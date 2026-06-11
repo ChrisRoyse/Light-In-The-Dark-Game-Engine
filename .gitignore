@@ -11,3 +11,6 @@ repoes/
 .idea/
 .vscode/
 .DS_Store
+
+# Scratch debug binaries/code
+/cmd/dbg/
