@@ -43,6 +43,11 @@ machine-readable reason (`deprecated`, `gameplay-irrelevant`, `superseded`, `def
 idiomatic Go, small interface count, options structs instead of parameter explosions, no
 leaked internals.
 
+*Revised 2026-06-11 per D-2026-06-11-8: the canonical surface is now exposed twice — idiomatic
+Go and embedded Lua (M5) — but counted once. Lua bindings are **generated from
+`api-manifest.json`**, never hand-written, so the Lua surface adds no independently
+maintained symbols and cannot drift from the Go surface.*
+
 **Success criteria.**
 
 | # | Criterion | Measured by | Gate |
@@ -53,6 +58,7 @@ leaked internals.
 | G2.4 | Methods on nouns only: zero exported free functions taking a handle-like first parameter (R-API-1) | API lint | M5 |
 | G2.5 | Trigger/condition/filter object zoo fully replaced: no exported `Trigger`, `BoolExpr`, `FilterFunc` analogues; events are `OnEvent` + closures (R-API-4) | API spec review + manifest mapping check | M2/M5 |
 | G2.6 | A WC3 modder can find the Go equivalent of any JASS function in one lookup | Generated JASS→Go mapping table published with docs; 100% coverage of non-tombstoned entries | M5 |
+| G2.7 | Lua surface parity without drift: every canonical symbol reachable from Lua via bindings generated from `api-manifest.json`; zero hand-written binding code (D-2026-06-11-8) | `jassgen` binding-generator output; CI regeneration reproducibility check | M5 |
 
 ### G3 — Low-tier hardware performance
 
@@ -74,6 +80,11 @@ budgets, restated as CI gates with their enforcement mechanism (see
 | G3.7 | Binary + base assets | ≤ 300 MB | Release artifact size check in CI | M6 |
 | G3.8 | Steady-state allocations per sim tick and per render frame | 0 (R-GC-1) | `testing.AllocsPerRun` CI benchmarks; regression above zero baseline fails the build (R-GC-5) | M3 onward |
 | G3.9 | Draw calls per frame at max army size | ≤ 300 (R-RND-3) | Render-stats counter asserted in benchmark scene | M4 onward |
+| G3.10 | Stretch target (recommended-spec machine, not the low-tier reference): 1,000 units + 1,000 projectiles within the same tick and draw-call budgets; ECS capacities, pathfinding, and budgets provisioned for this scale from M3; render side assumes the instancing patch lands in M4 (D-2026-06-11-18) | Headless + render benchmark stretch scenes tracked in CI; recommended-spec pass at M6 | M3 onward (capacities), M4/M6 (render) |
+
+*Revised 2026-06-11 per D-2026-06-11-18: G3.10 added. The 500-unit rows (G3.2/G3.3) remain
+the low-tier reference-machine **gates**; 1,000 units is the recommended-spec stretch
+target, never traded against them.*
 
 **Verification method.** Budgets are CI-enforced from M3 onward (headless) and M4 onward
 (render). "Passes on the developer's machine" is not acceptance; the reference machine
@@ -95,6 +106,11 @@ inference.
 | G4.4 | All assets pass core-glTF validation (no unsupported KHR extensions; `KHR_materials_unlit` excepted) | Asset-validation CLI ([Tooling §3](../09-roadmap/tooling.md)) | M0 onward |
 | G4.5 | Total cash cost of runtime stack and shipped assets | $0 — no paid middleware, fonts, codecs (`.ogg` only, R-AUD-1) | Continuous |
 | G4.6 | No runtime AI/ML inference anywhere in the engine | Code review policy; no inference deps possible under G4.1 allowlist | Continuous |
+| G4.7 | Generated assets carry full provenance (D-2026-06-11-12): every `tools/assetgen` output is produced at **asset-build time only**, hand-curated, and committed with a provenance entry recording generator, parameters, and curation sign-off; G4.6 intact — zero runtime inference | Provenance manifest check extended to generated assets (CI); assetgen run log | Continuous from first generated asset (M4 terrain textures) |
+
+*Revised 2026-06-11 per D-2026-06-11-12: G4.7 added — asset categories with no CC0 source
+(portraits, spell VFX textures, voice lines, UI icons, terrain splat/cliff sets) are filled
+by the build-time generative pipeline rather than cut.*
 
 ### G5 — Determinism
 
@@ -111,6 +127,10 @@ inference.
 | G5.4 | Zero nondeterminism sources in gameplay code: no `map` iteration, no wall-clock reads, no free-running goroutines inside a tick (R-SIM-2, R-EXEC-1) | Static lint ruleset over `litd/sim` + code review | M3 onward |
 | G5.5 | Event handlers fire in deterministic registration order; waits quantize to ticks (R-EXEC-2, R-EXEC-5) | Scheduler unit tests with order assertions | M3/M5 |
 | G5.6 | Sim math strategy (fixed-point vs ordered-float) decided and documented before any gameplay system is written | M1 decision record (see [Risks and Open Questions §2.1](./risks-and-open-questions.md)) | M1 |
+| G5.7 | Lua surface determinism (D-2026-06-11-8): a Lua-scripted scenario passes the same cross-platform hash matrix as G5.2; the sandbox (R-SEC-1, D-2026-06-11-20) exposes only the generated game API — no `os`/`io`/stdlib nondeterminism reachable — and its per-tick instruction + memory quotas are themselves deterministic (they double as the lockstep stall guard) | CI matrix job with Lua-driven run; sandbox-surface lint; quota enforcement tests (see [R7](./risks-and-open-questions.md#r7--lua-vm-determinism-added-2026-06-11-per-d-2026-06-11-8)) | M5 |
+
+*Revised 2026-06-11 per D-2026-06-11-8/20: G5.7 added — the embedded Lua VM sits inside the
+deterministic boundary and is held to the same evidence standard as the Go sim.*
 
 ---
 
@@ -163,6 +183,11 @@ committed feature.
 ### NG5 — Not a general-purpose engine
 
 This is an RTS-shaped engine; it does not compete with Unity/Godot.
+
+*Checked 2026-06-11 against D-2026-06-11-10: the M8 World Editor does not erode this
+non-goal — it is RTS-shaped authoring tooling for LitD worlds (terrain sculpt, unit/doodad
+placement, world-archive save), not general-purpose engine tooling. The criteria below are
+unchanged.*
 
 - **Criteria:** feature requests outside the RTS shape (free cameras, general rigid-body
   physics, non-RTS genre scaffolding) are declined by default in triage; G3N's experimental

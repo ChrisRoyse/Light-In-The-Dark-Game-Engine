@@ -55,6 +55,12 @@ func (d *SaveData) SaveUnitSnapshot(section, key string, u Unit)   // StoreUnit
 func (d *SaveData) RestoreUnit(section, key string, owner Player, pos Vec2, facing Angle) Unit
 ```
 
+`SaveData` is the campaign **cross-map persistence layer, v1 architecture** per
+D-2026-06-11-15: game-cache semantics and hero carry-over are built into the sim and the
+save format from M3 (retrofit is brutal, build-in is cheap). The campaign menu/mission-flow
+UI that consumes it ships with the M8 editor milestone.
+*Revised 2026-06-11 per D-2026-06-11-15.*
+
 ## Dedup rules applied
 
 | Rule | Application | Example |
@@ -73,11 +79,11 @@ Go language facility (map/generics)". No capability lost — the audit's escape 
 
 - **sim**: `Table`/`Attach` stores are sim-owned and **included in the determinism state hash if written from sim context** — script-attached data is gameplay state (R-SIM-2). Iteration order must be insertion-ordered, never Go map order.
 - **render**: none.
-- **asset**: `SaveData` persists to disk under the user profile dir (campaign progress); format is versioned JSON/binary — same pipeline as save games in [game-state-and-melee](game-state-and-melee.md).
+- **asset**: `SaveData` persists to disk under the user profile dir (campaign cross-map progress — v1 architecture, D-2026-06-11-15); format is versioned JSON/binary — same pipeline as save games in [game-state-and-melee](game-state-and-melee.md).
 
 ## Porting hazards
 
-1. **`SyncStored*` is a multiplayer primitive** (broadcast a local value to all clients — used for local-data sync tricks). Netcode is v2; tombstone as "v2: net-sync channel" rather than silently dropping — it is real capability.
+1. **`SyncStored*` is a multiplayer primitive** (broadcast a local value to all clients — used for local-data sync tricks). It lands at **M7 with lockstep multiplayer** (D-2026-06-11-5): manifest status is "scheduled M7" with a canonical mapping onto the lockstep sync channel — a committed milestone, not a vague v2 tombstone. *Revised 2026-06-11 per D-2026-06-11-5.*
 2. **`GetHandleId` arithmetic**: maps do pointer-arithmetic-adjacent tricks with handle ids (offsets, ranges). `Attach` covers attachment; raw `GetHandleId` survives in [math-strings-conversion](math-strings-conversion.md) as an opaque stable id with no recycling guarantees.
 3. **Determinism of user tables**: if a map script stores data keyed by something nondeterministic and then iterates, replays diverge. `Table` never exposes iteration in v1 (WC3 hashtables couldn't be iterated either) — keeps the trap closed.
 4. **`RestoreUnit` scope creep**: full WC3 semantics (what exactly a gamecache unit snapshot carries) is under-documented; define the snapshot schema explicitly in M2 and tombstone the rest.

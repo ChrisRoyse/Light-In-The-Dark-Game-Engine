@@ -1,6 +1,6 @@
 # Risks and Open Questions — Expanded
 
-> Expands [PRD §8 (Risks)](../../PRD.md#8-risks) and [PRD §9 (Open Questions)](../../PRD.md#9-open-questions).
+> Expands [PRD §8 (Risks)](../../PRD.md#8-risks) and [PRD §9 (Open Questions)](../../PRD.md#9-open-questions--decided-2026-06-11).
 > Each risk gains **detection signals** (how we notice it materializing early) and a
 > **trigger point** (the concrete condition that activates the mitigation/fallback). Each
 > open question gains **decision criteria**, a **deadline milestone** (per
@@ -51,15 +51,19 @@ scheduled in M3–M4).
 - Frame-time breakdown showing CPU-side draw submission (not GPU work) as the bottleneck on
   the reference machine — the signature of a draw-call-bound renderer.
 
-**Trigger points.**
+**Trigger points.** *Revised 2026-06-11 per D-2026-06-11-18: the 1,000-unit stretch target
+treats this risk's implementation trigger as already fired — the instancing patch is
+**planned M4 work**, not contingency.*
 - *Investigation trigger (scheduled):* M3/M4 boundary — spike the instancing patch on the
-  vendored fork regardless of current numbers, so the option is costed before it is needed.
-- *Implementation trigger:* benchmark scene at max army size exceeds **250 draw calls**
-  (early-warning threshold below the 300 budget) after batching/merging are fully applied →
-  land the instancing patch inside M4.
+  vendored fork; under D-18 the spike feeds directly into planned M4 implementation rather
+  than merely costing an option.
+- *Implementation (now planned-in):* the instancing patch lands inside M4 regardless of the
+  **250 draw call** early-warning threshold; the threshold remains as verification that
+  batching + instancing together hold the ≤ 300 budget at the 1,000-unit stretch scene.
 - *Escalation:* if instancing cannot be made to work in the vendored fork by end of M4,
   reduce per-faction material variety (deepen atlas sharing) to buy headroom — an asset-side
-  lever that needs no engine change.
+  lever that needs no engine change — and re-baseline the 1,000-unit stretch scene; the
+  500-unit low-tier guarantee (G3.2/G3.3) is not negotiable.
 
 ### R3 — Float non-determinism across CPUs
 
@@ -112,7 +116,9 @@ features not yet costed.
 - *Tombstone trigger:* a native's required engine feature is judged out of v1 scope → it is
   explicitly tombstoned (`deferred-v2`) in the manifest with sign-off — the G1 "no silent
   drop" rule applies; capability deferral is a recorded decision, never an implementation
-  accident.
+  accident. *(Note 2026-06-11: under the standing owner directive, "hard" is not a valid
+  reason — a deferral tombstone requires a product reason and owner sign-off; the same-day
+  reversal of the `commonai` deferral by D-2026-06-11-6 is the precedent.)*
 
 ### R5 — WC3 IP proximity
 
@@ -160,6 +166,99 @@ original/CC0; no Blizzard formats or content (see NG1/NG2 in
   internals, not just loader fixes), schedule a v2 evaluation of the abstraction boundary —
   R-API-6 (zero G3N types in the public API) exists precisely so this evaluation is possible
   without breaking users.
+
+### R7 — Lua VM determinism *(added 2026-06-11 per D-2026-06-11-8)*
+
+*Likelihood: Medium · Impact: High*
+
+The v1 Lua surface (M5) puts an embedded VM (gopher-lua family) inside the deterministic
+boundary. Any VM-internal nondeterminism — table iteration order leaking into scripts,
+string hashing, GC-timing-dependent behavior, float coercions in the standard library —
+breaks G5 exactly where it is hardest to lint: inside someone else's interpreter.
+
+**Mitigation.** Determinism audit of the chosen VM before adoption (D-8); the sandbox
+(R-SEC-1, D-20) exposes *only* the generated game API — no `os`, `io`, `math.random`, or
+other stdlib nondeterminism sources reachable; per-tick instruction quotas make script
+scheduling deterministic (and double as the lockstep stall guard).
+
+**Detection signals.**
+- A Lua-scripted benchmark scenario joins the cross-platform hash-comparison matrix
+  (G5.2) from M5 — the same harness that guards the Go sim guards the VM.
+- VM-version pinning: any VM dependency bump re-runs the full determinism audit checklist;
+  an unexplained hash change after a bump is the signal.
+- Binding-generator lint: any exposed Lua symbol outside the generated game-API set fails CI.
+
+**Trigger points.**
+- *Audit trigger:* any documented or discovered nondeterminism in the candidate VM → patch
+  or fork the VM (we already own a vendored engine fork; same posture) or restrict the
+  exposed surface until the scenario hash matrix is green.
+- *Replacement trigger:* if the VM family proves unauditable or unfixable by M5 exit, swap
+  VMs behind the binding layer — bindings are generated from `api-manifest.json` (D-8), so
+  retargeting is regeneration, not a rewrite. Dropping the Lua surface is **not** an option
+  (owner directive: features are not cut because they are hard).
+
+### R8 — Serializable-scheduler complexity *(added 2026-06-11 per D-2026-06-11-9)*
+
+*Likelihood: Medium · Impact: High*
+
+Mid-game save/load is v1 scope, so suspended script coroutines, timers, and event
+subscriptions must all serialize (D-9). A naive goroutine/stack-based scheduler cannot be
+serialized in Go; the representation must be stackless/state-machine coroutines or fully
+descriptive suspension records — chosen at M1, implemented at M3, and load-bearing for
+three features at once (saves, the M5.5 AI domain's second scheduler instance, campaign
+persistence per D-15).
+
+**Mitigation.** The M1 spike evaluates the scheduler representation for serializability
+*before* any gameplay code depends on it; the save format and scheduler representation are
+co-designed, not retrofitted.
+
+**Detection signals.**
+- M1 spike includes a suspend → serialize → restore → resume round-trip of a toy script;
+  any state that cannot be captured descriptively is found here, not at M6.
+- From M3, a permanent CI test: save mid-scenario, load, run to completion — final hash
+  must equal an unbroken run's hash. Divergence is the signal.
+- Code review flag: any scheduler or script-context state held in places the serializer
+  cannot reach (closures over Go pointers, unregistered timers) is rejected at review.
+
+**Trigger points.**
+- *Design trigger:* M1 round-trip reveals an unserializable suspension case → redesign the
+  representation before M3 starts; M3 does not begin on an unserializable scheduler.
+- *Late-discovery trigger:* save/load hash divergence after M3 → release blocker, same
+  severity class as R3 late discovery.
+- *Scope trigger:* the M5 Lua VM adds its own suspended-coroutine states; if the chosen VM's
+  coroutines resist descriptive serialization, the binding layer quantizes Lua waits onto
+  engine-level suspension records (R-EXEC-5 style) rather than serializing VM stacks.
+
+### R9 — Generative-pipeline quality and provenance *(added 2026-06-11 per D-2026-06-11-12)*
+
+*Likelihood: Medium · Impact: Medium*
+
+Asset categories with no CC0 source (portraits, spell VFX textures, voice lines, UI icons,
+terrain splat/cliff texture sets per D-7) come from the build-time generative pipeline
+(`tools/assetgen`). Two failure modes: output quality/coherence below the bar across a
+styled asset set, and provenance/licensing ambiguity of generator outputs undermining the
+G4 zero-cost, fully-provenanced posture.
+
+**Mitigation.** Generation is asset-build-time only with a mandatory hand-curation gate
+(D-12); accepted outputs are committed as ordinary owned assets with provenance entries
+recording generator, parameters, and curation sign-off; zero runtime AI (G4.6 intact);
+generators are chosen for commercially clear output licensing.
+
+**Detection signals.**
+- Curation reject-rate per category tracked in the assetgen run log; a category that won't
+  converge on style after repeated curation passes is the quality signal.
+- The G4.2 provenance scan extends to generated assets: any `assets/` file whose manifest
+  entry lacks generator + parameters + curator sign-off fails CI.
+- Periodic license review of each generator's output terms (same cadence as the R5
+  milestone-close audit); a terms change is the provenance signal.
+
+**Trigger points.**
+- *Quality trigger:* a category cannot reach the bar via generation + curation → author or
+  commission it by hand and record the cost exception against G4.5 as an owner decision;
+  uncurated output never ships.
+- *Provenance trigger:* a generator's output licensing becomes unclear or restrictive → that
+  generator is dropped and its in-tree outputs are reviewed for replacement; the provenance
+  manifest identifies exactly which assets came from it.
 
 ---
 
@@ -210,7 +309,10 @@ port shows the table is insufficient in practice.
 
 ### Q3 — Terrain: heightmap mesh vs hex/square tile meshes
 
-**STATUS: DECIDED 2026-06-11 — tile meshes for v1. See [decisions.md](./decisions.md#d-2026-06-11-3-q3--terrain-tile-meshes-kaykit-style-for-v1).**
+**STATUS: SUPERSEDED 2026-06-11 → heightmap + cliffs in v1 (M4). The same-day tile-mesh
+decision (D-2026-06-11-3) was reversed by [D-2026-06-11-7](./decisions.md#d-2026-06-11-7--terrain-heightmap--cliffs-in-v1-supersedes-d-2026-06-11-3)
+under the standing directive that features are not deferred for being hard. The
+"recommended default" below is retained as record only — it did not prevail.**
 
 **Deadline milestone:** **M4 design phase** (terrain rendering and the pathfinding grid's
 visual counterpart must be settled before M4 implementation starts; pathfinding in M3 stays
@@ -234,7 +336,11 @@ breaking the API.
 
 ### Q4 — `commonai.d.ts` AI natives: port in v1 or defer?
 
-**STATUS: DECIDED 2026-06-11 — defer to v2. See [decisions.md](./decisions.md#d-2026-06-11-4-q4--commonai-natives-defer-to-v2).**
+**STATUS: SUPERSEDED 2026-06-11 → FULL v1 port (own milestone M5.5). The same-day deferral
+(D-2026-06-11-4) was reversed by [D-2026-06-11-6](./decisions.md#d-2026-06-11-6--commonai-full-v1-port-supersedes-d-2026-06-11-4):
+all `commonai` natives map canonically (no `deferred-v2` tombstones for capability reasons);
+M6's melee opponent runs on the real AI domain. The "recommended default" below is retained
+as record only — it did not prevail.**
 
 **Deadline milestone:** **M2** (the manifest must classify every `commonai` symbol either
 way; the classification *is* the decision record).

@@ -6,22 +6,23 @@
 
 ## 1. Requirement statement
 
-R-SIM-3 mandates a data-oriented ECS with **struct-of-arrays (SoA) component stores** for units, projectiles, and buffs, sized to support 500 active units plus 500 projectiles per tick within the 10 ms tick budget on a dual-core 2 GHz reference machine. R-GC-2 binds the memory model: component stores are preallocated slices whose **capacity is fixed at map load and never reallocates mid-match**; all transient gameplay objects come from pools carved from the same allocation. R-GC-1/R-GC-5 make zero allocations per tick a CI-enforced invariant.
+R-SIM-3 mandates a data-oriented ECS with **struct-of-arrays (SoA) component stores** for units, projectiles, and buffs, provisioned for **1,000 active units plus 1,000 projectiles** per tick (the D-2026-06-11-18 stretch target, met on the recommended-spec machine); 500 + 500 within the 10 ms tick budget on the dual-core 2 GHz low-tier reference machine remains the guaranteed budget (PRD §5.3). *Revised 2026-06-11 per D-2026-06-11-18.* R-GC-2 binds the memory model: component stores are preallocated slices whose **capacity is fixed at map load and never reallocates mid-match**; all transient gameplay objects come from pools carved from the same allocation. R-GC-1/R-GC-5 make zero allocations per tick a CI-enforced invariant.
 
 The design below is deliberately conservative: no archetype migration, no sparse-set generality beyond what an RTS needs, no reflection-driven registration. Predictability over generality — the component set of an RTS is known at compile time.
 
 ## 2. Memory model: fixed capacity at map load (R-GC-2)
 
-At map load, the map header declares capacity limits (with engine-enforced ceilings):
+At map load, the map header declares capacity limits (with engine-enforced ceilings). *Capacities revised 2026-06-11 per D-2026-06-11-18 (1,000-unit stretch target; 500 remains the low-tier guarantee) and D-2026-06-11-13 (scripted-doodad pool):*
 
 | Pool | Default cap | Notes |
 |---|---|---|
-| Units | 2,000 | 500 *active* is the perf budget; cap leaves headroom for corpses-in-decay, summons |
-| Projectiles | 1,000 | pooled, high churn |
-| Buff instances | 4,000 | many-per-unit |
-| Order queue entries | 8,000 | pooled, see [Combat & Orders](combat-and-orders.md) |
-| Pending events | 2,048/tick | ring buffer |
-| Path requests/results | 256 in flight | see [Pathfinding](pathfinding.md) |
+| Units | 4,000 | 1,000 *active* is the stretch perf target (500 guaranteed low-tier); cap leaves headroom for corpses-in-decay, summons |
+| Projectiles | 2,000 | pooled, high churn; 1,000 live is the perf target |
+| Buff instances | 8,000 | many-per-unit |
+| Order queue entries | 16,000 | pooled, see [Combat & Orders](combat-and-orders.md) |
+| Pending events | 4,096/tick | ring buffer |
+| Path requests/results | 512 in flight | see [Pathfinding](pathfinding.md) |
+| Scripted doodads | 1,024 | render-only until first script touch, then promoted (§5, D-2026-06-11-13) |
 
 Every component store allocates `make([]T, cap)` once during load. Slices are never appended past capacity; exhaustion is a *gameplay* outcome (creation fails, exactly as WC3 refuses to exceed food/handle limits) plus a debug-mode assert — never a reallocation. This guarantees stable backing arrays (pointers/indices into stores remain valid for the match), zero steady-state GC pressure, and a hard, knowable RAM ceiling that fits the 1.5 GB match budget (PRD §5.3).
 
@@ -51,7 +52,7 @@ Each component is a plain struct-of-slices store, indexed by a dense component r
 ```go
 type TransformStore struct {
     // dense, parallel columns — one cache-friendly stream per field
-    Pos      []fixed.Vec2   // 16.16 fixed-point, see determinism.md
+    Pos      []fixed.Vec2   // 32.32 fixed-point (D-2026-06-11-1), see determinism.md
     Facing   []fixed.Angle
     Entity   []EntityID     // row -> owning entity (for iteration)
     rowOf    []int32        // entity index -> row, -1 if absent (sparse, cap = entity cap)
@@ -59,7 +60,7 @@ type TransformStore struct {
 }
 ```
 
-- **SoA, not AoS:** systems touch only the columns they need (movement reads `Pos`/`Facing` and never drags combat stats through cache). On the low-tier dual-core target this is where the 500-unit budget is won.
+- **SoA, not AoS:** systems touch only the columns they need (movement reads `Pos`/`Facing` and never drags combat stats through cache). This is where the 500-unit low-tier guarantee — and the 1,000-unit stretch target (D-2026-06-11-18) — is won.
 - **Dense iteration:** rows `[0, count)` are always live and contiguous. Removal is swap-with-last (copy last row into the vacated row, fix `rowOf` for the moved entity, decrement count). Swap-remove changes iteration order — which is fine *because* the order remains fully deterministic (it depends only on the deterministic history of adds/removes) and the [state hash](determinism.md) hashes stores in row order, so any ordering bug surfaces immediately.
 - **No archetypes:** with ~10 component types and known access patterns, per-component dense stores beat archetype machinery in both simplicity and worst-case behavior. Cross-component joins iterate the smaller store and probe `rowOf` of the other — O(1) per probe, no allocation.
 - **Stable IDs where scripts need them:** scripts hold `EntityID`s, never rows; rows are an internal, ephemeral concept.
@@ -83,22 +84,25 @@ type TransformStore struct {
 
 Render-side concerns (model instance, animation clip state, selection circle) live in `litd/render` mirror structures keyed by `EntityID`, never in sim components — the PRD §4.1 hard rule.
 
+**Doodads — promotion on first touch (D-2026-06-11-13).** *Added 2026-06-11 per D-2026-06-11-13.* Doodads default to render-side-only storage: no entity, no component rows — the zero-cost case stays zero-cost for the thousands of placed scenery objects a map carries. The first time a script addresses a doodad (show/hide, the `SetDoodadAnimation` analogues, reposition), it is **promoted**: an `EntityID` is allocated from the scripted-doodad pool (§2) and a small **Doodad component row** is created holding the map-placement index, visibility flag, animation override, and position/facing override; render resolves a promoted doodad through the `EntityID`-keyed mirror instead of the static placement list. Promotion happens in script execution order (deterministic), is one-way for the match, and promoted rows are authoritative state — covered by the [state hash](determinism.md) and the save format (R-SIM-6). Doodads with pathing footprints stamp the [grid](pathfinding.md) at map load regardless of promotion state.
+
 ### 5.1 Memory math (sanity check against the 1.5 GB budget)
 
-Back-of-envelope at default caps, 16.16 fixed-point ([Determinism §2](determinism.md)):
+Back-of-envelope at the revised default caps, 32.32 fixed-point positions ([Determinism §2](determinism.md)). *Revised 2026-06-11 per D-2026-06-11-18 (capacities) and D-2026-06-11-1 (32.32 field widths):*
 
 | Store | Approx bytes/row | Rows | Total |
 |---|---|---|---|
-| Transform | ~16 | 2,000 | 32 KB |
-| Movement (incl. waypoint buffer refs) | ~48 | 2,000 | 96 KB |
-| Combat (2 weapon slots) | ~128 | 2,000 | 256 KB |
-| Health / Collision / Owner / Order heads | ~48 | 2,000 | 96 KB |
-| Buff instances | ~32 | 4,000 | 128 KB |
-| Projectiles | ~64 | 1,000 | 64 KB |
-| Order queue pool | ~24 | 8,000 | 192 KB |
-| Pathing grid + dilated layers + buckets | — | — | ~2–4 MB |
+| Transform | ~32 | 4,000 | 128 KB |
+| Movement (incl. waypoint buffer refs) | ~64 | 4,000 | 256 KB |
+| Combat (2 weapon slots) | ~160 | 4,000 | 640 KB |
+| Health / Collision / Owner / Order heads | ~64 | 4,000 | 256 KB |
+| Buff instances | ~40 | 8,000 | 320 KB |
+| Projectiles | ~96 | 2,000 | 192 KB |
+| Order queue pool | ~24 | 16,000 | 384 KB |
+| Doodad rows (promoted, D-13) | ~32 | 1,024 | 32 KB |
+| Pathing grid + cliff levels + dilated layers + buckets + flow-field slots | — | — | ~5–6 MB |
 
-The entire authoritative sim state is **single-digit megabytes** — it fits in L2/L3 cache on the reference CPU, which is the real point of the SoA discipline. The 1.5 GB match budget (PRD §5.3) is consumed almost entirely by render-side assets, not the sim.
+Even at doubled capacities and doubled positional widths, the entire authoritative sim state is **single-digit megabytes** — it still fits in L3 cache on the reference CPU, which is the real point of the SoA discipline. The 1.5 GB match budget (PRD §5.3) is consumed almost entirely by render-side assets, not the sim.
 
 ## 6. System execution order within a tick
 
@@ -150,6 +154,6 @@ No closures, no interfaces, no bounds beyond the slice's own checks (which the c
 
 ## 8. Acceptance hooks
 
-- Headless benchmark (R-SIM-4): 500 units + 500 projectiles, full system chain, ≤ 10 ms/tick on the reference machine — CI-gated from M3 (PRD §5.3).
+- Headless benchmark (R-SIM-4), two gates from M3 (*revised 2026-06-11 per D-2026-06-11-18*): 500 units + 500 projectiles ≤ 10 ms/tick on the low-tier reference machine (the guarantee, PRD §5.3), and 1,000 units + 1,000 projectiles ≤ 10 ms/tick on the recommended-spec machine (the stretch target).
 - `AllocsPerRun` benchmarks per system and for the whole tick — zero baseline, regression-fails per R-GC-5.
 - Store-order determinism is implicitly verified by the [10k-tick hash trace](determinism.md): any unordered structure in a store would diverge the trace immediately.

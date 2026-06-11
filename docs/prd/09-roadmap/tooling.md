@@ -1,11 +1,16 @@
 # Roadmap — Tooling Specifications
 
-> Specifies the three tools the PRD requires: the `tools/jassgen` parser/generator
+> Specifies the four tools the PRD requires: the `tools/jassgen` parser/generator
 > (R-AST-4, [PRD §6](../../PRD.md#6-asset--data-pipeline)), the asset-validation CLI
-> (R-FMT-2, R-AST-2/3), and the CI benchmark harness that enforces the
+> (R-FMT-2, R-AST-2/3), the CI benchmark harness that enforces the
 > [§5.3 budgets](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram)
-> and GC discipline (R-GC-1…5). Milestone ownership per [Milestones](./milestones.md);
+> and GC discipline (R-GC-1…5), and the `tools/assetgen` generative asset pipeline
+> (R-AST-5, D-2026-06-11-12). Milestone ownership per [Milestones](./milestones.md);
 > deduplication policy per [PRD §4.2](../../PRD.md#42-deduplication-policy-the-complex-version-only-rule).
+>
+> *Revised 2026-06-11 per D-2026-06-11-6/8/12: `jassgen` gains the Lua binding generator as
+> a fifth output; `commonai` natives are mapped canonically, no longer tombstoned
+> `deferred-v2`; `tools/assetgen` added (§5).*
 
 ---
 
@@ -38,7 +43,7 @@ generated from the files that do:
 | `blizzard.j` | `repoes/war3-types/scripts/blizzard.j` | 985 BJ functions, **with bodies** — bodies drive D1/D2 detection |
 | `common.d.ts` | `repoes/war3-types/core/common.d.ts` | Type enrichment: handle subtype hierarchy, nullability |
 | `blizzard.d.ts` | `repoes/war3-types/core/blizzard.d.ts` | Type enrichment for BJ signatures |
-| `commonai.d.ts` | `repoes/war3-types/core/commonai.d.ts` | AI natives — classified and tombstoned per [Q4](../01-vision/risks-and-open-questions.md#q4--commonaidts-ai-natives-port-in-v1-or-defer) |
+| `commonai.d.ts` | `repoes/war3-types/core/commonai.d.ts` | AI natives — **mapped canonically** into the AI-domain surface (M5.5) per [D-2026-06-11-6](../01-vision/decisions.md#d-2026-06-11-6--commonai-full-v1-port-supersedes-d-2026-06-11-4); *revised 2026-06-11 — previously tombstoned `deferred-v2` per Q4* |
 | `overrides.toml` | `tools/jassgen/overrides.toml` | Hand-reviewed classification/mapping decisions (in git, code-reviewed) |
 
 ### 2.2 Pipeline
@@ -46,10 +51,10 @@ generated from the files that do:
 ```
 .j / .d.ts ──► parse ──► merge/enrich ──► classify (D1–D5) ──► apply overrides
                                                                     │
-              ┌─────────────────────────────────────────────────────┤
-              ▼                    ▼                     ▼           ▼
-      api-manifest.json     audit report        Go API stubs   JASS→Go table
-                          (md + machine JSON)   (litd/api)     (docs)
+        ┌──────────────────┬──────────────────┬─────────────────┬───┴────────────┐
+        ▼                  ▼                  ▼                 ▼                ▼
+api-manifest.json    audit report       Go API stubs      JASS→Go table    Lua bindings
+                  (md + machine JSON)    (litd/api)          (docs)        (D-8, M5)
 ```
 
 1. **Parse.** Two small recursive-descent parsers: one for JASS declarations
@@ -72,9 +77,12 @@ generated from the files that do:
    `reason` string. Tombstones (`deprecated`, `gameplay-irrelevant`, `superseded`,
    `deferred-v2`) can only come from overrides — the tool never tombstones on its own
    (G1.4's human-review rule).
-5. **Emit.** Four outputs, all deterministic: the manifest, the audit report (markdown for
-   humans + JSON for CI gates), compiling panic-body stubs for canonical symbols (M2
-   deliverable), and the JASS→Go mapping table for the docs (G2.6).
+5. **Emit.** Five outputs, all deterministic *(revised 2026-06-11 per D-2026-06-11-8: Lua
+   bindings added)*: the manifest, the audit report (markdown for humans + JSON for CI
+   gates), compiling panic-body stubs for canonical symbols (M2 deliverable), the JASS→Go
+   mapping table for the docs (G2.6), and the **Lua bindings** for the embedded VM (M5
+   deliverable) — generated from the same manifest entries as the Go surface, so the two
+   surfaces cannot drift (G2.7); zero hand-written binding code.
 
 ### 2.3 Audit report and CI gates
 
@@ -89,7 +97,8 @@ counters, each a CI gate:
 | `unmapped` == 0 (every entry mapped or tombstoned) | M2 |
 | `duplicateTargets` == 0 (two sources → one Go symbol only when marked as deliberate D1/D3/D5 collapse) | M5 |
 | `helperShadowsCore` == 0 (G1.5) | M5 |
-| `unimplemented` == 0 (stub bodies remaining) | M5 |
+| `unimplemented` == 0 (stub bodies remaining) | M5 (core), M5.5 (`commonai` origin) |
+| `commonai` capability tombstones == 0 — all AI natives mapped canonically (D-2026-06-11-6; *revised 2026-06-11, replaces the blanket `deferred-v2` plan*) | M2 |
 | `featureTags` rollup (the [R4](../01-vision/risks-and-open-questions.md#r4--api-surface-underestimation-natives-needing-engine-features-g3n-lacks) engine-feature census) | reviewed at M2, gates M4 planning |
 
 Additionally, CI re-runs `jassgen` and fails if any output differs from the committed
@@ -97,7 +106,10 @@ version (reproducibility gate, M2 onward).
 
 ### 2.4 `api-manifest.json` schema
 
-Proposed JSON Schema (draft 2020-12), abbreviated to the load-bearing parts:
+Proposed JSON Schema (draft 2020-12), abbreviated to the load-bearing parts. *Revised
+2026-06-11 per D-2026-06-11-6: `goMapping.package` gains `litd/ai` — the AI-domain surface
+implemented at M5.5 (package name provisional) — since `commonai` natives now map
+canonically:*
 
 ```json
 {
@@ -158,7 +170,7 @@ Proposed JSON Schema (draft 2020-12), abbreviated to the load-bearing parts:
           "required": ["symbol", "package"],
           "properties": {
             "symbol": { "type": "string" },
-            "package": { "enum": ["litd/api", "litd/api/helpers"] },
+            "package": { "enum": ["litd/api", "litd/api/helpers", "litd/ai"] },
             "collapsesWith": { "type": "array", "items": { "type": "string" } },
             "notes": { "type": "string" }
           }
@@ -240,13 +252,23 @@ Proposed JSON Schema (draft 2020-12), abbreviated to the load-bearing parts:
                  "collapsesWith": ["SetUnitState", "GetUnitStateSwap", "SetUnitLifeBJ", "SetUnitManaBJ"],
                  "notes": "typed accessors Life/SetLife/Mana/SetMana...; one state table behind them" } },
 
-// Tombstoned example — commonai deferral per Q4
+// commonai — mapped canonically per D-2026-06-11-6 (revised 2026-06-11: this entry was
+// previously the deferred-v2 tombstone example; capability tombstones for commonai are gone.
+// Symbol name illustrative; the AI-domain surface is specced at M2, implemented at M5.5.)
 { "name": "StartUnitAbilityOrder", "origin": "commonai",
   "signature": { "params": [], "returns": "boolean" },
   "classification": "D3", "classifiedBy": "override",
+  "disposition": "mapped",
+  "goMapping": { "symbol": "AIPlayer.OrderAbility", "package": "litd/ai",
+                 "notes": "AI domain (M5.5): isolated scheduler domain, command-stack messaging (R-EXEC-3)" } },
+
+// Tombstoned example — reasons remain for genuinely dead surface, never for capability
+{ "name": "DoNothing", "origin": "blizzard.j",
+  "signature": { "params": [], "returns": "nothing" },
+  "classification": "D1", "classifiedBy": "override",
   "disposition": "tombstoned",
-  "tombstone": { "reason": "deferred-v2",
-                 "detail": "AI domain deferred per Q4; isolated scheduler design (R-EXEC-3)" } }
+  "tombstone": { "reason": "gameplay-irrelevant",
+                 "detail": "empty placeholder callback; Go closures need no no-op sentinel" } }
 ```
 
 ---
@@ -289,12 +311,14 @@ and as a required CI job from M0.
 
 Turns the [§5.3 budgets](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram)
 and GC rules into failing builds. Three suites, introduced at the milestones where their
-subject exists (see the [gates summary](./milestones.md#9-cross-milestone-gates-summary)).
+subject exists (see the [gates summary](./milestones.md#14-cross-milestone-gates-summary)).
 
 ### 4.2 Suites
 
 **Headless sim suite (from M3).** Runs on every CI machine — deterministic, GPU-free.
-- Scenario: scripted 500-unit + 500-projectile sustained combat on a 128×128 map.
+- Scenario: scripted 500-unit + 500-projectile sustained combat on a 128×128 map; a
+  1,000-unit + 1,000-projectile stretch scenario runs alongside and is tracked, not gated
+  (D-2026-06-11-18 — 500 remains the low-tier gate).
 - Metrics: worst-case and p99 tick time (budget ≤ 10 ms, asserted with a CI-machine
   calibration factor; the reference-machine number is authoritative), `testing.AllocsPerRun`
   on the tick path (budget: 0; R-GC-1/5), state-hash determinism across the OS/arch matrix
@@ -303,7 +327,9 @@ subject exists (see the [gates summary](./milestones.md#9-cross-milestone-gates-
 **Render suite (from M4).** Requires a GPU runner; the authoritative pass is a periodic run
 on the physical reference machine (dual-core 2 GHz, UHD 620, 4 GB RAM), with a per-commit
 proxy run on a capped CI GPU runner.
-- Scenes: "typical" (mixed economy + small battle) and "worst case" (500 units on screen).
+- Scenes: "typical" (mixed economy + small battle), "worst case" (500 units on screen), and
+  the 1,000-unit stretch scene (D-2026-06-11-18; measured on the recommended spec, tracked
+  not gated).
 - Metrics: FPS (≥ 60 typical / ≥ 30 worst), draw calls (≤ 300; early-warning at 250 per
   [R2](../01-vision/risks-and-open-questions.md#r2--no-gpu-instancing-in-g3n--draw-call-ceiling)),
   allocs/frame (0), active VFX light count (≤ 8; R-RND-4).
@@ -326,12 +352,61 @@ proxy run on a capped CI GPU runner.
 
 ---
 
-## 5. Related documents
+## 5. Generative asset pipeline (`tools/assetgen`) *(added 2026-06-11 per D-2026-06-11-12, R-AST-5)*
+
+### 5.1 Purpose
+
+Fills the asset categories with no CC0 source — hero portraits, spell VFX textures, voice
+lines, UI icons, and the terrain splat/cliff texture sets the D-7 heightmap terrain needs —
+with **build-time** generative output (image models, TTS), hand-curated and committed as
+ordinary owned assets. Zero runtime AI inference anywhere (G4.6 unaffected); generation
+never happens in CI or at runtime. Quality and provenance risk tracked as
+[R9](../01-vision/risks-and-open-questions.md#r9--generative-pipeline-quality-and-provenance-added-2026-06-11-per-d-2026-06-11-12).
+
+### 5.2 Pipeline
+
+```
+generation spec ──► generate ──► curate (human accept/reject) ──► post-process ──► assetcheck ──► commit
+(assetgen.toml)   (image/TTS,        mandatory gate             (atlas pack,      (full §3       (asset +
+                   local or API)                                 .ogg encode)       gate)          provenance)
+```
+
+1. **Spec.** Each asset (or asset family) is described in a reviewed `assetgen.toml` entry:
+   category, generator/model, prompt and parameters, output constraints (dimensions, style
+   tags, atlas target). The spec file is in git — regeneration is reproducible *intent*,
+   even where generator output is not bit-stable.
+2. **Generate.** Image/TTS generation at asset-build time on a developer machine; raw
+   candidates land in a scratch area, never directly in `assets/`.
+3. **Curate.** Mandatory human gate: explicit per-asset accept. Nothing reaches `assets/`
+   uncurated. Reject counts are logged per category (the R9 quality signal).
+4. **Post-process.** Accepted outputs converted to engine formats: atlas-packed textures
+   (R-RND-2), `.ogg` audio (R-AUD-1).
+5. **Validate + commit.** Outputs pass the full `tools/assetcheck` gate (§3) like any other
+   asset — no special-casing — and are committed with an `assets/MANIFEST` provenance entry.
+
+### 5.3 Rules
+
+- **Build-time only.** No generation in CI, no generation at runtime; the engine never
+  links an inference dependency (impossible anyway under the G4.1 allowlist).
+- **Provenance is mandatory (G4.7).** Every accepted asset's manifest entry records:
+  generator/model + version, generation parameters (or `assetgen.toml` ref), date, and
+  curator sign-off. The G4.2 CI scan fails on any generated asset missing these fields.
+- **Output licensing must be commercially clear.** A generator whose output terms are
+  unclear or restrictive is dropped, and its in-tree outputs are identified via the
+  provenance manifest and reviewed for replacement (R9 trigger).
+- **Curation is not optional** and has no bypass flag — same posture as `assetcheck`'s
+  format rules.
+
+---
+
+## 6. Related documents
 
 - [Overview](../01-vision/overview.md) — components map and the manifest's role as the
   generated "components/blizzard JSON".
 - [Goals and Non-Goals](../01-vision/goals-and-non-goals.md) — the criterion IDs these tools gate.
 - [Risks and Open Questions](../01-vision/risks-and-open-questions.md) — detection signals
   these tools produce.
+- [Decisions](../01-vision/decisions.md) — the 2026-06-11 decision record (D-6, D-8, D-12)
+  behind this document's revisions.
 - [Milestones](./milestones.md) — when each tool and gate ships.
 - [PRD](../../PRD.md) — source of truth.

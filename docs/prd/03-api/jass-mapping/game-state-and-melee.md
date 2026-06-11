@@ -53,7 +53,9 @@ func (g *Game) StartLocation(i int) Vec2
 func (g *Game) Teams() int
 func (g *Game) IsReplay() bool
 
-// Persistence:
+// Persistence — full v1 scope (D-2026-06-11-9): mid-game saves ship at M6 on the
+// serializable scheduler; campaign cross-map persistence (D-2026-06-11-15) rides the
+// same pipeline via SaveData (see hashtable-and-gamecache):
 func (g *Game) SaveMatch(name string) error     // SaveGame + the SaveGameExists/sync dance
 func (g *Game) LoadMatch(name string) error
 
@@ -65,6 +67,11 @@ func StartingUnits(g *litd.Game)
 func StartingResources(g *litd.Game)
 func VictoryDefeatConditions(g *litd.Game)
 ```
+
+*Revised 2026-06-11 per D-2026-06-11-6:* `melee.Standard`'s computer slots run on the **real
+AI domain from M5.5** — they attach the standard melee `AIController` via `g.AttachAI`
+([ai-natives](ai-natives.md)), not a Go stopgap and not the previously planned no-op stubs.
+M6's vertical-slice opponent is this AI.
 
 ## Dedup rules applied
 
@@ -84,13 +91,13 @@ Each gets an explicit manifest reason per §4.2's acceptance criterion.
 
 ## Subsystem dependencies
 
-- **sim** (primary): game clock, time-of-day, pause, match result state are sim state; `Victory`/`Defeat` emit events and stop command acceptance deterministically. Save/load serializes the full sim state (the same serializer backs replays and the determinism hash, R-SIM-2/R-SIM-4).
+- **sim** (primary): game clock, time-of-day, pause, match result state are sim state; `Victory`/`Defeat` emit events and stop command acceptance deterministically. Save/load serializes the full sim state **including the scheduler's suspension records** — suspended coroutines, pending timers, event subscriptions (D-2026-06-11-9) — plus the campaign `SaveData` store (D-2026-06-11-15); the same serializer backs the determinism hash (R-SIM-2/R-SIM-4), and replays (command streams) remain a separate, complementary mechanism.
 - **render**: score screen, victory/defeat dialogs (via [ui-frames-and-dialogs](ui-frames-and-dialogs.md)); day/night lighting interpolation reads `TimeOfDay()`.
 - **asset**: map metadata (start locations, teams, flags) from the map file; melee starting-unit tables per race in `data/` (R-AST-1).
 
 ## Porting hazards
 
-1. **Save/load is a sim-architecture feature, not an API feature** — versioned snapshot of every ECS store, RNG seed, scheduler continuations (suspended `helpers.Wait` coroutines!). Suspended-coroutine serialization is the hard part; design in M3, not bolted on at M5.
+1. **Save/load is a sim-architecture feature, not an API feature** — versioned snapshot of every ECS store, RNG seed, scheduler continuations (suspended `helpers.Wait` coroutines!). *Revised 2026-06-11 per D-2026-06-11-9 — this is now committed design, not a risk:* the cooperative scheduler is **serializable from day one** — suspended coroutines, timers, and event subscriptions all serialize into the save format ([Execution model §2.1 S-5 / §2.3](../execution-model.md)); the representation is constrained at M1, implemented at M3, and full mid-game save/load ships at M6. The remaining hazard is only discipline: every new sim/scheduler feature must extend the save schema in the same change.
 2. **`SetGameSpeed`/`SetTimeOfDayScale` change tick-to-game-time mapping**: keep sim tick rate fixed at 20 Hz and scale *game-time per tick* — otherwise every duration in the engine needs re-quantizing (breaks R-EXEC-5).
 3. **Melee package is the dogfood gate**: if `melee.Standard` can't be written purely on the public API, the API is missing capability — schedule it as the M5 acceptance test.
 4. **Victory/defeat for ALL players** must resolve in one deterministic pass (WC3 had ordering quirks with simultaneous defeat); define tie rules.

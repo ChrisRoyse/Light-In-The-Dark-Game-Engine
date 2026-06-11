@@ -191,7 +191,8 @@ The [JASS Manual library documentation](https://jass.sourceforge.net/doc/library
   - all gameplay math in fixed-point (`int32` 16.16 or `int64` 32.32) or strictly ordered float ops — decision spike in M1;
   - a single seeded PRNG owned by the sim; no `map` iteration in gameplay code (Go map order is random) — keyed slices/ordered structures only;
   - no wall-clock or goroutine-race inputs inside a tick.
-- **R-SIM-3:** Data-oriented ECS layout (struct-of-arrays component stores) for units/projectiles/buffs — cache-friendly on low-tier CPUs, supports 500 active units + 500 projectiles per tick within budget (§5.3).
+- **R-SIM-3:** Data-oriented ECS layout (struct-of-arrays component stores) for units/projectiles/buffs — cache-friendly on low-tier CPUs. Capacities provisioned for **1,000 active units + 1,000 projectiles** (D-18 stretch target on recommended spec); the §5.3 low-tier budgets are guaranteed at 500.
+- **R-SIM-6:** The cooperative scheduler is **serializable** (D-9): suspended coroutines, timers, and event subscriptions serialize into the save format — mid-game save/load is v1 scope, and campaign cross-map persistence (D-15) rides the same mechanism.
 - **R-SIM-4:** Headless mode: sim runs and replays verify with no GPU/window (CI-testable).
 - **R-SIM-5:** Pathfinding deterministic A*/flow-field on the WC3-style grid; no threads inside tick resolution in v1 (parallelism only across full-tick boundaries if ever added).
 
@@ -247,8 +248,12 @@ Engine support required to make FSV possible (these are product features, per G7
 
 ### 5.6 Modding/scripting
 
-- v1: games are written **in Go against `litd/api`** (compiled, fastest, zero interpreter cost — consistent with "deterministic code, optimize for cost").
-- v2 candidate: embed a deterministic Lua VM ([gopher-lua]) exposing the same canonical API for runtime-loaded maps. Out of v1 scope; API layering (§4.1) is designed so this binds mechanically to `litd/api`.
+*Revised per D-2026-06-11-8/20.*
+
+- Systems/engine code is Go against `litd/api` (compiled, zero interpreter cost).
+- **v1 (M5) ships an embedded deterministic Lua VM** (gopher-lua family, determinism-audited) exposing the same canonical API; bindings are **generated from `api-manifest.json`** so Go and Lua surfaces cannot drift. Worlds are runtime-loadable — creators and AI coding agents author without a Go toolchain.
+- **Hard sandbox (R-SEC-1):** world Lua has no io/os/net access — game API only — with per-tick instruction and memory quotas (the quotas double as the lockstep stall guard). Worlds cannot touch the player's machine. Any world-sharing feature is gated on this sandbox.
+- M4 onward: every user-facing string (engine UI and world-author strings) flows through locale string tables; v1 ships English, translations are data drops (D-17).
 
 ---
 
@@ -257,7 +262,8 @@ Engine support required to make FSV possible (these are product features, per G7
 - **R-AST-1:** Source of truth for game data (unit stats, abilities, upgrades) is plain JSON/TOML tables in `data/` — the WC3 "SLK/object data" analogue — loaded once, immutable at runtime.
 - **R-AST-2:** All models pass the asset-validation CLI (core-glTF check, triangle budget, atlas usage, missing-animation check) before entering `assets/`.
 - **R-AST-3:** Standard animation clip names contractually required per unit model: `Idle`, `Walk`, `Attack`, `Death` (+ optional `Spell`, `Portrait`). Validator enforces.
-- **R-AST-4 (parser tool):** `tools/jassgen` parses `common.j`/`blizzard.j` + the `.d.ts` files into a machine-readable `api-manifest.json` (the requested "components/blizzard JSON", generated): every function, its classification (D1–D5, §4.2), and its canonical Go mapping. This manifest drives both code generation of API stubs and the §4.2 audit report.
+- **R-AST-4 (parser tool):** `tools/jassgen` parses `common.j`/`blizzard.j` + the `.d.ts` files into a machine-readable `api-manifest.json` (the requested "components/blizzard JSON", generated): every function, its classification (D1–D5, §4.2), and its canonical Go mapping. This manifest drives code generation of API stubs, **the Lua binding generator (D-8)**, and the §4.2 audit report.
+- **R-AST-5 (generative pipeline, D-12):** asset categories with no CC0 source (hero portraits, spell VFX textures, voice lines, UI icons, terrain splat/cliff texture sets) are produced by `tools/assetgen` — image/TTS generation run at **asset-build time only**, hand-curated, committed as owned assets with provenance entries. Zero runtime AI inference (G4.6 unaffected).
 
 ---
 
@@ -271,9 +277,12 @@ Engine support required to make FSV possible (these are product features, per G7
 | **M2** | API manifest + spec | `jassgen` outputs `api-manifest.json`; all 2,521 functions classified D1–D5; public API spec doc signed off |
 | **M3** | Sim core | ECS, 20 Hz tick, movement, pathfinding, combat for 500 units within budget (headless benchmark) |
 | **M4** | Render core | GLB units/buildings/terrain rendered with animation, team color, RTS camera; 60 FPS on reference machine |
-| **M5** | API v1 | Full canonical API implemented over sim+render; audit report shows 0 unmapped / 0 duplicated |
-| **M6** | Vertical slice | Playable skirmish: build, train, fight, win/lose; all §5.3 budgets green in CI; **replay verification (G5.3) green — lockstep-readiness proof for M7** |
-| **M7** | **Multiplayer (lockstep)** | 2–8 player LAN/online skirmish: transport + reliability layer, lockstep scheduler (input delay, stall handling), lobby/session bootstrap, state-hash desync detection with diagnostic dump. Replays and netplay share the command-stream format. See decision D-2026-06-11-5. |
+| **M5** | API v1 + Lua | Full canonical API implemented over sim+render; audit report shows 0 unmapped / 0 duplicated. **Lua VM embedded (deterministic, hard-sandboxed: no io/os/net, per-tick instruction+memory quotas), bindings generated from `api-manifest.json`; worlds runtime-loadable** (D-8, D-20) |
+| **M5.5** | **AI domain** | Full `commonai` port (D-6): second sandboxed scheduler domain, isolated contexts, command-stack messaging (R-EXEC-3); all AI natives canonical |
+| **M6** | Vertical slice | Playable skirmish vs the real AI domain: build, train, fight, win/lose; **mid-game save/load shipping (D-9)**; **world archive format defined (D-14)**; all §5.3 budgets green in CI; **replay verification (G5.3) green — lockstep-readiness proof for M7**; distribution + license decision (D-19) |
+| **M7** | **Multiplayer (lockstep)** | 2–8 player LAN/online skirmish: transport + reliability layer, lockstep scheduler (input delay, stall handling), lobby/session bootstrap, state-hash desync detection with diagnostic dump. Replays and netplay share the command-stream format (D-5). **In-client replay viewer + live observer slots (D-16)** |
+| **M8** | **World Editor** | In-engine visual editor: terrain sculpt/paint, unit/doodad placement, map metadata, world-archive save; campaign menu/mission-flow UI (D-10, D-15) |
+| **M9** | World hub (candidate) | Hosted world repository + in-game browser over the v1 archive format; hard-gated on the Lua sandbox (D-14, D-20) |
 
 ---
 
@@ -297,9 +306,11 @@ All four questions plus the multiplayer question are decided; full rationale in
 
 1. **Sim math → fixed-point `int64` 32.32** (D-2026-06-11-1). M1 spike now validates performance/precision of fixed-point rather than arbitrating; reopens only if the tick budget fails.
 2. **Naming → idiomatic Go only** (D-2026-06-11-2); generated JASS→Go mapping table is the migration aid.
-3. **Terrain → tile meshes (KayKit style)** for v1 (D-2026-06-11-3); heightmap is a v2 candidate behind the same sim-side grid abstraction.
-4. **`commonai` → deferred to v2** (D-2026-06-11-4); all symbols tombstoned `deferred-v2` in the manifest; M6 opponent is Go-scripted via the public API.
+3. **Terrain → heightmap + cliffs in v1** (D-2026-06-11-7, supersedes D-3): WC3-fidelity heightmap mesh, cliff levels, ramps, splatting in M4; sim-side grid abstraction unchanged.
+4. **`commonai` → FULL v1 port** (D-2026-06-11-6, supersedes D-4): second sandboxed scheduler domain, all AI natives canonical, own milestone M5.5; M6 melee opponent runs on the real AI domain.
 5. **Multiplayer → committed, lockstep, milestone M7** (D-2026-06-11-5). Deterministic lockstep over the existing command stream (commands exchanged, not state); `StateHash` doubles as desync detector; replay verification (G5.3) becomes a hard M6 exit criterion.
+
+**Second-session decisions (D-2026-06-11-6..20, full record in [`decisions.md`](prd/01-vision/decisions.md)).** Standing directive: features are not cut or deferred because they are hard. Highlights: Lua scripting in v1 (M5, hard-sandboxed, bindings generated from the manifest); full mid-game save/load in v1 (serializable scheduler from M3); doodads get full WC3 parity (handle promotion on first script touch); World Editor committed as M8; campaign persistence architecture in v1 with campaign UI at M8; open world-archive format in v1 with hosted hub as M9 candidate; replay viewer + observer slots at M7; string tables from M4 (English shipped); 1,000-unit stretch target (500 stays the low-tier guarantee); asset gaps filled by a build-time generative pipeline (zero runtime AI); web/WASM stays out; distribution + license decided at M6 (repo private until then).
 
 ---
 

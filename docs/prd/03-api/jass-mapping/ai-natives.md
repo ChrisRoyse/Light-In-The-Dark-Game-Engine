@@ -1,9 +1,13 @@
-# AI Natives — JASS → Go Mapping (DEFERRED TO v2)
+# AI Natives — JASS → Go Mapping
 
-> Part of the [JASS API mapping](README.md). Status per PRD [§9.4 (open question, draft: defer)](../../../PRD.md)
-> and **R-EXEC-3**: computer-player AI is **out of v1 scope**. This file documents the
-> surface so the manifest can classify it (tombstoned "v2"), per the §4.2 acceptance
-> criterion that nothing is *silently* dropped.
+> Part of the [JASS API mapping](README.md). Status per
+> [D-2026-06-11-6](../../01-vision/decisions.md) (supersedes the same-day deferral D-2026-06-11-4)
+> and **R-EXEC-3**: the JASS AI domain is a **full v1 port**, shipped as its own milestone
+> **M5.5** — a second sandboxed scheduler domain with isolated script contexts (no shared
+> globals with map scripts) and command-stack messaging. Every function in this category maps
+> canonically; none carries a `deferred-v2` tombstone for capability reasons.
+
+*Revised 2026-06-11 per D-2026-06-11-6.*
 
 ## Surface size (grep survey, 2026-06-11)
 
@@ -34,51 +38,58 @@ native GetLastCommand    takes nothing returns integer
 native PopLastCommand    takes nothing returns nothing
 ```
 
-## v2 canonical Go surface (sketch only — NOT in the v1 API)
+## Canonical Go surface (v1, M5.5)
 
 Per **R-EXEC-3**, the JASS AI runtime is an isolated execution domain: max 6
 threads/player, **no shared globals** with the map script, communication via
-integer-pair command stacks. The v2 design honors that isolation natively:
+integer-pair command stacks. The port honors that isolation natively:
 
 ```go
-// v2 SKETCH — subject to its own PRD:
 type AIController interface {
-    Tick(view AIView, cmd AICommander) // runs in its own sandboxed scheduler
+    Tick(view AIView, cmd AICommander) // runs in the second sandboxed scheduler domain
 }
-func (g *Game) AttachAI(p Player, ai AIController, d Difficulty) // StartMeleeAI
-func (g *Game) PauseAI(p Player, b bool)
-func (g *Game) CommandAI(p Player, command, data int)  // typed channel under the hood
+func (g *Game) AttachAI(p Player, ai AIController, d Difficulty) // StartMeleeAI / StartCampaignAI
+func (g *Game) PauseAI(p Player, b bool)                         // PauseCompAI
+func (g *Game) AIDifficulty(p Player) Difficulty                 // GetAIDifficulty
+func (g *Game) CommandAI(p Player, command, data int)            // typed channel under the hood
 
-// AIView: read-only, AI-legal queries (own units, visible enemies, counts).
-// AICommander: build/train/attack-wave intents (SetBuildUnit, AttackMoveKillA analogues).
+// AIView: read-only, AI-legal queries (own units, visible enemies, the GetUnitCount* family).
+// AICommander: build/train/harvest/attack-wave intents (SetBuildUnit, AttackMoveKillA,
+// StartGetEnemyBase analogues) plus the receive side of the command stack
+// (CommandsWaiting / GetLastCommand / PopLastCommand → a typed inbox on AICommander).
+// AI sleep/wait natives map to the same scheduler wait verbs as map scripts, quantized
+// to ticks (R-EXEC-5) inside the AI domain's own job space.
 ```
 
 The integer-pair command stack (`CommandAI` / `CommandsWaiting`/`GetLastCommand`/
 `PopLastCommand`) becomes a typed message queue — the Go-channel equivalent named by
-R-EXEC-3.
+R-EXEC-3. Each AI player gets its own scheduler instance (same deterministic scheduler
+type, separate job space) running in a dedicated phase of the tick
+([Execution model §6](../execution-model.md#6-ai-domain-isolation-r-exec-3)).
 
-## Dedup rules (manifest classification only in v1)
+## Dedup rules applied
 
 | Rule | Application |
 |---|---|
-| **D1–D3** | Applied on paper in the manifest: `...Loc` and difficulty-preset wrappers noted against their general forms so the v2 port starts deduplicated |
-| **D4** | The melee AI *strategy scripts* themselves (build orders, attack waves in Blizzard's `.ai` files) are content, not API — v2 ships original equivalents in the `melee` package |
-| **Tombstone "v2"** | All ~131 functions (8 common.j + 123 common.ai) carry manifest status `deferred-v2`, satisfying §4.2(b): explicitly tombstoned with reason, not silently dropped |
+| **D1–D3** | Applied in the M2 manifest as everywhere else: `...Loc` and difficulty-preset wrappers collapse onto their general forms before implementation at M5.5 |
+| **D4** | The melee AI *strategy scripts* themselves (build orders, attack waves in Blizzard's `.ai` files) are content, not API — v1 ships original equivalents as `data/` strategy tables consumed by the standard melee `AIController` |
+| **Canonical, milestone M5.5** | All ~131 functions (8 common.j + 123 common.ai) carry canonical Go mappings in the manifest with implementation milestone M5.5 — no `deferred-v2` tombstones for capability reasons (D-2026-06-11-6), satisfying §4.2(b) with mappings rather than deferrals |
 
-v1 exception: the **map-script-side hooks** (`StartMeleeAI`, `PauseCompAI`,
-`GetAIDifficulty`) get v1 stub mappings that no-op with a logged warning, so
-`melee.Standard` (see [game-state-and-melee](game-state-and-melee.md)) is structurally
-complete — computer slots simply idle in v1 skirmish.
+The earlier plan to ship v1 no-op stubs for the map-script-side hooks (`StartMeleeAI`,
+`PauseCompAI`, `GetAIDifficulty`) is **obsolete**: these map canonically to
+`AttachAI`/`PauseAI`/`AIDifficulty`, and M6's melee opponent runs on the real AI domain
+(see [game-state-and-melee](game-state-and-melee.md)) — computer slots are live, not idle.
+*Revised 2026-06-11 per D-2026-06-11-6.*
 
-## Subsystem dependencies (v2)
+## Subsystem dependencies
 
 - **sim**: AI runs in a sandboxed scheduler *inside* the deterministic tick (AI decisions are sim inputs and must be replay-identical — same R-SIM-2 bar as player commands). No wall-clock, no goroutine races; budgeted CPU slice within the 10 ms tick.
 - **render**: none (AI must work headless, R-SIM-4 — also how AI-vs-AI CI soak tests run).
 - **asset**: AI build-order/strategy tables in `data/` rather than compiled `.ai` scripts.
 
-## Porting hazards (recorded now for v2)
+## Porting hazards
 
-1. **Determinism vs "AI thread sleeps"**: JASS AI scripts busy-loop with `Sleep`. The v2 scheduler must quantize AI waits to ticks exactly like triggers (R-EXEC-5), or AI becomes the replay-divergence source.
+1. **Determinism vs "AI thread sleeps"**: JASS AI scripts busy-loop with `Sleep`. The AI-domain scheduler must quantize AI waits to ticks exactly like triggers (R-EXEC-5), or AI becomes the replay-divergence source.
 2. **Broken-in-WC3 natives**: the JASS manual notes string/callback natives misbehave in the AI context — do not replicate those bugs; the isolation boundary (AIView/AICommander) makes them unrepresentable instead.
-3. **Information leakage**: JASS AI natives could query beyond fog in places. v2 `AIView` should be fog-honest by default with an explicit cheating-difficulty escape hatch — gameplay decision to make consciously, not inherit.
-4. **Scope creep into v1**: unit-level *behaviors* (guard positions, return-fire, auto-acquire) are **not** "AI natives" — they're core sim combat behavior in [units](units.md) scope and ship in v1. Only *strategic* computer-player control is deferred. `RemoveGuardPosition`/`RecycleGuardPosition` sit on this boundary: classified v1-sim (creep camp behavior is needed for melee maps).
+3. **Information leakage**: JASS AI natives could query beyond fog in places. `AIView` should be fog-honest by default with an explicit cheating-difficulty escape hatch — gameplay decision to make consciously, not inherit.
+4. **Scope boundary with the sim core**: unit-level *behaviors* (guard positions, return-fire, auto-acquire) are **not** "AI natives" — they're core sim combat behavior in [units](units.md) scope and ship with the M3 sim core. Only *strategic* computer-player control waits for M5.5. `RemoveGuardPosition`/`RecycleGuardPosition` sit on this boundary: classified v1-sim (creep camp behavior is needed for melee maps).

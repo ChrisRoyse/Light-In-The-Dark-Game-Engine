@@ -1,6 +1,6 @@
 # Asset Validation and Game Data
 
-> Expands [PRD §6](../../PRD.md#6-asset--data-pipeline): the asset-validation CLI required by **R-FMT-2** ([PRD §3.2](../../PRD.md#32-model-format-gltf-20-binary-glb-core-profile-only)) and **R-AST-2/R-AST-3**, and the game-data table system of **R-AST-1** (the WC3 "SLK/object data" analogue).
+> Expands [PRD §6](../../PRD.md#6-asset--data-pipeline): the asset-validation CLI required by **R-FMT-2** ([PRD §3.2](../../PRD.md#32-model-format-gltf-20-binary-glb-core-profile-only)) and **R-AST-2/R-AST-3**, the game-data table system of **R-AST-1** (the WC3 "SLK/object data" analogue), plus provenance checks for generated assets (**R-AST-5**, D-2026-06-11-12) and world-archive validation (D-2026-06-11-14, **R-SEC-1**). *Revised 2026-06-11.*
 >
 > Related: [Asset Pipeline](./pipeline.md) · [Materials and Lighting](../05-rendering/materials-and-lighting.md) · [Batching and Draw Calls](../05-rendering/batching-and-draw-calls.md)
 
@@ -16,6 +16,7 @@ Usage shape:
 assetcheck validate assets/...            # all assets, exit non-zero on any violation
 assetcheck validate --json out.json ...   # machine-readable report for CI annotation
 assetcheck inspect assets/models/units/human/footman.glb   # human-readable summary
+assetcheck archive worlds/example.litdworld               # world-archive gate (§3.6, D-14)
 ```
 
 Checks are versioned; the check-set version is recorded so a tightened rule re-flags previously passing assets explicitly rather than silently.
@@ -61,6 +62,19 @@ Severity **error** fails the build; **warn** is reported but passes (warns are r
 
 - AUD-OGG: everything under `assets/audio/` is Ogg Vorbis (R-AUD-1), with channel/sample-rate sanity caps.
 - NAME-PATH: file and directory names match the conventions of [Pipeline §8](./pipeline.md) (`lower_snake_case`, class/faction layout); internal material/armature names follow the string-stable scheme there.
+
+### 2.7 Provenance — generated assets (R-AST-5, D-2026-06-11-12)
+
+*Added 2026-06-11 per D-2026-06-11-12.*
+
+Assets produced by the generative pipeline ([Pipeline §2.1](./pipeline.md)) are validated like every other asset (all checks above apply) plus:
+
+| ID | Check |
+|---|---|
+| PROV-MAN | Every asset whose source batch is under `sources/generated/` has a complete provenance entry: generating tool + model identifier, generation date, prompt/seed parameters where reproducible, curator + curation date, SHA-256 of the output. A generated asset without provenance is an error |
+| PROV-HASH | The committed asset's content hash matches its provenance entry — a generated output silently edited after curation is an error (same regenerate-and-re-curate rule as [Pipeline §9.4](./pipeline.md)) |
+| PROV-CUR | Release manifests reject generated assets lacking curator sign-off; un-curated batch leftovers must not reach `assets/` |
+| PROV-LIC | Provenance entries declare the asset **owned** (no third-party license field) — generated assets join `CREDITS.md` under the owned-assets section, never under a pack license |
 
 ## 3. Game-data tables (R-AST-1)
 
@@ -144,11 +158,27 @@ The data validator runs alongside asset checks in CI:
 
 R-AST-4's `tools/jassgen` (API manifest generator) is a sibling tool but a different domain: it processes the JASS API surface for code generation and audit ([PRD §6](../../PRD.md#6-asset--data-pipeline), §4.2). It shares the repo's tooling conventions (Go CLI, JSON report, CI gate) but no schema with `assetcheck`. The two meet only in M5's audit: API natives that read unit stats (e.g. the `GetUnitState` family collapsed per D5) must map onto fields this schema actually defines.
 
+### 3.6 World-archive validation (`assetcheck archive`, D-2026-06-11-14)
+
+*Added 2026-06-11 per D-2026-06-11-14.*
+
+The world archive ([Pipeline §10](./pipeline.md)) gets its own subcommand, run in CI over fixture archives and by the engine at load time (a failing archive refuses to load — same fail-loud posture as R-FMT-2):
+
+| Check | Description |
+|---|---|
+| Schema | Zip container well-formed; manifest present and schema-valid (unknown keys rejected); required fields present: per-entry content hashes, aggregate hash, engine-version requirement, hosting metadata fields (may be empty pre-M9, must exist) |
+| Content hashes | SHA-256 of every entry matches its manifest hash; aggregate hash matches; any mismatch is an error (tamper/corruption gate — also what the M9 hub will trust) |
+| Engine version | The required-engine-version range parses as valid semver; the loader refuses archives whose range excludes the running engine |
+| Embedded assets | Every custom GLB/`.ogg`/texture in the archive passes the full §2 catalog — an archive is not a validator bypass ([Pipeline §10](./pipeline.md)) |
+| Map data | The archive's tables and grids pass the §3.4 data validator, including cross-references into the archive's own custom assets |
+| **Lua sandbox safety (R-SEC-1)** | Static lint of all bundled Lua: no `require`/access of `io`, `os`, network, FFI, or any module outside the game-API allowlist; no `load`/`loadstring` of non-bundled sources. The lint is a fast-fail courtesy and CI gate — the **runtime hard sandbox (D-2026-06-11-20: no-io/no-os/no-net VM, per-tick instruction + memory quotas) remains the actual security boundary**; the lint never substitutes for it |
+
 ## 4. CI integration
 
 - **M0:** `assetcheck validate` green over the initial onboarded asset set; `assetcheck data` green over a seed data table.
-- **Every build:** both validators run over all of `assets/` and `data/` (fast: no GPU, no Blender); violations annotate the PR via the `--json` report.
+- **Every build:** both validators run over all of `assets/` and `data/` (fast: no GPU, no Blender); violations annotate the PR via the `--json` report. Provenance checks (§2.7) run wherever generated assets exist — from M4, when the first `assetgen` outputs (terrain splat/cliff sets, UI icons) land. *(Revised 2026-06-11 per D-2026-06-11-12.)*
 - **M6:** the vertical-slice skirmish runs entirely from validated assets + tables; zero asset/data special cases in code is an exit criterion alongside the [PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram) budgets.
+- **M6 onward:** `assetcheck archive` (§3.6) validates the world-archive fixture(s) on every build; the engine runs the same checks at archive load time. *(Added 2026-06-11 per D-2026-06-11-14.)*
 
 ## 5. Open items
 

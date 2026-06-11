@@ -31,7 +31,7 @@ and weaken the shape-only IP posture (R5). M2's sample-port exercise remains as 
 if a table-driven port proves genuinely painful, that finding reopens the question with
 evidence — until then this is settled.
 
-## D-2026-06-11-3 (Q3) — Terrain: tile meshes (KayKit style) for v1
+## D-2026-06-11-3 (Q3) — ~~Terrain: tile meshes for v1~~ SUPERSEDED by D-2026-06-11-7
 
 **Decision.** v1 terrain is square-grid tile meshes in the KayKit visual style, chunk-merged
 per the batching plan. Heightmap-with-cliffs terrain is a v2 renderer candidate behind the
@@ -43,7 +43,7 @@ tile aesthetic read well. The rendering spec's five M4 flip criteria
 ([terrain.md](../05-rendering/terrain.md)) stay as the escape hatch if tiles fail in
 practice.
 
-## D-2026-06-11-4 (Q4) — `commonai` natives: defer to v2
+## D-2026-06-11-4 (Q4) — ~~`commonai` natives: defer to v2~~ SUPERSEDED by D-2026-06-11-6
 
 **Decision.** All `commonai` natives (and the ~8 AI-related `common.j` natives) are
 classified and tombstoned `deferred-v2` in the M2 manifest. The M6 vertical slice's opponent
@@ -92,6 +92,132 @@ model WC3 itself used — over the existing command-stream design:
 **Feasibility verdict.** Not just possible — the architecture was already shaped for it.
 The marginal cost of M7 is transport + lobby + stall handling; the hard part (bit-identical
 simulation) is paid for by G5 regardless.
+
+---
+
+# Decision Record — 2026-06-11 (second session: feature-scope decisions)
+
+Owner-decided via structured questions. Standing directive from the owner: **features are
+not cut or deferred because they are hard** — deferral requires a product reason, and
+"hard" alone is not one. Two earlier same-day decisions are reversed accordingly.
+
+## D-2026-06-11-6 — `commonai`: FULL v1 port (supersedes D-2026-06-11-4)
+
+The JASS AI domain ships in v1: second sandboxed scheduler domain, isolated script contexts
+(no shared globals with map scripts), command-stack messaging per R-EXEC-3, all ~123
+`common.ai` natives plus the AI-related `common.j` natives mapped canonically (no
+`deferred-v2` tombstones for capability reasons). Scheduled as its own milestone **M5.5**
+after the core API (M5), before the vertical slice — M6's melee opponent runs on the real
+AI domain, not a Go stopgap.
+
+## D-2026-06-11-7 — Terrain: heightmap + cliffs in v1 (supersedes D-2026-06-11-3)
+
+WC3-fidelity terrain ships in M4: heightmap mesh, discrete cliff levels with ramps, texture
+splatting, chunked rendering aligned to the pathing grid. We accept authoring the terrain
+art ourselves; the generative asset pipeline (D-2026-06-11-12) covers splat textures and
+cliff texture sets. The sim-side grid abstraction is unchanged (R-SIM-5; the sim never sees
+the mesh). Tile-mesh rendering remains possible later behind the same abstraction, but is
+no longer the v1 plan. [terrain.md](../05-rendering/terrain.md) flips its recommendation.
+
+## D-2026-06-11-8 — Lua scripting in v1 (M5)
+
+Deterministic embedded Lua (gopher-lua family, audited for determinism) bound to the
+canonical API, with bindings **generated from `api-manifest.json`** alongside the Go API in
+M5. Worlds are runtime-loadable: creators and AI coding agents author without a Go
+toolchain or recompile. Go remains the systems language; Lua is the creation surface.
+
+## D-2026-06-11-9 — Full save/load in v1
+
+Mid-game saves are v1 scope. The cooperative scheduler is designed **serializable from day
+one (M3)**: suspended script coroutines, timers, and event subscriptions all serialize into
+the save format. Replays (command streams) remain a separate, complementary mechanism.
+This constrains the M1/M3 scheduler design choice toward a serializable representation
+(stackless/state-machine coroutines or fully descriptive suspension records).
+
+## D-2026-06-11-10 — World Editor: committed milestone M8
+
+In-engine visual editor after multiplayer: terrain sculpt/paint, unit/doodad placement,
+map metadata, save to the world archive format. Trigger-GUI authoring comes later;
+Lua covers logic until then. Campaign flow UI also lands here (D-2026-06-11-15).
+
+## D-2026-06-11-11 — Web/WASM target: no (desktop only stands)
+
+NG3 unchanged. Re-examinable post-v1; no spike scheduled.
+
+## D-2026-06-11-12 — Asset gaps: generative pipeline at asset-build time
+
+Portraits, spell VFX textures, voice lines, UI icons with no CC0 source are produced by a
+**build-time generative pipeline** (image models, TTS), curated by hand, committed as
+ordinary owned assets with provenance entries. Zero runtime AI (G4.6 intact). The pipeline
+is tooling (`tools/assetgen`), documented in 06-assets.
+
+## D-2026-06-11-13 — Doodads: full WC3 parity
+
+Doodads get optional handles: scripts can show/hide, animate, and reposition scenery
+(`SetDoodadAnimation` analogues map canonically, not position-addressed workarounds).
+Render-only remains the default storage mode until a doodad is first addressed by script
+(promotion on first touch), so the zero-cost case stays zero-cost.
+
+## D-2026-06-11-14 — World sharing: open archive format in v1, hosted hub later
+
+v1 defines a single-file world archive (zip-based: map data + Lua + custom assets +
+manifest with content hashes and engine-version requirements), loadable from disk and
+documented publicly. A hosted world repository with in-game browser is a committed
+post-M8 follow-on (M9 candidate), and the format carries the hosting metadata from day one.
+
+## D-2026-06-11-15 — Campaigns: persistence architecture in v1, UI at M8
+
+Cross-map persistent state (game-cache semantics, hero carry-over) is built into the sim
+and save format in v1 — retrofit is brutal, build-in is cheap. Campaign menu/mission-flow
+UI ships with the M8 editor milestone.
+
+## D-2026-06-11-16 — Replays/observers: viewer controls at M7
+
+M6 exit: replays record and verify headlessly (CI artifact). M7 ships the in-client replay
+viewer (pause/speed/free-camera/per-player perspective) and live observer slots — observers
+are replay viewers at zero delay over the same machinery.
+
+## D-2026-06-11-17 — i18n: string tables from M4, English shipped
+
+Every user-facing string (engine UI and world-author strings) flows through locale tables
+from M4 onward. v1 ships English; translations are pure data drops.
+
+## D-2026-06-11-18 — Scale: 1,000-unit stretch target
+
+ECS capacities, pathfinding, and budgets are provisioned for **1,000 units + 1,000
+projectiles** from M3. The low-tier reference machine guarantee stays at 500 units
+(existing §5.3 budgets); 1,000 becomes the recommended-spec target. Render side requires
+the instancing patch to land (R2 trigger now assumed fired — plan for it in M4, not as
+contingency).
+
+## D-2026-06-11-19 — Distribution and engine license: decided at M6, repo private until then
+
+No distribution-specific engineering before the vertical slice exists. Repo stays private;
+open-sourcing question (Apache-2.0 was the staff recommendation) is bundled into the M6
+distribution decision.
+
+## D-2026-06-11-20 — Shared-world security: hard sandbox
+
+World Lua runs in a no-io/no-os/no-net VM exposing only the game API, with per-tick
+instruction and memory quotas. The quotas double as the lockstep stall guard. Worlds cannot
+touch the player's machine. Non-negotiable gate for any sharing feature (M9 hub blocks on
+it; disk-loaded worlds get the same sandbox from M5).
+
+---
+
+## Milestone impact summary (post-decisions roadmap)
+
+| Milestone | Additions from this record |
+|---|---|
+| M1 | Scheduler representation must be serializable (D-9) |
+| M3 | 1,000-unit capacities (D-18); serializable scheduler implementation (D-9); campaign persistence hooks (D-15) |
+| M4 | Heightmap terrain (D-7); string tables (D-17); instancing patch planned-in (D-18) |
+| M5 | Lua VM + generated bindings + hard sandbox (D-8, D-20); doodad handle promotion (D-13) |
+| **M5.5** | **NEW: AI domain port — full `commonai` (D-6)** |
+| M6 | Save/load shipping (D-9); world archive format (D-14); distribution + license decision (D-19) |
+| M7 | Multiplayer (D-5) + replay viewer/observers (D-16) |
+| **M8** | **NEW: World Editor + campaign UI (D-10, D-15)** |
+| **M9** | **Candidate: hosted world hub (D-14), gated on sandbox (D-20)** |
 
 ---
 

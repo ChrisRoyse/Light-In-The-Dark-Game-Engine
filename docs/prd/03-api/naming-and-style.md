@@ -70,13 +70,13 @@ One row per source function — all 2,521, including tombstones, so every search
 | `PolledWait` | D4 | `helpers.PolledWait(d)` | suspends on scheduler; no polling |
 | `GetLastCreatedUnit` | — (tombstone: superseded) | use the return value of `g.CreateUnit` | |
 | `Preload` | — (tombstone: gameplay-irrelevant) | asset pipeline handles loading | |
-| `AICaptain...` (commonai) | — (tombstone: v2) | AI domain deferred ([R-EXEC-3](execution-model.md#6-ai-domain-isolation)) | |
+| `AICaptain...` (commonai) | AI domain | canonical AI-domain API, milestone M5.5 ([ai-natives](jass-mapping/ai-natives.md)) | full v1 port, isolated per [R-EXEC-3](execution-model.md#6-ai-domain-isolation). *Revised 2026-06-11 per D-2026-06-11-6* |
 
 ### 3.2 Structure of the published doc
 
 1. **Front matter:** the five collapse rules in one paragraph each, linking to the
    [deduplication policy](deduplication-policy.md); the execution-model "short version"
-   ([Execution model §7](execution-model.md#7-what-the-modder-must-know-the-short-version)).
+   ([Execution model §8](execution-model.md#8-what-the-modder-must-know-the-short-version)).
 2. **Concept crosswalk:** a short table for the *pattern-level* migrations that one-row mappings
    can't teach — trigger zoo → `OnEvent` + closures, `ForGroup` loops → slices,
    `location` lifecycle → `Vec2` values, `bj_lastCreated*` → return values, real-time vs
@@ -151,10 +151,10 @@ At M5/M6 exit, `litd/api` (including `helpers`) is declared stable under Go modu
 - **V-6 (API diff gate):** CI runs an API-surface diff (`apidiff`-style) on every PR; any change
   to the exported surface of `litd/api` requires a changelog entry and, post-1.0, fails the
   build if it is non-additive.
-- **V-7 (Lua parity, v2):** when the Lua binding ships
-  ([Architecture §6](architecture.md#6-v2-how-a-lua-binding-layers-on-top)), its surface versions
+- **V-7 (Lua parity, v1/M5):** the Lua binding ships in v1 at M5
+  ([Architecture §6](architecture.md#6-the-lua-binding-layer-v1-m5)); its surface versions
   in lockstep with the Go API from the same manifest; a map script declares the API version it
-  targets.
+  targets. *Revised 2026-06-11 per D-2026-06-11-8.*
 
 ### 5.3 What is explicitly *not* guaranteed
 

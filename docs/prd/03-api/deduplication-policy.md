@@ -126,7 +126,7 @@ Allowed reasons (closed enum):
 | `superseded` | Capability fully delivered by a canonical symbol of different shape; nothing to port | `function GetLastCreatedUnit takes nothing returns unit` and the whole `bj_lastCreated*` side-channel family — Go return values replace them. `native RemoveLocation takes location whichLocation returns nothing` — no `location` type exists to remove. `constant native GetEnumUnit takes nothing returns unit` — slice iteration has no hidden current element ([R-EXEC-4](execution-model.md#5-collections-callback-enum--slices)) |
 | `gameplay-irrelevant` | Engine-housekeeping with no LitD equivalent by design | `native Cheat takes string cheatStr returns nothing`; `native DoNotSaveReplay takes nothing returns nothing` (replays are core, not optional); `native Preload takes string filename returns nothing` / `native PreloadEnd takes real timeout returns nothing` — the asset pipeline ([Architecture §1.4](architecture.md#14-litdasset--the-content-pipeline)) owns loading |
 | `deprecated` | Dead even in WC3 — stubs and editor artifacts | `function CommentString takes string commentString returns nothing` (empty body; GUI comment rows); compat shims in `compat.d.ts` |
-| `v2` | Real capability deliberately deferred; tombstone carries the target version | all `commonai` natives (AI domain, per [PRD §9.4](../../PRD.md#9-open-questions) and [R-EXEC-3](execution-model.md#6-ai-domain-isolation)); `native SyncStoredInteger takes gamecache cache, string missionKey, string key returns nothing` and the gamecache sync family (multiplayer state sync is v2 netcode) |
+| `v2` | Real capability deliberately deferred for a product reason; tombstone carries the target version | currently no members — the former examples flipped to scheduled canonical mappings: all `commonai` natives are a full v1 port at milestone M5.5 ([D-2026-06-11-6](../01-vision/decisions.md), [R-EXEC-3](execution-model.md#6-ai-domain-isolation)); `native SyncStoredInteger takes gamecache cache, string missionKey, string key returns nothing` and the gamecache sync family land with lockstep multiplayer at M7 ([D-2026-06-11-5](../01-vision/decisions.md)). The reason stays in the enum; deferral requires a product reason, never difficulty alone. *Revised 2026-06-11 per D-2026-06-11-6 and D-2026-06-11-5* |
 
 Tombstones are permanent records: if a `v2` tombstone is later implemented, the manifest entry
 flips to a mapping but retains its history. The JASS→Go migration table
@@ -192,9 +192,9 @@ VIOLATIONS
   single call with identical args) and most D3 families (name-pattern + signature unification);
   D2/D4/D5 and all tombstones require a reviewed annotation in the manifest overrides file.
 - The manifest is the single input for: Go stub generation, the audit report, the
-  [JASS→Go mapping table](naming-and-style.md#3-the-jassgo-mapping-table), and the v2
-  [Lua binding generator](architecture.md#6-v2-how-a-lua-binding-layers-on-top). One inventory,
-  four consumers.
+  [JASS→Go mapping table](naming-and-style.md#3-the-jassgo-mapping-table), and the v1/M5
+  [Lua binding generator](architecture.md#6-the-lua-binding-layer-v1-m5). One inventory,
+  four consumers. *Revised 2026-06-11 per D-2026-06-11-8.*
 - Disagreements about where something lands (core vs helper vs tombstone) are resolved by one
   question: *does dropping it lose power a Go developer cannot trivially recover?* If yes, core;
   if recoverable but commonly needed, helper; if no, tombstone.

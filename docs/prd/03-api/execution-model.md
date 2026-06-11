@@ -42,8 +42,16 @@ scheduler with these guarantees:
 - **S-4 (tick residency):** all resumption happens at defined phases of the tick
   ([PRD R-SIM-1](../../PRD.md#51-simulation-core-deterministic)); nothing script-visible occurs
   between ticks or on the render thread.
+- **S-5 (serializability, D-2026-06-11-9):** the scheduler's complete suspension state — every
+  suspended coroutine/job, pending timer, and event subscription — serializes into the mid-game
+  save format and reconstructs on load with identical resume order (§2.4 tuples included).
+  Full save/load is **v1 scope**; serializability is a day-one design constraint on the M1
+  scheduler representation, not a retrofit. *Revised 2026-06-11 per D-2026-06-11-9.*
 
-### 2.2 Primary design: goroutines as coroutines with strict baton-passing
+### 2.2 Candidate design: goroutines as coroutines with strict baton-passing
+
+*Revised 2026-06-11 per D-2026-06-11-9 — formerly "primary design"; see §2.3 for why
+serializability (S-5) demotes it to a candidate that must earn its place at M1.*
 
 Go has no stackful coroutine primitive, but a goroutine pair with unbuffered handoff channels is
 one. Each script job that needs suspension capability owns a parked goroutine; the scheduler and
@@ -78,19 +86,32 @@ Properties that make this deterministic despite using goroutines:
 - Job goroutines never touch `time`, never spawn goroutines (no API exists for them to reach),
   and cannot run unless handed the baton.
 
-### 2.3 Alternative considered: stackless continuation jobs
+### 2.3 Stackless / descriptive-suspension design, and the revised decision rule
 
-The fallback design, kept open until the M1 determinism spike validates baton-passing overhead:
-handlers that never wait (the overwhelming majority) run as **plain synchronous calls** with no
-goroutine at all; only a call to a wait verb promotes the job to a continuation — either a
-goroutine on demand, or (fully stackless) an explicit
+*Revised 2026-06-11 per D-2026-06-11-9.*
+
+The competing designs: handlers that never wait (the overwhelming majority) run as **plain
+synchronous calls** with no goroutine at all; only a call to a wait verb promotes the job to a
+continuation — either a goroutine on demand, or (fully stackless) an explicit
 `Wait(d, func(){ ...rest... })` continuation-passing helper style. The stackless variant costs
 ergonomics (no mid-function suspension; the modder writes the continuation) but removes all
-goroutine machinery from the hot path. **Decision rule:** the hybrid is the default plan —
-synchronous fast path always, goroutine promotion only on first wait — and pure-stackless is
-adopted only if M1/M3 benchmarks show baton-passing breaking the 10 ms tick budget. Either way
-the public API is unchanged: `helpers.PolledWait` is specified to suspend the calling job, and
-how is an implementation detail.
+goroutine machinery from the hot path.
+
+**S-5 changes the weighting.** A parked goroutine's stack is opaque to us — it cannot be
+written into a save file. Mid-game saves (full v1 scope, D-2026-06-11-9) therefore require
+that every suspension be representable as a **descriptive suspension record** (what is waited
+on, wake tick, the continuation to run) regardless of how the suspension is executed at
+runtime. That materially favors the stackless/descriptive design: it gets serialization for
+free, where baton-passing would have to carry an equivalent record alongside the live stack
+and prove the two never disagree.
+
+**Decision rule (revised):** the synchronous fast path is unconditional; for suspension, the
+stackless/descriptive-suspension representation is the **default plan**. Baton-passing
+goroutines survive M1 only if the spike shows they can produce complete, faithful suspension
+records for save/load (save → load → resume → identical state hash) *and* their overhead fits
+the tick budget — serializability is now a gate equal to performance, not an afterthought.
+Either way the public API is unchanged: `helpers.PolledWait` is specified to suspend the
+calling job, and how is an implementation detail.
 
 ### 2.4 Deterministic resume order
 
@@ -186,19 +207,53 @@ map script, communication only via integer-pair command stacks, and several nati
 the AI context. The lesson LitD takes: AI is a *foreign domain* with a message-passing boundary,
 not privileged script.
 
-- v1 ships no computer-player AI ([PRD §9.4](../../PRD.md#9-open-questions)); every `commonai`
-  native is tombstoned `v2` in the manifest with this section as the design anchor.
-- The v2 design sketch: each AI player gets its **own scheduler instance** (same deterministic
-  scheduler type as §2, separate job space), running in a dedicated phase of the tick. It sees
-  the sim only through the same read-only view types as filters (§4), and it acts only by
-  enqueuing **typed commands** onto the same ordered command stream that player input and
-  replays use ([Architecture §2](architecture.md#2-import-rules)) — the typed-Go-channel
-  descendant of WC3's integer-pair command stack.
+*Revised 2026-06-11 per D-2026-06-11-6 (supersedes the v2 deferral).*
+
+- The AI domain is a **full v1 port**, shipped as its own milestone **M5.5** (after the core
+  API at M5, before the M6 vertical slice). All ~123 `common.ai` natives plus the AI-related
+  `common.j` natives map canonically ([ai-natives](jass-mapping/ai-natives.md)); none is
+  tombstoned for capability reasons, and M6's melee opponent runs on this domain, not a Go
+  stopgap.
+- The M5.5 design: each AI player gets its **own scheduler instance** (same deterministic
+  scheduler type as §2, separate job space, S-1…S-5 all apply — AI suspensions serialize into
+  saves like any other), running in a dedicated phase of the tick. It sees the sim only
+  through the same read-only view types as filters (§4), and it acts only by enqueuing
+  **typed commands** onto the same ordered command stream that player input and replays use
+  ([Architecture §2](architecture.md#2-import-rules)) — the typed-Go-channel descendant of
+  WC3's integer-pair command stack.
 - Consequences: AI cannot desync a match (its commands are in the deterministic stream like
   everyone else's), AI can be disabled or replaced wholesale (it has no hooks into map script
   state), and a future external-process AI is the same interface over a pipe.
 
-## 7. What the modder must know (the short version)
+## 7. The Lua execution surface (D-2026-06-11-8, R-SEC-1)
+
+*Added 2026-06-11 per D-2026-06-11-8/20.*
+
+v1 (M5) ships an embedded deterministic Lua VM (gopher-lua family, determinism-audited) as
+the runtime-loadable creation surface ([PRD §5.6](../../PRD.md#56-moddingscripting),
+[Architecture §6](architecture.md#6-the-lua-binding-layer-v1-m5)). Its execution semantics
+are **this document, unchanged**:
+
+- **Same scheduler.** A Lua coroutine is a scheduler job: it suspends only at the same wait
+  verbs, resumes by the same `(wakeTick, phase, registrationSeq, firingSeq)` tuple (§2.4),
+  and quantizes durations to ticks (§3). A mixed Go/Lua world has one total order, not two.
+  Lua coroutine suspensions are descriptive by nature (the VM owns the coroutine state), so
+  they serialize into saves under S-5 like every other job.
+- **Same determinism rules.** No wall clock, no `os`/`io`/network, `math.random` replaced by
+  the sim PRNG, no Go-runtime ordering observable. The bindings are generated from
+  `api-manifest.json`, so the Lua surface cannot reach anything the Go surface cannot.
+- **Hard quotas (R-SEC-1).** Each Lua context carries **per-tick instruction and memory
+  quotas**, enforced by the VM. Exceeding a quota is a loud script error
+  (R-FSV-4 — never a silent slowdown), and the world is told exactly where. This is the one
+  deliberate divergence from S-3's "no opcode limit" stance: Go handlers are first-party code
+  and get the diagnostic watchdog only; Lua worlds are untrusted third-party content
+  (D-2026-06-11-20) and get hard limits. The quotas double as the **lockstep stall guard**
+  for M7 multiplayer — a world script cannot stall the tick past budget on one client and
+  desync or hang the session.
+- **Same isolation philosophy as the AI domain (§6):** a sandboxed foreign domain whose only
+  authority is the game API it was handed.
+
+## 8. What the modder must know (the short version)
 
 The entire contract, as it will appear at the top of the `litd` package godoc:
 
@@ -211,11 +266,16 @@ The entire contract, as it will appear at the top of the `litd` package godoc:
 4. Filters can look but not touch — the types they receive make sure of it.
 5. Don't loop forever without waiting; in debug mode the engine will tell you where.
 
-## 8. Acceptance criteria for this section
+## 9. Acceptance criteria for this section
 
-- M1 spike: scheduler prototype (baton-passing and synchronous-fast-path hybrid) passes the
-  10k-tick state-hash reproducibility test, including jobs suspended across ticks, under
-  `GOMAXPROCS=1` and `GOMAXPROCS=N` with identical hashes.
+- M1 spike: scheduler prototype (synchronous fast path + the §2.3 suspension representation)
+  passes the 10k-tick state-hash reproducibility test, including jobs suspended across ticks,
+  under `GOMAXPROCS=1` and `GOMAXPROCS=N` with identical hashes.
+- **Serializability (S-5, D-2026-06-11-9):** save → load → resume round-trip with jobs
+  suspended mid-wait, pending timers, and live event subscriptions produces a state hash
+  identical to the uninterrupted run; golden test from M3.
+- **Lua quotas (R-SEC-1):** instruction- and memory-quota breach tests fail loudly with
+  location; sandbox-escape test suite (no `os`/`io`/net/FFI reachable) green from M5.
 - `go test -race` clean across the scheduler with concurrent render-snapshot reads.
 - Benchmarks: handler dispatch (no wait) allocation-free; baton handoff ≤ the M1-set budget per
   suspension; 500 simultaneously waiting jobs resumable within tick budget

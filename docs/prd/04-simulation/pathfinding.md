@@ -12,7 +12,16 @@ R-SIM-5 requires deterministic A\*/flow-field pathfinding on a WC3-style grid, w
 
 ### 2.1 Grid structure
 
-Warcraft III's pathing model is the template: the world is overlaid with a fine pathing grid at **4× the resolution of the terrain tile grid** — terrain tiles of 128 world units are divided into 32×32-unit pathing cells. A 128×128-tile map is therefore a 512×512 pathing grid (262,144 cells), which at one byte of flags per cell is 256 KB — trivially preallocated at map load per R-GC-2 and cheap to scan.
+*Revised 2026-06-11 per D-2026-06-11-7: heightmap terrain with cliff levels and ramps is the v1 terrain, not tile meshes.*
+
+Warcraft III's pathing model is the template: the world is overlaid with a fine pathing grid at **4× the resolution of the terrain cell grid** — terrain cells of 128 world units are divided into 32×32-unit pathing cells. A 128×128-cell map is therefore a 512×512 pathing grid (262,144 cells), which at one byte of flags per cell is 256 KB — trivially preallocated at map load per R-GC-2 and cheap to scan.
+
+v1 terrain is a **heightmap with discrete cliff levels and ramps** (D-7); the sim-side abstraction is unchanged (R-SIM-5: the sim sees the grid, never the mesh — tile meshes remain possible later behind the same abstraction). Alongside the flag byte, each pathing cell carries a **cliff level** (small integer, baked from the heightmap's discrete cliff layers at map load). Walkability semantics, heightmap-primary:
+
+- Movement between two adjacent cells is legal only if they share a cliff level **or** at least one of them is a **ramp cell**. Ramp cells are authored regions connecting exactly two adjacent cliff levels; they carry both levels (and interpolate render height) — to the sim a ramp is simply a cell that joins level *L* and *L+1*.
+- Cliff faces need no blocking flags: they *are* the level discontinuity, and the level-equality rule blocks them implicitly. The dilated collision layers (§2.2) bake the rule in per collision class.
+- **Within-level height variation (rolling terrain) never affects walkability** — only the discrete cliff level does. Exactly WC3's model: smooth height is cosmetic, cliffs are gameplay. Steep-slope unwalkability, where a map wants it, is expressed by the map baking `Walkable` off — a data decision, not a slope computation in the sim.
+- Cliff level is grid state covered by the [state hash](determinism.md), and it feeds the high-ground combat/vision rules defined elsewhere.
 
 Each cell carries a flag byte:
 
@@ -25,7 +34,7 @@ Each cell carries a flag byte:
 | `OccupiedStatic` | stamped by a building/destructable |
 | `OccupiedDynamic` | reserved by a unit (see §5) |
 
-Static flags (`Walkable`/`Flyable`/`Buildable` from terrain, cliffs, water, and map-placed doodads/destructables) are baked at map load. Destructables (trees) clear their stamp when destroyed — the WC3 tree-cutting mechanic falls out of the same path.
+Static flags (`Walkable`/`Flyable`/`Buildable` from the heightmap — water level, authored unwalkable regions — plus cliff levels, ramps, and map-placed doodads/destructables) are baked at map load. Destructables (trees) clear their stamp when destroyed — the WC3 tree-cutting mechanic falls out of the same path.
 
 ### 2.2 Collision sizes
 
@@ -35,15 +44,17 @@ Units have a **collision size** (radius in world units) from the unit data table
 
 Structures do not use collision discs; they **stamp a rectangular footprint** of cells `OccupiedStatic` when placement completes, and clear it on death/cancel — identical to WC3 pathing-map stamps. Placement validation tests the footprint against `Buildable` + occupancy; the builder-vacates-the-footprint dance is handled by issuing the builder a move-out order before stamping. Stamp/unstamp events mark the affected region dirty for the dilated layers and **invalidate cached paths** that pass through the region (paths store a bounding box for cheap intersection tests). All stamping happens in the tick's pathing phase ([phase 4](tick-and-scheduler.md)), in deterministic order.
 
-## 3. A\* vs flow-field for 500 units
+## 3. A\* vs flow-field for 1,000 units
+
+*Revised 2026-06-11 per D-2026-06-11-18: budgets provisioned at the 1,000-unit stretch target; 500 remains the low-tier guarantee.*
 
 ### 3.1 The analysis
 
 | Criterion | A\* (per-unit, hierarchical-ready) | Flow field (per-destination) |
 |---|---|---|
 | Cost model | O(search) per *request*; requests are bursty (on order, on invalidation) | O(grid region) per *destination* per invalidation; amortizes over units sharing a goal |
-| 500 units, scattered goals | Fine — most units are idle or following cached paths on any given tick | Poor — hundreds of distinct destinations means hundreds of fields |
-| 500 units, one goal (attack-move blob) | Burst of 500 searches (mitigated by path sharing, §3.2) | Excellent — one field serves the whole blob |
+| 1,000 units, scattered goals | Fine — most units are idle or following cached paths on any given tick | Poor — hundreds of distinct destinations means hundreds of fields |
+| 1,000 units, one goal (attack-move blob) | Burst of 1,000 searches (mitigated by path sharing, §3.2 — but divergence re-paths scale with unit count) | Excellent — one field serves the whole blob, at any blob size |
 | Memory | Open/closed scratch reused across queries; paths are short waypoint lists | One direction byte per cell per live field: 256 KB per field on 512×512 — caps hard against 1.5 GB RAM budget |
 | Determinism | Easy: sequential, integer costs, explicit [tie-breaking](#4-deterministic-tie-breaking) | Easy: integration sweep in fixed cell order |
 | Dynamic restamps | Invalidate + re-request affected paths | Re-integrate affected fields (coarser, costlier per event) |
@@ -54,10 +65,15 @@ Structures do not use collision discs; they **stamp a rectangular footprint** of
 **Primary: A\*** on the dilated pathing grid, per collision class, with these standard amplifiers:
 
 - **Hierarchical coarse stage:** a 16×16-cell sector graph (HPA\*-lite) answers long-distance reachability and produces a corridor; fine A\* runs only inside the corridor. Keeps worst-case single-query cost bounded on 512×512.
-- **Path sharing for group orders:** a group ordered to one destination computes one representative path per collision class; members follow offset copies and re-path individually only when they diverge (formation logic, §5). This removes the "500 simultaneous searches" burst in the common case.
+- **Path sharing for group orders:** a group ordered to one destination computes one representative path per collision class; members follow offset copies and re-path individually only when they diverge (formation logic, §5). This removes the "1,000 simultaneous searches" burst in the common case.
 - **Reachability short-circuit:** sector-graph connected-component labels answer "unreachable" in O(1) before any search, then fall back to nearest-reachable-cell (WC3 behavior when targeting an unwalkable point).
 
-**Flow fields are kept in reserve** behind the same `PathProvider` interface for one scenario — massed attack-move onto a shared target in the late game — and will be adopted in v1.x only if M3 benchmarks show the A\*+sharing path missing the budget for that case. The requirement's "A\*/flow-field" wording is deliberately satisfied by an architecture where either backend can serve a request without gameplay-visible differences beyond paths taken (which are deterministic under each backend).
+**Flow fields move from contingency to planned-likely** (*revised 2026-06-11 per D-2026-06-11-18*). At the 500-unit scale the A\*+sharing path was expected to hold and flow fields sat in reserve. At 1,000 units the budget math doubles exactly where A\* is weakest — the shared-goal blob: even with path sharing, divergence re-paths scale with unit count, and a 1,000-unit attack-move across a freshly restamped region can queue more fine-stage work than the per-tick expansion budget (§6) clears promptly, stretching path latency past what the corridor-following mask hides. Accordingly:
+
+- The flow-field backend stays behind the same `PathProvider` interface for the massed shared-goal scenario, but it is now **expected to be enabled, not held as contingency**: M3 benchmarks run at both 500 (low-tier guarantee) and 1,000 (recommended spec), and a 1,000-unit shared-goal scenario missing budget triggers implementation inside v1, not v1.x. Per the standing owner directive, the option is not deferred for difficulty — the seam, the memory (§7 reserves four field slots), and the determinism rules (§4 rule 5) are all in place from M3 so enabling it is a backend drop-in, not a re-plan.
+- Per-unit A\* remains primary for everything else — scattered goals and WC3 behavioral fidelity (units queue at chokes; the flow-field backend serves only massed shared-goal moves, where blob behavior reads naturally anyway).
+
+The requirement's "A\*/flow-field" wording is deliberately satisfied by an architecture where either backend can serve a request without gameplay-visible differences beyond paths taken (which are deterministic under each backend).
 
 ## 4. Deterministic tie-breaking
 
@@ -109,10 +125,10 @@ Grid A\* gives corridors; the WC3 "feel" comes from the local layer:
 
 Pathfinding shares the 10 ms tick budget (PRD §5.3); its slice is **≤ 2 ms worst case** on the reference machine, enforced as follows:
 
-- **Expansion budget, not wall-clock:** the pathing phase services queued requests up to a per-tick budget of **N node expansions** (initial value 8,000, tuned in M3) — counted work, not measured time, because a wall-clock cutoff would be non-deterministic ([Determinism §2.3](determinism.md)). Wall-clock is *measured* for the benchmark gate but never *consulted* by gameplay logic.
+- **Expansion budget, not wall-clock:** the pathing phase services queued requests up to a per-tick budget of **N node expansions** (initial value 8,000 sized to the 500-unit low-tier guarantee; provisional 16,000 for the 1,000-unit stretch target on recommended spec — both tuned in M3, *revised 2026-06-11 per D-2026-06-11-18*) — counted work, not measured time, because a wall-clock cutoff would be non-deterministic ([Determinism §2.3](determinism.md)). Wall-clock is *measured* for the benchmark gate but never *consulted* by gameplay logic. Note the budget value is per map/sim version (it is sim semantics, below), so the low-tier and stretch configurations are distinct sim configurations, not a runtime adaptation.
 - **Suspendable searches:** a search that exhausts the budget parks its open/closed state (preallocated per the pool rules in [ECS §2](ecs-architecture.md)) and resumes next tick. Units with pending paths play their "acknowledge" state and start moving along the coarse-stage corridor immediately, so latency is masked exactly as in WC3.
 - **Per-request node cap:** any single search exceeding a hard node ceiling (e.g. 4× the sector-corridor estimate) terminates with best-partial-path toward the goal — bounding the pathological worst case (fully walled targets are already short-circuited by reachability labels).
-- The M3 headless benchmark scene (500 units, mass re-path on building stamp, cross-map attack-move) gates this budget in CI alongside the [zero-alloc requirement](ecs-architecture.md): the pathing phase, like every phase, allocates nothing at steady state.
+- The M3 headless benchmark scenes (500 units on the low-tier reference and 1,000 units on recommended spec — D-2026-06-11-18; mass re-path on building stamp, cross-map attack-move, 1,000-unit shared-goal blob) gate this budget in CI alongside the [zero-alloc requirement](ecs-architecture.md): the pathing phase, like every phase, allocates nothing at steady state. The 1,000-unit shared-goal scene is also the §3.2 flow-field trigger gate.
 
 Worked example of why counted budgets matter: suppose tick N has 12 queued requests whose searches total 11,000 expansions. Under the 8,000-expansion budget, the first requests complete, one search parks mid-flight, and the remainder wait — *identically on every machine*. Under a 2 ms wall-clock cutoff, a fast machine finishes all 12 and a slow one finishes 9, and the two sims have diverged. The budget number is therefore part of simulation semantics (and of the [replay/version contract](determinism.md)) — tuning it is a sim-version change, not a config knob.
 
@@ -133,18 +149,20 @@ Every step is single-threaded inside the tick and ordered by `(requestTick, requ
 
 All pathing memory is fixed at map load per R-GC-2 ([ECS §2](ecs-architecture.md)):
 
-| Structure | Size (128×128-tile map) |
+| Structure | Size (128×128-cell map) |
 |---|---|
 | Base flag grid (512×512 × 1 B) | 256 KB |
+| Cliff-level grid (512×512 × 1 B, D-2026-06-11-7) | 256 KB |
 | Dilated layers (× ~4 class/mask combos) | ~1 MB |
 | Sector graph (32×32 sectors, portals) | ~64 KB |
 | g-cost + epoch arrays (per concurrent search slot × 2 slots) | ~2 MB |
-| Open-list arena, path waypoint pool, request queue | ~512 KB |
+| Open-list arena, path waypoint pool, request queue (sized for D-18 caps) | ~768 KB |
+| Flow-field slots (4 × 256 KB direction fields, reserved per §3.2, D-2026-06-11-18) | 1 MB |
 
-Roughly 4 MB total — comfortably inside the sim's cache-resident ambitions and the 10 s map-load budget (PRD §5.3).
+Roughly 5–6 MB total (*revised 2026-06-11 per D-2026-06-11-7/-18*) — still comfortably inside the sim's cache-resident ambitions and the 10 s map-load budget (PRD §5.3).
 
 ## 8. Tooling and acceptance hooks
 
 - **Grid debug overlay** (render-side, reads grid snapshots): walkability, dilated layers per class, live reservations, last N paths — the indispensable tool for tuning the §5 feel rules. Lives entirely in `litd/render`/debug builds; the sim exposes a read-only grid view, honoring the PRD §4.1 boundary.
 - **Determinism fixtures:** scripted scenarios (choke-point single-file, mutual shove, mass re-path on stamp, unreachable-target fallback) run headless on the full platform matrix and must produce identical hash traces — local avoidance is the historically desync-prone layer, so it gets dedicated fixtures rather than relying only on the general [10k-tick suite](determinism.md).
-- **Behavioral fidelity checklist (M3 review):** large units can't thread small gaps; trees open paths when felled; buildings reject placement on occupied footprints; units queue at chokes instead of flowing around; idle units shove aside. Each item is a headless assertion, not a manual eyeball.
+- **Behavioral fidelity checklist (M3 review):** large units can't thread small gaps; trees open paths when felled; buildings reject placement on occupied footprints; units queue at chokes instead of flowing around; idle units shove aside; ground units cross cliff levels only via ramps, never up cliff faces (*added 2026-06-11 per D-2026-06-11-7*). Each item is a headless assertion, not a manual eyeball.

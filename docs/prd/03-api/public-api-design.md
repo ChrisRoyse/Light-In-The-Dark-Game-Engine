@@ -60,8 +60,9 @@ The target surface, ~20 types (final list frozen by the M2 API spec):
 Deliberately **absent**: `trigger`/`boolexpr`/`conditionfunc`/`filterfunc` (→ closures),
 `group` (→ `[]Unit`), `location` (→ `Vec2`), `fogmodifier` (→ methods on `Player`/`Force`),
 `terraindeformation` (cosmetic; `Effect`), `gamecache` (→ `Game.Storage()`), and all
-`commonai` handles (tombstoned `v2`, see
-[Deduplication policy §7](deduplication-policy.md#7-tombstone-policy)).
+`commonai` handles (full v1 port at milestone M5.5, but they live in the isolated AI domain
+([R-EXEC-3](execution-model.md#6-ai-domain-isolation), [ai-natives](jass-mapping/ai-natives.md)),
+not in the core type budget). *Revised 2026-06-11 per D-2026-06-11-6.*
 
 Every type is a small copyable handle struct (entity id + generation + `*Game`); none holds
 gameplay state itself ([Architecture §1.1](architecture.md#11-litdapi--the-public-surface)).
@@ -79,8 +80,9 @@ u.SetOwner(p, litd.WithColorChange())
 The grouping rule is mechanical: the first handle parameter of the JASS native names the
 receiver. Functions with no handle parameter (`CreateUnit`, map queries, global settings) hang
 off `Game` — there are no package-level mutating functions, which is also what makes the API
-sandbox-friendly for the [v2 Lua binding](architecture.md#6-v2-how-a-lua-binding-layers-on-top):
-all authority flows from the `Game` value you were handed.
+sandbox-friendly for the [v1/M5 Lua binding](architecture.md#6-the-lua-binding-layer-v1-m5):
+all authority flows from the `Game` value you were handed. *Revised 2026-06-11 per
+D-2026-06-11-8.*
 
 ### 3.2 R-API-2 — value types for math; no heap `location`, no manual cleanup
 

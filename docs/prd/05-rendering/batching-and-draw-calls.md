@@ -1,6 +1,6 @@
 # Batching and Draw Calls
 
-> Expands [PRD §5.2](../../PRD.md#52-rendering-g3n-presentation-layer) requirements **R-RND-3** (≤ 300 draw calls/frame), **R-RND-7** (team color via uniform), the M3 instancing investigation from [PRD §7](../../PRD.md#7-milestones)/[§8](../../PRD.md#8-risks), and the per-frame allocation discipline of **R-GC-1..5** ([PRD §5.3.1](../../PRD.md#531-go-garbage-collection-discipline)).
+> Expands [PRD §5.2](../../PRD.md#52-rendering-g3n-presentation-layer) requirements **R-RND-3** (≤ 300 draw calls/frame), **R-RND-7** (team color via uniform), the instancing work — M3 investigation, **patch planned into M4 per [D-2026-06-11-18](../01-vision/decisions.md)** — from [PRD §7](../../PRD.md#7-milestones)/[§8](../../PRD.md#8-risks), and the per-frame allocation discipline of **R-GC-1..5** ([PRD §5.3.1](../../PRD.md#531-go-garbage-collection-discipline)).
 >
 > Related: [Camera and Culling](./camera-and-culling.md) · [Materials and Lighting](./materials-and-lighting.md) · [Terrain](./terrain.md) · [Fog of War, Minimap, Selection](./fog-of-war-minimap-selection.md)
 
@@ -9,6 +9,8 @@
 ## 1. The budget and why it exists
 
 **R-RND-3: ≤ 300 draw calls per frame at maximum army size** (the 500-units-on-screen worst case of [PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram)).
+
+*Revised 2026-06-11 per D-2026-06-11-18:* the low-tier 500-visible-unit budget above is unchanged as the **guarantee**; a **1,000-visible-unit stretch tier** on the recommended-spec machine is added ([Budgets §5.1](../08-performance/budgets-and-benchmarks.md)) under the same 300-call ceiling — which is what turns the §4 instancing patch from a contingency into planned M4 work.
 
 On the reference machine (Intel UHD 620, dual-core 2 GHz), the binding constraint is **CPU driver overhead**, not GPU fill or vertex rate: low-poly content at ≤1,500 triangles/unit leaves the GPU underworked, while each draw call costs state validation and submission time on a weak CPU that is also running the 20 Hz sim. G3N's renderer walks the scene graph and issues one draw per visible `Graphic` per material; without intervention, 500 units + terrain + props + UI would exceed 1,000 calls and the frame budget with it.
 
@@ -47,7 +49,9 @@ Static world geometry is merged offline-style at map load:
 
 Map-load merging is allowed to allocate freely — R-GC-1's zero-alloc constraint applies to steady state only.
 
-## 4. GPU instancing: the M3 G3N-patch investigation
+## 4. GPU instancing: planned M4 G3N patch, scoped by the M3 investigation
+
+*Revised 2026-06-11 per D-2026-06-11-18: the 1,000-unit stretch target assumes the PRD §8 instancing risk trigger has fired — the patch is **planned M4 work**, not a contingency. The M3 investigation no longer decides* whether *to patch; it decides* how *(above all the skinned-mesh question, §4.3.3).*
 
 ### 4.1 Status quo
 
@@ -55,15 +59,17 @@ G3N has **no documented GPU instancing path** ([PRD §3.4](../../PRD.md#34-engin
 
 ### 4.2 Why instancing matters here
 
-An RTS is the canonical instancing workload: hundreds of entities sharing a handful of meshes. With instancing, all visible footmen become **one draw call** carrying a per-instance buffer (transform + team color + animation parameters), turning the unit sub-budget from ~150 calls into ~10–20 (one per distinct visible model type per material).
+An RTS is the canonical instancing workload: hundreds of entities sharing a handful of meshes. With instancing, all visible footmen become **one draw call** carrying a per-instance buffer (transform + team color + animation parameters), turning the unit sub-budget from ~150 calls into ~10–20 (one per distinct visible model type per material). At the D-18 stretch case — 1,000 visible units — instancing is not an optimization but the only way the 300-call ceiling is reachable at all.
 
-### 4.3 Investigation plan (scheduled in M3, decision before M4 render core)
+### 4.3 Investigation plan (investigation in M3; patch lands in M4)
 
-1. **Baseline measurement (exit gate first).** Run the M3 benchmark scene (500 units, max zoom) with batching + merging only. **If ≤ 300 draw calls and ≥ 30 FPS worst case are met without instancing, the patch is deferred** — vendored-fork divergence is a maintenance cost we only pay when a budget forces it (mitigation order per PRD §8: "batching/merging first; instancing patch if budget missed").
+*Revised 2026-06-11 per D-2026-06-11-18 — step 1 no longer gates whether the patch happens.*
+
+1. **Baseline measurement (still first, repurposed).** Run the M3 benchmark scenes (500 and 1,000 units, max zoom) with batching + merging only. The baseline no longer decides *whether* to patch — 1,000 visible units cannot fit 300 calls without instancing, so the patch is committed M4 work — it sizes *how much* the patch must recover and which content classes (rigid vs skinned) sit on the critical path.
 2. **Patch surface survey.** Identify the minimal G3N touch points: `gls` (expose `glDrawElementsInstanced` and `glVertexAttribDivisor` in `gls-desktop.go`/`gls-browser.go`), `geometry.Geometry` (attach an instance VBO with per-instance attribute layout), `graphic` (an `InstancedMesh` type that renders once with a count instead of N `Mesh` nodes), and the shader generator (`renderer/shaman.go` + `renderer/shaders`) to consume instance attributes in the standard/unlit vertex shaders.
 3. **Skinned-mesh question.** Per-instance *rigid* transforms are straightforward; per-instance *skinning state* is not (each unit is at a different animation time). Candidate answers, evaluated in this order: (a) baked vertex-animation textures (sample bone matrices from a per-clip texture by instance animation-phase — fits the low preset and low bone counts of CC0 packs); (b) shared-pose cohorts (units in the same clip+quantized-phase share a pose; draws per cohort); (c) instancing for rigid content only (buildings, doodads, projectiles) and per-draw skinned units. Option (c) is the guaranteed-shippable floor.
-4. **Prototype + benchmark.** Implement the smallest variant that the baseline says we need; re-run the M3 scene; record draw calls, frame time, and CPU submission time.
-5. **Decision record.** Outcome (adopt / defer / partial) is written into this document and the vendored-fork patch list before M4 begins.
+4. **Prototype + benchmark.** Implement the smallest variant that covers the 1,000-unit stretch case per the baseline; re-run the M3 scenes; record draw calls, frame time, and CPU submission time.
+5. **Decision record.** Outcome (variant chosen, skinned-mesh answer, content classes covered) is written into this document and the vendored-fork patch list before the M4 render core builds on it. "Defer entirely" is no longer an outcome (D-2026-06-11-18); the floor is option (c) of step 3 — rigid-content instancing — with skinned coverage recorded as adopted or scheduled.
 
 ### 4.4 Patch hygiene
 
@@ -109,14 +115,14 @@ A sanity model of the benchmark frame with batching + merging only (no instancin
 | Source | Calls | Notes |
 |---|---|---|
 | Terrain chunks | ~25–30 | ~25–30 visible chunks ([Camera §7](./camera-and-culling.md)), 1 call each, doodads merged in |
-| Units (500 visible, 2 factions × ~6 model types) | ~150–500 | **the risk item**: without instancing, skinned units are 1 call each; shared materials make calls cheap but not fewer. If the visible count truly reaches 500, batching alone misses the budget — this is exactly the §4.3 step-1 measurement that decides the instancing patch |
+| Units (500 visible, 2 factions × ~6 model types) | ~150–500 | **the risk item**: without instancing, skinned units are 1 call each; shared materials make calls cheap but not fewer. If the visible count truly reaches 500, batching alone misses the budget — this is exactly the §4.3 step-1 measurement that sizes the planned instancing patch |
 | Buildings + destructible doodads | ~30 | mostly merged or shared-material |
 | FX/projectiles | ~20 | pooled billboards, few materials |
 | Decals (circles, bars, shadows: Alt held) | ~10 | pooled, shared materials ([Fog of War §4.3](./fog-of-war-minimap-selection.md)) |
 | Minimap + fog | ~6 | fog costs 0 ([Fog of War §2.4](./fog-of-war-minimap-selection.md)) |
 | GUI | ~15 | G3N widgets |
 
-The honest reading: **the 300-call budget at a literal 500 visible units requires either instancing (§4) or accepting that 500 *simultaneously on-screen* exceeds the typical case** — the [PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram) table already prices that case at the 30 FPS floor rather than 60. M3's baseline measurement turns this model into data; the instancing decision record (§4.3.5) closes it.
+The honest reading *(Revised 2026-06-11 per D-2026-06-11-18)*: **the 300-call budget at a literal 500 visible units on the low-tier machine — and a fortiori at the 1,000-visible stretch case on the recommended-spec machine — requires the instancing patch**, which is exactly why D-18 plans it into M4 instead of holding it as a contingency. The tiering: **1,000 visible units is the recommended-spec target; 500 remains the low-tier guarantee**, still priced at the [PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram) 30 FPS floor rather than 60 ([Budgets §5.1](../08-performance/budgets-and-benchmarks.md)). M3's baseline measurement turns this model into data; the §4.3 record fixes the patch's shape, not its existence.
 
 ## 9. Instrumentation and CI gate
 
@@ -129,7 +135,7 @@ The honest reading: **the 300-call budget at a literal 500 visible units require
 What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the milestone doesn't stall on debate:
 
 1. **Calls over 300, frame time fine** → tighten first: verify material-group parenting (§2.2) didn't fragment; check for accidental `material.Clone()` (§2.3, add a debug assert that counts live material instances); merge more doodad classes into chunks (§3).
-2. **Calls over 300 after tightening** → execute the instancing patch (§4.3), starting with rigid content (buildings/doodads/projectiles/decals), which is low-risk and may alone recover 50–100 calls before the skinned-mesh question (§4.3.3) needs an answer.
+2. **Calls over 300 after tightening** → extend the planned instancing patch (§4.3 — it lands in M4 regardless, per D-2026-06-11-18): rigid content first (buildings/doodads/projectiles/decals), which is low-risk and may alone recover 50–100 calls, then the skinned-mesh question (§4.3.3).
 3. **Frame time over budget with calls under 300** → the problem is not draw calls: profile skinning CPU cost (mitigation: animation-rate halving for far units, pose-sharing cohorts) and fill rate (mitigation: blended-FX caps, low preset — [Materials §5](./materials-and-lighting.md)).
 4. **Allocs/frame nonzero** → R-GC-5 treats this as a correctness failure, not a tuning matter; the offending path is fixed, never waived.
 5. **Last resort** → renegotiate the visible-army worst case with design (tighter Z_max in [Camera §2.2](./camera-and-culling.md) shrinks worst-case visible count quadratically) before renegotiating the 300-call budget itself.
@@ -138,8 +144,8 @@ What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the 
 
 | Milestone | Deliverable |
 |---|---|
-| M3 | Baseline batching + merging benchmark; instancing investigation (§4.3) and decision record |
-| M4 | Team-color uniform path; chunked terrain merging; draw-call counter gating CI; both camera projections benchmarked |
+| M3 | Baseline batching + merging benchmark; instancing investigation (§4.3) scoping the planned patch *(Revised 2026-06-11 per D-2026-06-11-18)* |
+| M4 | Team-color uniform path; chunked terrain merging; **instancing patch lands (D-2026-06-11-18)** — 1,000-unit stretch scene inside the 300-call ceiling on the recommended spec; draw-call counter gating CI; both camera projections benchmarked |
 | M6 | Full-match budget validation (vertical slice) with all overlays from [Fog of War, Minimap, Selection](./fog-of-war-minimap-selection.md) active |
 
 ## 12. Requirements traceability
@@ -149,5 +155,5 @@ What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the 
 | R-RND-3 (≤ 300 draw calls) | §1 budget allocation; §2–§4 mechanisms; §9 CI gate |
 | R-RND-7 (team color via uniform) | §5 |
 | R-GC-1/2/3/5 (zero-alloc frame path) | §6 obligations; §9 `AllocsPerRun` gate |
-| PRD §8 instancing risk | §4 investigation plan; §10 playbook steps 1–2 |
+| PRD §8 instancing risk / D-2026-06-11-18 (trigger assumed fired — planned M4 patch) | §4 plan; §10 playbook steps 1–2 |
 | R-RND-2 atlas prerequisite | §2.1 (consumes [Materials §3](./materials-and-lighting.md)) |

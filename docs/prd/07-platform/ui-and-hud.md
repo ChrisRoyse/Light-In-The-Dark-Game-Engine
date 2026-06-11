@@ -22,9 +22,10 @@ defined in [Input §8](./input.md). This keeps the HUD entirely outside the dete
 boundary (G5): a replay renders the same HUD because the sim state is the same, not because
 HUD interactions were recorded.
 
-This document refines R-UI-1 into sub-requirements **R-UI-1.1 … R-UI-1.6**: the WC3 HUD
+This document refines R-UI-1 into sub-requirements **R-UI-1.1 … R-UI-1.7**: the WC3 HUD
 layout, its construction on G3N widgets, the deduplicated public UI API, resolution scaling,
-and performance constraints.
+performance constraints, and localization (§8) — plus the committed later-milestone UI
+surfaces of §9. *Revised 2026-06-11 per D-2026-06-11-15/16/17.*
 
 ## 2. The WC3 HUD layout (R-UI-1.1)
 
@@ -176,7 +177,45 @@ and stretched or pillar-boxed from there. We keep the *virtual coordinate space*
   [Audio §7](./audio.md)). Icons pack into the single UI atlas of §3 at build time by the
   asset pipeline; `tools/assetcheck` validates atlas residency and license metadata.
 
-## 8. Acceptance criteria
+## 8. Localization: string tables from M4 (R-UI-1.7, D-2026-06-11-17)
+
+*Added 2026-06-11 per D-2026-06-11-17.*
+
+- **R-UI-1.7:** From M4 onward, **every user-facing engine string** — HUD labels, menu
+  items, dialog text, error feedback, tooltips, alert messages — resolves through a locale
+  string table; no string literal in `litd/render/hud` or the default skin reaches the
+  screen directly. v1 ships **English only**; adding a language is a pure data drop (a new
+  locale table), never a code change.
+- Locale tables live in `data/` under the R-AST-1 conventions (TOML, loaded once,
+  immutable) and validate via `assetcheck data`: missing-key and unused-key checks against
+  the engine's extracted string-key set, so a new engine string without an English entry is
+  a build error, not a runtime placeholder.
+- **World-author strings flow through the same mechanism:** the public API's text surfaces
+  (`SetText`, dialog specs, board cells — §4) accept a literal or a locale key, so worlds
+  are translatable with the same data-drop model.
+- The performance rules of §3 are unaffected: locale lookup happens at table load and
+  dirty-flag refresh time, never per frame; resolved strings land in the same preallocated
+  byte buffers (R-GC-3).
+
+## 9. Later-milestone UI surfaces (D-2026-06-11-15/16)
+
+*Added 2026-06-11 per D-2026-06-11-15 and D-2026-06-11-16.*
+
+Two committed UI surfaces land after the vertical slice, built on the same widget layer and
+every R-UI-1 rule above (virtual canvas, draw-call and allocation budgets, string tables):
+
+- **M7 — Replay viewer + observer UI (D-16).** Playback controls over the replay command
+  stream: pause, speed steps, free camera, per-player perspective switch. **Live observer
+  slots reuse the identical UI at zero delay** — an observer is a replay viewer of the
+  in-progress session over the same machinery. Like the HUD, it reads sim state through
+  the read-only boundary and emits no sim commands (a viewer cannot desync a lockstep
+  match). M6's exit needs only headless replay verification; the *viewer* is M7 scope.
+- **M8 — Campaign menu / mission-flow UI (D-15).** Campaign selection, mission
+  progression, and hero/state carry-over presentation over the cross-map persistence that
+  is built into the sim and save format in v1 (game-cache semantics). Ships with the M8
+  World Editor milestone; until then campaigns are architecture without a menu.
+
+## 10. Acceptance criteria
 
 1. The default HUD reproduces every §2 region, bound to live sim state, in the M6 vertical
    slice.
@@ -190,8 +229,11 @@ and stretched or pillar-boxed from there. We keep the *virtual coordinate space*
 5. Layout verified correct (no overlap, no off-screen panels, legible text) at 1024 × 768,
    1366 × 768, 1920 × 1080, 2560 × 1080, and 3840 × 2160 via automated screenshot
    comparison in the render harness.
+6. From M4, the extracted-string check (§8) reports zero hard-coded user-facing strings and
+   a complete English locale table; CI gates on it like any other data validation.
+   *(Added 2026-06-11 per D-2026-06-11-17.)*
 
-## 9. Related documents
+## 11. Related documents
 
 - [Input](./input.md) — command card hotkeys, selection grid behavior, the command pipeline HUD clicks feed into.
 - [Audio](./audio.md) — UI sound domain, per-widget sound hooks, alert stingers.

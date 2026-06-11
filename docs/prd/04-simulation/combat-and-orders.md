@@ -53,6 +53,8 @@ Two ranges from the unit table govern targeting (WC3 semantics):
 
 Acquisition scans run in the **Combat phase** for units in an acquiring state, throttled to every N ticks (default 5; data-tunable) with per-unit phase offset derived from entity index — spreading the cost across ticks *deterministically* (offset is a function of state, not of load). Candidate filtering uses a coarse spatial bucket grid (cell size ≥ max acquisition range / 2, preallocated, rebuilt incrementally in the movement phase).
 
+*Scale note (revised 2026-06-11 per D-2026-06-11-18):* acquisition is provisioned for **1,000 acquiring units** — at the default 5-tick throttle that is ~200 scans per tick instead of ~100, and the bucket grid is what keeps each scan local (candidates near the scanner) rather than O(units); a 1,000-unit deathball also means denser buckets, so per-scan candidate counts rise with crowding, not just population. The throttle interval and bucket cell size are the two tuning knobs if the M3 1,000-unit benchmark (recommended spec) pressures the combat-phase budget — both are sim semantics, so changing them is a sim-version change under the [replay contract](determinism.md). The 500-unit low-tier guarantee is unchanged.
+
 ### 3.2 Deterministic target acquisition ordering
 
 Among valid candidates (enemy, alive, visible, attackable by this weapon's targets-allowed mask — all table-driven flags), selection is by lexicographic tuple:
@@ -123,6 +125,17 @@ Buff instances live in their own pooled store ([ECS §5](ecs-architecture.md)): 
 - **Stat resolution:** modifiers fold into cached derived stats (move speed, attack cooldown, armor) recomputed only when the buff set changes, in deterministic fold order (buff ID, then instance index). The cache is derived state — excluded from the hash only once the derivation is covered by tests, per the [hashing strategy](determinism.md).
 - Expiry and dispel are processed in the cleanup phase, raising `EventBuffExpired` in deterministic store order.
 
+### 5.3 Campaign-persistent hero state (D-2026-06-11-15)
+
+*Added 2026-06-11 per D-2026-06-11-15.*
+
+Cross-map campaigns carry heroes between missions (game-cache semantics), so hero-relevant component state must be **extractable as a self-contained record**, not merely hash-stable: hero XP/level and attribute growth, learned ability IDs and levels (Ability component slots), and inventory contents — the Inventory slot refs *plus the referenced items' own instance fields* (charges, stack counts). Serialization rules:
+
+- The record stores **type IDs and instance fields** — unit-type ID, ability IDs/levels, item-type IDs — never `EntityID`s, which are match-local ([ECS §3](ecs-architecture.md)); loading the next map allocates fresh entities and replays the record into them.
+- Component layouts keep these fields value-typed and free of intra-match references (the existing SoA discipline already guarantees this), so extraction is a column copy, not a graph walk.
+- Derived stats (buff-modified attack speed, aura effects) are **not** carried — they re-derive from tables + the record on the destination map; only base progression state persists, matching WC3 cache semantics.
+- The same record format serves mid-game saves (R-SIM-6) and the game-cache API analogues, and is versioned with the data-table content hash ([replay header](determinism.md)) — a balance patch changes what an ability level means.
+
 ## 6. Worked data-table example (R-AST-1)
 
 To make "tables define content" concrete, an illustrative unit row and the mechanisms it touches:
@@ -148,5 +161,6 @@ At load: `cooldown 1.35 s` → 27 ticks, `damagePoint 0.5 s` → 10 ticks, `move
 ## 7. Acceptance hooks
 
 - Table schema validation in CI (R-AST-1/R-AST-2 pipeline): unknown fields, missing required clips, out-of-range coefficients fail the build.
-- Headless combat scenarios ([R-SIM-4](tick-and-scheduler.md)): scripted 500-unit engagements asserting final state hashes; mutual-kill, mid-flight-death, and interrupt edge cases are explicit fixtures.
+- Headless combat scenarios ([R-SIM-4](tick-and-scheduler.md)): scripted 500-unit engagements (low-tier guarantee) and 1,000-unit engagements (recommended spec, D-2026-06-11-18) asserting final state hashes; mutual-kill, mid-flight-death, and interrupt edge cases are explicit fixtures. *Revised 2026-06-11 per D-2026-06-11-18.*
+- Hero carry-over fixture (D-2026-06-11-15): extract the §5.3 record at end of map A, instantiate on map B headlessly, assert level/abilities/items round-trip bit-identically.
 - Zero allocations across order issue → projectile flight → death at steady state, enforced per R-GC-1/5 by the [ECS benchmarks](ecs-architecture.md).

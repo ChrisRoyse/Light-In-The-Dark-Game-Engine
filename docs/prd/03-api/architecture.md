@@ -136,8 +136,8 @@ Headless operation is a first-class build configuration, not a test shim:
   same zero-value-handle philosophy as
   [R-API-5](public-api-design.md#35-r-api-5--error-semantics-and-zero-value-handles).
 - Headless mode drives: CI gameplay tests, the M1 determinism spike, the M3 500-unit benchmark,
-  replay verification (re-run command stream, compare state hash), and — in v2 — dedicated
-  lockstep servers.
+  replay verification (re-run command stream, compare state hash), and — at M7
+  (D-2026-06-11-5) — dedicated lockstep servers.
 - The asset pipeline in headless mode loads *only* the gameplay-relevant data tables (stats,
   footprints), never meshes or audio, keeping CI fast and GPU-free.
 
@@ -160,26 +160,38 @@ method needs a loop, a conditional on game rules, or state, that logic belongs i
 (canonical) or `litd/api/helpers` (D4 convenience), never inline in the API layer where it could
 fork behavior between callers.
 
-## 6. v2: how a Lua binding layers on top
+## 6. The Lua binding layer (v1, M5)
 
-[PRD §5.5](../../PRD.md#55-moddingscripting) names a deterministic Lua VM
-([gopher-lua](https://github.com/yuin/gopher-lua)) as the v2 candidate for runtime-loaded maps.
-The architecture is designed so this binding is a *mechanical projection* of `litd/api`, not a
-second API:
+*Revised 2026-06-11 per D-2026-06-11-8/20 — promoted from "v2 candidate" to committed v1
+scope, shipping with M5.*
+
+[PRD §5.6](../../PRD.md#56-moddingscripting) commits a deterministic Lua VM
+([gopher-lua](https://github.com/yuin/gopher-lua) family, determinism-audited) as the v1
+runtime-loadable creation surface, delivered in M5 alongside the Go API. The architecture
+makes this binding a *mechanical projection* of `litd/api`, not a second API — and the
+**sandbox boundary (R-SEC-1)** is part of the layering itself:
 
 ```
 ┌────────────────────────────────────────────────────┐
-│ map.lua (runtime-loaded map script)                │  v2
-├────────────────────────────────────────────────────┤
-│ litd/luabind  — generated bindings + sandbox       │  v2
-├────────────────────────────────────────────────────┤
-│ litd/api      — canonical Go API (unchanged)       │  v1
+│ world.lua (runtime-loaded, from a world archive)   │  v1 (M5) — UNTRUSTED
+├────────────────────────────────────────────────────┤  ← sandbox boundary (R-SEC-1):
+│ litd/luabind  — generated bindings + hard sandbox  │  v1 (M5)   no io/os/net, game API only,
+├────────────────────────────────────────────────────┤            per-tick instr+mem quotas
+│ litd/api      — canonical Go API (unchanged)       │  v1 (M5)
 ├────────────────────────────────────────────────────┤
 │ litd/sim · litd/render · litd/asset                │  v1
 └────────────────────────────────────────────────────┘
 ```
 
-Design commitments made *now* so this works *later*:
+Everything above the sandbox boundary is untrusted world content; everything below is
+engine. World Lua cannot touch the player's machine (D-2026-06-11-20): `litd/luabind`
+exposes the game API and nothing else, and enforces per-tick instruction and memory quotas
+that double as the M7 lockstep stall guard
+([Execution model §7](execution-model.md#7-the-lua-execution-surface-d-2026-06-11-8-r-sec-1)).
+Any world-sharing feature (disk-loaded worlds from M5, the M9 hub) is hard-gated on this
+sandbox.
+
+Design commitments that make the binding mechanical:
 
 1. **Generated, not hand-written.** The `api-manifest.json` produced by `tools/jassgen`
    ([PRD R-AST-4](../../PRD.md#6-asset--data-pipeline)) already records every canonical Go symbol
@@ -192,22 +204,51 @@ Design commitments made *now* so this works *later*:
    scheduler ([Execution model §2](execution-model.md#2-the-deterministic-cooperative-scheduler)).
    A Lua script that calls `PolledWait` suspends as a scheduler job exactly like a Go handler
    closure does; resume order rules are shared, so a mixed Go/Lua map remains deterministic.
-3. **Sandboxing at the binding, not the core.** `litd/luabind` strips Lua's `os`, `io`, and
-   nondeterministic `math.random` (replaced by the sim PRNG) — the same isolation philosophy as
-   the AI domain ([Execution model §6](execution-model.md#6-ai-domain-isolation)). `litd/api`
+3. **Sandboxing at the binding, not the core (R-SEC-1).** `litd/luabind` strips Lua's `os`,
+   `io`, networking, and nondeterministic `math.random` (replaced by the sim PRNG), and meters
+   each context against per-tick instruction and memory quotas — the same isolation philosophy
+   as the AI domain ([Execution model §6](execution-model.md#6-ai-domain-isolation)). `litd/api`
    itself needs no changes because it already exposes no ambient authority: every capability
    hangs off the `Game` object you were given.
 4. **No version skew.** The Lua binding versions with the Go API
-   ([Naming & style §4](naming-and-style.md#4-versioning-and-stability-policy)); a map declares
+   ([Naming & style §4](naming-and-style.md#4-versioning-and-stability-policy)); a world declares
    the API version it targets, and the manifest's tombstone records double as the Lua
    deprecation table.
 
-Nothing in v1 implements any of this; the requirement on v1 is only that it never *blocks* it,
-which the import rules and manifest-driven generation guarantee.
+M5's exit criterion makes this concrete: Lua VM embedded, bindings generated from
+`api-manifest.json`, hard sandbox in place, worlds runtime-loadable
+([PRD §7](../../PRD.md#7-milestones)). Go remains the systems language; Lua is the creation
+surface — creators and AI coding agents author worlds without a Go toolchain or recompile.
 
-## 7. Acceptance criteria for this section
+## 7. World archives: the content unit (D-2026-06-11-14)
+
+*Added 2026-06-11 per D-2026-06-11-14.*
+
+The unit of content the api/asset layers load is the **world archive**: a single zip-based
+file containing map data, Lua scripts, custom assets, and a manifest with content hashes and
+engine-version requirements. The format is defined in v1 (M6) and documented publicly; it
+carries hosting metadata from day one so the M9 hosted-hub candidate needs no format change.
+
+How it maps onto the layering:
+
+- **`litd/asset`** opens and validates the archive (manifest hashes, engine-version check,
+  asset validation per R-AST-2) and routes its contents along the existing split: gameplay
+  data tables → `litd/sim`, meshes/audio → `litd/render`. A tampered or mismatched archive
+  fails loudly at load, never mid-match.
+- **`litd/api`** (via `litd/luabind`) receives the archive's Lua entry point and runs it
+  inside the §6 sandbox — the archive is precisely the untrusted content the sandbox boundary
+  exists for.
+- The M8 World Editor saves to this same format; content hashes make archives
+  lockstep-safe (all M7 clients verify they loaded byte-identical world content before the
+  first tick).
+
+## 8. Acceptance criteria for this section
 
 - CI import lint (IMP-1…IMP-5) green from M0.
 - `go build -tags litd_headless ./...` succeeds with no cgo on a GPU-less runner from M0.
 - Headless-vs-rendered state-hash equivalence test green from M3.
 - Zero G3N types in `litd/api` signatures, verified by the API-surface lint from M2.
+- Lua bindings regenerate from `api-manifest.json` with zero hand-edits; sandbox-escape and
+  quota-breach test suites (R-SEC-1) green from M5. *Added 2026-06-11 per D-2026-06-11-8/20.*
+- World-archive round trip (build → hash-verify → load headless → state hash matches a
+  loose-files load of the same content) green from M6. *Added 2026-06-11 per D-2026-06-11-14.*

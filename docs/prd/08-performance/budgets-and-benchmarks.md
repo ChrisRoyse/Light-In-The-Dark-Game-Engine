@@ -22,7 +22,8 @@ merge (from M3 onward), while a budget is red. Three rules govern how budgets ar
    defined measurement procedure is not a budget; "60 FPS" means nothing until percentile,
    scene, and machine are fixed.
 2. **The reference machine is the floor, not the average** (§5). Nothing is accepted on the
-   strength of developer hardware.
+   strength of developer hardware. The recommended-spec stretch tier (§5.1, D-2026-06-11-18)
+   *adds* gates on a second pinned machine; it never relaxes a low-tier budget.
 3. **Two-tier enforcement.** CI machines are not reference machines, so CI enforces
    *relative regression gates* on every PR (§6), while *absolute* budgets are verified on
    the physical reference machine at every milestone exit and on a scheduled cadence.
@@ -64,6 +65,7 @@ build before any timing is considered).
 |---|---|---|
 | `bench_idle_500` | 500 idle units, no orders, 2k ticks | Baseline tick cost; allocation gate floor |
 | `bench_battle_500v500` | 500 vs 500 scripted attack-move into sustained combat with projectiles, deaths, buffs, 10k ticks | The §5.3 worst-case tick budget; pooling under churn ([GC Discipline §4](./gc-discipline.md)) |
+| `bench_battle_1000` *(stretch, D-2026-06-11-18)* | 1,000 units + 1,000 live projectiles in sustained scripted combat, 10k ticks; ECS capacities provisioned for this from M3 | The recommended-spec stretch tier (§5.1): tick budget gated on the recommended-spec machine; on the low-tier machine it runs and reports but does not gate *(Added 2026-06-11 per D-2026-06-11-18)* |
 | `bench_path_storm` | 500 units issued simultaneous cross-map move orders through chokepoints, repeated | Pathfinding worst case (R-SIM-5) |
 | `bench_econ_macro` | 12 players, full base-building, training, harvesting loops, 20k ticks | Order queues, production, event system |
 | `bench_input_spam` | `bench_battle` workload + maximal-rate command stream | Command decode/validation path (R-INP-1.7) |
@@ -86,6 +88,13 @@ duration, segmented:
    render layer and gated (≤ 300) in the same run.
 3. **Stress transitions** (10 s): rapid camera jumps, mass deaths, selection churn —
    hunting allocation spikes and hitches.
+4. **Stretch battle** *(recommended-spec runs only, D-2026-06-11-18)*: an additional
+   segment holding 1,000 units in frustum, exercised only when the harness runs on the
+   recommended-spec machine (§5.1). Gates there: frame time p99 ≤ 33.3 ms and ≤ 300 draw
+   calls — reachable because the instancing patch is planned M4 work
+   ([Batching §4](../05-rendering/batching-and-draw-calls.md)). Low-tier gates are
+   unchanged; this segment is skipped on the low-tier machine.
+   *(Added 2026-06-11 per D-2026-06-11-18.)*
 
 Where it runs:
 
@@ -95,10 +104,10 @@ Where it runs:
   low): relative regression gates per PR from M4.
 - **Mesa `llvmpipe` software GL in containers**: not for timing (software rasterization
   distorts everything) but valuable for *correctness* CI — the scene renders, screenshot
-  comparisons for the HUD ([UI and HUD §8](../07-platform/ui-and-hud.md)), draw-call
+  comparisons for the HUD ([UI and HUD §10](../07-platform/ui-and-hud.md)), draw-call
   counting, and frame-path allocation gates, all of which are GPU-independent.
 
-## 5. Reference machine definition
+## 5. Reference machine definitions
 
 [PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram)
 names the class; this section pins it down so "passes on the reference machine" is
@@ -117,6 +126,31 @@ reproducible:
 The lab machine matching this spec is inventoried, its exact model recorded in
 `bench/reference-machine.md` in-repo, and never upgraded silently — replacing it is a
 documented decision, because every historical absolute number is calibrated to it.
+
+### 5.1 Recommended-spec machine — the 1,000-unit stretch tier (D-2026-06-11-18)
+
+*Added 2026-06-11 per D-2026-06-11-18.*
+
+The 1,000-unit stretch target (1,000 units + 1,000 projectiles, provisioned in ECS
+capacities and pathfinding from M3) is gated on a second pinned machine class. **The
+low-tier machine above remains the guarantee tier: every PRD §5.3 budget continues to gate
+there at 500 units, unchanged.** The stretch tier adds gates; it never substitutes for one.
+
+| Component | Specification |
+|---|---|
+| CPU | x86-64, **4 cores / 8 threads, ~3.0 GHz sustained** class (mid-2020s desktop i5 / Ryzen 5 era) |
+| GPU | Entry/mid discrete or strong integrated class (GTX 1650 / RX 6500 / Radeon 780M era) — comfortably past the draw-call-CPU constraint that defines the low-tier machine |
+| RAM | **16 GB** total system |
+| Storage | NVMe SSD class |
+| Display | 1920 × 1080 — stretch render gates measured at this resolution |
+| OS / driver | Same dual-OS rule as the low-tier machine (Windows + Ubuntu/Mesa); the **worse** result gates |
+| Power | Same protocol: AC power, thermal steady state, 5-minute warm-up |
+
+Stretch gates measured on this machine: `bench_battle_1000` **max tick ≤ 10 ms** (§3); the
+§4 stretch segment at **frame time p99 ≤ 33.3 ms with ≤ 300 draw calls and 1,000 units in
+frustum** (requires the planned M4 instancing patch,
+[Batching §4](../05-rendering/batching-and-draw-calls.md)). Like the low-tier box, the
+physical machine is inventoried in `bench/reference-machine.md` and never upgraded silently.
 
 ## 6. Regression gates (CI, from M3)
 
@@ -140,9 +174,16 @@ M4 when the render core exists). Mechanics:
 - **Scheduled absolute runs:** weekly full suite on the reference machine; results posted
   to the trend dashboard; a red absolute budget opens a blocking issue against the current
   milestone.
+- **Stretch-tier gates (D-2026-06-11-18):** from M3, `bench_battle_1000` runs in CI under
+  the same relative-regression rules as the 500-unit scenarios (capacities are provisioned
+  from M3, so the scenario must at least *run* from M3); its absolute gates are asserted on
+  the recommended-spec machine (§5.1) — sim tick from M3, render from M4 when the
+  instancing patch lands. Low-tier absolute gates are unaffected.
+  *(Added 2026-06-11 per D-2026-06-11-18.)*
 - **Milestone exits** (M3 sim, M4 render, M6 all of §5.3 green — see
   [PRD §7](../../PRD.md#7-milestones)): full absolute suite on the reference machine, both
-  OSes, results attached to the milestone review.
+  OSes, results attached to the milestone review; from M3 the stretch-tier results from the
+  recommended-spec machine are attached alongside.
 
 ## 7. Profiling workflow
 

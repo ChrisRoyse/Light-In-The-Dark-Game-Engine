@@ -10,8 +10,11 @@ Dark canonical Go API. Governing document: [PRD §4.2 (dedup rules D1–D5) and 
 |---|---|
 | `repoes/war3-types/scripts/common.j` | 1,534 natives (1,243 `native` + 291 `constant native`) |
 | `repoes/war3-types/scripts/blizzard.j` | 985 BJ functions |
-| `repoes/war3-types/scripts/common.ai` | 123 natives (deferred to v2, see [ai-natives](ai-natives.md)) |
-| **Total v1 classification surface** | **2,519** (+123 deferred) |
+| `repoes/war3-types/scripts/common.ai` | 123 natives (full v1 port at M5.5 per D-2026-06-11-6, see [ai-natives](ai-natives.md)) |
+| **Total v1 classification surface** | **2,642** (incl. 123 common.ai, milestone M5.5) |
+
+*Revised 2026-06-11 per D-2026-06-11-6: common.ai joins the v1 classification surface
+(milestone M5.5).*
 
 Counts below come from a pattern-based grep survey (2026-06-11) and are
 **approximate** — boundary functions (e.g. waygates, quests, hero items) are
@@ -39,12 +42,12 @@ assigned by judgment. The authoritative per-function classification is the
 | [destructables-and-doodads](destructables-and-doodads.md) | ~33 | ~35 | ~68 | D4 (gates/elevators), D3 |
 | [visibility-and-fog](visibility-and-fog.md) | ~35 | ~19 | ~54 | D3 (rect/radius), D5 (state triple) |
 | [timers](timers.md) | ~20 | ~22 | ~42 | D2 (create+start), last-handle deletion |
-| [ai-natives](ai-natives.md) — **deferred to v2** (PRD §9.4) | ~8 (+123 common.ai) | ~1 | ~9 (+123) | tombstone "v2" |
+| [ai-natives](ai-natives.md) — **full v1 port at M5.5** (D-2026-06-11-6) | ~8 (+123 common.ai) | ~1 | ~9 (+123) | canonical AI-domain mappings (R-EXEC-3) |
 | **Sum** | **~1,526** | **~985** | **~2,511** | |
 
 The ~8-native gap between the column sum (~1,526) and the true count (1,534) is
 classification slack on boundary functions; the M2 manifest resolves every one
-exactly, per the §4.2 acceptance criterion (each of the 2,519 functions either maps
+exactly, per the §4.2 acceptance criterion (each of the 2,642 functions either maps
 to exactly one canonical Go symbol or is tombstoned with a reason).
 
 ## Cross-cutting conventions (apply to every category)

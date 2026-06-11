@@ -45,7 +45,26 @@ func (d Destructable) SetInvulnerable(b bool)
 func (d Destructable) SetOccluderHeight(h float64)
 
 func (g *Game) DestructablesIn(r Rect, filter func(Destructable) bool) []Destructable
+
+// Doodads — full WC3 parity via optional handles (D-2026-06-11-13). Doodads stay in
+// render-only storage until a script first addresses one; first touch promotes it to a
+// lightweight handle-bearing entity, so the zero-cost case stays zero-cost:
+type Doodad struct{ /* opaque handle; promoted on first script touch */ }
+type DoodadType string
+
+func (g *Game) DoodadsIn(r Rect, typ DoodadType) []Doodad // promotes matches to handles
+func (d Doodad) PlayAnimation(name string, opts ...AnimOption)
+func (d Doodad) Show(b bool)
+func (d Doodad) SetPosition(p Vec2)
+func (d Doodad) SetFacing(a Angle)
+
+// SetDoodadAnimation's area-addressed form (the JASS shape) also maps canonically;
+// nearestOnly/animRandom flags become options:
+func (g *Game) PlayDoodadAnimations(center Vec2, radius float64, typ DoodadType, name string, opts ...DoodadAnimOption)
 ```
+
+*Revised 2026-06-11 per D-2026-06-11-13* — doodads now get the full scripting surface
+(show/hide, animate, reposition), not position-addressed workarounds.
 
 Per R-EXEC-4, `EnumDestructablesInRect` + `GetEnumDestructable` + filter boolexpr
 collapse into the slice-returning `DestructablesIn`.
@@ -62,13 +81,13 @@ collapse into the slice-returning `DestructablesIn`.
 
 ## Subsystem dependencies
 
-- **sim** (primary): destructables are static-ish ECS entities with life + pathing blockers; trees feed harvest logic; death updates the pathing grid (R-SIM-5) deterministically.
+- **sim** (primary): destructables are static-ish ECS entities with life + pathing blockers; trees feed harvest logic; death updates the pathing grid (R-SIM-5) deterministically. Promoted doodads (D-2026-06-11-13) join the sim as lightweight entities; unpromoted doodads never touch it.
 - **render**: model + death animation; occluder height affects the occlusion system (`EnableOcclusion`, see [effects-and-graphics](effects-and-graphics.md)); tree chunks are prime candidates for static mesh merging (R-RND-3).
 - **asset**: destructable-type rows in `data/` (life, pathing footprint, model, variations); GLB props from KayKit/Kenney packs.
 
 ## Porting hazards
 
-1. **Doodads have no handles.** `SetDoodadAnimation` addresses doodads by *position + type ID*, not handle — they're render-side decoration with no sim entity. Keep that asymmetry: `g.Scenery().PlayAnimation(center Vec2, radius, typ, name)` lives on a render-facing facade, not the sim API.
+1. **Doodad promotion must be deterministic.** *(Revised 2026-06-11 per D-2026-06-11-13; supersedes the old "doodads have no handles, keep the asymmetry" guidance.)* Doodads default to render-only storage and gain a handle only on first script touch. Promotion is sim-visible state: it must occur in script/sim context (never from the render thread), draw IDs from the deterministic entity allocator, and serialize with saves — a doodad promoted on one client but not another desyncs lockstep (D-5). A promoted doodad with a pathing footprint that is hidden or repositioned must update the pathing grid in-tick, same discipline as hazard 2.
 2. **Pathing-grid invalidation**: destructable death/resurrection must update pathfinding *within the same tick*, deterministically ordered with unit movement — classic source of replay divergence.
 3. **Tree-harvest coupling**: "is this a tree" is data classification used by AI/harvest orders. Encode in the type table; don't replicate WC3's order-string hack (`HarvestTree`) detection.
 4. **Gates/elevators are destructables with magic animation names and pathing side effects** ("open" disables the blocker). The D4 helpers must own both animation and pathing toggles together or maps will desync visually vs logically.

@@ -156,10 +156,12 @@ may never be raised on the strength of high-tier hardware.
 
 Matching the $0 asset posture of [PRD §3.3](../../PRD.md#33-assets-cc0-low-poly-fantasy-rts-packs-zero-cost):
 
-- **R-AUD-1.7:** All shipped audio is **CC0** (public-domain dedication). Attribution-only
+- **R-AUD-1.7:** All shipped audio is **CC0** (public-domain dedication) or **owned** —
+  produced by the generative pipeline (`tools/assetgen`, R-AST-5) and committed with a
+  provenance entry ([Validation §2.7](../06-assets/validation-and-data.md)). Attribution-only
   licenses (CC-BY) are acceptable for development placeholders but must be replaced or
-  cleared before any release build; the asset manifest records license per file and the
-  validator rejects unknown licenses.
+  cleared before any release build; the asset manifest records license (or provenance) per
+  file and the validator rejects unknown licenses. *Revised 2026-06-11 per D-2026-06-11-12.*
 
 Primary sources, all verified CC0:
 
@@ -169,9 +171,15 @@ Primary sources, all verified CC0:
 | [freesound.org, CC0 filter](https://freesound.org/search/?license=Creative+Commons+0) | Combat foley, ambience, voice raw material | Per-file license check is mandatory — freesound mixes licenses; only the CC0 filter results qualify |
 | [OpenGameArt, CC0 filter](https://opengameart.org/art-search-advanced?field_art_licenses_tid%5B%5D=4) | Fantasy SFX and music | Same per-file verification rule |
 
-Unit voice lines (the WC3 acknowledgement flavor) are out of scope for v1 sourcing — the
-engine supports them (§3 table), but the bundled demo assets ship with neutral SFX
-acknowledgements until recorded CC0 voice sets exist.
+Unit voice lines (the WC3 acknowledgement flavor) have no CC0 source — but the gap is no
+longer shipped around. *Revised 2026-06-11 per D-2026-06-11-12:* voice lines are produced by
+the **generative TTS stage of the asset pipeline** (`tools/assetgen`, R-AST-5,
+[Pipeline §2.1](../06-assets/pipeline.md)) at asset-build time: generated, hand-curated,
+encoded to mono `.ogg` per the §3 channel rules, and committed as owned assets with
+provenance entries ([Validation §2.7](../06-assets/validation-and-data.md)). Zero runtime
+AI — the runtime sees ordinary validated `.ogg` files, subject to the §5 voice budget like
+any other asset. The earlier mitigation (neutral SFX acknowledgements as the bundled
+default) is demoted to a development placeholder until each unit's curated voice set lands.
 
 ## 8. Public API surface
 
