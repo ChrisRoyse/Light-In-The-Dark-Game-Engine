@@ -1,0 +1,13 @@
+# Vendored reference repositories (cloned, not ours to track)
+repoes/
+
+# Go
+/bin/
+*.exe
+*.test
+*.out
+
+# Editor/OS
+.idea/
+.vscode/
+.DS_Store
