@@ -35,7 +35,7 @@ G3N has no fog-of-war concept; we add one with a texture + shader term, the stan
 
 - **Terrain**: the terrain shader multiplies its output color by the fog factor (hidden → near-black; explored → ~40% dim, desaturated). Terrain in *explored* state stays drawn — the player remembers the map.
 - **Units and dynamic entities**: not handled per-pixel. The render sync pass ([Batching §6](./batching-and-draw-calls.md)) already walks visible entities; it looks up each entity's fog cell and simply **does not draw** enemy/neutral entities outside *visible* cells (gameplay-correct hiding comes from the sim's visibility queries; this is the render mirror of it). Own units are never fogged.
-- **Buildings in explored fog**: WC3 shows a "last seen" ghost of enemy buildings under fog. v1 ships the simple variant — buildings draw whenever their cell is *explored or visible*, dimmed by the shader fog term like terrain. True last-seen snapshots (showing a destroyed building until re-scouted) are a tombstoned v2 refinement.
+- **Buildings in explored fog**: WC3 shows a "last seen" ghost of enemy buildings under fog. *Revised 2026-06-11 per the standing directive (decisions.md, second session): full WC3 parity in v1.* The sim keeps a per-player last-seen record for buildings (type, position, owner at last sighting — small fixed-size store, lockstep-safe because it derives purely from the visibility grid); the renderer draws the snapshot, not the live entity, until the cell is re-scouted. A destroyed building keeps its ghost until re-sighted, exactly as WC3.
 - **Hidden (never-seen) area**: fully black via the same fog term; no separate black-mask geometry needed.
 
 ### 2.4 Shader integration and cost
@@ -149,5 +149,5 @@ This ordering keeps every interim M4 build testable and isolates the only genuin
 ## 9. Open items
 
 1. Fog update cadence (every tick vs every 4th tick) — pick by feel in M4; both fit budget.
-2. Explored-fog "ghost building" snapshots — deferred to v2 (tracked above, §2.3).
+2. Explored-fog "ghost building" snapshots — v1 scope per the standing directive (last-seen store in sim, snapshot rendering; see §2.3).
 3. Whether minimap terrain base uses GPU RTT or CPU rasterization as the *default* (both implemented paths per §3.1) — decide on driver-compatibility evidence from M4 testing on Intel UHD.
