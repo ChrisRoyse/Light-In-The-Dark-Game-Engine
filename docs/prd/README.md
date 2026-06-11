@@ -12,6 +12,7 @@ This directory expands the master [PRD](../PRD.md) into detailed specifications.
 - [Overview](01-vision/overview.md) — what the engine is/isn't, target users, source-material clarification
 - [Goals and Non-Goals](01-vision/goals-and-non-goals.md) — G1–G7 with measurable success criteria
 - [Risks and Open Questions](01-vision/risks-and-open-questions.md) — detection signals, trigger points, recommended defaults
+- [Decisions](01-vision/decisions.md) — dated decision record (2026-06-11: Q1–Q4 settled; multiplayer committed as lockstep M7)
 
 ### 02 — Research
 - [Rendering Dimensionality](02-research/rendering-dimensionality.md) — 2D vs 2.5D vs low-poly 3D; memory math; decision
