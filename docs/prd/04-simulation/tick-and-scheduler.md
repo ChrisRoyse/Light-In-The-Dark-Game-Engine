@@ -51,21 +51,21 @@ Render runs at its own rate (target 60 FPS) and **interpolates between the two m
 
 JASS semantics (PRD §4.4): script "threads" are cooperative coroutines that yield only at explicit waits, with exactly one running at a time. LitD reproduces this contract precisely, because thousands of existing WC3 design patterns (and the API's own `PolledWait`-style helpers, §4.2 D4) depend on it.
 
-### 3.1 Mechanism — serializable by construction (R-SIM-6)
+### 3.1 Mechanism — serializable by construction (R-SIM-6): DECIDED and spike-validated
 
-*Revised 2026-06-11 per D-2026-06-11-9 (serializable scheduler) and D-2026-06-11-8 (Lua execution).*
+*Revised 2026-06-11 per D-2026-06-11-9 (serializable scheduler) and D-2026-06-11-8 (Lua execution). Revised again 2026-06-11 per D-2026-06-11-28: the design is **decided, not a candidate** — validated by the executed `spikes/scheduler` spike.*
 
-Mid-game save/load is v1 scope (D-9), and R-SIM-6 makes the scheduler **serializable from day one**: suspended script threads, timers, and event subscriptions must all write into the save format and restore bit-identically — campaign cross-map persistence (D-15) rides the same mechanism. That requirement decides the implementation question between the two candidate mechanisms:
+Mid-game save/load is v1 scope (D-9), and R-SIM-6 makes the scheduler **serializable from day one**: suspended script threads, timers, and event subscriptions must all write into the save format and restore bit-identically — campaign cross-map persistence (D-15) rides the same mechanism. That requirement decided the implementation question, and the M1-scope spike has since **validated the decision** (D-28):
 
-- **Candidate A — baton-passing goroutines** (the original design, summarized here for the record): each script context is a goroutine used strictly as a coroutine via unbuffered-channel handoff. Deterministic and concurrency-free — but **it cannot satisfy R-SIM-6**: a suspended script's continuation lives on its goroutine stack, and Go provides no mechanism to inspect, serialize, or reconstruct a goroutine stack. A mid-game save taken while any script sleeps inside a `Wait` would be impossible.
-- **Candidate B — stackless / descriptive suspension** (now the design): a suspended script thread is **data, not a stack**. Each suspension is a record `(wakeTick, seq, continuation, state)` in the sleeper queue, where the continuation is a *serializable reference* — a registered, stably-identified function plus a value-typed state payload for Go-authored scripts (never a bare Go closure, which is as unserializable as a stack), or a Lua coroutine for D-8 scripts (see below). Suspension is pushing a record; resume is invoking the continuation. The sleeper queue, timers, and subscription tables are plain data structures that serialize directly.
+- **Rejected — baton-passing goroutines** (the original design, kept here as a historical record only): each script context is a goroutine used strictly as a coroutine via unbuffered-channel handoff. Deterministic and concurrency-free — but **it cannot satisfy R-SIM-6**: a suspended script's continuation lives on its goroutine stack, and Go provides no mechanism to inspect, serialize, or reconstruct a goroutine stack. A mid-game save taken while any script sleeps inside a `Wait` would be impossible. **Per D-28 this design is dead**, not a fallback.
+- **THE design — stackless / descriptive suspension** (D-28): a suspended script thread is **data, not a stack**. Each suspension is a record `(wakeTick, seq, continuation, state)` in the sleeper queue, where the continuation is a *serializable reference* — a registered, stably-identified function plus a value-typed state payload for Go-authored scripts (never a bare Go closure, which is as unserializable as a stack), or a Lua coroutine for D-8 scripts (see below). Suspension is pushing a record; resume is invoking the continuation. The sleeper queue, timers, and subscription tables are plain data structures that serialize directly.
 
 The two script surfaces sit differently on candidate B:
 
 - **Go-authored scripts** express waits in explicit continuation style (`g.After(d, contID, state)` resumes a registered continuation; multi-step sequences are state machines, hand-written or generated). Mid-function blocking waits are *not* available to Go script code under this design — an accepted ergonomic cost, since Go is the systems language where explicit state machines are idiomatic.
-- **Lua scripts (D-8)** keep the full JASS-style linear ergonomics: a gopher-lua coroutine's entire execution state (call-stack frames, locals, upvalues) is ordinary Go heap data — there is no native stack — so a suspended Lua coroutine serializes (eris-style persistence, part of the [determinism audit](determinism.md)) and restores exactly, mid-`Wait`. Since Lua is the creation surface (D-8), the audience that most needs `PolledWait`-in-the-middle-of-a-trigger gets it.
+- **Lua scripts (D-8)** keep the full JASS-style linear ergonomics: a gopher-lua coroutine's entire execution state (call-stack frames, locals, upvalues) is ordinary Go heap data — there is no native stack — so a suspended Lua coroutine serializes and restores exactly, mid-`Wait`. *(Revised 2026-06-11 per D-2026-06-11-25: the persistence mechanism is concrete — the **coroutine/LState persister patch** on the vendored gopher-lua fork serializes call frames, registry, and upvalues, with function protos referenced by chunk-id; see [Determinism §2.6](determinism.md).)* Since Lua is the creation surface (D-8), the audience that most needs `PolledWait`-in-the-middle-of-a-trigger gets it.
 
-**M1 decision rule, revised:** serializability is a **hard gate**, not a tiebreaker. The M1 scheduler spike prototypes candidate B and validates (a) deterministic resume order identical to the baton design's contract, (b) save → load → resume round-trips taken mid-`Wait` continue the hash trace unchanged, (c) zero per-tick allocations (records and Lua coroutines pooled per R-GC-2). Candidate A is eliminated unless the spike discovers a way to make goroutine suspension fully descriptive — no such way is known to exist in Go — and survives in this document only as the rationale record.
+**Spike result (D-2026-06-11-28, `spikes/scheduler`) — the M1 decision rule is discharged:** the spike implemented scripts as descriptive suspension records (PC + locals + typed suspension), a sleep queue keyed `(wakeTick, seq)`, and event waiters FIFO by seq, then gob-serialized the **full scheduler state mid-run**, restored it, and advanced — traces and state **bit-identical** with the uninterrupted run, resume order deterministic. The goroutine-baton design is dead; stackless descriptive suspension is **the** scheduler design (R-SIM-6, D-9), not a candidate. M1's remaining scheduler work is production hardening (real save format instead of gob, pooling per R-GC-2, the Lua `suspKind` once the D-25 persister lands), not design choice.
 
 Mechanism-independent rules (unchanged):
 
@@ -82,7 +82,7 @@ type suspension struct {
     kind     suspKind // goContinuation | luaCoroutine | timer
     contID   ContID   // Go path: registered continuation, ID stable across runs/builds
     state    contState // Go path: value-typed payload, fixed max size, pooled
-    luaCo    *luaThread // Lua path: coroutine — heap data, eris-serializable
+    luaCo    *luaThread // Lua path: coroutine — heap data, persisted by the D-25 fork patch
 }
 
 // Scheduler resume loop (tick phase 2):
@@ -93,7 +93,7 @@ for sched.sleepers.PeekTick() == sched.now {
 }
 ```
 
-Exactly one suspension runs at a time, on the scheduler's own thread — no goroutines, no channels, nothing the Go runtime scheduler can reorder. (Candidate A's baton sketch is preserved in git history; its determinism contract — one runnable script at a time, ascending-key resume — carries over unchanged.)
+Exactly one suspension runs at a time, on the scheduler's own thread — no goroutines, no channels, nothing the Go runtime scheduler can reorder. (The rejected baton design's sketch is preserved in git history; its determinism contract — one runnable script at a time, ascending-key resume — carries over unchanged, and the spike confirmed the stackless implementation honors it.)
 
 A worked example of the contract, end to end — Lua, the surface where linear waits live:
 
@@ -137,7 +137,7 @@ The full `commonai` port (milestone M5.5) adds a **second scheduler domain**: an
 
 World and AI scripts run as Lua coroutines on this scheduler — same sleeper queue, same ordering key; a Lua coroutine and a Go continuation are just two `suspKind`s of the same suspension record. Three constraints bind the Lua path:
 
-- **Determinism:** the VM is inside the determinism boundary — fixed-point number discipline, specified table-iteration order, and the full audit scope per [Determinism §2.6](determinism.md).
+- **Determinism:** the VM is inside the determinism boundary — fixed-point number discipline, insertion-ordered table iteration, and the vendored gopher-lua fork's four-patch plan per [Determinism §2.6](determinism.md) (*revised 2026-06-11 per D-2026-06-11-25*).
 - **Quotas (R-SEC-1):** every resume runs under a per-tick **instruction quota**, and each VM under a **memory quota** — both *counted*, never timed, so enforcement is bit-identical on every machine. Exceeding a quota is a deterministic script fault handled by the §3.3 containment edge.
 - **Lockstep stall guard:** because the quota is counted work, a hostile or runaway world script burns the same bounded budget on every lockstep peer (M7, D-2026-06-11-5) and faults at the same instruction on every machine — quota enforcement doubles as the stall guard, turning "one client hangs, the match hangs" into a deterministic, replayable script error. The quota values are part of sim semantics and the replay/version contract, exactly like the [pathfinding expansion budget](pathfinding.md).
 

@@ -84,25 +84,26 @@ Design notes:
 
 *Revised 2026-06-11 per D-2026-06-11-1.*
 
-The staff leaning entering the spike was 16.16 over `int32` (halved positional memory, WC3-scale range sufficiency). The owner decision selects **32.32 over `int64`** instead: overflow anxiety disappears for positions, distances, and accumulators rather than being policed by convention and lint; the multiply/divide helpers are single-instruction on both target architectures; and the doubled positional footprint is absorbed — the entire sim state remains single-digit megabytes even at the D-2026-06-11-18 capacity targets ([ECS §5.1](ecs-architecture.md)). Both fixed-point variants share the decisive property: hazards 1–2 of §2.3 disappear entirely instead of being policed. Ordered float32 is dropped; the question reopens **only** if M1 shows the 32.32 backend cannot meet the ≤ 10 ms tick budget.
+The staff leaning entering the spike was 16.16 over `int32` (halved positional memory, WC3-scale range sufficiency). The owner decision selects **32.32 over `int64`** instead: overflow anxiety disappears for positions, distances, and accumulators rather than being policed by convention and lint; the multiply/divide helpers are single-instruction on both target architectures; and the doubled positional footprint is absorbed — the entire sim state remains single-digit megabytes even at the D-2026-06-11-18 capacity targets ([ECS §5.1](ecs-architecture.md)). Both fixed-point variants share the decisive property: hazards 1–2 of §2.3 disappear entirely instead of being policed. Ordered float32 is dropped; the question reopens **only** if M1 shows the 32.32 backend cannot meet the ≤ 10 ms tick budget. *(Revised 2026-06-11 per D-2026-06-11-27: the spike has since executed — §3 — and the reopening condition did not fire: 182 µs per 2,000-entity tick is 1.8% of the budget.)*
 
-### 2.6 Lua VM determinism (D-2026-06-11-8) — audit scope
+### 2.6 Lua VM determinism: DECIDED — vendored gopher-lua fork, four LITD patches (D-2026-06-11-25)
 
-*Added 2026-06-11 per D-2026-06-11-8.*
+*Added 2026-06-11 per D-2026-06-11-8. Revised 2026-06-11 per D-2026-06-11-25: the VM is decided and the open-ended "audit scope" is replaced by the concrete four-patch plan.*
 
-Deterministic embedded Lua (gopher-lua family) ships in v1 (M5), and world scripts execute inside the tick — so the Lua VM is gameplay code, sits inside the determinism boundary, and every hazard in §2.3 applies to it. The determinism audit of the VM is an M5 entry gate, with this scope:
+The VM is a **forked `yuin/gopher-lua`, vendored in `repoes/`** (LITD-PATCH discipline, [Tooling §6](../09-roadmap/tooling.md)). It ships in v1 (M5), and world scripts execute inside the tick — the VM is gameplay code, sits inside the determinism boundary, and every hazard in §2.3 applies to it. gopher-lua won (D-25) because two of those hazards are already closed at the source: **`pairs()` iteration is insertion-ordered** — the table implementation never ranges a Go map, so the script-side twin of hazard 3 does not exist — and **VM-level coroutines are plain Go heap data** (serializable; arnodel/golua's goroutine-based coroutines are unserializable, Shopify/go-lua has none), with number→string formatting in pure-Go strconv. Performance ~5–10× C Lua is adequate; hot paths are Go sim code. The remaining hazards are closed by **four concrete patches**:
 
-- **Arithmetic.** Stock gopher-lua numbers are `float64`, which would reintroduce every Option B hazard through the back door of script math. The constraint: Lua arithmetic must either **route through the same fixed-point discipline** — the VM patched/forked so the script-visible number type is `fixed.F64` with the same Mul/Div/trig semantics (preferred) — or be **strictly confined**: float values exist only VM-internally and never reach sim state except through API bindings that accept/return `fixed.F64` and convert at the boundary with a specified rounding rule. Confinement is fragile (a script that computes a position with float math and issues a move order has already laundered platform-dependent bits into a command), so it is acceptable only if the audit can demonstrate that *every* sim-visible numeric path crosses a converting boundary; failing that, the fixed-point number type is mandatory.
-- **Table iteration.** Lua `pairs`/`next` order must be fully specified and identical across runs and platforms; if gopher-lua's table implementation leans on Go map iteration anywhere observable, that implementation is replaced. This is the script-side twin of hazard 3.
-- **No ambient entropy.** `os`, `io`, wall-clock, and stock `math.random` are already stripped by the R-SEC-1 hard sandbox (D-2026-06-11-20); `math.random` rebinds to the sim PRNG (§4) so script randomness is part of the single deterministic stream.
-- **Quotas are counted, never timed.** The per-tick instruction and memory quotas (R-SEC-1) are counted work — like the pathfinding expansion budget, their values are part of sim semantics and the replay/version contract; a wall-clock cutoff would itself be a desync source.
-- **Coroutine state is data.** A gopher-lua coroutine's suspension state is ordinary Go heap data (no native stack), which is what makes it serializable for R-SIM-6 — see [Tick & Scheduler §3](tick-and-scheduler.md).
+1. **Instruction-budget counter in `mainLoop`** — the R-SEC-1 per-tick quota and the M7 lockstep tick budget. Counted work, never timed: like the pathfinding expansion budget, the quota values are part of sim semantics and the replay/version contract; a wall-clock cutoff would itself be a desync source.
+2. **Deterministic `mathlib` replacement** (fixed-point/table-based). The driver: Go's `math` package is **not cross-arch bit-identical** ([golang/go#20319](https://github.com/golang/go/issues/20319)) — stock gopher-lua stdlib math would reintroduce the §2.3 hazards through the back door of script math. `math.random` rebinds to the sim PRNG (§4) so script randomness is part of the single deterministic stream; `os`, `io`, and wall-clock are already stripped by the R-SEC-1 hard sandbox (D-2026-06-11-20). Sim-visible numeric paths cross API bindings that accept/return `fixed.F64` with a specified conversion rule.
+3. **Coroutine/LState persister** (call frames, registry, upvalues; function protos referenced by chunk-id). A gopher-lua coroutine's suspension state is ordinary Go heap data (no native stack), which is what makes it serializable for R-SIM-6 — see [Tick & Scheduler §3](tick-and-scheduler.md).
+4. **LState/callframe pooling** (R-GC-1) plus a **golden cross-arch determinism CI test** — the fork is held to the same hash-matrix evidence standard as the Go sim (G5.7); any upstream bump re-runs it before merge.
 
-## 3. The M1 spike design
+## 3. The M1 spike — EXECUTED 2026-06-11 with results (D-2026-06-11-27)
 
-*Revised 2026-06-11 per D-2026-06-11-1: the spike validates the decided fixed-point backend rather than arbitrating between representations.*
+*Revised 2026-06-11 per D-2026-06-11-1: the spike validates the decided fixed-point backend rather than arbitrating between representations. Revised again 2026-06-11 per D-2026-06-11-27: the spike has been **executed** (`spikes/fixedpoint`) and the backend is validated — this section now records the design plus the results; M1's remaining work is wiring the harness across the OS/arch CI matrix.*
 
-The spike produces the evidence that 32.32 fixed-point meets the budgets, plus the permanent regression harness. The ordered-float backend is no longer built; the harness keeps the backend seam so a float candidate *could* be re-added if the D-1 reopening condition (tick-budget failure) ever fires.
+**Results (D-27, `spikes/fixedpoint`).** Representative tick math — movement integration, distance/sqrt, damage accumulation — for **2,000 entities ran at 182 µs/tick = 1.8% of the ≤ 10 ms budget** (float64 baseline 28 µs; the 6.5× ratio is irrelevant at this absolute cost). The 10k-tick state hash was bit-stable across repeated runs; a 4-hour timer and DPS accumulators were exact; the coordinate range showed **5 decimal orders of headroom**; zero allocs/tick. The D-1 reopening condition (tick-budget failure) did not fire and the question is closed.
+
+The spike produced the evidence that 32.32 fixed-point meets the budgets, plus the permanent regression harness. The ordered-float backend was never built; the harness keeps the backend seam only as a historical escape hatch.
 
 **Workload.** A miniature but representative sim: 500 entities (the low-tier guarantee scale), plus a 1,000-entity variant per the D-2026-06-11-18 stretch target, exercising fixed-point movement integration, distance checks, A\* over a 256×256 grid with the deterministic tie-breaking rules from [Pathfinding](pathfinding.md), simple combat (target acquisition + damage), and PRNG-driven events — every operation class the real sim will use, behind one backend interface.
 
@@ -129,12 +130,12 @@ The full test matrix:
 
 Not every combination runs on every commit post-M1 (the steady-state CI suite runs the decided backend on Linux/amd64 + Linux/arm64 + Windows/amd64 per commit, full matrix nightly); the spike itself runs the complete matrix once per candidate change.
 
-**Spike exit questions the validation record must answer** (*revised 2026-06-11 per D-2026-06-11-1*):
+**Spike exit questions — answered by the executed run** (*revised 2026-06-11 per D-2026-06-11-27*):
 
-1. ns/tick and worst-tick latency for the 32.32 backend at 500 entities (low-tier reference machine) and 1,000 entities (recommended spec) against the ≤ 10 ms budget (PRD §5.3) — failure here is the *only* condition that reopens D-1.
-2. Range/precision calibration: where 32.32 margins land for movement integration, squared-distance comparison, and long-running accumulators; which paths require 128-bit intermediates and whether any of them are hot in profiles.
-3. Whether the lookup-table trig and `SqrtU64` precision suffice for movement normalization and projectile arcs without visible quantization artifacts at sim scale.
-4. Confirmation that `AllocsPerRun == 0` holds (a backend that forces boxing or table allocations fails R-GC-1 regardless of determinism).
+1. ns/tick against the ≤ 10 ms budget — **answered: 182 µs at 2,000 entities (1.8% of budget)**; the only D-1 reopening condition did not fire.
+2. Range/precision calibration — **answered: 4-hour timers and DPS accumulators exact; coordinate range has 5 decimal orders of headroom**; 128-bit intermediates confined to the `DistSqLess`-style range tests as designed.
+3. Lookup-table trig / `SqrtU64` quantization at sim scale — exercised by the spike's movement/sqrt workload with no anomalies; final visual confirmation rides the M3 benchmark scenes.
+4. `AllocsPerRun == 0` — **answered: zero allocs/tick.**
 
 ## 4. Seeded PRNG design
 
@@ -172,7 +173,7 @@ Replay verification in headless CI (R-SIM-4) — record a scripted match, replay
 |---|---|
 | Fixed-point `fixed.F64` type, lint ban on raw arithmetic | overflow misuse, accidental float math |
 | CI analyzer: no `range` over map, no `time.Now`, no `go` statement, no `math.*` in `litd/sim` | hazards 2–5 |
-| Lua VM audit (§2.6): fixed-point number type or converting API boundary; specified table order; counted instruction/memory quotas | script-side float, entropy, and ordering hazards (D-2026-06-11-8/-20) |
+| Vendored gopher-lua fork, four LITD patches (§2.6): instruction budget, deterministic mathlib, coroutine persister, pooling + golden cross-arch CI test | script-side float, entropy, and ordering hazards (D-2026-06-11-25, D-8/-20) |
 | 10k-tick multi-platform hash-trace test on every commit | everything, end to end |
 | Per-system sub-hashes | desync localization |
 | In-repo PRNG + hash implementations | toolchain version drift |

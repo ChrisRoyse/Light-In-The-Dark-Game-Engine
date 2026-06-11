@@ -28,7 +28,8 @@ Raw input handling, selection state, camera state, and hotkey resolution are all
 *not* sim state: a player's current selection lives in the input layer, and only the
 *orders issued to* selected entities cross into the sim (as commands carrying explicit
 entity-ID lists). This is the same separation lockstep RTS netcode requires, which is why
-§8 is the groundwork for replays and v2 multiplayer.
+§8 is the groundwork for replays and the committed M7 multiplayer milestone (quic-go star
+topology, D-2026-06-11-26).
 
 This document refines R-INP-1 into **R-INP-1.1 … R-INP-1.7**.
 
@@ -176,7 +177,14 @@ rather than being a feature.
 
 This is the load-bearing section: the contract between the input layer and
 [PRD §5.1](../../PRD.md#51-simulation-core-deterministic)'s deterministic core, and the
-groundwork G5 requires for replays and v2 lockstep netcode.
+groundwork G5 requires for replays and M7 lockstep netcode.
+
+*Revised 2026-06-11 per D-2026-06-11-26: the M7 transport is decided — **quic-go, star
+topology** (LAN: player-hosted in-process; internet: lightweight relay co-located with the
+M9 hub). Commands are grouped into **command turns every 2–4 sim ticks** with an **adaptive
+input-delay buffer** (start 2 turns); a reliable stream carries turns + state hashes. The
+record encoding below is unchanged — the turn is a transport-level grouping of these same
+records.*
 
 - **R-INP-1.7:** The sim's only input is an ordered stream of **command records**. The
   pipeline:
@@ -195,12 +203,12 @@ raw events (G3N window)                     presentation side
 | Field | Type | Notes |
 |---|---|---|
 | `version` | u8 | Encoding version; replays refuse mismatches |
-| `tick` | u32 | Execution tick (assigned at enqueue: next unsimulated tick in v1 single-player; netcode in v2 will schedule tick+delay) |
+| `tick` | u32 | Execution tick (assigned at enqueue: next unsimulated tick in single-player; M7 netcode schedules into the next command turn — turns every 2–4 ticks plus the adaptive input delay, D-2026-06-11-26) |
 | `playerID` | u8 | Issuing player |
 | `seq` | u16 | Per-player sequence number within the tick — total order for same-tick commands |
 | `opcode` | u8 | Closed set: `Move`, `Attack`, `Stop`, `Hold`, `Patrol`, `CastAbility`, `Train`, `Build`, `Cancel`, `Rally`, `Harvest`, `Repair`, `Board`, `Unload`, … (registry frozen per encoding version) |
 | `flags` | u8 | Bit 0: `queued` (§7); remaining bits reserved |
-| `payload` | opcode-specific | Entity-ID lists (u32 generation-counted IDs, explicit count), target ID or fixed-point world coordinates (the sim's native 16.16/32.32 representation per R-SIM-2 — coordinates are quantized at *encode* time so client float math never leaks in), ability/unit-type IDs (u16 data-table indices) |
+| `payload` | opcode-specific | Entity-ID lists (u32 generation-counted IDs, explicit count), target ID or fixed-point world coordinates (the sim's native `int64` 32.32 representation per R-SIM-2/D-2026-06-11-1 — coordinates are quantized at *encode* time so client float math never leaks in), ability/unit-type IDs (u16 data-table indices) |
 
 Design consequences, each deliberate:
 
@@ -209,9 +217,10 @@ Design consequences, each deliberate:
    ([PRD §7](../../PRD.md#7-milestones)) runs exactly this way, and the headless CI
    benchmarks ([Budgets and Benchmarks §3](../08-performance/budgets-and-benchmarks.md))
    use recorded command streams as their workload definition.
-2. **Netcode is an exchange problem, not a redesign.** v2 lockstep multiplayer exchanges
-   the same records and schedules them at `tick + latency`; nothing about the sim's input
-   contract changes ([PRD §2.2](../../PRD.md#22-non-goals-v1)).
+2. **Netcode is an exchange problem, not a redesign.** M7 lockstep multiplayer exchanges
+   the same records over quic-go (star topology, D-2026-06-11-26), grouped into command
+   turns every 2–4 sim ticks and scheduled behind the adaptive input-delay buffer; nothing
+   about the sim's input contract changes ([PRD §2.2](../../PRD.md#22-non-goals-v1)).
 3. **Cheating surface is bounded.** The sim validates every record (ownership of every
    listed entity ID, ability availability, tech requirements) deterministically; invalid
    records are rejected identically on every machine.

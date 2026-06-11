@@ -1,6 +1,6 @@
 # Batching and Draw Calls
 
-> Expands [PRD §5.2](../../PRD.md#52-rendering-g3n-presentation-layer) requirements **R-RND-3** (≤ 300 draw calls/frame), **R-RND-7** (team color via uniform), the instancing work — M3 investigation, **patch planned into M4 per [D-2026-06-11-18](../01-vision/decisions.md)** — from [PRD §7](../../PRD.md#7-milestones)/[§8](../../PRD.md#8-risks), and the per-frame allocation discipline of **R-GC-1..5** ([PRD §5.3.1](../../PRD.md#531-go-garbage-collection-discipline)).
+> Expands [PRD §5.2](../../PRD.md#52-rendering-g3n-presentation-layer) requirements **R-RND-3** (≤ 300 draw calls/frame), **R-RND-7** (team color via uniform), the instancing work — M3 implementation planning, **patch planned into M4 per [D-2026-06-11-18](../01-vision/decisions.md), viability confirmed by spike per D-2026-06-11-30** — from [PRD §7](../../PRD.md#7-milestones)/[§8](../../PRD.md#8-risks), and the per-frame allocation discipline of **R-GC-1..5** ([PRD §5.3.1](../../PRD.md#531-go-garbage-collection-discipline)).
 >
 > Related: [Camera and Culling](./camera-and-culling.md) · [Materials and Lighting](./materials-and-lighting.md) · [Terrain](./terrain.md) · [Fog of War, Minimap, Selection](./fog-of-war-minimap-selection.md)
 
@@ -49,24 +49,24 @@ Static world geometry is merged offline-style at map load:
 
 Map-load merging is allowed to allocate freely — R-GC-1's zero-alloc constraint applies to steady state only.
 
-## 4. GPU instancing: planned M4 G3N patch, scoped by the M3 investigation
+## 4. GPU instancing: planned M4 G3N patch — CONFIRMED VIABLE by spike (D-2026-06-11-30)
 
-*Revised 2026-06-11 per D-2026-06-11-18: the 1,000-unit stretch target assumes the PRD §8 instancing risk trigger has fired — the patch is **planned M4 work**, not a contingency. The M3 investigation no longer decides* whether *to patch; it decides* how *(above all the skinned-mesh question, §4.3.3).*
+*Revised 2026-06-11 per D-2026-06-11-18: the 1,000-unit stretch target assumes the PRD §8 instancing risk trigger has fired — the patch is **planned M4 work**, not a contingency. Revised again 2026-06-11 per D-2026-06-11-30: the spike ran — the patch is **confirmed viable** with no GL capability risk, and the M3 step is now implementation planning only.*
 
-### 4.1 Status quo
+### 4.1 Status quo — spike-verified (D-30)
 
-G3N has **no documented GPU instancing path** ([PRD §3.4](../../PRD.md#34-engine-viability-and-risks-g3n), risk table [§8](../../PRD.md#8-risks)): `renderer/renderer.go` issues per-graphic draws and the `gls` layer wraps classic `glDrawElements`-style submission. Because the engine is vendored in `repoes/engine`, we can patch it.
+G3N has **no documented GPU instancing path** at the Go level ([PRD §3.4](../../PRD.md#34-engine-viability-and-risks-g3n), risk table [§8](../../PRD.md#8-risks)): `renderer/renderer.go` issues per-graphic draws and the `gls` layer wraps classic `glDrawElements`-style submission. But the D-30 spike found that the vendored C binding layer **already loads the instancing entry points**: `glDrawArraysInstanced`, `glDrawElementsInstanced`, `glDrawElementsInstancedBaseVertex`, and `glVertexAttribDivisor` are loaded in `repoes/engine/gls/glapi.c` (lines 480–530 and 831–881). The patch is therefore **Go-side only**: `gls` wrappers over the already-loaded functions, an `InstancedMesh` graphic, and a per-instance transform/team-color attribute buffer. No GL capability risk; because the engine is vendored in `repoes/engine`, we own the patch.
 
 ### 4.2 Why instancing matters here
 
 An RTS is the canonical instancing workload: hundreds of entities sharing a handful of meshes. With instancing, all visible footmen become **one draw call** carrying a per-instance buffer (transform + team color + animation parameters), turning the unit sub-budget from ~150 calls into ~10–20 (one per distinct visible model type per material). At the D-18 stretch case — 1,000 visible units — instancing is not an optimization but the only way the 300-call ceiling is reachable at all.
 
-### 4.3 Investigation plan (investigation in M3; patch lands in M4)
+### 4.3 Implementation plan (planning in M3; patch lands in M4)
 
-*Revised 2026-06-11 per D-2026-06-11-18 — step 1 no longer gates whether the patch happens.*
+*Revised 2026-06-11 per D-2026-06-11-18 — step 1 no longer gates whether the patch happens. Revised again 2026-06-11 per D-2026-06-11-30 — the "investigation" is now **implementation planning only**: the spike already confirmed viability and fixed the patch shape.*
 
 1. **Baseline measurement (still first, repurposed).** Run the M3 benchmark scenes (500 and 1,000 units, max zoom) with batching + merging only. The baseline no longer decides *whether* to patch — 1,000 visible units cannot fit 300 calls without instancing, so the patch is committed M4 work — it sizes *how much* the patch must recover and which content classes (rigid vs skinned) sit on the critical path.
-2. **Patch surface survey.** Identify the minimal G3N touch points: `gls` (expose `glDrawElementsInstanced` and `glVertexAttribDivisor` in `gls-desktop.go`/`gls-browser.go`), `geometry.Geometry` (attach an instance VBO with per-instance attribute layout), `graphic` (an `InstancedMesh` type that renders once with a count instead of N `Mesh` nodes), and the shader generator (`renderer/shaman.go` + `renderer/shaders`) to consume instance attributes in the standard/unlit vertex shaders.
+2. **Patch surface — settled by the D-30 spike.** The C binding layer already loads `glDrawArraysInstanced`/`glDrawElementsInstanced`/`glDrawElementsInstancedBaseVertex`/`glVertexAttribDivisor` (`repoes/engine/gls/glapi.c:480–530, 831–881`); the LITD-PATCH adds the Go-side `gls` wrappers, an `InstancedMesh` graphic, and a per-instance transform/team-color attribute buffer, plus the shader-generator changes (`renderer/shaman.go` + `renderer/shaders`) to consume instance attributes in the standard/unlit vertex shaders. No survey work remains — this is a build list.
 3. **Skinned-mesh question.** Per-instance *rigid* transforms are straightforward; per-instance *skinning state* is not (each unit is at a different animation time). Candidate answers, evaluated in this order: (a) baked vertex-animation textures (sample bone matrices from a per-clip texture by instance animation-phase — fits the low preset and low bone counts of CC0 packs); (b) shared-pose cohorts (units in the same clip+quantized-phase share a pose; draws per cohort); (c) instancing for rigid content only (buildings, doodads, projectiles) and per-draw skinned units. Option (c) is the guaranteed-shippable floor.
 4. **Prototype + benchmark.** Implement the smallest variant that covers the 1,000-unit stretch case per the baseline; re-run the M3 scenes; record draw calls, frame time, and CPU submission time.
 5. **Decision record.** Outcome (variant chosen, skinned-mesh answer, content classes covered) is written into this document and the vendored-fork patch list before the M4 render core builds on it. "Defer entirely" is no longer an outcome (D-2026-06-11-18); the floor is option (c) of step 3 — rigid-content instancing — with skinned coverage recorded as adopted or scheduled.
@@ -144,7 +144,7 @@ What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the 
 
 | Milestone | Deliverable |
 |---|---|
-| M3 | Baseline batching + merging benchmark; instancing investigation (§4.3) scoping the planned patch *(Revised 2026-06-11 per D-2026-06-11-18)* |
+| M3 | Baseline batching + merging benchmark; instancing implementation planning (§4.3) — viability already confirmed by spike *(Revised 2026-06-11 per D-2026-06-11-18/-30)* |
 | M4 | Team-color uniform path; chunked terrain merging; **instancing patch lands (D-2026-06-11-18)** — 1,000-unit stretch scene inside the 300-call ceiling on the recommended spec; draw-call counter gating CI; both camera projections benchmarked |
 | M6 | Full-match budget validation (vertical slice) with all overlays from [Fog of War, Minimap, Selection](./fog-of-war-minimap-selection.md) active |
 
@@ -155,5 +155,5 @@ What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the 
 | R-RND-3 (≤ 300 draw calls) | §1 budget allocation; §2–§4 mechanisms; §9 CI gate |
 | R-RND-7 (team color via uniform) | §5 |
 | R-GC-1/2/3/5 (zero-alloc frame path) | §6 obligations; §9 `AllocsPerRun` gate |
-| PRD §8 instancing risk / D-2026-06-11-18 (trigger assumed fired — planned M4 patch) | §4 plan; §10 playbook steps 1–2 |
+| PRD §8 instancing risk / D-2026-06-11-18 (trigger assumed fired — planned M4 patch) / D-2026-06-11-30 (viability confirmed, GL bindings already loaded) | §4 plan; §10 playbook steps 1–2 |
 | R-RND-2 atlas prerequisite | §2.1 (consumes [Materials §3](./materials-and-lighting.md)) |

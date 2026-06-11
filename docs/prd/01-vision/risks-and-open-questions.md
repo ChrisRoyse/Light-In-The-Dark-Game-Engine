@@ -65,6 +65,11 @@ treats this risk's implementation trigger as already fired — the instancing pa
   lever that needs no engine change — and re-baseline the 1,000-unit stretch scene; the
   500-unit low-tier guarantee (G3.2/G3.3) is not negotiable.
 
+*Status 2026-06-11 (D-2026-06-11-30): the spike confirmed the patch **viable with no GL
+capability risk** — the vendored `gls/glapi.c` already loads the instancing entry points
+(lines 480–530, 831–881); the remaining patch is Go-side wrappers + `InstancedMesh` +
+per-instance attributes ([Batching §4](../05-rendering/batching-and-draw-calls.md)).*
+
 ### R3 — Float non-determinism across CPUs
 
 *Likelihood: Medium · Impact: High*
@@ -90,6 +95,12 @@ written (R-SIM-2).
 - *Late-discovery trigger:* divergence found after M3 (sim built) → treated as a release
   blocker; the deterministic math package boundary means the representation can be swapped
   without rewriting gameplay systems.
+
+*Status 2026-06-11 (D-2026-06-11-27): the spike has **executed and validated fixed-point**
+(`spikes/fixedpoint`): 182 µs per 2,000-entity tick = 1.8% of the ≤ 10 ms budget, 10k-tick
+hash bit-stable across runs, exact long-running accumulators, zero allocs/tick. Floats never
+entered the sim, so the cross-CPU float hazard is designed out rather than mitigated;
+residual exposure is regression only, held by the permanent CI hash-matrix guard.*
 
 ### R4 — API surface underestimation (natives needing engine features G3N lacks)
 
@@ -176,10 +187,18 @@ boundary. Any VM-internal nondeterminism — table iteration order leaking into 
 string hashing, GC-timing-dependent behavior, float coercions in the standard library —
 breaks G5 exactly where it is hardest to lint: inside someone else's interpreter.
 
-**Mitigation.** Determinism audit of the chosen VM before adoption (D-8); the sandbox
-(R-SEC-1, D-20) exposes *only* the generated game API — no `os`, `io`, `math.random`, or
-other stdlib nondeterminism sources reachable; per-tick instruction quotas make script
-scheduling deterministic (and double as the lockstep stall guard).
+**Mitigation — now an executed plan (D-2026-06-11-25), not an audit TODO.** The VM is
+decided: a **vendored fork of `yuin/gopher-lua`** (LITD-PATCH discipline,
+[Tooling §6](../09-roadmap/tooling.md)), chosen because `pairs()` iteration is
+insertion-ordered (never ranges a Go map), VM-level coroutines are plain serializable heap
+data, and number→string is pure-Go strconv. Four concrete patches close the remaining
+hazards: (1) instruction-budget counter in `mainLoop` (R-SEC-1 quota + lockstep tick
+budget), (2) deterministic `mathlib` replacement — Go's `math` package is not cross-arch
+bit-identical (golang/go#20319), `math.random` → sim PRNG, (3) coroutine/LState persister,
+(4) LState/callframe pooling + a golden cross-arch determinism CI test. The sandbox
+(R-SEC-1, D-20) still exposes *only* the generated game API — no `os`, `io`, or stdlib
+nondeterminism reachable; quotas are counted, never timed (and double as the lockstep stall
+guard). Residual risk: keeping the four patches green across fork maintenance.
 
 **Detection signals.**
 - A Lua-scripted benchmark scenario joins the cross-platform hash-comparison matrix
@@ -189,45 +208,51 @@ scheduling deterministic (and double as the lockstep stall guard).
 - Binding-generator lint: any exposed Lua symbol outside the generated game-API set fails CI.
 
 **Trigger points.**
-- *Audit trigger:* any documented or discovered nondeterminism in the candidate VM → patch
-  or fork the VM (we already own a vendored engine fork; same posture) or restrict the
-  exposed surface until the scenario hash matrix is green.
+- *Audit trigger:* any documented or discovered nondeterminism in the forked VM → a fifth
+  LITD patch (we already own the vendored fork, D-25; same posture as `repoes/engine`) or
+  restrict the exposed surface until the scenario hash matrix is green.
 - *Replacement trigger:* if the VM family proves unauditable or unfixable by M5 exit, swap
   VMs behind the binding layer — bindings are generated from `api-manifest.json` (D-8), so
   retargeting is regeneration, not a rewrite. Dropping the Lua surface is **not** an option
   (owner directive: features are not cut because they are hard).
 
-### R8 — Serializable-scheduler complexity *(added 2026-06-11 per D-2026-06-11-9)*
+### R8 — Serializable-scheduler complexity *(added 2026-06-11 per D-2026-06-11-9; downgraded 2026-06-11 per D-2026-06-11-28)*
 
-*Likelihood: Medium · Impact: High*
+*Likelihood: Low (downgraded from Medium — design validated by spike) · Impact: High*
 
 Mid-game save/load is v1 scope, so suspended script coroutines, timers, and event
 subscriptions must all serialize (D-9). A naive goroutine/stack-based scheduler cannot be
-serialized in Go; the representation must be stackless/state-machine coroutines or fully
-descriptive suspension records — chosen at M1, implemented at M3, and load-bearing for
+serialized in Go; the representation is **stackless descriptive suspension records — decided
+and spike-validated (D-28)** — implemented in production at M1/M3, and load-bearing for
 three features at once (saves, the M5.5 AI domain's second scheduler instance, campaign
 persistence per D-15).
 
-**Mitigation.** The M1 spike evaluates the scheduler representation for serializability
-*before* any gameplay code depends on it; the save format and scheduler representation are
-co-designed, not retrofitted.
+**Mitigation — design risk retired (D-2026-06-11-28).** The spike (`spikes/scheduler`)
+already ran the suspend → serialize → restore → resume round-trip: full scheduler state
+gob-serialized **mid-run**, restored, and advanced, with traces and state bit-identical to
+the uninterrupted run and deterministic `(wakeTick, seq)` resume order. The goroutine-baton
+alternative is dead. **Residual risk is production hardening only:** scaling the
+representation to the real sim's save format, pooling (R-GC-2), and the Lua coroutine
+persistence path (D-25 patch 3) — not design choice.
 
 **Detection signals.**
-- M1 spike includes a suspend → serialize → restore → resume round-trip of a toy script;
-  any state that cannot be captured descriptively is found here, not at M6.
+- ~~M1 spike round-trip~~ executed and green (D-28); the same round-trip becomes a permanent
+  CI fixture on the production implementation in M1.
 - From M3, a permanent CI test: save mid-scenario, load, run to completion — final hash
   must equal an unbroken run's hash. Divergence is the signal.
 - Code review flag: any scheduler or script-context state held in places the serializer
   cannot reach (closures over Go pointers, unregistered timers) is rejected at review.
 
 **Trigger points.**
-- *Design trigger:* M1 round-trip reveals an unserializable suspension case → redesign the
-  representation before M3 starts; M3 does not begin on an unserializable scheduler.
+- *Design trigger:* ~~retired~~ — the M1-scope round-trip ran and was green (D-28); a new
+  unserializable suspension case found during productionization reopens it as a design
+  defect, not a research question. M3 still does not begin on an unserializable scheduler.
 - *Late-discovery trigger:* save/load hash divergence after M3 → release blocker, same
   severity class as R3 late discovery.
-- *Scope trigger:* the M5 Lua VM adds its own suspended-coroutine states; if the chosen VM's
-  coroutines resist descriptive serialization, the binding layer quantizes Lua waits onto
-  engine-level suspension records (R-EXEC-5 style) rather than serializing VM stacks.
+- *Scope trigger:* the M5 Lua VM adds its own suspended-coroutine states — addressed by the
+  D-25 coroutine/LState persister patch (gopher-lua coroutines are plain heap data); if that
+  patch hits an unpersistable case, the binding layer quantizes Lua waits onto engine-level
+  suspension records (R-EXEC-5 style) rather than serializing VM stacks.
 
 ### R9 — Generative-pipeline quality and provenance *(added 2026-06-11 per D-2026-06-11-12)*
 
@@ -260,13 +285,74 @@ generators are chosen for commercially clear output licensing.
   generator is dropped and its in-tree outputs are reviewed for replacement; the provenance
   manifest identifies exactly which assets came from it.
 
+### R10 — Relay-service operation *(added 2026-06-11 per D-2026-06-11-26)*
+
+*Likelihood: Medium · Impact: Medium*
+
+M7 internet play depends on a **lightweight relay we operate**: the star topology (D-26)
+runs the host loop on a relay co-located with the M9 hub backend (D-23) for all
+non-LAN sessions, eliminating NAT traversal. That converts a pure-engineering milestone into
+an *operated service* dependency: availability, bandwidth/hosting cost (small — lockstep
+relays forward command turns, ~bytes per player per turn, never state), abuse handling, and
+a single point of failure for internet matches.
+
+**Mitigation.** Relay traffic is inherently tiny (commands, not state), so economics start
+benign; the relay runs the *same host loop* as a LAN-hosting player's engine — one code
+path, no special server build; LAN play never touches the relay, so an outage degrades to
+LAN/offline rather than bricking multiplayer; pion/webrtc hole-punching is the recorded
+runner-up if relay economics ever fail (D-26).
+
+**Detection signals.**
+- Relay cost and concurrent-session telemetry from M7 beta onward; cost-per-session trending
+  against hosting budget is the economics signal.
+- Session-failure rate attributable to relay (vs client) in the M7 diagnostic dumps.
+- Hub/relay co-hosting load interference (M9): hub traffic spikes degrading live match
+  latency.
+
+**Trigger points.**
+- *Economics trigger:* relay cost per active session exceeds the owner-set budget → activate
+  the pion/webrtc hole-punching runner-up for direct connections, keeping the relay as
+  fallback only.
+- *Reliability trigger:* relay-attributed session failures exceed agreed availability → split
+  the relay from the hub host and/or add a second region before M9 ships.
+
+### R11 — Proprietary-engine posture *(added 2026-06-11 per D-2026-06-11-21/22)*
+
+*Likelihood: Low · Impact: Medium*
+
+The engine is closed-source forever (D-21) and distributed only from our own site (D-22).
+Consequences worth tracking as risk rather than assuming away: creator trust ("will the
+platform outlive my world?") rests entirely on the published world-archive format and Lua
+API docs; discovery has no store channel and is a marketing problem by design; and every
+dependency must be permissive-licensed, since copyleft is now a legal exclusion, not a
+preference.
+
+**Mitigation.** The open creator surface is contractual: the archive format spec and Lua API
+docs are published and versioned (D-21), so worlds are portable data even though the engine
+is not open; the G4.1 permissive-only allowlist is CI-enforced with no waiver path; own-site
+distribution keeps the funnel and pricing fully owned (D-22).
+
+**Detection signals.**
+- License scan failures or newly relicensed upstream dependencies (the copyleft-creep
+  signal).
+- Creator feedback citing engine opacity or platform-longevity doubt as an adoption blocker
+  (M9 hub feedback channel).
+
+**Trigger points.**
+- *Dependency trigger:* an essential dependency relicenses to copyleft → pin the last
+  permissive version and schedule a replacement; shipping a copyleft dependency is never an
+  option.
+- *Trust trigger:* documented creator attrition over platform-longevity concerns → expand
+  the public surface (e.g. format conformance test suite, archive-reader reference code) —
+  the engine itself stays closed (D-21 is permanent).
+
 ---
 
 ## 2. Open Questions
 
 ### Q1 — Fixed-point vs ordered-float for sim math
 
-**STATUS: DECIDED 2026-06-11 — fixed-point `int64` 32.32. See [decisions.md](./decisions.md#d-2026-06-11-1-q1--sim-math-fixed-point-int64-3232).**
+**STATUS: DECIDED 2026-06-11 — fixed-point `int64` 32.32. See [decisions.md](./decisions.md#d-2026-06-11-1-q1--sim-math-fixed-point-int64-3232). Spike since EXECUTED and validated (D-2026-06-11-27): 182 µs/2,000-entity tick = 1.8% of budget; the reopening condition did not fire.**
 
 **Deadline milestone:** **M1** (the milestone exists to answer this; it blocks all of M3).
 

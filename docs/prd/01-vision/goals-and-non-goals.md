@@ -92,25 +92,34 @@ profile is the contract.
 
 ### G4 — Zero-cost asset and tech stack
 
-**Statement.** All runtime dependencies open source (BSD/MIT/Apache); all game models
+**Statement.** All runtime dependencies open source and **permissive only** (BSD/MIT/Apache
+— copyleft GPL/AGPL/LGPL is a hard exclusion, D-2026-06-11-21); all game models
 CC0-licensed. No proprietary MDX/MDL Blizzard formats, no paid middleware, no runtime AI
-inference.
+inference. The engine itself is **proprietary, permanently** (D-21): the public surface is
+the world archive format specification and the Lua scripting API documentation. Distribution
+is **own-site only** (D-22) — no Steam, no itch.io, no GitHub releases, no third-party SDKs
+in the tree.
+
+*Revised 2026-06-11 per D-2026-06-11-21/22: G4.1 tightened to a permissive-only allowlist
+with copyleft hard-excluded; G4.8 added for the proprietary/own-site posture.*
 
 **Success criteria.**
 
 | # | Criterion | Measured by | Gate |
 |---|---|---|---|
-| G4.1 | 100% of `go.mod` dependencies (transitive) carry BSD/MIT/Apache-family licenses | License scan in CI (e.g. `go-licenses`-style check) with allowlist | M0 onward |
+| G4.1 | 100% of `go.mod` dependencies (transitive) and vendored forks carry permissive (BSD/MIT/Apache-family) licenses — **allowlist, not blocklist**; copyleft (GPL/AGPL/LGPL) is a hard exclusion anywhere in the tree, with no waiver path (D-2026-06-11-21) | License scan in CI (e.g. `go-licenses`-style check) with the permissive-only allowlist | M0 onward |
 | G4.2 | 100% of files under `assets/` have a recorded CC0 (or equivalently free, commercial-OK) provenance entry | `assets/MANIFEST` provenance file checked by the asset-validation CLI | M0 onward |
 | G4.3 | Zero MDX/MDL or other Blizzard-format files in the repo or the asset pipeline | Asset-validation CLI rejects non-GLB model formats (R-FMT-1/R-AST-2) | M0 onward |
 | G4.4 | All assets pass core-glTF validation (no unsupported KHR extensions; `KHR_materials_unlit` excepted) | Asset-validation CLI ([Tooling §3](../09-roadmap/tooling.md)) | M0 onward |
 | G4.5 | Total cash cost of runtime stack and shipped assets | $0 — no paid middleware, fonts, codecs (`.ogg` only, R-AUD-1) | Continuous |
 | G4.6 | No runtime AI/ML inference anywhere in the engine | Code review policy; no inference deps possible under G4.1 allowlist | Continuous |
 | G4.7 | Generated assets carry full provenance (D-2026-06-11-12): every `tools/assetgen` output is produced at **asset-build time only**, hand-curated, and committed with a provenance entry recording generator, parameters, and curation sign-off; G4.6 intact — zero runtime inference | Provenance manifest check extended to generated assets (CI); assetgen run log | Continuous from first generated asset (M4 terrain textures) |
+| G4.8 | Proprietary/own-site posture holds (D-2026-06-11-21/22): the engine source is never published; the public surface is exactly the world archive format spec + Lua API docs; release artifacts ship only from the Light in the Dark Analytics site; zero third-party distribution SDKs in the tree | Release checklist + dependency scan (no store/launcher SDKs pass G4.1 anyway); repo visibility audit at each release | Continuous from M6 (first distributable) |
 
 *Revised 2026-06-11 per D-2026-06-11-12: G4.7 added — asset categories with no CC0 source
 (portraits, spell VFX textures, voice lines, UI icons, terrain splat/cliff sets) are filled
-by the build-time generative pipeline rather than cut.*
+by the build-time generative pipeline rather than cut. Revised 2026-06-11 per
+D-2026-06-11-21/22: G4.8 added.*
 
 ### G5 — Determinism
 

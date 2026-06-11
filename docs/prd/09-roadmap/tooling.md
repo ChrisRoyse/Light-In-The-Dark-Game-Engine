@@ -11,6 +11,10 @@
 > *Revised 2026-06-11 per D-2026-06-11-6/8/12: `jassgen` gains the Lua binding generator as
 > a fifth output; `commonai` natives are mapped canonically, no longer tombstoned
 > `deferred-v2`; `tools/assetgen` added (§5).*
+>
+> *Revised 2026-06-11 per D-2026-06-11-21/25: the vendored **gopher-lua fork** joins the
+> tooling/vendoring landscape (§6) with its four LITD patches; the license scan rule is
+> tightened to a permissive-only allowlist with copyleft hard-excluded (§1).*
 
 ---
 
@@ -25,6 +29,11 @@
   only prints warnings does not protect a budget.
 - **Plain Go, zero exotic deps.** Tools live under `tools/`, build with the ordinary
   toolchain, and respect the G4 license allowlist.
+- **License scan: permissive-only allowlist, copyleft hard-excluded** *(revised 2026-06-11
+  per D-2026-06-11-21)*. The G4.1 CI scan is an **allowlist** (BSD/MIT/Apache family), not a
+  blocklist; GPL/AGPL/LGPL is a hard exclusion anywhere in the tree — dependencies, tools,
+  and vendored forks alike. The engine is proprietary permanently (D-21), so a single
+  copyleft dependency is a shipping blocker, and the scan has no waiver path for it.
 
 ---
 
@@ -399,14 +408,47 @@ generation spec ──► generate ──► curate (human accept/reject) ──
 
 ---
 
-## 6. Related documents
+## 6. Vendored gopher-lua fork *(added 2026-06-11 per D-2026-06-11-25)*
+
+### 6.1 Purpose
+
+The M5 Lua VM is a **forked `yuin/gopher-lua`, vendored in `repoes/`** under the same
+LITD-PATCH discipline as the g3n fork (patches marked `// LITD-PATCH`, never silently
+rebased to upstream). gopher-lua won on the three hard requirements (D-25): VM-level
+coroutines are plain Go heap data (serializable — the only credible pure-Go option;
+arnodel/golua uses goroutines = unserializable, Shopify/go-lua has no coroutines at all),
+`pairs()` iteration is insertion-ordered (never ranges a Go map), and number→string
+formatting is pure-Go strconv. MIT-licensed, inside the §1 permissive allowlist.
+
+### 6.2 The four LITD patches
+
+| # | Patch | Serves |
+|---|---|---|
+| 1 | **Instruction-budget counter in `mainLoop`** | R-SEC-1 per-tick quota + M7 lockstep tick budget — counted work, never timed |
+| 2 | **Deterministic `mathlib` replacement** (fixed-point/table-based; `math.random` → sim PRNG) | Go's `math` package is not cross-arch bit-identical ([golang/go#20319](https://github.com/golang/go/issues/20319)) |
+| 3 | **Coroutine/LState persister** (call frames, registry, upvalues; protos by chunk-id) | R-SIM-6 serializable scheduler — mid-game saves of suspended Lua coroutines |
+| 4 | **LState/callframe pooling + golden cross-arch determinism CI test** | R-GC-1 zero-alloc tick; the CI test holds the fork to the same hash-matrix evidence standard as the Go sim (G5.7) |
+
+### 6.3 Maintenance rules
+
+- Same posture as `repoes/engine`: we own the fork; upstream bumps re-apply the LITD-PATCH
+  set and re-run the golden cross-arch test before merge (the R7 audit trigger in
+  [Risks](../01-vision/risks-and-open-questions.md)).
+- Performance context (D-25): gopher-lua at ~5–10× C Lua is adequate — hot paths are Go sim
+  code, not script bytecode.
+- The fork is a runtime dependency, so it sits under the §1 license scan like everything
+  else; its patches introduce no new dependencies.
+
+---
+
+## 7. Related documents
 
 - [Overview](../01-vision/overview.md) — components map and the manifest's role as the
   generated "components/blizzard JSON".
 - [Goals and Non-Goals](../01-vision/goals-and-non-goals.md) — the criterion IDs these tools gate.
 - [Risks and Open Questions](../01-vision/risks-and-open-questions.md) — detection signals
   these tools produce.
-- [Decisions](../01-vision/decisions.md) — the 2026-06-11 decision record (D-6, D-8, D-12)
-  behind this document's revisions.
+- [Decisions](../01-vision/decisions.md) — the 2026-06-11 decision record (D-6, D-8, D-12,
+  D-21, D-25) behind this document's revisions.
 - [Milestones](./milestones.md) — when each tool and gate ships.
 - [PRD](../../PRD.md) — source of truth.

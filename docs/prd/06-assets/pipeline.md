@@ -158,7 +158,7 @@ Enforced by the validator (lint class — [Validation §2.6](./validation-and-da
 
 *Added 2026-06-11 per D-2026-06-11-14.*
 
-Beside `assets/`, the pipeline feeds a second packaged form: the **single-file world archive** — the distribution unit for shareable worlds (format defined at M6, written by the M8 editor, browsed by the M9 hub candidate). The pipeline is both its **producer** (packaging validated inputs) and its **consumer** (validating archives on load and in CI).
+Beside `assets/`, the pipeline feeds a second packaged form: the **single-file world archive** — the distribution unit for shareable worlds (format defined at M6, written by the M8 editor, browsed by the committed M9 hub (D-2026-06-11-23)). The pipeline is both its **producer** (packaging validated inputs) and its **consumer** (validating archives on load and in CI).
 
 - **Container: zip-based, one file per world**, containing:
   - **map data** — the `data/maps/<map>/` tables and grids ([Validation §3.2](./validation-and-data.md));

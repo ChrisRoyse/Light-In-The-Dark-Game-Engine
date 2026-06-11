@@ -221,6 +221,119 @@ it; disk-loaded worlds get the same sandbox from M5).
 
 ---
 
+# Decision Record — 2026-06-11 (third session: all-upfront decisions + spike results)
+
+Owner directive: **all spikes completed and all decisions made upfront — nothing waits for
+a later milestone to decide.** Product decisions by owner; technical decisions validated by
+executed spikes (code in `spikes/`, results below) and sourced research.
+
+## D-2026-06-11-21 — License: proprietary, permanently
+
+The engine is **closed-source, proprietary, permanently** (supersedes the D-19 "decide at
+M6" deferral and the Apache-2.0 staff recommendation). Public surface: the world archive
+format specification and the Lua scripting API documentation — creators build on the
+platform without engine source. All dependencies must remain permissive
+(BSD/MIT/Apache) — copyleft is now a hard dependency exclusion (G4.1 allowlist tightened:
+no GPL/AGPL/LGPL anywhere in the tree).
+
+## D-2026-06-11-22 — Distribution: own site only
+
+Downloads ship from a Light in the Dark Analytics site. No Steam, no itch.io, no GitHub
+releases. Full funnel control; discovery is a marketing problem, not an engineering one.
+No third-party SDKs enter the tree.
+
+## D-2026-06-11-23 — World hub: committed M9 (no longer "candidate")
+
+Hosted world repository + in-game browser, M9 firm. Architecture: static-friendly index
+(no account needed to download), accounts/ratings later. Gated on the Lua hard sandbox
+(D-20). The hub backend co-hosts the M7 session relay (D-26).
+
+## D-2026-06-11-24 — Flagship game: real product, grows every milestone
+
+The M6 vertical slice is **v0.1 of the actual Light in the Dark game** — not a tech demo.
+Art style, factions, and lore are established now (generative pipeline, D-12) and every
+milestone ships a better version of the same game. Engine and game prove each other.
+
+## D-2026-06-11-25 — Lua VM: forked gopher-lua, vendored (spike: research memo)
+
+`yuin/gopher-lua` wins on the three hard requirements: VM-level coroutines are plain heap
+data (serializable — the only credible pure-Go option; arnodel/golua uses goroutines =
+unserializable; Shopify/go-lua has no coroutines at all), `pairs()` iteration is
+insertion-ordered (never ranges a Go map), and number→string is pure-Go strconv.
+Vendored fork in `repoes/` (LITD-PATCH discipline) with four patches:
+1. instruction-budget counter in `mainLoop` (R-SEC-1 quota + lockstep tick budget),
+2. deterministic `mathlib` replacement (fixed-point/table-based; `math.random` → sim PRNG)
+   — Go's `math` package is NOT cross-arch bit-identical (golang/go#20319),
+3. coroutine/LState persister (frames, registry, upvalues; protos by chunk-id),
+4. LState/callframe pooling (R-GC-1) + golden cross-arch determinism CI test.
+Performance ~5-10× C Lua: adequate; hot paths are Go sim code.
+
+## D-2026-06-11-26 — Transport: quic-go, star topology (spike: research memo)
+
+M7 networking: **quic-go** (MIT, mature, RFC 9221 datagrams) over a **star topology** —
+LAN: a player's engine hosts in-process; internet: the same host loop runs on a lightweight
+relay co-located with the M9 hub, eliminating NAT traversal entirely (hole-punching QUIC is
+still IETF-draft in 2026; pion/webrtc is the runner-up if relay economics ever fail).
+Command turns every 2–4 sim ticks, adaptive input-delay buffer (start 2 turns), reliable
+stream for turns + hashes, stall = pause + grace-period drop, 64-bit state hash piggybacked
+~1/s. Build hash + seed exchanged at join; mismatch refuses the session.
+
+## D-2026-06-11-27 — Spike S1 result: fixed-point int64 32.32 VALIDATED
+
+`spikes/fixedpoint`: representative tick math (movement integration, distance/sqrt, damage
+accumulation) for 2,000 entities = **182 µs/tick = 1.8% of the 10 ms budget** (float64
+baseline 28 µs — the 6.5× ratio is irrelevant at this absolute cost). 10k-tick state hash
+bit-stable across repeated runs; 4-hour timer and DPS accumulators exact; coordinate range
+has 5 decimal orders of headroom. Zero allocs/tick. **D-1 confirmed; M1 reduces to wiring
+this into CI across the OS/arch matrix.**
+
+## D-2026-06-11-28 — Spike S2 result: stackless serializable scheduler VALIDATED
+
+`spikes/scheduler`: scripts as descriptive suspension records (PC + locals + typed
+suspension), sleep queue keyed `(wakeTick, seq)`, event waiters FIFO by seq. Full scheduler
+state gob-serialized **mid-run**, restored, and advanced — traces and state bit-identical
+with the uninterrupted run; resume order deterministic. **The goroutine-baton design is
+dead; stackless descriptive suspension is THE scheduler design (R-SIM-6, D-9), not a
+candidate.** M1's remaining scheduler work is production hardening, not design choice.
+
+## D-2026-06-11-29 — Spike S3 result: pathfinding architecture SET
+
+`spikes/pathfind` (512×512 grid, 20% random blockers — pathological for A*): single
+long-distance path ≈ 5.1 ms / ~15.7k expansions; 1,000 simultaneous full repaths ≈ 2.3 s —
+**no flat A* fits 1,000-unit worst cases in a tick.** Architecture locked: amortized
+request queue with **counted expansion budget per tick** (~100k expansions ≈ 1–2 ms),
+**HPA\* hierarchy** (10–50× expansion cut) mandatory not optional, **path sharing** for
+group orders, **flow fields** for shared-goal moves ≥ ~40 units. Deterministic
+`(f, h, seq)` tie-breaking validated (identical expansion counts across runs).
+
+## D-2026-06-11-30 — Spike S4 result: g3n instancing patch CONFIRMED VIABLE
+
+Vendored `repoes/engine/gls/glapi.c` already loads `glDrawArraysInstanced`,
+`glDrawElementsInstanced`, `glDrawElementsInstancedBaseVertex`, `glVertexAttribDivisor`
+(lines 480–530, 831–881). The LITD-PATCH adds Go-side `gls` wrappers + an `InstancedMesh`
+graphic + per-instance transform/team-color attribute buffer. No GL capability risk;
+scheduled M4 per D-18.
+
+---
+
+## No remaining deferred decisions
+
+| Formerly open | Now |
+|---|---|
+| M1 fixed-point vs float spike | DONE — validated (D-27) |
+| M1 scheduler representation | DONE — stackless (D-28) |
+| Lua VM choice + determinism audit scope | DONE — gopher-lua fork, 4 patches (D-25) |
+| M3 pathfinding A* vs flow fields | DONE — layered architecture (D-29) |
+| M3/M4 instancing investigation | DONE — patch confirmed viable (D-30) |
+| M7 transport | DONE — quic-go star (D-26) |
+| M6 license decision | DONE — proprietary forever (D-21) |
+| M6 distribution decision | DONE — own site (D-22) |
+| M9 hub candidacy | DONE — committed (D-23) |
+| Flagship game identity | DONE — real product from M6 (D-24) |
+| Mid-M4 terrain fallback checkpoint | Stays as a quality gate with a pre-decided fallback (tiles), not an open decision |
+
+---
+
 ## Master PRD synchronization
 
 PRD §9 (Open Questions) and §2.2/NG4 (multiplayer non-goal) updated to reference this

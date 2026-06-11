@@ -11,6 +11,13 @@
 > ([decisions.md](../01-vision/decisions.md), D-2026-06-11-1…20): M0.5 marked DONE; M5
 > gains Lua; M5.5, M7, M8, M9 added; M4/M6 scope expanded. Per-milestone revision notes
 > inline. Standing directive: features are not cut or deferred because they are hard.*
+>
+> *Revised 2026-06-11 per the third-session record (D-2026-06-11-21…30): all spikes executed
+> and all decisions made upfront. M1 retitled **Determinism foundation** — its spike is DONE
+> (D-27/28, code in `spikes/`); M6 is the **flagship game v0.1** (D-24) and its
+> license/distribution decision rows are removed (decided: proprietary forever D-21, own-site
+> distribution D-22); M7 transport decided (quic-go star topology, D-26); M9 promoted from
+> candidate to **committed** (D-23).*
 
 ---
 
@@ -19,8 +26,8 @@
 ```
 M0 (bootstrap)
  ├──► M0.5 (First Light demo) ── DONE 2026-06-11
- ├──► M1 (determinism spike)  ── Q1 decided (D-1: fixed-point 32.32); validates perf +
- │                               serializable scheduler representation (D-9) ──► M3
+ ├──► M1 (determinism foundation) ── spike DONE (D-27/28: fixed-point 32.32 + stackless
+ │                               scheduler validated in spikes/); productionization ──► M3
  ├──► M2 (API manifest + spec) ─ Q2 decided (D-2); commonai mapped canonically (D-6) ──► M5
  │                                │
  │                                └─ engine-feature census informs M4 scope (R4)
@@ -30,22 +37,24 @@ M0 (bootstrap)
 M5 (API v1 + Lua) ◄── M2 (spec) + M3 (sim) + M4 (render)
 M5.5 (AI domain) ◄── M5 (AI natives bind against the finished canonical API)
 M6 (vertical slice) ◄── M5.5 — G5.3 replay gate here is the lockstep-readiness proof
-M7 (multiplayer + replay viewer/observers) ◄── M6
+M7 (multiplayer: quic-go star, D-26 + replay viewer/observers) ◄── M6
 M8 (World Editor + campaign UI) ◄── M7
-M9 (world hub — candidate) ◄── M8, hard-gated on the Lua sandbox (D-20)
+M9 (world hub — committed, D-23; co-hosts the M7 relay) ◄── M8, hard-gated on the Lua sandbox (D-20)
 ```
 
 Notes on the graph:
 
 - **M0.5 is done** (shipped 2026-06-11, `cmd/firstlight`): a deliberately early playable
   proof, FSV-verified; its code is throwaway-tolerant and constrains nothing downstream.
-- **M1 and M2 can run in parallel** after M0 — the determinism spike is sim-internal while
-  manifest work is parser/spec work; they share no artifacts.
+- **M1 and M2 can run in parallel** after M0 — M1 is sim-internal productionization (its
+  spike already ran, D-27/28) while manifest work is parser/spec work; they share no
+  artifacts.
 - **M2 must finish before M5 starts**, but its engine-feature census (R4) should land early
   enough to inform M4 planning — M2's manifest milestone is therefore scheduled to complete
   before M4's design phase begins.
-- **M3 strictly follows M1**: no gameplay math is written until the fixed-point validation
-  (Q1/D-1) and the serializable scheduler representation (D-9, R8) are recorded.
+- **M3 strictly follows M1**: both former blockers are decided and spike-validated — the
+  fixed-point validation (D-27) and the stackless serializable scheduler (D-28) — so M3 now
+  waits only on their productionized forms (`litd/fixed` + scheduler) landing in M1.
 - **M4 strictly follows M3** for its data source (render reads sim state, never invents it),
   though render spikes (camera, GLB loading, animation playback) may begin against stub
   state earlier — they just cannot exit M4 without the real sim underneath.
@@ -55,11 +64,14 @@ Notes on the graph:
   API and its scheduler reuses the (serializable) M3 scheduler machinery in a second
   isolated instance.
 - **M6 is integration plus the persistence/packaging features** that need everything else
-  in place: mid-game save/load (D-9), the world archive format (D-14), and the
-  distribution/license decision (D-19) — no new sim/render systems.
+  in place: mid-game save/load (D-9) and the world archive format (D-14) — no new sim/render
+  systems. The former D-19 distribution/license decision item is gone: decided upfront
+  (proprietary forever, D-21; own-site distribution, D-22). M6 ships **the flagship game
+  v0.1** (D-24), not a tech demo.
 - **M7–M9 are strictly sequential**: M7's lockstep needs M6's replay-verification proof;
   M8's editor saves into M6's archive format and follows multiplayer per the decision
-  record; M9 (candidate) hosts archives and is hard-gated on the D-20 sandbox.
+  record; M9 (committed, D-23) hosts archives, co-hosts the M7 session relay (D-26), and is
+  hard-gated on the D-20 sandbox.
 
 ---
 
@@ -119,51 +131,49 @@ constrain them. Nothing in M3/M4 may inherit a First Light design by inertia.
 
 ---
 
-## 4. M1 — Determinism spike
+## 4. M1 — Determinism foundation
 
-**PRD exit criteria.** Fixed-point vs ordered-float decision; 10k-tick sim state-hash
-reproducibility test green.
+**PRD exit criteria.** Spike already executed 2026-06-11 (D-27/D-28, `spikes/`): fixed-point
+int64 32.32 validated (182 µs/2,000-entity tick = 1.8% of budget); stackless serializable
+scheduler validated (mid-run save/restore bit-identical). Remaining M1 work: productionize
+`litd/fixed` + scheduler, wire the 10k-tick hash test across the OS/arch CI matrix.
 
-*Revised 2026-06-11 per D-2026-06-11-1 and D-2026-06-11-9: Q1 is decided — fixed-point
-`int64` 32.32 is the planning assumption. The spike's purpose shifts from arbitration to
-validating fixed-point against the ≤ 10 ms tick budget and calibrating range/precision
-(ordered-float reopens only if that validation fails). The spike additionally validates the
-**serializable scheduler representation** that mid-game save/load (D-9) requires.*
+*Revised 2026-06-11 per D-2026-06-11-27/28 (supersedes the earlier D-1/D-9 spike framing):
+the spike is **DONE** — executed the same day as the decisions, code in `spikes/`.
+`spikes/fixedpoint` ran representative tick math (movement integration, distance/sqrt,
+damage accumulation) for 2,000 entities at **182 µs/tick = 1.8% of the ≤ 10 ms budget**
+(float64 baseline 28 µs — the 6.5× ratio is irrelevant at this absolute cost), with the
+10k-tick state hash bit-stable across repeated runs, 4-hour timers and DPS accumulators
+exact, 5 decimal orders of coordinate-range headroom, and zero allocs/tick (D-27).
+`spikes/scheduler` gob-serialized the full scheduler state **mid-run**, restored it, and
+advanced — traces and state bit-identical with the uninterrupted run, resume order
+deterministic by `(wakeTick, seq)` (D-28). M1 is therefore no longer a decision milestone:
+it productionizes validated designs.*
 
 **Deliverables.**
-- Spike harness: a minimal toy sim (movement integration, accumulating combat-like math, a
-  seeded PRNG) implemented twice — fixed-point (`int32` 16.16 and `int64` 32.32 variants)
-  and ordered-float — with a canonical state-hash function.
+- `litd/fixed`: the production form of the `spikes/fixedpoint` math — 32.32 type, trig
+  tables, `SqrtU64`, 128-bit range tests per [Determinism §2.4](../04-simulation/determinism.md);
+  the boundary R3's late-discovery fallback depends on, frozen early.
+- The production stackless scheduler per [Tick & Scheduler §3](../04-simulation/tick-and-scheduler.md):
+  descriptive suspension records, `(wakeTick, seq)` sleeper queue; the `spikes/scheduler`
+  save → restore → resume round-trip ported into a permanent CI fixture.
 - CI matrix job running 10k-tick hash comparisons across OS/arch (G5.1, G5.2) and across Go
-  versions.
-- Micro-benchmarks of both representations against the ≤ 10 ms tick budget context (Q1
-  criterion 2).
-- Decision record for Q1 (criteria, measurements, choice) committed under `docs/prd/01-vision/`
-  per the [review cadence](../01-vision/risks-and-open-questions.md#3-review-cadence).
-- The deterministic math package skeleton (`litd/sim/fixmath` or equivalent) embodying the
-  decision — the boundary R3's late-discovery fallback depends on.
+  versions — the spike harness promoted, not rebuilt.
 - Determinism lint ruleset v1: no `map` iteration in gameplay packages, no wall-clock reads,
   no unordered reductions (G5.4 enforcement starts here).
-- *(Added 2026-06-11 per D-2026-06-11-9.)* Scheduler-representation evaluation for
-  serializability: a candidate representation (stackless/state-machine coroutines or fully
-  descriptive suspension records) demonstrated with a suspend → serialize → restore → resume
-  round-trip of a toy script (see [R8](../01-vision/risks-and-open-questions.md#r8--serializable-scheduler-complexity-added-2026-06-11-per-d-2026-06-11-9)).
 
 **Exit criteria.**
-1. Chosen representation produces bit-identical hashes across the full CI matrix over ≥ 100
-   runs of the 10k-tick scenario (G5.1/G5.2). Per R3's trigger: a single ordered-float
-   divergence eliminates ordered-float.
-2. Q1 decision record signed off; the recommended default
-   ([fixed-point 32.32](../01-vision/risks-and-open-questions.md#q1--fixed-point-vs-ordered-float-for-sim-math))
-   applies if evidence is inconclusive.
+1. `litd/fixed` produces bit-identical hashes across the full CI matrix over ≥ 100 runs of
+   the 10k-tick scenario (G5.1/G5.2) — expected trivially green per the D-27 spike evidence;
+   the matrix run is the productionization proof, not a decision input.
+2. Scheduler serialization round-trip green in CI on the production implementation,
+   reproducing the `spikes/scheduler` bit-identical mid-run save/restore result (D-28). M3
+   does not begin on an unserializable scheduler.
 3. Hash-reproducibility test and determinism lints are permanent CI fixtures, not spike
    leftovers.
-4. *(Added 2026-06-11 per D-2026-06-11-9.)* The chosen scheduler representation's
-   serialization round-trip is green: a suspended toy-script state restores to an identical
-   continuation and hash trajectory. M3 does not begin on an unserializable scheduler.
 
-**Depends on:** M0 (CI matrix). **Blocks:** M3 (no gameplay math before Q1 validation and
-the D-9 representation are recorded).
+**Depends on:** M0 (CI matrix). **Blocks:** M3 (gameplay math builds on the productionized
+`litd/fixed` and scheduler).
 
 ---
 
@@ -405,16 +415,21 @@ on the real AI domain, not a Go stopgap.
 
 ---
 
-## 10. M6 — Vertical slice
+## 10. M6 — Vertical slice = **LitD game v0.1**
 
 **PRD exit criteria.** Playable skirmish vs the real AI domain: build, train, fight,
-win/lose; mid-game save/load shipping; world archive format defined; all
+win/lose; **the flagship game, not a tech demo (D-24)** — art style/factions/lore
+established; mid-game save/load shipping; world archive format defined; all
 [§5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram)
-budgets green in CI; replay verification (G5.3) green — lockstep-readiness proof for M7;
-distribution + license decision.
+budgets green in CI; replay verification (G5.3) green — lockstep-readiness proof for M7.
 
-*Revised 2026-06-11 per D-2026-06-11-6/9/14/19: the opponent runs on the M5.5 AI domain;
-save/load, the world archive format, and the distribution/license decision land here.*
+*Revised 2026-06-11 per D-2026-06-11-6/9/14: the opponent runs on the M5.5 AI domain;
+save/load and the world archive format land here. Revised again 2026-06-11 per
+D-2026-06-11-21/22/24: the former distribution + license decision item (D-19) is **removed**
+— decided upfront (engine proprietary forever, D-21; own-site distribution only, D-22) —
+and the slice is reframed as **v0.1 of the actual Light in the Dark game** (D-24): art
+style, factions, and lore are established now (generative pipeline, D-12) and every
+subsequent milestone ships a better version of the same game.*
 
 **Deliverables.**
 - A complete skirmish game built **purely against `litd/api`** (dogfooding gate: any needed
@@ -428,11 +443,12 @@ save/load, the world archive format, and the distribution/license decision land 
   separate, complementary mechanism.
 - **World archive format defined and exercised (D-14):** single-file zip — map data + Lua +
   custom assets + manifest with content hashes and engine-version requirements — loadable
-  from disk, publicly documented, carrying the hosting metadata the M9 hub candidate needs
-  from day one. The slice's map ships as an archive.
-- **Distribution + engine-license decision recorded (D-19):** no distribution-specific
-  engineering before this point; the open-sourcing question (Apache-2.0 was the staff
-  recommendation) is decided here; repo stays private until then.
+  from disk, publicly documented, carrying the hosting metadata the committed M9 hub (D-23)
+  needs from day one. The slice's map ships as an archive.
+- **Flagship-game identity established (D-24):** art style, factions, and lore fixed and
+  shipped in the slice; the game grows every milestone from here — engine and game prove
+  each other. *(Replaces the former D-19 distribution/license decision deliverable: decided
+  upfront per D-21/D-22, no decision work remains in M6.)*
 - Full WC3-grade input in play: drag-select, control groups 0–9, smart orders, hotkeys,
   edge-pan + middle-drag camera (R-INP-1); HUD on G3N widgets via `g.UI()` (R-UI-1).
 - Game data as JSON/TOML tables in `data/` (R-AST-1); all models validator-clean (R-AST-2/3).
@@ -458,9 +474,7 @@ save/load, the world archive format, and the distribution/license decision land 
 6. *(Added 2026-06-11 per D-2026-06-11-14.)* The slice's map loads from a world archive;
    the archive format spec is published; content hashes and engine-version requirements
    validate on load.
-7. *(Added 2026-06-11 per D-2026-06-11-19.)* Distribution + license decision signed off by
-   the owner and recorded in the decision log.
-8. Milestone-close review of [risks and open questions](../01-vision/risks-and-open-questions.md)
+7. Milestone-close review of [risks and open questions](../01-vision/risks-and-open-questions.md)
    completed. *(Revised 2026-06-11: the former "v2 candidate list" — netcode, Lua VM,
    `commonai`, heightmap terrain — is gone; all four are committed v1/roadmap scope per
    D-5/6/7/8.)*
@@ -471,20 +485,30 @@ save/load, the world archive format, and the distribution/license decision land 
 
 ## 11. M7 — Multiplayer (lockstep) + replay viewer *(added 2026-06-11 per D-2026-06-11-5/16)*
 
-**PRD exit criteria.** 2–8 player LAN/online skirmish: transport + reliability layer,
-lockstep scheduler (input delay, stall handling), lobby/session bootstrap, state-hash
-desync detection with diagnostic dump. Replays and netplay share the command-stream format.
-In-client replay viewer + live observer slots.
+**PRD exit criteria.** 2–8 player LAN/online skirmish on **quic-go, star topology (D-26)**:
+lockstep scheduler (command turns, adaptive input delay, stall handling), lobby/session
+bootstrap, state-hash desync detection with diagnostic dump. Replays and netplay share the
+command-stream format. In-client replay viewer + live observer slots.
+
+*Revised 2026-06-11 per D-2026-06-11-26: the transport decision is no longer an M7-start
+spike — decided upfront from the executed research memo.*
 
 **Deliverables.**
-- Transport: UDP with a reliability layer, or QUIC (decided by spike at M7 start).
-- Lockstep scheduler over the existing command stream: input delay, stall handling — the
-  Lua sandbox's per-tick quotas (D-20) double as the stall guard. Each client runs the full
-  deterministic sim; only commands are exchanged, never state.
+- Transport (decided, D-26): **quic-go** (MIT, mature, RFC 9221 datagrams) over a **star
+  topology** — LAN: a player's engine hosts in-process; internet: the same host loop runs on
+  a **lightweight relay co-located with the M9 hub** (D-23), eliminating NAT traversal
+  entirely (hole-punching QUIC is still IETF-draft in 2026; pion/webrtc is the recorded
+  runner-up if relay economics ever fail). Build hash + seed exchanged at join; mismatch
+  refuses the session.
+- Lockstep scheduler over the existing command stream: **command turns every 2–4 sim
+  ticks**, **adaptive input-delay buffer** (start 2 turns), reliable stream for turns +
+  hashes, stall = pause + grace-period drop (D-26) — the Lua sandbox's per-tick quotas
+  (D-20) double as the stall guard. Each client runs the full deterministic sim; only
+  commands are exchanged, never state.
 - Lobby/session bootstrap for 2–8 players.
-- Desync detection: clients exchange `Game.StateHash()` (R-FSV-2) every N ticks; divergence
-  detected immediately and bisected per-system via the sub-hash design, with a diagnostic
-  dump.
+- Desync detection: clients exchange the 64-bit `Game.StateHash()` (R-FSV-2) piggybacked
+  ~1/s on the reliable stream (D-26); divergence detected immediately and bisected
+  per-system via the sub-hash design, with a diagnostic dump.
 - One format for replays and netplay: a replay *is* the recorded command stream of a
   session (D-5).
 - **In-client replay viewer (D-16):** pause, speed control, free camera, per-player
@@ -534,32 +558,39 @@ placement, map metadata, world-archive save; campaign menu/mission-flow UI.
 4. NG5 holds: the editor is RTS-shaped authoring tooling; no general-purpose-engine
    features rode in with it.
 
-**Depends on:** M7. **Blocks:** M9 (candidate).
+**Depends on:** M7. **Blocks:** M9 (committed, D-23).
 
 ---
 
-## 13. M9 — World hub (candidate) *(added 2026-06-11 per D-2026-06-11-14, hard-gated per D-2026-06-11-20)*
+## 13. M9 — World hub (committed) *(added 2026-06-11 per D-2026-06-11-14, hard-gated per D-2026-06-11-20; committed per D-2026-06-11-23)*
 
 **PRD exit criteria.** Hosted world repository + in-game browser over the v1 archive
-format; hard-gated on the Lua sandbox.
+format: static-friendly index (no account needed to download), accounts/ratings later;
+co-hosts the M7 session relay; hard-gated on the Lua sandbox.
 
-Candidate status: committed as the post-M8 follow-on direction by D-14, but its detailed
-scope is set at M8 close. What is fixed now:
+*Revised 2026-06-11 per D-2026-06-11-23: promoted from "candidate" to **committed, M9
+firm**. Detailed scope is still set at M8 close, but the milestone itself is no longer
+conditional.* What is fixed now:
 
 - The v1 world archive format (M6) carries hosting metadata from day one, so M9 needs no
   format break.
+- **Architecture (D-23):** static-friendly index — no account needed to download;
+  accounts/ratings are a later layer on top.
+- **Relay co-hosting (D-23/D-26):** the hub backend co-hosts the lightweight session relay
+  that M7 internet play runs through — one operated service, two duties.
 - **Hard gate (D-20, non-negotiable):** no sharing feature ships unless world Lua runs in
   the no-io/no-os/no-net VM with per-tick instruction and memory quotas — worlds cannot
   touch the player's machine. The M9 hub blocks on a security review of the sandbox.
 
 **Provisional exit criteria** (to be firmed at M8 close).
 1. Browse, download, and play a hosted world entirely in-client, over the unmodified v1
-   archive format.
+   archive format, with no account required to download.
 2. Sandbox security review passed; archive content hashes and engine-version requirements
    enforced on download and load.
 3. Hosted worlds carry provenance/attribution metadata surfaced in the browser.
+4. The co-hosted M7 session relay runs on the same backend (D-26).
 
-**Depends on:** M8, D-20 sandbox audit. **Blocks:** nothing (terminal candidate).
+**Depends on:** M8, D-20 sandbox audit. **Blocks:** nothing (terminal milestone).
 
 ---
 
@@ -570,7 +601,7 @@ scope is set at M8 close. What is fixed now:
 | License/provenance scans (G4.x, incl. generated-asset provenance G4.7) | M0 (G4.7 from M4) | every milestone |
 | Import-graph separation (sim ↛ render) | M0 | every milestone |
 | Determinism hash matrix (G5.1/G5.2) | M1 | every milestone |
-| Scheduler serialization round-trip (D-9, R8) | M1 (spike), M3 (full sim) | every milestone |
+| Scheduler serialization round-trip (D-9, R8; spike already green, D-28) | M1 (production), M3 (full sim) | every milestone |
 | Manifest regeneration reproducibility (incl. Lua bindings from M5) | M2 | every milestone |
 | Tick budget + zero-alloc tick (G3.3/G3.8); 1,000-unit stretch tracked (G3.10) | M3 | every milestone |
 | FPS, draw-call, zero-alloc frame (G3.1/G3.2/G3.9) | M4 | every milestone |

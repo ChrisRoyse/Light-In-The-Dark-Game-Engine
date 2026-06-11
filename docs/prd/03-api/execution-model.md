@@ -48,10 +48,12 @@ scheduler with these guarantees:
   Full save/load is **v1 scope**; serializability is a day-one design constraint on the M1
   scheduler representation, not a retrofit. *Revised 2026-06-11 per D-2026-06-11-9.*
 
-### 2.2 Candidate design: goroutines as coroutines with strict baton-passing
+### 2.2 Rejected design: goroutines as coroutines with strict baton-passing (historical)
 
-*Revised 2026-06-11 per D-2026-06-11-9 — formerly "primary design"; see §2.3 for why
-serializability (S-5) demotes it to a candidate that must earn its place at M1.*
+*Revised 2026-06-11 per D-2026-06-11-9 — formerly "primary design"; serializability (S-5)
+demoted it to a candidate. Revised again 2026-06-11 per D-2026-06-11-28: the candidate is
+**dead** — the executed scheduler spike validated the stackless design (§2.3), and this
+section is retained only as the rationale record for why baton-passing lost.*
 
 Go has no stackful coroutine primitive, but a goroutine pair with unbuffered handoff channels is
 one. Each script job that needs suspension capability owns a parked goroutine; the scheduler and
@@ -86,9 +88,11 @@ Properties that make this deterministic despite using goroutines:
 - Job goroutines never touch `time`, never spawn goroutines (no API exists for them to reach),
   and cannot run unless handed the baton.
 
-### 2.3 Stackless / descriptive-suspension design, and the revised decision rule
+### 2.3 Stackless / descriptive-suspension design — DECIDED and spike-validated
 
-*Revised 2026-06-11 per D-2026-06-11-9.*
+*Revised 2026-06-11 per D-2026-06-11-9. Revised again 2026-06-11 per D-2026-06-11-28: the
+"decision rule" below is discharged — the spike ran and the stackless design is **the**
+scheduler design, not a default plan.*
 
 The competing designs: handlers that never wait (the overwhelming majority) run as **plain
 synchronous calls** with no goroutine at all; only a call to a wait verb promotes the job to a
@@ -105,13 +109,16 @@ runtime. That materially favors the stackless/descriptive design: it gets serial
 free, where baton-passing would have to carry an equivalent record alongside the live stack
 and prove the two never disagree.
 
-**Decision rule (revised):** the synchronous fast path is unconditional; for suspension, the
-stackless/descriptive-suspension representation is the **default plan**. Baton-passing
-goroutines survive M1 only if the spike shows they can produce complete, faithful suspension
-records for save/load (save → load → resume → identical state hash) *and* their overhead fits
-the tick budget — serializability is now a gate equal to performance, not an afterthought.
-Either way the public API is unchanged: `helpers.PolledWait` is specified to suspend the
-calling job, and how is an implementation detail.
+**Decision — spike-validated (D-2026-06-11-28):** the synchronous fast path is
+unconditional; for suspension, the stackless/descriptive-suspension representation is
+**the design**. The M1-scope spike (`spikes/scheduler`) implemented scripts as descriptive
+suspension records (PC + locals + typed suspension) with a sleep queue keyed
+`(wakeTick, seq)` and event waiters FIFO by seq, then gob-serialized the full scheduler
+state **mid-run**, restored it, and advanced — traces and state bit-identical with the
+uninterrupted run, resume order deterministic. The baton-passing design is eliminated
+(§2.2 is the historical record); remaining M1 work is production hardening, not design
+choice. The public API is unchanged either way: `helpers.PolledWait` is specified to suspend
+the calling job, and how is an implementation detail.
 
 ### 2.4 Deterministic resume order
 
@@ -229,8 +236,12 @@ not privileged script.
 
 *Added 2026-06-11 per D-2026-06-11-8/20.*
 
-v1 (M5) ships an embedded deterministic Lua VM (gopher-lua family, determinism-audited) as
-the runtime-loadable creation surface ([PRD §5.6](../../PRD.md#56-moddingscripting),
+v1 (M5) ships an embedded deterministic Lua VM — concretely a **vendored fork of
+`yuin/gopher-lua`** (D-2026-06-11-25, *revised 2026-06-11*: four LITD patches —
+instruction-budget hook in `mainLoop`, deterministic mathlib replacement, coroutine/LState
+persister, LState pooling + golden cross-arch CI test; see
+[Determinism §2.6](../04-simulation/determinism.md)) — as the runtime-loadable creation
+surface ([PRD §5.6](../../PRD.md#56-moddingscripting),
 [Architecture §6](architecture.md#6-the-lua-binding-layer-v1-m5)). Its execution semantics
 are **this document, unchanged**:
 
@@ -268,17 +279,19 @@ The entire contract, as it will appear at the top of the `litd` package godoc:
 
 ## 9. Acceptance criteria for this section
 
-- M1 spike: scheduler prototype (synchronous fast path + the §2.3 suspension representation)
-  passes the 10k-tick state-hash reproducibility test, including jobs suspended across ticks,
-  under `GOMAXPROCS=1` and `GOMAXPROCS=N` with identical hashes.
+- M1 scheduler: the §2.3 design is already spike-validated (D-2026-06-11-28,
+  `spikes/scheduler` — mid-run save/restore bit-identical); the production implementation
+  (synchronous fast path + suspension records) passes the 10k-tick state-hash
+  reproducibility test, including jobs suspended across ticks, under `GOMAXPROCS=1` and
+  `GOMAXPROCS=N` with identical hashes. *(Revised 2026-06-11 per D-2026-06-11-28.)*
 - **Serializability (S-5, D-2026-06-11-9):** save → load → resume round-trip with jobs
   suspended mid-wait, pending timers, and live event subscriptions produces a state hash
   identical to the uninterrupted run; golden test from M3.
 - **Lua quotas (R-SEC-1):** instruction- and memory-quota breach tests fail loudly with
   location; sandbox-escape test suite (no `os`/`io`/net/FFI reachable) green from M5.
 - `go test -race` clean across the scheduler with concurrent render-snapshot reads.
-- Benchmarks: handler dispatch (no wait) allocation-free; baton handoff ≤ the M1-set budget per
-  suspension; 500 simultaneously waiting jobs resumable within tick budget
+- Benchmarks: handler dispatch (no wait) allocation-free; suspension-record push/resume ≤ the
+  M1-set budget per suspension; 500 simultaneously waiting jobs resumable within tick budget
   ([PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram)).
 - Event-order conformance tests: registration-order dispatch, emit-order firing, wake-tuple
   resume order — each pinned by golden tests that fail on any reordering.

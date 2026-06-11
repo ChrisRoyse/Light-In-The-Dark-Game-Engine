@@ -44,9 +44,11 @@ Units have a **collision size** (radius in world units) from the unit data table
 
 Structures do not use collision discs; they **stamp a rectangular footprint** of cells `OccupiedStatic` when placement completes, and clear it on death/cancel — identical to WC3 pathing-map stamps. Placement validation tests the footprint against `Buildable` + occupancy; the builder-vacates-the-footprint dance is handled by issuing the builder a move-out order before stamping. Stamp/unstamp events mark the affected region dirty for the dilated layers and **invalidate cached paths** that pass through the region (paths store a bounding box for cheap intersection tests). All stamping happens in the tick's pathing phase ([phase 4](tick-and-scheduler.md)), in deterministic order.
 
-## 3. A\* vs flow-field for 1,000 units
+## 3. A\* vs flow-field for 1,000 units — architecture SET (D-2026-06-11-29)
 
-*Revised 2026-06-11 per D-2026-06-11-18: budgets provisioned at the 1,000-unit stretch target; 500 remains the low-tier guarantee.*
+*Revised 2026-06-11 per D-2026-06-11-18: budgets provisioned at the 1,000-unit stretch target; 500 remains the low-tier guarantee. Revised again 2026-06-11 per D-2026-06-11-29: the architecture is **set by the executed `spikes/pathfind` spike**, not pending an M3 trade study.*
+
+**Spike results (D-29, `spikes/pathfind` — 512×512 grid, 20% random blockers, pathological for A\*):** a single long-distance path cost **≈ 5.1 ms / ~15.7k expansions**; **1,000 simultaneous full repaths cost ≈ 2.3 s** — no flat A\* fits 1,000-unit worst cases in a tick, ever. The layered architecture below is therefore locked: **amortized request queue with a counted expansion budget per tick (~100k expansions ≈ 1–2 ms)**, **HPA\* hierarchy mandatory** (10–50× expansion cut), **path sharing** for group orders, and **flow fields** for shared-goal moves of **≥ ~40 units**. Deterministic `(f, h, seq)` tie-breaking was validated by the spike (identical expansion counts across runs).
 
 ### 3.1 The analysis
 
@@ -60,24 +62,24 @@ Structures do not use collision discs; they **stamp a rectangular footprint** of
 | Dynamic restamps | Invalidate + re-request affected paths | Re-integrate affected fields (coarser, costlier per event) |
 | WC3 behavioral fidelity | High — WC3 is per-unit path + local resolution | Different "feel": crowd-flow behavior, units don't queue at chokes the WC3 way |
 
-### 3.2 Decision
+### 3.2 Decision — SET per D-2026-06-11-29
 
-**Primary: A\*** on the dilated pathing grid, per collision class, with these standard amplifiers:
+**Primary: A\*** on the dilated pathing grid, per collision class, with these amplifiers — **mandatory per the D-29 spike numbers, not optional optimizations**:
 
-- **Hierarchical coarse stage:** a 16×16-cell sector graph (HPA\*-lite) answers long-distance reachability and produces a corridor; fine A\* runs only inside the corridor. Keeps worst-case single-query cost bounded on 512×512.
+- **Hierarchical coarse stage (HPA\*, mandatory):** a 16×16-cell sector graph answers long-distance reachability and produces a corridor; fine A\* runs only inside the corridor. The spike's 5.1 ms / ~15.7k-expansion single long path on the pathological grid is what the 10–50× expansion cut exists to kill — without it, a handful of worst-case requests eat the whole pathing slice (*revised 2026-06-11 per D-2026-06-11-29*).
 - **Path sharing for group orders:** a group ordered to one destination computes one representative path per collision class; members follow offset copies and re-path individually only when they diverge (formation logic, §5). This removes the "1,000 simultaneous searches" burst in the common case.
 - **Reachability short-circuit:** sector-graph connected-component labels answer "unreachable" in O(1) before any search, then fall back to nearest-reachable-cell (WC3 behavior when targeting an unwalkable point).
 
-**Flow fields move from contingency to planned-likely** (*revised 2026-06-11 per D-2026-06-11-18*). At the 500-unit scale the A\*+sharing path was expected to hold and flow fields sat in reserve. At 1,000 units the budget math doubles exactly where A\* is weakest — the shared-goal blob: even with path sharing, divergence re-paths scale with unit count, and a 1,000-unit attack-move across a freshly restamped region can queue more fine-stage work than the per-tick expansion budget (§6) clears promptly, stretching path latency past what the corridor-following mask hides. Accordingly:
+**Flow fields are part of the locked architecture** (*revised 2026-06-11 per D-2026-06-11-18; locked per D-2026-06-11-29*). At the 500-unit scale the A\*+sharing path was expected to hold and flow fields sat in reserve. The spike settled it: 1,000 simultaneous full repaths cost ≈ 2.3 s — the shared-goal blob is exactly where A\* is weakest, and even with path sharing, divergence re-paths scale with unit count. Accordingly:
 
-- The flow-field backend stays behind the same `PathProvider` interface for the massed shared-goal scenario, but it is now **expected to be enabled, not held as contingency**: M3 benchmarks run at both 500 (low-tier guarantee) and 1,000 (recommended spec), and a 1,000-unit shared-goal scenario missing budget triggers implementation inside v1, not v1.x. Per the standing owner directive, the option is not deferred for difficulty — the seam, the memory (§7 reserves four field slots), and the determinism rules (§4 rule 5) are all in place from M3 so enabling it is a backend drop-in, not a re-plan.
+- The flow-field backend sits behind the same `PathProvider` interface and serves **shared-goal moves of ≥ ~40 units** (D-29 threshold, tuned in M3): one field amortizes over the whole group where per-unit searches cannot. It is **committed v1 architecture, not contingency** — the seam, the memory (§7 reserves four field slots), and the determinism rules (§4 rule 5) are all in place from M3.
 - Per-unit A\* remains primary for everything else — scattered goals and WC3 behavioral fidelity (units queue at chokes; the flow-field backend serves only massed shared-goal moves, where blob behavior reads naturally anyway).
 
 The requirement's "A\*/flow-field" wording is deliberately satisfied by an architecture where either backend can serve a request without gameplay-visible differences beyond paths taken (which are deterministic under each backend).
 
 ## 4. Deterministic tie-breaking
 
-A\* is only deterministic if every choice with equal cost is broken identically everywhere. Mandated rules:
+A\* is only deterministic if every choice with equal cost is broken identically everywhere. *(Validated 2026-06-11 per D-2026-06-11-29: the `spikes/pathfind` run confirmed the `(f, h, seq)` discipline produces identical expansion counts across runs.)* Mandated rules:
 
 1. **Integer costs only.** Cardinal step = 10, diagonal = 14 (the classic ×10 octile approximation) in fixed-point-free integer math; heuristic is octile distance in the same units, scaled to remain admissible. No float `sqrt(2)` anywhere.
 2. **Total ordering on the open list.** Priority key is the tuple `(f, h, insertionSeq)` compared lexicographically: equal `f` breaks toward smaller `h` (goal-ward bias, also a standard speedup), and remaining ties break by **insertion sequence number** — a monotone counter, not heap-internal order. The binary heap implementation must compare the full tuple; heap "stability" is never assumed.
@@ -125,12 +127,12 @@ Grid A\* gives corridors; the WC3 "feel" comes from the local layer:
 
 Pathfinding shares the 10 ms tick budget (PRD §5.3); its slice is **≤ 2 ms worst case** on the reference machine, enforced as follows:
 
-- **Expansion budget, not wall-clock:** the pathing phase services queued requests up to a per-tick budget of **N node expansions** (initial value 8,000 sized to the 500-unit low-tier guarantee; provisional 16,000 for the 1,000-unit stretch target on recommended spec — both tuned in M3, *revised 2026-06-11 per D-2026-06-11-18*) — counted work, not measured time, because a wall-clock cutoff would be non-deterministic ([Determinism §2.3](determinism.md)). Wall-clock is *measured* for the benchmark gate but never *consulted* by gameplay logic. Note the budget value is per map/sim version (it is sim semantics, below), so the low-tier and stretch configurations are distinct sim configurations, not a runtime adaptation.
+- **Expansion budget, not wall-clock:** the pathing phase services queued requests up to a per-tick budget of **N node expansions** (spike-calibrated initial value **~100,000 expansions ≈ 1–2 ms** on the reference profile per D-2026-06-11-29, final tuning in M3 — *revised 2026-06-11; supersedes the pre-spike 8,000/16,000 provisional figures*) — counted work, not measured time, because a wall-clock cutoff would be non-deterministic ([Determinism §2.3](determinism.md)). Wall-clock is *measured* for the benchmark gate but never *consulted* by gameplay logic. Note the budget value is per map/sim version (it is sim semantics, below), so any per-tier configurations are distinct sim configurations, not a runtime adaptation.
 - **Suspendable searches:** a search that exhausts the budget parks its open/closed state (preallocated per the pool rules in [ECS §2](ecs-architecture.md)) and resumes next tick. Units with pending paths play their "acknowledge" state and start moving along the coarse-stage corridor immediately, so latency is masked exactly as in WC3.
 - **Per-request node cap:** any single search exceeding a hard node ceiling (e.g. 4× the sector-corridor estimate) terminates with best-partial-path toward the goal — bounding the pathological worst case (fully walled targets are already short-circuited by reachability labels).
-- The M3 headless benchmark scenes (500 units on the low-tier reference and 1,000 units on recommended spec — D-2026-06-11-18; mass re-path on building stamp, cross-map attack-move, 1,000-unit shared-goal blob) gate this budget in CI alongside the [zero-alloc requirement](ecs-architecture.md): the pathing phase, like every phase, allocates nothing at steady state. The 1,000-unit shared-goal scene is also the §3.2 flow-field trigger gate.
+- The M3 headless benchmark scenes (500 units on the low-tier reference and 1,000 units on recommended spec — D-2026-06-11-18; mass re-path on building stamp, cross-map attack-move, 1,000-unit shared-goal blob) gate this budget in CI alongside the [zero-alloc requirement](ecs-architecture.md): the pathing phase, like every phase, allocates nothing at steady state. The 1,000-unit shared-goal scene exercises the §3.2 flow-field backend — committed architecture per D-2026-06-11-29, no longer a trigger gate.
 
-Worked example of why counted budgets matter: suppose tick N has 12 queued requests whose searches total 11,000 expansions. Under the 8,000-expansion budget, the first requests complete, one search parks mid-flight, and the remainder wait — *identically on every machine*. Under a 2 ms wall-clock cutoff, a fast machine finishes all 12 and a slow one finishes 9, and the two sims have diverged. The budget number is therefore part of simulation semantics (and of the [replay/version contract](determinism.md)) — tuning it is a sim-version change, not a config knob.
+Worked example of why counted budgets matter: suppose tick N has 12 queued requests whose searches total 130,000 expansions. Under the 100,000-expansion budget, the first requests complete, one search parks mid-flight, and the remainder wait — *identically on every machine*. Under a 2 ms wall-clock cutoff, a fast machine finishes all 12 and a slow one finishes 9, and the two sims have diverged. The budget number is therefore part of simulation semantics (and of the [replay/version contract](determinism.md)) — tuning it is a sim-version change, not a config knob.
 
 ### 6.1 Path request lifecycle
 

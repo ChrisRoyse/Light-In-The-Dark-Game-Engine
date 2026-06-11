@@ -163,11 +163,16 @@ fork behavior between callers.
 ## 6. The Lua binding layer (v1, M5)
 
 *Revised 2026-06-11 per D-2026-06-11-8/20 — promoted from "v2 candidate" to committed v1
-scope, shipping with M5.*
+scope, shipping with M5. Revised again 2026-06-11 per D-2026-06-11-25: the VM is concretely
+decided, no longer a "family" candidate.*
 
-[PRD §5.6](../../PRD.md#56-moddingscripting) commits a deterministic Lua VM
-([gopher-lua](https://github.com/yuin/gopher-lua) family, determinism-audited) as the v1
-runtime-loadable creation surface, delivered in M5 alongside the Go API. The architecture
+[PRD §5.6](../../PRD.md#56-moddingscripting) commits a deterministic Lua VM — a **vendored
+fork of [yuin/gopher-lua](https://github.com/yuin/gopher-lua)** (D-2026-06-11-25;
+LITD-PATCH discipline like the g3n fork, with four patches: instruction-budget hook in
+`mainLoop`, deterministic mathlib replacement, coroutine/LState persister, LState pooling +
+golden cross-arch CI test — see [Determinism §2.6](../04-simulation/determinism.md) and
+[Tooling §6](../09-roadmap/tooling.md)) — as the v1 runtime-loadable creation surface,
+delivered in M5 alongside the Go API. The architecture
 makes this binding a *mechanical projection* of `litd/api`, not a second API — and the
 **sandbox boundary (R-SEC-1)** is part of the layering itself:
 
@@ -201,7 +206,8 @@ Design commitments that make the binding mechanical:
    plain structs and value math marshal into Lua tables trivially, whereas leaked G3N types,
    channels, or goroutine-coupled objects would not.
 2. **Scheduler reuse.** Lua coroutines map one-to-one onto the deterministic cooperative
-   scheduler ([Execution model §2](execution-model.md#2-the-deterministic-cooperative-scheduler)).
+   scheduler ([Execution model §2](execution-model.md#2-the-deterministic-cooperative-scheduler)
+   — stackless descriptive suspension, decided and spike-validated per D-2026-06-11-28).
    A Lua script that calls `PolledWait` suspends as a scheduler job exactly like a Go handler
    closure does; resume order rules are shared, so a mixed Go/Lua map remains deterministic.
 3. **Sandboxing at the binding, not the core (R-SEC-1).** `litd/luabind` strips Lua's `os`,
@@ -227,7 +233,7 @@ surface — creators and AI coding agents author worlds without a Go toolchain o
 The unit of content the api/asset layers load is the **world archive**: a single zip-based
 file containing map data, Lua scripts, custom assets, and a manifest with content hashes and
 engine-version requirements. The format is defined in v1 (M6) and documented publicly; it
-carries hosting metadata from day one so the M9 hosted-hub candidate needs no format change.
+carries hosting metadata from day one so the committed M9 hosted hub (D-2026-06-11-23) needs no format change.
 
 How it maps onto the layering:
 
