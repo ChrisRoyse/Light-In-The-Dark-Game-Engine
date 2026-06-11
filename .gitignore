@@ -14,3 +14,5 @@ repoes/
 
 # Scratch debug binaries/code
 /cmd/dbg/
+# Test/FSV artifacts (screenshots, state dumps)
+/artifacts/

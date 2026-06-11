@@ -10,7 +10,7 @@
 //	-autotest        scripted run: orders the unit to a known target, waits for
 //	                 arrival, prints final state as JSON, captures a screenshot,
 //	                 and exits 0 (non-zero on timeout).
-//	-shot PATH       screenshot output path (default firstlight.png)
+//	-shot PATH       screenshot output path (default artifacts/firstlight.png)
 //
 // This code is M0.5 throwaway-tolerant: movement runs in the render loop with
 // float math. The deterministic 20 Hz sim replaces it in M3.
@@ -23,6 +23,7 @@ import (
 	"image"
 	"image/png"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -78,7 +79,7 @@ type state struct {
 
 func main() {
 	d := &demo{}
-	flag.StringVar(&d.shotPath, "shot", "firstlight.png", "screenshot output path")
+	flag.StringVar(&d.shotPath, "shot", "artifacts/firstlight.png", "screenshot output path")
 	flag.BoolVar(&d.autotest, "autotest", false, "scripted FSV run: order unit, verify arrival, screenshot, exit")
 	flag.Parse()
 
@@ -293,6 +294,11 @@ func (d *demo) screenshot(path string) error {
 		src := data[(height-1-y)*rowLen : (height-y)*rowLen]
 		dst := img.Pix[y*img.Stride : y*img.Stride+rowLen]
 		copy(dst, src)
+	}
+	if dir := filepath.Dir(path); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
 	}
 	f, err := os.Create(path)
 	if err != nil {

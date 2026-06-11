@@ -46,7 +46,7 @@ go build -o bin/firstlight ./cmd/firstlight # M0.5 demo
 ```bash
 go vet ./...
 go test ./...
-./bin/firstlight -autotest -shot firstlight-autotest.png
+./bin/firstlight -autotest -shot artifacts/firstlight-autotest.png
 ```
 
 Verification of any visual/behavioral change follows `prompts/fsv.md`: run the thing, then independently inspect the source of truth (screenshot file, state JSON, event log) — never trust exit codes alone. The demo's `-autotest` exists specifically so an agent can capture evidence: read the PNG to confirm what rendered, parse the `state:` JSON line to confirm sim coordinates.
