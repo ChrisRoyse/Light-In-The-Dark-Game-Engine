@@ -167,6 +167,8 @@ original/CC0; no Blizzard formats or content (see NG1/NG2 in
 
 ### Q1 — Fixed-point vs ordered-float for sim math
 
+**STATUS: DECIDED 2026-06-11 — fixed-point `int64` 32.32. See [decisions.md](./decisions.md#d-2026-06-11-1-q1--sim-math-fixed-point-int64-3232).**
+
 **Deadline milestone:** **M1** (the milestone exists to answer this; it blocks all of M3).
 
 **Decision criteria.**
@@ -187,6 +189,8 @@ ordered-float is both provably stable on all targets and meaningfully faster.
 
 ### Q2 — JASS-flavored aliases vs purely idiomatic Go naming
 
+**STATUS: DECIDED 2026-06-11 — idiomatic only. See [decisions.md](./decisions.md#d-2026-06-11-2-q2--naming-idiomatic-go-only-no-jass-aliases).**
+
 **Deadline milestone:** **M2** (the public API spec is the sign-off artifact; naming is part
 of it).
 
@@ -205,6 +209,8 @@ JASS→Go mapping table shipped in the docs as the migration aid. Revisit only i
 port shows the table is insufficient in practice.
 
 ### Q3 — Terrain: heightmap mesh vs hex/square tile meshes
+
+**STATUS: DECIDED 2026-06-11 — tile meshes for v1. See [decisions.md](./decisions.md#d-2026-06-11-3-q3--terrain-tile-meshes-kaykit-style-for-v1).**
 
 **Deadline milestone:** **M4 design phase** (terrain rendering and the pathfinding grid's
 visual counterpart must be settled before M4 implementation starts; pathfinding in M3 stays
@@ -228,6 +234,8 @@ breaking the API.
 
 ### Q4 — `commonai.d.ts` AI natives: port in v1 or defer?
 
+**STATUS: DECIDED 2026-06-11 — defer to v2. See [decisions.md](./decisions.md#d-2026-06-11-4-q4--commonai-natives-defer-to-v2).**
+
 **Deadline milestone:** **M2** (the manifest must classify every `commonai` symbol either
 way; the classification *is* the decision record).
 
@@ -248,6 +256,15 @@ way; the classification *is* the decision record).
 all `commonai` natives in the M2 manifest with reason `deferred-v2`; satisfy M6's opponent
 need with a Go-scripted skirmish AI built on the public API. Criterion 4's bolt-on property
 makes deferral cheap to reverse.
+
+### Q5 — Networked multiplayer (added 2026-06-11)
+
+**STATUS: DECIDED 2026-06-11 — committed, deterministic lockstep, milestone M7. See [decisions.md](./decisions.md#d-2026-06-11-5-new--q5--multiplayer-committed-lockstep-milestone-m7).**
+
+Feasibility: yes — lockstep is the WC3 model and the architecture is already shaped for it
+(deterministic sim, command-stream input, state hashing). M7 adds transport, lobby,
+input-delay/stall handling, and hash-based desync detection. G5.3 replay verification is the
+M6 exit gate proving lockstep readiness.
 
 ---
 

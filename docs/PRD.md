@@ -57,7 +57,7 @@ If JSON manifests are required downstream, they will be **generated** from these
 - Recreating Warcraft III content, campaigns, balance data, or art (IP risk; only the *API shape* is ported — JASS function signatures are facts about an interface, not copyrightable expression, but we re-implement all bodies from scratch).
 - MDX/MDL model loading (proprietary Blizzard formats — explicitly out).
 - Mobile/console targets. Desktop Windows/Linux/macOS only (G3N's supported platforms).
-- Full networked multiplayer in v1 (determinism groundwork is in scope; netcode is v2).
+- Netcode before milestone M7. Multiplayer itself is **committed** (lockstep, see §9.5 and M7): v1 milestones M0–M6 ship no transport/lobby code, but determinism (G5) and the command-stream design are load-bearing prerequisites for M7, not optional groundwork.
 - General-purpose engine competing with Unity/Godot. This is an RTS-shaped engine.
 
 ---
@@ -272,7 +272,8 @@ Engine support required to make FSV possible (these are product features, per G7
 | **M3** | Sim core | ECS, 20 Hz tick, movement, pathfinding, combat for 500 units within budget (headless benchmark) |
 | **M4** | Render core | GLB units/buildings/terrain rendered with animation, team color, RTS camera; 60 FPS on reference machine |
 | **M5** | API v1 | Full canonical API implemented over sim+render; audit report shows 0 unmapped / 0 duplicated |
-| **M6** | Vertical slice | Playable skirmish: build, train, fight, win/lose; all §5.3 budgets green in CI |
+| **M6** | Vertical slice | Playable skirmish: build, train, fight, win/lose; all §5.3 budgets green in CI; **replay verification (G5.3) green — lockstep-readiness proof for M7** |
+| **M7** | **Multiplayer (lockstep)** | 2–8 player LAN/online skirmish: transport + reliability layer, lockstep scheduler (input delay, stall handling), lobby/session bootstrap, state-hash desync detection with diagnostic dump. Replays and netplay share the command-stream format. See decision D-2026-06-11-5. |
 
 ---
 
@@ -289,12 +290,16 @@ Engine support required to make FSV possible (these are product features, per G7
 
 ---
 
-## 9. Open Questions
+## 9. Open Questions — DECIDED 2026-06-11
 
-1. Fixed-point vs ordered-float for sim math (M1 decides; affects every gameplay system).
-2. Keep JASS-flavored naming as aliases (`CreateUnit`) vs purely idiomatic Go (`g.CreateUnit`) — current draft: idiomatic only, with a generated JASS→Go mapping table in docs for porters.
-3. Terrain: heightmap mesh (WC3-like cliffs) vs hex/square tile meshes (KayKit style). Asset availability favors tiles; WC3 fidelity favors heightmap. Decide in M4 design.
-4. `commonai.d.ts` (716 lines of AI natives): port in v1 as part of the canonical API, or defer computer-player AI to v2? Draft: defer; manifest still classifies them (tombstoned "v2").
+All four questions plus the multiplayer question are decided; full rationale in
+[`docs/prd/01-vision/decisions.md`](prd/01-vision/decisions.md).
+
+1. **Sim math → fixed-point `int64` 32.32** (D-2026-06-11-1). M1 spike now validates performance/precision of fixed-point rather than arbitrating; reopens only if the tick budget fails.
+2. **Naming → idiomatic Go only** (D-2026-06-11-2); generated JASS→Go mapping table is the migration aid.
+3. **Terrain → tile meshes (KayKit style)** for v1 (D-2026-06-11-3); heightmap is a v2 candidate behind the same sim-side grid abstraction.
+4. **`commonai` → deferred to v2** (D-2026-06-11-4); all symbols tombstoned `deferred-v2` in the manifest; M6 opponent is Go-scripted via the public API.
+5. **Multiplayer → committed, lockstep, milestone M7** (D-2026-06-11-5). Deterministic lockstep over the existing command stream (commands exchanged, not state); `StateHash` doubles as desync detector; replay verification (G5.3) becomes a hard M6 exit criterion.
 
 ---
 

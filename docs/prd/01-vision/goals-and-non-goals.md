@@ -146,15 +146,19 @@ Desktop Windows/Linux/macOS only — G3N's supported platforms.
   build tags, input abstractions, or platform shims accepted into v1; reference-machine
   budgets are never traded off to enable a hypothetical port.
 
-### NG4 — No networked multiplayer in v1
+### NG4 — No netcode before M7 (multiplayer itself is committed)
 
-Determinism groundwork (G5) is in scope because it is the expensive prerequisite; netcode
-itself is v2.
+*Revised 2026-06-11 per decision D-2026-06-11-5: multiplayer is a committed lockstep
+milestone (M7), not a v2 maybe.* Milestones M0–M6 still ship no transport/lobby/sync code —
+but determinism (G5) and the command stream are now load-bearing prerequisites for a
+committed feature.
 
 - **Criteria:** no network transport, lobby, or sync code in v1; the command-stream
   abstraction (ordered commands in → deterministic state out, G5.3) exists and is tested,
   because it is also the replay mechanism; lockstep readiness is demonstrated by replay
-  verification, not by shipping netplay.
+  verification (G5.3), which is a hard M6 exit criterion gating M7; from M3 onward, sim
+  changes must answer "does this survive lockstep?" (no per-client state or local-player
+  branches inside the tick).
 
 ### NG5 — Not a general-purpose engine
 
