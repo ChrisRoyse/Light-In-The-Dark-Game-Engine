@@ -262,6 +262,16 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hut.WriteU16(ut.TypeID[i])
 	}
 
+	hin := h.next() // invents (#334)
+	in := w.Invents
+	hin.WriteU32(uint32(in.count))
+	for i := int32(0); i < in.count; i++ {
+		hin.WriteU32(uint32(in.Entity[i]))
+		for s := 0; s < InventorySlots; s++ {
+			hin.WriteU32(uint32(in.Slots[i][s]))
+		}
+	}
+
 	heco := h.next() // economy (#300/#302): counters + node/econ/harvest/produce rows
 	heco.WriteU32(uint32(w.resourceCount))
 	for pl := 0; pl < MaxPlayers; pl++ {
@@ -325,16 +335,6 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		for u := range w.upgradeDefs {
 			heco.WriteU8(w.upgradeLevel[pl][u])
 			heco.WriteU8(w.techMax[pl][u])
-		}
-	}
-
-	hin := h.next() // invents (#334)
-	in := w.Invents
-	hin.WriteU32(uint32(in.count))
-	for i := int32(0); i < in.count; i++ {
-		hin.WriteU32(uint32(in.Entity[i]))
-		for s := 0; s < InventorySlots; s++ {
-			hin.WriteU32(uint32(in.Slots[i][s]))
 		}
 	}
 
