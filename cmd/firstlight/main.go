@@ -5,6 +5,12 @@
 //   - Right-click the ground to order the unit to move there.
 //   - F12 saves a screenshot to firstlight.png.
 //
+// The unit is the census-verified KayKit Knight (assets/kaykit-adventurers/
+// Knight.glb, OK-ANIMATED) playing Idle/Running_A clips; the grounds are
+// dressed with static Quaternius Ultimate Fantasy RTS scenery (OK-STATIC).
+// Asset binaries are gitignored — when a GLB is missing the demo falls back
+// to the original blue box so -autotest still works on a fresh checkout.
+//
 // Verification flags (FSV protocol, PRD §5.5 / R-FSV-1..3):
 //
 //	-autotest        scripted run: orders the unit to a known target, waits for
@@ -26,6 +32,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/g3n/engine/animation"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
@@ -34,6 +41,7 @@ import (
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/light"
+	"github.com/g3n/engine/loader/gltf"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
@@ -47,15 +55,48 @@ const (
 	autoTargetX = 5.0
 	autoTargetZ = -4.0
 	autoTimeout = 10 * time.Second
+
+	assetsDir    = "assets"
+	knightGLB    = "kaykit-adventurers/Knight.glb"
+	knightHeight = 1.6 // world units, bbox-normalized
 )
+
+// sceneryItem places one static GLB: bbox-normalized to extent world units,
+// bottom on the ground, bbox center at (x, z), rotated rotY about +Y.
+type sceneryItem struct {
+	glb    string
+	extent float32
+	x, z   float32
+	rotY   float32
+}
+
+// scenery dresses the ground plane (±12 world units). All models are
+// OK-STATIC in docs/assets/census.tsv.
+var scenery = []sceneryItem{
+	{glb: "quaternius-ultimate-fantasy-rts/Castle_Fortress.glb", extent: 7.0, x: 0, z: -9},
+	{glb: "quaternius-ultimate-fantasy-rts/Village_Market.glb", extent: 4.0, x: -7.5, z: -5, rotY: 0.5},
+	{glb: "quaternius-ultimate-fantasy-rts/Hut.glb", extent: 2.4, x: 7, z: -6, rotY: -0.4},
+	{glb: "quaternius-ultimate-fantasy-rts/House.glb", extent: 2.8, x: 9, z: -3.5, rotY: -0.9},
+	{glb: "quaternius-ultimate-fantasy-rts/Gold_Rocks.glb", extent: 2.2, x: -8.5, z: 4},
+	{glb: "quaternius-ultimate-fantasy-rts/Pine_Trees.glb", extent: 3.6, x: -10, z: -8},
+	{glb: "quaternius-ultimate-fantasy-rts/Pine_Trees.glb", extent: 3.2, x: 9.5, z: -8.5, rotY: 2.1},
+	{glb: "quaternius-ultimate-fantasy-rts/Trees.glb", extent: 3.0, x: -10, z: 8.5, rotY: 1.2},
+	{glb: "quaternius-ultimate-fantasy-rts/Trees.glb", extent: 2.8, x: 10, z: 7.5, rotY: -1.7},
+	{glb: "quaternius-ultimate-fantasy-rts/Stone_Tower.glb", extent: 3.0, x: 5.5, z: 5.5, rotY: 2.6},
+}
 
 type demo struct {
 	app    *app.Application
 	scene  *core.Node
 	cam    *camera.Camera
 	ground *graphic.Mesh
-	unit   *graphic.Mesh
+	unit   *core.Node // wrapper: position = unit ground position
+	body   core.INode // visual child (GLB model or fallback box), pick target
 	ring   *graphic.Mesh
+
+	idleAnim *animation.Animation
+	runAnim  *animation.Animation
+	active   *animation.Animation
 
 	selected  bool
 	hasTarget bool
@@ -89,6 +130,7 @@ func main() {
 	d.buildCamera()
 	d.buildLights()
 	d.buildGround()
+	d.buildScenery()
 	d.buildUnit()
 	d.installInput()
 
@@ -100,8 +142,8 @@ func main() {
 // ~34 degree pitch from vertical, no orbit control.
 func (d *demo) buildCamera() {
 	d.cam = camera.New(1)
-	d.cam.SetPosition(0, 14, 9.5)
-	d.cam.LookAt(&math32.Vector3{X: 0, Y: 0, Z: 0}, &math32.Vector3{X: 0, Y: 1, Z: 0})
+	d.cam.SetPosition(0, 12, 9)
+	d.cam.LookAt(&math32.Vector3{X: 0, Y: 0, Z: -1.5}, &math32.Vector3{X: 0, Y: 1, Z: 0})
 	d.scene.Add(d.cam)
 
 	onResize := func(evname string, ev interface{}) {
@@ -128,20 +170,139 @@ func (d *demo) buildGround() {
 	d.scene.Add(d.ground)
 }
 
+// loadGLB parses a GLB and returns its default scene node, or an error.
+func loadGLB(rel string) (core.INode, error) {
+	doc, err := gltf.ParseBin(filepath.Join(assetsDir, rel))
+	if err != nil {
+		return nil, err
+	}
+	sceneIdx := 0
+	if doc.Scene != nil {
+		sceneIdx = *doc.Scene
+	}
+	return doc.LoadScene(sceneIdx)
+}
+
+// normalize wraps model so its bbox is scaled to extent world units (largest
+// axis), bottom at y=0, bbox center on the wrapper origin in XZ.
+func normalize(inode core.INode, extent float32) *core.Node {
+	model := inode.GetNode()
+	model.UpdateMatrixWorld() // bbox needs world matrices, stale until first render
+	bb := model.BoundingBox()
+	var center, size math32.Vector3
+	bb.Center(&center)
+	bb.Size(&size)
+	max := size.X
+	if size.Y > max {
+		max = size.Y
+	}
+	if size.Z > max {
+		max = size.Z
+	}
+	scale := float32(1)
+	if max > 0.001 {
+		scale = extent / max
+	}
+	model.SetScale(scale, scale, scale)
+	model.SetPosition(-center.X*scale, -bb.Min.Y*scale, -center.Z*scale)
+	wrapper := core.NewNode()
+	wrapper.Add(model)
+	return wrapper
+}
+
+func (d *demo) buildScenery() {
+	for _, it := range scenery {
+		model, err := loadGLB(it.glb)
+		if err != nil {
+			fmt.Printf("event: scenery skipped %s (%v)\n", it.glb, err)
+			continue
+		}
+		w := normalize(model, it.extent)
+		w.SetPosition(it.x, 0, it.z)
+		w.SetRotationY(it.rotY)
+		d.scene.Add(w)
+		fmt.Printf("event: scenery placed %s at (%.1f, %.1f)\n", it.glb, it.x, it.z)
+	}
+}
+
 func (d *demo) buildUnit() {
-	geom := geometry.NewBox(0.6, 1.2, 0.6)
-	mat := material.NewStandard(&math32.Color{R: 0.15, G: 0.30, B: 0.85})
-	d.unit = graphic.NewMesh(geom, mat)
-	d.unit.SetPosition(0, 0.6, 0)
+	d.unit = core.NewNode()
+	d.unit.SetPosition(0, 0, 0)
 	d.scene.Add(d.unit)
+
+	if doc, err := gltf.ParseBin(filepath.Join(assetsDir, knightGLB)); err == nil {
+		if err := d.buildKnight(doc); err != nil {
+			fmt.Printf("event: knight load failed (%v), using fallback box\n", err)
+			d.buildFallbackBox()
+		}
+	} else {
+		fmt.Printf("event: knight GLB missing (%v), using fallback box\n", err)
+		d.buildFallbackBox()
+	}
 
 	ringGeom := geometry.NewTorus(0.7, 0.05, 8, 24, 2*math32.Pi)
 	ringMat := material.NewStandard(&math32.Color{R: 1.0, G: 0.9, B: 0.1})
 	d.ring = graphic.NewMesh(ringGeom, ringMat)
 	d.ring.SetRotationX(-math32.Pi / 2)
-	d.ring.SetPosition(0, -0.55, 0) // relative to unit center, just above ground
+	d.ring.SetPosition(0, 0.05, 0)
 	d.ring.SetVisible(false)
 	d.unit.Add(d.ring)
+}
+
+// buildKnight loads the skinned Knight model and its Idle/Running_A clips.
+// Animations must be loaded after LoadScene (channels bind to loaded nodes).
+func (d *demo) buildKnight(doc *gltf.GLTF) error {
+	sceneIdx := 0
+	if doc.Scene != nil {
+		sceneIdx = *doc.Scene
+	}
+	model, err := doc.LoadScene(sceneIdx)
+	if err != nil {
+		return err
+	}
+	body := normalize(model, knightHeight)
+	d.body = body
+	d.unit.Add(body)
+
+	idle, err := doc.LoadAnimationByName("Idle")
+	if err != nil {
+		return fmt.Errorf("load Idle clip: %w", err)
+	}
+	run, err := doc.LoadAnimationByName("Running_A")
+	if err != nil {
+		return fmt.Errorf("load Running_A clip: %w", err)
+	}
+	idle.SetLoop(true)
+	run.SetLoop(true)
+	d.idleAnim = idle
+	d.runAnim = run
+	d.active = idle
+	fmt.Printf("event: knight loaded model=%s clips=[Idle Running_A]\n", knightGLB)
+	return nil
+}
+
+func (d *demo) buildFallbackBox() {
+	geom := geometry.NewBox(0.6, 1.2, 0.6)
+	mat := material.NewStandard(&math32.Color{R: 0.15, G: 0.30, B: 0.85})
+	box := graphic.NewMesh(geom, mat)
+	box.SetPosition(0, 0.6, 0)
+	d.body = box
+	d.unit.Add(box)
+}
+
+// setMoving switches the active clip between Idle and Running_A.
+func (d *demo) setMoving(moving bool) {
+	if d.idleAnim == nil || d.runAnim == nil {
+		return
+	}
+	next := d.idleAnim
+	if moving {
+		next = d.runAnim
+	}
+	if next != d.active {
+		next.Reset()
+		d.active = next
+	}
 }
 
 func (d *demo) installInput() {
@@ -175,7 +336,7 @@ func (d *demo) raycast(x, y float32, target core.INode) []collision.Intersect {
 }
 
 func (d *demo) onLeftClick(x, y float32) {
-	if len(d.raycast(x, y, d.unit)) > 0 {
+	if len(d.raycast(x, y, d.body)) > 0 {
 		d.setSelected(true)
 		return
 	}
@@ -196,13 +357,17 @@ func (d *demo) setSelected(sel bool) {
 }
 
 func (d *demo) orderMove(x, z float32) {
-	d.target = math32.Vector3{X: x, Y: 0.6, Z: z}
+	d.target = math32.Vector3{X: x, Y: 0, Z: z}
 	d.hasTarget = true
+	d.setMoving(true)
 	fmt.Printf("event: move order issued target=(%.2f, %.2f)\n", x, z) // R-FSV-3
 }
 
 func (d *demo) update(rend *renderer.Renderer, deltaTime time.Duration) {
 	d.stepMovement(float32(deltaTime.Seconds()))
+	if d.active != nil {
+		d.active.Update(float32(deltaTime.Seconds()))
+	}
 	d.runAutotest()
 
 	d.app.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
@@ -232,8 +397,9 @@ func (d *demo) stepMovement(dt float32) {
 	delta := math32.Vector3{X: d.target.X - pos.X, Y: 0, Z: d.target.Z - pos.Z}
 	dist := delta.Length()
 	if dist <= arriveEps {
-		d.unit.SetPosition(d.target.X, 0.6, d.target.Z)
+		d.unit.SetPosition(d.target.X, 0, d.target.Z)
 		d.hasTarget = false
+		d.setMoving(false)
 		fmt.Printf("event: arrived pos=(%.2f, %.2f)\n", d.target.X, d.target.Z)
 		return
 	}
@@ -242,7 +408,7 @@ func (d *demo) stepMovement(dt float32) {
 		step = dist
 	}
 	delta.Normalize().MultiplyScalar(step)
-	d.unit.SetPosition(pos.X+delta.X, 0.6, pos.Z+delta.Z)
+	d.unit.SetPosition(pos.X+delta.X, 0, pos.Z+delta.Z)
 	d.unit.SetRotationY(math32.Atan2(delta.X, delta.Z))
 }
 
