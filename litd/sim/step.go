@@ -117,6 +117,7 @@ func (w *World) phaseCombat() {
 	w.abilitySystem() // casts before autoattacks: an ordered cast owns the unit
 	w.acquisitionSystem()
 	w.attackSystem()
+	w.auraSystem()         // throttled child maintenance before the periodic pass (#164)
 	w.buffPeriodicSystem() // periodic ticks land in this tick's apply pass (#162)
 	if w.OnCombatPhase != nil {
 		w.OnCombatPhase(w.tick)

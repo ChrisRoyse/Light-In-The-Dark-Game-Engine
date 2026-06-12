@@ -215,3 +215,53 @@ func TestBuffFingerprint(t *testing.T) {
 	}
 	t.Logf("base %x, reload %x, permille+1 %x", base.Fingerprint, again.Fingerprint, changed.Fingerprint)
 }
+
+const auraBuffsTOML = testBuffsTOML + `
+[[buff]]
+id = "command"
+duration = 100.0
+stacking = "refresh"
+[buff.aura]
+radius = 200.0
+child = "slow"
+linger = 1.0
+`
+
+// Aura block converts: radius to fixed, child to table index, linger
+// to ticks — and every malformed block is a load error.
+func TestBuffAuraBlock(t *testing.T) {
+	tb, err := Load(buffFS(auraBuffsTOML, applyBuffAbilityTOML))
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	var cmd *BuffType
+	slowIdx := -1
+	for i := range tb.BuffTypes {
+		if tb.BuffTypes[i].ID == "command" {
+			cmd = &tb.BuffTypes[i]
+		}
+		if tb.BuffTypes[i].ID == "slow" {
+			slowIdx = i
+		}
+	}
+	if cmd == nil || cmd.AuraRadius != 200<<32 || int(cmd.AuraChild) != slowIdx || cmd.AuraLingerTicks != 20 {
+		t.Fatalf("command aura = %+v (slow at %d)", cmd, slowIdx)
+	}
+	t.Logf("command: radius=%d child=%d linger=%dt", int64(cmd.AuraRadius), cmd.AuraChild, cmd.AuraLingerTicks)
+
+	cases := []struct{ name, buffs, wantErr string }{
+		{"zero radius", strings.Replace(auraBuffsTOML, "radius = 200.0", "radius = 0", 1), "aura.radius"},
+		{"unknown child", strings.Replace(auraBuffsTOML, `child = "slow"`, `child = "nothing"`, 1), "aura.child"},
+		{"self child", strings.Replace(auraBuffsTOML, `child = "slow"`, `child = "command"`, 1), "aura.child"},
+		{"linger below floor", strings.Replace(auraBuffsTOML, "linger = 1.0", "linger = 0.1", 1), "aura.linger"},
+		{"unknown aura field", strings.Replace(auraBuffsTOML, "linger = 1.0", "linger = 1.0\nrange = 5", 1), "unknown field"},
+	}
+	for _, c := range cases {
+		_, err := Load(buffFS(c.buffs, applyBuffAbilityTOML))
+		if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+			t.Errorf("%s: err = %v, want containing %q", c.name, err, c.wantErr)
+		} else {
+			t.Logf("%s: %v", c.name, err)
+		}
+	}
+}

@@ -11,8 +11,14 @@ import (
 	"io/fs"
 	"sort"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
+
+// MinAuraLingerSeconds floors the aura linger grace: shorter than the
+// 5-tick evaluation cadence and a child would expire and re-apply
+// between in-range evaluations (EvBuffExpired flicker).
+const MinAuraLingerSeconds = 0.25
 
 // Stacking rules.
 const (
@@ -62,6 +68,13 @@ type BuffType struct {
 	Periodic      EffectList // runs every period against the carrier
 	Mods          []StatMod
 	Flags         uint8
+	// aura block (#164): a live instance of this type maintains
+	// AuraChild instances on allies within AuraRadius of the carrier;
+	// children linger AuraLingerTicks past their last in-range
+	// evaluation. AuraRadius 0 = not an aura.
+	AuraRadius      fixed.F64
+	AuraChild       uint16
+	AuraLingerTicks uint16
 }
 
 type rawBuffFile struct {
@@ -77,7 +90,14 @@ type rawBuff struct {
 	Period      float64          `toml:"period" json:"period"` // seconds; 0 = no periodic
 	Dispellable bool             `toml:"dispellable" json:"dispellable"`
 	Mods        []rawStatMod     `toml:"mod" json:"mod"`
+	Aura        *rawAura         `toml:"aura" json:"aura"`
 	Effects     []map[string]any `toml:"effects" json:"effects"` // periodic composition
+}
+
+type rawAura struct {
+	Radius float64 `toml:"radius" json:"radius"` // world units
+	Child  string  `toml:"child" json:"child"`   // buff id
+	Linger float64 `toml:"linger" json:"linger"` // seconds
 }
 
 type rawStatMod struct {
@@ -87,7 +107,8 @@ type rawStatMod struct {
 }
 
 // convertBuff converts one raw buff row; the caller compiles Effects.
-func convertBuff(file string, r *rawBuff) (BuffType, error) {
+// names is the full sorted buff-ID list (aura child resolution).
+func convertBuff(file string, r *rawBuff, names []string) (BuffType, error) {
 	fail := func(field string, err error) (BuffType, error) {
 		return BuffType{}, fmt.Errorf("data: %s: buff %q: %s: %w", file, r.ID, field, err)
 	}
@@ -164,6 +185,32 @@ func convertBuff(file string, r *rawBuff) (BuffType, error) {
 		}
 		b.Mods = append(b.Mods, sm)
 	}
+	if r.Aura != nil {
+		rad, err := worldUnits(r.Aura.Radius)
+		if err != nil {
+			return fail("aura.radius", err)
+		}
+		if rad <= 0 {
+			return fail("aura.radius", fmt.Errorf("must be positive"))
+		}
+		b.AuraRadius = rad
+		ci := indexOf(names, r.Aura.Child)
+		if ci < 0 {
+			return fail("aura.child", fmt.Errorf("%q is not a defined buff %v", r.Aura.Child, names))
+		}
+		if r.Aura.Child == r.ID {
+			return fail("aura.child", fmt.Errorf("an aura cannot be its own child"))
+		}
+		b.AuraChild = uint16(ci)
+		if r.Aura.Linger < MinAuraLingerSeconds {
+			return fail("aura.linger", fmt.Errorf("%v s below floor %v s (evaluation-cadence flicker)", r.Aura.Linger, MinAuraLingerSeconds))
+		}
+		lin, err := SecondsToTicks(r.Aura.Linger)
+		if err != nil {
+			return fail("aura.linger", err)
+		}
+		b.AuraLingerTicks = lin
+	}
 	return b, nil
 }
 
@@ -206,7 +253,7 @@ func (t *Tables) loadBuffs(fsys fs.FS, comp *effectCompiler) error {
 	}
 	for i := range pending {
 		p := &pending[i]
-		b, err := convertBuff(p.file, &p.raw)
+		b, err := convertBuff(p.file, &p.raw, comp.buffTypes)
 		if err != nil {
 			return err
 		}
@@ -242,6 +289,9 @@ func (t *Tables) hashBuffs(h *statehash.Hasher) {
 		h.WriteU16(b.Periodic.Off)
 		h.WriteU16(b.Periodic.Len)
 		h.WriteU8(b.Flags)
+		h.WriteI64(int64(b.AuraRadius))
+		h.WriteU16(b.AuraChild)
+		h.WriteU16(b.AuraLingerTicks)
 		h.WriteU32(uint32(len(b.Mods)))
 		for _, m := range b.Mods {
 			h.WriteU8(m.Stat)

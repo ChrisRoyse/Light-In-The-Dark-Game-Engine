@@ -118,7 +118,8 @@ type World struct {
 	// buff-set change.
 	buffAdd     [data.BuffStatCount][]int64
 	buffMult    [data.BuffStatCount][]fixed.F64
-	buffScratch []int32 // recompute gather scratch, cap = BuffInstances
+	buffScratch []int32    // recompute gather scratch, cap = BuffInstances
+	auraScratch []EntityID // aura candidate scratch (#164), cap = Units
 	// spatial bucket grid (buckets.go) — derived from Transform
 	// positions, excluded from the state hash
 	bucketHead []int32
@@ -259,6 +260,7 @@ func NewWorld(requested Caps) *World {
 		areaDistHi:      make([]uint64, 0, 64),
 		areaDistLo:      make([]uint64, 0, 64),
 		buffScratch:     make([]int32, 0, caps.BuffInstances),
+		auraScratch:     make([]EntityID, 0, caps.Units),
 	}
 	for s := 0; s < int(data.BuffStatCount); s++ {
 		w.buffAdd[s] = make([]int64, idxSpace)

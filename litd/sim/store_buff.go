@@ -9,11 +9,17 @@ package sim
 type BuffInstance struct {
 	BuffID         uint16
 	Stacks         uint8
+	Flags          uint8 // BuffInstAuraChild (#164)
 	Target         EntityID
 	Source         EntityID
 	RemainingTicks uint32
 	PeriodicClock  uint32 // absolute next-period tick (CooldownReady)
 }
+
+// BuffInstAuraChild marks an aura-maintained child: the aura system
+// refreshes its linger while the carrier is in radius, and aura
+// maintenance never treats it as an aura source (no chains).
+const BuffInstAuraChild uint8 = 1 << 0
 
 // BuffPool hands out rows by index. Index, not pointer, is the handle:
 // rows live in one backing array that never moves (R-GC-2).
