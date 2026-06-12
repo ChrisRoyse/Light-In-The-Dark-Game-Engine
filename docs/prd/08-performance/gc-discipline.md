@@ -65,7 +65,7 @@ gate or a `-gcflags=-m` excerpt.
 R-GC-2 requires all transient gameplay objects to come from preallocated pools. Three
 patterns cover every case in the engine; new systems must justify deviating.
 
-### 4.1 SoA free-list pool — projectiles, buffs, order-queue entries
+### 4.1 SoA free-list pool — missiles, buffs, order-queue entries
 
 Transients live directly inside the ECS struct-of-arrays stores (R-SIM-3): a fixed-capacity
 parallel-array block plus a free list of indices and a generation counter per slot
@@ -73,7 +73,7 @@ parallel-array block plus a free list of indices and a generation counter per sl
 [Input §8](../07-platform/input.md)).
 
 ```go
-type ProjectilePool struct {
+type MissilePool struct {
     pos, vel   []Fixed2     // parallel SoA arrays, len == cap, fixed at map load
     target     []EntityID
     gen        []uint16     // slot generation; stale handles never resurrect
@@ -81,7 +81,7 @@ type ProjectilePool struct {
     liveCount  int32
 }
 
-func (p *ProjectilePool) Spawn() (Handle, bool) { // bool: pool exhausted
+func (p *MissilePool) Spawn() (Handle, bool) { // bool: pool exhausted
     if len(p.free) == 0 { return Handle{}, false } // deterministic, budgeted failure
     i := p.free[len(p.free)-1]
     p.free = p.free[:len(p.free)-1]
@@ -90,8 +90,8 @@ func (p *ProjectilePool) Spawn() (Handle, bool) { // bool: pool exhausted
 ```
 
 Pool exhaustion is a *designed* state: capacities are sized from the §5.3 worst case (500
-units + 500 projectiles) with headroom, and overflow behavior is deterministic (oldest
-projectile recycled, or spawn refused with an event) — never a grow, never a panic.
+units + 500 missiles) with headroom, and overflow behavior is deterministic (oldest
+missile recycled, or spawn refused with an event) — never a grow, never a panic.
 
 ### 4.2 Value-type ring buffer — events and per-tick scratch
 

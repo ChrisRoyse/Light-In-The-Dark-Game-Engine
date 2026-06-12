@@ -37,7 +37,7 @@ size budgets.
 | Budget (PRD §5.3) | Metric definition | Procedure |
 |---|---|---|
 | **Render ≥ 60 FPS typical** | Frame time **p50 ≤ 16.6 ms and p99 ≤ 33 ms** over the "typical" segment of the render benchmark scene (§4) | Per-frame CPU+present time recorded into a preallocated ring buffer (the recorder must itself satisfy R-GC-1); percentiles computed post-run. FPS averages are never used — they hide hitches |
-| **Render ≥ 30 FPS worst case (500 units on screen)** | Frame time **p99 ≤ 33.3 ms** over the "max battle" segment of the scene; additionally no single frame > 100 ms (hitch gate) | Same recorder; the 500-unit segment holds all units inside the frustum, animating, with projectiles and the full HUD ([UI and HUD §6](../07-platform/ui-and-hud.md)) |
+| **Render ≥ 30 FPS worst case (500 units on screen)** | Frame time **p99 ≤ 33.3 ms** over the "max battle" segment of the scene; additionally no single frame > 100 ms (hitch gate) | Same recorder; the 500-unit segment holds all units inside the frustum, animating, with missiles and the full HUD ([UI and HUD §6](../07-platform/ui-and-hud.md)) |
 | **Sim tick ≤ 10 ms worst case** | **Max** tick wall time (not mean, not p99 — the budget already includes 50 % headroom against the 50 ms tick period) across the full headless benchmark battle (§3) | `go test -bench` harness around `sim.Step()`; per-tick durations recorded; gate on max and report p50/p99 for trend analysis |
 | **Cold start ≤ 5 s** | Process exec → main menu first frame presented | Timestamp written at first present; measured on the reference machine from cold page cache (`echo 3 > /proc/sys/vm/drop_caches` on Linux; reboot script on Windows). CI runs it warm and gates relatively only |
 | **Map load ≤ 10 s** | "Load" command accepted → first playable frame (sim tick 0 executed + first present) of the 128×128 benchmark map with full asset set, including decoded audio ([Audio §6](../07-platform/audio.md)) | Instrumented load phases (asset I/O, GLB parse, GPU upload, pathfinding-grid build, audio decode) each reported separately so regressions are attributable |
@@ -64,8 +64,8 @@ build before any timing is considered).
 | Scenario | Contents | Gates exercised |
 |---|---|---|
 | `bench_idle_500` | 500 idle units, no orders, 2k ticks | Baseline tick cost; allocation gate floor |
-| `bench_battle_500v500` | 500 vs 500 scripted attack-move into sustained combat with projectiles, deaths, buffs, 10k ticks | The §5.3 worst-case tick budget; pooling under churn ([GC Discipline §4](./gc-discipline.md)) |
-| `bench_battle_1000` *(stretch, D-2026-06-11-18)* | 1,000 units + 1,000 live projectiles in sustained scripted combat, 10k ticks; ECS capacities provisioned for this from M3 | The recommended-spec stretch tier (§5.1): tick budget gated on the recommended-spec machine; on the low-tier machine it runs and reports but does not gate *(Added 2026-06-11 per D-2026-06-11-18)* |
+| `bench_battle_500v500` | 500 vs 500 scripted attack-move into sustained combat with missiles, deaths, buffs, 10k ticks | The §5.3 worst-case tick budget; pooling under churn ([GC Discipline §4](./gc-discipline.md)) |
+| `bench_battle_1000` *(stretch, D-2026-06-11-18)* | 1,000 units + 1,000 live missiles in sustained scripted combat, 10k ticks; ECS capacities provisioned for this from M3 | The recommended-spec stretch tier (§5.1): tick budget gated on the recommended-spec machine; on the low-tier machine it runs and reports but does not gate *(Added 2026-06-11 per D-2026-06-11-18)* |
 | `bench_path_storm` | 500 units issued simultaneous cross-map move orders through chokepoints, repeated | Pathfinding worst case (R-SIM-5) |
 | `bench_econ_macro` | 12 players, full base-building, training, harvesting loops, 20k ticks | Order queues, production, event system |
 | `bench_input_spam` | `bench_battle` workload + maximal-rate command stream | Command decode/validation path (R-INP-1.7) |
@@ -131,7 +131,7 @@ documented decision, because every historical absolute number is calibrated to i
 
 *Added 2026-06-11 per D-2026-06-11-18.*
 
-The 1,000-unit stretch target (1,000 units + 1,000 projectiles, provisioned in ECS
+The 1,000-unit stretch target (1,000 units + 1,000 missiles, provisioned in ECS
 capacities and pathfinding from M3) is gated on a second pinned machine class. **The
 low-tier machine above remains the guarantee tier: every PRD §5.3 budget continues to gate
 there at 500 units, unchanged.** The stretch tier adds gates; it never substitutes for one.

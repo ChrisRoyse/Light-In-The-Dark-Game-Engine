@@ -231,7 +231,7 @@ target; the scheduler implementation is serializable; campaign-persistence hooks
 **Deliverables.**
 - ECS with struct-of-arrays component stores, capacities fixed at map load (R-SIM-3,
   R-GC-2); entity lifecycle (create/destroy/recycle) with pooled transients. Capacities,
-  pathfinding structures, and budgets provisioned for **1,000 units + 1,000 projectiles**
+  pathfinding structures, and budgets provisioned for **1,000 units + 1,000 missiles**
   (D-18) — the 500-unit low-tier budget remains the gate, 1,000 the recommended-spec target.
 - Fixed 20 Hz tick loop with the deterministic cooperative scheduler (R-EXEC-1): script
   coroutines, tick-quantized waits (R-EXEC-5), deterministic event dispatch order (R-EXEC-2)
@@ -242,11 +242,11 @@ target; the scheduler implementation is serializable; campaign-persistence hooks
   build-in is cheap. Campaign UI itself is M8.
 - Movement + deterministic A*/flow-field pathfinding on the WC3-style grid, single-threaded
   within tick resolution (R-SIM-5).
-- Combat: orders, attack acquisition, damage application, death events, projectile entities.
+- Combat: orders, attack acquisition, damage application, death events, missile entities.
 - Command-stream interface: ordered commands in → state out; replay recording and headless
   replay verification (R-SIM-4, G5.3).
-- Headless benchmark scenario (500 units + 500 projectiles in sustained combat) wired into
-  the CI benchmark harness ([Tooling §4](./tooling.md)); a 1,000-unit + 1,000-projectile
+- Headless benchmark scenario (500 units + 500 missiles in sustained combat) wired into
+  the CI benchmark harness ([Tooling §4](./tooling.md)); a 1,000-unit + 1,000-missile
   stretch scenario runs alongside it and is tracked (D-18).
 - `testing.AllocsPerRun` gates on the tick path (R-GC-1/5).
 

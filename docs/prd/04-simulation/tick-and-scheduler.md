@@ -29,7 +29,7 @@ alpha = accumulator / tickDuration            // 0..1, render-side only
 | Orders + abilities/buffs | 1.0 ms |
 | Pathing (expansion-budgeted, see [Pathfinding §6](pathfinding.md)) | 2.0 ms |
 | Movement + collision | 2.0 ms |
-| Combat + projectiles | 2.0 ms |
+| Combat + missiles | 2.0 ms |
 | Events + cleanup + snapshot | 1.5 ms |
 | Reserve | 0.5 ms |
 
@@ -151,7 +151,7 @@ One `sim.Step()` executes these phases in fixed order (system-level detail in [E
 | 2 | **Scripts** | Map-script domain scheduler resumes all suspensions with `wakeTick == now` in sleeper-queue order and fires due timers; then the **AI domain** (§3.4, from M5.5) does the same in its own isolated context, consuming command-stack messages (R-EXEC-3). Script effects (unit creation, orders issued) apply immediately, exactly as in JASS. *Revised 2026-06-11 per D-2026-06-11-6.* |
 | 3 | **Orders** | Order queues resolve into concrete intents: current order decides target point/entity for movement, attack, cast (see [Combat & Orders](combat-and-orders.md)). |
 | 4 | **Movement** | Path requests serviced within budget ([Pathfinding](pathfinding.md)), grid restamps from construction, position integration, avoidance, facing. |
-| 5 | **Combat** | Target acquisition, attack cycle state machines, projectile advancement and impact, damage application via deferred-effect buffers. |
+| 5 | **Combat** | Target acquisition, attack cycle state machines, missile advancement and impact, damage application via deferred-effect buffers. |
 | 6 | **Events** | Deterministic flush of the tick's gameplay events (deaths, damage, order completion) to handlers per §3.2; handlers may enqueue further state changes that land this phase or, if they wait, on later ticks. |
 | 7 | **Cleanup** | Death resolution, corpse decay clocks, swap-remove of dead rows, pool/free-list recycling, buff expiry sweep; render snapshot published; state hash on its cadence. |
 

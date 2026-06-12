@@ -191,10 +191,11 @@ The [JASS Manual library documentation](https://jass.sourceforge.net/doc/library
   - all gameplay math in fixed-point (`int32` 16.16 or `int64` 32.32) or strictly ordered float ops — decision spike in M1;
   - a single seeded PRNG owned by the sim; no `map` iteration in gameplay code (Go map order is random) — keyed slices/ordered structures only;
   - no wall-clock or goroutine-race inputs inside a tick.
-- **R-SIM-3:** Data-oriented ECS layout (struct-of-arrays component stores) for units/projectiles/buffs — cache-friendly on low-tier CPUs. Capacities provisioned for **1,000 active units + 1,000 projectiles** (D-18 stretch target on recommended spec); the §5.3 low-tier budgets are guaranteed at 500.
+- **R-SIM-3:** Data-oriented ECS layout (struct-of-arrays component stores) for units/missiles/buffs — cache-friendly on low-tier CPUs. Capacities provisioned for **1,000 active units + 1,000 missiles** (D-18 stretch target on recommended spec); the §5.3 low-tier budgets are guaranteed at 500.
 - **R-SIM-6:** The cooperative scheduler is **serializable** (D-9): suspended coroutines, timers, and event subscriptions serialize into the save format — mid-game save/load is v1 scope, and campaign cross-map persistence (D-15) rides the same mechanism.
 - **R-SIM-4:** Headless mode: sim runs and replays verify with no GPU/window (CI-testable).
 - **R-SIM-5:** Pathfinding deterministic A*/flow-field on the WC3-style grid; no threads inside tick resolution in v1 (parallelism only across full-tick boundaries if ever added).
+- **R-SIM-7 (deliberate WC3 divergence):** Abilities are **dynamically built and registered**, never hardcoded: an ability definition is an effect *pipeline* composed from plugin-codeable effect mechanisms held in a deterministic registry (engine standard library + world-registered Go/Lua plugins; the registered set folds into the content hash, so mismatched plugin sets refuse to join rather than desync). Missiles are **independent first-class sim objects** — pooled entities with their own guidance programs and impact behaviors, spawnable and queryable through the public API, not cosmetic attack attachments. Spec: [combat-and-orders.md §3.5, §5.1](prd/04-simulation/combat-and-orders.md).
 
 ### 5.2 Rendering (G3N presentation layer)
 
@@ -224,7 +225,7 @@ Budgets are CI-enforced from M3 onward via headless sim benchmarks and a scripte
 Go's GC is acceptable for a 20 Hz sim + 60 FPS render **only if steady-state allocation is near zero**. GC pressure is treated as a budgeted resource, not an afterthought:
 
 - **R-GC-1:** Zero heap allocations per sim tick and per render frame at steady state (excluding map load, unit creation bursts). Enforced in CI with `testing.AllocsPerRun` benchmarks on the tick and frame paths.
-- **R-GC-2:** All transient gameplay objects (projectiles, buffs, events, order queue entries) come from preallocated pools; ECS component stores are preallocated struct-of-arrays slices that never reallocate mid-match (capacity fixed at map load).
+- **R-GC-2:** All transient gameplay objects (missiles, buffs, events, order queue entries) come from preallocated pools; ECS component stores are preallocated struct-of-arrays slices that never reallocate mid-match (capacity fixed at map load).
 - **R-GC-3:** Value types everywhere in hot paths (`Vec2`, `Angle`, event payloads); no interface boxing or closures allocated inside the tick loop; string building/logging is debug-mode only.
 - **R-GC-4:** GC tuning is a fallback, not a strategy: `GOGC`/`debug.SetGCPercent` and soft memory limit may be set at startup, but budgets must pass with defaults.
 - **R-GC-5:** CI fails on regression: any change increasing allocs/tick or allocs/frame above zero baseline is rejected.

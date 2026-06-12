@@ -21,7 +21,7 @@ The budget allocates roughly:
 | Terrain | ≤ 40 | static chunk merging (§3) |
 | Units (≤ 500 visible) | ≤ 150 | shared-material batching + instancing (§2, §4) |
 | Buildings & doodads | ≤ 50 | shared atlas material; static doodad merging into terrain chunks |
-| FX / projectiles | ≤ 30 | pooled billboards, shared materials |
+| FX / missiles | ≤ 30 | pooled billboards, shared materials |
 | Fog-of-war, decals, minimap | ≤ 15 | see [Fog of War, Minimap, Selection](./fog-of-war-minimap-selection.md) |
 | GUI | ≤ 15 | G3N GUI widgets |
 
@@ -67,7 +67,7 @@ An RTS is the canonical instancing workload: hundreds of entities sharing a hand
 
 1. **Baseline measurement (still first, repurposed).** Run the M3 benchmark scenes (500 and 1,000 units, max zoom) with batching + merging only. The baseline no longer decides *whether* to patch — 1,000 visible units cannot fit 300 calls without instancing, so the patch is committed M4 work — it sizes *how much* the patch must recover and which content classes (rigid vs skinned) sit on the critical path.
 2. **Patch surface — settled by the D-30 spike.** The C binding layer already loads `glDrawArraysInstanced`/`glDrawElementsInstanced`/`glDrawElementsInstancedBaseVertex`/`glVertexAttribDivisor` (`repoes/engine/gls/glapi.c:480–530, 831–881`); the LITD-PATCH adds the Go-side `gls` wrappers, an `InstancedMesh` graphic, and a per-instance transform/team-color attribute buffer, plus the shader-generator changes (`renderer/shaman.go` + `renderer/shaders`) to consume instance attributes in the standard/unlit vertex shaders. No survey work remains — this is a build list.
-3. **Skinned-mesh question.** Per-instance *rigid* transforms are straightforward; per-instance *skinning state* is not (each unit is at a different animation time). Candidate answers, evaluated in this order: (a) baked vertex-animation textures (sample bone matrices from a per-clip texture by instance animation-phase — fits the low preset and low bone counts of CC0 packs); (b) shared-pose cohorts (units in the same clip+quantized-phase share a pose; draws per cohort); (c) instancing for rigid content only (buildings, doodads, projectiles) and per-draw skinned units. Option (c) is the guaranteed-shippable floor.
+3. **Skinned-mesh question.** Per-instance *rigid* transforms are straightforward; per-instance *skinning state* is not (each unit is at a different animation time). Candidate answers, evaluated in this order: (a) baked vertex-animation textures (sample bone matrices from a per-clip texture by instance animation-phase — fits the low preset and low bone counts of CC0 packs); (b) shared-pose cohorts (units in the same clip+quantized-phase share a pose; draws per cohort); (c) instancing for rigid content only (buildings, doodads, missiles) and per-draw skinned units. Option (c) is the guaranteed-shippable floor.
 4. **Prototype + benchmark.** Implement the smallest variant that covers the 1,000-unit stretch case per the baseline; re-run the M3 scenes; record draw calls, frame time, and CPU submission time.
 5. **Decision record.** Outcome (variant chosen, skinned-mesh answer, content classes covered) is written into this document and the vendored-fork patch list before the M4 render core builds on it. "Defer entirely" is no longer an outcome (D-2026-06-11-18); the floor is option (c) of step 3 — rigid-content instancing — with skinned coverage recorded as adopted or scheduled.
 
@@ -117,7 +117,7 @@ A sanity model of the benchmark frame with batching + merging only (no instancin
 | Terrain chunks | ~25–30 | ~25–30 visible chunks ([Camera §7](./camera-and-culling.md)), 1 call each, doodads merged in |
 | Units (500 visible, 2 factions × ~6 model types) | ~150–500 | **the risk item**: without instancing, skinned units are 1 call each; shared materials make calls cheap but not fewer. If the visible count truly reaches 500, batching alone misses the budget — this is exactly the §4.3 step-1 measurement that sizes the planned instancing patch |
 | Buildings + destructible doodads | ~30 | mostly merged or shared-material |
-| FX/projectiles | ~20 | pooled billboards, few materials |
+| FX/missiles | ~20 | pooled billboards, few materials |
 | Decals (circles, bars, shadows: Alt held) | ~10 | pooled, shared materials ([Fog of War §4.3](./fog-of-war-minimap-selection.md)) |
 | Minimap + fog | ~6 | fog costs 0 ([Fog of War §2.4](./fog-of-war-minimap-selection.md)) |
 | GUI | ~15 | G3N widgets |
@@ -135,7 +135,7 @@ The honest reading *(Revised 2026-06-11 per D-2026-06-11-18)*: **the 300-call bu
 What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the milestone doesn't stall on debate:
 
 1. **Calls over 300, frame time fine** → tighten first: verify material-group parenting (§2.2) didn't fragment; check for accidental `material.Clone()` (§2.3, add a debug assert that counts live material instances); merge more doodad classes into chunks (§3).
-2. **Calls over 300 after tightening** → extend the planned instancing patch (§4.3 — it lands in M4 regardless, per D-2026-06-11-18): rigid content first (buildings/doodads/projectiles/decals), which is low-risk and may alone recover 50–100 calls, then the skinned-mesh question (§4.3.3).
+2. **Calls over 300 after tightening** → extend the planned instancing patch (§4.3 — it lands in M4 regardless, per D-2026-06-11-18): rigid content first (buildings/doodads/missiles/decals), which is low-risk and may alone recover 50–100 calls, then the skinned-mesh question (§4.3.3).
 3. **Frame time over budget with calls under 300** → the problem is not draw calls: profile skinning CPU cost (mitigation: animation-rate halving for far units, pose-sharing cohorts) and fill rate (mitigation: blended-FX caps, low preset — [Materials §5](./materials-and-lighting.md)).
 4. **Allocs/frame nonzero** → R-GC-5 treats this as a correctness failure, not a tuning matter; the offending path is fixed, never waived.
 5. **Last resort** → renegotiate the visible-army worst case with design (tighter Z_max in [Camera §2.2](./camera-and-culling.md) shrinks worst-case visible count quadratically) before renegotiating the 300-call budget itself.

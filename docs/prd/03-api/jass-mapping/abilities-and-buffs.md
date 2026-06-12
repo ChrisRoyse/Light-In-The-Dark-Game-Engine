@@ -60,6 +60,15 @@ func (u Unit) LearnSkill(t AbilityType)
 func (p Player) SetTechResearched(t TechType, level int)
 func (p Player) TechCount(t TechType, inProgress bool) int
 func (p Player) SetTechAllowed(t TechType, max int)
+
+// LitD extension — no JASS analogue. Abilities are composed plugin pipelines
+// (combat-and-orders.md §5.1), not hardcoded engine behaviors:
+func (g *Game) RegisterEffectMechanism(id MechanismID, m EffectMechanism)
+    // world-load registration point only; deterministic manifest order;
+    // registered set folds into the content hash (replay/join guard)
+func (g *Game) DefineAbility(t AbilityType, def AbilityDef)
+    // dynamic ability definition: cast-table fields + effect pipeline
+    // ([]PipelineStep{mechanism ID, params}); equivalent to a data-table row
 ```
 
 ## Dedup rules applied
@@ -83,7 +92,7 @@ The Blz field-reflection matrix is the single biggest D5 win in the whole API:
 
 ## Porting hazards
 
-1. **WC3 abilities are data-driven engine behaviors**, not scripts — porting the *natives* is easy; the implicit ability *engine* (channel/cast-point/backswing phases, targeting validation, aura pulse cadence) is the real scope. The natives only make sense once that sim system exists (M3+).
+1. **WC3 abilities are a closed set of hardcoded engine behaviors** — LitD deliberately diverges: abilities are dynamically built and registered as composed plugin pipelines ([combat-and-orders.md §5.1](../../04-simulation/combat-and-orders.md)). Porting the *natives* is easy; the cast state machine + effect-mechanism registry is the real scope, and the natives only make sense once that sim system exists (M3+). Every WC3 hardcoded ability must be expressible as a pipeline over the standard mechanism library — a WC3 ability that can't be composed reveals a missing mechanism, not a new special case.
 2. **Ability vs buff vs tech ID confusion**: JASS uses raw integers for all three; LitD's distinct `AbilityType`/`BuffType`/`TechType` string keys prevent the classic four-cc mixups, but the manifest must classify every constant correctly.
 3. **Field reflection writes mid-game** (`BlzSetAbility*Field`) mutate shared ability definitions vs per-instance values inconsistently in WC3. LitD rule: `SetField` is always per-instance copy-on-write; document divergence.
 4. **`SelectHeroSkill` and skill-point economy** interact with UI (skill menu) — the sim must own point counts; UI only displays.

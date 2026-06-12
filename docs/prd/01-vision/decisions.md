@@ -185,7 +185,7 @@ from M4 onward. v1 ships English; translations are pure data drops.
 ## D-2026-06-11-18 — Scale: 1,000-unit stretch target
 
 ECS capacities, pathfinding, and budgets are provisioned for **1,000 units + 1,000
-projectiles** from M3. The low-tier reference machine guarantee stays at 500 units
+missiles** from M3. The low-tier reference machine guarantee stays at 500 units
 (existing §5.3 budgets); 1,000 becomes the recommended-spec target. Render side requires
 the instancing patch to land (R2 trigger now assumed fired — plan for it in M4, not as
 contingency).
@@ -404,6 +404,37 @@ to us and feed rapid engine fixes; constant performance optimization.
 
 Every future issue inherits: new subsystem ⇒ counters + log channel + state visible in
 the dump (already enforced by R-FSV-2/3 acceptance).
+
+## D-2026-06-12-1 — Plugin-composed abilities + first-class missile objects (R-SIM-7)
+
+Owner directive: abilities must be dynamically built and registered, not hardcoded;
+missiles must be independent objects; deliberately more advanced/modern abstraction
+than WC3.
+
+**Decision.** Two coupled WC3 divergences, recorded as R-SIM-7 in the master PRD:
+
+1. **Abilities are composed plugin pipelines** ([combat-and-orders.md §5.1](../04-simulation/combat-and-orders.md)).
+   The shared cast state machine stays engine code; the *content* of EFFECT is an
+   ordered pipeline of effect mechanisms drawn from a deterministic string-ID registry.
+   Engine ships a standard mechanism library; worlds register more as plugins — Go via
+   compile-time static registration (no `plugin.Open`; reproducible builds), Lua via the
+   sandboxed deterministic interpreter (M5+). Three authoring tiers: new table row
+   (compose existing mechanisms) < new registered mechanism (plugin) < cast-machine
+   change (engine). Registered set + versions fold into the content hash — mismatched
+   plugin sets refuse to join (replay/join guard), never silently desync.
+2. **Missiles are first-class sim entities** ([combat-and-orders.md §3.5](../04-simulation/combat-and-orders.md)):
+   own pooled component store, guidance programs (homing/ballistic/linear/…) and impact
+   behaviors (deliver/detonate/pierce/fork/expire) selected by table ID from the same
+   registry discipline, spawnable by attacks, abilities, and directly via
+   `g.SpawnMissile(opts)`; public noun #21 ([public-api-design.md §2](../03-api/public-api-design.md)).
+   WC3's expire-vs-AoE table flag generalizes into impact behaviors; skillshots
+   (linear + hit-mask) come for free.
+
+All existing determinism/GC constraints bind plugin mechanisms identically to engine
+code (sim PRNG only, fixed-point only, deferred-effect buffers, zero alloc per tick,
+R-GC-1 CI gate). Affected issues (#158, #160, #162, #234) updated to spec against
+§3.5/§5.1. The terminology across PRD docs is standardized to **missile** (was
+"projectile").
 
 ---
 

@@ -31,7 +31,7 @@ Live counters, zero-alloc, sampled per tick/frame, ring-buffered history (10 min
 | draw calls, batches, instances | ≤ 300 |
 | allocs/frame, allocs/tick, heap MB | 0 / 0 / ≤ 1.5 GB |
 | path expansions/tick, queue depth | ~100k budget |
-| active units/projectiles/buffs | 1,000/1,000 caps |
+| active units/missiles/buffs | 1,000/1,000 caps |
 | voices active | 32 |
 | net: turn RTT, input-delay turns, hash-lag | M7 |
 | lua: instructions/tick per script, mem | R-SEC-1 quotas |

@@ -8,7 +8,7 @@
 
 Combat and orders are the systems where WC3's *feel* lives, and the systems most prone to hidden non-determinism (target selection, simultaneous damage, float cooldowns). Two principles govern everything below:
 
-1. **Data-table-driven (R-AST-1):** every number — damage dice, armor coefficients, cooldowns, acquisition ranges, buff durations, projectile speeds — comes from the immutable JSON/TOML tables in `data/`, loaded once at startup. Code implements *mechanisms*; tables define *content*. Durations are stored in seconds in the tables for designer ergonomics and converted to integer tick counts at load ([no sub-tick timing exists](tick-and-scheduler.md), R-EXEC-5).
+1. **Data-table-driven (R-AST-1):** every number — damage dice, armor coefficients, cooldowns, acquisition ranges, buff durations, missile speeds — comes from the immutable JSON/TOML tables in `data/`, loaded once at startup. Code implements *mechanisms*; tables define *content*. Durations are stored in seconds in the tables for designer ergonomics and converted to integer tick counts at load ([no sub-tick timing exists](tick-and-scheduler.md), R-EXEC-5).
 2. **Deterministic by ordering:** every selection among candidates (targets, queue entries, simultaneous deaths) has an explicitly specified total order, per [R-SIM-2](determinism.md). "Whichever the loop found first" is only acceptable when the loop's order is itself specified — which, via [dense-store iteration](ecs-architecture.md), it always is.
 
 ## 2. The WC3 order system
@@ -67,7 +67,7 @@ Among valid candidates (enemy, alive, visible, attackable by this weapon's targe
 2. **distanceSq** — fixed-point squared distance, computed in widened integers ([Determinism §2.1](determinism.md)); no square roots in the comparison path.
 3. **entityIndex** — final total-order tie-break. Two byte-identical sims pick the same target, always.
 
-The candidate iteration order (bucket scan order) does not affect the outcome because the comparison is a total order over the full candidate set — the loop keeps a running best under the tuple comparison. This is the pattern for *every* "pick one of several" decision in the engine (shove targets in [pathfinding §5](pathfinding.md), projectile hit resolution, item stacking).
+The candidate iteration order (bucket scan order) does not affect the outcome because the comparison is a total order over the full candidate set — the loop keeps a running best under the tuple comparison. This is the pattern for *every* "pick one of several" decision in the engine (shove targets in [pathfinding §5](pathfinding.md), missile hit resolution, item stacking).
 
 ### 3.3 Attack state machine
 
@@ -81,14 +81,39 @@ IDLE → ACQUIRE → CHASE → WINDUP(damagePoint ticks) → FIRE → BACKSWING 
 - **Damage point (windup)** — delay from animation start to damage/launch, the WC3 mechanic that makes attack-canceling and damage timing matter. If the target leaves range or dies during windup, the attack cancels (table flag controls whether cooldown is consumed — WC3-faithful default: it is not).
 - **Backswing** — post-damage animation time during which a new order interrupts freely (orb-walking/animation-canceling works as in WC3, because the *sim* model carries the windup/backswing split; render merely plays clips cued to these states per the [interpolation contract](tick-and-scheduler.md)).
 
-### 3.4 Instant vs projectile delivery
+### 3.4 Instant vs missile delivery
 
 The weapon table's delivery field selects:
 
 - **Instant (melee/hitscan):** at FIRE, a damage packet (value struct: source, target, amount-rolled, attack type, flags) is written to the deferred-damage buffer.
-- **Projectile:** at FIRE, a projectile is allocated from the pool ([ECS §5](ecs-architecture.md)) carrying the packet plus speed/arc/homing from the table. Projectiles advance in the Projectiles phase; homing projectiles (WC3 default) track the target entity and deliver on arrival even if the source died; a target that becomes invalid mid-flight expires the projectile (table flag: or detonates AoE at last position). Damage is rolled **at launch** (WC3 semantics), so the PRNG call order stays anchored to the FIRE event regardless of flight time.
+- **Missile:** at FIRE, a missile **entity** is spawned ([§3.5](#35-the-missile-system)) carrying the packet. Damage is rolled **at launch** (WC3 semantics), so the PRNG call order stays anchored to the FIRE event regardless of flight time.
 
-All damage packets from a tick — instant and arriving projectiles — are applied in a single deferred pass in deterministic buffer order, so mutual kills and overkill are well-defined ([ECS §6](ecs-architecture.md) deferred-effect rule).
+All damage packets from a tick — instant and arriving missiles — are applied in a single deferred pass in deterministic buffer order, so mutual kills and overkill are well-defined ([ECS §6](ecs-architecture.md) deferred-effect rule).
+
+### 3.5 The missile system
+
+**Design divergence from WC3.** WC3 missiles are cosmetic attachments to an attack — invisible to scripts, unqueryable, with hardcoded homing. LitD missiles are **independent first-class sim objects**: pooled entities with their own component row, their own lifecycle, addressable by the public API and by scripts, spawnable by attacks, abilities, *and* directly (`g.SpawnMissile(opts)`). The missile is an object that *carries a payload and a guidance program*, not a delivery animation.
+
+**Anatomy.** A missile row holds: source entity, owner player, guidance state (target entity *or* point *or* direction), speed / acceleration, arc, payload ref (damage packet or effect-pipeline ref, [§5.1](#51-abilities-as-composed-plugin-pipelines)), guidance ID, impact-behavior ID, remaining-range/TTL ticks, hit-mask (targets-allowed), and a per-missile PRNG-free deterministic phase.
+
+**Guidance programs** are registered mechanisms (same plugin registry discipline as ability effects, §5.1) selected by table ID:
+
+| Guidance | Behavior |
+|---|---|
+| `homing` | tracks target entity (WC3 default); delivers even if source died; target invalid mid-flight → impact behavior decides |
+| `ballistic` | point-targeted arc, terrain-height aware; impacts the point regardless of what moved |
+| `linear` | direction + max range; collision-tested against the hit-mask each advance (skillshot semantics) |
+| `boomerang`, `orbit`, … | additional registered guidance programs; new guidance = new registered mechanism, no missile-system change |
+
+**Impact behaviors** are likewise registered, selected by table ID, and composable with any guidance: `deliver` (single target), `detonate` (AoE at impact/last position), `pierce` (deliver and continue, per-mille damage decay, max-hits cap), `fork` (spawn child missiles — bounded depth, children from the same pool), `expire` (no payload). Mid-flight target death resolves per impact behavior — the WC3 table-flag dichotomy (expire vs AoE-detonate) falls out as two impact behaviors instead of a special case.
+
+**Determinism and budget constraints (unchanged in spirit from the rest of the sim):**
+
+- Missiles advance in the Missiles phase in dense-row order; collision tests use the bucket grid with the §3.2 total-order tuple for hit resolution.
+- Payload values are fixed at launch; impact-time armor/buffs apply per the damage pipeline (§4).
+- Pool cap 2,000 ([ECS §2](ecs-architecture.md)); exhaustion fails the spawn deterministically + debug assert — never silent fallback to instant.
+- Zero alloc per advance/impact; fork/pierce children come from the same pool under the same cap.
+- Guidance and impact mechanism sets are part of the engine; their registration order is fixed at compile/load time and folded into the content hash ([determinism](determinism.md)).
 
 ## 4. Damage and armor tables
 
@@ -101,19 +126,24 @@ The WC3 damage model, fully table-driven (R-AST-1):
 
 ## 5. Buff and ability state machines
 
-### 5.1 Abilities
+### 5.1 Abilities as composed plugin pipelines
 
-Each ability instance (Ability component slot) is a table-defined state machine:
+**Design divergence from WC3.** WC3 abilities are a closed set of hardcoded engine behaviors parameterized by object data; making a genuinely new ability means abusing channel/dummy-unit tricks. LitD abilities are **dynamically built and registered**: an ability *definition* is assembled at load time (and, for script-authored worlds, at world-init time) from registered **effect mechanisms** — pluggable, codeable units of behavior — composed into a pipeline by data. The engine ships a standard mechanism library; worlds register additional mechanisms as plugins (Go at engine/world build, Lua via the sandboxed script domain from M5). Nothing about an ability is hardcoded to an ability ID.
+
+**The cast state machine is the engine's; the content is the pipeline's.** Each ability instance (Ability component slot) runs the shared state machine:
 
 ```
 READY → TARGETING(client-side only) → PRECAST(turn+approach) → CASTPOINT(ticks)
       → EFFECT → [CHANNEL(ticks)] → BACKSWING → COOLDOWN(ticks) → READY
 ```
 
-- Table fields: mana cost, cooldown ticks, cast point ticks, cast range, targets-allowed mask, effect ID, channel duration, AoE shape/size — the WC3 object-data analogue.
-- **EFFECT** dispatches on effect ID to a registry of effect mechanisms (damage, heal, apply-buff, summon, teleport, …) implemented in code; everything parameterizing them is table data. New abilities are new table rows composing existing mechanisms — adding a *mechanism* is an engine change, adding an *ability* is not.
+- Table fields: mana cost, cooldown ticks, cast point ticks, cast range, targets-allowed mask, **effect pipeline** (ordered list of mechanism IDs + per-step params), channel duration, AoE shape/size — the WC3 object-data analogue, with the single effect ID generalized to a pipeline.
+- **EFFECT** executes the pipeline: each step dispatches on mechanism ID to the **effect registry** — damage, heal, apply-buff, summon, teleport, spawn-missile ([§3.5](#35-the-missile-system)), apply-aura, modify-stat, chain-to-next-target, … Steps run in pipeline order; each step receives the cast context (caster, target(s), point, level) and the prior step's output (e.g. spawn-missile step → its impact triggers the *rest* of the pipeline at the impact site — missile-delivered abilities are the same pipeline, split at the missile step).
+- **Registry semantics:** mechanisms register under string IDs at a deterministic registration point (engine init for built-ins, world load for plugins, in manifest order — never `init()` side effects or map iteration). The registered set + versions fold into the data content hash ([replay header](determinism.md)) — two clients with different plugin sets cannot silently desync; they refuse to join.
+- **Three tiers of authoring, no engine change for the first two:** (1) new ability = new table row composing existing mechanisms; (2) new mechanism = a plugin registered by the world (Go or Lua); (3) only changes to the cast state machine itself are engine changes.
 - Interrupts (new order, stun, silence) take edges defined per state: PRECAST/CASTPOINT cancel without cost; CHANNEL cancels with cost spent — WC3-faithful, table-overridable.
 - Mana is fixed-point with per-tick regen increments; cooldowns are absolute "ready at tick T" integers (cheap, hash-friendly, no per-tick decrement loops).
+- **Determinism constraints on plugin mechanisms:** mechanisms run inside the AbilityAndBuff phase under the same rules as engine code — sim PRNG only, fixed-point math only, no map iteration, effects through the deferred buffers. Go plugin mechanisms are compile-time registered (no `plugin.Open` — static registration keeps builds reproducible); Lua mechanisms run on the deterministic interpreter under R-EXEC-1 with the instruction budget. A mechanism violating zero-alloc fails the R-GC-1 CI gate like any sim code.
 
 ### 5.2 Buffs
 
@@ -163,4 +193,4 @@ At load: `cooldown 1.35 s` → 27 ticks, `damagePoint 0.5 s` → 10 ticks, `move
 - Table schema validation in CI (R-AST-1/R-AST-2 pipeline): unknown fields, missing required clips, out-of-range coefficients fail the build.
 - Headless combat scenarios ([R-SIM-4](tick-and-scheduler.md)): scripted 500-unit engagements (low-tier guarantee) and 1,000-unit engagements (recommended spec, D-2026-06-11-18) asserting final state hashes; mutual-kill, mid-flight-death, and interrupt edge cases are explicit fixtures. *Revised 2026-06-11 per D-2026-06-11-18.*
 - Hero carry-over fixture (D-2026-06-11-15): extract the §5.3 record at end of map A, instantiate on map B headlessly, assert level/abilities/items round-trip bit-identically.
-- Zero allocations across order issue → projectile flight → death at steady state, enforced per R-GC-1/5 by the [ECS benchmarks](ecs-architecture.md).
+- Zero allocations across order issue → missile flight → death at steady state, enforced per R-GC-1/5 by the [ECS benchmarks](ecs-architecture.md).

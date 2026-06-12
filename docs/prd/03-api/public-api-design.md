@@ -56,6 +56,7 @@ The target surface, ~20 types (final list frozen by the M2 API spec):
 | 18 | `Effect` | noun | `effect`, `effecttype`, `lightning`, `weathereffect`, `texttag`, `minimapicon` — transient presentation objects |
 | 19 | `Camera` | noun | `camerasetup`, `camerafield` (clamped per [PRD R-RND-1](../../PRD.md#52-rendering-g3n-presentation-layer)) |
 | 20 | `Frame` (under `Game.UI()`) | noun | `dialog`, `button`, `leaderboard`, `multiboard`, `multiboarditem`, `quest`, `questitem`, `timerdialog` (display part), `trackable` — the WC3 frame-native capability per [PRD R-UI-1](../../PRD.md#54-audio-ui-input) |
+| 21 | `Missile` | noun | *no JASS analogue (LitD extension)* — missiles are independent first-class sim objects ([Combat & Orders §3.5](../04-simulation/combat-and-orders.md)): spawnable (`g.SpawnMissile(opts)`), queryable, retargetable mid-flight; guidance + impact behaviors selected from the plugin mechanism registry |
 
 Deliberately **absent**: `trigger`/`boolexpr`/`conditionfunc`/`filterfunc` (→ closures),
 `group` (→ `[]Unit`), `location` (→ `Vec2`), `fogmodifier` (→ methods on `Player`/`Force`),

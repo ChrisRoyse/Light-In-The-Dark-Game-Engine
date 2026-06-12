@@ -6,7 +6,7 @@
 
 ## 1. Requirement statement
 
-R-SIM-3 mandates a data-oriented ECS with **struct-of-arrays (SoA) component stores** for units, projectiles, and buffs, provisioned for **1,000 active units plus 1,000 projectiles** per tick (the D-2026-06-11-18 stretch target, met on the recommended-spec machine); 500 + 500 within the 10 ms tick budget on the dual-core 2 GHz low-tier reference machine remains the guaranteed budget (PRD §5.3). *Revised 2026-06-11 per D-2026-06-11-18.* R-GC-2 binds the memory model: component stores are preallocated slices whose **capacity is fixed at map load and never reallocates mid-match**; all transient gameplay objects come from pools carved from the same allocation. R-GC-1/R-GC-5 make zero allocations per tick a CI-enforced invariant.
+R-SIM-3 mandates a data-oriented ECS with **struct-of-arrays (SoA) component stores** for units, missiles, and buffs, provisioned for **1,000 active units plus 1,000 missiles** per tick (the D-2026-06-11-18 stretch target, met on the recommended-spec machine); 500 + 500 within the 10 ms tick budget on the dual-core 2 GHz low-tier reference machine remains the guaranteed budget (PRD §5.3). *Revised 2026-06-11 per D-2026-06-11-18.* R-GC-2 binds the memory model: component stores are preallocated slices whose **capacity is fixed at map load and never reallocates mid-match**; all transient gameplay objects come from pools carved from the same allocation. R-GC-1/R-GC-5 make zero allocations per tick a CI-enforced invariant.
 
 The design below is deliberately conservative: no archetype migration, no sparse-set generality beyond what an RTS needs, no reflection-driven registration. Predictability over generality — the component set of an RTS is known at compile time.
 
@@ -17,7 +17,7 @@ At map load, the map header declares capacity limits (with engine-enforced ceili
 | Pool | Default cap | Notes |
 |---|---|---|
 | Units | 4,000 | 1,000 *active* is the stretch perf target (500 guaranteed low-tier); cap leaves headroom for corpses-in-decay, summons |
-| Projectiles | 2,000 | pooled, high churn; 1,000 live is the perf target |
+| Missiles | 2,000 | pooled, high churn; 1,000 live is the perf target |
 | Buff instances | 8,000 | many-per-unit |
 | Order queue entries | 16,000 | pooled, see [Combat & Orders](combat-and-orders.md) |
 | Pending events | 4,096/tick | ring buffer |
@@ -73,14 +73,14 @@ type TransformStore struct {
 | **Movement** | speed, turn rate, target waypoint, path handle, move state | consumes [pathfinding](pathfinding.md) results |
 | **Collision** | collision size (radius class), pathing flags (ground/air/build), grid stamp ref | drives grid occupancy, WC3 collision-size semantics |
 | **Health** | life, max life, regen, armor value, armor type, death state/decay timer | armor type indexes the [damage table](combat-and-orders.md) |
-| **Combat** | attack(s): damage dice, attack type, cooldown, range, acquisition range, damage point, projectile ref, current target, cooldown clock | see [attack cycle](combat-and-orders.md) |
-| **Ability** | ability slots: ability ID, level, cooldown clock, mana cost ref, cast state machine | data-table-driven per R-AST-1 |
+| **Combat** | attack(s): damage dice, attack type, cooldown, range, acquisition range, damage point, missile ref, current target, cooldown clock | see [attack cycle](combat-and-orders.md) |
+| **Ability** | ability slots: ability ID, level, cooldown clock, mana cost ref, cast state machine, effect-pipeline ref | definitions composed from registered plugin mechanisms ([Combat & Orders §5.1](combat-and-orders.md)); data-table-driven per R-AST-1 |
 | **Buff** | (instance store) buff ID, target entity, source entity, remaining ticks, stack count, periodic clock | buffs are entities-lite: pooled instances, not full entities |
 | **Inventory** | item slots (6, WC3-style), item entity refs | items are entities with their own components |
 | **Order** | current order, order queue head (pooled linked entries) | see [order system](combat-and-orders.md) |
 | **Owner** | player index, team, color | |
 | **UnitType** | unit-type ID → immutable data-table row (stats, model, sounds) | the SLK analogue, R-AST-1 |
-| **Projectile** | source, target (entity or point), speed, arc, payload (damage packet), homing flag | dedicated store + pool |
+| **Missile** | source, owner, guidance state (target entity / point / direction), speed, acceleration, arc, payload ref (damage packet or effect-pipeline ref), guidance ID, impact-behavior ID, TTL/range, hit-mask | independent first-class entity, dedicated store + pool; [Combat & Orders §3.5](combat-and-orders.md) |
 
 Render-side concerns (model instance, animation clip state, selection circle) live in `litd/render` mirror structures keyed by `EntityID`, never in sim components — the PRD §4.1 hard rule.
 
@@ -97,7 +97,7 @@ Back-of-envelope at the revised default caps, 32.32 fixed-point positions ([Dete
 | Combat (2 weapon slots) | ~160 | 4,000 | 640 KB |
 | Health / Collision / Owner / Order heads | ~64 | 4,000 | 256 KB |
 | Buff instances | ~40 | 8,000 | 320 KB |
-| Projectiles | ~96 | 2,000 | 192 KB |
+| Missiles (first-class entities, §3.5 fields) | ~128 | 2,000 | 256 KB |
 | Order queue pool | ~24 | 16,000 | 384 KB |
 | Doodad rows (promoted, D-13) | ~32 | 1,024 | 32 KB |
 | Pathing grid + cliff levels + dilated layers + buckets + flow-field slots | — | — | ~5–6 MB |
@@ -115,7 +115,7 @@ Systems run **strictly sequentially, in a fixed registration order** — single-
 5. **Pathing** — path requests, grid updates from building stamps
 6. **Movement** — integrate positions, local avoidance, facing turns
 7. **Combat** — acquisition, attack cycles, damage application
-8. **Projectiles** — advance, hit-test, deliver payloads
+8. **Missiles** — advance per guidance program, hit-test, run impact behaviors, deliver payloads ([Combat & Orders §3.5](combat-and-orders.md))
 9. **Death/Cleanup** — process kills, decay, swap-remove, free-list returns, pool recycling
 10. **EventFlush** — deterministically ordered event dispatch to handlers (R-EXEC-2)
 11. **StateHash** (CI/checkpoint cadence) — see [Determinism §5](determinism.md)
@@ -154,6 +154,6 @@ No closures, no interfaces, no bounds beyond the slice's own checks (which the c
 
 ## 8. Acceptance hooks
 
-- Headless benchmark (R-SIM-4), two gates from M3 (*revised 2026-06-11 per D-2026-06-11-18*): 500 units + 500 projectiles ≤ 10 ms/tick on the low-tier reference machine (the guarantee, PRD §5.3), and 1,000 units + 1,000 projectiles ≤ 10 ms/tick on the recommended-spec machine (the stretch target).
+- Headless benchmark (R-SIM-4), two gates from M3 (*revised 2026-06-11 per D-2026-06-11-18*): 500 units + 500 missiles ≤ 10 ms/tick on the low-tier reference machine (the guarantee, PRD §5.3), and 1,000 units + 1,000 missiles ≤ 10 ms/tick on the recommended-spec machine (the stretch target).
 - `AllocsPerRun` benchmarks per system and for the whole tick — zero baseline, regression-fails per R-GC-5.
 - Store-order determinism is implicitly verified by the [10k-tick hash trace](determinism.md): any unordered structure in a store would diverge the trace immediately.

@@ -14,7 +14,7 @@
 All world content is hand-authored or pre-rendered bitmap art composited on a flat plane, with depth faked by draw order (painter's algorithm) and an isometric or top-down tile grid. This is the Starcraft 1 / Age of Empires II lineage.
 
 - **Pros:** trivially cheap per-pixel GPU cost; art style is fully controlled per frame; no skinning, no lighting, no 3D math in the renderer.
-- **Cons:** every visual variation — facing direction, animation frame, team color (if baked), upgrade tier, zoom level — multiplies texture memory. Rotating the camera, smooth zoom, height-based line of sight, and projectile arcs in true 3D space are all either impossible or faked at great effort.
+- **Cons:** every visual variation — facing direction, animation frame, team color (if baked), upgrade tier, zoom level — multiplies texture memory. Rotating the camera, smooth zoom, height-based line of sight, and missile arcs in true 3D space are all either impossible or faked at great effort.
 
 ### 1.2 2.5D (3D terrain + sprite units, or billboarded sprites in a projected world)
 
@@ -138,7 +138,7 @@ The remaining GPU risk is **draw-call count** with 500 units on screen, addresse
 
 - **G3N is a 3D engine.** Its 2D support is incidental — a `Sprite` graphic (`repoes/engine/graphic/sprite.go`) and a sprite-sheet texture animator (`repoes/engine/texture/animator.go`) — not a 2D pipeline with batched quad rendering, sorting layers, or 2D physics. Building a 2D RTS on it means fighting the engine while discarding its actual strengths: the hierarchical scene graph, lighting, skinned-mesh support (`graphic/rigged_mesh.go`, `graphic/skeleton.go`), and the glTF loader.
 - **The free asset ecosystem is low-poly 3D.** Quaternius, KayKit, and Kenney ship hundreds of CC0, rigged, animated, glTF-format fantasy/RTS models ([Asset Sources](asset-sources.md)). There is no comparable CC0 library of 8-direction fantasy RTS sprite sheets. For a zero-asset-budget project (G4), this alone is nearly decisive.
-- **WC3 fidelity.** The target experience — including height-varying terrain, flying units, projectile arcs, and the JASS API's 3D-aware natives (unit fly height, terrain Z queries) — is naturally expressed in true 3D and would need systematic faking in 2D/2.5D.
+- **WC3 fidelity.** The target experience — including height-varying terrain, flying units, missile arcs, and the JASS API's 3D-aware natives (unit fly height, terrain Z queries) — is naturally expressed in true 3D and would need systematic faking in 2D/2.5D.
 
 ## 5. Decision and consequences
 

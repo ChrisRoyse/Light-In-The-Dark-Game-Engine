@@ -87,4 +87,4 @@ Go language facility (map/generics)". No capability lost — the audit's escape 
 2. **`GetHandleId` arithmetic**: maps do pointer-arithmetic-adjacent tricks with handle ids (offsets, ranges). `Attach` covers attachment; raw `GetHandleId` survives in [math-strings-conversion](math-strings-conversion.md) as an opaque stable id with no recycling guarantees.
 3. **Determinism of user tables**: if a map script stores data keyed by something nondeterministic and then iterates, replays diverge. `Table` never exposes iteration in v1 (WC3 hashtables couldn't be iterated either) — keeps the trap closed.
 4. **`RestoreUnit` scope creep**: full WC3 semantics (what exactly a gamecache unit snapshot carries) is under-documented; define the snapshot schema explicitly in M2 and tombstone the rest.
-5. **GC pressure**: `Attach` on hot paths (per-projectile data) must use pooled storage, not naive `map[Handle]any` boxing (R-GC-2/3).
+5. **GC pressure**: `Attach` on hot paths (per-missile data) must use pooled storage, not naive `map[Handle]any` boxing (R-GC-2/3).

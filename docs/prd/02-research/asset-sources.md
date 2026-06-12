@@ -24,7 +24,7 @@ WC3 asset taxonomy used throughout:
 | **Buildings** | Town hall chain, production/tech/defense structures, with construction & destruction states |
 | **Doodads** | Decorative/destructible props: trees, rocks, crates, fences, gold mines |
 | **Terrain** | Ground tiles/cliffs/water/ramps |
-| **VFX** | Spell effects, projectiles, buff auras, explosions |
+| **VFX** | Spell effects, missiles, buff auras, explosions |
 | **UI** | Command card icons, hero portraits, frames, cursors, minimap art |
 | **Audio** | Unit responses, combat SFX, music |
 
@@ -87,7 +87,7 @@ Not in the PRD table but same CC0 source, closing gaps identified in §3:
 | Defensive structures | Kenney Castle Kit | KayKit | Good |
 | Doodads / destructables | KayKit Builder | KayKit Hexagon, Kenney | **Good** |
 | Terrain | KayKit Hexagon | Kenney Hexagon | Good *if* tile terrain wins Open Question 3; heightmap path has **no** asset source — see gap G5 |
-| Spell/projectile VFX | — | Kenney Particle (textures only) | **Gap** G2 |
+| Spell/missile VFX | — | Kenney Particle (textures only) | **Gap** G2 |
 | Hero portraits / icons | — | Kenney icons (generic only) | **Gap** G1/G3 |
 | UI chrome / cursors | Kenney UI Pack | — | Partial (needs RTS-specific composition) |
 | Unit voice responses | — | — | **Gap** G4 |

@@ -17,7 +17,7 @@ Every budget in this document is downstream of the locked camera ([Camera and Cu
 | Unit model | **≤ 1,500** | Including all attachments/props in the rig; Quaternius RTS units typically land at 500–1,200 |
 | Building | **≤ 4,000** | Buildings are few, large on screen, and static (no skinning cost) |
 | Doodad / prop | ≤ 500 (working figure) | Merged into terrain chunks ([Batching §3](./batching-and-draw-calls.md)); cheap individually, numerous collectively |
-| Projectile / FX mesh | ≤ 200 | Most projectiles are billboards, not meshes |
+| Missile / FX mesh | ≤ 200 | Most missiles are billboards, not meshes |
 | Terrain | budgeted per chunk, see [Terrain §3](./terrain.md) | — |
 
 These are **hard validator gates**, not guidance: the asset-validation CLI ([Validation §2](../06-assets/validation-and-data.md), R-AST-2) counts triangles per GLB and rejects over-budget models at build time. Sizing rationale: worst case 500 visible units × 1,500 tris = 750k triangles plus terrain/buildings — comfortably within Intel UHD 620 vertex throughput at 30 FPS, which is exactly the worst-case floor in [PRD §5.3](../../PRD.md#53-performance-budgets-acceptance-gates-low-tier-reference-machine-dual-core-2-ghz-intel-uhd-620-4-gb-ram). The binding constraint on the reference machine is draw-call CPU cost, not triangles ([Batching §1](./batching-and-draw-calls.md)); triangle budgets exist mostly to bound skinning cost (CPU/GPU vertex work scales with rigged vertex count) and memory.

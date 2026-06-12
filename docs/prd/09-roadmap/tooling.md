@@ -325,8 +325,8 @@ subject exists (see the [gates summary](./milestones.md#14-cross-milestone-gates
 ### 4.2 Suites
 
 **Headless sim suite (from M3).** Runs on every CI machine — deterministic, GPU-free.
-- Scenario: scripted 500-unit + 500-projectile sustained combat on a 128×128 map; a
-  1,000-unit + 1,000-projectile stretch scenario runs alongside and is tracked, not gated
+- Scenario: scripted 500-unit + 500-missile sustained combat on a 128×128 map; a
+  1,000-unit + 1,000-missile stretch scenario runs alongside and is tracked, not gated
   (D-2026-06-11-18 — 500 remains the low-tier gate).
 - Metrics: worst-case and p99 tick time (budget ≤ 10 ms, asserted with a CI-machine
   calibration factor; the reference-machine number is authoritative), `testing.AllocsPerRun`

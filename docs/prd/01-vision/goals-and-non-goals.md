@@ -73,14 +73,14 @@ budgets, restated as CI gates with their enforcement mechanism (see
 |---|---|---|---|---|
 | G3.1 | Render frame rate, typical scene | ≥ 60 FPS | Scripted render benchmark scene on reference machine | M4 onward |
 | G3.2 | Render frame rate, worst case (500 units on screen) | ≥ 30 FPS | Same harness, max-army scene | M4/M6 |
-| G3.3 | Sim tick at 20 Hz, worst case (500 units + 500 projectiles) | ≤ 10 ms (50% headroom) | Headless sim benchmark in CI | M3 onward |
+| G3.3 | Sim tick at 20 Hz, worst case (500 units + 500 missiles) | ≤ 10 ms (50% headroom) | Headless sim benchmark in CI | M3 onward |
 | G3.4 | Cold start to main menu | ≤ 5 s | Timed launch in benchmark harness | M6 |
 | G3.5 | Map load (128×128) | ≤ 10 s | Benchmark harness | M6 |
 | G3.6 | RAM, full match | ≤ 1.5 GB | RSS sampling during benchmark match | M6 |
 | G3.7 | Binary + base assets | ≤ 300 MB | Release artifact size check in CI | M6 |
 | G3.8 | Steady-state allocations per sim tick and per render frame | 0 (R-GC-1) | `testing.AllocsPerRun` CI benchmarks; regression above zero baseline fails the build (R-GC-5) | M3 onward |
 | G3.9 | Draw calls per frame at max army size | ≤ 300 (R-RND-3) | Render-stats counter asserted in benchmark scene | M4 onward |
-| G3.10 | Stretch target (recommended-spec machine, not the low-tier reference): 1,000 units + 1,000 projectiles within the same tick and draw-call budgets; ECS capacities, pathfinding, and budgets provisioned for this scale from M3; render side assumes the instancing patch lands in M4 (D-2026-06-11-18) | Headless + render benchmark stretch scenes tracked in CI; recommended-spec pass at M6 | M3 onward (capacities), M4/M6 (render) |
+| G3.10 | Stretch target (recommended-spec machine, not the low-tier reference): 1,000 units + 1,000 missiles within the same tick and draw-call budgets; ECS capacities, pathfinding, and budgets provisioned for this scale from M3; render side assumes the instancing patch lands in M4 (D-2026-06-11-18) | Headless + render benchmark stretch scenes tracked in CI; recommended-spec pass at M6 | M3 onward (capacities), M4/M6 (render) |
 
 *Revised 2026-06-11 per D-2026-06-11-18: G3.10 added. The 500-unit rows (G3.2/G3.3) remain
 the low-tier reference-machine **gates**; 1,000 units is the recommended-spec stretch
