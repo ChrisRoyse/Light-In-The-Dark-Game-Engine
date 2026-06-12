@@ -33,3 +33,6 @@ jobs:
 
       - name: go test
         run: go test ./...
+
+      - name: assetcheck gate
+        run: go run ./tools/assetcheck ./assets
