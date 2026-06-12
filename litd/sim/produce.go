@@ -454,25 +454,25 @@ func (w *World) spawnCell(building EntityID, def *data.Unit) (fixed.Vec2, bool) 
 			cand := center
 			switch dir {
 			case 0:
-				cand.X += d
+				cand.X = cand.X.Add(d)
 			case 1:
-				cand.Y += d
+				cand.Y = cand.Y.Add(d)
 			case 2:
-				cand.X -= d
+				cand.X = cand.X.Sub(d)
 			case 3:
-				cand.Y -= d
+				cand.Y = cand.Y.Sub(d)
 			case 4:
-				cand.X += d
-				cand.Y += d
+				cand.X = cand.X.Add(d)
+				cand.Y = cand.Y.Add(d)
 			case 5:
-				cand.X -= d
-				cand.Y += d
+				cand.X = cand.X.Sub(d)
+				cand.Y = cand.Y.Add(d)
 			case 6:
-				cand.X -= d
-				cand.Y -= d
+				cand.X = cand.X.Sub(d)
+				cand.Y = cand.Y.Sub(d)
 			case 7:
-				cand.X += d
-				cand.Y -= d
+				cand.X = cand.X.Add(d)
+				cand.Y = cand.Y.Sub(d)
 			}
 			if w.Grid == nil {
 				return cand, true
