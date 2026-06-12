@@ -36,8 +36,8 @@ type entity struct {
 }
 
 const (
-	contPulse  sched.ContID = 1 // periodic heal pulse, reschedules itself
-	contWatch  sched.ContID = 2 // event waiter, re-arms on every sync
+	contPulse  sched.ContID  = 1 // periodic heal pulse, reschedules itself
+	contWatch  sched.ContID  = 2 // event waiter, re-arms on every sync
 	evSync     sched.EventID = 1
 	syncPeriod uint32        = 64
 )
@@ -75,8 +75,8 @@ func NewWorld(seed uint64, n int, cmds []Command) *World {
 	for i := range w.ents {
 		e := &w.ents[i]
 		e.pos = fixed.Vec2{
-			X: fixed.FromInt(int32(w.rng.Uint32()%8192)) / 64,
-			Y: fixed.FromInt(int32(w.rng.Uint32()%8192)) / 64,
+			X: fixed.FromInt(int32(w.rng.Uint32() % 8192)).Div(fixed.FromInt(64)),
+			Y: fixed.FromInt(int32(w.rng.Uint32() % 8192)).Div(fixed.FromInt(64)),
 		}
 		e.hp = fixed.FromInt(100)
 		e.target = int32(w.rng.Uint32() % uint32(n))
@@ -88,7 +88,7 @@ func NewWorld(seed uint64, n int, cmds []Command) *World {
 		if i < 0 {
 			i = -i
 		}
-		w.ents[i].hp += fixed.FromInt(1)
+		w.ents[i].hp = w.ents[i].hp.Add(fixed.FromInt(1))
 		s.After(uint32(draw%7)+1, contPulse, st)
 	})
 	w.sched.Register(contWatch, func(s *sched.Scheduler, st sched.State) {
@@ -120,7 +120,7 @@ func (w *World) Step() {
 			e := &w.ents[c.A%n]
 			e.vel = e.vel.Add(fixed.Vec2{X: fixed.FromInt(c.B%5 - 2), Y: fixed.FromInt(c.B%3 - 1)})
 		case cmdDamage:
-			w.ents[c.A%n].hp -= fixed.FromInt(c.B%20 + 1)
+			w.ents[c.A%n].hp = w.ents[c.A%n].hp.Sub(fixed.FromInt(c.B%20 + 1))
 		}
 	}
 
@@ -131,18 +131,18 @@ func (w *World) Step() {
 
 	dt := fixed.One / 20 // 50 ms tick
 	attackRange := fixed.FromInt(2)
-	dmg := fixed.FromInt(25) / 2 // 12.5
+	dmg := fixed.FromInt(25).Div(fixed.FromInt(2)) // 12.5
 	for i := range w.ents {
 		e := &w.ents[i]
 		t := &w.ents[e.target]
 		if fixed.DistSqLess(e.pos, t.pos, attackRange) {
-			t.hp -= dmg.Mul(dt)
+			t.hp = t.hp.Sub(dmg.Mul(dt))
 		} else {
 			d := t.pos.Sub(e.pos)
 			lenSq := d.LenSq()
 			if lenSq > 0 {
 				dist := fixed.F64(uint64(fixed.SqrtU64(uint64(lenSq))) << 16)
-				inv := fixed.One.Div(dist + fixed.One)
+				inv := fixed.One.Div(dist.Add(fixed.One))
 				e.vel = e.vel.Add(d.Scale(inv).Scale(dt))
 			}
 		}

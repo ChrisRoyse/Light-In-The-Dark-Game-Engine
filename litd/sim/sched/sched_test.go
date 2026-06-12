@@ -25,10 +25,10 @@ const (
 )
 
 const (
-	contNote ContID = iota + 1 // logs and stops
-	contChain                  // logs, waits 2 ticks, then contNote
-	contRewait                 // logs, immediately re-waits on evPing
-	contWaitZero               // logs, After(0) -> contNote
+	contNote     ContID = iota + 1 // logs and stops
+	contChain                      // logs, waits 2 ticks, then contNote
+	contRewait                     // logs, immediately re-waits on evPing
+	contWaitZero                   // logs, After(0) -> contNote
 )
 
 func newTestSched(e *env) *Scheduler {

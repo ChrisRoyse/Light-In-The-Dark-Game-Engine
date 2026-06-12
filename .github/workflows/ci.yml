@@ -40,5 +40,8 @@ jobs:
       - name: import-graph gate (sim never imports render/G3N/GL)
         run: go run ./tools/importcheck
 
+      - name: determinism lint gate (no map iteration / wall clock / floats / raw F64 ops)
+        run: go run ./tools/determlint ./litd/...
+
       - name: license-scan gate (permissive allowlist, copyleft hard-fail)
         run: ./scripts/license-scan.sh
