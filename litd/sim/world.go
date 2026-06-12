@@ -102,6 +102,9 @@ type World struct {
 	// capability-class column
 	smart           *data.SmartTable
 	unitClassByType []uint8
+	// compiled effect-composition arena (effect.go, ADR #294);
+	// installed by BindEffects, read-only thereafter
+	effects []data.CompiledEffect
 	// spatial bucket grid (buckets.go) — derived from Transform
 	// positions, excluded from the state hash
 	bucketHead []int32

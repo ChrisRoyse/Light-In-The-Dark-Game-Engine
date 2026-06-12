@@ -64,20 +64,23 @@ const (
 
 // Tables is the loaded, immutable data set.
 type Tables struct {
-	AttackTypes []string    // damage-matrix row names, table order
-	ArmorTypes  []string    // damage-matrix column names, table order
-	Coeff       [][]int32   // [attackType][armorType] per-mille coefficient
-	Abilities   []Ability   // sorted by ID
-	Units       []Unit      // sorted by ID
-	Smart       *SmartTable // smart-order resolution; nil when orders/ absent
-	Fingerprint uint64      // canonical content hash (state-hash preamble)
+	AttackTypes []string         // damage-matrix row names, table order
+	ArmorTypes  []string         // damage-matrix column names, table order
+	Coeff       [][]int32        // [attackType][armorType] per-mille coefficient
+	Abilities   []Ability        // sorted by ID
+	Units       []Unit           // sorted by ID
+	Effects     []CompiledEffect // flat effect-composition arena (ADR #294)
+	Smart       *SmartTable      // smart-order resolution; nil when orders/ absent
+	Fingerprint uint64           // canonical content hash (state-hash preamble)
 }
 
-// Ability is a stub row until #160 grows it — the ID set exists so
-// unit references validate.
+// Ability is one ability row. Behavior is the compiled effect
+// composition (#296); cast mechanics (cost, cooldown, targeting)
+// land with #160.
 type Ability struct {
-	ID   string
-	Name string
+	ID      string
+	Name    string
+	Effects EffectList // zero-length when the row declares none
 }
 
 // Unit is one converted unit row. Every field is in sim units:
@@ -163,21 +166,35 @@ type rawAbilityFile struct {
 type rawAbility struct {
 	ID   string `toml:"id" json:"id"`
 	Name string `toml:"name" json:"name"`
+	// Effects is the raw composition tree; the effect compiler owns
+	// all validation inside the maps (decodeStrict cannot see them).
+	Effects []map[string]any `toml:"effects" json:"effects"`
 }
 
 // ---- strict decoding ----
 
 // decodeStrict decodes TOML or JSON (by extension) and rejects any
 // field the schema does not declare — naming the field and the file.
-func decodeStrict(file string, blob []byte, v any) error {
+// opaque lists key prefixes whose subtrees decode into any-typed
+// containers (the TOML metadata cannot see inside them); the owning
+// validator — the effect compiler — enforces strictness there
+// instead, so nothing is exempt from SOME strict check.
+func decodeStrict(file string, blob []byte, v any, opaque ...string) error {
 	switch path.Ext(file) {
 	case ".toml":
 		md, err := toml.Decode(string(blob), v)
 		if err != nil {
 			return fmt.Errorf("data: %s: %w", file, err)
 		}
-		if un := md.Undecoded(); len(un) > 0 {
-			return fmt.Errorf("data: %s: unknown field %q (schema rejects unrecognized keys)", file, un[0].String())
+	undecoded:
+		for _, un := range md.Undecoded() {
+			k := un.String()
+			for _, p := range opaque {
+				if strings.HasPrefix(k, p+".") {
+					continue undecoded
+				}
+			}
+			return fmt.Errorf("data: %s: unknown field %q (schema rejects unrecognized keys)", file, k)
 		}
 		return nil
 	case ".json":
@@ -275,34 +292,61 @@ func Load(fsys fs.FS) (*Tables, error) {
 		return nil, err
 	}
 
-	// abilities (the reference set)
+	// abilities (the reference set). Raw rows are collected with
+	// their source file, sorted by ID, THEN compiled — the effect
+	// arena layout depends only on the ID order, never on file
+	// enumeration.
 	abilityFiles, err := listTables(fsys, "abilities")
 	if err != nil {
 		return nil, err
 	}
+	type pendingAbility struct {
+		file string
+		raw  rawAbility
+	}
+	var pending []pendingAbility
 	for _, f := range abilityFiles {
 		blob, err := fs.ReadFile(fsys, f)
 		if err != nil {
 			return nil, fmt.Errorf("data: %s: %w", f, err)
 		}
 		var raw rawAbilityFile
-		if err := decodeStrict(f, blob, &raw); err != nil {
+		if err := decodeStrict(f, blob, &raw, "ability.effects"); err != nil {
 			return nil, err
 		}
 		for i := range raw.Ability {
-			a := raw.Ability[i]
-			if a.ID == "" {
+			if raw.Ability[i].ID == "" {
 				return nil, fmt.Errorf("data: %s: ability with empty id", f)
 			}
-			t.Abilities = append(t.Abilities, Ability{ID: a.ID, Name: a.Name})
+			pending = append(pending, pendingAbility{file: f, raw: raw.Ability[i]})
 		}
 	}
-	sort.Slice(t.Abilities, func(i, j int) bool { return t.Abilities[i].ID < t.Abilities[j].ID })
-	for i := 1; i < len(t.Abilities); i++ {
-		if t.Abilities[i].ID == t.Abilities[i-1].ID {
-			return nil, fmt.Errorf("data: duplicate ability id %q", t.Abilities[i].ID)
+	sort.Slice(pending, func(i, j int) bool { return pending[i].raw.ID < pending[j].raw.ID })
+	for i := 1; i < len(pending); i++ {
+		if pending[i].raw.ID == pending[i-1].raw.ID {
+			return nil, fmt.Errorf("data: duplicate ability id %q (%s, %s)",
+				pending[i].raw.ID, pending[i-1].file, pending[i].file)
 		}
 	}
+	comp := &effectCompiler{attackTypes: t.AttackTypes}
+	for _, p := range pending {
+		ab := Ability{ID: p.raw.ID, Name: p.raw.Name}
+		if p.raw.Effects != nil {
+			comp.file = p.file
+			where := fmt.Sprintf("ability %q effects", p.raw.ID)
+			lst, inv, err := comp.compile(where, p.raw.Effects, 1)
+			if err != nil {
+				return nil, err
+			}
+			if inv > MaxEffectInvocations {
+				return nil, fmt.Errorf("data: %s: %s: worst-case invocation count %d exceeds ceiling %d",
+					p.file, where, inv, MaxEffectInvocations)
+			}
+			ab.Effects = lst
+		}
+		t.Abilities = append(t.Abilities, ab)
+	}
+	t.Effects = comp.arena
 
 	// units
 	unitFiles, err := listTables(fsys, "units")
@@ -615,7 +659,10 @@ func (t *Tables) fingerprint() uint64 {
 	for i := range t.Abilities {
 		writeString(h, t.Abilities[i].ID)
 		writeString(h, t.Abilities[i].Name)
+		h.WriteU16(t.Abilities[i].Effects.Off)
+		h.WriteU16(t.Abilities[i].Effects.Len)
 	}
+	hashEffects(h, t.Effects)
 	h.WriteU32(uint32(len(t.Units)))
 	for i := range t.Units {
 		u := &t.Units[i]

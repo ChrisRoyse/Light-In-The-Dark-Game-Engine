@@ -8,3 +8,25 @@ name = "Defend"
 [[ability]]
 id = "sprint"
 name = "Sprint"
+
+# Sample data-defined effect composition (ADR #294, #296): direct hit
+# plus splash. Compiles at load into the flat effect arena; litd/sim
+# executes it once #160 wires casts.
+[[ability]]
+id = "firebolt"
+name = "Firebolt"
+
+[[ability.effects]]
+prim = "damage"
+amount = 50
+attack-type = "magic"
+
+[[ability.effects]]
+prim = "area"
+radius = 200.0
+max-targets = 6
+
+[[ability.effects.effects]]
+prim = "damage"
+amount = 20
+attack-type = "magic"
