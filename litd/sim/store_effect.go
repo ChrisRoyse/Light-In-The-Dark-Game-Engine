@@ -131,13 +131,17 @@ func (w *World) SpawnEffect(spec EffectSpec) (EntityID, bool) {
 	}
 	w.bucketInsert(id, spec.Pos)
 	w.MarkSnap(id)
+	w.EmitRenderEvent(RenderEffectSpawn, id, spec.ModelID)
 	return id, true
 }
 
 func (w *World) DestroyEffect(id EntityID) bool {
-	if !w.Ents.Alive(id) || w.Effects.Row(id) == -1 {
+	r := w.Effects.Row(id)
+	if !w.Ents.Alive(id) || r == -1 {
 		return false
 	}
+	model := w.Effects.ModelID[r]
+	w.EmitRenderEvent(RenderEffectEnd, id, model)
 	w.bucketRemove(id)
 	w.Effects.Remove(id)
 	w.Transforms.Remove(id)

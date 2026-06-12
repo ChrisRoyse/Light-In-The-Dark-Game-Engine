@@ -52,6 +52,13 @@ type RenderEvent struct {
 	Data uint16
 }
 
+// RenderEvent kind values. Append-only: render consumers may switch on
+// these stable byte values in recorded snapshots.
+const (
+	RenderEffectSpawn uint8 = 1 // Ent = effect, Data = ModelID
+	RenderEffectEnd   uint8 = 2 // Ent = effect, Data = ModelID
+)
+
 // Snapshot is one published frame of sim state plus that tick's
 // render events. TimeOfDay is the game clock quantized onto the u16
 // ring: render interpolates the shortest wrap-safe delta as

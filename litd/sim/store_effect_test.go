@@ -42,6 +42,20 @@ func effectRows(w *World) string {
 	return b.String()
 }
 
+func renderEventsDump(evs []RenderEvent) string {
+	var b strings.Builder
+	b.WriteString("[")
+	for i := range evs {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+		fmt.Fprintf(&b, "{i=%d tick=%d kind=%d ent=%d data=%d}",
+			i, evs[i].Tick, evs[i].Kind, uint32(evs[i].Ent), evs[i].Data)
+	}
+	b.WriteString("]")
+	return b.String()
+}
+
 func entityFreeChain(w *World, limit int) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "head=%d chain=[", w.Ents.freeHead)
@@ -207,6 +221,109 @@ func TestEffectAppearsInSnapshotEntries(t *testing.T) {
 	}
 	if entry.Flags&SnapNoLerp == 0 {
 		t.Fatalf("spawned effect snapshot should be no-lerp: flags=%02x", entry.Flags)
+	}
+}
+
+func TestEffectLifecycleRenderEventKindsUnique(t *testing.T) {
+	kinds := map[string]uint8{
+		"RenderEffectSpawn": RenderEffectSpawn,
+		"RenderEffectEnd":   RenderEffectEnd,
+	}
+	byVal := map[uint8]string{}
+	for name, v := range kinds {
+		if prev, dup := byVal[v]; dup {
+			t.Errorf("render event kind %d claimed by both %s and %s", v, prev, name)
+		}
+		byVal[v] = name
+	}
+	t.Logf("FSV render event kinds: %v", kinds)
+}
+
+func TestEffectSpawnRenderEventMatchesSnapshotEntry(t *testing.T) {
+	w := NewWorld(Caps{Units: 1, Projectiles: 1, Effects: 4, ScriptedDoodads: 1, PendingEvents: 4})
+	id, ok := w.SpawnEffect(effectSpec(41, 12, 34, 2, 0x01020304))
+	if !ok {
+		t.Fatal("SpawnEffect failed")
+	}
+	w.Step()
+	snap := w.Snaps.Curr()
+	entry, foundEntry := findSnapshotEntry(snap, id)
+	var spawn RenderEvent
+	foundEvent := false
+	for _, ev := range snap.Events {
+		if ev.Kind == RenderEffectSpawn {
+			spawn = ev
+			foundEvent = true
+			break
+		}
+	}
+	t.Logf("FSV effect spawn cue EVENTS: %s", renderEventsDump(snap.Events))
+	t.Logf("FSV effect spawn cue ENTRY: found=%v entry={id=%d pos=(%d,%d) flags=%02x} spawn={tick=%d kind=%d ent=%d data=%d}",
+		foundEntry, uint32(entry.ID), entry.Pos.X.Floor(), entry.Pos.Y.Floor(), entry.Flags,
+		spawn.Tick, spawn.Kind, uint32(spawn.Ent), spawn.Data)
+	if !foundEvent {
+		t.Fatalf("missing RenderEffectSpawn in events: %s", renderEventsDump(snap.Events))
+	}
+	if !foundEntry || spawn.Ent != id || entry.ID != id || spawn.Data != 41 || spawn.Tick != snap.Tick {
+		t.Fatalf("spawn cue/entry mismatch: events=%s entry=%+v", renderEventsDump(snap.Events), entry)
+	}
+}
+
+func TestEffectSpawnDestroySameTickRenderEvents(t *testing.T) {
+	w := NewWorld(Caps{Units: 1, Projectiles: 1, Effects: 4, ScriptedDoodads: 1, PendingEvents: 4})
+	id, ok := w.SpawnEffect(effectSpec(42, 5, 6, 1, 0xff00ffff))
+	if !ok {
+		t.Fatal("SpawnEffect failed")
+	}
+	if !w.DestroyEffect(id) {
+		t.Fatal("DestroyEffect failed")
+	}
+	w.Step()
+	evs := w.Snaps.Curr().Events
+	t.Logf("FSV same-tick effect lifecycle EVENTS: %s", renderEventsDump(evs))
+	if len(evs) != 2 {
+		t.Fatalf("spawn+destroy same tick should publish two cues: %s", renderEventsDump(evs))
+	}
+	if evs[0].Kind != RenderEffectSpawn || evs[1].Kind != RenderEffectEnd ||
+		evs[0].Ent != id || evs[1].Ent != id ||
+		evs[0].Data != 42 || evs[1].Data != 42 ||
+		evs[0].Tick != w.Snaps.Curr().Tick || evs[1].Tick != w.Snaps.Curr().Tick {
+		t.Fatalf("same-tick lifecycle cues wrong: %s", renderEventsDump(evs))
+	}
+}
+
+func TestEffectRenderEventDropDoesNotAffectHash(t *testing.T) {
+	caps := Caps{Units: 1, Projectiles: 1, Effects: 4, ScriptedDoodads: 1, PendingEvents: 2}
+	room := NewWorld(caps)
+	full := NewWorld(caps)
+	full.EmitRenderEvent(250, 0, 0)
+	full.EmitRenderEvent(251, 0, 0)
+	roomID, roomOK := room.SpawnEffect(effectSpec(43, 7, 8, 1, 0x11111111))
+	fullID, fullOK := full.SpawnEffect(effectSpec(43, 7, 8, 1, 0x11111111))
+	if !roomOK || !fullOK || roomID != fullID {
+		t.Fatalf("effect spawn mismatch: room=%d/%v full=%d/%v", roomID, roomOK, fullID, fullOK)
+	}
+	room.Step()
+	full.Step()
+	reg := NewHashRegistry()
+	var roomHash, fullHash statehash.Snapshot
+	room.HashState(reg, &roomHash)
+	full.HashState(reg, &fullHash)
+	t.Logf("FSV effect cue room EVENTS: %s dropped=%d hash=%016x", renderEventsDump(room.Snaps.Curr().Events), room.renderEvDropped, roomHash.Top)
+	t.Logf("FSV effect cue full EVENTS: %s dropped=%d hash=%016x", renderEventsDump(full.Snaps.Curr().Events), full.renderEvDropped, fullHash.Top)
+	if full.renderEvDropped != 1 {
+		t.Fatalf("full staging buffer should drop exactly one effect cue, got %d", full.renderEvDropped)
+	}
+	if room.renderEvDropped != 0 {
+		t.Fatalf("room world unexpectedly dropped cues: %d", room.renderEvDropped)
+	}
+	if roomHash.Top != fullHash.Top {
+		t.Fatalf("cosmetic cue drop changed sim hash: room=%016x full=%016x systems=%v", roomHash.Top, fullHash.Top, snapDiff(t, &roomHash, &fullHash))
+	}
+	for _, ev := range full.Snaps.Curr().Events {
+		if ev.Kind == RenderEffectSpawn {
+			t.Fatalf("full snapshot should not contain dropped spawn cue: %s", renderEventsDump(full.Snaps.Curr().Events))
+		}
 	}
 }
 
