@@ -146,7 +146,7 @@ func TestEventUnitDeathBuiltin(t *testing.T) {
 	}
 	w.Step()
 	t.Logf("trace: %v; alive after tick: %v", trace, w.Ents.Alive(victim))
-	if fmt.Sprint(trace) != fmt.Sprint([]string{"death of idx=0 alive=true"}) || w.Ents.Alive(victim) {
+	if fmt.Sprint(trace) != fmt.Sprint([]string{"death of idx=1 alive=true"}) || w.Ents.Alive(victim) {
 		t.Fatalf("death event wrong: %v alive=%v", trace, w.Ents.Alive(victim))
 	}
 }

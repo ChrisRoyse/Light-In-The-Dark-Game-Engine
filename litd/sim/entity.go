@@ -44,20 +44,30 @@ type Entities struct {
 	DebugStaleHandle func(EntityID)
 }
 
-// NewEntities returns an allocator with exactly capacity slots,
-// allocated once. capacity must fit in the 24-bit index space.
+// NewEntities returns an allocator with exactly capacity usable
+// slots, allocated once. capacity must fit in the 24-bit index space.
+//
+// Slot 0 is RESERVED and never allocated: index 0 + generation 0
+// would make EntityID 0 a live handle, and 0 is the engine-wide
+// "no entity" sentinel — the command stream's no-target variant, the
+// Target columns' empty value, CreateUnit's failure return. Burning
+// one slot makes the sentinel structurally unambiguous (the same
+// fix as path.NoPath != 0 and the OccupiedDynamic-gated reservation
+// table — sentinel/value collisions are this engine's recurring bug
+// class).
 func NewEntities(capacity int) *Entities {
-	if capacity <= 0 || capacity > 1<<24 {
-		panic("sim: entity capacity must be in (0, 2^24]")
+	if capacity <= 0 || capacity >= 1<<24 {
+		panic("sim: entity capacity must be in (0, 2^24)")
 	}
 	e := &Entities{
-		slots:    make([]entitySlot, capacity),
-		freeHead: 0,
+		slots:    make([]entitySlot, capacity+1),
+		freeHead: 1,
 	}
 	for i := range e.slots {
 		e.slots[i].next = int32(i) + 1
 	}
-	e.slots[capacity-1].next = -1
+	e.slots[0].next = -1 // reserved, never on the free list
+	e.slots[capacity].next = -1
 	return e
 }
 
@@ -126,4 +136,4 @@ func (e *Entities) staleAssert(id EntityID) {
 func (e *Entities) Count() int { return int(e.count) }
 
 // Cap returns the fixed capacity.
-func (e *Entities) Cap() int { return len(e.slots) }
+func (e *Entities) Cap() int { return len(e.slots) - 1 } // slot 0 reserved

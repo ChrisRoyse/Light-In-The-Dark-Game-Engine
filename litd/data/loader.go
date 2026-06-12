@@ -64,12 +64,13 @@ const (
 
 // Tables is the loaded, immutable data set.
 type Tables struct {
-	AttackTypes []string  // damage-matrix row names, table order
-	ArmorTypes  []string  // damage-matrix column names, table order
-	Coeff       [][]int32 // [attackType][armorType] per-mille coefficient
-	Abilities   []Ability // sorted by ID
-	Units       []Unit    // sorted by ID
-	Fingerprint uint64    // canonical content hash (state-hash preamble)
+	AttackTypes []string    // damage-matrix row names, table order
+	ArmorTypes  []string    // damage-matrix column names, table order
+	Coeff       [][]int32   // [attackType][armorType] per-mille coefficient
+	Abilities   []Ability   // sorted by ID
+	Units       []Unit      // sorted by ID
+	Smart       *SmartTable // smart-order resolution; nil when orders/ absent
+	Fingerprint uint64      // canonical content hash (state-hash preamble)
 }
 
 // Ability is a stub row until #160 grows it — the ID set exists so
@@ -330,6 +331,16 @@ func Load(fsys fs.FS) (*Tables, error) {
 		if t.Units[i].ID == t.Units[i-1].ID {
 			return nil, fmt.Errorf("data: duplicate unit id %q", t.Units[i].ID)
 		}
+	}
+
+	// smart-order table (optional directory; absence is visible as nil,
+	// never silently defaulted)
+	if files, _ := listTables(fsys, "orders"); len(files) > 0 {
+		smart, err := LoadSmart(fsys)
+		if err != nil {
+			return nil, err
+		}
+		t.Smart = smart
 	}
 
 	t.Fingerprint = t.fingerprint()
@@ -639,6 +650,10 @@ func (t *Tables) fingerprint() uint64 {
 		for _, ab := range u.Abilities {
 			h.WriteU16(ab)
 		}
+	}
+	h.WriteBool(t.Smart != nil)
+	if t.Smart != nil {
+		t.Smart.hashInto(h)
 	}
 	return h.Sum64()
 }

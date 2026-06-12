@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/sched"
@@ -97,7 +98,11 @@ type World struct {
 	// stall threshold override (0 = DefaultStallRepathTicks)
 	reservedBy  []EntityID
 	stallRepath uint16
-	Sched       *sched.Scheduler // phase-2 script scheduler, lockstep with tick
+	// smart-order resolution (smartorder.go): data table + TypeID →
+	// capability-class column
+	smart           *data.SmartTable
+	unitClassByType []uint8
+	Sched           *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// Cmds is the binary command-record front door (command.go):
 	// Stage any time (mutex), driver ingests between ticks, phase 1
@@ -161,36 +166,39 @@ type World struct {
 func NewWorld(requested Caps) *World {
 	caps := requested.resolve()
 	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
+	// entity indices run 1..entityCap (slot 0 reserved, entity.go) —
+	// every array indexed by EntityID.Index() needs entityCap+1 room
+	idxSpace := entityCap + 1
 	w := &World{
 		caps:            caps,
 		Cmds:            newCommandQueue(),
 		cmdStaging:      make([]WorldCommand, 0, 1024),
 		cmdActive:       make([]WorldCommand, 0, 1024),
 		killed:          make([]EntityID, 0, caps.Units),
-		Snaps:           newSnapshotBuffers(entityCap, caps.PendingEvents),
-		snapNoLerp:      make([]bool, entityCap),
-		snapDeath:       make([]bool, entityCap),
-		snapMarked:      make([]EntityID, 0, entityCap),
+		Snaps:           newSnapshotBuffers(idxSpace, caps.PendingEvents),
+		snapNoLerp:      make([]bool, idxSpace),
+		snapDeath:       make([]bool, idxSpace),
+		snapMarked:      make([]EntityID, 0, idxSpace),
 		renderEvStaging: make([]RenderEvent, 0, caps.PendingEvents),
 		Sched:           sched.New(),
 		Ents:            NewEntities(entityCap),
-		Transforms:      NewTransformStore(entityCap, entityCap),
-		Movements:       NewMovementStore(caps.Units, entityCap),
-		Collisions:      NewCollisionStore(caps.Units, entityCap),
-		Healths:         NewHealthStore(caps.Units, entityCap),
-		Owners:          NewOwnerStore(caps.Units, entityCap),
-		UnitTypes:       NewUnitTypeStore(caps.Units, entityCap),
-		Combats:         NewCombatStore(caps.Units, entityCap),
-		Abilities:       NewAbilityStore(caps.Units, entityCap),
-		Invents:         NewInventoryStore(caps.Units, entityCap),
-		Orders:          NewOrderStore(caps.Units, entityCap),
+		Transforms:      NewTransformStore(entityCap, idxSpace),
+		Movements:       NewMovementStore(caps.Units, idxSpace),
+		Collisions:      NewCollisionStore(caps.Units, idxSpace),
+		Healths:         NewHealthStore(caps.Units, idxSpace),
+		Owners:          NewOwnerStore(caps.Units, idxSpace),
+		UnitTypes:       NewUnitTypeStore(caps.Units, idxSpace),
+		Combats:         NewCombatStore(caps.Units, idxSpace),
+		Abilities:       NewAbilityStore(caps.Units, idxSpace),
+		Invents:         NewInventoryStore(caps.Units, idxSpace),
+		Orders:          NewOrderStore(caps.Units, idxSpace),
 		Buffs:           NewBuffPool(caps.BuffInstances),
 		Projs:           NewProjectilePool(caps.Projectiles),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
 		pathReqs:        make([]pathRequest, caps.PathRequests),
-		Doodads:         NewDoodadStore(caps.ScriptedDoodads, entityCap),
+		Doodads:         NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Paths:           path.NewPathStore(caps.PathRequests, 1024),
 	}
 	for i := range w.orderPool {

@@ -75,7 +75,7 @@ func TestStepKillDeferredAcrossPhases(t *testing.T) {
 	}
 	want := []string{
 		"p5: killed marked, alive=true",
-		"p6: death event for idx=0, alive=true, transform row=0",
+		"p6: death event for idx=1, alive=true, transform row=0",
 		"p7(end): alive=false units=0",
 	}
 	if fmt.Sprint(log) != fmt.Sprint(want) {

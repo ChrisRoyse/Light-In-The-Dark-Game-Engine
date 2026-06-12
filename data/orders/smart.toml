@@ -1,0 +1,20 @@
+# Smart-order (right-click) resolution table — input.md §4,
+# combat-and-orders.md §2.2. rules.<target-class> lists one order name
+# per unit class, in unit-classes column order. Order names must be in
+# the v1 opcode registry (input.md §8); the loader rejects anything
+# else.
+#
+# v1 registry gaps (spec §4 wants them, the wire cannot carry them
+# yet): ally → "follow" and item → "pickup" are not v1 opcodes, so
+# both resolve to "move" until the registry grows with the systems
+# that execute them.
+
+unit-classes = ["fighter", "worker"]
+
+[rules]
+ground-point = ["move", "move"]
+enemy = ["attack", "attack"]
+ally = ["move", "move"]
+own-building = ["rally", "rally"]
+resource = ["move", "harvest"]
+item = ["move", "move"]
