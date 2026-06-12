@@ -91,31 +91,32 @@ type World struct {
 	todCarry       uint64
 	dayLengthTicks uint32
 
-	Ents       *Entities
-	Transforms *TransformStore
-	Movements  *MovementStore
-	Collisions *CollisionStore
-	Healths    *HealthStore
-	Owners     *OwnerStore
-	UnitTypes  *UnitTypeStore
-	Combats    *CombatStore
-	Abilities  *AbilityStore
-	Invents    *InventoryStore
-	Orders     *OrderStore
-	Buffs      *BuffPool
-	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
-	Effects    *EffectStore  // persistent script effects, first-class entities (#348)
-	Heroes     *HeroStore
-	Items      *ItemStore   // item entities (#305): type + charges + carrier
-	Patrol     *PatrolStore // patrol endpoints (#306)
-	Build      *BuildStore  // building footprints + construction progress (#301)
-	Nodes      *ResourceNodeStore
-	Econs      *EconStore
-	Harvests   *HarvestStore
-	Produce    *ProduceStore
-	Doodads    *DoodadStore
-	Paths      *path.PathStore // pooled per-unit waypoint buffers (§7)
-	Grid       *path.Grid      // pathing grid; nil until SetGrid (map load)
+	Ents          *Entities
+	Transforms    *TransformStore
+	Movements     *MovementStore
+	Collisions    *CollisionStore
+	Healths       *HealthStore
+	Owners        *OwnerStore
+	UnitTypes     *UnitTypeStore
+	Combats       *CombatStore
+	Abilities     *AbilityStore
+	AbilityFields *AbilityFieldStore
+	Invents       *InventoryStore
+	Orders        *OrderStore
+	Buffs         *BuffPool
+	Missiles      *MissileStore // first-class missile entities (#158, ADR #295)
+	Effects       *EffectStore  // persistent script effects, first-class entities (#348)
+	Heroes        *HeroStore
+	Items         *ItemStore   // item entities (#305): type + charges + carrier
+	Patrol        *PatrolStore // patrol endpoints (#306)
+	Build         *BuildStore  // building footprints + construction progress (#301)
+	Nodes         *ResourceNodeStore
+	Econs         *EconStore
+	Harvests      *HarvestStore
+	Produce       *ProduceStore
+	Doodads       *DoodadStore
+	Paths         *path.PathStore // pooled per-unit waypoint buffers (§7)
+	Grid          *path.Grid      // pathing grid; nil until SetGrid (map load)
 	// local avoidance (avoidance.go): cell → owning entity, plus the
 	// stall threshold override (0 = DefaultStallRepathTicks)
 	reservedBy  []EntityID
@@ -301,6 +302,7 @@ func NewWorld(requested Caps) *World {
 		UnitTypes:       NewUnitTypeStore(caps.Units, idxSpace),
 		Combats:         NewCombatStore(caps.Units, idxSpace),
 		Abilities:       NewAbilityStore(caps.Units, idxSpace),
+		AbilityFields:   NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
 		Invents:         NewInventoryStore(caps.Units, idxSpace),
 		Orders:          NewOrderStore(caps.Units, idxSpace),
 		Buffs:           NewBuffPool(caps.BuffInstances),
@@ -431,6 +433,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 		w.Combats.Remove(id)
 	}
 	if w.Abilities.Row(id) != -1 {
+		w.AbilityFields.RemoveEntity(id)
 		w.Abilities.Remove(id)
 	}
 	if w.Items.Row(id) != -1 {
@@ -508,6 +511,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Combats.rowOf) * rowOfB
 	n += len(w.Abilities.AbilityID) * abilityRowB
 	n += len(w.Abilities.rowOf) * rowOfB
+	n += len(w.AbilityFields.Ent)*(4+1+1+8+1) + len(w.AbilityFields.free)*4 +
+		len(w.AbilityFields.rowOf)*rowOfB + len(w.AbilityFields.perUnit)
 	n += len(w.Invents.Slots) * (InventorySlots*4 + 4)
 	n += len(w.Invents.rowOf) * rowOfB
 	n += len(w.Orders.Kind) * (1 + 1 + 4 + 16 + 4 + 4)

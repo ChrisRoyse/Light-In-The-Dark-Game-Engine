@@ -49,14 +49,62 @@ func (w *World) BindAbilityDefs(defs []data.Ability) bool {
 // (future, #217) data spawner use it.
 func (w *World) SetAbility(id EntityID, slot int, defIndex int) bool {
 	ar := w.Abilities.Row(id)
-	if ar == -1 || slot < 0 || slot >= AbilitySlots ||
+	if ar == -1 || !w.Ents.Alive(id) || slot < 0 || slot >= AbilitySlots ||
 		defIndex < 0 || defIndex >= len(w.abilityDefs) {
 		return false
 	}
+	w.AbilityFields.RemoveSlot(id, slot)
 	w.Abilities.AbilityID[ar][slot] = uint16(defIndex + 1)
 	w.Abilities.CastState[ar][slot] = CastReady
 	w.Abilities.ReadyAt[ar][slot] = 0
 	return true
+}
+
+// RemoveAbility clears one ability slot and all per-instance field
+// overrides bound to that slot.
+func (w *World) RemoveAbility(id EntityID, slot int) bool {
+	ar := w.Abilities.Row(id)
+	if ar == -1 || !w.Ents.Alive(id) || !validAbilitySlot(slot) || w.Abilities.AbilityID[ar][slot] == 0 {
+		return false
+	}
+	w.AbilityFields.RemoveSlot(id, slot)
+	w.Abilities.AbilityID[ar][slot] = 0
+	w.Abilities.Level[ar][slot] = 0
+	w.Abilities.ReadyAt[ar][slot] = 0
+	w.Abilities.CastState[ar][slot] = CastReady
+	if w.Abilities.CastSlot[ar] == int8(slot) {
+		w.Abilities.CastSlot[ar] = -1
+		w.Abilities.CastEnd[ar] = 0
+	}
+	return true
+}
+
+// SetAbilityField writes a per-instance override for an equipped
+// ability slot. Unknown fields, empty slots, stale entities, and pool
+// exhaustion fail closed.
+func (w *World) SetAbilityField(id EntityID, slot int, field AbilityField, value fixed.F64) bool {
+	ar := w.Abilities.Row(id)
+	if ar == -1 || !w.Ents.Alive(id) || !validAbilitySlot(slot) || w.Abilities.AbilityID[ar][slot] == 0 || !validAbilityField(field) {
+		return false
+	}
+	return w.AbilityFields.Set(w.Ents, id, slot, field, value)
+}
+
+// ResolveAbilityField reads the per-instance override when present,
+// otherwise the immutable data.Ability default for the equipped slot.
+func (w *World) ResolveAbilityField(id EntityID, slot int, field AbilityField) (fixed.F64, bool) {
+	ar := w.Abilities.Row(id)
+	if ar == -1 || !w.Ents.Alive(id) || !validAbilitySlot(slot) || !validAbilityField(field) {
+		return 0, false
+	}
+	if v, ok := w.AbilityFields.Get(id, slot, field); ok {
+		return v, true
+	}
+	ref := w.Abilities.AbilityID[ar][slot]
+	if ref == 0 || int(ref) > len(w.abilityDefs) {
+		return 0, false
+	}
+	return abilityDefField(&w.abilityDefs[ref-1], field)
 }
 
 // castTransition flips a slot's cast state and reports it.
@@ -119,7 +167,12 @@ func (w *World) driveCast(ar int32) {
 		w.completeOrder(or, id, false) // on cooldown: deterministic refusal
 		return
 	}
-	if a.Mana[ar] < fixed.FromInt(def.ManaCost) {
+	manaCost, ok := w.ResolveAbilityField(id, slot, AbilityFieldManaCost)
+	if !ok || manaCost < 0 {
+		w.completeOrder(or, id, false)
+		return
+	}
+	if a.Mana[ar] < manaCost {
 		w.completeOrder(or, id, false) // insufficient mana
 		return
 	}
@@ -146,7 +199,7 @@ func (w *World) driveCast(ar int32) {
 		}
 	}
 	// commit: spend mana, enter castpoint
-	a.Mana[ar] = a.Mana[ar].Sub(fixed.FromInt(def.ManaCost))
+	a.Mana[ar] = a.Mana[ar].Sub(manaCost)
 	a.CastSlot[ar] = int8(slot)
 	a.CastEnd[ar] = w.tick + uint32(def.CastPointTicks)
 	w.castTransition(id, ar, slot, CastPoint)
@@ -165,12 +218,19 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 	switch a.CastState[ar][slot] {
 	case CastPoint:
 		// EFFECT edge: composition fires, cooldown commits
+		cooldown, ok := w.ResolveAbilityField(id, slot, AbilityFieldCooldown)
+		if !ok || cooldown < 0 {
+			a.CastSlot[ar] = -1
+			w.castTransition(id, ar, slot, CastReady)
+			w.completeOrder(or, id, false)
+			return
+		}
 		w.ExecuteEffects(def.Effects, EffectCtx{
 			Source: id,
 			Target: w.Orders.Target[or],
 			Point:  w.Orders.Point[or],
 		})
-		a.ReadyAt[ar][slot] = w.tick + uint32(def.CooldownTicks)
+		a.ReadyAt[ar][slot] = w.tick + abilityFieldTicks(cooldown)
 		if def.ChannelTicks > 0 {
 			a.CastEnd[ar] = w.tick + uint32(def.ChannelTicks)
 			w.castTransition(id, ar, slot, CastChannel)
@@ -205,8 +265,11 @@ func (w *World) finishCast(ar int32, id EntityID, slot int, or int32) {
 func (w *World) cancelCast(ar int32, id EntityID, slot int) {
 	a := w.Abilities
 	if a.CastState[ar][slot] == CastPoint {
-		def := &w.abilityDefs[a.AbilityID[ar][slot]-1]
-		m := a.Mana[ar].Add(fixed.FromInt(def.ManaCost))
+		manaCost, ok := w.ResolveAbilityField(id, slot, AbilityFieldManaCost)
+		if !ok || manaCost < 0 {
+			manaCost = 0
+		}
+		m := a.Mana[ar].Add(manaCost)
 		if m > a.MaxMana[ar] {
 			m = a.MaxMana[ar]
 		}
@@ -227,4 +290,15 @@ func (w *World) castableSlot(ar int32, ref uint16) (*data.Ability, int) {
 		}
 	}
 	return nil, -1
+}
+
+func abilityFieldTicks(v fixed.F64) uint32 {
+	if v <= 0 {
+		return 0
+	}
+	n := v.Floor()
+	if n > int64(^uint32(0)) {
+		return ^uint32(0)
+	}
+	return uint32(n)
 }
