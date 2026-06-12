@@ -185,3 +185,26 @@ func BenchmarkEventFlush(b *testing.B) {
 	}
 	_ = sink
 }
+
+// Regression for #332: EvUnitDamaged shipped as 2, colliding with
+// EvMoveDone in the single dispatch namespace — a move-done subscriber
+// fired on every damage packet. Every built-in kind must be unique.
+func TestBuiltinEventKindsUnique(t *testing.T) {
+	kinds := map[string]uint16{
+		"EvUnitDeath":    EvUnitDeath,
+		"EvMoveDone":     EvMoveDone,
+		"EvRepathNeeded": EvRepathNeeded,
+		"EvOrderIssued":  EvOrderIssued,
+		"EvOrderDone":    EvOrderDone,
+		"EvOrderDropped": EvOrderDropped,
+		"EvUnitDamaged":  EvUnitDamaged,
+	}
+	byVal := map[uint16]string{}
+	for name, v := range kinds {
+		if prev, dup := byVal[v]; dup {
+			t.Errorf("event kind %d claimed by both %s and %s", v, prev, name)
+		}
+		byVal[v] = name
+	}
+	t.Logf("built-in kinds: %v", kinds)
+}

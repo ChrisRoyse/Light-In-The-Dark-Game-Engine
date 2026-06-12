@@ -34,8 +34,9 @@ type DamagePacket struct {
 
 // EvUnitDamaged fires once per applied packet, before any same-tick
 // death event. Src = damage source, Dst = victim, Arg = the
-// post-mitigation amount in fixed.F64 bits.
-const EvUnitDamaged uint16 = 2
+// post-mitigation amount in fixed.F64 bits. (7, not 2: kinds share
+// one dispatch namespace and 2/3 belong to movement — #332.)
+const EvUnitDamaged uint16 = 7
 
 // Armor LUT bounds (combat-and-orders.md §4: practical armor range).
 // ArmorValue outside the range clamps to it.
