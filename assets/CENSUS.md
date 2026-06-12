@@ -27,8 +27,15 @@ exit-code · error.
 | Verdict | Models |
 |---|---|
 | OK-ANIMATED | 8 |
-| OK-STATIC | 512 |
-| R1-EMPTY-RENDER | 107 |
+| OK-STATIC | 617 |
+| R1-EMPTY-RENDER | 2 (both tracked: #289 near-plane, #290 heuristic false positive) |
+
+*Updated post-#288: the LITD-PATCH implementing `KHR_materials_unlit` in
+the vendored g3n loader landed (patches/engine/0003) and all 105
+kenney-retro-medieval models were re-censused — every one now renders
+textured geometry (OK-STATIC). Manually re-inspected: wall-detail,
+floor-stairs-corner-outer, roof-high-side — all visible brick/wood
+textures.*
 
 | Pack | GLBs | Result |
 |---|---|---|
@@ -37,7 +44,7 @@ exit-code · error.
 | kaykit-hexagon | 221 | 221 OK-STATIC |
 | kenney-castle | 76 | 75 OK-STATIC · 1 R1 flag that is a **false positive** (`ground.glb`, see #290) |
 | kenney-hexagon | 72 | 69 OK-STATIC · 3 OK-ANIMATED |
-| kenney-retro-medieval | 105 | **105 R1-EMPTY-RENDER** (see #288) |
+| kenney-retro-medieval | 105 | 105 OK-STATIC (after #288 unlit patch; originally 105 R1-EMPTY-RENDER) |
 | quaternius-ultimate-fantasy-rts | 107 | 107 OK-STATIC |
 
 ## Animation-playback proof (8 animated models)
@@ -64,7 +71,7 @@ shots are correctly byte-identical) but remain screenshot-verified to render.
 
 | Cluster | Count | Root cause | Issue |
 |---|---|---|---|
-| kenney-retro-medieval (whole pack) | 105 | All 105 declare `extensionsRequired: ["KHR_materials_unlit"]` (verified per file). The vendored g3n loader's `loadMaterialUnlit` is a stub returning `nil, nil` → nil material → nothing drawn. Frames are pure black (1 color; `barrels` shot manually inspected). R-FMT-1 allows unlit, so these are conforming assets blocked by an engine gap. | #288 (p1) |
+| kenney-retro-medieval (whole pack) | 105 | All 105 declare `extensionsRequired: ["KHR_materials_unlit"]`; the vendored g3n loader stubbed `loadMaterialUnlit` as nil,nil with its dispatch commented out → nil material, nothing drawn. **FIXED** by LITD-PATCH 0003 (#288); all 105 re-censused OK-STATIC. | #288 (closed) |
 | kaykit-builder/trash_B.glb | 1 | 7 cm prop: auto-framing distance (extent × 1.6 ≈ 0.15) puts the whole model inside the camera's 0.3 near plane → fully clipped. Frame pure black (manually inspected). | #289 |
 | kenney-castle/ground.glb | 1 | **False positive.** 4-vertex flat plane renders as a clean solid-green quad (manually inspected — clearly visible) but one material × one normal = exactly 2 distinct colors, tripping the ≤2-color blank heuristic. Manual verdict override: **renders correctly**. | #290 |
 
