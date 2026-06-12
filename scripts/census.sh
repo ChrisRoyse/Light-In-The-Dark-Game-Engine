@@ -39,13 +39,17 @@ find assets -name "*.glb" | LC_ALL=C sort | while IFS= read -r f; do
   if [ "$shots" = "3" ]; then
     d01=$(cmp -l "$OUTDIR/$slug-0.png" "$OUTDIR/$slug-1.png" 2>/dev/null | wc -l)
     d12=$(cmp -l "$OUTDIR/$slug-1.png" "$OUTDIR/$slug-2.png" 2>/dev/null | wc -l)
+    # render-coverage metric: pixels differing from the black clear
+    # color. Distinct-color counting false-positived flat single-color
+    # models (#290) — a solid plane is 2 colors but thousands of pixels.
     colors=$(python3 -c "
 from PIL import Image
-print(len(set(Image.open('$OUTDIR/$slug-0.png').convert('RGB').getdata())))" 2>/dev/null)
+im = Image.open('$OUTDIR/$slug-0.png').convert('RGB')
+print(sum(n for n, c in im.getcolors(maxcolors=10**6) if c != (0, 0, 0)))" 2>/dev/null)
   fi
   if [ "$rc" != "0" ] || [ "$shots" != "3" ]; then
     status="R1-FAIL-RUN"
-  elif [ "${colors:-0}" -le 2 ]; then
+  elif [ "${colors:-0}" -lt 50 ]; then
     status="R1-EMPTY-RENDER"
   elif [ "${anims:-0}" -gt 0 ] && [ "$d01" = "0" ] && [ "$d12" = "0" ]; then
     status="R1-STATIC-WITH-CLIPS"

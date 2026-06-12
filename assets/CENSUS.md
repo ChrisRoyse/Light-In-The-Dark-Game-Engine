@@ -16,8 +16,11 @@ verdict per model. Any anomaly is an R1 flag recorded in the table — nothing
 is skipped.
 
 `census.tsv` columns (no header row): path · verdict · meshes · skins · joints
-· clips · bytediff(shot0→1) · bytediff(shot1→2) · distinct-colors(shot0) ·
-exit-code · error.
+· clips · bytediff(shot0→1) · bytediff(shot1→2) · render-coverage(shot0) ·
+exit-code · error. Render-coverage = pixels differing from the black clear
+color (post-#290); rows cached before #290 carry the old distinct-colors
+number in that column — verdicts are unaffected (every cached pass was
+screenshot-verified).
 
 ## Totals
 
@@ -27,8 +30,8 @@ exit-code · error.
 | Verdict | Models |
 |---|---|
 | OK-ANIMATED | 8 |
-| OK-STATIC | 618 |
-| R1-EMPTY-RENDER | 1 (`ground.glb` — the #290 heuristic false positive; renders correctly) |
+| OK-STATIC | 619 |
+| R1-EMPTY-RENDER | 0 |
 
 *Updated post-#288: the LITD-PATCH implementing `KHR_materials_unlit` in
 the vendored g3n loader landed (patches/engine/0003) and all 105
@@ -42,7 +45,7 @@ textures.*
 | kaykit-adventurers | 5 | 5 OK-ANIMATED (the D-31 reference set) |
 | kaykit-builder | 41 | 41 OK-STATIC (`trash_B.glb` fixed by #289 near-plane scaling) |
 | kaykit-hexagon | 221 | 221 OK-STATIC |
-| kenney-castle | 76 | 75 OK-STATIC · 1 R1 flag that is a **false positive** (`ground.glb`, see #290) |
+| kenney-castle | 76 | 76 OK-STATIC (`ground.glb` false flag cleared by the #290 metric fix) |
 | kenney-hexagon | 72 | 69 OK-STATIC · 3 OK-ANIMATED |
 | kenney-retro-medieval | 105 | 105 OK-STATIC (after #288 unlit patch; originally 105 R1-EMPTY-RENDER) |
 | quaternius-ultimate-fantasy-rts | 107 | 107 OK-STATIC |
@@ -73,7 +76,7 @@ shots are correctly byte-identical) but remain screenshot-verified to render.
 |---|---|---|---|
 | kenney-retro-medieval (whole pack) | 105 | All 105 declare `extensionsRequired: ["KHR_materials_unlit"]`; the vendored g3n loader stubbed `loadMaterialUnlit` as nil,nil with its dispatch commented out → nil material, nothing drawn. **FIXED** by LITD-PATCH 0003 (#288); all 105 re-censused OK-STATIC. | #288 (closed) |
 | kaykit-builder/trash_B.glb | 1 | 7 cm prop: auto-framing distance (extent × 1.6 ≈ 0.15) put the whole model inside the camera's fixed 0.3 near plane → fully clipped. **FIXED**: animtest now scales the near plane with the framed extent; re-censused OK-STATIC (304 colors). | #289 (closed) |
-| kenney-castle/ground.glb | 1 | **False positive.** 4-vertex flat plane renders as a clean solid-green quad (manually inspected — clearly visible) but one material × one normal = exactly 2 distinct colors, tripping the ≤2-color blank heuristic. Manual verdict override: **renders correctly**. | #290 |
+| kenney-castle/ground.glb | 1 | **False positive.** 4-vertex flat plane renders as a clean solid-green quad (manually inspected) but one material × one normal = exactly 2 distinct colors, tripping the old ≤2-color heuristic. **FIXED**: the driver now counts non-background pixels (<50 ⇒ blank); re-censused OK-STATIC with 44,361 model pixels. | #290 (closed) |
 
 True non-rendering models: **106** (105 unlit + 1 near-plane), all tool/engine
 defects, not asset defects. Zero GLBs failed to parse.
@@ -83,7 +86,6 @@ defects, not asset defects. Zero GLBs failed to parse.
 - The quaternius-ultimate-fantasy-rts ingest is the buildings/scenery subset
   (no character units), so 0 clips across the pack is expected; the R-AST-3
   Idle/Walk/Attack/Death clip rule (#33) applies to unit models only.
-- After #288/#289 land, delete the affected rows from
-  `artifacts/census/census-cache.tsv` and re-run `scripts/census.sh` — only
-  those models re-render; this table's R1 section should then shrink to the
-  single documented false positive (or zero once #290 fixes the heuristic).
+- #288 (unlit), #289 (near plane), and #290 (blank heuristic) all landed and
+  the affected models were re-censused: **627/627 models render-verified,
+  zero open R1 flags.**
