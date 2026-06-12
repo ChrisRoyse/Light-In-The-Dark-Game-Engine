@@ -123,9 +123,11 @@ func (w *World) phaseEvents() {
 	w.flushEvents()
 }
 
-// Phase 7 — cleanup: deferred removals (second pass), then the render
-// snapshot publish and state hash on cadence (hooks until #203/#207).
+// Phase 7 — cleanup: snapshot publish FIRST (entities killed this
+// tick appear one last time with the death cue), then the deferred
+// removals (second pass), then state hash on cadence.
 func (w *World) phaseCleanup() {
+	w.publishSnapshot()
 	for i := range w.killed {
 		w.DestroyUnit(w.killed[i])
 	}

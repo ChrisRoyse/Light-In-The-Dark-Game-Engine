@@ -108,6 +108,15 @@ type World struct {
 	// deferred kills: marked phase 5, events phase 6, removed phase 7
 	killed []EntityID
 
+	// render snapshot publication (snapshot.go): double buffer plus
+	// per-tick discontinuity marks and staged presentation cues
+	Snaps           *SnapshotBuffers
+	snapNoLerp      []bool
+	snapDeath       []bool
+	snapMarked      []EntityID
+	renderEvStaging []RenderEvent
+	renderEvDropped uint64
+
 	// Debug/integration hooks; nil-safe stubs until their issues land.
 	PhaseTrace func(tick uint32, phase int, name string)
 	OnCommand  func(tick uint32, c WorldCommand)
@@ -139,30 +148,35 @@ func NewWorld(requested Caps) *World {
 	caps := requested.resolve()
 	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
 	return &World{
-		caps:       caps,
-		Cmds:       newCommandQueue(),
-		cmdStaging: make([]WorldCommand, 0, 1024),
-		cmdActive:  make([]WorldCommand, 0, 1024),
-		killed:     make([]EntityID, 0, caps.Units),
-		Sched:      sched.New(),
-		Ents:       NewEntities(entityCap),
-		Transforms: NewTransformStore(entityCap, entityCap),
-		Movements:  NewMovementStore(caps.Units, entityCap),
-		Collisions: NewCollisionStore(caps.Units, entityCap),
-		Healths:    NewHealthStore(caps.Units, entityCap),
-		Owners:     NewOwnerStore(caps.Units, entityCap),
-		UnitTypes:  NewUnitTypeStore(caps.Units, entityCap),
-		Combats:    NewCombatStore(caps.Units, entityCap),
-		Abilities:  NewAbilityStore(caps.Units, entityCap),
-		Invents:    NewInventoryStore(caps.Units, entityCap),
-		Orders:     NewOrderStore(caps.Units, entityCap),
-		Buffs:      NewBuffPool(caps.BuffInstances),
-		Projs:      NewProjectilePool(caps.Projectiles),
-		orderPool:  make([]orderEntry, caps.OrderQueueEntries),
-		events:     make([]Event, caps.PendingEvents),
-		handlers:   make(map[HandlerID]EventHandler),
-		pathReqs:   make([]pathRequest, caps.PathRequests),
-		Doodads:    NewDoodadStore(caps.ScriptedDoodads, entityCap),
+		caps:            caps,
+		Cmds:            newCommandQueue(),
+		cmdStaging:      make([]WorldCommand, 0, 1024),
+		cmdActive:       make([]WorldCommand, 0, 1024),
+		killed:          make([]EntityID, 0, caps.Units),
+		Snaps:           newSnapshotBuffers(entityCap, caps.PendingEvents),
+		snapNoLerp:      make([]bool, entityCap),
+		snapDeath:       make([]bool, entityCap),
+		snapMarked:      make([]EntityID, 0, entityCap),
+		renderEvStaging: make([]RenderEvent, 0, caps.PendingEvents),
+		Sched:           sched.New(),
+		Ents:            NewEntities(entityCap),
+		Transforms:      NewTransformStore(entityCap, entityCap),
+		Movements:       NewMovementStore(caps.Units, entityCap),
+		Collisions:      NewCollisionStore(caps.Units, entityCap),
+		Healths:         NewHealthStore(caps.Units, entityCap),
+		Owners:          NewOwnerStore(caps.Units, entityCap),
+		UnitTypes:       NewUnitTypeStore(caps.Units, entityCap),
+		Combats:         NewCombatStore(caps.Units, entityCap),
+		Abilities:       NewAbilityStore(caps.Units, entityCap),
+		Invents:         NewInventoryStore(caps.Units, entityCap),
+		Orders:          NewOrderStore(caps.Units, entityCap),
+		Buffs:           NewBuffPool(caps.BuffInstances),
+		Projs:           NewProjectilePool(caps.Projectiles),
+		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
+		events:          make([]Event, caps.PendingEvents),
+		handlers:        make(map[HandlerID]EventHandler),
+		pathReqs:        make([]pathRequest, caps.PathRequests),
+		Doodads:         NewDoodadStore(caps.ScriptedDoodads, entityCap),
 	}
 }
 
@@ -187,6 +201,7 @@ func (w *World) CreateUnit(pos fixed.Vec2, facing fixed.Angle) (EntityID, bool) 
 		return 0, false
 	}
 	w.unitCount++
+	w.MarkSnap(id) // spawn discontinuity: render must not lerp from nowhere
 	return id, true
 }
 
