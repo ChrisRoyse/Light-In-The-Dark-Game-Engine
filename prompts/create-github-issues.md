@@ -1,3 +1,3 @@
 Create github issues in the Light-in-the-Dark-Analytics/light-in-the-dark-game-engine and create atomic tasks. create a task for every tiny little atomic things that need to be completed so that if I complete all of the tasks the entire light in the dark game engine platform feature will be fully implemented, integrated and fully operational and live and working. in production and operational as intended. create the issues following these protocols: '/home/paula/projects/light-in-the-dark-game-engine/prompts/compression.md'
 
-follow these protocols as well and fill out these issues with these protocols as well: '/home/paula/projects/light-in-the-dark-/prompts/fsv.md'
+follow these protocols as well and fill out these issues with these protocols as well: '/home/paula/projects/light-in-the-dark-game-engine/prompts/fsv.md'

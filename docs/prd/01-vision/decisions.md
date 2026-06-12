@@ -375,6 +375,36 @@ asynchronous collaboration satisfies the requirement at ~zero engineering and $0
 cost (cost-effectiveness directive), and the source-form decision is what a future
 realtime layer would need anyway.
 
+## D-2026-06-11-34 — Observability, telemetry, and the debug feedback loop
+
+Owner directive: high observability everywhere; find bugs fast; debug reports flow back
+to us and feed rapid engine fixes; constant performance optimization.
+
+**Decision.** Observability is an engine subsystem, not an afterthought
+(spec: [08-performance/observability-and-debugging.md](../08-performance/observability-and-debugging.md)):
+
+1. **Structured logging (`litd/obs`):** ring-buffer logger, zero-alloc on hot paths
+   (preallocated entries, value-type fields — R-GC-1 compatible), tick-stamped, leveled
+   (ERROR/WARN/INFO/DEBUG/TRACE), per-subsystem channels. Debug builds verbose; release
+   builds keep ERROR/WARN + the ring buffer (last N seconds always recoverable).
+2. **Perf counters:** every budget (§5.3) has a live counter — tick ms by phase, frame
+   ms, draw calls, allocs/frame, pathfinding expansions, voice count, net turn RTT.
+   In-engine F11 perf overlay renders them; counters export to the benchmark harness.
+3. **Debug-report bundle (`litd-report.zip`):** one keypress/flag captures: ring-buffer
+   log, state dump JSON + state hash, the running replay (command stream — reproduces
+   the bug deterministically by design), perf counter history, sysinfo (GPU/driver/OS),
+   engine build hash. **The replay is the killer feature: every bug report replays
+   bit-identically** (G5) — "feed it back into the system" = run the replay headless,
+   watch the divergence/sub-hash, fix, verify.
+4. **Telemetry (opt-in, anonymous):** perf metrics + crash signatures to the own-site
+   endpoint (D-22 infra). No gameplay data, no PII. Off by default.
+5. **Dev tooling:** pprof + runtime/trace endpoints in dev builds; in-game debug console
+   (Lua REPL against the sandboxed API); desync auto-bisect (per-system sub-hash diff
+   pinpoints the diverging system per R-SIM state-hash design).
+
+Every future issue inherits: new subsystem ⇒ counters + log channel + state visible in
+the dump (already enforced by R-FSV-2/3 acceptance).
+
 ---
 
 ## No remaining deferred decisions
