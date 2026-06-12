@@ -89,12 +89,8 @@ func (w *World) phaseInput() {
 }
 
 // Phase 2 — scripts: the deterministic scheduler drains due
-// suspensions (#87 wires litd/sim/sched here).
-func (w *World) phaseScripts() {
-	if w.OnScriptPhase != nil {
-		w.OnScriptPhase(w.tick)
-	}
-}
+// suspensions in (wakeTick, seq) order (script_phase.go).
+func (w *World) phaseScripts() { w.scriptPhase() }
 
 // Phase 3 — orders: pop/translate orders into system intents (#144+).
 func (w *World) phaseOrders() {}

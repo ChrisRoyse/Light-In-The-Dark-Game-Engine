@@ -1,6 +1,9 @@
 package sim
 
-import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/sched"
+)
 
 // Caps fixes every pool capacity for a match. The zero value of a
 // field means "engine default". A map header may LOWER a cap, never
@@ -108,6 +111,7 @@ type World struct {
 
 	Ents       *Entities
 	Transforms *TransformStore
+	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// double-buffered command staging (step.go): enqueue any time,
 	// applied at the NEXT tick's phase 1
@@ -149,6 +153,7 @@ func NewWorld(requested Caps) *World {
 		cmdStaging:  make([]WorldCommand, 0, 1024),
 		cmdActive:   make([]WorldCommand, 0, 1024),
 		killed:      make([]EntityID, 0, caps.Units),
+		Sched:       sched.New(),
 		Ents:        NewEntities(entityCap),
 		Transforms:  NewTransformStore(entityCap, entityCap),
 		projectiles: make([]projectileRow, caps.Projectiles),
