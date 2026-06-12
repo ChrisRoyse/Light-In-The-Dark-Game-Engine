@@ -1,0 +1,52 @@
+name: Task
+description: A unit of work — feature, tooling, infra, docs. Carries the FSV acceptance contract.
+title: ""
+labels: ["status:needs-triage"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One paragraph — what this adds to the system and why the system needs it.
+    validations:
+      required: true
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: Deliverable
+      description: Concrete artifacts — files, packages, CI jobs, docs.
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Spec
+      description: PRD section / docs/prd file / requirement IDs (R-SIM-*, R-API-*, ...).
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Architecture rules that bind this task (determinism, zero-alloc, no sim→render import, ...).
+  - type: input
+    id: blocked-by
+    attributes:
+      label: Blocked by
+      placeholder: "#NN or none"
+  - type: textarea
+    id: fsv
+    attributes:
+      label: FSV acceptance contract (PRD §5.5, prompts/fsv.md)
+      description: Filled in BEFORE work starts. Verification is manual — no exit-codes-alone, no mocks.
+      value: |
+        - Source of truth: <where the final state lives — file / state JSON / screenshot / GitHub API / CI log>
+        - Execute & inspect: <trigger to run, then the separate read of the SoT>
+        - Edge cases (≥3):
+          - <empty / zero input>
+          - <boundary / max>
+          - <invalid / malformed>
+        - Evidence: <what gets attached to the resolution comment>
+        - No mocks. No fallbacks masking failure. Manual inspection of outputs required, not exit codes alone.
+    validations:
+      required: true

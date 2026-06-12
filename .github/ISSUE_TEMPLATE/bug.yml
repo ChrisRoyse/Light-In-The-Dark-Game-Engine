@@ -1,0 +1,52 @@
+name: Bug report
+description: A defect — observed behavior diverges from spec/PRD or from the Source of Truth.
+title: "[BUG] "
+labels: ["type:bug", "status:needs-triage"]
+body:
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Exact commands / clicks, starting from a fresh checkout or known state.
+      placeholder: |
+        1. go build -o bin/firstlight ./cmd/firstlight
+        2. ./bin/firstlight -autotest
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual (FSV-style)
+      description: What the Source of Truth should contain vs what it actually contains. Quote real output — state JSON, screenshot path, log lines — not exit codes.
+      placeholder: |
+        Expected: state JSON shows unit at (512, 512) ± 8
+        Actual:   state JSON shows unit at (0, 0); screenshot artifacts/x.png shows unit never moved
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, GPU/driver, Go version, commit SHA.
+      placeholder: |
+        WSL2 (6.6.87.2-microsoft-standard-WSL2), mesa d3d12, go1.26, commit cd42e97
+    validations:
+      required: true
+  - type: checkboxes
+    id: wsl-known-issues
+    attributes:
+      label: WSL2/WSLg known issues ruled out (CLAUDE.md)
+      description: If on WSL2, confirm these are not the cause before filing.
+      options:
+        - label: "Not the stale Xwayland listener bug (`ss -xl | grep X11` shows ONE listener; `wsl --shutdown` tried)"
+        - label: "Not the GLX context bug (reproduces even with `G3N_EGL=1`)"
+        - label: "Not a mesa driver pick (reproduces with `GALLIUM_DRIVER=d3d12`)"
+        - label: "N/A — not running under WSL"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, screenshots, state dumps, file:line references.
+    validations:
+      required: true
