@@ -32,6 +32,10 @@ func eventKindName(k uint16) string {
 		return "unit-damaged"
 	case EvBuffExpired:
 		return "buff-expired"
+	case EvVictory:
+		return "victory"
+	case EvDefeat:
+		return "defeat"
 	}
 	return ""
 }

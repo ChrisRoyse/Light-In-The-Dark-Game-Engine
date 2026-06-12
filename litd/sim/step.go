@@ -140,6 +140,7 @@ func (w *World) phaseEvents() {
 		}
 		w.Emit(Event{Kind: EvUnitDeath, Src: w.killed[i]})
 	}
+	w.resolveMatchResults()
 	w.flushEvents()
 }
 

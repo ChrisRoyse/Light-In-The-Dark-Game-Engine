@@ -116,6 +116,10 @@ type World struct {
 	// stall threshold override (0 = DefaultStallRepathTicks)
 	reservedBy  []EntityID
 	stallRepath uint16
+	// match result state (gamestate.go): one immutable terminal result
+	// per player plus same-tick pending requests resolved in phase 6.
+	results       [MaxPlayers]uint8
+	resultPending [MaxPlayers]uint8
 	// smart-order resolution (smartorder.go): data table + TypeID →
 	// capability-class column
 	smart           *data.SmartTable
