@@ -28,6 +28,14 @@ import (
 // exposes none of its internal types across the public boundary.
 type Game struct {
 	w *sim.World
+
+	// debug enables R-API-5 invalid-handle assertions; off in shipped
+	// maps (WC3 forgiveness), on in development (catch the swallowed
+	// bug). Toggled via SetDebug.
+	debug bool
+	// onInvalid is the optional sink for debug-mode invalid-handle
+	// reports; nil routes them to the standard logger.
+	onInvalid func(report string)
 }
 
 // newGame wraps a simulation world. The public setup path —
