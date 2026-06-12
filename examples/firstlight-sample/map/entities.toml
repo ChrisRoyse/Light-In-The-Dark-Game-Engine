@@ -1,0 +1,5 @@
+# one element per line; ordered by id; ids never reused
+entities = [
+  { id = 1, type = "vigil-footman", player = 0, pos = [4096, 4096], facing = 16384 },
+  { id = 2, type = "beacon", player = 255, pos = [8192, 8192], facing = 0 },
+]
