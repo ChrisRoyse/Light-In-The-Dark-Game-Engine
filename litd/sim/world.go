@@ -104,6 +104,11 @@ type World struct {
 
 	Ents       *Entities
 	Transforms *TransformStore
+	Movements  *MovementStore
+	Collisions *CollisionStore
+	Healths    *HealthStore
+	Owners     *OwnerStore
+	UnitTypes  *UnitTypeStore
 	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// double-buffered command staging (step.go): enqueue any time,
@@ -154,6 +159,11 @@ func NewWorld(requested Caps) *World {
 		Sched:       sched.New(),
 		Ents:        NewEntities(entityCap),
 		Transforms:  NewTransformStore(entityCap, entityCap),
+		Movements:   NewMovementStore(caps.Units, entityCap),
+		Collisions:  NewCollisionStore(caps.Units, entityCap),
+		Healths:     NewHealthStore(caps.Units, entityCap),
+		Owners:      NewOwnerStore(caps.Units, entityCap),
+		UnitTypes:   NewUnitTypeStore(caps.Units, entityCap),
 		projectiles: make([]projectileRow, caps.Projectiles),
 		buffs:       make([]buffInstance, caps.BuffInstances),
 		orderPool:   make([]orderEntry, caps.OrderQueueEntries),
@@ -188,13 +198,29 @@ func (w *World) CreateUnit(pos fixed.Vec2, facing fixed.Angle) (EntityID, bool) 
 	return id, true
 }
 
-// DestroyUnit removes a unit and its components. Stale handles are
-// no-ops (R-API-5).
+// DestroyUnit removes a unit and every component row it holds. Stale
+// handles are no-ops (R-API-5). Presence-checked removals: absent
+// optional components are not contract violations, so no assert fires.
 func (w *World) DestroyUnit(id EntityID) bool {
 	if !w.Ents.Alive(id) {
 		return false
 	}
 	w.Transforms.Remove(id)
+	if w.Movements.Row(id) != -1 {
+		w.Movements.Remove(id)
+	}
+	if w.Collisions.Row(id) != -1 {
+		w.Collisions.Remove(id)
+	}
+	if w.Healths.Row(id) != -1 {
+		w.Healths.Remove(id)
+	}
+	if w.Owners.Row(id) != -1 {
+		w.Owners.Remove(id)
+	}
+	if w.UnitTypes.Row(id) != -1 {
+		w.UnitTypes.Remove(id)
+	}
 	if !w.Ents.Destroy(id) {
 		return false
 	}
@@ -216,6 +242,16 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Transforms.Facing) * 2
 	n += len(w.Transforms.Entity) * 4
 	n += len(w.Transforms.rowOf) * rowOfB
+	n += len(w.Movements.Speed) * (8 + 2 + 16 + 4 + 1 + 4) // per-row column bytes
+	n += len(w.Movements.rowOf) * rowOfB
+	n += len(w.Collisions.SizeClass) * (1 + 1 + 4 + 4)
+	n += len(w.Collisions.rowOf) * rowOfB
+	n += len(w.Healths.Life) * (8 + 8 + 8 + 2 + 1 + 1 + 4 + 4)
+	n += len(w.Healths.rowOf) * rowOfB
+	n += len(w.Owners.Player) * (1 + 1 + 1 + 4)
+	n += len(w.Owners.rowOf) * rowOfB
+	n += len(w.UnitTypes.TypeID) * (2 + 4)
+	n += len(w.UnitTypes.rowOf) * rowOfB
 	n += len(w.projectiles) * 64
 	n += len(w.buffs) * 24
 	n += len(w.orderPool) * 32
