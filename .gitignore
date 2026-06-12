@@ -16,3 +16,4 @@ repoes/
 /cmd/dbg/
 # Test/FSV artifacts (screenshots, state dumps)
 /artifacts/
+benchmarks/history.jsonl

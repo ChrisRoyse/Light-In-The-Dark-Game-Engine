@@ -1,0 +1,14 @@
+# Performance budgets — THE single place a budget number exists
+# (tooling.md §4.3). Suites and the bench harness read this file;
+# no budget literal may appear anywhere else in the repo.
+#
+# Format: strict key = integer under [budgets]. Parsed by
+# tools/benchharness (fail-closed: unknown keys or non-integers error).
+
+[budgets]
+# Whole-tick wall budget in milliseconds on low-tier authoritative
+# hardware (PRD §5.3: ≤10 ms leaves 50% headroom at 20 Hz).
+tick_ms_max = 10
+
+# Heap allocations per sim tick at steady state (R-GC-1).
+allocs_per_tick = 0
