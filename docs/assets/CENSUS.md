@@ -1,6 +1,6 @@
 # Asset census — animtest R1 detection run (M0)
 
-Census date: 2026-06-11 · Driver: `scripts/census.sh` · Raw table: `assets/census.tsv`
+Census date: 2026-06-11 · Driver: `scripts/census.sh` · Raw table: `docs/assets/census.tsv`
 Screenshot evidence: `artifacts/census/*.png` (3 staggered shots per model, gitignored
 binaries — regenerate with the driver; results are sha256-cached in
 `artifacts/census/census-cache.tsv` so unchanged models never re-render).
