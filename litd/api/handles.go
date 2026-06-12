@@ -269,19 +269,8 @@ func (o Order) IsZero() bool { return o == Order{} }
 
 // Event is an event payload (public-api-design.md §2 row 12): the JASS
 // event/eventid handles plus every Get* event-context native collapse
-// onto methods of this value, dispatched through Game.OnEvent. It
-// carries a game pointer so its context accessors can resolve the
-// nouns involved; the accessor methods land with the OnEvent
-// dispatcher.
-type Event struct {
-	kind uint16
-	src  sim.EntityID
-	dst  sim.EntityID
-	g    *Game
-}
-
-// IsZero reports whether this is the zero-value event.
-func (e Event) IsZero() bool { return e == Event{} }
+// onto methods of this value, dispatched through Game.OnEvent. The type
+// and its accessors are defined in event_payload.go.
 
 // Compile-time proof that the targetable nouns satisfy Widget
 // (public-api-design.md §2 row 7). These fail the build if a Widget

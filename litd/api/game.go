@@ -36,6 +36,16 @@ type Game struct {
 	// onInvalid is the optional sink for debug-mode invalid-handle
 	// reports; nil routes them to the standard logger.
 	onInvalid func(report string)
+
+	// eventKinds maps a sim event kind to its public dispatch list,
+	// consulted only at OnEvent registration time (never on the
+	// dispatch hot path — each list is reached through a closure). nil
+	// until the first OnEvent call.
+	eventKinds map[uint16]*kindList
+	// nextHandlerID hands out sim HandlerIDs for the per-kind
+	// trampolines from a high base that cannot collide with
+	// script-registered handlers.
+	nextHandlerID sim.HandlerID
 }
 
 // newGame wraps a simulation world. The public setup path —
@@ -43,7 +53,17 @@ type Game struct {
 // lands with its own issue; this unexported constructor is the seam
 // internal callers and tests use to obtain a Game over an existing
 // world without leaking a litd/sim type through an exported signature.
-func newGame(w *sim.World) *Game { return &Game{w: w} }
+func newGame(w *sim.World) *Game {
+	return &Game{
+		w:             w,
+		eventKinds:    make(map[uint16]*kindList),
+		nextHandlerID: apiHandlerBase,
+	}
+}
+
+// apiHandlerBase starts the api's sim-HandlerID allocation high enough
+// that it never collides with a script- or sim-registered handler.
+const apiHandlerBase sim.HandlerID = 1 << 30
 
 // alive reports whether an entity handle still names a live sim entity.
 // It is the shared validity primitive for every entity-backed noun
