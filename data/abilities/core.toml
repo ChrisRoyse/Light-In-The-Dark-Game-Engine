@@ -1,0 +1,10 @@
+# Ability ID registry — stub rows until #160 grows the schema; unit
+# ability references validate against this set at load.
+
+[[ability]]
+id = "defend"
+name = "Defend"
+
+[[ability]]
+id = "sprint"
+name = "Sprint"

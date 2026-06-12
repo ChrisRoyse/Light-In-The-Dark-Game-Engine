@@ -1,0 +1,55 @@
+# Human roster starter rows (combat-and-orders.md §6 worked example).
+# Authored units: seconds, units/second, revolutions/second — the
+# loader converts everything to ticks/fixed-point at load.
+
+[[unit]]
+id = "footman"
+life = 420
+regen = 0.25
+armor = 2
+armor-type = "heavy"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+model = "units/footman.glb"
+abilities = ["defend"]
+
+[[unit.attack]]
+type = "normal"
+range = 90
+damage-base = 11
+dice = 1
+sides = 2
+cooldown = 1.35
+damage-point = 0.5
+backswing = 0.5
+delivery = "instant"
+targets-allowed = ["ground", "structure"]
+
+[[unit]]
+id = "archer"
+life = 245
+regen = 0.1
+armor = 0
+armor-type = "light"
+move-speed = 300
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 700
+model = "units/archer.glb"
+
+[[unit.attack]]
+type = "piercing"
+range = 500
+damage-base = 14
+dice = 1
+sides = 4
+cooldown = 1.5
+damage-point = 0.3
+backswing = 0.3
+delivery = "projectile"
+projectile-speed = 900
+targets-allowed = ["ground", "air", "structure"]
