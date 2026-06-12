@@ -169,14 +169,15 @@ type Sound struct {
 func (s Sound) Valid() bool  { return s.g != nil && s.id != 0 }
 func (s Sound) IsZero() bool { return s == Sound{} }
 
-// Effect is a transient presentation object — special effects,
-// lightning, text tags, minimap icons (public-api-design.md §2 row 18).
+// Effect is a persistent presentation entity — special effects now,
+// with lightning, text tags, and minimap icons joining the same noun
+// family as their stores land (public-api-design.md §2 row 18).
 type Effect struct {
-	id uint32
+	id sim.EntityID
 	g  *Game
 }
 
-func (e Effect) Valid() bool  { return e.g != nil && e.id != 0 }
+func (e Effect) Valid() bool  { return e.g.effectAlive(e.id) }
 func (e Effect) IsZero() bool { return e == Effect{} }
 
 // Camera is the RTS camera control surface (public-api-design.md §2

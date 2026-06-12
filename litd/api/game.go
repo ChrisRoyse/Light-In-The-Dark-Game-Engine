@@ -40,6 +40,11 @@ type Game struct {
 	// map assets.
 	match matchConfig
 
+	// effectModels is the setup-time asset table projection used by
+	// AddSpecialEffect: public model keys resolve to sim/render model
+	// ids, and unknown keys fail closed.
+	effectModels map[string]uint16
+
 	// debug enables R-API-5 invalid-handle assertions; off in shipped
 	// maps (WC3 forgiveness), on in development (catch the swallowed
 	// bug). Toggled via SetDebug.
