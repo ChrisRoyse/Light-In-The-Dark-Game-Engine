@@ -109,6 +109,10 @@ type World struct {
 	Healths    *HealthStore
 	Owners     *OwnerStore
 	UnitTypes  *UnitTypeStore
+	Combats    *CombatStore
+	Abilities  *AbilityStore
+	Invents    *InventoryStore
+	Orders     *OrderStore
 	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// double-buffered command staging (step.go): enqueue any time,
@@ -164,6 +168,10 @@ func NewWorld(requested Caps) *World {
 		Healths:     NewHealthStore(caps.Units, entityCap),
 		Owners:      NewOwnerStore(caps.Units, entityCap),
 		UnitTypes:   NewUnitTypeStore(caps.Units, entityCap),
+		Combats:     NewCombatStore(caps.Units, entityCap),
+		Abilities:   NewAbilityStore(caps.Units, entityCap),
+		Invents:     NewInventoryStore(caps.Units, entityCap),
+		Orders:      NewOrderStore(caps.Units, entityCap),
 		projectiles: make([]projectileRow, caps.Projectiles),
 		buffs:       make([]buffInstance, caps.BuffInstances),
 		orderPool:   make([]orderEntry, caps.OrderQueueEntries),
@@ -221,6 +229,18 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.UnitTypes.Row(id) != -1 {
 		w.UnitTypes.Remove(id)
 	}
+	if w.Combats.Row(id) != -1 {
+		w.Combats.Remove(id)
+	}
+	if w.Abilities.Row(id) != -1 {
+		w.Abilities.Remove(id)
+	}
+	if w.Invents.Row(id) != -1 {
+		w.Invents.Remove(id)
+	}
+	if w.Orders.Row(id) != -1 {
+		w.Orders.Remove(id)
+	}
 	if !w.Ents.Destroy(id) {
 		return false
 	}
@@ -235,6 +255,9 @@ func (w *World) PreallocatedBytes() int {
 		slotB  = 8  // entitySlot
 		vec2B  = 16 // fixed.Vec2
 		rowOfB = 4
+		// per-row column-byte sums of the wide stores
+		combatRowB  = 8 + 2 + 2 + 2 + 4 + 4 + 16 + 4 + 8 + 8 + 4 + 4 + 4 + 4
+		abilityRowB = AbilitySlots*(2+1+4+2+1) + 4
 	)
 	n := 0
 	n += len(w.Ents.slots) * slotB
@@ -252,6 +275,14 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Owners.rowOf) * rowOfB
 	n += len(w.UnitTypes.TypeID) * (2 + 4)
 	n += len(w.UnitTypes.rowOf) * rowOfB
+	n += len(w.Combats.DmgBase) * combatRowB
+	n += len(w.Combats.rowOf) * rowOfB
+	n += len(w.Abilities.AbilityID) * abilityRowB
+	n += len(w.Abilities.rowOf) * rowOfB
+	n += len(w.Invents.Slots) * (InventorySlots*4 + 4)
+	n += len(w.Invents.rowOf) * rowOfB
+	n += len(w.Orders.Kind) * (1 + 4 + 16 + 4 + 4)
+	n += len(w.Orders.rowOf) * rowOfB
 	n += len(w.projectiles) * 64
 	n += len(w.buffs) * 24
 	n += len(w.orderPool) * 32
