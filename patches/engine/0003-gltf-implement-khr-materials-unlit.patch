@@ -1,0 +1,73 @@
+diff --git a/loader/gltf/khr_materials_unlit.go b/loader/gltf/khr_materials_unlit.go
+index 35d0879..5f5ff6a 100644
+--- a/loader/gltf/khr_materials_unlit.go
++++ b/loader/gltf/khr_materials_unlit.go
+@@ -2,14 +2,47 @@ package gltf
+ 
+ import (
+ 	"github.com/g3n/engine/material"
++	"github.com/g3n/engine/math32"
+ )
+ 
+-// TODO
+-// loadMaterialUnlit receives an interface value describing a KHR_materials_unlit extension,
+-// decodes it and returns a Material closest to the specified description.
+-// The specification of this extension is at:
++// LITD-PATCH: implement KHR_materials_unlit (upstream stub returned
++// nil, nil, which the LoadMaterial dispatch cached as a nil material —
++// every unlit-tagged primitive rendered nothing).
++//
++// loadMaterialUnlit builds a lighting-independent material from the
++// material's pbrMetallicRoughness baseColor per the extension spec:
+ // https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_unlit
+-func (g *GLTF) loadMaterialUnlit(ext interface{}) (material.IMaterial, error) {
++// The fragment color is baseColorFactor × baseColorTexture, nothing
++// else. Implemented as a Standard material with UseLightNone: the
++// standard shader's noLights path outputs exactly matDiffuse × texture.
++func (g *GLTF) loadMaterialUnlit(m *Material) (material.IMaterial, error) {
+ 
+-	return nil, nil
++	mat := material.NewStandard(&math32.Color{R: 1, G: 1, B: 1})
++	mat.SetUseLights(material.UseLightNone)
++	mat.SetEmissiveColor(&math32.Color{R: 0, G: 0, B: 0})
++	mat.SetSpecularColor(&math32.Color{R: 0, G: 0, B: 0})
++
++	if m.DoubleSided {
++		mat.SetSide(material.SideDouble)
++	} else {
++		mat.SetSide(material.SideFront)
++	}
++	if m.AlphaMode == "BLEND" {
++		mat.SetTransparent(true)
++	}
++
++	if pbr := m.PbrMetallicRoughness; pbr != nil {
++		if f := pbr.BaseColorFactor; f != nil {
++			mat.SetColor(&math32.Color{R: f[0], G: f[1], B: f[2]})
++			mat.SetOpacity(f[3])
++		}
++		if pbr.BaseColorTexture != nil {
++			tex, err := g.LoadTexture(pbr.BaseColorTexture.Index)
++			if err != nil {
++				return nil, err
++			}
++			mat.AddTexture(tex)
++		}
++	}
++	return mat, nil
+ }
+diff --git a/loader/gltf/loader.go b/loader/gltf/loader.go
+index d4990a1..d582d55 100644
+--- a/loader/gltf/loader.go
++++ b/loader/gltf/loader.go
+@@ -759,7 +759,9 @@ func (g *GLTF) LoadMaterial(matIdx int) (material.IMaterial, error) {
+ 			if ext == KhrMaterialsCommon {
+ 				imat, err = g.loadMaterialCommon(extData)
+ 			} else if ext == KhrMaterialsUnlit {
+-				//imat, err = g.loadMaterialUnlit(matData, extData)
++				// LITD-PATCH: dispatch was commented out upstream, leaving
++				// imat nil — unlit materials loaded as nil and drew nothing.
++				imat, err = g.loadMaterialUnlit(&matData)
+ 				//} else if ext == KhrMaterialsPbrSpecularGlossiness {
+ 			} else {
+ 				return nil, fmt.Errorf("unsupported extension:%s", ext)
