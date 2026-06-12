@@ -47,6 +47,12 @@ const (
 	// EventMissileExpired fires when a missile dies without delivering.
 	// Missile() is the missile.
 	EventMissileExpired
+	// EventVictory fires when a player first reaches ResultWon.
+	// Player() is the winning player.
+	EventVictory
+	// EventDefeat fires when a player first reaches ResultLost or
+	// ResultLeft. Player() is the defeated/left player.
+	EventDefeat
 )
 
 // simKindOf maps each public event kind to its sim event kind. The map
@@ -65,6 +71,8 @@ var simKindOf = map[EventKind]uint16{
 	EventConstructFinished: 20, // sim.EvConstructFinished
 	EventMissileImpact:     22, // sim.EvMissileImpact
 	EventMissileExpired:    23, // sim.EvMissileExpired
+	EventVictory:           sim.EvVictory,
+	EventDefeat:            sim.EvDefeat,
 }
 
 // Event is the payload handed to an OnEvent handler — a plain value
@@ -93,6 +101,18 @@ func (e Event) primary() sim.EntityID {
 		return e.dst
 	}
 	return e.src
+}
+
+// playerSlot returns the player slot carried by a player-scoped event,
+// or -1 when the event is not about a player slot.
+func (e Event) playerSlot() int32 {
+	switch e.kind {
+	case EventVictory, EventDefeat:
+		if e.arg >= 0 && e.arg < sim.MaxPlayers {
+			return int32(e.arg)
+		}
+	}
+	return -1
 }
 
 // Missile returns the missile on a missile event, else the zero
@@ -144,6 +164,16 @@ func (e Event) Damage() float64 {
 		return 0
 	}
 	return toFloat(fixed.F64(e.arg))
+}
+
+// Player returns the player carried by a player-scoped event, else the
+// zero Player on an unrelated kind. JASS: GetTriggerPlayer for the
+// victory/defeat collapse.
+func (e Event) Player() Player {
+	if e.playerSlot() < 0 {
+		return Player{}
+	}
+	return Player{idx: e.playerSlot(), g: e.g}
 }
 
 // EventView is the read-only payload handed to a filter

@@ -134,7 +134,7 @@ func (g *Game) dispatch(kl *kindList, e sim.Event) {
 			continue
 		}
 		ev := Event{kind: kl.pubKind, src: e.Src, dst: e.Dst, arg: e.Arg, g: g}
-		if s.player >= 0 && g.ownerOf(ev.primary()) != s.player {
+		if s.player >= 0 && g.scopePlayerOf(ev) != s.player {
 			continue
 		}
 		if s.filter != nil && !g.runFilter(s, ev) {
@@ -158,6 +158,16 @@ func (g *Game) runFilter(s *subscription, ev Event) bool {
 		}
 	}
 	return r
+}
+
+// scopePlayerOf returns the player slot used by ForPlayer. Player
+// events carry the slot directly; unit events scope through the primary
+// unit owner.
+func (g *Game) scopePlayerOf(ev Event) int32 {
+	if p := ev.playerSlot(); p >= 0 {
+		return p
+	}
+	return g.ownerOf(ev.primary())
 }
 
 // ownerOf returns the owner slot of an entity, or -1 if it has no owner
