@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	contNoteW   sched.ContID = 1
-	contZeroW   sched.ContID = 2
-	contRewaitW sched.ContID = 3
+	contNoteW   sched.ContID  = 1
+	contZeroW   sched.ContID  = 2
+	contRewaitW sched.ContID  = 3
 	evPingW     sched.EventID = 1
 )
 

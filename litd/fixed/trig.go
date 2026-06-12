@@ -15,7 +15,7 @@ const (
 // Sin returns sin(a) as 32.32 fixed point, via the committed
 // quarter-wave table (sinQuarter, generated source — no runtime math.*).
 func (a Angle) Sin() F64 {
-	quadrant := a >> 14   // 0..3
+	quadrant := a >> 14    // 0..3
 	idx := int(a & 0x3FFF) // position within quarter wave
 	switch quadrant {
 	case 0:

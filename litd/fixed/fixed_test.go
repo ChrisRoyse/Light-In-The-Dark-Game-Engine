@@ -157,9 +157,9 @@ func TestEdgeNegativeMulRoundsTowardZero(t *testing.T) {
 
 func TestEdge128BitPathExact(t *testing.T) {
 	// operands whose naive int64 product overflows but whose true result fits
-	a := FromInt(1 << 20)     // 2^20
-	b := FromInt(1 << 10)     // 2^10
-	got := a.Mul(b)           // 2^30 — fits comfortably
+	a := FromInt(1 << 20) // 2^20
+	b := FromInt(1 << 10) // 2^10
+	got := a.Mul(b)       // 2^30 — fits comfortably
 	want := FromInt(1 << 30)
 	t.Logf("edge 128-bit path: Mul(2^20, 2^10) got=%d want=%d (naive int64 product would overflow: raw operands 2^52, 2^42)", got, want)
 	if got != want {

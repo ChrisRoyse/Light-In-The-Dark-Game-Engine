@@ -62,8 +62,8 @@ func TestDistSqLessEdgeNegativeDeltasBoundary(t *testing.T) {
 	// a 3-4-5 triangle with negative deltas: dist = 5 exactly
 	a := Vec2{FromInt(-3), FromInt(-4)}
 	b := Vec2{0, 0}
-	exactly := DistSqLess(a, b, FromInt(5))     // 25 < 25 → false
-	above := DistSqLess(a, b, FromInt(5)+1)     // 25 < (5+ε)² → true
+	exactly := DistSqLess(a, b, FromInt(5)) // 25 < 25 → false
+	above := DistSqLess(a, b, FromInt(5)+1) // 25 < (5+ε)² → true
 	t.Logf("edge negative deltas (3-4-5): r=5 → %v (big ref %v); r=5+ε → %v (big ref %v)",
 		exactly, refDistSqLess(a, b, FromInt(5)), above, refDistSqLess(a, b, FromInt(5)+1))
 	if exactly || !above {
