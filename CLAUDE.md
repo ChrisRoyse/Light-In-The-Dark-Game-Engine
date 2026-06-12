@@ -71,4 +71,5 @@ Verification of any visual/behavioral change follows `prompts/fsv.md`: run the t
 
 - Commits: conventional commits, normal prose.
 - Assets: core glTF 2.0 GLB only, no KHR extensions except `KHR_materials_unlit` (R-FMT-1); CC0 licensed only.
+- Asset binaries (`assets/**/*.glb`) are **gitignored** — only `assets/MANIFEST` (provenance ledger: path/pack/source/license/sha256) is tracked. Fresh checkout: re-download packs from the MANIFEST `source` URLs, verify with `go run ./tools/assetcheck ./assets`.
 - `cmd/dbg/` is scratch space for environment debugging — delete freely.

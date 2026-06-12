@@ -148,6 +148,12 @@ func TestParseRealManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if onDisk == 0 {
+		// asset binaries are gitignored (MANIFEST is the tracked ledger);
+		// a fresh checkout legitimately has none — the 1:1 reconcile only
+		// applies where the assets actually live
+		t.Skipf("no asset files on disk (gitignored); MANIFEST parsed OK with %d entries", len(assets))
+	}
 	if len(assets) != onDisk {
 		t.Fatalf("MANIFEST has %d entries but %d files on disk", len(assets), onDisk)
 	}

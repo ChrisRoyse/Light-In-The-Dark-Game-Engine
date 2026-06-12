@@ -17,3 +17,10 @@ repoes/
 # Test/FSV artifacts (screenshots, state dumps)
 /artifacts/
 benchmarks/history.jsonl
+
+# Asset binaries: NOT tracked. assets/MANIFEST is the tracked provenance
+# ledger (path/pack/source/license/sha256); restore binaries from the
+# MANIFEST source URLs. assetcheck runs locally against the real files.
+assets/**/*.glb
+assets/**/*.png
+assets/**/*.ogg
