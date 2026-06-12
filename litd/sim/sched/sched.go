@@ -44,22 +44,45 @@ type waiter struct {
 	state State
 }
 
+// eventWaiters is the waiter list for one event. The scheduler keeps
+// these in a slice sorted by ev — not a map — so hashing and
+// serialization walk them in deterministic order with no map
+// iteration anywhere (R-SIM-2 discipline, #97 encoder constraint).
+type eventWaiters struct {
+	ev   EventID
+	list []waiter
+}
+
 // Scheduler owns all suspended script state. Not safe for concurrent
 // use — by design it must only ever be touched from the sim goroutine.
 type Scheduler struct {
 	now     uint32
 	nextSeq uint32
-	conts   map[ContID]Func
-	sleep   []record // binary min-heap on (wakeTick, seq)
-	waiters map[EventID][]waiter
+	conts   map[ContID]Func // lookup only, never iterated, never serialized
+	sleep   []record        // binary min-heap on (wakeTick, seq)
+	waiters []eventWaiters  // sorted ascending by ev
 }
 
 // New returns an empty scheduler at tick 0.
 func New() *Scheduler {
 	return &Scheduler{
-		conts:   make(map[ContID]Func),
-		waiters: make(map[EventID][]waiter),
+		conts: make(map[ContID]Func),
 	}
+}
+
+// waiterIdx binary-searches s.waiters for ev. Returns the index and
+// whether it exists; if not, the index is the sorted insertion point.
+func (s *Scheduler) waiterIdx(ev EventID) (int, bool) {
+	lo, hi := 0, len(s.waiters)
+	for lo < hi {
+		mid := (lo + hi) / 2
+		if s.waiters[mid].ev < ev {
+			lo = mid + 1
+		} else {
+			hi = mid
+		}
+	}
+	return lo, lo < len(s.waiters) && s.waiters[lo].ev == ev
 }
 
 // Register binds id to fn. Call only during sim construction, in
@@ -108,7 +131,13 @@ func (s *Scheduler) WaitEvent(ev EventID, cont ContID, st State) {
 		panic("sched: WaitEvent with unregistered ContID")
 	}
 	s.nextSeq++
-	s.waiters[ev] = append(s.waiters[ev], waiter{seq: s.nextSeq, cont: cont, state: st})
+	i, ok := s.waiterIdx(ev)
+	if !ok {
+		s.waiters = append(s.waiters, eventWaiters{})
+		copy(s.waiters[i+1:], s.waiters[i:])
+		s.waiters[i] = eventWaiters{ev: ev}
+	}
+	s.waiters[i].list = append(s.waiters[i].list, waiter{seq: s.nextSeq, cont: cont, state: st})
 }
 
 // FireEvent resumes every waiter currently parked on ev, in FIFO (seq)
@@ -116,13 +145,14 @@ func (s *Scheduler) WaitEvent(ev EventID, cont ContID, st State) {
 // mid-dispatch lands in a fresh list with a new seq, behind everyone
 // in this dispatch, and cannot disturb the remaining order (R-EXEC-2).
 func (s *Scheduler) FireEvent(ev EventID) {
-	fired := s.waiters[ev]
-	if len(fired) == 0 {
+	i, ok := s.waiterIdx(ev)
+	if !ok || len(s.waiters[i].list) == 0 {
 		return
 	}
-	s.waiters[ev] = nil
-	for i := range fired {
-		s.run(fired[i].cont, fired[i].state)
+	fired := s.waiters[i].list
+	s.waiters[i].list = nil
+	for j := range fired {
+		s.run(fired[j].cont, fired[j].state)
 	}
 }
 
@@ -153,7 +183,12 @@ func (s *Scheduler) run(cont ContID, st State) {
 func (s *Scheduler) PendingSleepers() int { return len(s.sleep) }
 
 // PendingWaiters returns how many waiters are parked on ev.
-func (s *Scheduler) PendingWaiters(ev EventID) int { return len(s.waiters[ev]) }
+func (s *Scheduler) PendingWaiters(ev EventID) int {
+	if i, ok := s.waiterIdx(ev); ok {
+		return len(s.waiters[i].list)
+	}
+	return 0
+}
 
 // --- sleep queue: binary min-heap on (wakeTick, seq) ----------------------
 
