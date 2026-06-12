@@ -6,7 +6,10 @@ package sim
 // accumulator. T2 pattern — see store_transform.go. Weapon slot 1
 // zero-valued = unused (a melee-only unit simply never touches it).
 
-import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+)
 
 // WeaponSlots is the per-unit weapon count (WC3's attack 1 / attack 2).
 const WeaponSlots = 2
@@ -26,8 +29,13 @@ type CombatStore struct {
 	Cooldown   [][WeaponSlots]uint16 // full attack period, ticks
 	DamagePt   [][WeaponSlots]uint16 // windup ticks to FIRE
 	Range      [][WeaponSlots]fixed.F64
-	ProjRef    [][WeaponSlots]uint16 // projectile type row; 0 = instant
-	ReadyAt    [][WeaponSlots]uint32 // absolute next-attack tick
+	ProjRef    [][WeaponSlots]uint16          // projectile type row; 0 = instant
+	ReadyAt    [][WeaponSlots]uint32          // absolute next-attack tick
+	Backswing  [][WeaponSlots]uint16          // post-FIRE recovery ticks (freely interruptible)
+	WFlags     [][WeaponSlots]uint8           // Weapon* flag bits
+	AtkState   [][WeaponSlots]uint8           // Atk* state machine (attack.go)
+	PhaseEnd   [][WeaponSlots]uint32          // absolute end tick of the current windup/backswing
+	Effects    [][WeaponSlots]data.EffectList // FIRE payload (#296); zero = built-in damage
 
 	// per unit
 	AcquisitionRange []fixed.F64
@@ -56,6 +64,11 @@ func NewCombatStore(rowCap, entityCap int) *CombatStore {
 		Range:            make([][WeaponSlots]fixed.F64, rowCap),
 		ProjRef:          make([][WeaponSlots]uint16, rowCap),
 		ReadyAt:          make([][WeaponSlots]uint32, rowCap),
+		Backswing:        make([][WeaponSlots]uint16, rowCap),
+		WFlags:           make([][WeaponSlots]uint8, rowCap),
+		AtkState:         make([][WeaponSlots]uint8, rowCap),
+		PhaseEnd:         make([][WeaponSlots]uint32, rowCap),
+		Effects:          make([][WeaponSlots]data.EffectList, rowCap),
 		AcquisitionRange: make([]fixed.F64, rowCap),
 		Target:           make([]EntityID, rowCap),
 		LastAttacker:     make([]EntityID, rowCap),
@@ -94,6 +107,11 @@ func (s *CombatStore) Add(e *Entities, id EntityID) bool {
 	s.Range[r] = [WeaponSlots]fixed.F64{}
 	s.ProjRef[r] = [WeaponSlots]uint16{}
 	s.ReadyAt[r] = [WeaponSlots]uint32{}
+	s.Backswing[r] = [WeaponSlots]uint16{}
+	s.WFlags[r] = [WeaponSlots]uint8{}
+	s.AtkState[r] = [WeaponSlots]uint8{}
+	s.PhaseEnd[r] = [WeaponSlots]uint32{}
+	s.Effects[r] = [WeaponSlots]data.EffectList{}
 	s.AcquisitionRange[r] = 0
 	s.Target[r] = 0
 	s.LastAttacker[r] = 0
@@ -126,6 +144,11 @@ func (s *CombatStore) Remove(id EntityID) bool {
 		s.Range[r] = s.Range[last]
 		s.ProjRef[r] = s.ProjRef[last]
 		s.ReadyAt[r] = s.ReadyAt[last]
+		s.Backswing[r] = s.Backswing[last]
+		s.WFlags[r] = s.WFlags[last]
+		s.AtkState[r] = s.AtkState[last]
+		s.PhaseEnd[r] = s.PhaseEnd[last]
+		s.Effects[r] = s.Effects[last]
 		s.AcquisitionRange[r] = s.AcquisitionRange[last]
 		s.Target[r] = s.Target[last]
 		s.LastAttacker[r] = s.LastAttacker[last]

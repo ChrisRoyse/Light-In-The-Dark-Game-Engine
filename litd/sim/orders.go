@@ -220,9 +220,15 @@ func (w *World) ordersSystem() {
 			case MoveBlocked: // stalled out: unreachable for now
 				w.completeOrder(r, id, false)
 			}
+		case OrderAttack:
+			// the attack cycle (attack.go) drives the engagement; the
+			// order completes when its target is gone
+			if !w.Ents.Alive(s.Target[r]) {
+				w.completeOrder(r, id, true)
+			}
 		default:
-			// attack/smart execution lands with #146/#150; until then
-			// the order holds as current (visible state, no fake done)
+			// smart execution lands with #146; until then the order
+			// holds as current (visible state, no fake done)
 		}
 	}
 }

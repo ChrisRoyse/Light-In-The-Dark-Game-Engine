@@ -161,11 +161,14 @@ type World struct {
 	OnShove       func(tick uint32, mover, shoved EntityID, cell int32)
 	OnScriptPhase func(tick uint32)
 	OnCombatPhase func(tick uint32)
-	OnDeathEvent  func(tick uint32, id EntityID)
-	OnSnapshot    func(tick uint32)
-	OnHash        func(tick uint32)
-	OnEventDrop   func(tick uint32, e Event)
-	HashEvery     uint32
+	// OnAttackTransition fires on every per-weapon state flip
+	// (attack.go #150 — the tick-stamped trace that is the FSV SoT).
+	OnAttackTransition func(tick uint32, id EntityID, slot int, from, to uint8)
+	OnDeathEvent       func(tick uint32, id EntityID)
+	OnSnapshot         func(tick uint32)
+	OnHash             func(tick uint32)
+	OnEventDrop        func(tick uint32, e Event)
+	HashEvery          uint32
 
 	unitCount int
 	// pooled intrusive order-queue entries (orders.go): LIFO free

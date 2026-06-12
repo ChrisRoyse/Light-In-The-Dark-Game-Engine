@@ -114,6 +114,7 @@ func (w *World) phaseMovement() {
 // Kills mark the deferred buffer — removal is phase 7's job.
 func (w *World) phaseCombat() {
 	w.acquisitionSystem()
+	w.attackSystem()
 	if w.OnCombatPhase != nil {
 		w.OnCombatPhase(w.tick)
 	}
