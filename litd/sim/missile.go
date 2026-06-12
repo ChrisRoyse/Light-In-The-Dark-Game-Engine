@@ -45,6 +45,17 @@ type MissileSpec struct {
 	Decay  uint16     // per-mille payload decay between pierce hits (0 → 1000 = none)
 }
 
+// EvMissileImpact fires when a missile delivers its payload — Src is
+// the missile, Dst the victim/target (0 for a point or AoE detonation).
+// EvMissileExpired fires when a missile dies without delivering — Src
+// is the missile, Dst is 0. Both reach scripts through the OnEvent
+// dispatcher (#293); they are emitted alongside the OnMissile*
+// presentation callbacks.
+const (
+	EvMissileImpact  uint16 = 22
+	EvMissileExpired uint16 = 23
+)
+
 // missileHitRadius is the lateral collision half-width of a linear
 // skillshot against a unit centre (world units). v1 constant until a
 // per-unit collision size joins the hit test (#334 seam).
@@ -144,6 +155,7 @@ func (w *World) missileSystem() {
 				if w.OnMissileExpire != nil {
 					w.OnMissileExpire(w.tick, id, s.GuidePt[r])
 				}
+				w.Emit(Event{Kind: EvMissileExpired, Src: id})
 				w.KillUnit(id) // expire: payload-less
 				continue
 			}
@@ -193,6 +205,7 @@ func (w *World) impactMissile(id EntityID, r int32, at fixed.Vec2) {
 	if w.OnMissileImpact != nil {
 		w.OnMissileImpact(w.tick, id, at, tgt)
 	}
+	w.Emit(Event{Kind: EvMissileImpact, Src: id, Dst: tgt})
 	w.KillUnit(id)
 }
 
@@ -236,6 +249,7 @@ func (w *World) advanceLinear(id EntityID, r int32) {
 		if w.OnMissileExpire != nil {
 			w.OnMissileExpire(w.tick, id, w.Transforms.Pos[tr])
 		}
+		w.Emit(Event{Kind: EvMissileExpired, Src: id})
 		w.KillUnit(id)
 	}
 }
@@ -335,6 +349,68 @@ func (w *World) deliverLinearHit(id EntityID, r int32, victim EntityID, at fixed
 	if w.OnMissileImpact != nil {
 		w.OnMissileImpact(w.tick, id, at, victim)
 	}
+	w.Emit(Event{Kind: EvMissileImpact, Src: id, Dst: victim})
+}
+
+// DetonateMissile delivers a missile's payload at its current position
+// immediately and removes it (deferred kill). Returns false on a
+// non-missile or dead handle (R-API-5). Script-facing — Missile.Detonate
+// (#293).
+func (w *World) DetonateMissile(id EntityID) bool {
+	r := w.Missiles.Row(id)
+	if r == -1 || !w.Ents.Alive(id) {
+		return false
+	}
+	tr := w.Transforms.Row(id)
+	if tr == -1 {
+		return false
+	}
+	w.impactMissile(id, r, w.Transforms.Pos[tr])
+	return true
+}
+
+// ExpireMissile removes a missile payload-less and emits EvMissileExpired
+// (plus the OnMissileExpire callback). Returns false on a non-missile or
+// dead handle. Script-facing — Missile.Expire (#293).
+func (w *World) ExpireMissile(id EntityID) bool {
+	r := w.Missiles.Row(id)
+	if r == -1 || !w.Ents.Alive(id) {
+		return false
+	}
+	last := w.Missiles.GuidePt[r]
+	if tr := w.Transforms.Row(id); tr != -1 {
+		last = w.Transforms.Pos[tr]
+	}
+	if w.OnMissileExpire != nil {
+		w.OnMissileExpire(w.tick, id, last)
+	}
+	w.Emit(Event{Kind: EvMissileExpired, Src: id})
+	w.KillUnit(id)
+	return true
+}
+
+// SetMissileTarget retargets a missile mid-flight to home on target
+// (refreshing the goal to its live position), or toward its current goal
+// point when target == 0. Retargeting converts a linear skillshot into a
+// guided missile. Returns false on a non-missile/dead handle or a dead
+// target. Script-facing — Missile.SetTarget (#293).
+func (w *World) SetMissileTarget(id, target EntityID) bool {
+	r := w.Missiles.Row(id)
+	if r == -1 || !w.Ents.Alive(id) {
+		return false
+	}
+	if target != 0 && !w.Ents.Alive(target) {
+		return false
+	}
+	s := w.Missiles
+	s.Flags[r] &^= MissileLinear // a retargeted missile is guided, not a skillshot
+	s.GuideEnt[r] = target
+	if target != 0 {
+		if tr := w.Transforms.Row(target); tr != -1 {
+			s.GuidePt[r] = w.Transforms.Pos[tr]
+		}
+	}
+	return true
 }
 
 // stepF64 clamps the advance distance to the remaining range.

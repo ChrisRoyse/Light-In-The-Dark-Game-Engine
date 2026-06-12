@@ -40,6 +40,13 @@ const (
 	// EventConstructFinished fires when a building completes
 	// construction.
 	EventConstructFinished
+	// EventMissileImpact fires when a missile delivers its payload.
+	// Missile() is the missile; Unit() is the struck unit (zero on a
+	// point/AoE detonation).
+	EventMissileImpact
+	// EventMissileExpired fires when a missile dies without delivering.
+	// Missile() is the missile.
+	EventMissileExpired
 )
 
 // simKindOf maps each public event kind to its sim event kind. The map
@@ -56,6 +63,8 @@ var simKindOf = map[EventKind]uint16{
 	EventHeroLevel:         14, // sim.EvHeroLevel
 	EventItemPickedUp:      16, // sim.EvItemPickedUp
 	EventConstructFinished: 20, // sim.EvConstructFinished
+	EventMissileImpact:     22, // sim.EvMissileImpact
+	EventMissileExpired:    23, // sim.EvMissileExpired
 }
 
 // Event is the payload handed to an OnEvent handler — a plain value
@@ -80,10 +89,20 @@ func (e Event) IsZero() bool { return e == Event{} }
 // Unit() and by ForPlayer scoping. For a damage event that is the
 // damaged unit (Dst); for every other kind it is the source (Src).
 func (e Event) primary() sim.EntityID {
-	if e.kind == EventUnitDamaged {
+	if e.kind == EventUnitDamaged || e.kind == EventMissileImpact {
 		return e.dst
 	}
 	return e.src
+}
+
+// Missile returns the missile on a missile event, else the zero
+// Missile.
+func (e Event) Missile() Missile {
+	switch e.kind {
+	case EventMissileImpact, EventMissileExpired:
+		return Missile{id: e.src, g: e.g}
+	}
+	return Missile{}
 }
 
 // Unit returns the event's primary unit (the dying unit, the damaged
