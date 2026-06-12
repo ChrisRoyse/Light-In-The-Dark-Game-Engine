@@ -43,6 +43,20 @@ jobs:
             echo "assetcheck must be run locally against the real assets/ before committing MANIFEST changes."
           fi
 
+      - name: zero-alloc gate (R-GC-1/5, tick path; any nonzero AllocsPerRun fails)
+        run: go test ./litd/sim/ -run TestZeroAlloc -v -count=1
+
+      - name: escape-analysis dump (alloc diagnosis artifact)
+        if: always()
+        run: go build -gcflags='-m' ./litd/sim/ 2> escape-analysis-sim.txt || true
+
+      - name: upload escape-analysis artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: escape-analysis-sim
+          path: escape-analysis-sim.txt
+
       - name: import-graph gate (sim never imports render/G3N/GL)
         run: go run ./tools/importcheck
 
