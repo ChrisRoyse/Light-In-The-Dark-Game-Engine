@@ -109,6 +109,55 @@ func TestSnapshotBuffersPingPong(t *testing.T) {
 	}
 }
 
+func todForSnapshotTest(q uint16) fixed.F64 {
+	return fixed.F64(uint64(q) * clockDayRaw / 65536)
+}
+
+func TestSnapshotTimeOfDayBeforeFirstPublishIsMidnight(t *testing.T) {
+	w := NewWorld(Caps{})
+	prev, curr := w.Snaps.Prev(), w.Snaps.Curr()
+	t.Logf("FSV ToD before first publish prev: tick=%d tod=%d entries=%d", prev.Tick, prev.TimeOfDay, len(prev.Entries))
+	t.Logf("FSV ToD before first publish curr: tick=%d tod=%d entries=%d", curr.Tick, curr.TimeOfDay, len(curr.Entries))
+	if prev.TimeOfDay != 0 || curr.TimeOfDay != 0 || prev.Tick != 0 || curr.Tick != 0 {
+		t.Fatalf("zero snapshot must be midnight tick 0: prev=%+v curr=%+v", prev, curr)
+	}
+}
+
+func TestSnapshotTimeOfDayWrapDelta(t *testing.T) {
+	w := NewWorld(Caps{})
+	inc, _ := clockAdvance(fixed.One, DefaultDayLengthTicks, 0)
+	w.SetTimeOfDay(todForSnapshotTest(65534) - fixed.F64(inc))
+	before := clockFSV(w)
+	w.Step()
+	w.Step()
+	prev, curr := w.Snaps.Prev(), w.Snaps.Curr()
+	delta := int16(curr.TimeOfDay - prev.TimeOfDay)
+	t.Logf("FSV ToD wrap BEFORE: %s", before)
+	t.Logf("FSV ToD wrap Prev: tick=%d tod=%d", prev.Tick, prev.TimeOfDay)
+	t.Logf("FSV ToD wrap Curr: tick=%d tod=%d delta(int16)=%d", curr.Tick, curr.TimeOfDay, delta)
+	if prev.TimeOfDay < 65520 || curr.TimeOfDay > 16 {
+		t.Fatalf("expected wrap-adjacent snapshots, got prev=%d curr=%d", prev.TimeOfDay, curr.TimeOfDay)
+	}
+	if delta <= 0 || delta > 32 {
+		t.Fatalf("wrap delta=%d, want small positive shortest-ring delta", delta)
+	}
+}
+
+func TestSnapshotTimeOfDayFrozenHeader(t *testing.T) {
+	w := NewWorld(Caps{})
+	w.SetTimeOfDay(9 * fixed.One)
+	w.SuspendTimeOfDay(true)
+	w.Step()
+	w.Step()
+	prev, curr := w.Snaps.Prev(), w.Snaps.Curr()
+	want := uint16(24576) // 9/24 * 65536
+	t.Logf("FSV ToD frozen Prev: tick=%d tod=%d", prev.Tick, prev.TimeOfDay)
+	t.Logf("FSV ToD frozen Curr: tick=%d tod=%d", curr.Tick, curr.TimeOfDay)
+	if prev.TimeOfDay != want || curr.TimeOfDay != want {
+		t.Fatalf("frozen snapshots changed ToD: prev=%d curr=%d want=%d", prev.TimeOfDay, curr.TimeOfDay, want)
+	}
+}
+
 // Life fraction quantization: known life values produce known u16
 // fractions (X+X=Y: 50% of 100 = 32767).
 func TestSnapshotLifeFraction(t *testing.T) {

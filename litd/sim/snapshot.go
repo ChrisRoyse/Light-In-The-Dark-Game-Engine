@@ -53,12 +53,16 @@ type RenderEvent struct {
 }
 
 // Snapshot is one published frame of sim state plus that tick's
-// render events. Entries and Events are reslices of preallocated
-// backing arrays — never reallocated after NewWorld (R-GC-1/2).
+// render events. TimeOfDay is the game clock quantized onto the u16
+// ring: render interpolates the shortest wrap-safe delta as
+// int16(curr.TimeOfDay - prev.TimeOfDay). Entries and Events are
+// reslices of preallocated backing arrays — never reallocated after
+// NewWorld (R-GC-1/2).
 type Snapshot struct {
-	Tick    uint32
-	Entries []SnapshotEntry
-	Events  []RenderEvent
+	Tick      uint32
+	TimeOfDay uint16
+	Entries   []SnapshotEntry
+	Events    []RenderEvent
 }
 
 // SnapshotBuffers double-buffers snapshots: publish fills the back
@@ -142,6 +146,10 @@ func lifeFrac(life, maxLife fixed.F64) uint16 {
 	return uint16(int64(life) * 65535 / int64(maxLife))
 }
 
+func snapshotTimeOfDay(tod fixed.F64) uint16 {
+	return uint16(uint64(tod) * 65536 / clockDayRaw)
+}
+
 // publishSnapshot fills the back buffer from the live stores and
 // flips. Runs in phase 7 BEFORE deferred removal, so entities killed
 // this tick appear one last time carrying SnapDeath|SnapNoLerp.
@@ -159,6 +167,7 @@ func (w *World) publishSnapshot() {
 	sb := w.Snaps
 	back := &sb.bufs[1-sb.curr]
 	back.Tick = w.tick
+	back.TimeOfDay = snapshotTimeOfDay(w.tod)
 	back.Entries = back.Entries[:0]
 	for r := int32(0); r < w.Transforms.Count(); r++ {
 		id := w.Transforms.Entity[r]
