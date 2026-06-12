@@ -36,3 +36,6 @@ jobs:
 
       - name: assetcheck gate
         run: go run ./tools/assetcheck ./assets
+
+      - name: import-graph gate (sim never imports render/G3N/GL)
+        run: go run ./tools/importcheck
