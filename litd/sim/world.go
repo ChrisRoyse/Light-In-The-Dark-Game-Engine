@@ -137,6 +137,8 @@ type World struct {
 	deadHeroes [MaxPlayers][MaxDeadHeroes]HeroRecord
 	// item type table (#305)
 	itemDefs []data.Item
+	// data-table content hash (#208 SaveData versioning)
+	dataFingerprint uint64
 	// derived-stat cache (buff.go): per stat, per entity index, the
 	// folded flat Add and multiplicative factor; identity (+0, ×One)
 	// when the entity carries no modifying buff. Recomputed only on
