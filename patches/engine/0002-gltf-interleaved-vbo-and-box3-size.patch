@@ -1,0 +1,192 @@
+diff --git a/gls/vbo.go b/gls/vbo.go
+index 7a20557..d08566d 100644
+--- a/gls/vbo.go
++++ b/gls/vbo.go
+@@ -54,6 +54,25 @@ var attribTypeNameMap = map[AttribType]string{
+ 	SkinIndex:       "matricesIndices",
+ }
+ 
++// LITD-PATCH: AddAttribOffsetSize registers a typed attribute at an
++// explicit byte offset with an explicit element count, overriding the
++// fixed attribTypeSizeMap entry. Needed for interleaved glTF buffers
++// where e.g. COLOR_0 is VEC4 while gls assumes VertexColor has 3
++// elements: the type must stay set (BoundingBox/ReadVertices/culling
++// look attributes up by Type) and the size must match the file layout
++// (StrideSize accounting drives the GL stride).
++func (vbo *VBO) AddAttribOffsetSize(atype AttribType, byteOffset uint32, numElements int32) *VBO {
++
++	vbo.attribs = append(vbo.attribs, VBOattrib{
++		Type:        atype,
++		Name:        attribTypeNameMap[atype],
++		ByteOffset:  byteOffset,
++		NumElements: numElements,
++		ElementType: FLOAT,
++	})
++	return vbo
++}
++
+ // Map from attribute type to default attribute size.
+ var attribTypeSizeMap = map[AttribType]int32{
+ 	VertexPosition:  3,
+@@ -229,32 +248,34 @@ func (vbo *VBO) Update() {
+ 	vbo.update = true
+ }
+ 
+-// AttribOffset returns the total number of elements from
+-// all attributes preceding the attribute specified by type.
++// AttribOffset returns the element offset of the attribute specified by
++// type within one stride group.
++// LITD-PATCH: derived from the attribute's stored ByteOffset instead of
++// summing the sizes of preceding attribs. The old sum assumed attribs are
++// registered in buffer-layout order; loaders that register attributes in
++// arbitrary order with explicit byte offsets (interleaved glTF) broke
++// ReadVectors3/BoundingBox/culling. ByteOffset/4 equals the old result
++// for all sequentially-registered FLOAT layouts.
+ func (vbo *VBO) AttribOffset(attribType AttribType) int {
+ 
+-	elementCount := 0
+ 	for _, attr := range vbo.attribs {
+ 		if attr.Type == attribType {
+-			return elementCount
++			return int(attr.ByteOffset) / 4
+ 		}
+-		elementCount += int(attr.NumElements)
+ 	}
+-	return elementCount
++	return vbo.Stride()
+ }
+ 
+-// AttribOffsetName returns the total number of elements from
+-// all attributes preceding the attribute specified by name.
++// AttribOffsetName returns the element offset of the attribute specified
++// by name within one stride group. LITD-PATCH: see AttribOffset.
+ func (vbo *VBO) AttribOffsetName(name string) int {
+ 
+-	elementCount := 0
+ 	for _, attr := range vbo.attribs {
+ 		if attr.Name == name {
+-			return elementCount
++			return int(attr.ByteOffset) / 4
+ 		}
+-		elementCount += int(attr.NumElements)
+ 	}
+-	return elementCount
++	return vbo.Stride()
+ }
+ 
+ // Stride returns the stride of the VBO, which is the number of elements in
+diff --git a/loader/gltf/loader.go b/loader/gltf/loader.go
+index 83d0f47..d4990a1 100644
+--- a/loader/gltf/loader.go
++++ b/loader/gltf/loader.go
+@@ -560,29 +560,44 @@ func (g *GLTF) loadAttributes(geom *geometry.Geometry, attributes map[string]int
+ 
+ 		// Load data and add it to geometry's VBO
+ 		if g.isInterleaved(accessor) {
++			// LITD-PATCH: the original interleaved path truncated the VBO to
++			// accessor.Count*TypeSizes floats (one attribute's worth) of a
++			// strided buffer and registered the first attribute at byte
++			// offset 0 regardless of accessor.ByteOffset. Combined with Go's
++			// randomized map iteration over `attributes`, geometry rendered
++			// as garbage (or panicked) depending on which attribute created
++			// the VBO. Fix: upload the WHOLE bufferView and register every
++			// attribute at its real byte offset. Fail closed on layouts the
++			// gls.VBO stride model cannot express.
+ 			bvIdx := *accessor.BufferView
++			if accessor.ComponentType != FLOAT {
++				return fmt.Errorf("interleaved attribute %s: componentType %d not supported (FLOAT only)", name, accessor.ComponentType)
++			}
++			byteOffset := uint32(0)
++			if accessor.ByteOffset != nil {
++				byteOffset = uint32(*accessor.ByteOffset)
++			}
+ 			// Check if we already loaded this buffer view
+ 			vbo, ok := interleavedVBOs[bvIdx]
+ 			if ok {
+ 				// Already created VBO for this buffer view
+ 				// Add attribute with correct byteOffset
+-				g.addAttributeToVBO(vbo, name, uint32(*accessor.ByteOffset))
++				g.addSizedAttributeToVBO(vbo, name, TypeSizes[accessor.Type], byteOffset)
+ 			} else {
+-				// Load data and create vbo
++				// Load the entire interleaved buffer view and create vbo
+ 				buf, err := g.loadBufferView(bvIdx)
+ 				if err != nil {
+ 					return err
+ 				}
+-				//
+-				// TODO: BUG HERE
+-				// If buffer view has accessors with different component type then this will have a read alignment problem!
+-				//
+-				data, err := g.bytesToArrayF32(buf, accessor.ComponentType, accessor.Count*TypeSizes[accessor.Type])
++				if len(buf)%4 != 0 {
++					return fmt.Errorf("interleaved bufferView %d: byteLength %d not float-aligned", bvIdx, len(buf))
++				}
++				data, err := g.bytesToArrayF32(buf, FLOAT, len(buf)/4)
+ 				if err != nil {
+ 					return err
+ 				}
+ 				vbo := gls.NewVBO(data)
+-				g.addAttributeToVBO(vbo, name, 0)
++				g.addSizedAttributeToVBO(vbo, name, TypeSizes[accessor.Type], byteOffset)
+ 				// Save reference to VBO keyed by index of the buffer view
+ 				interleavedVBOs[bvIdx] = vbo
+ 				// Add VBO to geometry
+@@ -604,6 +619,18 @@ func (g *GLTF) loadAttributes(geom *geometry.Geometry, attributes map[string]int
+ 		}
+ 	}
+ 
++	// LITD-PATCH: gls.VBO assumes a gapless stride equal to the sum of its
++	// registered attribute sizes. If the file's declared ByteStride differs
++	// (padding, or an attribute this loader skipped), rendering would be
++	// silently wrong — fail closed instead.
++	for bvIdx, vbo := range interleavedVBOs {
++		bv := g.BufferViews[bvIdx]
++		if bv.ByteStride != nil && vbo.StrideSize() != *bv.ByteStride {
++			return fmt.Errorf("interleaved bufferView %d: declared byteStride %d != sum of attribute sizes %d (padded or partially-mapped layouts unsupported)",
++				bvIdx, *bv.ByteStride, vbo.StrideSize())
++		}
++	}
++
+ 	// Set indices
+ 	if len(indices) > 0 {
+ 		geom.SetIndices(indices)
+@@ -629,6 +656,21 @@ func (g *GLTF) addAttributeToVBO(vbo *gls.VBO, attribName string, byteOffset uin
+ 	vbo.AddAttribOffset(aType, byteOffset)
+ }
+ 
++// LITD-PATCH: addSizedAttributeToVBO registers an attribute with the
++// accessor's actual element count instead of gls's fixed per-type size.
++// Needed for interleaved layouts where e.g. COLOR_0 is VEC4 but gls
++// assumes VertexColor is 3 elements — the stride accounting must match
++// the file's layout exactly or every following attribute misreads.
++func (g *GLTF) addSizedAttributeToVBO(vbo *gls.VBO, attribName string, itemSize int, byteOffset uint32) {
++
++	aType, ok := AttributeName[attribName]
++	if !ok {
++		log.Warn(fmt.Sprintf("Attribute %v is not supported!", attribName))
++		return
++	}
++	vbo.AddAttribOffsetSize(aType, byteOffset, int32(itemSize))
++}
++
+ // validateAccessorAttribute validates the specified accessor for the given attribute name.
+ func (g *GLTF) validateAccessorAttribute(ac Accessor, attribName string) error {
+ 
+diff --git a/math32/box3.go b/math32/box3.go
+index c08c618..d8130b9 100644
+--- a/math32/box3.go
++++ b/math32/box3.go
+@@ -113,7 +113,11 @@ func (b *Box3) Size(optionalTarget *Vector3) *Vector3 {
+ 	} else {
+ 		result = optionalTarget
+ 	}
+-	return result.SubVectors(&b.Min, &b.Max)
++	// LITD-PATCH: size is Max - Min; upstream computed Min - Max, returning
++	// negative extents for every non-empty box. The only in-engine callers
++	// (bounding-sphere radius via Length(), rotational inertia via squares)
++	// are sign-insensitive, so this is safe to correct.
++	return result.SubVectors(&b.Max, &b.Min)
+ }
+ 
+ // ExpandByPoint may expand this bounding box to include the specified point.

@@ -123,18 +123,32 @@ func TestParseFailsClosed(t *testing.T) {
 	}
 }
 
-func TestParseSeedManifest(t *testing.T) {
-	// the committed seed MANIFEST (header only) must parse to zero entries
+func TestParseRealManifest(t *testing.T) {
+	// the committed MANIFEST must parse and its entry count must equal the
+	// number of asset files on disk (1:1 ledger)
 	f, err := os.Open("../../../assets/MANIFEST")
 	if err != nil {
-		t.Skip("seed MANIFEST not present:", err)
+		t.Skip("MANIFEST not present:", err)
 	}
 	defer f.Close()
 	assets, err := Parse(f)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(assets) != 0 {
-		t.Fatalf("seed manifest should have 0 entries, got %d", len(assets))
+	onDisk := 0
+	err = filepath.WalkDir("../../../assets", func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && filepath.Base(p) != "MANIFEST" {
+			onDisk++
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assets) != onDisk {
+		t.Fatalf("MANIFEST has %d entries but %d files on disk", len(assets), onDisk)
 	}
 }

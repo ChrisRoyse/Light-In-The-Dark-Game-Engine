@@ -80,6 +80,31 @@ func main() {
 	}
 	scene.Add(model)
 
+	// Auto-frame: models range from 1-unit hex tiles to multi-unit castles
+	// and are not all origin-centered. Fixed framing rendered off-screen
+	// models as black frames — a false "does not render" signal.
+	model.UpdateMatrixWorld() // world matrices are stale until first render; bbox needs them
+	bb := model.BoundingBox()
+	center := math32.Vector3{}
+	bb.Center(&center)
+	size := math32.Vector3{}
+	bb.Size(&size)
+	extent := size.X
+	if size.Y > extent {
+		extent = size.Y
+	}
+	if size.Z > extent {
+		extent = size.Z
+	}
+	if extent < 0.001 || extent > 1e6 {
+		fmt.Printf("event: degenerate bounding box (extent %v), keeping default camera\n", extent)
+	} else {
+		dist := extent * 1.6
+		cam.SetPosition(center.X+dist*0.6, center.Y+dist*0.6, center.Z+dist)
+		cam.LookAt(&center, &math32.Vector3{X: 0, Y: 1, Z: 0})
+		fmt.Printf("event: framed bbox center=(%.2f,%.2f,%.2f) extent=%.2f\n", center.X, center.Y, center.Z, extent)
+	}
+
 	var anim *animation.Animation
 	if len(doc.Animations) > 0 {
 		if *animName != "" {
