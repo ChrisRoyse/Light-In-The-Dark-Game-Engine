@@ -326,6 +326,29 @@ Spellcast/Hit…) exceeds the R-AST-3 required set. R1's "patch trigger" stands 
 packs (Quaternius pack pending — Google-Drive-hosted, same Blender exporter class); the
 per-pack census stays in M0 asset ingestion via `animtest`.
 
+## D-2026-06-11-32 — Flagship game identity: "Light in the Dark" on the world of Veil
+
+Full spec: [10-game/identity.md](../10-game/identity.md). Owner-decided after researched
+synthesis of WC3 (lore structure + art direction), AoW4 (progression DNA), AoM Retold
+(studied, deity layer declined):
+
+- **Title:** Light in the Dark (game = engine = brand); v0.1 subtitle *First Flame*.
+- **Premise:** sunless world of Veil; civilization huddles around dying Beacons amid the
+  living dark (the Gloam). Original lore throughout (NG1 guardrail).
+- **Factions:** 4 asymmetric playable (Vigil / Gloamborn / Unbound / Rootkin — defend,
+  embrace, outrun, outlast the dark) + the Dark as pure unplayable antagonist (never
+  gathers, never builds — the Burning Legion lesson).
+- **No deity/god-power layer** (AoM mechanic declined): heroes with abilities carry the
+  magic — skill trees on level-up, tiered gear, in-match **Grimoire** research tracks,
+  capstone army **transformations** (AoW4 DNA, all game-layer data + scripts).
+- **Light as core mechanic:** beacons/portable flame/blight as faction texture; the
+  Flicker as day/night analogue; fog of war is the antagonist made visible.
+- **Art direction (binding on assetgen + asset curation):** original-WC3 rules — comic-book
+  fantasy, exaggerated proportions, silhouette-first, hand-painted flat-color atlas
+  textures, saturated faction palettes, medieval + magic only.
+- **v0.1 (M6):** Vigil + Unbound playable, one skirmish map with Beacon/Flicker, heroes +
+  one grimoire track each, vs the M5.5 AI.
+
 ---
 
 ## No remaining deferred decisions

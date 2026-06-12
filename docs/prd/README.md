@@ -55,6 +55,9 @@ This directory expands the master [PRD](../PRD.md) into detailed specifications.
 - [Budgets and Benchmarks](08-performance/budgets-and-benchmarks.md) — methodology, CI harness, reference machine
 - [GC Discipline](08-performance/gc-discipline.md) — zero-alloc hot paths, hazard catalog, pooling
 
+### 10 — Game (flagship)
+- [Identity](10-game/identity.md) — "Light in the Dark" on the world of Veil: premise, 4+1 factions, hero/grimoire systems, WC3-rules art direction (D-32)
+
 ### 09 — Roadmap
 - [Milestones](09-roadmap/milestones.md) — M0–M6 detail (see master PRD §7 for M0.5 "First Light" demo)
 - [Tooling](09-roadmap/tooling.md) — jassgen, api-manifest.json schema, assetcheck, CI benchmarks
