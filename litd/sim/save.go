@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v8: missile rows grow linear/pierce skillshot fields (Dir, RangeLeft,
+// PierceLeft, Decay) appended after BirthTick (#331).
 // v7: patrol rows (endpoints + leg/leash flags) appended after the
 // item rows (#306).
 // v6: item rows appended after the hero section; the inventory
@@ -55,7 +57,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 7
+const SaveFormatVersion uint32 = 8
 
 // ---- little-endian writer / reader ----
 
@@ -378,6 +380,10 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(ms.Packet[i].AttackType)
 		s.ent(ms.Source[i])
 		s.u32(ms.BirthTick[i])
+		s.vec2(ms.Dir[i])
+		s.f64(ms.RangeLeft[i])
+		s.i32(ms.PierceLeft[i])
+		s.u16(ms.Decay[i])
 	}
 
 	// doodads (byPlacement is derived, rebuilt at load)
@@ -631,17 +637,21 @@ type decodedSave struct {
 	buffRows []BuffInstance
 	buffFree []int32
 
-	msN     int32
-	msE     []EntityID
-	msSpeed []fixed.F64
-	msArc   []fixed.F64
-	msFlags []uint8
-	msGE    []EntityID
-	msGP    []fixed.Vec2
-	msPay   []data.EffectList
-	msPkt   []DamagePacket
-	msSrc   []EntityID
-	msBirth []uint32
+	msN      int32
+	msE      []EntityID
+	msSpeed  []fixed.F64
+	msArc    []fixed.F64
+	msFlags  []uint8
+	msGE     []EntityID
+	msGP     []fixed.Vec2
+	msPay    []data.EffectList
+	msPkt    []DamagePacket
+	msSrc    []EntityID
+	msBirth  []uint32
+	msDir    []fixed.Vec2
+	msRange  []fixed.F64
+	msPierce []int32
+	msDecay  []uint16
 
 	doN     int32
 	doPlace []int32
@@ -1132,6 +1142,10 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.msPkt = make([]DamagePacket, n)
 	d.msSrc = make([]EntityID, n)
 	d.msBirth = make([]uint32, n)
+	d.msDir = make([]fixed.Vec2, n)
+	d.msRange = make([]fixed.F64, n)
+	d.msPierce = make([]int32, n)
+	d.msDecay = make([]uint16, n)
 	for i := int32(0); i < n; i++ {
 		d.msE[i] = r.ent()
 		d.msSpeed[i] = r.f64()
@@ -1143,6 +1157,10 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.msPkt[i] = DamagePacket{Source: r.ent(), Target: r.ent(), Amount: r.f64(), AttackType: r.u8()}
 		d.msSrc[i] = r.ent()
 		d.msBirth[i] = r.u32()
+		d.msDir[i] = r.vec2()
+		d.msRange[i] = r.f64()
+		d.msPierce[i] = r.i32()
+		d.msDecay[i] = r.u16()
 	}
 
 	// doodads
@@ -1851,6 +1869,10 @@ func applySave(d *decodedSave, w *World) {
 		ms.Packet[i] = d.msPkt[i]
 		ms.Source[i] = d.msSrc[i]
 		ms.BirthTick[i] = d.msBirth[i]
+		ms.Dir[i] = d.msDir[i]
+		ms.RangeLeft[i] = d.msRange[i]
+		ms.PierceLeft[i] = d.msPierce[i]
+		ms.Decay[i] = d.msDecay[i]
 		ms.rowOf[d.msE[i].Index()] = i
 	}
 

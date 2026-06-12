@@ -238,6 +238,11 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hmi.WriteU8(ms.Packet[i].AttackType)
 		hmi.WriteU32(uint32(ms.Source[i]))
 		hmi.WriteU32(ms.BirthTick[i])
+		hmi.WriteI64(int64(ms.Dir[i].X))
+		hmi.WriteI64(int64(ms.Dir[i].Y))
+		hmi.WriteI64(int64(ms.RangeLeft[i]))
+		hmi.WriteU32(uint32(ms.PierceLeft[i]))
+		hmi.WriteU16(ms.Decay[i])
 	}
 
 	hd := h.next() // doodads

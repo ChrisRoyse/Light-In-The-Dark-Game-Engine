@@ -23,6 +23,10 @@ const (
 	// without it the missile expires payload-less (WC3's expire-vs-
 	// AoE flag, generalized).
 	MissileAoE uint8 = 1 << 0
+	// MissileLinear: a skillshot — no guide target, flies along Dir to
+	// RangeLeft, collision-tested against foes each advance (#331).
+	// GuideEnt is unused; the swept window resolves hits.
+	MissileLinear uint8 = 1 << 1
 )
 
 type MissileStore struct {
@@ -37,6 +41,12 @@ type MissileStore struct {
 	BirthTick []uint32
 	Entity    []EntityID
 
+	// Linear/pierce skillshot state (#331; meaningful iff MissileLinear).
+	Dir        []fixed.Vec2 // unit flight direction
+	RangeLeft  []fixed.F64  // remaining range (world units); ≤0 → done
+	PierceLeft []int32      // remaining hits before the missile dies (1 = single deliver)
+	Decay      []uint16     // per-mille payload multiplier applied after each pierce hit (1000 = none)
+
 	rowOf []int32
 	count int32
 
@@ -48,17 +58,21 @@ func NewMissileStore(rowCap, entityCap int) *MissileStore {
 		panic("sim: store caps must satisfy 0 < rowCap <= entityCap")
 	}
 	s := &MissileStore{
-		Speed:     make([]fixed.F64, rowCap),
-		Arc:       make([]fixed.F64, rowCap),
-		Flags:     make([]uint8, rowCap),
-		GuideEnt:  make([]EntityID, rowCap),
-		GuidePt:   make([]fixed.Vec2, rowCap),
-		Payload:   make([]data.EffectList, rowCap),
-		Packet:    make([]DamagePacket, rowCap),
-		Source:    make([]EntityID, rowCap),
-		BirthTick: make([]uint32, rowCap),
-		Entity:    make([]EntityID, rowCap),
-		rowOf:     make([]int32, entityCap),
+		Speed:      make([]fixed.F64, rowCap),
+		Arc:        make([]fixed.F64, rowCap),
+		Flags:      make([]uint8, rowCap),
+		GuideEnt:   make([]EntityID, rowCap),
+		GuidePt:    make([]fixed.Vec2, rowCap),
+		Payload:    make([]data.EffectList, rowCap),
+		Packet:     make([]DamagePacket, rowCap),
+		Source:     make([]EntityID, rowCap),
+		BirthTick:  make([]uint32, rowCap),
+		Entity:     make([]EntityID, rowCap),
+		Dir:        make([]fixed.Vec2, rowCap),
+		RangeLeft:  make([]fixed.F64, rowCap),
+		PierceLeft: make([]int32, rowCap),
+		Decay:      make([]uint16, rowCap),
+		rowOf:      make([]int32, entityCap),
 	}
 	for i := range s.rowOf {
 		s.rowOf[i] = -1
@@ -89,6 +103,10 @@ func (s *MissileStore) Add(e *Entities, id EntityID) bool {
 	s.Packet[r] = DamagePacket{}
 	s.Source[r] = 0
 	s.BirthTick[r] = 0
+	s.Dir[r] = fixed.Vec2{}
+	s.RangeLeft[r] = 0
+	s.PierceLeft[r] = 0
+	s.Decay[r] = 0
 	s.Entity[r] = id
 	s.rowOf[idx] = r
 	s.count++
@@ -117,6 +135,10 @@ func (s *MissileStore) Remove(id EntityID) bool {
 		s.Packet[r] = s.Packet[last]
 		s.Source[r] = s.Source[last]
 		s.BirthTick[r] = s.BirthTick[last]
+		s.Dir[r] = s.Dir[last]
+		s.RangeLeft[r] = s.RangeLeft[last]
+		s.PierceLeft[r] = s.PierceLeft[last]
+		s.Decay[r] = s.Decay[last]
 		moved := s.Entity[last]
 		s.Entity[r] = moved
 		s.rowOf[moved.Index()] = r
