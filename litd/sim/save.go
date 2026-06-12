@@ -43,7 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
-const SaveFormatVersion uint32 = 1
+// v2: economy sections (#300) — resource counters, node/econ/harvest
+// stores — appended after doodads.
+const SaveFormatVersion uint32 = 2
 
 // ---- little-endian writer / reader ----
 
@@ -378,6 +380,49 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(d.Entity[i])
 	}
 
+	// economy (#300): counters + the three stores. Food ledgers are
+	// derived (recomputed from econ rows at load) and not written.
+	s.u32(uint32(w.resourceCount))
+	for pl := 0; pl < MaxPlayers; pl++ {
+		if w.resourceCount == 0 {
+			continue
+		}
+		for _, v := range w.resources[pl] {
+			s.i64(v)
+		}
+	}
+	nd := w.Nodes
+	s.u32(uint32(nd.count))
+	for i := int32(0); i < nd.count; i++ {
+		s.ent(nd.Entity[i])
+		s.u8(nd.Resource[i])
+		s.i64(nd.Remaining[i])
+		s.u8(nd.Flags[i])
+		s.ent(nd.Busy[i])
+	}
+	ec := w.Econs
+	s.u32(uint32(ec.count))
+	for i := int32(0); i < ec.count; i++ {
+		s.ent(ec.Entity[i])
+		s.u8(ec.FoodCost[i])
+		s.u8(ec.FoodProvided[i])
+		s.u16(ec.DepotMask[i])
+	}
+	hv := w.Harvests
+	s.u32(uint32(hv.count))
+	for i := int32(0); i < hv.count; i++ {
+		s.ent(hv.Entity[i])
+		s.u8(hv.State[i])
+		s.ent(hv.Node[i])
+		s.ent(hv.Depot[i])
+		s.u32(uint32(hv.Carried[i]))
+		s.u8(hv.CarriedRes[i])
+		s.u32(hv.Clock[i])
+		s.u32(uint32(hv.Capacity[i]))
+		s.u16(hv.GatherTicks[i])
+		s.u16(hv.Mask[i])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -509,6 +554,34 @@ type decodedSave struct {
 	doFace  []fixed.Angle
 	doOv    []uint8
 	doE     []EntityID
+
+	resourceCount int32
+	resources     [][]int64
+
+	ndN    int32
+	ndE    []EntityID
+	ndRes  []uint8
+	ndRem  []int64
+	ndFl   []uint8
+	ndBusy []EntityID
+
+	ecN    int32
+	ecE    []EntityID
+	ecCost []uint8
+	ecProv []uint8
+	ecMask []uint16
+
+	hvN     int32
+	hvE     []EntityID
+	hvState []uint8
+	hvNode  []EntityID
+	hvDepot []EntityID
+	hvCarr  []int32
+	hvCRes  []uint8
+	hvClock []uint32
+	hvCap   []int32
+	hvGT    []uint16
+	hvMask  []uint16
 
 	schedBlob []byte
 
@@ -962,6 +1035,81 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.doE[i] = r.ent()
 	}
 
+	// economy
+	r.what = "economy counters"
+	d.resourceCount = r.i32()
+	if r.err != nil {
+		return r.err
+	}
+	if d.resourceCount < 0 || int(d.resourceCount) != w.resourceCount {
+		return fmt.Errorf("sim: save: %d resource types, this world has %d bound — BindEconomy before LoadState", d.resourceCount, w.resourceCount)
+	}
+	if d.resourceCount > 0 {
+		d.resources = make([][]int64, MaxPlayers)
+		for pl := 0; pl < MaxPlayers; pl++ {
+			d.resources[pl] = make([]int64, d.resourceCount)
+			for ri := range d.resources[pl] {
+				d.resources[pl][ri] = r.i64()
+			}
+		}
+	}
+	if n, err = r.section("resource nodes", len(w.Nodes.Resource)); err != nil {
+		return err
+	}
+	d.ndN = n
+	d.ndE = make([]EntityID, n)
+	d.ndRes = make([]uint8, n)
+	d.ndRem = make([]int64, n)
+	d.ndFl = make([]uint8, n)
+	d.ndBusy = make([]EntityID, n)
+	for i := int32(0); i < n; i++ {
+		d.ndE[i] = r.ent()
+		d.ndRes[i] = r.u8()
+		d.ndRem[i] = r.i64()
+		d.ndFl[i] = r.u8()
+		d.ndBusy[i] = r.ent()
+	}
+	if n, err = r.section("econ rows", len(w.Econs.FoodCost)); err != nil {
+		return err
+	}
+	d.ecN = n
+	d.ecE = make([]EntityID, n)
+	d.ecCost = make([]uint8, n)
+	d.ecProv = make([]uint8, n)
+	d.ecMask = make([]uint16, n)
+	for i := int32(0); i < n; i++ {
+		d.ecE[i] = r.ent()
+		d.ecCost[i] = r.u8()
+		d.ecProv[i] = r.u8()
+		d.ecMask[i] = r.u16()
+	}
+	if n, err = r.section("harvest rows", len(w.Harvests.State)); err != nil {
+		return err
+	}
+	d.hvN = n
+	d.hvE = make([]EntityID, n)
+	d.hvState = make([]uint8, n)
+	d.hvNode = make([]EntityID, n)
+	d.hvDepot = make([]EntityID, n)
+	d.hvCarr = make([]int32, n)
+	d.hvCRes = make([]uint8, n)
+	d.hvClock = make([]uint32, n)
+	d.hvCap = make([]int32, n)
+	d.hvGT = make([]uint16, n)
+	d.hvMask = make([]uint16, n)
+	for i := int32(0); i < n; i++ {
+		d.hvE[i] = r.ent()
+		d.hvState[i] = r.u8()
+		d.hvNode[i] = r.ent()
+		d.hvDepot[i] = r.ent()
+		d.hvCarr[i] = r.i32()
+		d.hvCRes[i] = r.u8()
+		d.hvClock[i] = r.u32()
+		d.hvCap[i] = r.i32()
+		d.hvGT[i] = r.u16()
+		d.hvMask[i] = r.u16()
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1045,6 +1193,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"unit types", d.utE}, {"health", d.hlE}, {"owners", d.owE},
 		{"combat", d.cbE}, {"abilities", d.abE}, {"inventories", d.inE},
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
+		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
@@ -1344,6 +1493,60 @@ func applySave(d *decodedSave, w *World) {
 	sort.Slice(do.byPlacement, func(x, y int) bool {
 		return do.Placement[do.byPlacement[x]] < do.Placement[do.byPlacement[y]]
 	})
+
+	// economy (#300)
+	if d.resourceCount > 0 {
+		for pl := 0; pl < MaxPlayers; pl++ {
+			copy(w.resources[pl], d.resources[pl])
+		}
+	}
+	nd := w.Nodes
+	nd.count = d.ndN
+	resetRowOf(nd.rowOf)
+	for i := int32(0); i < d.ndN; i++ {
+		nd.Entity[i] = d.ndE[i]
+		nd.Resource[i] = d.ndRes[i]
+		nd.Remaining[i] = d.ndRem[i]
+		nd.Flags[i] = d.ndFl[i]
+		nd.Busy[i] = d.ndBusy[i]
+		nd.rowOf[d.ndE[i].Index()] = i
+	}
+	ec := w.Econs
+	ec.count = d.ecN
+	resetRowOf(ec.rowOf)
+	for pl := range w.foodUsed { // ledger is derived: recompute below
+		w.foodUsed[pl] = 0
+		w.foodCap[pl] = 0
+	}
+	for i := int32(0); i < d.ecN; i++ {
+		ec.Entity[i] = d.ecE[i]
+		ec.FoodCost[i] = d.ecCost[i]
+		ec.FoodProvided[i] = d.ecProv[i]
+		ec.DepotMask[i] = d.ecMask[i]
+		ec.rowOf[d.ecE[i].Index()] = i
+		if or := w.Owners.Row(d.ecE[i]); or != -1 {
+			if pl := w.Owners.Player[or]; pl < MaxPlayers {
+				w.foodUsed[pl] += int32(d.ecCost[i])
+				w.foodCap[pl] += int32(d.ecProv[i])
+			}
+		}
+	}
+	hv := w.Harvests
+	hv.count = d.hvN
+	resetRowOf(hv.rowOf)
+	for i := int32(0); i < d.hvN; i++ {
+		hv.Entity[i] = d.hvE[i]
+		hv.State[i] = d.hvState[i]
+		hv.Node[i] = d.hvNode[i]
+		hv.Depot[i] = d.hvDepot[i]
+		hv.Carried[i] = d.hvCarr[i]
+		hv.CarriedRes[i] = d.hvCRes[i]
+		hv.Clock[i] = d.hvClock[i]
+		hv.Capacity[i] = d.hvCap[i]
+		hv.GatherTicks[i] = d.hvGT[i]
+		hv.Mask[i] = d.hvMask[i]
+		hv.rowOf[d.hvE[i].Index()] = i
+	}
 
 	// subscriptions
 	w.subs = d.subs

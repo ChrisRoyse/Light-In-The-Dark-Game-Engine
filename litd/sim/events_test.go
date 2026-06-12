@@ -191,14 +191,16 @@ func BenchmarkEventFlush(b *testing.B) {
 // fired on every damage packet. Every built-in kind must be unique.
 func TestBuiltinEventKindsUnique(t *testing.T) {
 	kinds := map[string]uint16{
-		"EvUnitDeath":    EvUnitDeath,
-		"EvMoveDone":     EvMoveDone,
-		"EvRepathNeeded": EvRepathNeeded,
-		"EvOrderIssued":  EvOrderIssued,
-		"EvOrderDone":    EvOrderDone,
-		"EvOrderDropped": EvOrderDropped,
-		"EvUnitDamaged":  EvUnitDamaged,
-		"EvBuffExpired":  EvBuffExpired,
+		"EvUnitDeath":         EvUnitDeath,
+		"EvMoveDone":          EvMoveDone,
+		"EvRepathNeeded":      EvRepathNeeded,
+		"EvOrderIssued":       EvOrderIssued,
+		"EvOrderDone":         EvOrderDone,
+		"EvOrderDropped":      EvOrderDropped,
+		"EvUnitDamaged":       EvUnitDamaged,
+		"EvBuffExpired":       EvBuffExpired,
+		"EvResourceDeposited": EvResourceDeposited,
+		"EvResourceDepleted":  EvResourceDepleted,
 	}
 	byVal := map[uint16]string{}
 	for name, v := range kinds {

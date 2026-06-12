@@ -222,6 +222,8 @@ func (w *World) ordersSystem() {
 			case MoveBlocked: // stalled out: unreachable for now
 				w.completeOrder(r, id, false)
 			}
+		case OrderHarvest:
+			w.driveHarvest(r, id) // the #300 cycle state machine
 		case OrderAttack:
 			// the attack cycle (attack.go) drives the engagement; the
 			// order completes when its target is gone

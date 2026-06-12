@@ -26,6 +26,9 @@ var HashSystems = []string{
 	// replays with the old 14-system vocabulary refuse via the
 	// existing sub-count check (fail closed, self-describing).
 	"collisions", "unittypes", "invents",
+	// appended by #300: resource/food counters + the three economy
+	// stores. Same append discipline as #334.
+	"economy",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -257,6 +260,49 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := int32(0); i < ut.count; i++ {
 		hut.WriteU32(uint32(ut.Entity[i]))
 		hut.WriteU16(ut.TypeID[i])
+	}
+
+	heco := h.next() // economy (#300): counters + node/econ/harvest rows
+	heco.WriteU32(uint32(w.resourceCount))
+	for pl := 0; pl < MaxPlayers; pl++ {
+		if w.resourceCount > 0 {
+			for _, v := range w.resources[pl] {
+				heco.WriteU64(uint64(v))
+			}
+		}
+		heco.WriteU32(uint32(w.foodUsed[pl]))
+		heco.WriteU32(uint32(w.foodCap[pl]))
+	}
+	nd := w.Nodes
+	heco.WriteU32(uint32(nd.count))
+	for i := int32(0); i < nd.count; i++ {
+		heco.WriteU32(uint32(nd.Entity[i]))
+		heco.WriteU8(nd.Resource[i])
+		heco.WriteU64(uint64(nd.Remaining[i]))
+		heco.WriteU8(nd.Flags[i])
+		heco.WriteU32(uint32(nd.Busy[i]))
+	}
+	ec := w.Econs
+	heco.WriteU32(uint32(ec.count))
+	for i := int32(0); i < ec.count; i++ {
+		heco.WriteU32(uint32(ec.Entity[i]))
+		heco.WriteU8(ec.FoodCost[i])
+		heco.WriteU8(ec.FoodProvided[i])
+		heco.WriteU16(ec.DepotMask[i])
+	}
+	hv := w.Harvests
+	heco.WriteU32(uint32(hv.count))
+	for i := int32(0); i < hv.count; i++ {
+		heco.WriteU32(uint32(hv.Entity[i]))
+		heco.WriteU8(hv.State[i])
+		heco.WriteU32(uint32(hv.Node[i]))
+		heco.WriteU32(uint32(hv.Depot[i]))
+		heco.WriteU32(uint32(hv.Carried[i]))
+		heco.WriteU8(hv.CarriedRes[i])
+		heco.WriteU32(hv.Clock[i])
+		heco.WriteU32(uint32(hv.Capacity[i]))
+		heco.WriteU16(hv.GatherTicks[i])
+		heco.WriteU16(hv.Mask[i])
 	}
 
 	hin := h.next() // invents (#334)

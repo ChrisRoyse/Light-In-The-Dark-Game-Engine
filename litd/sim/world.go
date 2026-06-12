@@ -93,6 +93,9 @@ type World struct {
 	Orders     *OrderStore
 	Buffs      *BuffPool
 	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
+	Nodes      *ResourceNodeStore
+	Econs      *EconStore
+	Harvests   *HarvestStore
 	Doodads    *DoodadStore
 	Paths      *path.PathStore // pooled per-unit waypoint buffers (§7)
 	Grid       *path.Grid      // pathing grid; nil until SetGrid (map load)
@@ -195,6 +198,13 @@ type World struct {
 	HashEvery          uint32
 
 	unitCount int
+
+	// #300 economy: per-player resource counters (sized by
+	// BindEconomy) and the food/supply ledger (EconStore-maintained)
+	resources     [][]int64
+	resourceCount int
+	foodUsed      [MaxPlayers]int32
+	foodCap       [MaxPlayers]int32
 	// pooled intrusive order-queue entries (orders.go): LIFO free
 	// list threaded through orderEntry.next
 	orderPool      []orderEntry
@@ -248,6 +258,9 @@ func NewWorld(requested Caps) *World {
 		Orders:          NewOrderStore(caps.Units, idxSpace),
 		Buffs:           NewBuffPool(caps.BuffInstances),
 		Missiles:        NewMissileStore(caps.Projectiles, idxSpace),
+		Nodes:           NewResourceNodeStore(caps.Units, idxSpace),
+		Econs:           NewEconStore(caps.Units, idxSpace),
+		Harvests:        NewHarvestStore(caps.Units, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -333,6 +346,17 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.Healths.Row(id) != -1 {
 		w.Healths.Remove(id)
 	}
+	if w.Econs.Row(id) != -1 { // before Owners.Remove: the ledger needs the player
+		if or := w.Owners.Row(id); or != -1 {
+			if p := w.Owners.Player[or]; p < MaxPlayers {
+				cost, provided, _ := w.Econs.remove(id)
+				w.foodUsed[p] -= int32(cost)
+				w.foodCap[p] -= int32(provided)
+			}
+		} else {
+			w.Econs.remove(id)
+		}
+	}
 	if w.Owners.Row(id) != -1 {
 		w.Owners.Remove(id)
 	}
@@ -351,6 +375,12 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if r := w.Orders.Row(id); r != -1 {
 		w.clearOrderQueue(r) // recycle pooled entries (no leak)
 		w.Orders.Remove(id)
+	}
+	if w.Nodes.Row(id) != -1 {
+		w.Nodes.Remove(id)
+	}
+	if w.Harvests.Row(id) != -1 {
+		w.Harvests.Remove(id)
 	}
 	isMissile := w.Missiles.Row(id) != -1
 	if isMissile {

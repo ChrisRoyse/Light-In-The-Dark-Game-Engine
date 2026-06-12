@@ -64,15 +64,17 @@ const (
 
 // Tables is the loaded, immutable data set.
 type Tables struct {
-	AttackTypes []string         // damage-matrix row names, table order
-	ArmorTypes  []string         // damage-matrix column names, table order
-	Coeff       [][]int32        // [attackType][armorType] per-mille coefficient
-	BuffTypes   []BuffType       // sorted by ID (#162)
-	Abilities   []Ability        // sorted by ID
-	Units       []Unit           // sorted by ID
-	Effects     []CompiledEffect // flat effect-composition arena (ADR #294)
-	Smart       *SmartTable      // smart-order resolution; nil when orders/ absent
-	Fingerprint uint64           // canonical content hash (state-hash preamble)
+	AttackTypes   []string           // damage-matrix row names, table order
+	ArmorTypes    []string           // damage-matrix column names, table order
+	Coeff         [][]int32          // [attackType][armorType] per-mille coefficient
+	BuffTypes     []BuffType         // sorted by ID (#162)
+	Abilities     []Ability          // sorted by ID
+	Units         []Unit             // sorted by ID
+	Effects       []CompiledEffect   // flat effect-composition arena (ADR #294)
+	Smart         *SmartTable        // smart-order resolution; nil when orders/ absent
+	ResourceTypes []string           // economy resource registry, table order (#300)
+	Nodes         []ResourceNodeType // resource-node types, sorted by ID
+	Fingerprint   uint64             // canonical content hash (state-hash preamble)
 }
 
 // Ability is one ability row. Behavior is the compiled effect
@@ -107,6 +109,12 @@ type Unit struct {
 	Model            string
 	Attacks          []Attack
 	Abilities        []uint16 // indices into Tables.Abilities
+
+	// economy block (#300)
+	FoodCost     uint8
+	FoodProvided uint8
+	DepotMask    uint16      // bit per accepted resource index
+	Harvest      HarvestSpec // Capacity 0 = not a harvester
 }
 
 // Attack is one converted weapon row.
@@ -144,6 +152,10 @@ type rawUnit struct {
 	Model            string      `toml:"model" json:"model"`
 	Abilities        []string    `toml:"abilities" json:"abilities"`
 	Attacks          []rawAttack `toml:"attack" json:"attack"`
+	FoodCost         int64       `toml:"food-cost" json:"food-cost"`
+	FoodProvided     int64       `toml:"food-provided" json:"food-provided"`
+	DepotFor         []string    `toml:"depot-for" json:"depot-for"`
+	Harvest          *rawHarvest `toml:"harvest" json:"harvest"`
 }
 
 type rawAttack struct {
@@ -371,6 +383,12 @@ func Load(fsys fs.FS) (*Tables, error) {
 	}
 	t.Effects = comp.arena
 
+	// economy registry before units: unit econ blocks validate
+	// against the resource-type vocabulary (#300)
+	if err := t.loadEconomy(fsys); err != nil {
+		return nil, err
+	}
+
 	// units
 	unitFiles, err := listTables(fsys, "units")
 	if err != nil {
@@ -553,6 +571,9 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		AcquisitionRange: acq,
 		Model:            r.Model,
 	}
+	if u.FoodCost, u.FoodProvided, u.DepotMask, u.Harvest, err = t.convertEconomy(file, r.ID, r); err != nil {
+		return Unit{}, err
+	}
 	for ai := range r.Attacks {
 		a, err := t.convertAttack(file, r.ID, &r.Attacks[ai])
 		if err != nil {
@@ -728,7 +749,14 @@ func (t *Tables) fingerprint() uint64 {
 		for _, ab := range u.Abilities {
 			h.WriteU16(ab)
 		}
+		h.WriteU8(u.FoodCost)
+		h.WriteU8(u.FoodProvided)
+		h.WriteU16(u.DepotMask)
+		h.WriteU16(u.Harvest.GatherTicks)
+		h.WriteU32(uint32(u.Harvest.Capacity))
+		h.WriteU16(u.Harvest.Mask)
 	}
+	t.hashEconomy(h)
 	h.WriteBool(t.Smart != nil)
 	if t.Smart != nil {
 		t.Smart.hashInto(h)
