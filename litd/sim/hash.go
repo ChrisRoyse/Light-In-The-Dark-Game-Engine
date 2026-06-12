@@ -36,6 +36,8 @@ var HashSystems = []string{
 	"items",
 	// appended by #306: patrol endpoints + leg/leash flags.
 	"patrol",
+	// appended by #301: building footprints + construction progress.
+	"build",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -409,6 +411,18 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hpa.WriteI64(int64(ps.B[i].X))
 		hpa.WriteI64(int64(ps.B[i].Y))
 		hpa.WriteU8(ps.Flags[i])
+	}
+
+	hbd := h.next() // build (#301): footprint + construction progress
+	bs := w.Build
+	hbd.WriteU32(uint32(bs.count))
+	for i := int32(0); i < bs.count; i++ {
+		hbd.WriteU32(uint32(bs.Entity[i]))
+		hbd.WriteU32(uint32(bs.Builder[i]))
+		hbd.WriteI64(int64(bs.FX[i]))
+		hbd.WriteI64(int64(bs.FY[i]))
+		hbd.WriteI64(int64(bs.FW[i]))
+		hbd.WriteU16(bs.Progress[i])
 	}
 
 	return reg.Sum(dst)

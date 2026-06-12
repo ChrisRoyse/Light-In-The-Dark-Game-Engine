@@ -230,6 +230,8 @@ func (w *World) ordersSystem() {
 			w.drivePatrol(r, id) // ping-pong + leashed auto-engage (#306)
 		case OrderFollow:
 			w.driveFollow(r, id) // track entity with re-path hysteresis (#306)
+		case OrderBuild:
+			w.driveBuild(r, id) // walk to site → start construction (#301)
 		case OrderAttack:
 			// the attack cycle (attack.go) drives the engagement; the
 			// order completes when its target is gone

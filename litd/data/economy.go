@@ -178,6 +178,34 @@ func (t *Tables) convertProduction(file, unitID string, r *rawUnit) (costs []int
 	return costs, trainTicks, nil
 }
 
+// convertConstruction validates the building/construction block (#301).
+// A unit is constructable iff build-seconds > 0; such a unit must
+// declare a positive footprint. Refund is a per-mille fraction.
+func (t *Tables) convertConstruction(file, unitID string, r *rawUnit) (footprint uint8, buildTicks uint16, refund uint16, err error) {
+	fail := func(field string, e error) (uint8, uint16, uint16, error) {
+		return 0, 0, 0, fmt.Errorf("data: %s: unit %q: %s: %w", file, unitID, field, e)
+	}
+	if r.Footprint < 0 || r.Footprint > 64 {
+		return fail("footprint", fmt.Errorf("%d out of range [0, 64]", r.Footprint))
+	}
+	footprint = uint8(r.Footprint)
+	if r.RefundPermille < 0 || r.RefundPermille > 1000 {
+		return fail("refund-permille", fmt.Errorf("%d out of range [0, 1000]", r.RefundPermille))
+	}
+	refund = uint16(r.RefundPermille)
+	if r.BuildSeconds != 0 {
+		ticks, e := SecondsToTicks(r.BuildSeconds)
+		if e != nil || ticks == 0 {
+			return fail("build-seconds", fmt.Errorf("%v", r.BuildSeconds))
+		}
+		buildTicks = ticks
+		if footprint == 0 {
+			return fail("footprint", fmt.Errorf("a constructable building (build-seconds > 0) needs a positive footprint"))
+		}
+	}
+	return footprint, buildTicks, refund, nil
+}
+
 // hashEconomy folds the registry, nodes, and is called from the
 // fingerprint (unit econ fields fold with their unit rows).
 func (t *Tables) hashEconomy(h *statehash.Hasher) {

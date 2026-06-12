@@ -96,6 +96,7 @@ type World struct {
 	Heroes     *HeroStore
 	Items      *ItemStore   // item entities (#305): type + charges + carrier
 	Patrol     *PatrolStore // patrol endpoints (#306)
+	Build      *BuildStore  // building footprints + construction progress (#301)
 	Nodes      *ResourceNodeStore
 	Econs      *EconStore
 	Harvests   *HarvestStore
@@ -293,6 +294,7 @@ func NewWorld(requested Caps) *World {
 		Heroes:          NewHeroStore(caps.Units, idxSpace),
 		Items:           NewItemStore(caps.Units, idxSpace),
 		Patrol:          NewPatrolStore(caps.Units, idxSpace),
+		Build:           NewBuildStore(caps.Units, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -418,6 +420,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.Patrol.Row(id) != -1 {
 		w.Patrol.Remove(id)
 	}
+	w.destroyBuild(id) // unstamp a structure's footprint / release a dead builder (#301)
 	if w.Invents.Row(id) != -1 {
 		w.Invents.Remove(id)
 	}

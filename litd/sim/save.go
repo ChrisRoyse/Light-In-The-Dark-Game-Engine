@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v9: build rows (footprint + construction progress + builder) appended
+// after the patrol rows (#301).
 // v8: missile rows grow linear/pierce skillshot fields (Dir, RangeLeft,
 // PierceLeft, Decay) appended after BirthTick (#331).
 // v7: patrol rows (endpoints + leg/leash flags) appended after the
@@ -57,7 +59,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 8
+const SaveFormatVersion uint32 = 9
 
 // ---- little-endian writer / reader ----
 
@@ -525,6 +527,18 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(ps.Flags[i])
 	}
 
+	// build (#301): footprint + construction progress per structure
+	bs := w.Build
+	s.u32(uint32(bs.count))
+	for i := int32(0); i < bs.count; i++ {
+		s.ent(bs.Entity[i])
+		s.ent(bs.Builder[i])
+		s.i32(bs.FX[i])
+		s.i32(bs.FY[i])
+		s.i32(bs.FW[i])
+		s.u16(bs.Progress[i])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -720,6 +734,14 @@ type decodedSave struct {
 	paA     []fixed.Vec2
 	paB     []fixed.Vec2
 	paFlags []uint8
+
+	bdN    int32
+	bdE    []EntityID
+	bdBldr []EntityID
+	bdFX   []int32
+	bdFY   []int32
+	bdFW   []int32
+	bdProg []uint16
 
 	schedBlob []byte
 
@@ -1386,6 +1408,26 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.paFlags[i] = r.u8()
 	}
 
+	// build (#301)
+	if n, err = r.section("build rows", len(w.Build.FX)); err != nil {
+		return err
+	}
+	d.bdN = n
+	d.bdE = make([]EntityID, n)
+	d.bdBldr = make([]EntityID, n)
+	d.bdFX = make([]int32, n)
+	d.bdFY = make([]int32, n)
+	d.bdFW = make([]int32, n)
+	d.bdProg = make([]uint16, n)
+	for i := int32(0); i < n; i++ {
+		d.bdE[i] = r.ent()
+		d.bdBldr[i] = r.ent()
+		d.bdFX[i] = r.i32()
+		d.bdFY[i] = r.i32()
+		d.bdFW[i] = r.i32()
+		d.bdProg[i] = r.u16()
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1471,7 +1513,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
 		{"produce rows", d.pqE}, {"hero rows", d.hrE}, {"item rows", d.itE},
-		{"patrol rows", d.paE},
+		{"patrol rows", d.paE}, {"build rows", d.bdE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
@@ -2032,6 +2074,19 @@ func applySave(d *decodedSave, w *World) {
 		pas.rowOf[d.paE[i].Index()] = i
 	}
 
+	bds := w.Build
+	bds.count = d.bdN
+	resetRowOf(bds.rowOf)
+	for i := int32(0); i < d.bdN; i++ {
+		bds.Entity[i] = d.bdE[i]
+		bds.Builder[i] = d.bdBldr[i]
+		bds.FX[i] = d.bdFX[i]
+		bds.FY[i] = d.bdFY[i]
+		bds.FW[i] = d.bdFW[i]
+		bds.Progress[i] = d.bdProg[i]
+		bds.rowOf[d.bdE[i].Index()] = i
+	}
+
 	// subscriptions
 	w.subs = d.subs
 
@@ -2069,6 +2124,12 @@ func applySave(d *decodedSave, w *World) {
 				w.reservedBy[cl] = m.Entity[i]
 				w.Grid.OrFlags(cl%path.GridSize, cl/path.GridSize, path.OccupiedDynamic)
 			}
+		}
+		// building footprints: OccupiedStatic is not in the saved grid
+		// (the grid is re-baked from the map) — restamp from build rows
+		// so placement queries see the same occupancy (#301).
+		for i := int32(0); i < bds.count; i++ {
+			w.Grid.StampStatic(path.Rect{X: bds.FX[i], Y: bds.FY[i], W: bds.FW[i], H: bds.FW[i]})
 		}
 	}
 

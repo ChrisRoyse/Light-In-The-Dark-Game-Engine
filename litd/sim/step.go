@@ -102,6 +102,7 @@ func (w *World) phaseScripts() { w.scriptPhase() }
 func (w *World) phaseOrders() {
 	w.ordersSystem()
 	w.produceSystem()
+	w.constructionSystem() // rising structures ramp HP / complete (#301)
 }
 
 // Phase 4 — movement: waypoint following, fixed-point integration,

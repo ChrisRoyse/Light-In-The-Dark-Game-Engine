@@ -127,6 +127,15 @@ type Unit struct {
 	Researches []uint16 // upgrade indices this building can research (#303)
 
 	RevivesHeroes bool // altar-class building (#304)
+
+	// construction block (#301): a unit with BuildTicks > 0 is a
+	// worker-constructable building. Footprint is the square side in
+	// grid cells stamped onto the pathing grid; Costs (above) is the
+	// build cost; Life is the finished max HP. RefundPermille is the
+	// per-mille of cost returned on cancel.
+	Footprint      uint8  // square side in cells; 0 = not a building
+	BuildTicks     uint16 // construction duration; 0 = not constructable
+	RefundPermille uint16 // cancel refund fraction (0..1000)
 }
 
 // Attack is one converted weapon row.
@@ -173,6 +182,9 @@ type rawUnit struct {
 	Trains           []string         `toml:"trains" json:"trains"`
 	Researches       []string         `toml:"researches" json:"researches"`
 	RevivesHeroes    bool             `toml:"revives-heroes" json:"revives-heroes"`
+	Footprint        int64            `toml:"footprint" json:"footprint"`
+	BuildSeconds     float64          `toml:"build-seconds" json:"build-seconds"`
+	RefundPermille   int64            `toml:"refund-permille" json:"refund-permille"`
 }
 
 type rawAttack struct {
@@ -635,6 +647,9 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		return Unit{}, err
 	}
 	u.RevivesHeroes = r.RevivesHeroes
+	if u.Footprint, u.BuildTicks, u.RefundPermille, err = t.convertConstruction(file, r.ID, r); err != nil {
+		return Unit{}, err
+	}
 	for ai := range r.Attacks {
 		a, err := t.convertAttack(file, r.ID, &r.Attacks[ai])
 		if err != nil {
@@ -830,6 +845,9 @@ func (t *Tables) fingerprint() uint64 {
 			h.WriteU16(rs)
 		}
 		h.WriteBool(u.RevivesHeroes)
+		h.WriteU8(u.Footprint)
+		h.WriteU16(u.BuildTicks)
+		h.WriteU16(u.RefundPermille)
 	}
 	t.hashEconomy(h)
 	t.hashTech(h)
