@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v11: gamestate section (per-player match results) appended after
+// the clock section (#345).
 // v10: clock section (tod, scale, frozen, carry, day length) appended
 // after the build rows (#339).
 // v9: build rows (footprint + construction progress + builder) appended
@@ -61,7 +63,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 10
+const SaveFormatVersion uint32 = 11
 
 // ---- little-endian writer / reader ----
 
@@ -147,6 +149,11 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	if w.eventCount != 0 || len(w.killed) != 0 || len(w.dmgBuf) != 0 {
 		return fmt.Errorf("sim: save: mid-tick state (events=%d killed=%d damage=%d) — save between ticks only",
 			w.eventCount, len(w.killed), len(w.dmgBuf))
+	}
+	for player, pending := range w.resultPending {
+		if pending != ResultPlaying {
+			return fmt.Errorf("sim: save: pending match result request for player %d — step before saving", player)
+		}
 	}
 	s := &saveWriter{w: out}
 	if _, err := io.WriteString(out, SaveMagic); err != nil {
@@ -549,6 +556,12 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u64(w.todCarry)
 	s.u32(w.dayLengthTicks)
 
+	// gamestate (#345): per-player terminal result latches. Pending
+	// requests are refused above and are never serialized.
+	for player := 0; player < MaxPlayers; player++ {
+		s.u8(w.results[player])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -758,6 +771,8 @@ type decodedSave struct {
 	clockFrozen    bool
 	clockCarry     uint64
 	clockDayLength uint32
+
+	results [MaxPlayers]uint8
 
 	schedBlob []byte
 
@@ -1455,6 +1470,15 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return r.err
 	}
 
+	// gamestate (#345)
+	r.what = "gamestate"
+	for player := 0; player < MaxPlayers; player++ {
+		d.results[player] = r.u8()
+	}
+	if r.err != nil {
+		return r.err
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1708,6 +1732,19 @@ func validateSave(d *decodedSave, w *World) error {
 		return fmt.Errorf("sim: save: clock carry %d outside denominator %d", d.clockCarry, d.clockDayLength)
 	}
 
+	winners := 0
+	for player, result := range d.results {
+		if result > ResultLeft {
+			return fmt.Errorf("sim: save: player %d match result %d unknown", player, result)
+		}
+		if result == ResultWon {
+			winners++
+		}
+	}
+	if winners > 1 {
+		return fmt.Errorf("sim: save: match result has %d winners", winners)
+	}
+
 	// items (#305): bound defs, type bounds, and the bidirectional
 	// carrier↔slot invariant (no duplication, no orphans)
 	if d.itN > 0 && w.itemDefs == nil {
@@ -1777,6 +1814,10 @@ func applySave(d *decodedSave, w *World) {
 	w.todFrozen = d.clockFrozen
 	w.todCarry = d.clockCarry
 	w.dayLengthTicks = d.clockDayLength
+	w.results = d.results
+	for player := range w.resultPending {
+		w.resultPending[player] = ResultPlaying
+	}
 
 	copy(w.Ents.slots, d.entSlots)
 	w.Ents.freeHead = d.entFreeHead

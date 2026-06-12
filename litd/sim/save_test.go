@@ -6,6 +6,7 @@ package sim
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
@@ -125,6 +126,17 @@ func snapDiff(t *testing.T, want, got *statehash.Snapshot) (diverged []string) {
 	return
 }
 
+func hashSystemIndex(t *testing.T, name string) int {
+	t.Helper()
+	for i, got := range HashSystems {
+		if got == name {
+			return i
+		}
+	}
+	t.Fatalf("hash system %q not found in %v", name, HashSystems)
+	return -1
+}
+
 // The acceptance criterion: hash before save == hash after load, per
 // system; resuming the loaded world stays hash-identical to the
 // original run, the suspension fires at the same tick in both, and
@@ -192,11 +204,18 @@ func TestSaveRoundTrip(t *testing.T) {
 	t.Logf("resumed 100 ticks: both hashes %016x; suspension fired at tick %v in BOTH worlds", sa.Top, *firedSrc)
 }
 
-const saveClockSectionLen = 8 + 8 + 1 + 8 + 4
+const (
+	saveClockSectionLen     = 8 + 8 + 1 + 8 + 4
+	saveGameStateSectionLen = MaxPlayers
+)
 
 func clockSectionOffsetForTest(w *World, saved []byte) int {
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
-	return len(saved) - 4 - 4 - len(blob) - saveClockSectionLen
+	return len(saved) - 4 - 4 - len(blob) - saveGameStateSectionLen - saveClockSectionLen
+}
+
+func gameStateSectionOffsetForTest(w *World, saved []byte) int {
+	return clockSectionOffsetForTest(w, saved) + saveClockSectionLen
 }
 
 func TestSaveClockRoundTripAndResume(t *testing.T) {
@@ -228,7 +247,8 @@ func TestSaveClockRoundTripAndResume(t *testing.T) {
 	var after statehash.Snapshot
 	dst.HashState(reg, &after)
 	t.Logf("FSV clock load AFTER:  %s hash=%016x", clockFSV(dst), after.Top)
-	t.Logf("FSV clock subhash before=%016x after=%016x", before.Subs[len(HashSystems)-1], after.Subs[len(HashSystems)-1])
+	clockIdx := hashSystemIndex(t, "clock")
+	t.Logf("FSV clock subhash before=%016x after=%016x", before.Subs[clockIdx], after.Subs[clockIdx])
 	if before.Top != after.Top {
 		t.Fatalf("clock round-trip hash mismatch; systems=%v", snapDiff(t, &before, &after))
 	}
@@ -335,8 +355,9 @@ func TestHashClockDivergence(t *testing.T) {
 	w1.HashState(reg, &a)
 	w2.HashState(reg, &b)
 	culprit, ok := reg.FirstDivergence(&a, &b)
-	t.Logf("FSV clock hash active: %s top=%016x clock=%016x", clockFSV(w1), a.Top, a.Subs[len(HashSystems)-1])
-	t.Logf("FSV clock hash frozen: %s top=%016x clock=%016x", clockFSV(w2), b.Top, b.Subs[len(HashSystems)-1])
+	clockIdx := hashSystemIndex(t, "clock")
+	t.Logf("FSV clock hash active: %s top=%016x clock=%016x", clockFSV(w1), a.Top, a.Subs[clockIdx])
+	t.Logf("FSV clock hash frozen: %s top=%016x clock=%016x", clockFSV(w2), b.Top, b.Subs[clockIdx])
 	if !ok || culprit != "clock" {
 		t.Fatalf("first divergence=%q ok=%v, want clock", culprit, ok)
 	}
@@ -349,10 +370,134 @@ func TestHashClockDivergence(t *testing.T) {
 	w3.HashState(reg, &a)
 	w4.HashState(reg, &b)
 	culprit, ok = reg.FirstDivergence(&a, &b)
-	t.Logf("FSV clock carry hash zero: %s clock=%016x", clockFSV(w3), a.Subs[len(HashSystems)-1])
-	t.Logf("FSV clock carry hash one:  %s clock=%016x", clockFSV(w4), b.Subs[len(HashSystems)-1])
+	t.Logf("FSV clock carry hash zero: %s clock=%016x", clockFSV(w3), a.Subs[clockIdx])
+	t.Logf("FSV clock carry hash one:  %s clock=%016x", clockFSV(w4), b.Subs[clockIdx])
 	if !ok || culprit != "clock" {
 		t.Fatalf("carry first divergence=%q ok=%v, want clock", culprit, ok)
+	}
+}
+
+func gameStateFSV(w *World) string {
+	return fmt.Sprintf("tick=%d results=%v pending=%v", w.Tick(), w.results, w.resultPending)
+}
+
+func settleGameState(t *testing.T, w *World) {
+	t.Helper()
+	if !w.SetVictory(0) || !w.SetDefeat(1) || !w.SetLeft(3) {
+		t.Fatalf("failed to stage mixed gamestate: %s", gameStateFSV(w))
+	}
+	w.Step()
+}
+
+func TestSaveGameStateRoundTripBytes(t *testing.T) {
+	src := NewWorld(Caps{})
+	settleGameState(t, src)
+	reg := NewHashRegistry()
+	var before statehash.Snapshot
+	src.HashState(reg, &before)
+
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	saved := append([]byte(nil), buf.Bytes()...)
+	gsOff := gameStateSectionOffsetForTest(src, saved)
+
+	dst := NewWorld(Caps{})
+	if err := dst.LoadState(bytes.NewReader(saved), 0); err != nil {
+		t.Fatal(err)
+	}
+	var after statehash.Snapshot
+	dst.HashState(reg, &after)
+	gsIdx := hashSystemIndex(t, "gamestate")
+	t.Logf("FSV gamestate save BEFORE: %s hash=%016x gamestate=%016x", gameStateFSV(src), before.Top, before.Subs[gsIdx])
+	t.Logf("FSV gamestate section offset=%d hex=% x", gsOff, saved[gsOff:gsOff+saveGameStateSectionLen])
+	t.Logf("FSV gamestate load AFTER:  %s hash=%016x gamestate=%016x", gameStateFSV(dst), after.Top, after.Subs[gsIdx])
+	if before.Top != after.Top {
+		t.Fatalf("gamestate round-trip hash mismatch; systems=%v", snapDiff(t, &before, &after))
+	}
+	if src.results != dst.results || dst.resultPending != ([MaxPlayers]uint8{}) {
+		t.Fatalf("gamestate did not round-trip cleanly:\nsrc %s\ndst %s", gameStateFSV(src), gameStateFSV(dst))
+	}
+
+	var buf2 bytes.Buffer
+	if err := dst.SaveState(&buf2, 0); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(saved, buf2.Bytes()) {
+		t.Fatal("gamestate round-trip re-save is not byte-identical")
+	}
+}
+
+func TestHashGameStateDivergence(t *testing.T) {
+	reg := NewHashRegistry()
+	won := NewWorld(Caps{})
+	lost := NewWorld(Caps{})
+	if !won.SetVictory(0) || !lost.SetDefeat(0) {
+		t.Fatal("failed to stage gamestate divergence")
+	}
+	won.Step()
+	lost.Step()
+	var a, b statehash.Snapshot
+	won.HashState(reg, &a)
+	lost.HashState(reg, &b)
+	culprit, ok := reg.FirstDivergence(&a, &b)
+	gsIdx := hashSystemIndex(t, "gamestate")
+	t.Logf("FSV gamestate hash won:  %s top=%016x gamestate=%016x", gameStateFSV(won), a.Top, a.Subs[gsIdx])
+	t.Logf("FSV gamestate hash lost: %s top=%016x gamestate=%016x", gameStateFSV(lost), b.Top, b.Subs[gsIdx])
+	if !ok || culprit != "gamestate" {
+		t.Fatalf("first divergence=%q ok=%v, want gamestate", culprit, ok)
+	}
+}
+
+func TestSaveGameStateTruncatedSectionRefusesAndDoesNotMutate(t *testing.T) {
+	src := NewWorld(Caps{})
+	settleGameState(t, src)
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	full := buf.Bytes()
+	gsOff := gameStateSectionOffsetForTest(src, full)
+
+	dst := NewWorld(Caps{})
+	if !dst.SetDefeat(2) {
+		t.Fatal("failed to stage target result")
+	}
+	dst.Step()
+	reg := NewHashRegistry()
+	var pristine, after statehash.Snapshot
+	dst.HashState(reg, &pristine)
+	before := gameStateFSV(dst)
+	err := dst.LoadState(bytes.NewReader(full[:gsOff+5]), 0)
+	if err == nil {
+		t.Fatal("truncated gamestate section accepted")
+	}
+	dst.HashState(reg, &after)
+	t.Logf("FSV truncated gamestate source: %s section=% x", gameStateFSV(src), full[gsOff:gsOff+saveGameStateSectionLen])
+	t.Logf("FSV truncated gamestate target BEFORE: %s hash=%016x", before, pristine.Top)
+	t.Logf("FSV truncated gamestate target AFTER:  %s hash=%016x err=%v", gameStateFSV(dst), after.Top, err)
+	if pristine.Top != after.Top || before != gameStateFSV(dst) {
+		t.Fatal("failed gamestate load mutated the target world")
+	}
+}
+
+func TestSaveGameStatePendingRefused(t *testing.T) {
+	w := NewWorld(Caps{})
+	if !w.SetVictory(0) {
+		t.Fatal("failed to stage pending victory")
+	}
+	before := gameStateFSV(w)
+	var buf bytes.Buffer
+	err := w.SaveState(&buf, 0)
+	after := gameStateFSV(w)
+	t.Logf("FSV pending gamestate save BEFORE: %s", before)
+	t.Logf("FSV pending gamestate save AFTER:  %s bytes=%d err=%v", after, buf.Len(), err)
+	if err == nil {
+		t.Fatal("pending result save accepted")
+	}
+	if before != after || buf.Len() != 0 {
+		t.Fatalf("pending save mutated/wrote state: before=%s after=%s bytes=%d", before, after, buf.Len())
 	}
 }
 

@@ -40,6 +40,8 @@ var HashSystems = []string{
 	"build",
 	// appended by #339: deterministic game clock state.
 	"clock",
+	// appended by #345: per-player terminal match results.
+	"gamestate",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -433,6 +435,11 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hcl.WriteBool(w.todFrozen)
 	hcl.WriteU64(w.todCarry)
 	hcl.WriteU32(w.dayLengthTicks)
+
+	hgs := h.next() // gamestate (#345): per-player terminal results
+	for player := 0; player < MaxPlayers; player++ {
+		hgs.WriteU8(w.results[player])
+	}
 
 	return reg.Sum(dst)
 }
