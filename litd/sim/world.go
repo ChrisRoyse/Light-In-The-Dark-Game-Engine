@@ -3,6 +3,7 @@ package sim
 import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/prng"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/sched"
 )
@@ -131,6 +132,14 @@ type World struct {
 	cmdActive  []WorldCommand
 	// deferred kills: marked phase 5, events phase 6, removed phase 7
 	killed []EntityID
+	// deferred damage (damage.go #152): queued during phase 5, ONE
+	// apply pass at combat-phase end; drops are counted, never silent
+	dmgBuf     []DamagePacket
+	dmgDropped uint32
+	coeff      [][]int32 // per-mille attack×armor matrix (BindDamageMatrix)
+	// the sim PRNG (R-SIM-2): every gameplay roll draws here, one
+	// deterministic call order; reseeded per match via SetSeed
+	rng *prng.Stream
 
 	// render snapshot publication (snapshot.go): double buffer plus
 	// per-tick discontinuity marks and staged presentation cues
@@ -187,6 +196,8 @@ func NewWorld(requested Caps) *World {
 		cmdStaging:      make([]WorldCommand, 0, 1024),
 		cmdActive:       make([]WorldCommand, 0, 1024),
 		killed:          make([]EntityID, 0, caps.Units),
+		dmgBuf:          make([]DamagePacket, 0, caps.Units*4),
+		rng:             prng.New(0, 0),
 		Snaps:           newSnapshotBuffers(idxSpace, caps.PendingEvents),
 		snapNoLerp:      make([]bool, idxSpace),
 		snapDeath:       make([]bool, idxSpace),

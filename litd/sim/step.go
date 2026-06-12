@@ -109,13 +109,15 @@ func (w *World) phaseMovement() {
 }
 
 // Phase 5 — combat: throttled target acquisition (acquire.go), then
-// attack cycles, damage, kills (#150+). Kills mark the deferred
-// buffer — removal is phase 7's job.
+// attack cycles (#150), then the SINGLE deferred-damage apply pass
+// (damage.go) — everything queued this phase lands in append order.
+// Kills mark the deferred buffer — removal is phase 7's job.
 func (w *World) phaseCombat() {
 	w.acquisitionSystem()
 	if w.OnCombatPhase != nil {
 		w.OnCombatPhase(w.tick)
 	}
+	w.damageApplySystem()
 }
 
 // Phase 6 — events: deterministically ordered dispatch (#88). Death
