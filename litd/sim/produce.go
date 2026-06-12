@@ -311,6 +311,15 @@ func (w *World) CancelTrain(building EntityID, slot int) bool {
 		return false
 	}
 	v := w.Produce.Queue[r][slot]
+	if w.Produce.QFlags[r][slot]&TrainFlagHeroRevive != 0 {
+		rec := &w.deadHeroes[p][v] // slot stays in the pool (still dead)
+		for i := 0; i < w.resourceCount; i++ {
+			w.resources[p][i] += w.reviveCostAt(rec.Level, i)
+		}
+		w.foodUsed[p] -= int32(w.unitDefs[w.heroTables.Heroes[rec.HeroType].Unit].FoodCost)
+		w.shiftQueue(r, slot)
+		return true
+	}
 	if w.Produce.QFlags[r][slot]&TrainFlagResearch != 0 {
 		cur := w.upgradeLevel[p][v] // pending level (duplicates refused)
 		costs := w.upgradeDefs[v].Levels[cur].Costs
@@ -358,6 +367,18 @@ func (w *World) shiftQueue(r int32, slot int) {
 func (w *World) headTicks(r int32) uint16 {
 	s := w.Produce
 	v := s.Queue[r][0]
+	if s.QFlags[r][0]&TrainFlagHeroRevive != 0 {
+		or := w.Owners.Row(s.Entity[r])
+		if or == -1 {
+			return w.heroTables.Revive.BaseTicks
+		}
+		rec := &w.deadHeroes[w.Owners.Player[or]][v]
+		lvl := rec.Level
+		if lvl == 0 {
+			lvl = 1
+		}
+		return w.reviveTicksAt(lvl)
+	}
 	if s.QFlags[r][0]&TrainFlagResearch == 0 {
 		return w.unitDefs[v].TrainTicks
 	}
@@ -411,6 +432,12 @@ func (w *World) produceSystem() {
 		if s.QFlags[r][0]&TrainFlagResearch != 0 {
 			w.completeResearch(r, building, w.Owners.Player[or], typeID)
 			w.shiftQueue(r, 0)
+			continue
+		}
+		if s.QFlags[r][0]&TrainFlagHeroRevive != 0 {
+			if w.completeRevive(r, building, w.Owners.Player[or], typeID) {
+				w.shiftQueue(r, 0)
+			}
 			continue
 		}
 		def := &w.unitDefs[typeID]
@@ -594,7 +621,7 @@ func (w *World) SpawnFromTable(typeID uint16, player, team uint8, pos fixed.Vec2
 	if ok && def.Harvest.Capacity > 0 {
 		ok = w.Harvests.Add(w.Ents, id, &def.Harvest)
 	}
-	if ok && len(def.Trains) > 0 {
+	if ok && (len(def.Trains) > 0 || def.RevivesHeroes) {
 		ok = w.Produce.Add(w.Ents, id)
 	}
 	if !ok {
@@ -618,8 +645,14 @@ func (w *World) releaseTrainReservations(r int32) {
 		return
 	}
 	for i := 0; i < int(w.Produce.QCount[r]); i++ {
-		if w.Produce.QFlags[r][i]&TrainFlagResearch != 0 {
+		fl := w.Produce.QFlags[r][i]
+		if fl&TrainFlagResearch != 0 {
 			continue // research holds no food
+		}
+		if fl&TrainFlagHeroRevive != 0 {
+			rec := &w.deadHeroes[p][w.Produce.Queue[r][i]]
+			w.foodUsed[p] -= int32(w.unitDefs[w.heroTables.Heroes[rec.HeroType].Unit].FoodCost)
+			continue
 		}
 		w.foodUsed[p] -= int32(w.unitDefs[w.Produce.Queue[r][i]].FoodCost)
 	}

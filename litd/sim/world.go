@@ -93,6 +93,7 @@ type World struct {
 	Orders     *OrderStore
 	Buffs      *BuffPool
 	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
+	Heroes     *HeroStore
 	Nodes      *ResourceNodeStore
 	Econs      *EconStore
 	Harvests   *HarvestStore
@@ -130,6 +131,9 @@ type World struct {
 	reqOfUpgrade []int32
 	upgradeLevel [MaxPlayers][]uint8
 	techMax      [MaxPlayers][]uint8
+	// hero rule set (#304) + per-player dead-hero pools (D-15 records)
+	heroTables *data.HeroTables
+	deadHeroes [MaxPlayers][MaxDeadHeroes]HeroRecord
 	// derived-stat cache (buff.go): per stat, per entity index, the
 	// folded flat Add and multiplicative factor; identity (+0, ×One)
 	// when the entity carries no modifying buff. Recomputed only on
@@ -277,6 +281,7 @@ func NewWorld(requested Caps) *World {
 		Econs:           NewEconStore(caps.Units, idxSpace),
 		Harvests:        NewHarvestStore(caps.Units, idxSpace),
 		Produce:         NewProduceStore(caps.Units, idxSpace),
+		Heroes:          NewHeroStore(caps.Units, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -377,6 +382,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 		w.releaseTrainReservations(pr) // resources stay spent (destruction is not a cancel)
 		w.Produce.Remove(id)
 	}
+	w.captureHeroDeath(id) // before Owners.Remove: the dead pool needs the player
 	if w.Owners.Row(id) != -1 {
 		w.Owners.Remove(id)
 	}

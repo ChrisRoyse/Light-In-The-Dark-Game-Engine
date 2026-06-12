@@ -43,13 +43,15 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v5: hero section (#304) — hero rows + per-player dead-hero pools
+// appended after the tech arrays.
 // v4: tech section (#303) — per-player upgrade level/cap arrays
 // appended after the produce rows.
 // v3: production section (#302) — produce rows (queues, head clock,
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 4
+const SaveFormatVersion uint32 = 5
 
 // ---- little-endian writer / reader ----
 
@@ -453,6 +455,43 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
+	// heroes (#304): rows + dead pools
+	hs := w.Heroes
+	s.u32(uint32(hs.count))
+	for i := int32(0); i < hs.count; i++ {
+		s.ent(hs.Entity[i])
+		s.u16(hs.HeroType[i])
+		s.i64(hs.XP[i])
+		s.u8(hs.Level[i])
+		s.i64(int64(hs.Str[i]))
+		s.i64(int64(hs.Agi[i]))
+		s.i64(int64(hs.Int[i]))
+		s.u8(hs.SkillPoints[i])
+		for sl := 0; sl < data.MaxHeroSkills; sl++ {
+			s.u8(hs.SkillLevel[i][sl])
+		}
+	}
+	for pl := 0; pl < MaxPlayers; pl++ {
+		for sl := 0; sl < MaxDeadHeroes; sl++ {
+			rec := &w.deadHeroes[pl][sl]
+			if !rec.Used {
+				s.u8(0)
+				continue
+			}
+			s.u8(1)
+			s.u16(rec.HeroType)
+			s.i64(rec.XP)
+			s.u8(rec.Level)
+			s.i64(int64(rec.Str))
+			s.i64(int64(rec.Agi))
+			s.i64(int64(rec.Int))
+			s.u8(rec.SkillPoints)
+			for k := 0; k < data.MaxHeroSkills; k++ {
+				s.u8(rec.SkillLevel[k])
+			}
+		}
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -626,6 +665,11 @@ type decodedSave struct {
 	upgCount int32
 	upgLevel [][]uint8
 	upgMax   [][]uint8
+
+	hrN     int32
+	hrE     []EntityID
+	hrRec   []HeroRecord
+	deadRec [][MaxDeadHeroes]HeroRecord
 
 	schedBlob []byte
 
@@ -1198,6 +1242,56 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		}
 	}
 
+	if n, err = r.section("hero rows", len(w.Heroes.XP)); err != nil {
+		return err
+	}
+	d.hrN = n
+	d.hrE = make([]EntityID, n)
+	d.hrRec = make([]HeroRecord, n)
+	for i := int32(0); i < n; i++ {
+		d.hrE[i] = r.ent()
+		rec := &d.hrRec[i]
+		rec.Used = true
+		rec.HeroType = r.u16()
+		rec.XP = r.i64()
+		rec.Level = r.u8()
+		rec.Str = fixed.F64(r.i64())
+		rec.Agi = fixed.F64(r.i64())
+		rec.Int = fixed.F64(r.i64())
+		rec.SkillPoints = r.u8()
+		for sl := 0; sl < data.MaxHeroSkills; sl++ {
+			rec.SkillLevel[sl] = r.u8()
+		}
+	}
+	r.what = "dead-hero pools"
+	d.deadRec = make([][MaxDeadHeroes]HeroRecord, MaxPlayers)
+	for pl := 0; pl < MaxPlayers; pl++ {
+		for sl := 0; sl < MaxDeadHeroes; sl++ {
+			used := r.u8()
+			if r.err != nil {
+				return r.err
+			}
+			if used > 1 {
+				return fmt.Errorf("sim: save: dead-hero slot flag %d not 0/1", used)
+			}
+			if used == 0 {
+				continue
+			}
+			rec := &d.deadRec[pl][sl]
+			rec.Used = true
+			rec.HeroType = r.u16()
+			rec.XP = r.i64()
+			rec.Level = r.u8()
+			rec.Str = fixed.F64(r.i64())
+			rec.Agi = fixed.F64(r.i64())
+			rec.Int = fixed.F64(r.i64())
+			rec.SkillPoints = r.u8()
+			for k := 0; k < data.MaxHeroSkills; k++ {
+				rec.SkillLevel[k] = r.u8()
+			}
+		}
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1282,7 +1376,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"combat", d.cbE}, {"abilities", d.abE}, {"inventories", d.inE},
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
-		{"produce rows", d.pqE},
+		{"produce rows", d.pqE}, {"hero rows", d.hrE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
@@ -1388,6 +1482,50 @@ func validateSave(d *decodedSave, w *World) error {
 			if maxL := uint8(len(w.upgradeDefs[u].Levels)); d.upgLevel[pl][u] > maxL || d.upgMax[pl][u] > maxL {
 				return fmt.Errorf("sim: save: player %d upgrade %d level %d / cap %d exceeds table max %d",
 					pl, u, d.upgLevel[pl][u], d.upgMax[pl][u], maxL)
+			}
+		}
+	}
+
+	// hero rows / pools: require the bound tables, level/type bounds
+	heroCount := func() int {
+		if w.heroTables == nil {
+			return 0
+		}
+		return len(w.heroTables.Heroes)
+	}()
+	checkRec := func(where string, rec *HeroRecord) error {
+		if w.heroTables == nil {
+			return fmt.Errorf("sim: save: %s present but no hero tables bound — BindHeroes before LoadState", where)
+		}
+		if int(rec.HeroType) >= heroCount {
+			return fmt.Errorf("sim: save: %s references unbound hero type %d", where, rec.HeroType)
+		}
+		if rec.Level < 1 || int(rec.Level) > len(w.heroTables.Curve) {
+			return fmt.Errorf("sim: save: %s level %d outside the bound curve [1, %d]", where, rec.Level, len(w.heroTables.Curve))
+		}
+		return nil
+	}
+	for i := int32(0); i < d.hrN; i++ {
+		if err := checkRec(fmt.Sprintf("hero row %d", i), &d.hrRec[i]); err != nil {
+			return err
+		}
+	}
+	for pl := range d.deadRec {
+		for sl := range d.deadRec[pl] {
+			if d.deadRec[pl][sl].Used {
+				if err := checkRec(fmt.Sprintf("dead-hero pool [%d][%d]", pl, sl), &d.deadRec[pl][sl]); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	for i := int32(0); i < d.pqN; i++ { // revive queue entries point at OCCUPIED pool slots
+		for q := 0; q < int(d.pqCount[i]); q++ {
+			if d.pqFl[i][q]&TrainFlagHeroRevive == 0 {
+				continue
+			}
+			if int(d.pqQ[i][q]) >= MaxDeadHeroes {
+				return fmt.Errorf("sim: save: produce row %d slot %d revive index %d out of pool range", i, q, d.pqQ[i][q])
 			}
 		}
 	}
@@ -1696,6 +1834,13 @@ func applySave(d *decodedSave, w *World) {
 					if d.pqFl[i][q]&TrainFlagResearch != 0 {
 						continue
 					}
+					if d.pqFl[i][q]&TrainFlagHeroRevive != 0 {
+						rec := &d.deadRec[pl][d.pqQ[i][q]]
+						if rec.Used {
+							w.foodUsed[pl] += int32(w.unitDefs[w.heroTables.Heroes[rec.HeroType].Unit].FoodCost)
+						}
+						continue
+					}
 					w.foodUsed[pl] += int32(w.unitDefs[d.pqQ[i][q]].FoodCost)
 				}
 			}
@@ -1706,6 +1851,25 @@ func applySave(d *decodedSave, w *World) {
 			copy(w.upgradeLevel[pl], d.upgLevel[pl])
 			copy(w.techMax[pl], d.upgMax[pl])
 		}
+	}
+	hsr := w.Heroes
+	hsr.count = d.hrN
+	resetRowOf(hsr.rowOf)
+	for i := int32(0); i < d.hrN; i++ {
+		rec := &d.hrRec[i]
+		hsr.Entity[i] = d.hrE[i]
+		hsr.HeroType[i] = rec.HeroType
+		hsr.XP[i] = rec.XP
+		hsr.Level[i] = rec.Level
+		hsr.Str[i] = rec.Str
+		hsr.Agi[i] = rec.Agi
+		hsr.Int[i] = rec.Int
+		hsr.SkillPoints[i] = rec.SkillPoints
+		hsr.SkillLevel[i] = rec.SkillLevel
+		hsr.rowOf[d.hrE[i].Index()] = i
+	}
+	for pl := 0; pl < MaxPlayers; pl++ {
+		w.deadHeroes[pl] = d.deadRec[pl]
 	}
 
 	// subscriptions

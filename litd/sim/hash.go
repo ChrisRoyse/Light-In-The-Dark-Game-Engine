@@ -7,6 +7,7 @@ package sim
 // FirstDivergence localizes any determinism break to one system.
 
 import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/prng"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
@@ -29,6 +30,8 @@ var HashSystems = []string{
 	// appended by #300: resource/food counters + the three economy
 	// stores. Same append discipline as #334.
 	"economy",
+	// appended by #304: hero rows + per-player dead-hero pools.
+	"heroes",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -335,6 +338,42 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		for u := range w.upgradeDefs {
 			heco.WriteU8(w.upgradeLevel[pl][u])
 			heco.WriteU8(w.techMax[pl][u])
+		}
+	}
+
+	hhr := h.next() // heroes (#304): rows + dead pools
+	hs := w.Heroes
+	hhr.WriteU32(uint32(hs.count))
+	for i := int32(0); i < hs.count; i++ {
+		hhr.WriteU32(uint32(hs.Entity[i]))
+		hhr.WriteU16(hs.HeroType[i])
+		hhr.WriteI64(hs.XP[i])
+		hhr.WriteU8(hs.Level[i])
+		hhr.WriteI64(int64(hs.Str[i]))
+		hhr.WriteI64(int64(hs.Agi[i]))
+		hhr.WriteI64(int64(hs.Int[i]))
+		hhr.WriteU8(hs.SkillPoints[i])
+		for sl := 0; sl < data.MaxHeroSkills; sl++ {
+			hhr.WriteU8(hs.SkillLevel[i][sl])
+		}
+	}
+	for pl := 0; pl < MaxPlayers; pl++ {
+		for sl := 0; sl < MaxDeadHeroes; sl++ {
+			rec := &w.deadHeroes[pl][sl]
+			hhr.WriteBool(rec.Used)
+			if !rec.Used {
+				continue
+			}
+			hhr.WriteU16(rec.HeroType)
+			hhr.WriteI64(rec.XP)
+			hhr.WriteU8(rec.Level)
+			hhr.WriteI64(int64(rec.Str))
+			hhr.WriteI64(int64(rec.Agi))
+			hhr.WriteI64(int64(rec.Int))
+			hhr.WriteU8(rec.SkillPoints)
+			for k := 0; k < data.MaxHeroSkills; k++ {
+				hhr.WriteU8(rec.SkillLevel[k])
+			}
 		}
 	}
 

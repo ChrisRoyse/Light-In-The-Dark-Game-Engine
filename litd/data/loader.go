@@ -76,6 +76,7 @@ type Tables struct {
 	Nodes         []ResourceNodeType // resource-node types, sorted by ID
 	Upgrades      []Upgrade          // tech upgrades, sorted by ID (#303)
 	Requires      []Require          // admission requirements, sorted (#303)
+	Hero          *HeroTables        // hero rule set; nil when heroes/ absent (#304)
 	Fingerprint   uint64             // canonical content hash (state-hash preamble)
 }
 
@@ -123,6 +124,8 @@ type Unit struct {
 	TrainTicks uint16   // 0 = not trainable
 	Trains     []uint16 // unit indices this building can train (post-sort resolve)
 	Researches []uint16 // upgrade indices this building can research (#303)
+
+	RevivesHeroes bool // altar-class building (#304)
 }
 
 // Attack is one converted weapon row.
@@ -168,6 +171,7 @@ type rawUnit struct {
 	TrainSeconds     float64          `toml:"train-seconds" json:"train-seconds"`
 	Trains           []string         `toml:"trains" json:"trains"`
 	Researches       []string         `toml:"researches" json:"researches"`
+	RevivesHeroes    bool             `toml:"revives-heroes" json:"revives-heroes"`
 }
 
 type rawAttack struct {
@@ -458,6 +462,11 @@ func Load(fsys fs.FS) (*Tables, error) {
 		return nil, err
 	}
 
+	// hero tables after units + abilities (#304)
+	if err := t.loadHeroes(fsys); err != nil {
+		return nil, err
+	}
+
 	// smart-order table (optional directory; absence is visible as nil,
 	// never silently defaulted)
 	if files, _ := listTables(fsys, "orders"); len(files) > 0 {
@@ -617,6 +626,7 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 	if u.Costs, u.TrainTicks, err = t.convertProduction(file, r.ID, r); err != nil {
 		return Unit{}, err
 	}
+	u.RevivesHeroes = r.RevivesHeroes
 	for ai := range r.Attacks {
 		a, err := t.convertAttack(file, r.ID, &r.Attacks[ai])
 		if err != nil {
@@ -811,9 +821,11 @@ func (t *Tables) fingerprint() uint64 {
 		for _, rs := range u.Researches {
 			h.WriteU16(rs)
 		}
+		h.WriteBool(u.RevivesHeroes)
 	}
 	t.hashEconomy(h)
 	t.hashTech(h)
+	t.hashHero(h)
 	h.WriteBool(t.Smart != nil)
 	if t.Smart != nil {
 		t.Smart.hashInto(h)

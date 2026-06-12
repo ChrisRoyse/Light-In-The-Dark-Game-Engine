@@ -163,6 +163,9 @@ func (w *World) damageApplySystem() {
 
 		life := w.Healths.Life[hr].Sub(post)
 		if life <= 0 {
+			if w.Healths.Life[hr] > 0 { // lethal CROSSING: pay XP once (#304)
+				w.grantKillXP(p.Source, p.Target)
+			}
 			life = 0
 			w.KillUnit(p.Target)
 		}
