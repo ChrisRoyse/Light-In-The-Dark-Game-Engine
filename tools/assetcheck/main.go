@@ -164,6 +164,9 @@ func check(dir string, files []string) []finding {
 				add(rel, "GLTF-CORE", err.Error())
 				continue
 			}
+			for _, u := range info.ExternalURIs {
+				add(rel, "GLTF-URI", fmt.Sprintf("external resource reference (%s) — committed GLBs must be self-contained", u))
+			}
 			for _, e := range append(append([]string{}, info.ExtensionsUsed...), info.ExtensionsRequired...) {
 				if name, bad := compressionExtensions[e]; bad {
 					add(rel, "GLTF-COMPRESS", fmt.Sprintf("%s compression (%s) — G3N cannot decode (R-FMT-3)", name, e))

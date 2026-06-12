@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // glbInfo is what the gate needs from a .glb: declared extensions and
@@ -14,6 +15,7 @@ type glbInfo struct {
 	ExtensionsUsed     []string
 	ExtensionsRequired []string
 	Clips              []string
+	ExternalURIs       []string // non-data: buffer/image URIs — break self-containment
 }
 
 const (
@@ -58,6 +60,12 @@ func parseGLB(path string) (*glbInfo, error) {
 		Animations         []struct {
 			Name string `json:"name"`
 		} `json:"animations"`
+		Buffers []struct {
+			URI string `json:"uri"`
+		} `json:"buffers"`
+		Images []struct {
+			URI string `json:"uri"`
+		} `json:"images"`
 	}
 	if err := json.Unmarshal(data[20:20+chunkLen], &doc); err != nil {
 		return nil, fmt.Errorf("JSON chunk: %w", err)
@@ -71,6 +79,16 @@ func parseGLB(path string) (*glbInfo, error) {
 	}
 	for _, a := range doc.Animations {
 		info.Clips = append(info.Clips, a.Name)
+	}
+	for _, b := range doc.Buffers {
+		if b.URI != "" && !strings.HasPrefix(b.URI, "data:") {
+			info.ExternalURIs = append(info.ExternalURIs, "buffer: "+b.URI)
+		}
+	}
+	for _, im := range doc.Images {
+		if im.URI != "" && !strings.HasPrefix(im.URI, "data:") {
+			info.ExternalURIs = append(info.ExternalURIs, "image: "+im.URI)
+		}
 	}
 	return info, nil
 }

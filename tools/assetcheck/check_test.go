@@ -185,6 +185,21 @@ func TestCorruptGLB(t *testing.T) {
 	}
 }
 
+func TestExternalURIRejected(t *testing.T) {
+	f := newFixture(t)
+	doc := gltfDoc(nil, nil)
+	doc["images"] = []map[string]any{{"uri": "Textures/colormap.png"}}
+	f.add(t, "props/external.glb", buildGLB(t, doc), true)
+	// data: URIs are self-contained and must pass
+	doc2 := gltfDoc(nil, nil)
+	doc2["images"] = []map[string]any{{"uri": "data:image/png;base64,AAAA"}}
+	f.add(t, "props/datauri.glb", buildGLB(t, doc2), true)
+	got := f.run(t)
+	if len(got) != 1 || got[0].Rule != "GLTF-URI" || got[0].Path != "props/external.glb" {
+		t.Fatalf("want one GLTF-URI for external.glb only, got %v", got)
+	}
+}
+
 func TestEmptyAssetsDirPasses(t *testing.T) {
 	f := newFixture(t)
 	if got := f.run(t); len(got) != 0 {
