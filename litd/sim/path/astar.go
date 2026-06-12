@@ -72,6 +72,10 @@ type Searcher struct {
 	heap []openNode // fixed-cap binary heap arena
 	seq  uint32     // insertion counter, reset per search
 
+	// corridor, when non-nil, restricts expansion to its sectors
+	// (HPA* fine stage — set only inside SearchCorridor)
+	corridor *SectorMask
+
 	expansions int32 // last search's expansion count (FSV surface)
 }
 
@@ -173,6 +177,9 @@ func (s *Searcher) stepClear(l *Layer, x, y, dx, dy int32) bool {
 	if !l.CenterClear(nx, ny) || !s.g.AdjacencyLegal(x, y, nx, ny) {
 		return false
 	}
+	if s.corridor != nil && !s.corridor.Has(sectorOf(nx, ny)) {
+		return false
+	}
 	if dx != 0 && dy != 0 {
 		if !l.CenterClear(x, ny) || !l.CenterClear(nx, y) {
 			return false
@@ -251,6 +258,15 @@ func (s *Searcher) Search(l *Layer, sx, sy, tx, ty int32, out []int32) ([]int32,
 		}
 	}
 	return out, false // open list drained: unreachable
+}
+
+// SearchCorridor is Search restricted to a sector corridor (the HPA*
+// fine stage). Identical determinism contract.
+func (s *Searcher) SearchCorridor(l *Layer, corridor *SectorMask, sx, sy, tx, ty int32, out []int32) ([]int32, bool) {
+	s.corridor = corridor
+	out, ok := s.Search(l, sx, sy, tx, ty, out)
+	s.corridor = nil
+	return out, ok
 }
 
 // reconstruct walks parents goal→start, then reverses in place so
