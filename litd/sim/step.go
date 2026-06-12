@@ -99,8 +99,9 @@ func (w *World) phaseScripts() { w.scriptPhase() }
 // Phase 3 — orders: pop/translate orders into system intents (#144+).
 func (w *World) phaseOrders() {}
 
-// Phase 4 — movement: pathing consumption + integration (#113).
-func (w *World) phaseMovement() {}
+// Phase 4 — movement: waypoint following, fixed-point integration,
+// turn-rate-limited facing (movement.go).
+func (w *World) phaseMovement() { w.movementSystem() }
 
 // Phase 5 — combat: acquisition, attack cycles, damage, kills (#150+).
 // Kills mark the deferred buffer — removal is phase 7's job.

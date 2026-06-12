@@ -15,15 +15,19 @@ const (
 )
 
 // NoPath is the PathHandle value meaning "no cached path held".
-const NoPath uint32 = 0
+// 0xFFFFFFFF, NOT zero: path.PathID 0 is the legitimate first ID
+// (generation 0, slot 0), while slot 0xFFFFFF can never exist below
+// the engine's pool ceilings — the sentinel is unreachable.
+const NoPath uint32 = 0xFFFFFFFF
 
 type MovementStore struct {
-	Speed      []fixed.F64   // world units per TICK
-	TurnRate   []fixed.Angle // max facing change per TICK
-	Target     []fixed.Vec2  // current waypoint
-	PathHandle []uint32      // path.PathID bits; NoPath when none
-	State      []uint8       // Move* constants
-	Entity     []EntityID
+	Speed       []fixed.F64   // world units per TICK
+	TurnRate    []fixed.Angle // max facing change per TICK
+	Target      []fixed.Vec2  // current waypoint
+	PathHandle  []uint32      // path.PathID bits; NoPath when none
+	WaypointIdx []int32       // cursor into the path's waypoint list
+	State       []uint8       // Move* constants
+	Entity      []EntityID
 
 	rowOf []int32
 	count int32
@@ -36,13 +40,14 @@ func NewMovementStore(rowCap, entityCap int) *MovementStore {
 		panic("sim: store caps must satisfy 0 < rowCap <= entityCap")
 	}
 	s := &MovementStore{
-		Speed:      make([]fixed.F64, rowCap),
-		TurnRate:   make([]fixed.Angle, rowCap),
-		Target:     make([]fixed.Vec2, rowCap),
-		PathHandle: make([]uint32, rowCap),
-		State:      make([]uint8, rowCap),
-		Entity:     make([]EntityID, rowCap),
-		rowOf:      make([]int32, entityCap),
+		Speed:       make([]fixed.F64, rowCap),
+		TurnRate:    make([]fixed.Angle, rowCap),
+		Target:      make([]fixed.Vec2, rowCap),
+		PathHandle:  make([]uint32, rowCap),
+		WaypointIdx: make([]int32, rowCap),
+		State:       make([]uint8, rowCap),
+		Entity:      make([]EntityID, rowCap),
+		rowOf:       make([]int32, entityCap),
 	}
 	for i := range s.rowOf {
 		s.rowOf[i] = -1
@@ -75,6 +80,7 @@ func (s *MovementStore) Add(e *Entities, t *TransformStore, id EntityID, speed f
 	s.TurnRate[r] = turnRate
 	s.Target[r] = fixed.Vec2{}
 	s.PathHandle[r] = NoPath
+	s.WaypointIdx[r] = 0
 	s.State[r] = MoveIdle
 	s.Entity[r] = id
 	s.rowOf[idx] = r
@@ -99,6 +105,7 @@ func (s *MovementStore) Remove(id EntityID) bool {
 		s.TurnRate[r] = s.TurnRate[last]
 		s.Target[r] = s.Target[last]
 		s.PathHandle[r] = s.PathHandle[last]
+		s.WaypointIdx[r] = s.WaypointIdx[last]
 		s.State[r] = s.State[last]
 		moved := s.Entity[last]
 		s.Entity[r] = moved

@@ -2,6 +2,7 @@ package sim
 
 import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/sched"
 )
 
@@ -90,6 +91,7 @@ type World struct {
 	Buffs      *BuffPool
 	Projs      *ProjectilePool
 	Doodads    *DoodadStore
+	Paths      *path.PathStore  // pooled per-unit waypoint buffers (§7)
 	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// Cmds is the binary command-record front door (command.go):
@@ -177,6 +179,7 @@ func NewWorld(requested Caps) *World {
 		handlers:        make(map[HandlerID]EventHandler),
 		pathReqs:        make([]pathRequest, caps.PathRequests),
 		Doodads:         NewDoodadStore(caps.ScriptedDoodads, entityCap),
+		Paths:           path.NewPathStore(caps.PathRequests, 1024),
 	}
 }
 
@@ -264,7 +267,7 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Transforms.Facing) * 2
 	n += len(w.Transforms.Entity) * 4
 	n += len(w.Transforms.rowOf) * rowOfB
-	n += len(w.Movements.Speed) * (8 + 2 + 16 + 4 + 1 + 4) // per-row column bytes
+	n += len(w.Movements.Speed) * (8 + 2 + 16 + 4 + 4 + 1 + 4) // per-row column bytes
 	n += len(w.Movements.rowOf) * rowOfB
 	n += len(w.Collisions.SizeClass) * (1 + 1 + 4 + 4)
 	n += len(w.Collisions.rowOf) * rowOfB
