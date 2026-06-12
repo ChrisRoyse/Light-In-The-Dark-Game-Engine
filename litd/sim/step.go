@@ -114,7 +114,9 @@ func (w *World) phaseEvents() {
 		if w.OnDeathEvent != nil {
 			w.OnDeathEvent(w.tick, w.killed[i])
 		}
+		w.Emit(Event{Kind: EvUnitDeath, Src: w.killed[i]})
 	}
+	w.flushEvents()
 }
 
 // Phase 7 — cleanup: deferred removals (second pass), then the render

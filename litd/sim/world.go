@@ -70,13 +70,6 @@ type buffInstance struct {
 	periodic  uint32
 }
 
-type pendingEvent struct {
-	kind uint16
-	src  EntityID
-	dst  EntityID
-	arg  int64
-}
-
 type pathRequest struct {
 	unit  EntityID
 	goal  fixed.Vec2
@@ -128,18 +121,23 @@ type World struct {
 	OnDeathEvent  func(tick uint32, id EntityID)
 	OnSnapshot    func(tick uint32)
 	OnHash        func(tick uint32)
+	OnEventDrop   func(tick uint32, e Event)
 	HashEvery     uint32
 
-	unitCount  int
-	projectiles []projectileRow
-	projCount   int
-	buffs       []buffInstance
-	buffCount   int
-	orderPool   []orderEntry
-	events      []pendingEvent // per-tick ring
-	pathReqs    []pathRequest
-	doodads     []doodadRow
-	doodadCount int
+	unitCount     int
+	projectiles   []projectileRow
+	projCount     int
+	buffs         []buffInstance
+	buffCount     int
+	orderPool     []orderEntry
+	events        []Event // per-tick pending ring (events.go)
+	eventCount    int
+	eventsDropped uint64
+	handlers      map[HandlerID]EventHandler // registry: lookup only, never iterated
+	subs          []kindSubs                 // kind-sorted, registration-ordered lists
+	pathReqs      []pathRequest
+	doodads       []doodadRow
+	doodadCount   int
 }
 
 // NewWorld allocates every pool at the resolved capacities. The
@@ -159,7 +157,8 @@ func NewWorld(requested Caps) *World {
 		projectiles: make([]projectileRow, caps.Projectiles),
 		buffs:       make([]buffInstance, caps.BuffInstances),
 		orderPool:   make([]orderEntry, caps.OrderQueueEntries),
-		events:      make([]pendingEvent, caps.PendingEvents),
+		events:      make([]Event, caps.PendingEvents),
+		handlers:    make(map[HandlerID]EventHandler),
 		pathReqs:    make([]pathRequest, caps.PathRequests),
 		doodads:     make([]doodadRow, caps.ScriptedDoodads),
 	}
