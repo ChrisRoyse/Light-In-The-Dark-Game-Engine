@@ -208,7 +208,9 @@ func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s]})
 }
 
-// rollWeapon rolls base + Ndice×roll(sides) on the sim PRNG.
+// rollWeapon rolls base + Ndice×roll(sides) on the sim PRNG, then
+// folds the attacker's derived attack-damage cache (upgrades #303 +
+// buffs #162).
 func (w *World) rollWeapon(cr int32, s int) fixed.F64 {
 	c := w.Combats
 	amt := fixed.FromInt(c.DmgBase[cr][s])
@@ -217,7 +219,7 @@ func (w *World) rollWeapon(cr int32, s int) fixed.F64 {
 			amt = amt.Add(fixed.FromInt(int32(w.rng.Uint32()%sides) + 1))
 		}
 	}
-	return amt
+	return fixed.F64(w.buffedStat(data.StatAttackDamage, c.Entity[cr], int64(amt)))
 }
 
 // SetWeapon fills one weapon slot from converted data-table values

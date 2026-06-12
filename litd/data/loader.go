@@ -74,6 +74,8 @@ type Tables struct {
 	Smart         *SmartTable        // smart-order resolution; nil when orders/ absent
 	ResourceTypes []string           // economy resource registry, table order (#300)
 	Nodes         []ResourceNodeType // resource-node types, sorted by ID
+	Upgrades      []Upgrade          // tech upgrades, sorted by ID (#303)
+	Requires      []Require          // admission requirements, sorted (#303)
 	Fingerprint   uint64             // canonical content hash (state-hash preamble)
 }
 
@@ -120,6 +122,7 @@ type Unit struct {
 	Costs      []int64  // per resource index (len = registry size; nil = free)
 	TrainTicks uint16   // 0 = not trainable
 	Trains     []uint16 // unit indices this building can train (post-sort resolve)
+	Researches []uint16 // upgrade indices this building can research (#303)
 }
 
 // Attack is one converted weapon row.
@@ -164,6 +167,7 @@ type rawUnit struct {
 	Costs            map[string]int64 `toml:"costs" json:"costs"`
 	TrainSeconds     float64          `toml:"train-seconds" json:"train-seconds"`
 	Trains           []string         `toml:"trains" json:"trains"`
+	Researches       []string         `toml:"researches" json:"researches"`
 }
 
 type rawAttack struct {
@@ -403,6 +407,7 @@ func Load(fsys fs.FS) (*Tables, error) {
 		return nil, err
 	}
 	pendingTrains := map[string][]string{}
+	pendingResearches := map[string][]string{}
 	for _, f := range unitFiles {
 		blob, err := fs.ReadFile(fsys, f)
 		if err != nil {
@@ -419,6 +424,9 @@ func Load(fsys fs.FS) (*Tables, error) {
 			}
 			if len(raw.Unit[i].Trains) > 0 {
 				pendingTrains[u.ID] = raw.Unit[i].Trains
+			}
+			if len(raw.Unit[i].Researches) > 0 {
+				pendingResearches[u.ID] = raw.Unit[i].Researches
 			}
 			t.Units = append(t.Units, u)
 		}
@@ -442,6 +450,12 @@ func Load(fsys fs.FS) (*Tables, error) {
 			}
 			t.Units[i].Trains = append(t.Units[i].Trains, uint16(idx))
 		}
+	}
+
+	// tech tree after the unit sort: applies-to / requirement / unit
+	// researches references need stable unit indices (#303)
+	if err := t.loadTech(fsys, pendingResearches); err != nil {
+		return nil, err
 	}
 
 	// smart-order table (optional directory; absence is visible as nil,
@@ -793,8 +807,13 @@ func (t *Tables) fingerprint() uint64 {
 		for _, tr := range u.Trains {
 			h.WriteU16(tr)
 		}
+		h.WriteU32(uint32(len(u.Researches)))
+		for _, rs := range u.Researches {
+			h.WriteU16(rs)
+		}
 	}
 	t.hashEconomy(h)
+	t.hashTech(h)
 	h.WriteBool(t.Smart != nil)
 	if t.Smart != nil {
 		t.Smart.hashInto(h)

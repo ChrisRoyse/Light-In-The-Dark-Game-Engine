@@ -43,11 +43,13 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v4: tech section (#303) — per-player upgrade level/cap arrays
+// appended after the produce rows.
 // v3: production section (#302) — produce rows (queues, head clock,
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 3
+const SaveFormatVersion uint32 = 4
 
 // ---- little-endian writer / reader ----
 
@@ -439,6 +441,18 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.vec2(pq.RallyPoint[i])
 	}
 
+	// tech (#303): per-player level + cap arrays; the count must
+	// match the bound upgrade table at load
+	s.u32(uint32(len(w.upgradeDefs)))
+	if len(w.upgradeDefs) > 0 {
+		for pl := 0; pl < MaxPlayers; pl++ {
+			for u := range w.upgradeDefs {
+				s.u8(w.upgradeLevel[pl][u])
+				s.u8(w.techMax[pl][u])
+			}
+		}
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -608,6 +622,10 @@ type decodedSave struct {
 	pqRK    []uint8
 	pqRE    []EntityID
 	pqRP    []fixed.Vec2
+
+	upgCount int32
+	upgLevel [][]uint8
+	upgMax   [][]uint8
 
 	schedBlob []byte
 
@@ -1159,6 +1177,26 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.pqRE[i] = r.ent()
 		d.pqRP[i] = r.vec2()
 	}
+	r.what = "tech arrays"
+	d.upgCount = r.i32()
+	if r.err != nil {
+		return r.err
+	}
+	if d.upgCount < 0 || int(d.upgCount) != len(w.upgradeDefs) {
+		return fmt.Errorf("sim: save: %d upgrades, this world has %d bound — BindTech before LoadState", d.upgCount, len(w.upgradeDefs))
+	}
+	if d.upgCount > 0 {
+		d.upgLevel = make([][]uint8, MaxPlayers)
+		d.upgMax = make([][]uint8, MaxPlayers)
+		for pl := 0; pl < MaxPlayers; pl++ {
+			d.upgLevel[pl] = make([]uint8, d.upgCount)
+			d.upgMax[pl] = make([]uint8, d.upgCount)
+			for u := int32(0); u < d.upgCount; u++ {
+				d.upgLevel[pl][u] = r.u8()
+				d.upgMax[pl][u] = r.u8()
+			}
+		}
+	}
 
 	// scheduler blob
 	r.what = "scheduler blob"
@@ -1327,7 +1365,11 @@ func validateSave(d *decodedSave, w *World) error {
 		}
 		for q := 0; q < ProduceQueueCap; q++ {
 			if q < qc {
-				if int(d.pqQ[i][q]) >= len(w.unitDefs) {
+				if d.pqFl[i][q]&TrainFlagResearch != 0 {
+					if int(d.pqQ[i][q]) >= len(w.upgradeDefs) {
+						return fmt.Errorf("sim: save: produce row %d slot %d references unbound upgrade %d — BindTech before LoadState", i, q, d.pqQ[i][q])
+					}
+				} else if int(d.pqQ[i][q]) >= len(w.unitDefs) {
 					return fmt.Errorf("sim: save: produce row %d slot %d references unbound typeID %d", i, q, d.pqQ[i][q])
 				}
 			} else if d.pqQ[i][q] != 0 || d.pqFl[i][q] != 0 {
@@ -1339,6 +1381,14 @@ func validateSave(d *decodedSave, w *World) error {
 		}
 		if d.pqRK[i] > RallyEntity {
 			return fmt.Errorf("sim: save: produce row %d rally kind %d unknown", i, d.pqRK[i])
+		}
+	}
+	for pl := 0; pl < int(min(int64(len(d.upgLevel)), MaxPlayers)); pl++ {
+		for u := int32(0); u < d.upgCount; u++ {
+			if maxL := uint8(len(w.upgradeDefs[u].Levels)); d.upgLevel[pl][u] > maxL || d.upgMax[pl][u] > maxL {
+				return fmt.Errorf("sim: save: player %d upgrade %d level %d / cap %d exceeds table max %d",
+					pl, u, d.upgLevel[pl][u], d.upgMax[pl][u], maxL)
+			}
 		}
 	}
 
@@ -1639,13 +1689,22 @@ func applySave(d *decodedSave, w *World) {
 		pq.RallyPoint[i] = d.pqRP[i]
 		pq.rowOf[d.pqE[i].Index()] = i
 		// queued trains hold food reservations — fold them back into
-		// the recomputed ledger
+		// the recomputed ledger (research rows hold no food)
 		if or := w.Owners.Row(d.pqE[i]); or != -1 {
 			if pl := w.Owners.Player[or]; pl < MaxPlayers {
 				for q := 0; q < int(d.pqCount[i]); q++ {
+					if d.pqFl[i][q]&TrainFlagResearch != 0 {
+						continue
+					}
 					w.foodUsed[pl] += int32(w.unitDefs[d.pqQ[i][q]].FoodCost)
 				}
 			}
+		}
+	}
+	if d.upgCount > 0 {
+		for pl := 0; pl < MaxPlayers; pl++ {
+			copy(w.upgradeLevel[pl], d.upgLevel[pl])
+			copy(w.techMax[pl], d.upgMax[pl])
 		}
 	}
 
@@ -1699,6 +1758,14 @@ func applySave(d *decodedSave, w *World) {
 	for i := range p.rows {
 		if p.live[i] {
 			w.recomputeBuffStats(p.rows[i].Target)
+		}
+	}
+	// upgrade contributions live in the same cache: re-derive every
+	// typed unit (idempotent over the buff pass above; #303)
+	if len(w.upgradeDefs) > 0 {
+		ut := w.UnitTypes
+		for i := int32(0); i < ut.Count(); i++ {
+			w.recomputeBuffStats(ut.Entity[i])
 		}
 	}
 }

@@ -320,6 +320,13 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		heco.WriteI64(int64(pq.RallyPoint[i].X))
 		heco.WriteI64(int64(pq.RallyPoint[i].Y))
 	}
+	heco.WriteU32(uint32(len(w.upgradeDefs))) // tech levels/caps (#303)
+	for pl := 0; pl < MaxPlayers; pl++ {
+		for u := range w.upgradeDefs {
+			heco.WriteU8(w.upgradeLevel[pl][u])
+			heco.WriteU8(w.techMax[pl][u])
+		}
+	}
 
 	hin := h.next() // invents (#334)
 	in := w.Invents

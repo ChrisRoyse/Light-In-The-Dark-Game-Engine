@@ -128,7 +128,7 @@ func TestBuffLoadRejections(t *testing.T) {
 	}{
 		{"unknown stacking", strings.Replace(testBuffsTOML, `stacking = "refresh"`, `stacking = "stack"`, 1), "stacking"},
 		{"zero duration", strings.Replace(testBuffsTOML, "duration = 1.0", "duration = 0", 1), "duration"},
-		{"unknown stat", strings.Replace(testBuffsTOML, `stat = "armor"`, `stat = "attack-damage"`, 1), "mod.stat"},
+		{"unknown stat", strings.Replace(testBuffsTOML, `stat = "armor"`, `stat = "mana-regen"`, 1), "mod.stat"},
 		{"permille out of range", strings.Replace(testBuffsTOML, "permille = 500", "permille = 10001", 1), "mod.permille"},
 		{"fractional armor add", strings.Replace(testBuffsTOML, "add = -3", "add = -3.5", 1), "mod.add"},
 		{"max-stacks out of range", strings.Replace(testBuffsTOML, "max-stacks = 5", "max-stacks = 256", 1), "max-stacks"},

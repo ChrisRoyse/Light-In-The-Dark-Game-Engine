@@ -39,10 +39,11 @@ const (
 	StatMoveSpeed      uint8 = iota // Add in world-units/second → per-tick fixed
 	StatArmor                       // Add in integer armor points
 	StatAttackCooldown              // Add in seconds → ticks (signed)
+	StatAttackDamage                // Add in damage points → fixed bits (#303)
 	BuffStatCount
 )
 
-var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown"}
+var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage"}
 
 // Buff flags.
 const (
@@ -147,7 +148,7 @@ func convertBuff(file string, r *rawBuff, names []string) (BuffType, error) {
 		m := &r.Mods[i]
 		mi := indexOf(buffStatNames[:], m.Stat)
 		if mi < 0 {
-			return fail("mod.stat", fmt.Errorf("%q is not move-speed|armor|attack-cooldown", m.Stat))
+			return fail("mod.stat", fmt.Errorf("%q is not move-speed|armor|attack-cooldown|attack-damage", m.Stat))
 		}
 		sm := StatMod{Stat: uint8(mi), Permille: 1000}
 		if m.Permille != 0 {
@@ -156,33 +157,11 @@ func convertBuff(file string, r *rawBuff, names []string) (BuffType, error) {
 			}
 			sm.Permille = int32(m.Permille)
 		}
-		switch sm.Stat {
-		case StatMoveSpeed:
-			v, err := perSecondToPerTick(m.Add)
-			if err != nil {
-				return fail("mod.add", err)
-			}
-			sm.Add = int64(v)
-		case StatArmor:
-			if m.Add != float64(int64(m.Add)) {
-				return fail("mod.add", fmt.Errorf("armor add must be an integer"))
-			}
-			sm.Add = int64(m.Add)
-		case StatAttackCooldown:
-			if m.Add < 0 {
-				neg, err := SecondsToTicks(-m.Add)
-				if err != nil {
-					return fail("mod.add", err)
-				}
-				sm.Add = -int64(neg)
-			} else {
-				pos, err := SecondsToTicks(m.Add)
-				if err != nil {
-					return fail("mod.add", err)
-				}
-				sm.Add = int64(pos)
-			}
+		add, err := convertStatAdd(sm.Stat, m.Add)
+		if err != nil {
+			return fail("mod.add", err)
 		}
+		sm.Add = add
 		b.Mods = append(b.Mods, sm)
 	}
 	if r.Aura != nil {
@@ -299,4 +278,43 @@ func (t *Tables) hashBuffs(h *statehash.Hasher) {
 			h.WriteU32(uint32(m.Permille))
 		}
 	}
+}
+
+// convertStatAdd converts one stat modifier's table value to sim
+// units: move-speed wu/s → per-tick fixed bits, armor integer points,
+// attack-cooldown seconds → ticks (signed), attack-damage points →
+// fixed bits. Shared by buff and upgrade (#303) conversion.
+func convertStatAdd(stat uint8, add float64) (int64, error) {
+	switch stat {
+	case StatMoveSpeed:
+		v, err := perSecondToPerTick(add)
+		if err != nil {
+			return 0, err
+		}
+		return int64(v), nil
+	case StatArmor:
+		if add != float64(int64(add)) {
+			return 0, fmt.Errorf("armor add must be an integer")
+		}
+		return int64(add), nil
+	case StatAttackCooldown:
+		neg := false
+		if add < 0 {
+			neg, add = true, -add
+		}
+		t, err := SecondsToTicks(add)
+		if err != nil {
+			return 0, err
+		}
+		if neg {
+			return -int64(t), nil
+		}
+		return int64(t), nil
+	case StatAttackDamage:
+		if add != float64(int64(add)) {
+			return 0, fmt.Errorf("attack-damage add must be an integer")
+		}
+		return int64(add) << 32, nil
+	}
+	return 0, fmt.Errorf("unknown stat %d", stat)
 }

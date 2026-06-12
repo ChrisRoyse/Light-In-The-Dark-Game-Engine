@@ -55,7 +55,12 @@ const (
 )
 
 // Queue-slot flags.
-const TrainFlagHeroRevive uint8 = 1 << 0
+const (
+	TrainFlagHeroRevive uint8 = 1 << 0
+	// TrainFlagResearch: the slot value is an UPGRADE index, not a
+	// unit type — research riding the queue (#303)
+	TrainFlagResearch uint8 = 1 << 1
+)
 
 // Rally kinds (ProduceStore.RallyKind).
 const (
@@ -305,7 +310,17 @@ func (w *World) CancelTrain(building EntityID, slot int) bool {
 	if p >= MaxPlayers {
 		return false
 	}
-	def := &w.unitDefs[w.Produce.Queue[r][slot]]
+	v := w.Produce.Queue[r][slot]
+	if w.Produce.QFlags[r][slot]&TrainFlagResearch != 0 {
+		cur := w.upgradeLevel[p][v] // pending level (duplicates refused)
+		costs := w.upgradeDefs[v].Levels[cur].Costs
+		for i := 0; i < len(costs) && i < w.resourceCount; i++ {
+			w.resources[p][i] += costs[i]
+		}
+		w.shiftQueue(r, slot)
+		return true
+	}
+	def := &w.unitDefs[v]
 	for i := 0; i < len(def.Costs) && i < w.resourceCount; i++ {
 		w.resources[p][i] += def.Costs[i]
 	}
@@ -329,11 +344,33 @@ func (w *World) shiftQueue(r int32, slot int) {
 	s.QCount[r] = uint8(n - 1)
 	if slot == 0 {
 		if s.QCount[r] > 0 {
-			s.Done[r] = w.tick + uint32(w.unitDefs[s.Queue[r][0]].TrainTicks)
+			s.Done[r] = w.tick + uint32(w.headTicks(r))
 		} else {
 			s.Done[r] = 0
 		}
 	}
+}
+
+// headTicks reads the head entry's duration: train time for unit
+// rows, the PENDING level's research time for flagged rows (one
+// in-flight research per upgrade per player, so the pending level is
+// the player's current level).
+func (w *World) headTicks(r int32) uint16 {
+	s := w.Produce
+	v := s.Queue[r][0]
+	if s.QFlags[r][0]&TrainFlagResearch == 0 {
+		return w.unitDefs[v].TrainTicks
+	}
+	def := &w.upgradeDefs[v]
+	or := w.Owners.Row(s.Entity[r])
+	if or == -1 {
+		return def.Levels[0].ResearchTicks
+	}
+	cur := w.upgradeLevel[w.Owners.Player[or]][v]
+	if int(cur) >= len(def.Levels) {
+		cur = uint8(len(def.Levels) - 1)
+	}
+	return def.Levels[cur].ResearchTicks
 }
 
 // TrainProgress reports (elapsed, total) ticks of the head entry —
@@ -371,6 +408,11 @@ func (w *World) produceSystem() {
 			continue
 		}
 		typeID := s.Queue[r][0]
+		if s.QFlags[r][0]&TrainFlagResearch != 0 {
+			w.completeResearch(r, building, w.Owners.Player[or], typeID)
+			w.shiftQueue(r, 0)
+			continue
+		}
 		def := &w.unitDefs[typeID]
 		pos, ok := w.spawnCell(building, def)
 		if !ok {
@@ -559,6 +601,7 @@ func (w *World) SpawnFromTable(typeID uint16, player, team uint8, pos fixed.Vec2
 		w.DestroyUnit(id)
 		return 0, false
 	}
+	w.recomputeBuffStats(id) // inherit the owner's researched upgrades (#303)
 	return id, true
 }
 
@@ -575,6 +618,9 @@ func (w *World) releaseTrainReservations(r int32) {
 		return
 	}
 	for i := 0; i < int(w.Produce.QCount[r]); i++ {
+		if w.Produce.QFlags[r][i]&TrainFlagResearch != 0 {
+			continue // research holds no food
+		}
 		w.foodUsed[p] -= int32(w.unitDefs[w.Produce.Queue[r][i]].FoodCost)
 	}
 }

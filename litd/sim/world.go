@@ -122,6 +122,14 @@ type World struct {
 	// tech-requirement admission hook (#303); nil = allow (documented
 	// canonical default while no requirement table is bound)
 	techGate func(player uint8, typeID uint16) bool
+	// tech tree (#303): bound upgrade/requirement tables, per-target
+	// lookup, and the per-player level/cap arrays (state, hashed)
+	upgradeDefs  []data.Upgrade
+	techReqs     []data.Require
+	reqOfUnit    []int32
+	reqOfUpgrade []int32
+	upgradeLevel [MaxPlayers][]uint8
+	techMax      [MaxPlayers][]uint8
 	// derived-stat cache (buff.go): per stat, per entity index, the
 	// folded flat Add and multiplicative factor; identity (+0, ×One)
 	// when the entity carries no modifying buff. Recomputed only on
