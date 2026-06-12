@@ -17,6 +17,7 @@
 //	                 arrival, prints final state as JSON, captures a screenshot,
 //	                 and exits 0 (non-zero on timeout).
 //	-shot PATH       screenshot output path (default artifacts/firstlight.png)
+//	-tod H           fixed time-of-day hour for render verification; valid [0,24)
 //
 // This code is M0.5 throwaway-tolerant: movement runs in the render loop with
 // float math. The deterministic 20 Hz sim replaces it in M3.
@@ -28,10 +29,13 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
+	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/g3n/engine/animation"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
@@ -55,6 +59,10 @@ const (
 	autoTargetX = 5.0
 	autoTargetZ = -4.0
 	autoTimeout = 10 * time.Second
+
+	todTicksPerSecond = 20.0
+	todDayTicks       = 9600.0
+	todHoursPerSecond = 24.0 * todTicksPerSecond / todDayTicks
 
 	assetsDir    = "assets"
 	knightGLB    = "kaykit-adventurers/Knight.glb"
@@ -107,6 +115,11 @@ type demo struct {
 	autoOrdered bool
 	autoStart   time.Time
 	shotPending bool
+
+	fixedTOD  todFlag
+	todHours  float64
+	todSource func() float64
+	dayNight  *litrender.DayNight
 }
 
 // state is the FSV state dump printed by -autotest (R-FSV-2).
@@ -116,13 +129,41 @@ type state struct {
 	HasTarget        bool
 	Selected         bool
 	ArrivedAtTarget  bool
+	TimeOfDay        float64
+}
+
+type todFlag struct {
+	set   bool
+	value float64
+}
+
+func (t *todFlag) String() string {
+	if !t.set {
+		return ""
+	}
+	return strconv.FormatFloat(t.value, 'f', -1, 64)
+}
+
+func (t *todFlag) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return fmt.Errorf("parse tod hour: %w", err)
+	}
+	if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 || v >= 24 {
+		return fmt.Errorf("tod must be in [0,24), got %s", s)
+	}
+	t.set = true
+	t.value = v
+	return nil
 }
 
 func main() {
 	d := &demo{}
 	flag.StringVar(&d.shotPath, "shot", "artifacts/firstlight.png", "screenshot output path")
 	flag.BoolVar(&d.autotest, "autotest", false, "scripted FSV run: order unit, verify arrival, screenshot, exit")
+	flag.Var(&d.fixedTOD, "tod", "fixed time-of-day hour for render verification; valid [0,24)")
 	flag.Parse()
+	d.configureTODSource(time.Now())
 
 	d.app = app.App(1280, 720, "Light in the Dark — First Light (M0.5)")
 	d.scene = core.NewNode()
@@ -136,6 +177,32 @@ func main() {
 
 	d.autoStart = time.Now()
 	d.app.Run(d.update)
+}
+
+func (d *demo) configureTODSource(now time.Time) {
+	if d.fixedTOD.set {
+		fixed := d.fixedTOD.value
+		d.todSource = func() float64 { return fixed }
+		fmt.Printf("event: tod source fixed hour=%.3f\n", fixed)
+		return
+	}
+	d.todHours = cyclingTODSeed(now)
+	d.todSource = func() float64 { return d.todHours }
+	fmt.Printf("event: tod source cycling hour=%.3f rate=%.6f_hours_per_sec\n", d.todHours, todHoursPerSecond)
+}
+
+func cyclingTODSeed(now time.Time) float64 {
+	return math.Mod(float64(now.UnixNano())/float64(time.Second)*todHoursPerSecond, 24)
+}
+
+func (d *demo) advanceTOD(dt time.Duration) {
+	if d.fixedTOD.set {
+		return
+	}
+	d.todHours += dt.Seconds() * todHoursPerSecond
+	if d.todHours >= 24 {
+		d.todHours = math.Mod(d.todHours, 24)
+	}
 }
 
 // buildCamera creates the locked RTS camera (PRD R-RND-1): fixed yaw,
@@ -156,10 +223,12 @@ func (d *demo) buildCamera() {
 }
 
 func (d *demo) buildLights() {
-	d.scene.Add(light.NewAmbient(&math32.Color{R: 1, G: 1, B: 1}, 0.5))
-	sun := light.NewDirectional(&math32.Color{R: 1, G: 1, B: 1}, 0.9)
-	sun.SetPosition(10, 20, 10)
+	ambient := light.NewAmbient(&math32.Color{}, 0)
+	sun := light.NewDirectional(&math32.Color{}, 0)
+	d.scene.Add(ambient)
 	d.scene.Add(sun)
+	d.dayNight = litrender.NewDayNight(ambient, sun)
+	d.dayNight.Update(d.todSource())
 }
 
 func (d *demo) buildGround() {
@@ -364,6 +433,8 @@ func (d *demo) orderMove(x, z float32) {
 }
 
 func (d *demo) update(rend *renderer.Renderer, deltaTime time.Duration) {
+	d.advanceTOD(deltaTime)
+	d.dayNight.Update(d.todSource())
 	d.stepMovement(float32(deltaTime.Seconds()))
 	if d.active != nil {
 		d.active.Update(float32(deltaTime.Seconds()))
@@ -382,7 +453,7 @@ func (d *demo) update(rend *renderer.Renderer, deltaTime time.Duration) {
 			fmt.Fprintf(os.Stderr, "screenshot error: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Printf("event: screenshot saved path=%s\n", d.shotPath)
+		fmt.Printf("event: screenshot saved path=%s tod=%.3f\n", d.shotPath, d.todSource())
 		if d.autotest {
 			d.finishAutotest()
 		}
@@ -441,6 +512,7 @@ func (d *demo) finishAutotest() {
 		TargetX: autoTargetX, TargetZ: autoTargetZ,
 		HasTarget: d.hasTarget, Selected: d.selected,
 		ArrivedAtTarget: math32.Abs(pos.X-autoTargetX) < 0.1 && math32.Abs(pos.Z-autoTargetZ) < 0.1,
+		TimeOfDay:       d.todSource(),
 	}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
