@@ -114,6 +114,7 @@ func (w *World) phaseMovement() {
 // (damage.go) — everything queued this phase lands in append order.
 // Kills mark the deferred buffer — removal is phase 7's job.
 func (w *World) phaseCombat() {
+	w.abilitySystem() // casts before autoattacks: an ordered cast owns the unit
 	w.acquisitionSystem()
 	w.attackSystem()
 	if w.OnCombatPhase != nil {

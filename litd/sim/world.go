@@ -62,6 +62,7 @@ type orderEntry struct {
 	kind   uint8
 	target EntityID
 	point  fixed.Vec2
+	data   uint16
 }
 
 type pathRequest struct {
@@ -106,6 +107,8 @@ type World struct {
 	// compiled effect-composition arena (effect.go, ADR #294);
 	// installed by BindEffects, read-only thereafter
 	effects []data.CompiledEffect
+	// loaded ability rows (ability.go #160); refs are defIndex+1
+	abilityDefs []data.Ability
 	// spatial bucket grid (buckets.go) — derived from Transform
 	// positions, excluded from the state hash
 	bucketHead []int32
@@ -169,6 +172,8 @@ type World struct {
 	// missile flight traces (#158 FSV SoT)
 	OnMissileImpact func(tick uint32, id EntityID, at fixed.Vec2, tgt EntityID)
 	OnMissileExpire func(tick uint32, id EntityID, last fixed.Vec2)
+	// cast-machine transitions (#160 FSV SoT)
+	OnCastTransition func(tick uint32, id EntityID, slot int, from, to uint8)
 	// OnAttackTransition fires on every per-weapon state flip
 	// (attack.go #150 — the tick-stamped trace that is the FSV SoT).
 	OnAttackTransition func(tick uint32, id EntityID, slot int, from, to uint8)

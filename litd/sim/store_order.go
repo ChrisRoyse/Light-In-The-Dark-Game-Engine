@@ -19,6 +19,7 @@ const (
 	OrderAttack
 	OrderSmart // right-click, resolved by the smart-order table (#146)
 	OrderHold
+	OrderCastAbility // Data = ability ref (defIndex+1); ability.go drives it
 )
 
 type OrderStore struct {
@@ -26,6 +27,7 @@ type OrderStore struct {
 	Phase     []uint8      // orderFresh / orderRunning (orders.go)
 	Target    []EntityID   // entity target (0 = none / point order)
 	Point     []fixed.Vec2 // point target
+	Data      []uint16     // order payload (cast: ability ref, defIndex+1)
 	QueueHead []int32      // first pooled queue entry; NoOrderEntry = empty
 	Entity    []EntityID
 
@@ -44,6 +46,7 @@ func NewOrderStore(rowCap, entityCap int) *OrderStore {
 		Phase:     make([]uint8, rowCap),
 		Target:    make([]EntityID, rowCap),
 		Point:     make([]fixed.Vec2, rowCap),
+		Data:      make([]uint16, rowCap),
 		QueueHead: make([]int32, rowCap),
 		Entity:    make([]EntityID, rowCap),
 		rowOf:     make([]int32, entityCap),
@@ -73,6 +76,7 @@ func (s *OrderStore) Add(e *Entities, id EntityID) bool {
 	s.Phase[r] = 0
 	s.Target[r] = 0
 	s.Point[r] = fixed.Vec2{}
+	s.Data[r] = 0
 	s.QueueHead[r] = NoOrderEntry
 	s.Entity[r] = id
 	s.rowOf[idx] = r
@@ -97,6 +101,7 @@ func (s *OrderStore) Remove(id EntityID) bool {
 		s.Phase[r] = s.Phase[last]
 		s.Target[r] = s.Target[last]
 		s.Point[r] = s.Point[last]
+		s.Data[r] = s.Data[last]
 		s.QueueHead[r] = s.QueueHead[last]
 		moved := s.Entity[last]
 		s.Entity[r] = moved

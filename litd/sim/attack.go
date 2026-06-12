@@ -85,7 +85,7 @@ func (w *World) attackSystem() {
 			case OrderStop, OrderHold:
 				// acquiring stances: auto-acquired target stands
 			default:
-				interrupted = true // move/smart/…: combat yields
+				interrupted = true // move/cast/smart/…: combat yields
 			}
 		}
 

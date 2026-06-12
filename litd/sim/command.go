@@ -414,6 +414,8 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 		orderKind, writeOrder = OrderStop, true
 	case OpHold:
 		orderKind, writeOrder = OrderHold, true
+	case OpCastAbility:
+		orderKind, writeOrder = OrderCastAbility, true
 	}
 	if writeOrder {
 		for i := 0; i < valid; i++ {
@@ -424,7 +426,7 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 			// a player command is an unqueued issue: queue cleared,
 			// current order interrupted, new order installed (§2.3 —
 			// the shift-queue flag joins the wire format with #146)
-			w.issueOrderRow(or, w.cmdActors[i], Order{Kind: orderKind, Target: target, Point: r.Point}, false)
+			w.issueOrderRow(or, w.cmdActors[i], Order{Kind: orderKind, Target: target, Point: r.Point, Data: r.Data}, false)
 		}
 	}
 	w.cmdApplied++

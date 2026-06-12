@@ -75,12 +75,18 @@ type Tables struct {
 }
 
 // Ability is one ability row. Behavior is the compiled effect
-// composition (#296); cast mechanics (cost, cooldown, targeting)
-// land with #160.
+// composition (#296); cast mechanics are sim-unit converted at load
+// (#160). A zero-valued cast block is a passive/stub row.
 type Ability struct {
-	ID      string
-	Name    string
-	Effects EffectList // zero-length when the row declares none
+	ID             string
+	Name           string
+	Effects        EffectList // zero-length when the row declares none
+	ManaCost       int32
+	CooldownTicks  uint16
+	CastPointTicks uint16
+	BackswingTicks uint16
+	ChannelTicks   uint16
+	CastRange      fixed.F64 // 0 = self/no-target cast
 }
 
 // Unit is one converted unit row. Every field is in sim units:
@@ -164,8 +170,14 @@ type rawAbilityFile struct {
 }
 
 type rawAbility struct {
-	ID   string `toml:"id" json:"id"`
-	Name string `toml:"name" json:"name"`
+	ID        string  `toml:"id" json:"id"`
+	Name      string  `toml:"name" json:"name"`
+	ManaCost  int64   `toml:"mana-cost" json:"mana-cost"`
+	Cooldown  float64 `toml:"cooldown" json:"cooldown"`     // seconds
+	CastPoint float64 `toml:"cast-point" json:"cast-point"` // seconds
+	Backswing float64 `toml:"backswing" json:"backswing"`   // seconds
+	Channel   float64 `toml:"channel" json:"channel"`       // seconds
+	CastRange float64 `toml:"cast-range" json:"cast-range"` // world units
 	// Effects is the raw composition tree; the effect compiler owns
 	// all validation inside the maps (decodeStrict cannot see them).
 	Effects []map[string]any `toml:"effects" json:"effects"`
@@ -330,7 +342,10 @@ func Load(fsys fs.FS) (*Tables, error) {
 	}
 	comp := &effectCompiler{attackTypes: t.AttackTypes}
 	for _, p := range pending {
-		ab := Ability{ID: p.raw.ID, Name: p.raw.Name}
+		ab, err := convertAbilityCast(p.file, &p.raw)
+		if err != nil {
+			return nil, err
+		}
 		if p.raw.Effects != nil {
 			comp.file = p.file
 			where := fmt.Sprintf("ability %q effects", p.raw.ID)
@@ -657,10 +672,17 @@ func (t *Tables) fingerprint() uint64 {
 	}
 	h.WriteU32(uint32(len(t.Abilities)))
 	for i := range t.Abilities {
-		writeString(h, t.Abilities[i].ID)
-		writeString(h, t.Abilities[i].Name)
-		h.WriteU16(t.Abilities[i].Effects.Off)
-		h.WriteU16(t.Abilities[i].Effects.Len)
+		a := &t.Abilities[i]
+		writeString(h, a.ID)
+		writeString(h, a.Name)
+		h.WriteU16(a.Effects.Off)
+		h.WriteU16(a.Effects.Len)
+		h.WriteU32(uint32(a.ManaCost))
+		h.WriteU16(a.CooldownTicks)
+		h.WriteU16(a.CastPointTicks)
+		h.WriteU16(a.BackswingTicks)
+		h.WriteU16(a.ChannelTicks)
+		h.WriteI64(int64(a.CastRange))
 	}
 	hashEffects(h, t.Effects)
 	h.WriteU32(uint32(len(t.Units)))
@@ -720,4 +742,45 @@ func (u *Unit) String() string {
 			int64(a.ProjectileSpeedPerTick), a.TargetsAllowed)
 	}
 	return b.String()
+}
+
+// convertAbilityCast converts one raw ability's cast block to sim
+// units (seconds → ticks, world units → fixed) — fail closed on any
+// out-of-range value.
+func convertAbilityCast(file string, r *rawAbility) (Ability, error) {
+	fail := func(field string, err error) (Ability, error) {
+		return Ability{}, fmt.Errorf("data: %s: ability %q: %s: %w", file, r.ID, field, err)
+	}
+	if r.ManaCost < 0 || r.ManaCost > 1<<20 {
+		return fail("mana-cost", fmt.Errorf("value %d out of range [0, 2^20]", r.ManaCost))
+	}
+	cd, err := SecondsToTicks(r.Cooldown)
+	if err != nil {
+		return fail("cooldown", err)
+	}
+	cp, err := SecondsToTicks(r.CastPoint)
+	if err != nil {
+		return fail("cast-point", err)
+	}
+	bs, err := SecondsToTicks(r.Backswing)
+	if err != nil {
+		return fail("backswing", err)
+	}
+	ch, err := SecondsToTicks(r.Channel)
+	if err != nil {
+		return fail("channel", err)
+	}
+	rng, err := worldUnits(r.CastRange)
+	if err != nil {
+		return fail("cast-range", err)
+	}
+	return Ability{
+		ID: r.ID, Name: r.Name,
+		ManaCost:       int32(r.ManaCost),
+		CooldownTicks:  cd,
+		CastPointTicks: cp,
+		BackswingTicks: bs,
+		ChannelTicks:   ch,
+		CastRange:      rng,
+	}, nil
 }

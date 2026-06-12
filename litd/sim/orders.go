@@ -49,6 +49,7 @@ type Order struct {
 	Kind   uint8
 	Target EntityID
 	Point  fixed.Vec2
+	Data   uint16 // cast: ability ref (defIndex+1)
 }
 
 // IssueOrder is the order entry point — Unit.Order/Unit.OrderQueued
@@ -69,7 +70,7 @@ func (w *World) issueOrderRow(r int32, id EntityID, o Order, queued bool) bool {
 	if !queued {
 		w.clearOrderQueue(r)
 		w.interruptCurrentOrder(id)
-		w.installOrder(r, id, o.Kind, o.Target, o.Point)
+		w.installOrder(r, id, o.Kind, o.Target, o.Point, o.Data)
 		return true
 	}
 	depth := int32(0)
@@ -87,7 +88,7 @@ func (w *World) issueOrderRow(r int32, id EntityID, o Order, queued bool) bool {
 		w.Emit(Event{Kind: EvOrderDropped, Src: id, Arg: int64(o.Kind)})
 		return false
 	}
-	w.orderPool[e] = orderEntry{next: NoOrderEntry, kind: o.Kind, target: o.Target, point: o.Point}
+	w.orderPool[e] = orderEntry{next: NoOrderEntry, kind: o.Kind, target: o.Target, point: o.Point, data: o.Data}
 	if tail == NoOrderEntry {
 		s.QueueHead[r] = e
 	} else {
@@ -114,12 +115,13 @@ func (w *World) QueueDepth(id EntityID) int {
 func (w *World) OrderPoolFree() int32 { return w.orderFreeCount }
 
 // installOrder makes an order current and raises EvOrderIssued.
-func (w *World) installOrder(r int32, id EntityID, kind uint8, target EntityID, pt fixed.Vec2) {
+func (w *World) installOrder(r int32, id EntityID, kind uint8, target EntityID, pt fixed.Vec2, data uint16) {
 	s := w.Orders
 	s.Kind[r] = kind
 	s.Phase[r] = orderFresh
 	s.Target[r] = target
 	s.Point[r] = pt
+	s.Data[r] = data
 	w.Emit(Event{Kind: EvOrderIssued, Src: id, Dst: target, Arg: int64(kind)})
 }
 
@@ -156,10 +158,10 @@ func (w *World) completeOrder(r int32, id EntityID, done bool) {
 		e := w.orderPool[h]
 		s.QueueHead[r] = e.next
 		w.freeOrderEntry(h)
-		w.installOrder(r, id, e.kind, e.target, e.point)
+		w.installOrder(r, id, e.kind, e.target, e.point, e.data)
 		return
 	}
-	w.installOrder(r, id, OrderStop, 0, fixed.Vec2{}) // default order fall-through
+	w.installOrder(r, id, OrderStop, 0, fixed.Vec2{}, 0) // default order fall-through
 }
 
 // clearOrderQueue recycles every queued entry of a row.

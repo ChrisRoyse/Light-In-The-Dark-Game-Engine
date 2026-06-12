@@ -18,7 +18,9 @@ func TestStoreCombatRowBytes(t *testing.T) {
 		unsafe.Sizeof(c.LastDamagedTick[0]) + unsafe.Sizeof(c.Entity[0]))
 	a := NewAbilityStore(1, 1)
 	ability := int(unsafe.Sizeof(a.AbilityID[0]) + unsafe.Sizeof(a.Level[0]) + unsafe.Sizeof(a.ReadyAt[0]) +
-		unsafe.Sizeof(a.ManaCostRef[0]) + unsafe.Sizeof(a.CastState[0]) + unsafe.Sizeof(a.Entity[0]))
+		unsafe.Sizeof(a.CastState[0]) + unsafe.Sizeof(a.Mana[0]) + unsafe.Sizeof(a.MaxMana[0]) +
+		unsafe.Sizeof(a.ManaRegen[0]) + unsafe.Sizeof(a.CastSlot[0]) + unsafe.Sizeof(a.CastEnd[0]) +
+		unsafe.Sizeof(a.Entity[0]))
 	inv := NewInventoryStore(1, 1)
 	invB := int(unsafe.Sizeof(inv.Slots[0]) + unsafe.Sizeof(inv.Entity[0]))
 	o := NewOrderStore(1, 1)
