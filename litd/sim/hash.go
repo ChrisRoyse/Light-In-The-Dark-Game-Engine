@@ -21,6 +21,11 @@ var HashSystems = []string{
 	"tick", "entities", "transforms", "movement", "health", "owners",
 	"combat", "abilities", "orders", "buffs", "missiles", "doodads",
 	"sched", "prng",
+	// appended by #334 (gap found in #206): these were live state the
+	// hash was blind to. Appending keeps prior sub indices stable;
+	// replays with the old 14-system vocabulary refuse via the
+	// existing sub-count check (fail closed, self-describing).
+	"collisions", "unittypes", "invents",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -44,9 +49,19 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	ht := h.next() // tick
 	ht.WriteU32(w.tick)
 
-	he := h.next() // entities
+	he := h.next() // entities: full table — generations, alive bits,
+	// and free-list links are state (LIFO reuse order steers every
+	// future allocation; #334)
 	he.WriteU32(uint32(w.unitCount))
 	he.WriteU32(uint32(w.Ents.count))
+	he.WriteU32(uint32(w.Ents.freeHead))
+	he.WriteU32(uint32(len(w.Ents.slots)))
+	for i := range w.Ents.slots {
+		s := &w.Ents.slots[i]
+		he.WriteU8(s.gen)
+		he.WriteBool(s.alive)
+		he.WriteU32(uint32(s.next))
+	}
 
 	htr := h.next() // transforms
 	n := w.Transforms.Count()
@@ -165,6 +180,11 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 			hor.WriteU16(q.data)
 		}
 	}
+	// pool free-list ORDER steers every future queue allocation (#334)
+	hor.WriteU32(uint32(w.orderFreeHead))
+	for e := w.orderFreeHead; e != NoOrderEntry; e = w.orderPool[e].next {
+		hor.WriteU32(uint32(e))
+	}
 
 	hb := h.next() // buffs (pool-index order: live rows + derived cache)
 	p := w.Buffs
@@ -182,6 +202,11 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hb.WriteU32(uint32(r.Source))
 		hb.WriteU32(r.RemainingTicks)
 		hb.WriteU32(r.PeriodicClock)
+	}
+	// pool free-stack ORDER steers every future buff allocation (#334)
+	hb.WriteU32(uint32(len(p.free)))
+	for _, f := range p.free {
+		hb.WriteU32(uint32(f))
 	}
 
 	hmi := h.next() // missiles
@@ -215,6 +240,34 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	cur := w.rng.Cursor()
 	hp.WriteU64(cur.State)
 	hp.WriteU64(cur.Inc)
+
+	hco := h.next() // collisions (#334)
+	co := w.Collisions
+	hco.WriteU32(uint32(co.count))
+	for i := int32(0); i < co.count; i++ {
+		hco.WriteU32(uint32(co.Entity[i]))
+		hco.WriteU8(co.SizeClass[i])
+		hco.WriteU8(co.PathFlags[i])
+		hco.WriteU32(uint32(co.StampRef[i]))
+	}
+
+	hut := h.next() // unittypes (#334)
+	ut := w.UnitTypes
+	hut.WriteU32(uint32(ut.count))
+	for i := int32(0); i < ut.count; i++ {
+		hut.WriteU32(uint32(ut.Entity[i]))
+		hut.WriteU16(ut.TypeID[i])
+	}
+
+	hin := h.next() // invents (#334)
+	in := w.Invents
+	hin.WriteU32(uint32(in.count))
+	for i := int32(0); i < in.count; i++ {
+		hin.WriteU32(uint32(in.Entity[i]))
+		for s := 0; s < InventorySlots; s++ {
+			hin.WriteU32(uint32(in.Slots[i][s]))
+		}
+	}
 
 	return reg.Sum(dst)
 }
