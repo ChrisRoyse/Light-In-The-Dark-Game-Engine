@@ -61,6 +61,11 @@ type Scheduler struct {
 	conts   map[ContID]Func // lookup only, never iterated, never serialized
 	sleep   []record        // binary min-heap on (wakeTick, seq)
 	waiters []eventWaiters  // sorted ascending by ev
+
+	// listPool recycles waiter-slice backing arrays between FireEvent
+	// dispatches (R-GC-2): at steady state no dispatch allocates. Pure
+	// memory reuse — never serialized, never observable in resume order.
+	listPool [][]waiter
 }
 
 // New returns an empty scheduler at tick 0.
@@ -150,10 +155,31 @@ func (s *Scheduler) FireEvent(ev EventID) {
 		return
 	}
 	fired := s.waiters[i].list
-	s.waiters[i].list = nil
+	s.waiters[i].list = s.grabList() // re-waits land here, behind this dispatch
 	for j := range fired {
 		s.run(fired[j].cont, fired[j].state)
 	}
+	s.releaseList(fired)
+}
+
+// grabList returns an empty waiter slice, reusing pooled capacity.
+func (s *Scheduler) grabList() []waiter {
+	if n := len(s.listPool); n > 0 {
+		l := s.listPool[n-1]
+		s.listPool = s.listPool[:n-1]
+		return l
+	}
+	return nil
+}
+
+// releaseList recycles a dispatched waiter list. Contents are zeroed
+// first — a recycled slot must never leak a previous waiter's seq,
+// ContID, or state into anything (pool-reset discipline, R-GC-2).
+func (s *Scheduler) releaseList(l []waiter) {
+	for i := range l {
+		l[i] = waiter{}
+	}
+	s.listPool = append(s.listPool, l[:0])
 }
 
 // Step advances one tick and resumes every suspension whose wakeTick
