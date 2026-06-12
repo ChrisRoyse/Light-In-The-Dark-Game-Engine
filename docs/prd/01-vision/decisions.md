@@ -349,6 +349,32 @@ synthesis of WC3 (lore structure + art direction), AoW4 (progression DNA), AoM R
 - **v0.1 (M6):** Vigil + Unbound playable, one skirmish map with Beacon/Flicker, heroes +
   one grimoire track each, vs the M5.5 AI.
 
+## D-2026-06-11-33 — Collaborative world development: source-form worlds, VCS-native
+
+Owner requirement: multiple people must be able to work on one map/mod together
+("maybe they will use GitHub or whatever"), enabling bigger community projects, at
+minimum cost.
+
+**Decision.** Worlds have two forms:
+
+1. **Source form (the editing + collaboration format):** a plain directory —
+   `world.toml` (metadata), `data/*.toml` (units/abilities/upgrades), `scripts/*.lua`,
+   `map/` (terrain heightmap + entity placements in line-stable text), `assets/`
+   (binary GLB/OGG/PNG referenced by manifest). Every text file written with **stable
+   key ordering and line-oriented layout** so git diff/merge works cleanly; binary
+   assets are whole-file replaced (standard git behavior, LFS-compatible). Any VCS or
+   none — we ship no collaboration infrastructure.
+2. **Archive form (`.litdworld`, the distribution format, D-14):** built from source
+   form by `tools/worldpack` with **deterministic packing** (sorted entries, fixed
+   timestamps) → byte-identical archive from identical source → content hashes stable
+   across builders, which the M9 hub and M7 join-guard already rely on.
+
+The M8 editor reads and writes **source form** (archive export = one button). The
+engine loads both. Real-time co-editing (CRDT/OT) is explicitly **not** built — git-style
+asynchronous collaboration satisfies the requirement at ~zero engineering and $0 infra
+cost (cost-effectiveness directive), and the source-form decision is what a future
+realtime layer would need anyway.
+
 ---
 
 ## No remaining deferred decisions
