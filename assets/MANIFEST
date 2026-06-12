@@ -3009,3 +3009,2027 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bb78297f10ebfc8c9a2fc79ab8fb462c64f2eb4bfe4c2c3d486b4ab7eb44857f"
+
+[[asset]]
+path = "kenney-castle/bridge-draw.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d7cded1ab137c118fa9df8c1e5321480fa4170c88cd93901fd324bd3d7f39d27"
+
+[[asset]]
+path = "kenney-castle/bridge-straight-pillar.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "73243308f8154da9a8d7a16d111574197b5913d3add15902a576b81f34b2fcec"
+
+[[asset]]
+path = "kenney-castle/bridge-straight.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "524fcf2ace571b6b668fdef028916095d8ba77f828b98a02ba048e6c09d42e0e"
+
+[[asset]]
+path = "kenney-castle/door.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "71afb0b53ad8f8deaec5b723f051d77e2b2a320beb60d83a5c13c3d16f25a1f9"
+
+[[asset]]
+path = "kenney-castle/flag-banner-long.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "fe1159ab0f9019c112269d3b0c6129f718f55d5f05a7c34fade97529eabe2871"
+
+[[asset]]
+path = "kenney-castle/flag-banner-short.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "27117d115f425f648aa9f0bd5a4202bc1aa2ac7ecebc5d01d5cb060dd52f7347"
+
+[[asset]]
+path = "kenney-castle/flag-pennant.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7874dca1bc9d12db3cc1556ac637f519d5c305bb9742bb428416ce3209238508"
+
+[[asset]]
+path = "kenney-castle/flag-wide.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "3567b99f5c6ad45549c388d72c5ba7dc4483b971f354b04503219e15e293890e"
+
+[[asset]]
+path = "kenney-castle/flag.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "737b179cc594b031558d07d72aa17ef54a24ddc9e05392fb884397aa95940e81"
+
+[[asset]]
+path = "kenney-castle/gate.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "cc4eb4dfcfce366f73bf34c5f0810d766c2cec86a11471b6cb1d4055c0a516d6"
+
+[[asset]]
+path = "kenney-castle/ground-hills.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "53e7dda2b8d3304c5a0bda00fbce9614f17b3d83e22f227b9286da7f35f5809c"
+
+[[asset]]
+path = "kenney-castle/ground.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "483b6c69961d5fdfb248da8433a3d84f998983b7bf3cae8a7e20e14a60400507"
+
+[[asset]]
+path = "kenney-castle/metal-gate.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "45b449ca1f0a8fd91ba1b4520a546ae6c90ffd16600d8af4d11dbc0a6259d6a5"
+
+[[asset]]
+path = "kenney-castle/rocks-large.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "cdb9a81ead1ced7bb2757055303befa498b836427ad6617eca46f1e5fb589aa4"
+
+[[asset]]
+path = "kenney-castle/rocks-small.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "985aa8fd440f2720c0149c4cac00334ce7068c21b209201e3c07e06a9a7958ba"
+
+[[asset]]
+path = "kenney-castle/siege-ballista-demolished.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d237b17b8cbd2fa491ba8f6c43add7660ab6c8b46f480e7c0530950f7f1031f3"
+
+[[asset]]
+path = "kenney-castle/siege-ballista.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "22e0c347291e2d0b8939d9a0d43a2ac2939c9e0cb953f20ca3059ee2bcf61484"
+
+[[asset]]
+path = "kenney-castle/siege-catapult-demolished.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "034f11642f0193622e3ef202e767692e6f1ce657c3488e7278cde1b7265b695f"
+
+[[asset]]
+path = "kenney-castle/siege-catapult.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1bf267a2d264b4062cf97bf15c023fc86f19adb923a4acb7df6e4994250f2e93"
+
+[[asset]]
+path = "kenney-castle/siege-ram-demolished.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "3b4a1a7b1090268fa35ba394f49db55128a45624575af3447721559f151f5ad3"
+
+[[asset]]
+path = "kenney-castle/siege-ram.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "4c6c7d23c84280038f5c62f107dd5f43e561647aa01e660c61e6a8da4325929e"
+
+[[asset]]
+path = "kenney-castle/siege-tower-demolished.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9bd03d0d3a31b4ddd0547d75b559c9c3ecaad400262f6e37e50ff4c104e37643"
+
+[[asset]]
+path = "kenney-castle/siege-tower.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "864e12792264dd602289af8f48089a1c0cdf5b4836cde818143e909bf5b74d84"
+
+[[asset]]
+path = "kenney-castle/siege-trebuchet-demolished.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "37000fb0efed6cfb3874c72e71d63f883e0b66bc40ae6fc5aa5f6864041459af"
+
+[[asset]]
+path = "kenney-castle/siege-trebuchet.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a8e7e730013544d8cad93e1169d8db9d0124de3c35b72060ea6b6367fe9b860b"
+
+[[asset]]
+path = "kenney-castle/stairs-stone-square.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6763e8288cf0d1193bb67d6fae06e36d8610dfd322cf5f2d3c9aa85a1083f91b"
+
+[[asset]]
+path = "kenney-castle/stairs-stone.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "48f0ca2c6b034fb016acfd3e4c3eab51517de0a502077ceb8cc0c7242e51b176"
+
+[[asset]]
+path = "kenney-castle/tower-base.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5df77e55dc4b11ce518b27eddd1b50839ea8bb2eadf7e195d0e4b06ce738ed51"
+
+[[asset]]
+path = "kenney-castle/tower-hexagon-base.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f5ded9947d3ce780ff778e1a53620b069a2bb63bc496df39d538493473bb15a2"
+
+[[asset]]
+path = "kenney-castle/tower-hexagon-mid.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "62e7b7bd966980e75cbcaaf0e2699192c5f5e6aa3c90b57e32ed9d58aefed742"
+
+[[asset]]
+path = "kenney-castle/tower-hexagon-roof-secondary.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6eab0f189354788e3d55c867e604919d562ee7692c984417a024c1ee84628b77"
+
+[[asset]]
+path = "kenney-castle/tower-hexagon-roof.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f5811e66b6bcc87b9d6590d0a3c9d3035bcf7029b28a2d3824c617d5d6b1634f"
+
+[[asset]]
+path = "kenney-castle/tower-hexagon-top-wood.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a33fadfaa2a730856522a968c98a1acef7ed3e9aec5510ca9b1855548cf5e47c"
+
+[[asset]]
+path = "kenney-castle/tower-hexagon-top.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b02c990196d3121f01f5ff1a3107d87443b20bd75dbb0bd0e63e8aa8fb5bea3c"
+
+[[asset]]
+path = "kenney-castle/tower-slant-roof.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2c17953817a7a07f43358401658cc543215705b3c6197f10775fa6495daf18db"
+
+[[asset]]
+path = "kenney-castle/tower-square-arch.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "91387328d18a3ff2655781b1835189c21b0922988860bbb23980a018beafa34a"
+
+[[asset]]
+path = "kenney-castle/tower-square-base-border.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e32f0ae152c2b1ddf4a2e826e97523b8d2ec483cb89798a09fed5a22c5a88ecd"
+
+[[asset]]
+path = "kenney-castle/tower-square-base-color.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b0ea369379b55fe59c7b9584f2772a60c301f377c22e3e7aad02414158f8fbb5"
+
+[[asset]]
+path = "kenney-castle/tower-square-base.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b7a27feb07342b7c13c6f4c2501b9ad654b0ca1f47c95b666e8a6494b9d4c163"
+
+[[asset]]
+path = "kenney-castle/tower-square-mid-color.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "278480134d54bbccdb3e95fa9b9685ce29c796cc1e7db8c25186e6debec87385"
+
+[[asset]]
+path = "kenney-castle/tower-square-mid-door.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "bbdfd4887fa97c32b000bbde6357ebceccdc059a5ab5d51945c26a19d278ca4d"
+
+[[asset]]
+path = "kenney-castle/tower-square-mid-open-simple.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "660028ff53ba1299b68325679867c6d6dd6018a8ed1add36ed7763b2d499c468"
+
+[[asset]]
+path = "kenney-castle/tower-square-mid-open.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7474fb01b21c623094606e9774fc9bf0eb7e8910ce6da8af50e0c3124fe98676"
+
+[[asset]]
+path = "kenney-castle/tower-square-mid-windows.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5fb43c018da41fc0b7fc17ef070bf475e6f8006322c9fa4370a13c6f58dffbe9"
+
+[[asset]]
+path = "kenney-castle/tower-square-mid.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "019539cbf8a558677b7c4e2562900262f05f084ae6315d1522ac2e404d9fd61d"
+
+[[asset]]
+path = "kenney-castle/tower-square-roof.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "99d0c3a191205f74eea16dc5c242f80bddefaa00b7e37530c00c4955789bb63f"
+
+[[asset]]
+path = "kenney-castle/tower-square-top-color.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "41d2b05de56ded2a7731d983cb2c1c875dabf7788185988cdacc7a3a3287ff6e"
+
+[[asset]]
+path = "kenney-castle/tower-square-top-roof-high-windows.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "00de1242319d9cc22bc775ebe845e657b550245bd07e31efefa78f30e2740112"
+
+[[asset]]
+path = "kenney-castle/tower-square-top-roof-high.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "86dc3fd119c7c9fdc9a6582d16d337943ae2fff2e42b0f76c0bfb2cd3c9a24f7"
+
+[[asset]]
+path = "kenney-castle/tower-square-top-roof-rounded.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1dafe6351ed4a0eb2bd10dd50bdff52672ee9bf2e3ceec4d8ec6ea18995c30a0"
+
+[[asset]]
+path = "kenney-castle/tower-square-top-roof.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1997c721d47258c1636eab73c41075f78ababca6df9ed1ebd16e8df58ce0632e"
+
+[[asset]]
+path = "kenney-castle/tower-square-top.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "64f1fc91b4441d063db031f3353ab71294c4a0756a5c6ee0ab8931a7cc926d8b"
+
+[[asset]]
+path = "kenney-castle/tower-square.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "3091468125473036f27fef70ebeb041f7964f92d37e12fc80aecc2ed959608ae"
+
+[[asset]]
+path = "kenney-castle/tower-top.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "62a91103578a70ffce65fcc1100c1556b0a7caeac54e15798632897a1cc313f1"
+
+[[asset]]
+path = "kenney-castle/tree-large.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "3eee2ebfc2083b304caf1deae55f60b840bc71f7fc2c8358d30db9f0ed8fa3d1"
+
+[[asset]]
+path = "kenney-castle/tree-log.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "0146a7d7c7bb793b9333d0ee9642b6340e9dc0a46c6a904320b35dd9be74fdc4"
+
+[[asset]]
+path = "kenney-castle/tree-small.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "8a5fed35d8bf95d56621e41f526748eea5d146cb53fb2b9dd3c407ae50db44f4"
+
+[[asset]]
+path = "kenney-castle/tree-trunk.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "34b6500a3d246c4e52ba8bf056191d14430d0a21c2e9c084d8c03897c3c35bc4"
+
+[[asset]]
+path = "kenney-castle/wall-corner-half-tower.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6f9bc2bd61e0e729e9fc71b1f8bc10b3911906899d87f08112f26f3458b6de2f"
+
+[[asset]]
+path = "kenney-castle/wall-corner-half.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "048eed66efe35f97cc09d3829f3c01bb0eb5df3716770474f64d3e613d32bda9"
+
+[[asset]]
+path = "kenney-castle/wall-corner-slant.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "fa2585aa5f3763c800e9e7ae585f8e324d24c7ab0cacaad9f05d523f64390d3e"
+
+[[asset]]
+path = "kenney-castle/wall-corner.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "29e37795d40c0a950349c9fba0d3cc7d3dfa8c16c722c0cb76be27ae3d0c0a90"
+
+[[asset]]
+path = "kenney-castle/wall-doorway.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c7befe6054402b9d4bf2f1792f573f370131f0ea73b21c66f6907b0ed966360f"
+
+[[asset]]
+path = "kenney-castle/wall-half-modular.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "601fa4ef3f8e97c42601f62e0a80589e9633a337225593ef2f4af3a27b1aceae"
+
+[[asset]]
+path = "kenney-castle/wall-half.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "fea4afbaadec6880a49a5a803d3647684d479e9b655465afeeb5d51e5b98809e"
+
+[[asset]]
+path = "kenney-castle/wall-narrow-corner.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "4fa95c7f3e8c7d16c09476ec63ef60d5cdc0ad9e7d2fba4dc8419d62cf15ece9"
+
+[[asset]]
+path = "kenney-castle/wall-narrow-gate.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "eae01c7aae504f890c16f2cf6b2f742290cdd29de40425439993e96d1d323e33"
+
+[[asset]]
+path = "kenney-castle/wall-narrow-stairs-rail.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c6d2ab55084c0cf948ae47fa6b0bd2bc63b72a9539e57b7eb3d13d99625f2e52"
+
+[[asset]]
+path = "kenney-castle/wall-narrow-stairs.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "310530cbe31b4097f18b8de4a63117b7c42223c90200a4a7f4ee7b4a33fb4643"
+
+[[asset]]
+path = "kenney-castle/wall-narrow-wood-fence.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2e2e7874f496226801bf70898add587457cf624b2f104df8f97b0416d56ec78b"
+
+[[asset]]
+path = "kenney-castle/wall-narrow-wood.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6213c2444cf49118bb5ceca4107a518524b70c756242132904d7a31227cd8cc4"
+
+[[asset]]
+path = "kenney-castle/wall-narrow.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "eb942ab16bf4cd9992a56338781fe44c7bac7be97b73665b8eb46b7bd61ec6b0"
+
+[[asset]]
+path = "kenney-castle/wall-pillar.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2785432f0c2a14429f1c68a5b2d505c17118677b6b36ff958a9b54c52eae8094"
+
+[[asset]]
+path = "kenney-castle/wall-stud.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6eef17d22f32b070b7d3c7b0b11faea61d80e06b58557536f3154f44e55542aa"
+
+[[asset]]
+path = "kenney-castle/wall-to-narrow.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "998465418235380f91d9635364296a865be12047254f303035ad8916de9600dc"
+
+[[asset]]
+path = "kenney-castle/wall.glb"
+pack = "Kenney Castle Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/castle-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e615e438bcb8edb3c406db26fa4c7fbf6ec4e81d8affedee7a3bf80f0687127f"
+
+[[asset]]
+path = "kenney-hexagon/bridge.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "928cc7601af78e539171ec9620fa267138e77ba27cd1cba3b300af04b8cf6979"
+
+[[asset]]
+path = "kenney-hexagon/building-archery.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a1c929a3f963c14ebe8ab59f569b9a4fecd95c26cc7fe399c22657cbc7c72ac3"
+
+[[asset]]
+path = "kenney-hexagon/building-cabin.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "abac7fa53253056a585e0f88918bec0fc7b4684e6bde23397c9a462e1b236477"
+
+[[asset]]
+path = "kenney-hexagon/building-castle.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "252118b1becaab175836bcbc9a01e000b14d145799df3787e9c0e6dafb3f71e5"
+
+[[asset]]
+path = "kenney-hexagon/building-dock.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b657b19638ecb9f4cffbb524e341981d74c73677ec9f3f915e85426371895a26"
+
+[[asset]]
+path = "kenney-hexagon/building-farm.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "8d26f627f5a0c1e7d1c7e39f20d672b2a6e2109c16febb03439ddafa2b9d79b3"
+
+[[asset]]
+path = "kenney-hexagon/building-house.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "95bd71684502f535434ee2a6dd06161261f96715fb86ba543f0f77c26b670c35"
+
+[[asset]]
+path = "kenney-hexagon/building-market.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "df24f0ca75514e4794ec61844f22e752db68fb0d5f0c5d4660711b956b5ed97d"
+
+[[asset]]
+path = "kenney-hexagon/building-mill.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "ee11dc0166d22dfc6fa6519b41c778c3c2a0cc56d1b77ebd5b5e70f0b5d3c8c9"
+
+[[asset]]
+path = "kenney-hexagon/building-mine.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e099360e9ffe58d033d66ee750a19ba1d53b49fb2d6957f1d42dd5b605f345e3"
+
+[[asset]]
+path = "kenney-hexagon/building-port.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "036de30dbc6f02d63380d23ac90276fb54fbe59086482224e9476f18420cf0a1"
+
+[[asset]]
+path = "kenney-hexagon/building-sheep.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "92d89ac15178e216cabb57e8b4068613eed863c33e5c16649ed204387455baa7"
+
+[[asset]]
+path = "kenney-hexagon/building-smelter.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "73b4eb4142bfcfafacb0402b511e845c1d79bd98f03c5676cd91860a501dc49a"
+
+[[asset]]
+path = "kenney-hexagon/building-tower.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "04cbff9748161a4d5505e56e5aa660e4fa5b5842b99c5b65eca32fd857111313"
+
+[[asset]]
+path = "kenney-hexagon/building-village.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6a6cef8aeb8685c74e3d9ddbb11d03adea96a3a84073309c847341c32ec77aa5"
+
+[[asset]]
+path = "kenney-hexagon/building-wall.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c7bc2a2f8a51f4a6e6b21c73030eb9aff452bc4587ad6e0388a8cf3ee95ef6de"
+
+[[asset]]
+path = "kenney-hexagon/building-walls.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d10ead90b866464cce6ed4b51af1f099772ae8d20e24cd55a41fc5ef1360feb9"
+
+[[asset]]
+path = "kenney-hexagon/building-watermill.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7aee39cdf7ae6d5083a431ba642e7b09731b879f17039a6234d798ad3f98f1fc"
+
+[[asset]]
+path = "kenney-hexagon/building-wizard-tower.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "04db1fb4867c4f01c3567f1f20d17a44f57f0a2b5ef95e606632f2b42fa5c76e"
+
+[[asset]]
+path = "kenney-hexagon/dirt-lumber.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b55e3a137d58b6fb973e016260a63763f33d44407cd626f04928d8106b70cb5e"
+
+[[asset]]
+path = "kenney-hexagon/dirt.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a0c44d4e12dd49ccf22d4f6cab75c41a7a6262da4c503e0d80c5969f90aeb219"
+
+[[asset]]
+path = "kenney-hexagon/grass-forest.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b5c0640984bb18e81f3d07aa494b46bfb9d092ec455962cf88dde0b34be39e5a"
+
+[[asset]]
+path = "kenney-hexagon/grass-hill.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "21b502c2eb1b99225d43f3ae147ff0b13a6f84c1e32ae73c7076b1e7cce12100"
+
+[[asset]]
+path = "kenney-hexagon/grass.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6f82794aa808babe96355d23cc132daff290c3e864ce7d3c659dfa422322da82"
+
+[[asset]]
+path = "kenney-hexagon/path-corner-sharp.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1ef7702306e74648e86a336e0f444287ae45292ddb0b1387fd7986e45127bb20"
+
+[[asset]]
+path = "kenney-hexagon/path-corner.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e9336906e32493e1c40d370fe84c83de25dc5de341986e3fc2da4ec2f54f0952"
+
+[[asset]]
+path = "kenney-hexagon/path-crossing.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1638760598dcc73513a2233ca9f17f7d721b82089059137504be1b2bad1aaf31"
+
+[[asset]]
+path = "kenney-hexagon/path-end.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "8b4c3e037f6b24caa2fc6a13b7fcc8e69f64bf57471edeb31d66d5c8c7a246e6"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionA.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7cbda5f6a607c8d90794ccd2235f34af7ee42414384f4d9a740174d901d7de7a"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionB.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "42697bc0536e11130dcb8ec48b5af81eb1a29c0f72d3fcbd666bfe15ac914e7b"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionC.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "77d9ddf425bfea64d3f13f5fcb53600a0a652ea9dfe14fdfaaef8e193973bf33"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionD.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "df4b272af51e96da551606002f5b3e4bb8bc2d6dfb8e06341e002c307ac753dc"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionE.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "0ae1b7de139eb603023f271f46f25c69dec6def9b737dcd212a52693c793b994"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionF.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "03e7ab361fbb8664cf344c1d9dbe495120e03f85f2d5841836c8fe334854b90e"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionG.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "30276cfb33f8faa26258b7304eab3fad6ed3dbd36a50297ce2a5f067361cd711"
+
+[[asset]]
+path = "kenney-hexagon/path-intersectionH.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b54f24c3c8f921c9b550125b3ad5c50ccb0be05e09e0e61875f860f1217845b9"
+
+[[asset]]
+path = "kenney-hexagon/path-square-end.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "59275bd589907aef1594d6474af85fd354ad2fb235dee87a0f5bb8f006daeb6a"
+
+[[asset]]
+path = "kenney-hexagon/path-square.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "fcaea114e2180a8939499d86c5aa98ff5e579915de01a0619510eb0b2a320142"
+
+[[asset]]
+path = "kenney-hexagon/path-start.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e78203ca88b02788e15df1cf013bcfd428b831ea354147e9b25e145481ccb2b0"
+
+[[asset]]
+path = "kenney-hexagon/path-straight.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a2ba347c4742467f4de6bd70f3997b3b0eabc6a7d051c8a052e08e9ae3a9c8b6"
+
+[[asset]]
+path = "kenney-hexagon/river-corner-sharp.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f2b8b8934bd1353fd0be7b0c1f2cd534dd56d74c264d2d4c94f0831516c49af8"
+
+[[asset]]
+path = "kenney-hexagon/river-corner.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2b95650e5dcd7d96051bd464fcafe4982e1633e3715053f538d1a5eb42078967"
+
+[[asset]]
+path = "kenney-hexagon/river-crossing.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "0a50fe2108e6ef9b1c7cead1109cd19c70d3f26fdb52c5ebd196b69f43904a51"
+
+[[asset]]
+path = "kenney-hexagon/river-end.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "508d6e10385c84e4233c147d3634f0fe6deb111cde5000a705b85da6db9528a4"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionA.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "da8c2f5fac6ff9f755e402eecabe004e6f0d5c2c1b33cd77c237c33726930bd5"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionB.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c9b2cff6050081a5e852d36c6cf7c75eeeae6a32e28c5e874fbdcc421a53fbdd"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionC.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1d8ca2d75ed9ac2a7600f5189c12fc4b80620460a6c4f3e5cf29e0740a2f56cf"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionD.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "ecd4cb49e0fbc04032a1115aa8fb2f932fbe0d4b25ed0f6f5c2a8f13658a2084"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionE.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "46fd843c79a140b75ee82e693ef89c33a0a3896892850344b269eea5d6462c64"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionF.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5a44b04a6db26822d5ba22053c6597e05baa6492fa1323a79c598f9862ba31a8"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionG.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "34807870c78b92467aa9f542326bce0b4ac4a90016b09ba828b05248c9b96d41"
+
+[[asset]]
+path = "kenney-hexagon/river-intersectionH.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "31b62854309d4fb40768c6314724d462fe9c3ad1d1f25d296030ffd5a670c184"
+
+[[asset]]
+path = "kenney-hexagon/river-start.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1a6703d4d1360104dbe4d2a3fb5a04a14b044fff92d48435d610403c517e2b80"
+
+[[asset]]
+path = "kenney-hexagon/river-straight.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "992106342081a4686baf0c4400be508f7e59fd87a5f0cd7e1bd7ae8d0129348c"
+
+[[asset]]
+path = "kenney-hexagon/sand-desert.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "415dc88f83d475d9669934c1a768947fcffb268bbc7bfbbe81c89b3dc5e405fa"
+
+[[asset]]
+path = "kenney-hexagon/sand-rocks.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e77c8fabed2640cab7c8329c28dcbbc0cc78db4daa53cd23192a134b30761d35"
+
+[[asset]]
+path = "kenney-hexagon/sand.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d06aae664655e39db59b74285bbb831c393637a2aa0d460330782425798f4c6c"
+
+[[asset]]
+path = "kenney-hexagon/stone-hill.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "bf61274060c5374bb17a04b5a4851e9e47175f675fff62da4d7a9c8aec5b61de"
+
+[[asset]]
+path = "kenney-hexagon/stone-mountain.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c63a8b5374780d528d43e9efe83ab592f2c7ec0a84aae4a2ca461f5fc5d717f4"
+
+[[asset]]
+path = "kenney-hexagon/stone-rocks.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "ff5b0cff528934078e7bcc0cc1c911f772c8a2088815c4dca30f617cfa405919"
+
+[[asset]]
+path = "kenney-hexagon/stone.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "36b8b8521bc03a6d6c2baefeec1f6044e48eebaaaf51372dd4b6cbb0765fe82b"
+
+[[asset]]
+path = "kenney-hexagon/unit-house.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7f872464ac294dbb47fd061f5a9d63f02f6b7a224fb8650f454517cb8271cd79"
+
+[[asset]]
+path = "kenney-hexagon/unit-mansion.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "da8d144dd6043b9291d46edb57a15a0d1e21db0310f117fccad0f03d73014ce0"
+
+[[asset]]
+path = "kenney-hexagon/unit-mill.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "067d76749147670981ca8cbb69e3d548fb947c8cb03c14b1108b93c5fa3d40a8"
+
+[[asset]]
+path = "kenney-hexagon/unit-ship-large.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "19d3be9b3fa4f4900184a1685c663823f370cef51093eb13421dc4d04e9bc3fb"
+
+[[asset]]
+path = "kenney-hexagon/unit-ship.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "cdb420445db67a5aac880394caefaed758320d6de7d795636d7de9940031f623"
+
+[[asset]]
+path = "kenney-hexagon/unit-tower.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "8370ed063ff1dc58c52f6193b26c17326a2daa983ff32fbeb57f896ea7e6ad9f"
+
+[[asset]]
+path = "kenney-hexagon/unit-tree.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2875f3ef8fdaa4abbd1fa008d36b3dd0e4e1b36697f95e9c775c99a293cd8a35"
+
+[[asset]]
+path = "kenney-hexagon/unit-wall-tower.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "595fb5f5f2e36248d32f260f2c3f5dc65694eed21250c95d4880c1a52edbe091"
+
+[[asset]]
+path = "kenney-hexagon/water-island.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "434a256cdbb80da385d2edc7affca1a78b0e69d32e675c2f450960caab9ec9ef"
+
+[[asset]]
+path = "kenney-hexagon/water-rocks.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "71396df0d09e27490148e8fda8a073a3f064d60166b48c7d0ccc7616cd67b74e"
+
+[[asset]]
+path = "kenney-hexagon/water.glb"
+pack = "Kenney Hexagon Kit 2.0 (KHR_texture_transform baked out)"
+source = "https://kenney.nl/assets/hexagon-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "99e1f76d6167d3f7a6159c757ca4d91c06a5aec990441941aaa35a2f385a8e83"
+
+[[asset]]
+path = "kenney-retro-medieval/barrels.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e3117a5d9434af0d395062798b280924a65565788c4712d3cc1f1781508275b8"
+
+[[asset]]
+path = "kenney-retro-medieval/battlement-corner-inner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "cc33ee68d49414d0e64eba7a08b5066048763fea8fda4be72acfa961eadd80b9"
+
+[[asset]]
+path = "kenney-retro-medieval/battlement-corner-outer.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9b2dccf36906713b4f2f5e414354329dae6a636a8792f263ad11a62774855952"
+
+[[asset]]
+path = "kenney-retro-medieval/battlement-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9eb8d76c4cdd3e5e242fb24cdf53250a47707d0657d64d8896e4388fe61e10db"
+
+[[asset]]
+path = "kenney-retro-medieval/battlement.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "51821ec896219a4209a7e2882230a5859ce6fc22045d5d8a27de38a38dd5aac5"
+
+[[asset]]
+path = "kenney-retro-medieval/bricks.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9152f246a37e15c57e72f59754f541ab85ca203fcdbd7d63a2059eb26b4fc75d"
+
+[[asset]]
+path = "kenney-retro-medieval/column-damaged.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1890e741fcc7350b9cfd1c130886a076acafb5198e78799c8fd9676ada32a1b2"
+
+[[asset]]
+path = "kenney-retro-medieval/column-paint-damaged.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5d6bcf0c9e59339881a609fc999f3584c0231b571a1531f88bf636e653bb557c"
+
+[[asset]]
+path = "kenney-retro-medieval/column-paint.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a4bce61f44ea4558a9938435d86f90154c3cfef8c815650c95583912d265b5ca"
+
+[[asset]]
+path = "kenney-retro-medieval/column-wood.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "fc1256c602573092f13df98d23b8223ba1f1286f68f760dfbb4147b737ab6cd9"
+
+[[asset]]
+path = "kenney-retro-medieval/column.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d356e4433e121195cee92e21ba20d5ff0456e566131c86d399cc197b057c2d60"
+
+[[asset]]
+path = "kenney-retro-medieval/detail-barrel.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a00ff16ae4f04947da9a66bbde509a78a1575059ed511475026c62f16293caea"
+
+[[asset]]
+path = "kenney-retro-medieval/detail-crate-ropes.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "63b4cf09552e7f2598a7a2e6ebf895a10cd6c8f9b519f8d58d594a9db8a3f1b9"
+
+[[asset]]
+path = "kenney-retro-medieval/detail-crate-small.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "413b4f9fc0e43208abca53b6cd5be9e51fc75504771afe41429be670e6f47fe9"
+
+[[asset]]
+path = "kenney-retro-medieval/detail-crate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7908cb732163ceec29556323a2a30d7fde39a672d9712ee1d8f5df49e59cde0f"
+
+[[asset]]
+path = "kenney-retro-medieval/dock-corner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d6c09691b8d93cf79a46c6d7d5ff7d7a32365a6971cc2e9c8768a435eceff772"
+
+[[asset]]
+path = "kenney-retro-medieval/dock-side.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c1f3b169df7de3b7908aa5c934de7675a0b06230689e036cafba6fd1fe85e60b"
+
+[[asset]]
+path = "kenney-retro-medieval/fence-top.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d28709a35955cd560a16deefb1c0689593201c55a2486e978521b519375c8148"
+
+[[asset]]
+path = "kenney-retro-medieval/fence-wood.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2573f949dae251fcc559b0c5960ee1f27403801d5f2721dedf7b4fcdd4189f3e"
+
+[[asset]]
+path = "kenney-retro-medieval/fence.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9da9660103b409ea29318bb1a5da076f51519417c3cb3dcaa1974d62920703cb"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-flat.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "536e4d2a02eb3aca6e6b23c23fdb8fcb397e5ad069c659ac7bb0b0c38a74630b"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-stairs-corner-inner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "3abe5094ee824717292ff80c1eadb0c72746ccf653e034169f8e767699da09ba"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-stairs-corner-outer.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "08e7e1c37c0ecc0f678bea8e7eda261f99de84ad1228d7388d2a12d0c3a513b9"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-stairs.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "a432baed2c71ab45024166c5ab33d76c1928f89495790072bfca886956bda8bf"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-steps-corner-inner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7b3ec60741d277e09e837193006a9e24d8ca9b1dfce0368d834bda634a737342"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-steps-corner-outer.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d6f4c670e55d253fa7b2b80f484fcd372150d95f27aa7324d75b08132384f111"
+
+[[asset]]
+path = "kenney-retro-medieval/floor-steps.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c0ceea388accae179d5796edb1ab61b57378502a4921c20de119853fd4ab1937"
+
+[[asset]]
+path = "kenney-retro-medieval/floor.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c03ee83287e38ce2469194b1560754c3fe9d630949dabb60acce7675e9636ae2"
+
+[[asset]]
+path = "kenney-retro-medieval/ladder.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2bca0b4cdd4aece22af9e1d213e9e2e1a51dcb70344dea4a9f961744acfcdb1a"
+
+[[asset]]
+path = "kenney-retro-medieval/overhang-fence.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e836b35ff845c6cd0650cdba8dfc0891b371e4adbf6ffb523082989bc9a34e8e"
+
+[[asset]]
+path = "kenney-retro-medieval/overhang-round-railing.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "584f3ed52578860bcf44b29371a3ff80855f8955f8a447790cba4238feaa85c0"
+
+[[asset]]
+path = "kenney-retro-medieval/overhang-round.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e19d568ab9723f493cb806d4c0dcaaace2b3cd103e3448411d647ba68e6a8017"
+
+[[asset]]
+path = "kenney-retro-medieval/overhang.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "0784901e82b1482645d18c24dab743608166195f140d4e18d368b03966ea1190"
+
+[[asset]]
+path = "kenney-retro-medieval/pulley-crate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "226b4eb99340a112d7dcc531b26b5b7a894dad7b2ca9fe4069a08405d7292acc"
+
+[[asset]]
+path = "kenney-retro-medieval/pulley.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "b55d7a3b1ad1d76b4d891ec7ee59507797c335e88b61c6b4f27dd5252f5c30f0"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-corner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "971fa2fe7a92926c1b1060d637bd210ee67ee98b35c60ed95bee1001cdf763bc"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-edge.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "be5c313ff20380dc2a10a63b8580d28284f375aab77b85ed5dd1209e6a3c615e"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-high-side-corner-inner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "61e557ba75a07ea86acf7eb5c502fb2ef830c2a33af82e22276fb5464547dc3a"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-high-side-corner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "0c128b25a49630b3faca82d98451503b5fdfa42fc3a48613b9284b5f40c58536"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-high-side.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5ee1a7b41b5c5376d64254d7b6b9202a7fa322b344913760d93a6e170bb26bf4"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-side-corner-inner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "dfd18661624b6603e8cf15ab36eef27d462817ab21084676ba71de4bec06b45a"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-side-corner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e7dcea1b2c5b330eb9fad4b68d2b52e6944c06b8ef0632ba1d1491434166318a"
+
+[[asset]]
+path = "kenney-retro-medieval/roof-side.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "67dd8e47f4ed2e01dd9aab9a994392752e7fc02e5cdc9c8e3cf53ee2043edd37"
+
+[[asset]]
+path = "kenney-retro-medieval/roof.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "de40cbbd2fd4678955e037a6c9675c2a5bf34ea8c6ea4d680dc828d9c0ff60ab"
+
+[[asset]]
+path = "kenney-retro-medieval/stairs-corner.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "15e5352d0e9d1b0f982dc59782fc3ef75cb9b7a53573c5f51adac10315144286"
+
+[[asset]]
+path = "kenney-retro-medieval/stairs-stone.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "0d82ef44f1632fb77265e09483b2784ed74e8e3567ada320bdf41e32f5617b67"
+
+[[asset]]
+path = "kenney-retro-medieval/stairs-wood.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "ecbac9c88e02304e88dc584177639f329d5b85cf678340750258b0d7b6e91cfa"
+
+[[asset]]
+path = "kenney-retro-medieval/structure-cross.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "4ca1bb13ab7e115d1b0702a0437cf9d06f92321864d0166498dc9d117f541fc1"
+
+[[asset]]
+path = "kenney-retro-medieval/structure-pole.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "97cf225e5a4e67c565ee71a22940b05028fd5e6c84a3283ac38d0ac48384aa23"
+
+[[asset]]
+path = "kenney-retro-medieval/structure-poles.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "188ef78f925c700c7d27e891c63832869ea238d8ed7d8d1200f9615d0eb8d31e"
+
+[[asset]]
+path = "kenney-retro-medieval/structure-wall-cross.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "35d270efda5bc73f20617e866e30981c4bc96580ab850a9d5d1a74c30414c41b"
+
+[[asset]]
+path = "kenney-retro-medieval/structure-wall.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "bdf9a6086b2606cacbe3bb32100da91514cde990a9a04624e58493c69c1e4c59"
+
+[[asset]]
+path = "kenney-retro-medieval/structure.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "68c9b3f8bd33ff084604139e1dc9b4eeabbd964a84e869bf621b3d106e9ba0b5"
+
+[[asset]]
+path = "kenney-retro-medieval/tower-base.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9638da419cbfdd31eac89d6f35bba96f94c589cbea8468a5e3bb5564c8debc79"
+
+[[asset]]
+path = "kenney-retro-medieval/tower-edge.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "aab077d44d1ccfb9c820d3dcb0d6697e47875af6455f2279aef12b9670e1addd"
+
+[[asset]]
+path = "kenney-retro-medieval/tower-paint-base.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6c1e32b5d04218991dbfd6534330429582a86a9ec8d6d03902030605e71a5e67"
+
+[[asset]]
+path = "kenney-retro-medieval/tower-paint.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "cfa8af7e8fedaf75b6259994b1ae23d855789a7b238a0010cbdf2ff568f9bfd9"
+
+[[asset]]
+path = "kenney-retro-medieval/tower-top.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d7b8fecff7f4780d04f3ad8229265773d581fbe6b9f812b8c165762bb38fb61c"
+
+[[asset]]
+path = "kenney-retro-medieval/tower.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "9b1f5db20ab89878fbb1163aea72f35d33c4a4c5ce86a6b5f5da17a4a74872a6"
+
+[[asset]]
+path = "kenney-retro-medieval/tree-large.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "238ca32ed780fe244157169390e5749753741fa6a42489f168eb42940c7aa649"
+
+[[asset]]
+path = "kenney-retro-medieval/tree-shrub.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7f457f09dbc145745a5286ab5a210b84f405f660e7b7cc2679b2da7139099090"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-detail.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "21d69cd29bfbd42bddf429d819471d1fb0877287908da532057882bae8b288d4"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f6ef93a4efdca7a0a98f83c4fcaeec68272bec07d5f4a2199cd4560482c05458"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-flat-gate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "200f7480082e9707f2eb65f9fb343ac94057ce0aa2e9ca11fc064ee881d7c7d0"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "8009ff6688c1120d64231793ef0d619f20d3dfd51de11d7ca8b7f21d4453dd00"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-gate-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "eeee0b4678d414b082df3396926075f78a74d3f367653299f25ae002b2840d0d"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-gate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f12de05985ed380078f5fd4da8a1664a4d018ebe372dea8dc060385d40e9d155"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "08b6ab55a00538b6ec4d196431a0bb2ae0cfb66990050fe1b6904e521b608dad"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-paint-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "7499f0aa196547de3e9eee350d86d44e2ebe68a168cbaf28cd37afdcfacaf3cc"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-paint-gate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "ac77cc82ec0b719155df3e9e806731dd627a16248fc1f892d597c4c5d771f8a2"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-paint-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c7872903abec1344ae2934c117b4f9ffe8b2d2b9cc7878d52214449b1bd6b4fc"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-paint-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "ea0784027b52dcd9ad0214c6115c82376350d3a8db0a8339ac11ba5428f3137e"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-paint.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5c4a0b621bd8f8b18a08ba0fcd1d1b1acc1b52f272e6441aa2eda63e30ec3e92"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6a7db28bf8929f3b46182771f37ce7c3692494c9c5a14e8497af6429443d30d3"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-fortified.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "5ca0abf1bed9c0da3e4d12a16ec761e5683478eb623deb0b9cb549fe7cc63dca"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-gate-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "01082e9bb9ffabc72699f4910ecf5023e92965f72d180d326a3131778b24eb6e"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-gate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c32a722c34c95f0f749d90c49442daa29d9e349ec31bf00d1e7d60d0774251e3"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "fd3f638988d93871c8736a08c671146ac2ddde4d95e7f93df972415c2ea76461"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-low.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "742d26df1bb883265f3005b25dbe6adca78350defaa6d3f1d3c9d6d0123a2f45"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint-detail.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "6ced3d7d048169cae576dcb37121627970513fb36153075769e116d75d6403a5"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "4c614128825edc9241c159cb07526285f8e59d4c33b0bda719d9c72c690eab0d"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint-flat.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "06cd4765c970d810ff751939ccee8148e046fcdd31dcd1f22d436abf3fd39dba"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint-gate.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e11ff93059b0a4aeece2746405c72cc4b55096ea9bba0f42fcbedecd3d2eef6c"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "32ac54e7bbdeca90f316d261e0ad06a2f0c0c1b4a246441bf11a88f0c6258354"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "2c40a12a996953cc7a42bab060c4dcf37b71f3dceda503c8434eebcb610c50a9"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-paint.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "220172c9aac51d42d92890d3694edded39d6afc8b5ce8d8daa73940cff145cd0"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "abfe1736287e7c3f7cb29f8eae52d83d835b1fb75d34e38b0e5c5c7cf8a9bafe"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-paint-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "82b3e62ea1e9de78e107f57f78b9c614fd398a9d38ae6c92c39f9c6b4ce2a6e4"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-paint-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "d7c4417086019754d1f8f2dc3406432d2ff0d6d7a35b115634a160bf26aca0e5"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-paint.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c3109bf59eb7b0b585501cbbb050e8095f15f48ec2c80906ee97b016d6e10282"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-painted-wood-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "e2e9063e0e81018157947d0a428dced47ae9fd00be8db63be8fc08576eabfb46"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-painted-wood-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "72d85d02a66700172046d8b3b3525d362536f44fcdf11065160ecfc4639465a1"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-painted-wood.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "61f4d2ed99fb3784722ba271e87449797e269e8eb35ca1d2623cee8a3eb4b3d5"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1eaeda1e0a09c351fc3d2092ab995233ced8fe090602eb3c8a2b431f0fdea63f"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-wood-door.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "35d1ae37f87f0460e169d6d144a615ef26b41cc5084c00037dd8916de18878e8"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-wood-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f5523dbc06b23fecbb05ed065253c079e87f0af9d8c62c166a6d14b92612005b"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane-wood.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "efd3253205b25a53c707ec780287409c65b1218f62d1a8ccd3e42919a84b2f5a"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-pane.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "f1aa2afef5445f0a51b78adf52fadc6e257115e379ec2e0b7e81d5cd391a0911"
+
+[[asset]]
+path = "kenney-retro-medieval/wall-window.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "3672937020b99fc8de965acff020f5a23360d4ef8d79cbf970e07e438af85827"
+
+[[asset]]
+path = "kenney-retro-medieval/wall.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "378918e7193cb2ca36d754c849de761690a4bf5d387e8f4bf3d19a3be47835fb"
+
+[[asset]]
+path = "kenney-retro-medieval/water.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "12b856ee630415f63e4fc2ae6931e31fcba6b3a2c419848718a818be899d78c5"
+
+[[asset]]
+path = "kenney-retro-medieval/wood-floor-half.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "c39de0167378a5c9c76336b2663ec662f08c18e6a3c0fb56b0b0036f6a526e94"
+
+[[asset]]
+path = "kenney-retro-medieval/wood-floor-quarter.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "514489e4ca65792f57e5f61ecb61cf7e573ece14a7e050ed99a6b14687e20c7a"
+
+[[asset]]
+path = "kenney-retro-medieval/wood-floor-railing.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "1d1237351c26fd3083ccb98d04b97717b98f6087d8152fb4c04595c03de83564"
+
+[[asset]]
+path = "kenney-retro-medieval/wood-floor.glb"
+pack = "Kenney Retro Medieval Kit (KHR_texture_transform baked out)"
+source = "https://opengameart.org/content/retro-medieval-kit"
+license = "CC0-1.0"
+retrieved = "2026-06-11"
+sha256 = "decb332416397e0b8c5ab3a55ab5ee91c8ce3c8f2767c2d2e282f868acbc9b8d"
