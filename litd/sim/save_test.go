@@ -208,15 +208,21 @@ const (
 	saveClockSectionLen     = 8 + 8 + 1 + 8 + 4
 	saveGameStateSectionLen = MaxPlayers
 	saveEffectRowLen        = 2 + 8 + 4 + 4 + 4
+	saveAbilityFieldRowLen  = 4 + 4 + 1 + 1 + 8
 )
 
 func effectSectionLenForTest(w *World) int {
 	return 4 + int(w.Effects.Count())*saveEffectRowLen
 }
 
+func abilityFieldSectionLenForTest(w *World) int {
+	return 4 + int(w.AbilityFields.Count())*saveAbilityFieldRowLen + 4 + len(w.AbilityFields.free)*4 + 8
+}
+
 func clockSectionOffsetForTest(w *World, saved []byte) int {
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
-	return len(saved) - 4 - 4 - len(blob) - effectSectionLenForTest(w) - saveGameStateSectionLen - saveClockSectionLen
+	return len(saved) - 4 - 4 - len(blob) - abilityFieldSectionLenForTest(w) -
+		effectSectionLenForTest(w) - saveGameStateSectionLen - saveClockSectionLen
 }
 
 func gameStateSectionOffsetForTest(w *World, saved []byte) int {
@@ -225,6 +231,10 @@ func gameStateSectionOffsetForTest(w *World, saved []byte) int {
 
 func effectSectionOffsetForTest(w *World, saved []byte) int {
 	return gameStateSectionOffsetForTest(w, saved) + saveGameStateSectionLen
+}
+
+func abilityFieldSectionOffsetForTest(w *World, saved []byte) int {
+	return effectSectionOffsetForTest(w, saved) + effectSectionLenForTest(w)
 }
 
 func TestSaveClockRoundTripAndResume(t *testing.T) {

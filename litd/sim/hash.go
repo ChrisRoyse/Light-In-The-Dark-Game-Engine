@@ -44,6 +44,8 @@ var HashSystems = []string{
 	"gamestate",
 	// appended by #349: persistent script-spawned effect rows.
 	"effects",
+	// appended by #354: sparse per-instance ability field overrides.
+	"abilityfields",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -453,6 +455,25 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hfx.WriteU32(fx.BirthTick[i])
 		hfx.WriteU32(uint32(fx.Entity[i]))
 	}
+
+	haf := h.next() // abilityfields (#354): live rows + free-stack order
+	af := w.AbilityFields
+	haf.WriteU32(uint32(af.Count()))
+	for i := 0; i < af.Cap(); i++ {
+		if !af.live[i] {
+			continue
+		}
+		haf.WriteU32(uint32(i))
+		haf.WriteU32(uint32(af.Ent[i]))
+		haf.WriteU8(af.Slot[i])
+		haf.WriteU8(af.Field[i])
+		haf.WriteI64(int64(af.Value[i]))
+	}
+	haf.WriteU32(uint32(len(af.free)))
+	for _, f := range af.free {
+		haf.WriteU32(uint32(f))
+	}
+	haf.WriteU64(af.Rejected())
 
 	return reg.Sum(dst)
 }

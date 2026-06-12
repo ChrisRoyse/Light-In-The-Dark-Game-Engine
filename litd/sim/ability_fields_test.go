@@ -153,7 +153,14 @@ func TestAbilityFieldUnknownFieldFailClosed(t *testing.T) {
 
 func abilityFieldWorld(t *testing.T, slots int) (*World, EntityID) {
 	t.Helper()
-	w := NewWorld(Caps{
+	w := NewWorld(abilityFieldTestCaps())
+	bindAbilityFieldDefs(t, w)
+	caster := addAbilityFieldUnit(t, w, slots)
+	return w, caster
+}
+
+func abilityFieldTestCaps() Caps {
+	return Caps{
 		Units:             4,
 		Projectiles:       1,
 		Effects:           1,
@@ -162,7 +169,11 @@ func abilityFieldWorld(t *testing.T, slots int) (*World, EntityID) {
 		PendingEvents:     32,
 		PathRequests:      1,
 		ScriptedDoodads:   1,
-	})
+	}
+}
+
+func bindAbilityFieldDefs(t *testing.T, w *World) {
+	t.Helper()
 	if !w.BindAbilityDefs([]data.Ability{{
 		ID:            "field-test",
 		Name:          "Field Test",
@@ -171,6 +182,10 @@ func abilityFieldWorld(t *testing.T, slots int) (*World, EntityID) {
 	}}) {
 		t.Fatal("BindAbilityDefs failed")
 	}
+}
+
+func addAbilityFieldUnit(t *testing.T, w *World, slots int) EntityID {
+	t.Helper()
 	caster := atkUnit(t, w, 0, fixed.Vec2{X: 100 * fixed.One, Y: 100 * fixed.One}, 0)
 	if !w.Abilities.Add(w.Ents, caster) {
 		t.Fatal("Abilities.Add failed")
@@ -186,7 +201,7 @@ func abilityFieldWorld(t *testing.T, slots int) (*World, EntityID) {
 			t.Fatalf("SetAbility slot %d failed", slot)
 		}
 	}
-	return w, caster
+	return caster
 }
 
 func abilityReadyManaDump(w *World, id EntityID) string {

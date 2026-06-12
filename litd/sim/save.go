@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v14: ability field override rows + free-list order appended after
+// effects (#354).
 // v13: persistent effect rows appended after gamestate (#349).
 // v12: capability table includes persistent effect cap (#348);
 // live effect rows are serialized starting in v13.
@@ -66,7 +68,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 13
+const SaveFormatVersion uint32 = 14
 
 // ---- little-endian writer / reader ----
 
@@ -578,6 +580,26 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(fx.Entity[i])
 	}
 
+	// ability field overrides (#354): live rows ascending by pool index,
+	// then the free stack in allocation order, plus the rejection counter.
+	af := w.AbilityFields
+	s.u32(uint32(af.Count()))
+	for i := 0; i < af.Cap(); i++ {
+		if !af.live[i] {
+			continue
+		}
+		s.u32(uint32(i))
+		s.ent(af.Ent[i])
+		s.u8(af.Slot[i])
+		s.u8(af.Field[i])
+		s.f64(af.Value[i])
+	}
+	s.u32(uint32(len(af.free)))
+	for _, f := range af.free {
+		s.i32(f)
+	}
+	s.u64(af.Rejected())
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -796,6 +818,15 @@ type decodedSave struct {
 	efColor []uint32
 	efBirth []uint32
 	efE     []EntityID
+
+	afN        int32
+	afLive     []bool
+	afEnt      []EntityID
+	afSlot     []uint8
+	afField    []uint8
+	afValue    []fixed.F64
+	afFree     []int32
+	afRejected uint64
 
 	schedBlob []byte
 
@@ -1524,6 +1555,55 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return r.err
 	}
 
+	// ability field overrides (#354)
+	if n, err = r.section("ability fields", w.AbilityFields.Cap()); err != nil {
+		return err
+	}
+	d.afN = n
+	afCap := w.AbilityFields.Cap()
+	d.afLive = make([]bool, afCap)
+	d.afEnt = make([]EntityID, afCap)
+	d.afSlot = make([]uint8, afCap)
+	d.afField = make([]uint8, afCap)
+	d.afValue = make([]fixed.F64, afCap)
+	for i := int32(0); i < n; i++ {
+		row := r.u32()
+		if r.err != nil {
+			return r.err
+		}
+		if row >= uint32(afCap) {
+			return fmt.Errorf("sim: save: ability field row index %d exceeds cap %d", row, afCap)
+		}
+		if d.afLive[row] {
+			return fmt.Errorf("sim: save: duplicate ability field row index %d", row)
+		}
+		d.afLive[row] = true
+		d.afEnt[row] = r.ent()
+		d.afSlot[row] = r.u8()
+		d.afField[row] = r.u8()
+		d.afValue[row] = r.f64()
+	}
+	if r.err != nil {
+		return r.err
+	}
+	r.what = "ability field free list"
+	nFree = r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if nFree > uint32(afCap) {
+		return fmt.Errorf("sim: save: ability field free count %d exceeds cap %d", nFree, afCap)
+	}
+	d.afFree = make([]int32, nFree)
+	for i := range d.afFree {
+		d.afFree[i] = r.i32()
+	}
+	r.what = "ability field rejected count"
+	d.afRejected = r.u64()
+	if r.err != nil {
+		return r.err
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1627,6 +1707,76 @@ func validateSave(d *decodedSave, w *World) error {
 		effectRows[id] = int32(i)
 		if _, ok := transformRows[id]; !ok {
 			return fmt.Errorf("sim: save: effect row %d entity %d has no transform row", i, id)
+		}
+	}
+	abilityRows := make(map[EntityID]abilitySlotSave, len(d.abE))
+	for i, id := range d.abE {
+		if _, dup := abilityRows[id]; dup {
+			return fmt.Errorf("sim: save: duplicate ability rows for entity %d", id)
+		}
+		abilityRows[id] = d.abSlots[i]
+	}
+	abilityFieldKeys := make(map[uint64]int, d.afN)
+	abilityFieldPerUnit := make(map[EntityID]int)
+	abilityFieldLive := 0
+	for row := range d.afLive {
+		if !d.afLive[row] {
+			continue
+		}
+		abilityFieldLive++
+		id := d.afEnt[row]
+		slot := int(d.afSlot[row])
+		field := AbilityField(d.afField[row])
+		if !entAlive(id) {
+			return fmt.Errorf("sim: save: ability field row %d references dead/stale entity %d", row, id)
+		}
+		if !validAbilitySlot(slot) {
+			return fmt.Errorf("sim: save: ability field row %d has invalid slot %d", row, slot)
+		}
+		if !validAbilityField(field) {
+			return fmt.Errorf("sim: save: ability field row %d has unknown field %d", row, field)
+		}
+		slots, ok := abilityRows[id]
+		if !ok {
+			return fmt.Errorf("sim: save: ability field row %d entity %d has no ability row", row, id)
+		}
+		if slots[slot].AbilityID == 0 {
+			return fmt.Errorf("sim: save: ability field row %d targets empty ability slot %d", row, slot)
+		}
+		key := uint64(uint32(id))<<16 | uint64(d.afSlot[row])<<8 | uint64(d.afField[row])
+		if prev, dup := abilityFieldKeys[key]; dup {
+			return fmt.Errorf("sim: save: ability field rows %d and %d duplicate entity-slot-field", prev, row)
+		}
+		abilityFieldKeys[key] = row
+		abilityFieldPerUnit[id]++
+		if abilityFieldPerUnit[id] > AbilityOverrideCapPerUnit {
+			return fmt.Errorf("sim: save: ability field entity %d has %d overrides, cap %d",
+				id, abilityFieldPerUnit[id], AbilityOverrideCapPerUnit)
+		}
+	}
+	if abilityFieldLive != int(d.afN) {
+		return fmt.Errorf("sim: save: ability field live count %d, header says %d", abilityFieldLive, d.afN)
+	}
+	if abilityFieldLive+len(d.afFree) != len(d.afLive) {
+		return fmt.Errorf("sim: save: ability field pool reachability live=%d free=%d cap=%d",
+			abilityFieldLive, len(d.afFree), len(d.afLive))
+	}
+	abilityFieldFree := make([]bool, len(d.afLive))
+	for _, f := range d.afFree {
+		if f < 0 || int(f) >= len(d.afLive) {
+			return fmt.Errorf("sim: save: ability field free index %d out of range", f)
+		}
+		if d.afLive[f] {
+			return fmt.Errorf("sim: save: ability field row %d both live and free", f)
+		}
+		if abilityFieldFree[f] {
+			return fmt.Errorf("sim: save: duplicate ability field free index %d", f)
+		}
+		abilityFieldFree[f] = true
+	}
+	for row, live := range d.afLive {
+		if !live && !abilityFieldFree[row] {
+			return fmt.Errorf("sim: save: ability field row %d is neither live nor free", row)
 		}
 	}
 
@@ -2009,6 +2159,38 @@ func applySave(d *decodedSave, w *World) {
 		}
 		a.rowOf[d.abE[i].Index()] = i
 	}
+
+	af := w.AbilityFields
+	af.count = d.afN
+	af.rejected = d.afRejected
+	for i := range af.live {
+		af.live[i] = false
+		af.Ent[i] = 0
+		af.Slot[i] = 0
+		af.Field[i] = 0
+		af.Value[i] = 0
+	}
+	for i := range af.rowOf {
+		af.rowOf[i] = -1
+	}
+	for i := range af.perUnit {
+		af.perUnit[i] = 0
+	}
+	for i := range d.afLive {
+		if !d.afLive[i] {
+			continue
+		}
+		af.live[i] = true
+		af.Ent[i] = d.afEnt[i]
+		af.Slot[i] = d.afSlot[i]
+		af.Field[i] = d.afField[i]
+		af.Value[i] = d.afValue[i]
+		idx := af.Ent[i].Index()
+		af.rowOf[af.key(idx, int(af.Slot[i]), AbilityField(af.Field[i]))] = int32(i)
+		af.perUnit[idx]++
+	}
+	af.free = af.free[:len(d.afFree)]
+	copy(af.free, d.afFree)
 
 	in := w.Invents
 	in.count = d.inN
