@@ -29,10 +29,17 @@ const FlowSlots = 4
 // tuned in M3).
 const DefaultFlowThreshold = 40
 
+// DefaultIntegrationBudget is the default Pump expansion budget:
+// ~8k heap pops ≈ 1.25 ms on the #291 reference hardware, inside the
+// pathfinding.md §6 ≤2 ms tick slice. M3 tunes it (#202).
+const DefaultIntegrationBudget = 8192
+
 type flowSlot struct {
 	dirs    []uint8 // 256 KB direction field
 	goal    int32   // goal cell, -1 when empty
 	live    bool
+	ready   bool   // dirs hold a COMPLETE integration for goal (#291)
+	dirty   bool   // needs (re-)integration (#291 budgeted mode)
 	lastUse uint64 // monotone use counter value at last Acquire
 }
 
@@ -50,6 +57,12 @@ type FlowSet struct {
 	heap       []openNode
 	seq        uint32
 
+	// budgeted integration (#291): one in-flight Dijkstra writes into
+	// staging; the slot's previous field keeps serving until the copy
+	// at completion — stale but self-consistent, never half-written
+	staging  []uint8
+	inflight int8 // slot index, -1 = none
+
 	useCounter uint64
 }
 
@@ -65,6 +78,8 @@ func NewFlowSet(g *Grid, l *Layer) *FlowSet {
 		integCost:  make([]int32, GridSize*GridSize),
 		integStamp: make([]uint32, GridSize*GridSize),
 		heap:       make([]openNode, 0, openArenaCap),
+		staging:    make([]uint8, GridSize*GridSize),
+		inflight:   -1,
 	}
 	for i := range f.slots {
 		f.slots[i].dirs = make([]uint8, GridSize*GridSize)
@@ -92,15 +107,10 @@ func Step(dir uint8) (int32, int32) {
 	return d.dx, d.dy
 }
 
-// Acquire returns the slot index of a field flowing toward (gx, gy),
-// reusing a live same-goal slot or recycling the least-recently-used
-// one (ties: lowest slot index — deterministic). Fails closed on a
-// blocked goal.
-func (f *FlowSet) Acquire(gx, gy int32) (int, bool) {
-	if !InBounds(gx, gy) || !f.l.CenterClear(gx, gy) {
-		return -1, false
-	}
-	goal := idx(gx, gy)
+// pickSlot resolves a goal to a slot: a live same-goal slot, else an
+// empty slot, else the least-recently-used (ties: lowest index —
+// deterministic). reused reports the same-goal hit.
+func (f *FlowSet) pickSlot(goal int32) (slot int, reused bool) {
 	f.useCounter++
 	for i := range f.slots {
 		if f.slots[i].live && f.slots[i].goal == goal {
@@ -125,29 +135,122 @@ func (f *FlowSet) Acquire(gx, gy int32) (int, bool) {
 		}
 	}
 	s := &f.slots[pick]
+	if f.inflight == int8(pick) {
+		f.abortInflight() // recycled out from under its integration
+	}
 	s.goal = goal
 	s.live = true
+	s.ready = false
+	s.dirty = false
 	s.lastUse = f.useCounter
-	f.integrate(s)
+	return pick, false
+}
+
+// Acquire returns the slot index of a field flowing toward (gx, gy),
+// integrating SYNCHRONOUSLY (the pre-#291 contract: the field is
+// ready on return). Fails closed on a blocked goal.
+func (f *FlowSet) Acquire(gx, gy int32) (int, bool) {
+	if !InBounds(gx, gy) || !f.l.CenterClear(gx, gy) {
+		return -1, false
+	}
+	pick, reused := f.pickSlot(idx(gx, gy))
+	if !reused || !f.slots[pick].ready {
+		f.integrate(&f.slots[pick])
+	}
 	return pick, true
 }
 
-// Release frees a slot (group order completed).
-func (f *FlowSet) Release(slot int) {
-	f.slots[slot].live = false
-	f.slots[slot].goal = -1
+// AcquireAsync is the #291 budgeted variant: the slot is returned
+// immediately and integration runs under the Pump expansion budget.
+// ready reports whether the field already serves this goal; a fresh
+// slot reads all-DirNone until its first integration completes.
+func (f *FlowSet) AcquireAsync(gx, gy int32) (slot int, ready, ok bool) {
+	if !InBounds(gx, gy) || !f.l.CenterClear(gx, gy) {
+		return -1, false, false
+	}
+	pick, reused := f.pickSlot(idx(gx, gy))
+	s := &f.slots[pick]
+	if !reused {
+		for i := range s.dirs {
+			s.dirs[i] = DirNone // a recycled field must not serve the OLD goal
+		}
+		s.dirty = true
+	}
+	return pick, s.ready, true
 }
 
-// InvalidateAll re-integrates every live slot in slot order — the
-// restamp hook (§3.2: a stamp intersecting a live field
-// re-integrates it; fields are map-global, so all live slots
-// refresh).
+// Ready reports whether a slot's field is a complete integration of
+// its current goal (false mid-flight on a fresh slot; a re-integrating
+// live slot stays ready, serving its stale-but-consistent field).
+func (f *FlowSet) Ready(slot int) bool { return f.slots[slot].ready }
+
+// Release frees a slot (group order completed).
+func (f *FlowSet) Release(slot int) {
+	if f.inflight == int8(slot) {
+		f.abortInflight()
+	}
+	f.slots[slot].live = false
+	f.slots[slot].goal = -1
+	f.slots[slot].ready = false
+	f.slots[slot].dirty = false
+}
+
+// InvalidateAll re-integrates every live slot in slot order,
+// synchronously — the restamp hook of the sync contract (§3.2: a
+// stamp intersecting a live field re-integrates it; fields are
+// map-global, so all live slots refresh).
 func (f *FlowSet) InvalidateAll() {
+	f.abortInflight()
 	for i := range f.slots {
 		if f.slots[i].live {
 			f.integrate(&f.slots[i])
 		}
 	}
+}
+
+// InvalidateAllAsync is the budgeted restamp hook: live slots are
+// marked dirty and re-integrate under the Pump budget; each keeps
+// serving its stale-but-consistent field until its refresh completes.
+// An in-flight integration restarts (a mid-flight stamp must not mix
+// pre- and post-stamp reachability in one field).
+func (f *FlowSet) InvalidateAllAsync() {
+	f.abortInflight()
+	for i := range f.slots {
+		if f.slots[i].live {
+			f.slots[i].dirty = true
+		}
+	}
+}
+
+// Pump drives pending integrations under a counted expansion budget
+// (§6 counted-work rule): at most maxExpansions heap pops across this
+// call, dirty slots served in slot-index order, one in flight at a
+// time. Returns the expansions consumed. Call once per tick from the
+// pathing slice; DefaultIntegrationBudget ≈ 1.25 ms.
+func (f *FlowSet) Pump(maxExpansions int) int {
+	consumed := 0
+	for consumed < maxExpansions {
+		if f.inflight == -1 {
+			next := -1
+			for i := range f.slots {
+				if f.slots[i].live && f.slots[i].dirty {
+					next = i
+					break
+				}
+			}
+			if next == -1 {
+				return consumed
+			}
+			f.startIntegration(next)
+		}
+		c, done := f.stepIntegration(maxExpansions - consumed)
+		consumed += c
+		if !done {
+			return consumed
+		}
+		f.finishIntegration()
+	}
+	return consumed
 }
 
 func (f *FlowSet) touch(c int32) {
@@ -161,30 +264,69 @@ func (f *FlowSet) touch(c int32) {
 // the opposite step (the compass order is symmetric: i ↔ (i+4)%8).
 func reverseDir(i int) uint8 { return uint8((i+4)%8) + 1 }
 
-// integrate fills a slot: a Dijkstra from the goal under the §4
-// (cost, seq) total-order discipline, writing each cell's direction
-// at its final relaxation — the direction points along the cell's
-// settled cheapest step toward the goal. The (cost, seq) heap makes
-// every relaxation order — and therefore every tie — identical
-// across runs and machines (§4 rule 5's intent; a separate fixed
-// row-major sweep was measured 2× slower for the same determinism).
+// integrate fills a slot synchronously: start, run to exhaustion,
+// publish. The budgeted path (#291) drives the same three pieces
+// through Pump.
 func (f *FlowSet) integrate(s *flowSlot) {
+	si := -1
+	for i := range f.slots {
+		if &f.slots[i] == s {
+			si = i
+		}
+	}
+	f.startIntegration(si)
+	for {
+		if _, done := f.stepIntegration(1 << 30); done {
+			break
+		}
+	}
+	f.finishIntegration()
+}
+
+// startIntegration seeds a Dijkstra from the slot's goal into the
+// staging buffer. Integration state (epoch'd cost array, heap, seq)
+// lives on the FlowSet and persists across budget slices.
+func (f *FlowSet) startIntegration(si int) {
+	s := &f.slots[si]
+	f.inflight = int8(si)
 	f.epoch++
 	f.seq = 0
 	f.heap = f.heap[:0]
 
-	// dirs reset: unreached cells must read DirNone
-	for i := range s.dirs {
-		s.dirs[i] = DirNone
+	// staging reset: unreached cells must read DirNone
+	for i := range f.staging {
+		f.staging[i] = DirNone
 	}
 
 	f.touch(s.goal)
 	f.integCost[s.goal] = 0
 	f.push(openNode{f: 0, h: 0, seq: f.seq, cell: s.goal})
 	f.seq++
+}
 
+// abortInflight drops the in-flight integration; the slot keeps its
+// dirty flag (or its recycler resets it), staging is discarded.
+func (f *FlowSet) abortInflight() {
+	f.inflight = -1
+	f.heap = f.heap[:0]
+}
+
+// stepIntegration runs up to budget heap pops of the in-flight
+// Dijkstra under the §4 (cost, seq) total-order discipline, writing
+// each cell's direction at its final relaxation — the direction
+// points along the cell's settled cheapest step toward the goal. The
+// (cost, seq) heap makes every relaxation order — and therefore
+// every tie — identical across runs and machines (§4 rule 5's
+// intent; a fixed row-major sweep was measured 2× slower for the
+// same determinism). Slicing the loop by pop count cannot change the
+// result: the pop order is a pure function of the heap state.
+func (f *FlowSet) stepIntegration(budget int) (consumed int, done bool) {
 	for len(f.heap) > 0 {
+		if consumed >= budget {
+			return consumed, false // parked; resume next Pump
+		}
 		n := f.pop()
+		consumed++
 		c := n.cell
 		if n.f > f.integCost[c] {
 			continue // stale
@@ -212,7 +354,7 @@ func (f *FlowSet) integrate(s *flowSlot) {
 				continue
 			}
 			f.integCost[nc] = ncost
-			s.dirs[nc] = reverseDir(i) // step n→c, toward the goal
+			f.staging[nc] = reverseDir(i) // step n→c, toward the goal
 			if !f.push(openNode{f: ncost, h: 0, seq: f.seq, cell: nc}) {
 				// arena exhausted: unreached cells stay DirNone —
 				// fail closed, field still byte-deterministic
@@ -222,7 +364,18 @@ func (f *FlowSet) integrate(s *flowSlot) {
 			f.seq++
 		}
 	}
-	s.dirs[s.goal] = DirNone // the goal itself has no onward step
+	return consumed, true
+}
+
+// finishIntegration publishes the completed staging field into its
+// slot in one copy — readers never observe a partial integration.
+func (f *FlowSet) finishIntegration() {
+	s := &f.slots[f.inflight]
+	f.staging[s.goal] = DirNone // the goal itself has no onward step
+	copy(s.dirs, f.staging)
+	s.ready = true
+	s.dirty = false
+	f.inflight = -1
 }
 
 // stepClear mirrors Searcher.stepClear for the flow layer: bounds,

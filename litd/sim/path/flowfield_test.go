@@ -220,3 +220,178 @@ func BenchmarkFlowFieldIntegrateReferenceMap(b *testing.B) {
 		f.integrate(&f.slots[slot])
 	}
 }
+
+// #291: a budgeted integration (many small Pump slices) produces a
+// field BYTE-IDENTICAL to the synchronous one — slicing by pop count
+// cannot change the (cost, seq) pop order.
+func TestFlowFieldBudgetedMatchesSync(t *testing.T) {
+	_, _, fSync := flowFixture(Rect{X: 0, Y: 0, W: 64, H: 64})
+	slotS, ok := fSync.Acquire(40, 40)
+	if !ok {
+		t.Fatal("sync acquire failed")
+	}
+
+	_, _, fB := flowFixture(Rect{X: 0, Y: 0, W: 64, H: 64})
+	slotB, ready, ok := fB.AcquireAsync(40, 40)
+	if !ok || ready {
+		t.Fatalf("async acquire: ready=%v ok=%v, want fresh not-ready slot", ready, ok)
+	}
+	pumps, total := 0, 0
+	for !fB.Ready(slotB) {
+		c := fB.Pump(97) // deliberately awkward slice size
+		if c == 0 && !fB.Ready(slotB) {
+			t.Fatal("Pump made no progress on a dirty slot")
+		}
+		if c > 97 {
+			t.Fatalf("Pump consumed %d > budget 97", c)
+		}
+		total += c
+		pumps++
+	}
+	if !bytes.Equal(fSync.slots[slotS].dirs, fB.slots[slotB].dirs) {
+		t.Fatal("budgeted field differs from synchronous field")
+	}
+	t.Logf("byte-identical fields; budgeted: %d pumps × ≤97 expansions = %d total", pumps, total)
+	if pumps < 2 {
+		t.Fatalf("test degenerate: only %d pump slice(s), wanted a real park/resume", pumps)
+	}
+}
+
+// #291: a live slot keeps serving its previous, self-consistent field
+// while a budgeted re-integration is in flight; the refresh publishes
+// atomically at completion.
+func TestFlowFieldStaleServesDuringReintegration(t *testing.T) {
+	g, d, f := flowFixture(Rect{X: 0, Y: 0, W: 32, H: 32})
+	slot, _, ok := f.AcquireAsync(16, 16)
+	if !ok {
+		t.Fatal("acquire failed")
+	}
+	for !f.Ready(slot) {
+		f.Pump(64)
+	}
+	before := append([]uint8(nil), f.slots[slot].dirs...)
+
+	// wall stamp splits the map; async invalidate
+	for y := int32(0); y < 32; y++ {
+		if y != 16 {
+			g.ClearFlags(8, y, Walkable)
+		}
+	}
+	d.RecomputeAll()
+	f.InvalidateAllAsync()
+
+	if !f.Ready(slot) {
+		t.Fatal("live slot lost readiness on async invalidate (must serve stale)")
+	}
+	f.Pump(32) // partial slice
+	if !bytes.Equal(before, f.slots[slot].dirs) {
+		t.Fatal("field mutated mid-flight: partial integration visible")
+	}
+	t.Logf("mid-flight: field still byte-equal to pre-stamp (stale, consistent)")
+	for f.slots[slot].dirty || f.inflight != -1 {
+		f.Pump(64)
+	}
+	if bytes.Equal(before, f.slots[slot].dirs) {
+		t.Fatal("refresh never published")
+	}
+	// post-refresh: the wall must redirect flow through the (8,16) gap
+	x, y := int32(2), int32(2)
+	for steps := 0; !(x == 16 && y == 16); steps++ {
+		dx, dy := Step(f.Dir(slot, x, y))
+		if dx == 0 && dy == 0 || steps > 96 {
+			t.Fatalf("post-refresh walk stuck at (%d,%d)", x, y)
+		}
+		x, y = x+dx, y+dy
+	}
+	t.Logf("post-refresh: walk from (2,2) reaches goal through the gap")
+}
+
+// #291: recycling and releasing the in-flight slot aborts cleanly; a
+// recycled field never serves the OLD goal's directions.
+func TestFlowFieldAbortInflight(t *testing.T) {
+	_, _, f := flowFixture(Rect{X: 0, Y: 0, W: 64, H: 64})
+	goals := [][2]int32{{10, 10}, {50, 10}, {10, 50}, {50, 50}}
+	for _, g := range goals {
+		if _, _, ok := f.AcquireAsync(g[0], g[1]); !ok {
+			t.Fatal("acquire failed")
+		}
+	}
+	f.Pump(50) // slot 0 mid-flight
+	if f.inflight != 0 {
+		t.Fatalf("inflight = %d, want 0", f.inflight)
+	}
+	// 5th goal recycles LRU slot 0 mid-flight
+	slot, ready, ok := f.AcquireAsync(30, 30)
+	if !ok || slot != 0 || ready {
+		t.Fatalf("recycle: slot=%d ready=%v ok=%v, want slot 0 fresh", slot, ready, ok)
+	}
+	if f.inflight != -1 {
+		t.Fatal("recycle did not abort the in-flight integration")
+	}
+	for i := range f.slots[0].dirs {
+		if f.slots[0].dirs[i] != DirNone {
+			t.Fatal("recycled slot serves stale directions for the old goal")
+		}
+	}
+	for !f.Ready(slot) {
+		f.Pump(4096)
+	}
+	g, l, lu := f.SlotState(0)
+	t.Logf("slot 0 after recycle+pump: goal=%d live=%v lastUse=%d ready=%v", g, l, lu, f.Ready(0))
+
+	// release mid-flight
+	f.InvalidateAllAsync()
+	f.Pump(10)
+	in := int(f.inflight)
+	if in == -1 {
+		t.Fatal("expected an in-flight re-integration")
+	}
+	f.Release(in)
+	if f.inflight != -1 {
+		t.Fatal("Release left the integration in flight")
+	}
+	t.Logf("release of in-flight slot %d aborted cleanly", in)
+}
+
+// #291 R-GC-1: Pump allocates nothing.
+func TestFlowFieldPumpAllocs(t *testing.T) {
+	_, _, f := flowFixture(Rect{X: 0, Y: 0, W: 128, H: 128})
+	if _, _, ok := f.AcquireAsync(64, 64); !ok {
+		t.Fatal("acquire failed")
+	}
+	avg := testing.AllocsPerRun(50, func() {
+		f.InvalidateAllAsync()
+		for f.Pump(4096) > 0 {
+		}
+	})
+	if avg != 0 {
+		t.Fatalf("allocs/pump-cycle = %v, want 0", avg)
+	}
+	t.Logf("allocs = %v", avg)
+}
+
+// #291: one default-budget Pump slice on the worst-case full grid
+// stays inside the §6 ≤2 ms tick slice (the whole point).
+func BenchmarkFlowFieldPumpSlice(b *testing.B) {
+	g := NewGrid()
+	for y := int32(0); y < GridSize; y++ {
+		for x := int32(0); x < GridSize; x++ {
+			g.OrFlags(x, y, Walkable)
+		}
+	}
+	d := NewDilatedSet(g, []LayerKey{{Required: Walkable, Blocked: OccupiedStatic}})
+	d.RecomputeAll()
+	f := NewFlowSet(g, d.Layer(0))
+	if _, _, ok := f.AcquireAsync(256, 256); !ok {
+		b.Fatal("acquire failed")
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if f.Pump(DefaultIntegrationBudget) == 0 {
+			b.StopTimer()
+			f.InvalidateAllAsync() // refill work
+			b.StartTimer()
+		}
+	}
+}
