@@ -88,6 +88,39 @@ func mulDivSigned(num fixed.F64, mul, den int64) fixed.F64 {
 	return fixed.F64(int64(q))
 }
 
+// unitStep returns dir/|dir| × speed: the one-tick displacement.
+// Down-shifts the direction so its squared magnitude fits uint64 for
+// SqrtU64 (the shift cancels in the ratio); a zero vector (direction
+// underflowed the shift) returns the zero step — caller snaps.
+func unitStep(dir fixed.Vec2, speed fixed.F64) fixed.Vec2 {
+	dx, dy := int64(dir.X), int64(dir.Y)
+	adx, ady := dx, dy
+	if adx < 0 {
+		adx = -adx
+	}
+	if ady < 0 {
+		ady = -ady
+	}
+	maxc := adx
+	if ady > maxc {
+		maxc = ady
+	}
+	shift := uint(0)
+	for maxc>>shift >= 1<<31 {
+		shift++
+	}
+	sx, sy := dx>>shift, dy>>shift
+	lenSq := uint64(sx*sx) + uint64(sy*sy)
+	l := int64(fixed.SqrtU64(lenSq))
+	if l == 0 {
+		return fixed.Vec2{}
+	}
+	return fixed.Vec2{
+		X: mulDivSigned(speed, sx, l),
+		Y: mulDivSigned(speed, sy, l),
+	}
+}
+
 // movementSystem advances every Following unit by one tick.
 func (w *World) movementSystem() {
 	m := w.Movements
@@ -118,45 +151,27 @@ func (w *World) movementSystem() {
 
 		// arrival: strictly closer than one tick's displacement (or
 		// exactly on it) → snap, never overshoot, never oscillate
+		var nextPos fixed.Vec2
+		arrived := false
 		if pos == target || fixed.DistSqLess(pos, target, speed) {
-			w.Transforms.Pos[tr] = target
-			w.advanceWaypoint(r)
-			continue
+			nextPos, arrived = target, true
+		} else {
+			step := unitStep(dir, speed)
+			if step == (fixed.Vec2{}) {
+				nextPos, arrived = target, true // sub-unit remainder
+			} else {
+				nextPos = pos.Add(step)
+			}
 		}
 
-		// displacement = dir/|dir| × speed. Down-shift the direction
-		// so its squared magnitude fits uint64 for SqrtU64; the
-		// shift cancels in the ratio.
-		dx, dy := int64(dir.X), int64(dir.Y)
-		adx, ady := dx, dy
-		if adx < 0 {
-			adx = -adx
-		}
-		if ady < 0 {
-			ady = -ady
-		}
-		maxc := adx
-		if ady > maxc {
-			maxc = ady
-		}
-		shift := uint(0)
-		for maxc>>shift >= 1<<31 {
-			shift++
-		}
-		sx, sy := dx>>shift, dy>>shift
-		lenSq := uint64(sx*sx) + uint64(sy*sy)
-		l := int64(fixed.SqrtU64(lenSq))
-		if l == 0 {
-			// direction underflowed the shift: snap (sub-unit step)
-			w.Transforms.Pos[tr] = target
-			w.advanceWaypoint(r)
+		if w.Grid != nil { // §5 local avoidance (avoidance.go)
+			w.moveWithAvoidance(r, tr, id, nextPos, arrived)
 			continue
 		}
-		step := fixed.Vec2{
-			X: mulDivSigned(speed, sx, l),
-			Y: mulDivSigned(speed, sy, l),
+		w.Transforms.Pos[tr] = nextPos
+		if arrived {
+			w.advanceWaypoint(r)
 		}
-		w.Transforms.Pos[tr] = pos.Add(step)
 	}
 }
 

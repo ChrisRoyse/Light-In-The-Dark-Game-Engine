@@ -91,8 +91,13 @@ type World struct {
 	Buffs      *BuffPool
 	Projs      *ProjectilePool
 	Doodads    *DoodadStore
-	Paths      *path.PathStore  // pooled per-unit waypoint buffers (§7)
-	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
+	Paths      *path.PathStore // pooled per-unit waypoint buffers (§7)
+	Grid       *path.Grid      // pathing grid; nil until SetGrid (map load)
+	// local avoidance (avoidance.go): cell → owning entity, plus the
+	// stall threshold override (0 = DefaultStallRepathTicks)
+	reservedBy  []EntityID
+	stallRepath uint16
+	Sched       *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// Cmds is the binary command-record front door (command.go):
 	// Stage any time (mutex), driver ingests between ticks, phase 1
@@ -125,13 +130,16 @@ type World struct {
 	// OnCommandRecord fires for every VALIDATED record in phase 1
 	// with the surviving (alive + owned) actor list.
 	OnCommandRecord func(tick uint32, r *CommandRecord, actors []EntityID)
-	OnScriptPhase   func(tick uint32)
-	OnCombatPhase   func(tick uint32)
-	OnDeathEvent    func(tick uint32, id EntityID)
-	OnSnapshot      func(tick uint32)
-	OnHash          func(tick uint32)
-	OnEventDrop     func(tick uint32, e Event)
-	HashEvery       uint32
+	// OnShove fires when a mover displaces an idle occupant to cell
+	// (avoidance.go §5 — the decision log for FSV).
+	OnShove       func(tick uint32, mover, shoved EntityID, cell int32)
+	OnScriptPhase func(tick uint32)
+	OnCombatPhase func(tick uint32)
+	OnDeathEvent  func(tick uint32, id EntityID)
+	OnSnapshot    func(tick uint32)
+	OnHash        func(tick uint32)
+	OnEventDrop   func(tick uint32, e Event)
+	HashEvery     uint32
 
 	unitCount     int
 	orderPool     []orderEntry
@@ -216,7 +224,8 @@ func (w *World) DestroyUnit(id EntityID) bool {
 		return false
 	}
 	w.Transforms.Remove(id)
-	if w.Movements.Row(id) != -1 {
+	if r := w.Movements.Row(id); r != -1 {
+		w.releaseReservation(r, id) // free the avoidance cell (no leak)
 		w.Movements.Remove(id)
 	}
 	if w.Collisions.Row(id) != -1 {
@@ -267,7 +276,7 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Transforms.Facing) * 2
 	n += len(w.Transforms.Entity) * 4
 	n += len(w.Transforms.rowOf) * rowOfB
-	n += len(w.Movements.Speed) * (8 + 2 + 16 + 4 + 4 + 1 + 4) // per-row column bytes
+	n += len(w.Movements.Speed) * (8 + 2 + 16 + 4 + 4 + 2 + 4 + 1 + 4) // per-row column bytes
 	n += len(w.Movements.rowOf) * rowOfB
 	n += len(w.Collisions.SizeClass) * (1 + 1 + 4 + 4)
 	n += len(w.Collisions.rowOf) * rowOfB

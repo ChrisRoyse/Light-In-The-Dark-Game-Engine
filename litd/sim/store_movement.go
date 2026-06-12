@@ -26,6 +26,8 @@ type MovementStore struct {
 	Target      []fixed.Vec2  // current waypoint
 	PathHandle  []uint32      // path.PathID bits; NoPath when none
 	WaypointIdx []int32       // cursor into the path's waypoint list
+	Stall       []uint16      // consecutive blocked ticks (avoidance)
+	ResCell     []int32       // reserved grid cell; -1 = none
 	State       []uint8       // Move* constants
 	Entity      []EntityID
 
@@ -45,6 +47,8 @@ func NewMovementStore(rowCap, entityCap int) *MovementStore {
 		Target:      make([]fixed.Vec2, rowCap),
 		PathHandle:  make([]uint32, rowCap),
 		WaypointIdx: make([]int32, rowCap),
+		Stall:       make([]uint16, rowCap),
+		ResCell:     make([]int32, rowCap),
 		State:       make([]uint8, rowCap),
 		Entity:      make([]EntityID, rowCap),
 		rowOf:       make([]int32, entityCap),
@@ -81,6 +85,8 @@ func (s *MovementStore) Add(e *Entities, t *TransformStore, id EntityID, speed f
 	s.Target[r] = fixed.Vec2{}
 	s.PathHandle[r] = NoPath
 	s.WaypointIdx[r] = 0
+	s.Stall[r] = 0
+	s.ResCell[r] = -1
 	s.State[r] = MoveIdle
 	s.Entity[r] = id
 	s.rowOf[idx] = r
@@ -106,6 +112,8 @@ func (s *MovementStore) Remove(id EntityID) bool {
 		s.Target[r] = s.Target[last]
 		s.PathHandle[r] = s.PathHandle[last]
 		s.WaypointIdx[r] = s.WaypointIdx[last]
+		s.Stall[r] = s.Stall[last]
+		s.ResCell[r] = s.ResCell[last]
 		s.State[r] = s.State[last]
 		moved := s.Entity[last]
 		s.Entity[r] = moved
