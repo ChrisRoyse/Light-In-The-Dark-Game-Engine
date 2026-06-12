@@ -29,6 +29,17 @@ import (
 type Game struct {
 	w *sim.World
 
+	// driver is the wall-clock loop hook for root game-state verbs
+	// such as Pause/Resume/SetSpeed. It is deliberately an unexported
+	// tiny interface so no driver, render, or G3N type leaks into the
+	// public API.
+	driver driverHook
+
+	// match holds immutable map/match metadata once a map loader exists.
+	// Tests seed it directly; production construction will fill it from
+	// map assets.
+	match matchConfig
+
 	// debug enables R-API-5 invalid-handle assertions; off in shipped
 	// maps (WC3 forgiveness), on in development (catch the swallowed
 	// bug). Toggled via SetDebug.
@@ -59,6 +70,12 @@ func newGame(w *sim.World) *Game {
 		eventKinds:    make(map[uint16]*kindList),
 		nextHandlerID: apiHandlerBase,
 	}
+}
+
+func newGameWithDriver(w *sim.World, d driverHook) *Game {
+	g := newGame(w)
+	g.driver = d
+	return g
 }
 
 // apiHandlerBase starts the api's sim-HandlerID allocation high enough
