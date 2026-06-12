@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v15: runtime ability definitions appended after ability field
+// overrides (#355); capability table includes RuntimeAbilityDefs.
 // v14: ability field override rows + free-list order appended after
 // effects (#354).
 // v13: persistent effect rows appended after gamestate (#349).
@@ -68,7 +70,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 14
+const SaveFormatVersion uint32 = 15
 
 // ---- little-endian writer / reader ----
 
@@ -101,6 +103,10 @@ func (s *saveWriter) i64(v int64)       { s.u64(uint64(v)) }
 func (s *saveWriter) f64(v fixed.F64)   { s.i64(int64(v)) }
 func (s *saveWriter) vec2(v fixed.Vec2) { s.f64(v.X); s.f64(v.Y) }
 func (s *saveWriter) ent(v EntityID)    { s.u32(uint32(v)) }
+func (s *saveWriter) str(v string) {
+	s.u32(uint32(len(v)))
+	s.write([]byte(v))
+}
 func (s *saveWriter) boolean(v bool) {
 	if v {
 		s.u8(1)
@@ -142,6 +148,21 @@ func (s *saveReader) vec2() fixed.Vec2 {
 	return fixed.Vec2{X: x, Y: s.f64()}
 }
 func (s *saveReader) ent() EntityID { return EntityID(s.u32()) }
+func (s *saveReader) str(max int) (string, error) {
+	n := s.u32()
+	if s.err != nil {
+		return "", s.err
+	}
+	if n > uint32(max) {
+		return "", fmt.Errorf("sim: save: %s string length %d exceeds limit %d", s.what, n, max)
+	}
+	b := make([]byte, n)
+	if _, err := io.ReadFull(s.r, b); err != nil {
+		s.fail()
+		return "", s.err
+	}
+	return string(b), nil
+}
 func (s *saveReader) boolean() bool { return s.u8() != 0 }
 
 // ---- save ----
@@ -174,6 +195,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(uint32(w.caps.PendingEvents))
 	s.u32(uint32(w.caps.PathRequests))
 	s.u32(uint32(w.caps.ScriptedDoodads))
+	s.u32(uint32(w.caps.RuntimeAbilityDefs))
 	s.u32(w.tick)
 	s.u32(uint32(w.unitCount))
 	cur := w.rng.Cursor()
@@ -600,6 +622,13 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	}
 	s.u64(af.Rejected())
 
+	// runtime ability definitions (#355): static defs are data-table
+	// fingerprinted; only match-created rows are sim state.
+	s.u32(uint32(len(w.runtimeAbilityDefs)))
+	for i := range w.runtimeAbilityDefs {
+		abilityDefSave(s, &w.runtimeAbilityDefs[i])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -616,6 +645,19 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	}
 
 	return s.err
+}
+
+func abilityDefSave(s *saveWriter, def *data.Ability) {
+	s.str(def.ID)
+	s.str(def.Name)
+	s.u16(def.Effects.Off)
+	s.u16(def.Effects.Len)
+	s.i32(def.ManaCost)
+	s.u16(def.CooldownTicks)
+	s.u16(def.CastPointTicks)
+	s.u16(def.BackswingTicks)
+	s.u16(def.ChannelTicks)
+	s.f64(def.CastRange)
 }
 
 // ---- load ----
@@ -828,6 +870,8 @@ type decodedSave struct {
 	afFree     []int32
 	afRejected uint64
 
+	runtimeAbilityDefs []data.Ability
+
 	schedBlob []byte
 
 	subs []kindSubs
@@ -881,14 +925,15 @@ func (w *World) LoadState(in io.Reader, fingerprint uint64) error {
 		return fmt.Errorf("sim: save: data-table fingerprint %016x does not match this world's %016x — refusing", fp, fingerprint)
 	}
 	got := Caps{
-		Units:             int(r.u32()),
-		Projectiles:       int(r.u32()),
-		Effects:           int(r.u32()),
-		BuffInstances:     int(r.u32()),
-		OrderQueueEntries: int(r.u32()),
-		PendingEvents:     int(r.u32()),
-		PathRequests:      int(r.u32()),
-		ScriptedDoodads:   int(r.u32()),
+		Units:              int(r.u32()),
+		Projectiles:        int(r.u32()),
+		Effects:            int(r.u32()),
+		BuffInstances:      int(r.u32()),
+		OrderQueueEntries:  int(r.u32()),
+		PendingEvents:      int(r.u32()),
+		PathRequests:       int(r.u32()),
+		ScriptedDoodads:    int(r.u32()),
+		RuntimeAbilityDefs: int(r.u32()),
 	}
 	if r.err == nil && got != w.caps {
 		return fmt.Errorf("sim: save: capability table %+v does not match this world's %+v — load into a world with identical caps", got, w.caps)
@@ -1604,6 +1649,22 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return r.err
 	}
 
+	// runtime ability definitions (#355)
+	if n, err = r.section("runtime ability definitions", cap(w.runtimeAbilityDefs)); err != nil {
+		return err
+	}
+	d.runtimeAbilityDefs = make([]data.Ability, n)
+	for i := range d.runtimeAbilityDefs {
+		def, err := abilityDefLoad(r)
+		if err != nil {
+			return err
+		}
+		d.runtimeAbilityDefs[i] = def
+	}
+	if r.err != nil {
+		return r.err
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1648,6 +1709,32 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		}
 	}
 	return r.err
+}
+
+func abilityDefLoad(r *saveReader) (data.Ability, error) {
+	id, err := r.str(maxRuntimeAbilityStringLen)
+	if err != nil {
+		return data.Ability{}, err
+	}
+	name, err := r.str(maxRuntimeAbilityStringLen)
+	if err != nil {
+		return data.Ability{}, err
+	}
+	def := data.Ability{
+		ID:             id,
+		Name:           name,
+		Effects:        data.EffectList{Off: r.u16(), Len: r.u16()},
+		ManaCost:       r.i32(),
+		CooldownTicks:  r.u16(),
+		CastPointTicks: r.u16(),
+		BackswingTicks: r.u16(),
+		ChannelTicks:   r.u16(),
+		CastRange:      r.f64(),
+	}
+	if r.err != nil {
+		return data.Ability{}, r.err
+	}
+	return def, nil
 }
 
 // validateSave cross-checks the decoded staging against the world's
@@ -1709,10 +1796,34 @@ func validateSave(d *decodedSave, w *World) error {
 			return fmt.Errorf("sim: save: effect row %d entity %d has no transform row", i, id)
 		}
 	}
+	if len(w.abilityDefs)+len(d.runtimeAbilityDefs) > maxAbilityDefs {
+		return fmt.Errorf("sim: save: ability def count static=%d runtime=%d exceeds ref cap %d",
+			len(w.abilityDefs), len(d.runtimeAbilityDefs), maxAbilityDefs)
+	}
+	abilityIDs := make(map[string]int, len(w.abilityDefs)+len(d.runtimeAbilityDefs))
+	for i := range w.abilityDefs {
+		abilityIDs[w.abilityDefs[i].ID] = i
+	}
+	for i := range d.runtimeAbilityDefs {
+		def := &d.runtimeAbilityDefs[i]
+		if !w.validRuntimeAbilityDef(def) {
+			return fmt.Errorf("sim: save: runtime ability def %d is invalid", i)
+		}
+		if prev, dup := abilityIDs[def.ID]; dup {
+			return fmt.Errorf("sim: save: runtime ability def %d duplicates ability id %q at def %d", i, def.ID, prev)
+		}
+		abilityIDs[def.ID] = len(w.abilityDefs) + i
+	}
 	abilityRows := make(map[EntityID]abilitySlotSave, len(d.abE))
 	for i, id := range d.abE {
 		if _, dup := abilityRows[id]; dup {
 			return fmt.Errorf("sim: save: duplicate ability rows for entity %d", id)
+		}
+		for slot := 0; slot < AbilitySlots; slot++ {
+			ref := d.abSlots[i][slot].AbilityID
+			if ref != 0 && int(ref) > len(w.abilityDefs)+len(d.runtimeAbilityDefs) {
+				return fmt.Errorf("sim: save: ability row %d slot %d references unbound ability ref %d", i, slot, ref)
+			}
 		}
 		abilityRows[id] = d.abSlots[i]
 	}
@@ -2139,6 +2250,9 @@ func applySave(d *decodedSave, w *World) {
 		}
 		c.rowOf[d.cbE[i].Index()] = i
 	}
+
+	w.runtimeAbilityDefs = w.runtimeAbilityDefs[:len(d.runtimeAbilityDefs)]
+	copy(w.runtimeAbilityDefs, d.runtimeAbilityDefs)
 
 	a := w.Abilities
 	a.count = d.abN

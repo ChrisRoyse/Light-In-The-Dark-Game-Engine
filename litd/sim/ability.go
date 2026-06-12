@@ -26,6 +26,12 @@ import (
 // castStateNames renders traces (FSV SoT).
 var castStateNames = [...]string{"ready", "precast", "castpoint", "channel", "backswing", "cooldown"}
 
+const (
+	maxAbilityDefs             = 1<<16 - 1 // ref 0 is empty; refs 1..65535 are valid
+	maxRuntimeAbilityStringLen = 256
+	maxRuntimeAbilityManaCost  = 1 << 20
+)
+
 // CastStateName returns the human name of a Cast* state.
 func CastStateName(s uint8) string {
 	if int(s) < len(castStateNames) {
@@ -38,23 +44,48 @@ func CastStateName(s uint8) string {
 // AbilityStore.AbilityID are defIndex+1 into this slice. Fail-closed
 // on a set too large for the uint16 ref space.
 func (w *World) BindAbilityDefs(defs []data.Ability) bool {
-	if len(defs) >= 1<<16-1 {
+	if len(w.runtimeAbilityDefs) != 0 || len(defs)+cap(w.runtimeAbilityDefs) > maxAbilityDefs {
 		return false
 	}
 	w.abilityDefs = defs
 	return true
 }
 
+// RegisterAbilityDef appends a deterministic runtime ability row after
+// the bound data-table defs and returns its stable ability ref. Call it
+// during setup or through a lockstep command path between Step calls;
+// registration during a tick phase is refused so row order cannot vary
+// by callback timing.
+func (w *World) RegisterAbilityDef(def data.Ability) (uint16, bool) {
+	if w.inStep || len(w.runtimeAbilityDefs) == cap(w.runtimeAbilityDefs) ||
+		w.abilityDefCount() >= maxAbilityDefs ||
+		!w.validRuntimeAbilityDef(&def) ||
+		w.abilityIDExists(def.ID) {
+		return 0, false
+	}
+	w.runtimeAbilityDefs = append(w.runtimeAbilityDefs, def)
+	return uint16(w.abilityDefCount()), true
+}
+
 // SetAbility fills a slot with a bound ability ref. Tests and the
 // (future, #217) data spawner use it.
 func (w *World) SetAbility(id EntityID, slot int, defIndex int) bool {
+	if defIndex < 0 || defIndex >= w.abilityDefCount() {
+		return false
+	}
+	return w.SetAbilityRef(id, slot, uint16(defIndex+1))
+}
+
+// SetAbilityRef fills a slot with a concrete ability ref. Runtime
+// registrations return refs directly, while static table callers may
+// continue to use SetAbility's defIndex form.
+func (w *World) SetAbilityRef(id EntityID, slot int, ref uint16) bool {
 	ar := w.Abilities.Row(id)
-	if ar == -1 || !w.Ents.Alive(id) || slot < 0 || slot >= AbilitySlots ||
-		defIndex < 0 || defIndex >= len(w.abilityDefs) {
+	if ar == -1 || !w.Ents.Alive(id) || !validAbilitySlot(slot) || w.abilityDefByRef(ref) == nil {
 		return false
 	}
 	w.AbilityFields.RemoveSlot(id, slot)
-	w.Abilities.AbilityID[ar][slot] = uint16(defIndex + 1)
+	w.Abilities.AbilityID[ar][slot] = ref
 	w.Abilities.CastState[ar][slot] = CastReady
 	w.Abilities.ReadyAt[ar][slot] = 0
 	return true
@@ -101,10 +132,11 @@ func (w *World) ResolveAbilityField(id EntityID, slot int, field AbilityField) (
 		return v, true
 	}
 	ref := w.Abilities.AbilityID[ar][slot]
-	if ref == 0 || int(ref) > len(w.abilityDefs) {
+	def := w.abilityDefByRef(ref)
+	if def == nil {
 		return 0, false
 	}
-	return abilityDefField(&w.abilityDefs[ref-1], field)
+	return abilityDefField(def, field)
 }
 
 // castTransition flips a slot's cast state and reports it.
@@ -214,7 +246,13 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 	if !CooldownReady(w.tick, a.CastEnd[ar]) {
 		return // current phase still running
 	}
-	def := &w.abilityDefs[a.AbilityID[ar][slot]-1]
+	def := w.abilityDefByRef(a.AbilityID[ar][slot])
+	if def == nil {
+		a.CastSlot[ar] = -1
+		w.castTransition(id, ar, slot, CastReady)
+		w.completeOrder(or, id, false)
+		return
+	}
 	switch a.CastState[ar][slot] {
 	case CastPoint:
 		// EFFECT edge: composition fires, cooldown commits
@@ -281,15 +319,72 @@ func (w *World) cancelCast(ar int32, id EntityID, slot int) {
 
 // castableSlot finds the slot equipped with ref. nil = not equipped.
 func (w *World) castableSlot(ar int32, ref uint16) (*data.Ability, int) {
-	if ref == 0 || int(ref) > len(w.abilityDefs) {
+	def := w.abilityDefByRef(ref)
+	if def == nil {
 		return nil, -1
 	}
 	for s := 0; s < AbilitySlots; s++ {
 		if w.Abilities.AbilityID[ar][s] == ref {
-			return &w.abilityDefs[ref-1], s
+			return def, s
 		}
 	}
 	return nil, -1
+}
+
+func (w *World) abilityDefCount() int {
+	return len(w.abilityDefs) + len(w.runtimeAbilityDefs)
+}
+
+func (w *World) abilityDefByRef(ref uint16) *data.Ability {
+	if ref == 0 {
+		return nil
+	}
+	idx := int(ref) - 1
+	if idx < len(w.abilityDefs) {
+		return &w.abilityDefs[idx]
+	}
+	idx -= len(w.abilityDefs)
+	if idx >= 0 && idx < len(w.runtimeAbilityDefs) {
+		return &w.runtimeAbilityDefs[idx]
+	}
+	return nil
+}
+
+func (w *World) abilityIDExists(id string) bool {
+	for i := range w.abilityDefs {
+		if w.abilityDefs[i].ID == id {
+			return true
+		}
+	}
+	for i := range w.runtimeAbilityDefs {
+		if w.runtimeAbilityDefs[i].ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (w *World) validRuntimeAbilityDef(def *data.Ability) bool {
+	if def == nil ||
+		def.ID == "" ||
+		len(def.ID) > maxRuntimeAbilityStringLen ||
+		len(def.Name) > maxRuntimeAbilityStringLen ||
+		def.ManaCost < 0 ||
+		def.ManaCost > maxRuntimeAbilityManaCost ||
+		def.CastRange < 0 {
+		return false
+	}
+	if def.Effects.Len == 0 {
+		return def.Effects.Off == 0
+	}
+	// Runtime effect-bearing abilities are treated as targeted until
+	// the public API carries an explicit target kind; require a positive
+	// range rather than silently permitting zero-range target casts.
+	if def.CastRange == 0 {
+		return false
+	}
+	end := uint32(def.Effects.Off) + uint32(def.Effects.Len)
+	return end <= uint32(len(w.effects))
 }
 
 func abilityFieldTicks(v fixed.F64) uint32 {

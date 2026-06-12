@@ -46,6 +46,8 @@ var HashSystems = []string{
 	"effects",
 	// appended by #354: sparse per-instance ability field overrides.
 	"abilityfields",
+	// appended by #355: runtime ability definitions appended after static data.
+	"abilitydefs",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -475,7 +477,33 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	}
 	haf.WriteU64(af.Rejected())
 
+	had := h.next() // abilitydefs (#355): runtime rows only; static rows are fingerprinted data
+	had.WriteU32(uint32(len(w.runtimeAbilityDefs)))
+	for i := range w.runtimeAbilityDefs {
+		hashAbilityDef(had, &w.runtimeAbilityDefs[i])
+	}
+
 	return reg.Sum(dst)
+}
+
+func hashAbilityDef(h *statehash.Hasher, def *data.Ability) {
+	hashString(h, def.ID)
+	hashString(h, def.Name)
+	h.WriteU16(def.Effects.Off)
+	h.WriteU16(def.Effects.Len)
+	h.WriteU32(uint32(def.ManaCost))
+	h.WriteU16(def.CooldownTicks)
+	h.WriteU16(def.CastPointTicks)
+	h.WriteU16(def.BackswingTicks)
+	h.WriteU16(def.ChannelTicks)
+	h.WriteI64(int64(def.CastRange))
+}
+
+func hashString(h *statehash.Hasher, s string) {
+	h.WriteU32(uint32(len(s)))
+	for i := 0; i < len(s); i++ {
+		h.WriteU8(s[i])
+	}
 }
 
 // regHashers walks a registry's hashers in registration order without

@@ -13,26 +13,28 @@ import (
 // raise it: NewWorld clamps every request to the engine ceiling
 // (ecs-architecture.md §2, R-GC-2).
 type Caps struct {
-	Units             int
-	Projectiles       int
-	Effects           int
-	BuffInstances     int
-	OrderQueueEntries int
-	PendingEvents     int // per-tick ring
-	PathRequests      int // in flight
-	ScriptedDoodads   int
+	Units              int
+	Projectiles        int
+	Effects            int
+	BuffInstances      int
+	OrderQueueEntries  int
+	PendingEvents      int // per-tick ring
+	PathRequests       int // in flight
+	ScriptedDoodads    int
+	RuntimeAbilityDefs int // dynamic ability rows appended after bound data
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
 var EngineCaps = Caps{
-	Units:             4000,
-	Projectiles:       2000,
-	Effects:           1024,
-	BuffInstances:     8000,
-	OrderQueueEntries: 16000,
-	PendingEvents:     4096,
-	PathRequests:      512,
-	ScriptedDoodads:   1024,
+	Units:              4000,
+	Projectiles:        2000,
+	Effects:            1024,
+	BuffInstances:      8000,
+	OrderQueueEntries:  16000,
+	PendingEvents:      4096,
+	PathRequests:       512,
+	ScriptedDoodads:    1024,
+	RuntimeAbilityDefs: 1024,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -45,14 +47,15 @@ func clampCap(requested, ceiling int) int {
 // resolve clamps every requested cap to the engine ceiling.
 func (c Caps) resolve() Caps {
 	return Caps{
-		Units:             clampCap(c.Units, EngineCaps.Units),
-		Projectiles:       clampCap(c.Projectiles, EngineCaps.Projectiles),
-		Effects:           clampCap(c.Effects, EngineCaps.Effects),
-		BuffInstances:     clampCap(c.BuffInstances, EngineCaps.BuffInstances),
-		OrderQueueEntries: clampCap(c.OrderQueueEntries, EngineCaps.OrderQueueEntries),
-		PendingEvents:     clampCap(c.PendingEvents, EngineCaps.PendingEvents),
-		PathRequests:      clampCap(c.PathRequests, EngineCaps.PathRequests),
-		ScriptedDoodads:   clampCap(c.ScriptedDoodads, EngineCaps.ScriptedDoodads),
+		Units:              clampCap(c.Units, EngineCaps.Units),
+		Projectiles:        clampCap(c.Projectiles, EngineCaps.Projectiles),
+		Effects:            clampCap(c.Effects, EngineCaps.Effects),
+		BuffInstances:      clampCap(c.BuffInstances, EngineCaps.BuffInstances),
+		OrderQueueEntries:  clampCap(c.OrderQueueEntries, EngineCaps.OrderQueueEntries),
+		PendingEvents:      clampCap(c.PendingEvents, EngineCaps.PendingEvents),
+		PathRequests:       clampCap(c.PathRequests, EngineCaps.PathRequests),
+		ScriptedDoodads:    clampCap(c.ScriptedDoodads, EngineCaps.ScriptedDoodads),
+		RuntimeAbilityDefs: clampCap(c.RuntimeAbilityDefs, EngineCaps.RuntimeAbilityDefs),
 	}
 }
 
@@ -80,8 +83,9 @@ type pathRequest struct {
 // a gameplay outcome: creation fails, like WC3 refusing past its
 // handle limits.
 type World struct {
-	caps Caps
-	tick uint32
+	caps   Caps
+	tick   uint32
+	inStep bool
 	// deterministic game clock (clock.go): tod is fixed-point hours
 	// in [0,24); todCarry stores the fractional raw-hour remainder
 	// that makes full-day advancement drift-free.
@@ -134,6 +138,9 @@ type World struct {
 	effects []data.CompiledEffect
 	// loaded ability rows (ability.go #160); refs are defIndex+1
 	abilityDefs []data.Ability
+	// runtime ability rows (#355), appended after loaded abilityDefs.
+	// Backing storage is capped by Caps.RuntimeAbilityDefs.
+	runtimeAbilityDefs []data.Ability
 	// loaded buff-type rows (buff.go #162); BuffInstance.BuffID
 	// indexes this slice
 	buffTypes []data.BuffType
@@ -278,61 +285,62 @@ func NewWorld(requested Caps) *World {
 	// every array indexed by EntityID.Index() needs entityCap+1 room
 	idxSpace := entityCap + 1
 	w := &World{
-		caps:            caps,
-		todScale:        fixed.One,
-		dayLengthTicks:  DefaultDayLengthTicks,
-		Cmds:            newCommandQueue(),
-		cmdStaging:      make([]WorldCommand, 0, 1024),
-		cmdActive:       make([]WorldCommand, 0, 1024),
-		killed:          make([]EntityID, 0, caps.Units+caps.Projectiles),
-		dmgBuf:          make([]DamagePacket, 0, caps.Units*4),
-		rng:             prng.New(0, 0),
-		Snaps:           newSnapshotBuffers(idxSpace, caps.PendingEvents),
-		snapNoLerp:      make([]bool, idxSpace),
-		snapDeath:       make([]bool, idxSpace),
-		snapMarked:      make([]EntityID, 0, idxSpace),
-		renderEvStaging: make([]RenderEvent, 0, caps.PendingEvents),
-		Sched:           sched.New(),
-		Ents:            NewEntities(entityCap),
-		Transforms:      NewTransformStore(entityCap, idxSpace),
-		Movements:       NewMovementStore(caps.Units, idxSpace),
-		Collisions:      NewCollisionStore(caps.Units, idxSpace),
-		Healths:         NewHealthStore(caps.Units, idxSpace),
-		Owners:          NewOwnerStore(caps.Units, idxSpace),
-		UnitTypes:       NewUnitTypeStore(caps.Units, idxSpace),
-		Combats:         NewCombatStore(caps.Units, idxSpace),
-		Abilities:       NewAbilityStore(caps.Units, idxSpace),
-		AbilityFields:   NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
-		Invents:         NewInventoryStore(caps.Units, idxSpace),
-		Orders:          NewOrderStore(caps.Units, idxSpace),
-		Buffs:           NewBuffPool(caps.BuffInstances),
-		Missiles:        NewMissileStore(caps.Projectiles, idxSpace),
-		Effects:         NewEffectStore(caps.Effects, idxSpace),
-		Nodes:           NewResourceNodeStore(caps.Units, idxSpace),
-		Econs:           NewEconStore(caps.Units, idxSpace),
-		Harvests:        NewHarvestStore(caps.Units, idxSpace),
-		Produce:         NewProduceStore(caps.Units, idxSpace),
-		Heroes:          NewHeroStore(caps.Units, idxSpace),
-		Items:           NewItemStore(caps.Units, idxSpace),
-		Patrol:          NewPatrolStore(caps.Units, idxSpace),
-		Build:           NewBuildStore(caps.Units, idxSpace),
-		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
-		events:          make([]Event, caps.PendingEvents),
-		handlers:        make(map[HandlerID]EventHandler),
-		pathReqs:        make([]pathRequest, caps.PathRequests),
-		Doodads:         NewDoodadStore(caps.ScriptedDoodads, idxSpace),
-		Paths:           path.NewPathStore(caps.PathRequests, 1024),
-		bucketHead:      make([]int32, bucketCount),
-		bucketNext:      make([]int32, idxSpace),
-		bucketPrev:      make([]int32, idxSpace),
-		bucketCell:      make([]int32, idxSpace),
-		bucketID:        make([]EntityID, idxSpace),
-		acquireEvery:    DefaultAcquireInterval,
-		areaScratch:     make([]EntityID, 0, 64),
-		areaDistHi:      make([]uint64, 0, 64),
-		areaDistLo:      make([]uint64, 0, 64),
-		buffScratch:     make([]int32, 0, caps.BuffInstances),
-		auraScratch:     make([]EntityID, 0, caps.Units),
+		caps:               caps,
+		todScale:           fixed.One,
+		dayLengthTicks:     DefaultDayLengthTicks,
+		Cmds:               newCommandQueue(),
+		cmdStaging:         make([]WorldCommand, 0, 1024),
+		cmdActive:          make([]WorldCommand, 0, 1024),
+		killed:             make([]EntityID, 0, caps.Units+caps.Projectiles),
+		dmgBuf:             make([]DamagePacket, 0, caps.Units*4),
+		rng:                prng.New(0, 0),
+		Snaps:              newSnapshotBuffers(idxSpace, caps.PendingEvents),
+		snapNoLerp:         make([]bool, idxSpace),
+		snapDeath:          make([]bool, idxSpace),
+		snapMarked:         make([]EntityID, 0, idxSpace),
+		renderEvStaging:    make([]RenderEvent, 0, caps.PendingEvents),
+		Sched:              sched.New(),
+		Ents:               NewEntities(entityCap),
+		Transforms:         NewTransformStore(entityCap, idxSpace),
+		Movements:          NewMovementStore(caps.Units, idxSpace),
+		Collisions:         NewCollisionStore(caps.Units, idxSpace),
+		Healths:            NewHealthStore(caps.Units, idxSpace),
+		Owners:             NewOwnerStore(caps.Units, idxSpace),
+		UnitTypes:          NewUnitTypeStore(caps.Units, idxSpace),
+		Combats:            NewCombatStore(caps.Units, idxSpace),
+		Abilities:          NewAbilityStore(caps.Units, idxSpace),
+		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
+		Invents:            NewInventoryStore(caps.Units, idxSpace),
+		Orders:             NewOrderStore(caps.Units, idxSpace),
+		Buffs:              NewBuffPool(caps.BuffInstances),
+		Missiles:           NewMissileStore(caps.Projectiles, idxSpace),
+		Effects:            NewEffectStore(caps.Effects, idxSpace),
+		Nodes:              NewResourceNodeStore(caps.Units, idxSpace),
+		Econs:              NewEconStore(caps.Units, idxSpace),
+		Harvests:           NewHarvestStore(caps.Units, idxSpace),
+		Produce:            NewProduceStore(caps.Units, idxSpace),
+		Heroes:             NewHeroStore(caps.Units, idxSpace),
+		Items:              NewItemStore(caps.Units, idxSpace),
+		Patrol:             NewPatrolStore(caps.Units, idxSpace),
+		Build:              NewBuildStore(caps.Units, idxSpace),
+		orderPool:          make([]orderEntry, caps.OrderQueueEntries),
+		events:             make([]Event, caps.PendingEvents),
+		handlers:           make(map[HandlerID]EventHandler),
+		pathReqs:           make([]pathRequest, caps.PathRequests),
+		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
+		Paths:              path.NewPathStore(caps.PathRequests, 1024),
+		runtimeAbilityDefs: make([]data.Ability, 0, caps.RuntimeAbilityDefs),
+		bucketHead:         make([]int32, bucketCount),
+		bucketNext:         make([]int32, idxSpace),
+		bucketPrev:         make([]int32, idxSpace),
+		bucketCell:         make([]int32, idxSpace),
+		bucketID:           make([]EntityID, idxSpace),
+		acquireEvery:       DefaultAcquireInterval,
+		areaScratch:        make([]EntityID, 0, 64),
+		areaDistHi:         make([]uint64, 0, 64),
+		areaDistLo:         make([]uint64, 0, 64),
+		buffScratch:        make([]int32, 0, caps.BuffInstances),
+		auraScratch:        make([]EntityID, 0, caps.Units),
 	}
 	for s := 0; s < int(data.BuffStatCount); s++ {
 		w.buffAdd[s] = make([]int64, idxSpace)
@@ -488,8 +496,9 @@ func (w *World) PreallocatedBytes() int {
 		vec2B  = 16 // fixed.Vec2
 		rowOfB = 4
 		// per-row column-byte sums of the wide stores
-		combatRowB  = 8 + 2 + 2 + 2 + 4 + 4 + 16 + 4 + 8 + 8 + 4 + 4 + 4 + 4
-		abilityRowB = AbilitySlots*(2+1+4+2+1) + 4
+		combatRowB         = 8 + 2 + 2 + 2 + 4 + 4 + 16 + 4 + 8 + 8 + 4 + 4 + 4 + 4
+		abilityRowB        = AbilitySlots*(2+1+4+2+1) + 4
+		runtimeAbilityRowB = 56 // data.Ability struct on supported 64-bit targets
 	)
 	n := 0
 	n += len(w.Ents.slots) * slotB
@@ -511,6 +520,7 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Combats.rowOf) * rowOfB
 	n += len(w.Abilities.AbilityID) * abilityRowB
 	n += len(w.Abilities.rowOf) * rowOfB
+	n += cap(w.runtimeAbilityDefs) * runtimeAbilityRowB
 	n += len(w.AbilityFields.Ent)*(4+1+1+8+1) + len(w.AbilityFields.free)*4 +
 		len(w.AbilityFields.rowOf)*rowOfB + len(w.AbilityFields.perUnit)
 	n += len(w.Invents.Slots) * (InventorySlots*4 + 4)

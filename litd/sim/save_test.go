@@ -219,9 +219,20 @@ func abilityFieldSectionLenForTest(w *World) int {
 	return 4 + int(w.AbilityFields.Count())*saveAbilityFieldRowLen + 4 + len(w.AbilityFields.free)*4 + 8
 }
 
+func abilityDefSectionLenForTest(w *World) int {
+	n := 4
+	for i := range w.runtimeAbilityDefs {
+		def := &w.runtimeAbilityDefs[i]
+		n += 4 + len(def.ID)
+		n += 4 + len(def.Name)
+		n += 2 + 2 + 4 + 2 + 2 + 2 + 2 + 8
+	}
+	return n
+}
+
 func clockSectionOffsetForTest(w *World, saved []byte) int {
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
-	return len(saved) - 4 - 4 - len(blob) - abilityFieldSectionLenForTest(w) -
+	return len(saved) - 4 - 4 - len(blob) - abilityDefSectionLenForTest(w) - abilityFieldSectionLenForTest(w) -
 		effectSectionLenForTest(w) - saveGameStateSectionLen - saveClockSectionLen
 }
 
@@ -235,6 +246,10 @@ func effectSectionOffsetForTest(w *World, saved []byte) int {
 
 func abilityFieldSectionOffsetForTest(w *World, saved []byte) int {
 	return effectSectionOffsetForTest(w, saved) + effectSectionLenForTest(w)
+}
+
+func abilityDefSectionOffsetForTest(w *World, saved []byte) int {
+	return abilityFieldSectionOffsetForTest(w, saved) + abilityFieldSectionLenForTest(w)
 }
 
 func TestSaveClockRoundTripAndResume(t *testing.T) {
@@ -684,7 +699,7 @@ func TestSaveCorruptionNeverSilent(t *testing.T) {
 		t.Fatal(err)
 	}
 	full := buf.Bytes()
-	headerLen := len(SaveMagic) + 4 + 8 + 8*4 + 4 + 4 + 16
+	headerLen := len(SaveMagic) + 4 + 8 + 9*4 + 4 + 4 + 16
 	step := len(full)/97 + 1
 	refused, changed := 0, 0
 	for off := headerLen; off < len(full); off += step {

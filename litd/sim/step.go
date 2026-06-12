@@ -57,6 +57,7 @@ func (w *World) KillUnit(id EntityID) bool {
 
 // Step advances the simulation by exactly one tick.
 func (w *World) Step() {
+	w.inStep = true
 	w.tick++
 	w.runPhase(1, "input", (*World).phaseInput)
 	w.runPhase(2, "scripts", (*World).phaseScripts)
@@ -65,6 +66,7 @@ func (w *World) Step() {
 	w.runPhase(5, "combat", (*World).phaseCombat)
 	w.runPhase(6, "events", (*World).phaseEvents)
 	w.runPhase(7, "cleanup", (*World).phaseCleanup)
+	w.inStep = false
 }
 
 func (w *World) runPhase(n int, name string, f func(*World)) {
