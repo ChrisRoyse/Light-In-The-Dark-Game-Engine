@@ -1,0 +1,137 @@
+package sim
+
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+
+// The 7-phase tick (tick-and-scheduler.md §4, ecs-architecture.md §6).
+// Step is THE hand-written tick function: phases run in fixed order
+// from one function, systems are concrete code — no System interface,
+// no registration slice, nothing dynamic (ecs §7). Game time is the
+// integer tick counter; one tick is exactly 50 ms of game time and no
+// float delta-time exists anywhere in litd/sim (R-SIM-1).
+//
+// Order-sensitive same-tick effects use deferred buffers: a kill
+// lands in the killed buffer during phase 5, its death event fires in
+// phase 6 while the entity still exists, and the entity is removed in
+// phase 7's second pass (ecs §6 deferred-effect rule).
+
+// WorldCommand is one player/script command. Commands enqueue into a
+// staging buffer at any time; phase 1 of the NEXT tick applies them —
+// a command can never act in the tick that issued it.
+type WorldCommand struct {
+	Kind  uint8
+	Unit  EntityID
+	Point fixed.Vec2
+}
+
+// Tick returns the current game time in ticks (50 ms each).
+func (w *World) Tick() uint32 { return w.tick }
+
+// EnqueueCommand stages a command for the next tick's input phase.
+// Returns false when the staging buffer is full (gameplay outcome).
+func (w *World) EnqueueCommand(c WorldCommand) bool {
+	if len(w.cmdStaging) == cap(w.cmdStaging) {
+		return false
+	}
+	w.cmdStaging = append(w.cmdStaging, c)
+	return true
+}
+
+// KillUnit marks a unit dead this tick. The entity stays alive (and
+// addressable by phase-6 event handlers) until phase 7 removes it.
+// Duplicate kills of the same entity in one tick collapse to one.
+func (w *World) KillUnit(id EntityID) bool {
+	if !w.Ents.Alive(id) {
+		return false
+	}
+	for i := range w.killed {
+		if w.killed[i] == id {
+			return true // already marked this tick
+		}
+	}
+	if len(w.killed) == cap(w.killed) {
+		return false
+	}
+	w.killed = append(w.killed, id)
+	return true
+}
+
+// Step advances the simulation by exactly one tick.
+func (w *World) Step() {
+	w.tick++
+	w.runPhase(1, "input", (*World).phaseInput)
+	w.runPhase(2, "scripts", (*World).phaseScripts)
+	w.runPhase(3, "orders", (*World).phaseOrders)
+	w.runPhase(4, "movement", (*World).phaseMovement)
+	w.runPhase(5, "combat", (*World).phaseCombat)
+	w.runPhase(6, "events", (*World).phaseEvents)
+	w.runPhase(7, "cleanup", (*World).phaseCleanup)
+}
+
+func (w *World) runPhase(n int, name string, f func(*World)) {
+	if w.PhaseTrace != nil {
+		w.PhaseTrace(w.tick, n, name)
+	}
+	f(w)
+}
+
+// Phase 1 — input: the staging buffer swaps into the active command
+// list and applies. Commands staged DURING this tick (by scripts or
+// the driver) land in the now-empty staging buffer for the next tick.
+func (w *World) phaseInput() {
+	w.cmdActive, w.cmdStaging = w.cmdStaging, w.cmdActive[:0]
+	for i := range w.cmdActive {
+		if w.OnCommand != nil {
+			w.OnCommand(w.tick, w.cmdActive[i])
+		}
+		// order-component application lands with #144/#146; the
+		// double-buffer timing contract is authoritative already
+	}
+}
+
+// Phase 2 — scripts: the deterministic scheduler drains due
+// suspensions (#87 wires litd/sim/sched here).
+func (w *World) phaseScripts() {
+	if w.OnScriptPhase != nil {
+		w.OnScriptPhase(w.tick)
+	}
+}
+
+// Phase 3 — orders: pop/translate orders into system intents (#144+).
+func (w *World) phaseOrders() {}
+
+// Phase 4 — movement: pathing consumption + integration (#113).
+func (w *World) phaseMovement() {}
+
+// Phase 5 — combat: acquisition, attack cycles, damage, kills (#150+).
+// Kills mark the deferred buffer — removal is phase 7's job.
+func (w *World) phaseCombat() {
+	if w.OnCombatPhase != nil {
+		w.OnCombatPhase(w.tick)
+	}
+}
+
+// Phase 6 — events: deterministically ordered dispatch (#88). Death
+// events for this tick's kills fire here, while the entities still
+// exist and their components remain readable.
+func (w *World) phaseEvents() {
+	for i := range w.killed {
+		if w.OnDeathEvent != nil {
+			w.OnDeathEvent(w.tick, w.killed[i])
+		}
+	}
+}
+
+// Phase 7 — cleanup: deferred removals (second pass), then the render
+// snapshot publish and state hash on cadence (hooks until #203/#207).
+func (w *World) phaseCleanup() {
+	for i := range w.killed {
+		w.DestroyUnit(w.killed[i])
+	}
+	w.killed = w.killed[:0]
+	if w.OnSnapshot != nil {
+		w.OnSnapshot(w.tick)
+	}
+	if w.OnHash != nil && w.HashEvery > 0 && w.tick%w.HashEvery == 0 {
+		w.OnHash(w.tick)
+	}
+}

@@ -129,24 +129,24 @@ func (w *DetWorld) Step() {
 		w.sched.FireEvent(evSync)
 	}
 
-	dt := fixed.One / 20 // 50 ms tick
+	tickScale := fixed.One / 20 // 50 ms tick
 	attackRange := fixed.FromInt(2)
 	dmg := fixed.FromInt(25).Div(fixed.FromInt(2)) // 12.5
 	for i := range w.ents {
 		e := &w.ents[i]
 		t := &w.ents[e.target]
 		if fixed.DistSqLess(e.pos, t.pos, attackRange) {
-			t.hp = t.hp.Sub(dmg.Mul(dt))
+			t.hp = t.hp.Sub(dmg.Mul(tickScale))
 		} else {
 			d := t.pos.Sub(e.pos)
 			lenSq := d.LenSq()
 			if lenSq > 0 {
 				dist := fixed.F64(uint64(fixed.SqrtU64(uint64(lenSq))) << 16)
 				inv := fixed.One.Div(dist.Add(fixed.One))
-				e.vel = e.vel.Add(d.Scale(inv).Scale(dt))
+				e.vel = e.vel.Add(d.Scale(inv).Scale(tickScale))
 			}
 		}
-		e.pos = e.pos.Add(e.vel.Scale(dt))
+		e.pos = e.pos.Add(e.vel.Scale(tickScale))
 	}
 }
 

@@ -104,9 +104,27 @@ type projectileRow struct {
 // handle limits.
 type World struct {
 	caps Caps
+	tick uint32
 
 	Ents       *Entities
 	Transforms *TransformStore
+
+	// double-buffered command staging (step.go): enqueue any time,
+	// applied at the NEXT tick's phase 1
+	cmdStaging []WorldCommand
+	cmdActive  []WorldCommand
+	// deferred kills: marked phase 5, events phase 6, removed phase 7
+	killed []EntityID
+
+	// Debug/integration hooks; nil-safe stubs until their issues land.
+	PhaseTrace    func(tick uint32, phase int, name string)
+	OnCommand     func(tick uint32, c WorldCommand)
+	OnScriptPhase func(tick uint32)
+	OnCombatPhase func(tick uint32)
+	OnDeathEvent  func(tick uint32, id EntityID)
+	OnSnapshot    func(tick uint32)
+	OnHash        func(tick uint32)
+	HashEvery     uint32
 
 	unitCount  int
 	projectiles []projectileRow
@@ -128,6 +146,9 @@ func NewWorld(requested Caps) *World {
 	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
 	return &World{
 		caps:        caps,
+		cmdStaging:  make([]WorldCommand, 0, 1024),
+		cmdActive:   make([]WorldCommand, 0, 1024),
+		killed:      make([]EntityID, 0, caps.Units),
 		Ents:        NewEntities(entityCap),
 		Transforms:  NewTransformStore(entityCap, entityCap),
 		projectiles: make([]projectileRow, caps.Projectiles),
