@@ -101,12 +101,18 @@ func (w *World) phaseScripts() { w.scriptPhase() }
 func (w *World) phaseOrders() { w.ordersSystem() }
 
 // Phase 4 — movement: waypoint following, fixed-point integration,
-// turn-rate-limited facing (movement.go).
-func (w *World) phaseMovement() { w.movementSystem() }
+// turn-rate-limited facing (movement.go), then the incremental
+// bucket-grid rebuild over everything that moved (buckets.go §3.1).
+func (w *World) phaseMovement() {
+	w.movementSystem()
+	w.bucketReconcile()
+}
 
-// Phase 5 — combat: acquisition, attack cycles, damage, kills (#150+).
-// Kills mark the deferred buffer — removal is phase 7's job.
+// Phase 5 — combat: throttled target acquisition (acquire.go), then
+// attack cycles, damage, kills (#150+). Kills mark the deferred
+// buffer — removal is phase 7's job.
 func (w *World) phaseCombat() {
+	w.acquisitionSystem()
 	if w.OnCombatPhase != nil {
 		w.OnCombatPhase(w.tick)
 	}

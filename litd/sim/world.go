@@ -102,7 +102,16 @@ type World struct {
 	// capability-class column
 	smart           *data.SmartTable
 	unitClassByType []uint8
-	Sched           *sched.Scheduler // phase-2 script scheduler, lockstep with tick
+	// spatial bucket grid (buckets.go) — derived from Transform
+	// positions, excluded from the state hash
+	bucketHead []int32
+	bucketNext []int32
+	bucketPrev []int32
+	bucketCell []int32
+	bucketID   []EntityID
+	// acquisition scan throttle in ticks (acquire.go, §3.1 default 5)
+	acquireEvery uint16
+	Sched        *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// Cmds is the binary command-record front door (command.go):
 	// Stage any time (mutex), driver ingests between ticks, phase 1
@@ -200,6 +209,12 @@ func NewWorld(requested Caps) *World {
 		pathReqs:        make([]pathRequest, caps.PathRequests),
 		Doodads:         NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Paths:           path.NewPathStore(caps.PathRequests, 1024),
+		bucketHead:      make([]int32, bucketCount),
+		bucketNext:      make([]int32, idxSpace),
+		bucketPrev:      make([]int32, idxSpace),
+		bucketCell:      make([]int32, idxSpace),
+		bucketID:        make([]EntityID, idxSpace),
+		acquireEvery:    DefaultAcquireInterval,
 	}
 	for i := range w.orderPool {
 		w.orderPool[i].next = int32(i) + 1
@@ -207,6 +222,12 @@ func NewWorld(requested Caps) *World {
 	w.orderPool[len(w.orderPool)-1].next = -1
 	w.orderFreeHead = 0
 	w.orderFreeCount = int32(len(w.orderPool))
+	for i := range w.bucketHead {
+		w.bucketHead[i] = -1
+	}
+	for i := range w.bucketCell {
+		w.bucketCell[i] = -1
+	}
 	return w
 }
 
@@ -230,6 +251,7 @@ func (w *World) CreateUnit(pos fixed.Vec2, facing fixed.Angle) (EntityID, bool) 
 		w.Ents.Destroy(id)
 		return 0, false
 	}
+	w.bucketInsert(id, pos) // spatial bucket membership (buckets.go)
 	w.unitCount++
 	w.MarkSnap(id) // spawn discontinuity: render must not lerp from nowhere
 	return id, true
@@ -242,6 +264,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if !w.Ents.Alive(id) {
 		return false
 	}
+	w.bucketRemove(id)
 	w.Transforms.Remove(id)
 	if r := w.Movements.Row(id); r != -1 {
 		w.releaseReservation(r, id) // free the avoidance cell (no leak)

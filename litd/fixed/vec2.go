@@ -35,11 +35,36 @@ func deltaMag(x, y F64) uint64 {
 	return uint64(y) - uint64(x)
 }
 
+// DistSq returns the exact squared distance between a and b as a
+// 128-bit (hi, lo) pair — dx²+dy², with nothing ever truncated to F64
+// (determinism.md §2.4). Pairs compare lexicographically: (hi, lo)
+// orders exactly as the true squared distance, which makes DistSq the
+// comparison key for every "nearest candidate" total order in the sim
+// (combat-and-orders.md §3.2). A sum ≥ 2^128 (impossible for on-map
+// coordinates: a 16,384-wu map keeps hi below 2^30) saturates to the
+// maximum pair — farther than everything, still totally ordered.
+func DistSq(a, b Vec2) (hi, lo uint64) {
+	dxHi, dxLo := bits.Mul64(deltaMag(a.X, b.X), deltaMag(a.X, b.X))
+	dyHi, dyLo := bits.Mul64(deltaMag(a.Y, b.Y), deltaMag(a.Y, b.Y))
+
+	sumLo, carry := bits.Add64(dxLo, dyLo, 0)
+	sumHi, carry := bits.Add64(dxHi, dyHi, carry)
+	if carry != 0 {
+		return ^uint64(0), ^uint64(0)
+	}
+	return sumHi, sumLo
+}
+
+// RadiusSq returns r² as the 128-bit pair DistSq values compare
+// against (range checks: in-range ⇔ DistSq ≤ RadiusSq).
+func RadiusSq(r F64) (hi, lo uint64) {
+	m := magnitude(r)
+	return bits.Mul64(m, m)
+}
+
 // DistSqLess reports whether the squared distance between a and b is
 // strictly less than r squared — exactly, over the full coordinate
-// range. Squares are 128-bit via bits.Mul64; the sum dx²+dy² may need
-// 129 bits, tracked with the carry from bits.Add64; nothing is ever
-// truncated to F64 (determinism.md §2.4).
+// range (128-bit compare via DistSq).
 //
 // r is a distance in F64 units; negative r has an empty interior
 // (returns false).
@@ -47,18 +72,8 @@ func DistSqLess(a, b Vec2, r F64) bool {
 	if r <= 0 {
 		return false // strict-less: nothing is closer than a non-positive radius
 	}
-	dxHi, dxLo := bits.Mul64(deltaMag(a.X, b.X), deltaMag(a.X, b.X))
-	dyHi, dyLo := bits.Mul64(deltaMag(a.Y, b.Y), deltaMag(a.Y, b.Y))
-
-	sumLo, carry := bits.Add64(dxLo, dyLo, 0)
-	sumHi, carry := bits.Add64(dxHi, dyHi, carry)
-	if carry != 0 {
-		return false // sum ≥ 2^128 > any representable r²
-	}
-
-	rMag := magnitude(r)
-	rHi, rLo := bits.Mul64(rMag, rMag)
-
+	sumHi, sumLo := DistSq(a, b)
+	rHi, rLo := RadiusSq(r)
 	if sumHi != rHi {
 		return sumHi < rHi
 	}
