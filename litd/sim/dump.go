@@ -16,14 +16,36 @@ import (
 )
 
 // dumpFixed renders a 32.32 value as both raw bits (the authoritative
-// form) and a human decimal (derived, for reading).
+// form) and a human decimal string (derived, for reading). The
+// decimal is built with integer math only — floats are banned from
+// this package (#335, hazard §2.3-1), and a string avoids any
+// JSON-encoder rounding drift.
 type dumpFixed struct {
-	Raw int64   `json:"raw"`
-	Dec float64 `json:"dec"`
+	Raw int64  `json:"raw"`
+	Dec string `json:"dec"`
 }
 
 func df(v fixed.F64) dumpFixed {
-	return dumpFixed{Raw: int64(v), Dec: float64(int64(v)) / (1 << 32)}
+	return dumpFixed{Raw: int64(v), Dec: fixedDecString(int64(v))}
+}
+
+// fixedDecString formats a raw 32.32 value with six fractional
+// digits, round-half-up, pure integer math.
+func fixedDecString(raw int64) string {
+	u := uint64(raw)
+	if raw < 0 {
+		u = uint64(-raw) // two's complement: correct even for MinInt64
+	}
+	ip := u >> 32
+	dec := ((u&0xFFFFFFFF)*1_000_000 + (1 << 31)) >> 32
+	if dec == 1_000_000 {
+		ip++
+		dec = 0
+	}
+	if raw < 0 {
+		return fmt.Sprintf("-%d.%06d", ip, dec)
+	}
+	return fmt.Sprintf("%d.%06d", ip, dec)
 }
 
 type dumpEntity struct {

@@ -189,3 +189,28 @@ func TestEventLogDisabledZeroAlloc(t *testing.T) {
 	}
 	t.Logf("allocs = %v", avg)
 }
+
+// #335: the decimal renderer is pure integer math — exact cases
+// including the rounding boundary, negatives, and MinInt64.
+func TestFixedDecString(t *testing.T) {
+	cases := []struct {
+		raw  int64
+		want string
+	}{
+		{0, "0.000000"},
+		{1 << 32, "1.000000"},
+		{-(1 << 32), "-1.000000"},
+		{(3 << 32) | (1 << 31), "3.500000"},          // exactly .5
+		{1, "0.000000"},                              // 2^-32 rounds down
+		{0xFFFFFFFF, "1.000000"},                     // just under 1 rounds up, carries
+		{-((10 << 32) | (1 << 30)), "-10.250000"},    // negative fraction
+		{-9223372036854775808, "-2147483648.000000"}, // MinInt64
+	}
+	for _, c := range cases {
+		got := fixedDecString(c.raw)
+		t.Logf("raw=%d -> %s (want %s)", c.raw, got, c.want)
+		if got != c.want {
+			t.Errorf("fixedDecString(%d) = %q, want %q", c.raw, got, c.want)
+		}
+	}
+}
