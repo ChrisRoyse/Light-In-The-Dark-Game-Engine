@@ -74,10 +74,14 @@ func (w *World) runPhase(n int, name string, f func(*World)) {
 	f(w)
 }
 
-// Phase 1 — input: the staging buffer swaps into the active command
-// list and applies. Commands staged DURING this tick (by scripts or
-// the driver) land in the now-empty staging buffer for the next tick.
+// Phase 1 — input: drain pending command records for this tick in
+// (Player, Seq) order with deterministic validation (command.go),
+// then the legacy WorldCommand double buffer. Records staged DURING
+// this tick wait in the staging buffer until the driver's next
+// IngestStagedCommands call — a command can never act in the tick
+// that issued it.
 func (w *World) phaseInput() {
+	w.consumePendingCommands()
 	w.cmdActive, w.cmdStaging = w.cmdStaging, w.cmdActive[:0]
 	for i := range w.cmdActive {
 		if w.OnCommand != nil {

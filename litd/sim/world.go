@@ -92,6 +92,15 @@ type World struct {
 	Doodads    *DoodadStore
 	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
+	// Cmds is the binary command-record front door (command.go):
+	// Stage any time (mutex), driver ingests between ticks, phase 1
+	// validates and applies in (Tick, Player, Seq) order.
+	Cmds *CommandQueue
+	// scratch actor list for phase-1 validation (no per-record alloc)
+	cmdActors   [MaxCommandUnits]EntityID
+	cmdApplied  uint64
+	cmdRejected uint64
+
 	// double-buffered command staging (step.go): enqueue any time,
 	// applied at the NEXT tick's phase 1
 	cmdStaging []WorldCommand
@@ -100,15 +109,18 @@ type World struct {
 	killed []EntityID
 
 	// Debug/integration hooks; nil-safe stubs until their issues land.
-	PhaseTrace    func(tick uint32, phase int, name string)
-	OnCommand     func(tick uint32, c WorldCommand)
-	OnScriptPhase func(tick uint32)
-	OnCombatPhase func(tick uint32)
-	OnDeathEvent  func(tick uint32, id EntityID)
-	OnSnapshot    func(tick uint32)
-	OnHash        func(tick uint32)
-	OnEventDrop   func(tick uint32, e Event)
-	HashEvery     uint32
+	PhaseTrace func(tick uint32, phase int, name string)
+	OnCommand  func(tick uint32, c WorldCommand)
+	// OnCommandRecord fires for every VALIDATED record in phase 1
+	// with the surviving (alive + owned) actor list.
+	OnCommandRecord func(tick uint32, r *CommandRecord, actors []EntityID)
+	OnScriptPhase   func(tick uint32)
+	OnCombatPhase   func(tick uint32)
+	OnDeathEvent    func(tick uint32, id EntityID)
+	OnSnapshot      func(tick uint32)
+	OnHash          func(tick uint32)
+	OnEventDrop     func(tick uint32, e Event)
+	HashEvery       uint32
 
 	unitCount     int
 	orderPool     []orderEntry
@@ -128,6 +140,7 @@ func NewWorld(requested Caps) *World {
 	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
 	return &World{
 		caps:       caps,
+		Cmds:       newCommandQueue(),
 		cmdStaging: make([]WorldCommand, 0, 1024),
 		cmdActive:  make([]WorldCommand, 0, 1024),
 		killed:     make([]EntityID, 0, caps.Units),
