@@ -15,6 +15,7 @@ import (
 type Caps struct {
 	Units             int
 	Projectiles       int
+	Effects           int
 	BuffInstances     int
 	OrderQueueEntries int
 	PendingEvents     int // per-tick ring
@@ -26,6 +27,7 @@ type Caps struct {
 var EngineCaps = Caps{
 	Units:             4000,
 	Projectiles:       2000,
+	Effects:           1024,
 	BuffInstances:     8000,
 	OrderQueueEntries: 16000,
 	PendingEvents:     4096,
@@ -45,6 +47,7 @@ func (c Caps) resolve() Caps {
 	return Caps{
 		Units:             clampCap(c.Units, EngineCaps.Units),
 		Projectiles:       clampCap(c.Projectiles, EngineCaps.Projectiles),
+		Effects:           clampCap(c.Effects, EngineCaps.Effects),
 		BuffInstances:     clampCap(c.BuffInstances, EngineCaps.BuffInstances),
 		OrderQueueEntries: clampCap(c.OrderQueueEntries, EngineCaps.OrderQueueEntries),
 		PendingEvents:     clampCap(c.PendingEvents, EngineCaps.PendingEvents),
@@ -101,6 +104,7 @@ type World struct {
 	Orders     *OrderStore
 	Buffs      *BuffPool
 	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
+	Effects    *EffectStore  // persistent script effects, first-class entities (#348)
 	Heroes     *HeroStore
 	Items      *ItemStore   // item entities (#305): type + charges + carrier
 	Patrol     *PatrolStore // patrol endpoints (#306)
@@ -265,10 +269,10 @@ type World struct {
 
 // NewWorld allocates every pool at the resolved capacities. The
 // entity table covers everything that can hold an EntityID: units,
-// projectiles, and promoted doodads.
+// projectiles, persistent effects, and promoted doodads.
 func NewWorld(requested Caps) *World {
 	caps := requested.resolve()
-	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
+	entityCap := caps.Units + caps.Projectiles + caps.Effects + caps.ScriptedDoodads
 	// entity indices run 1..entityCap (slot 0 reserved, entity.go) —
 	// every array indexed by EntityID.Index() needs entityCap+1 room
 	idxSpace := entityCap + 1
@@ -301,6 +305,7 @@ func NewWorld(requested Caps) *World {
 		Orders:          NewOrderStore(caps.Units, idxSpace),
 		Buffs:           NewBuffPool(caps.BuffInstances),
 		Missiles:        NewMissileStore(caps.Projectiles, idxSpace),
+		Effects:         NewEffectStore(caps.Effects, idxSpace),
 		Nodes:           NewResourceNodeStore(caps.Units, idxSpace),
 		Econs:           NewEconStore(caps.Units, idxSpace),
 		Harvests:        NewHarvestStore(caps.Units, idxSpace),
@@ -452,6 +457,10 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if isMissile {
 		w.Missiles.Remove(id)
 	}
+	isEffect := w.Effects.Row(id) != -1
+	if isEffect {
+		w.Effects.Remove(id)
+	}
 	// derived-stat cache back to identity NOW — the entity index can
 	// be reused before the next buff sweep frees the dead carrier's
 	// instances (buff.go #162)
@@ -462,7 +471,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if !w.Ents.Destroy(id) {
 		return false
 	}
-	if !isMissile {
+	if !isMissile && !isEffect {
 		w.unitCount-- // missiles never counted against the unit cap
 	}
 	return true
@@ -504,8 +513,10 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Orders.Kind) * (1 + 1 + 4 + 16 + 4 + 4)
 	n += len(w.Orders.rowOf) * rowOfB
 	n += cap(w.Missiles.Entity) * 120 // MissileStore columns
-	n += w.Buffs.Cap() * 24           // BuffInstance + free/live bookkeeping
-	for s := range w.buffAdd {        // derived-stat cache (#162)
+	n += len(w.Effects.ModelID) * (2 + 8 + 4 + 4 + 4)
+	n += len(w.Effects.rowOf) * rowOfB
+	n += w.Buffs.Cap() * 24    // BuffInstance + free/live bookkeeping
+	for s := range w.buffAdd { // derived-stat cache (#162)
 		n += len(w.buffAdd[s])*8 + len(w.buffMult[s])*8
 	}
 	n += cap(w.buffScratch) * 4

@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v12: capability table includes persistent effect cap (#348);
+// worlds with live effects refuse save until the #349 effect section.
 // v11: gamestate section (per-player match results) appended after
 // the clock section (#345).
 // v10: clock section (tod, scale, frozen, carry, day length) appended
@@ -63,7 +65,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 11
+const SaveFormatVersion uint32 = 12
 
 // ---- little-endian writer / reader ----
 
@@ -155,6 +157,9 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 			return fmt.Errorf("sim: save: pending match result request for player %d — step before saving", player)
 		}
 	}
+	if w.Effects.Count() != 0 {
+		return fmt.Errorf("sim: save: %d persistent effects present — effect save section lands with #349", w.Effects.Count())
+	}
 	s := &saveWriter{w: out}
 	if _, err := io.WriteString(out, SaveMagic); err != nil {
 		return err
@@ -163,6 +168,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u64(fingerprint)
 	s.u32(uint32(w.caps.Units))
 	s.u32(uint32(w.caps.Projectiles))
+	s.u32(uint32(w.caps.Effects))
 	s.u32(uint32(w.caps.BuffInstances))
 	s.u32(uint32(w.caps.OrderQueueEntries))
 	s.u32(uint32(w.caps.PendingEvents))
@@ -829,6 +835,7 @@ func (w *World) LoadState(in io.Reader, fingerprint uint64) error {
 	got := Caps{
 		Units:             int(r.u32()),
 		Projectiles:       int(r.u32()),
+		Effects:           int(r.u32()),
 		BuffInstances:     int(r.u32()),
 		OrderQueueEntries: int(r.u32()),
 		PendingEvents:     int(r.u32()),
