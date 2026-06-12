@@ -12,8 +12,6 @@ package litd
 // silent fire-as-instant fallback (R-API-5).
 
 import (
-	"math"
-
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
@@ -200,7 +198,6 @@ func vec(v Vec2) fixed.Vec2 {
 // radians→brads unit conversion, a plain scale that is exact enough and
 // platform-stable.
 func dirFromAngle(a Angle) fixed.Vec2 {
-	const radToBrad = 65536.0 / (2 * math.Pi)
-	b := fixed.Angle(uint16(int64(a.rad * radToBrad)))
+	b := angleToBrad(a)
 	return fixed.Vec2{X: b.Cos(), Y: b.Sin()}
 }

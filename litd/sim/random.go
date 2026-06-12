@@ -1,0 +1,30 @@
+package sim
+
+// Public draw primitives over the single seeded PRNG (R-SIM-2). Every
+// gameplay roll — Go or Lua, internal or script-facing — funnels through
+// w.rng so the draw sequence is part of the deterministic, replayable,
+// hashed state. These are the canonical forms the public RandomInt/
+// RandomFloat/RandomAngle verbs translate one-to-one.
+
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+
+// RandU32 returns the next raw draw from the sim PRNG.
+func (w *World) RandU32() uint32 { return w.rng.Uint32() }
+
+// RandRange returns a uniformly-distributed integer in [min, max]
+// inclusive. A degenerate range (max <= min) returns min without
+// drawing — fail-closed, deterministic.
+func (w *World) RandRange(min, max int32) int32 {
+	if max <= min {
+		return min
+	}
+	span := uint32(int64(max) - int64(min) + 1)
+	return min + int32(w.rng.Uint32()%span)
+}
+
+// RandUnit returns a fixed-point value in [0, 1): the raw 32-bit draw
+// read as a 32.32 fraction.
+func (w *World) RandUnit() fixed.F64 { return fixed.F64(w.rng.Uint32()) }
+
+// RandAngle returns a uniformly-distributed binary angle.
+func (w *World) RandAngle() fixed.Angle { return fixed.Angle(uint16(w.rng.Uint32())) }
