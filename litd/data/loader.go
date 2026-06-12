@@ -115,6 +115,11 @@ type Unit struct {
 	FoodProvided uint8
 	DepotMask    uint16      // bit per accepted resource index
 	Harvest      HarvestSpec // Capacity 0 = not a harvester
+
+	// production block (#302)
+	Costs      []int64  // per resource index (len = registry size; nil = free)
+	TrainTicks uint16   // 0 = not trainable
+	Trains     []uint16 // unit indices this building can train (post-sort resolve)
 }
 
 // Attack is one converted weapon row.
@@ -139,23 +144,26 @@ type rawUnitFile struct {
 }
 
 type rawUnit struct {
-	ID               string      `toml:"id" json:"id"`
-	Life             int64       `toml:"life" json:"life"`
-	Regen            float64     `toml:"regen" json:"regen"`
-	Armor            int64       `toml:"armor" json:"armor"`
-	ArmorType        string      `toml:"armor-type" json:"armor-type"`
-	MoveSpeed        float64     `toml:"move-speed" json:"move-speed"`
-	TurnRate         float64     `toml:"turn-rate" json:"turn-rate"`
-	CollisionSize    int64       `toml:"collision-size" json:"collision-size"`
-	Pathing          string      `toml:"pathing" json:"pathing"`
-	AcquisitionRange float64     `toml:"acquisition-range" json:"acquisition-range"`
-	Model            string      `toml:"model" json:"model"`
-	Abilities        []string    `toml:"abilities" json:"abilities"`
-	Attacks          []rawAttack `toml:"attack" json:"attack"`
-	FoodCost         int64       `toml:"food-cost" json:"food-cost"`
-	FoodProvided     int64       `toml:"food-provided" json:"food-provided"`
-	DepotFor         []string    `toml:"depot-for" json:"depot-for"`
-	Harvest          *rawHarvest `toml:"harvest" json:"harvest"`
+	ID               string           `toml:"id" json:"id"`
+	Life             int64            `toml:"life" json:"life"`
+	Regen            float64          `toml:"regen" json:"regen"`
+	Armor            int64            `toml:"armor" json:"armor"`
+	ArmorType        string           `toml:"armor-type" json:"armor-type"`
+	MoveSpeed        float64          `toml:"move-speed" json:"move-speed"`
+	TurnRate         float64          `toml:"turn-rate" json:"turn-rate"`
+	CollisionSize    int64            `toml:"collision-size" json:"collision-size"`
+	Pathing          string           `toml:"pathing" json:"pathing"`
+	AcquisitionRange float64          `toml:"acquisition-range" json:"acquisition-range"`
+	Model            string           `toml:"model" json:"model"`
+	Abilities        []string         `toml:"abilities" json:"abilities"`
+	Attacks          []rawAttack      `toml:"attack" json:"attack"`
+	FoodCost         int64            `toml:"food-cost" json:"food-cost"`
+	FoodProvided     int64            `toml:"food-provided" json:"food-provided"`
+	DepotFor         []string         `toml:"depot-for" json:"depot-for"`
+	Harvest          *rawHarvest      `toml:"harvest" json:"harvest"`
+	Costs            map[string]int64 `toml:"costs" json:"costs"`
+	TrainSeconds     float64          `toml:"train-seconds" json:"train-seconds"`
+	Trains           []string         `toml:"trains" json:"trains"`
 }
 
 type rawAttack struct {
@@ -394,6 +402,7 @@ func Load(fsys fs.FS) (*Tables, error) {
 	if err != nil {
 		return nil, err
 	}
+	pendingTrains := map[string][]string{}
 	for _, f := range unitFiles {
 		blob, err := fs.ReadFile(fsys, f)
 		if err != nil {
@@ -408,6 +417,9 @@ func Load(fsys fs.FS) (*Tables, error) {
 			if err != nil {
 				return nil, err
 			}
+			if len(raw.Unit[i].Trains) > 0 {
+				pendingTrains[u.ID] = raw.Unit[i].Trains
+			}
 			t.Units = append(t.Units, u)
 		}
 	}
@@ -415,6 +427,20 @@ func Load(fsys fs.FS) (*Tables, error) {
 	for i := 1; i < len(t.Units); i++ {
 		if t.Units[i].ID == t.Units[i-1].ID {
 			return nil, fmt.Errorf("data: duplicate unit id %q", t.Units[i].ID)
+		}
+	}
+	// trains lists resolve AFTER the sort: unit indices are stable
+	// only once the canonical order exists (#302)
+	for i := range t.Units {
+		for _, ref := range pendingTrains[t.Units[i].ID] {
+			idx := sort.Search(len(t.Units), func(k int) bool { return t.Units[k].ID >= ref })
+			if idx == len(t.Units) || t.Units[idx].ID != ref {
+				return nil, fmt.Errorf("data: unit %q: trains reference to undefined unit %q", t.Units[i].ID, ref)
+			}
+			if t.Units[idx].TrainTicks == 0 {
+				return nil, fmt.Errorf("data: unit %q: trains %q which has no train-seconds", t.Units[i].ID, ref)
+			}
+			t.Units[i].Trains = append(t.Units[i].Trains, uint16(idx))
 		}
 	}
 
@@ -572,6 +598,9 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		Model:            r.Model,
 	}
 	if u.FoodCost, u.FoodProvided, u.DepotMask, u.Harvest, err = t.convertEconomy(file, r.ID, r); err != nil {
+		return Unit{}, err
+	}
+	if u.Costs, u.TrainTicks, err = t.convertProduction(file, r.ID, r); err != nil {
 		return Unit{}, err
 	}
 	for ai := range r.Attacks {
@@ -755,6 +784,15 @@ func (t *Tables) fingerprint() uint64 {
 		h.WriteU16(u.Harvest.GatherTicks)
 		h.WriteU32(uint32(u.Harvest.Capacity))
 		h.WriteU16(u.Harvest.Mask)
+		h.WriteU32(uint32(len(u.Costs)))
+		for _, cv := range u.Costs {
+			h.WriteI64(cv)
+		}
+		h.WriteU16(u.TrainTicks)
+		h.WriteU32(uint32(len(u.Trains)))
+		for _, tr := range u.Trains {
+			h.WriteU16(tr)
+		}
 	}
 	t.hashEconomy(h)
 	h.WriteBool(t.Smart != nil)

@@ -97,8 +97,12 @@ func (w *World) phaseInput() {
 func (w *World) phaseScripts() { w.scriptPhase() }
 
 // Phase 3 — orders: drive current orders, pop completed ones, fall
-// through to the default order (orders.go).
-func (w *World) phaseOrders() { w.ordersSystem() }
+// through to the default order (orders.go), then advance production
+// queues (produce.go #302).
+func (w *World) phaseOrders() {
+	w.ordersSystem()
+	w.produceSystem()
+}
 
 // Phase 4 — movement: waypoint following, fixed-point integration,
 // turn-rate-limited facing (movement.go), then the incremental

@@ -96,6 +96,7 @@ type World struct {
 	Nodes      *ResourceNodeStore
 	Econs      *EconStore
 	Harvests   *HarvestStore
+	Produce    *ProduceStore
 	Doodads    *DoodadStore
 	Paths      *path.PathStore // pooled per-unit waypoint buffers (§7)
 	Grid       *path.Grid      // pathing grid; nil until SetGrid (map load)
@@ -115,6 +116,12 @@ type World struct {
 	// loaded buff-type rows (buff.go #162); BuffInstance.BuffID
 	// indexes this slice
 	buffTypes []data.BuffType
+	// loaded unit rows (produce.go #302); UnitTypeStore.TypeID indexes
+	// this slice; BindUnitDefs installs, read-only thereafter
+	unitDefs []data.Unit
+	// tech-requirement admission hook (#303); nil = allow (documented
+	// canonical default while no requirement table is bound)
+	techGate func(player uint8, typeID uint16) bool
 	// derived-stat cache (buff.go): per stat, per entity index, the
 	// folded flat Add and multiplicative factor; identity (+0, ×One)
 	// when the entity carries no modifying buff. Recomputed only on
@@ -261,6 +268,7 @@ func NewWorld(requested Caps) *World {
 		Nodes:           NewResourceNodeStore(caps.Units, idxSpace),
 		Econs:           NewEconStore(caps.Units, idxSpace),
 		Harvests:        NewHarvestStore(caps.Units, idxSpace),
+		Produce:         NewProduceStore(caps.Units, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -356,6 +364,10 @@ func (w *World) DestroyUnit(id EntityID) bool {
 		} else {
 			w.Econs.remove(id)
 		}
+	}
+	if pr := w.Produce.Row(id); pr != -1 { // before Owners.Remove: the food ledger needs the player
+		w.releaseTrainReservations(pr) // resources stay spent (destruction is not a cancel)
+		w.Produce.Remove(id)
 	}
 	if w.Owners.Row(id) != -1 {
 		w.Owners.Remove(id)

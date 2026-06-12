@@ -262,7 +262,7 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hut.WriteU16(ut.TypeID[i])
 	}
 
-	heco := h.next() // economy (#300): counters + node/econ/harvest rows
+	heco := h.next() // economy (#300/#302): counters + node/econ/harvest/produce rows
 	heco.WriteU32(uint32(w.resourceCount))
 	for pl := 0; pl < MaxPlayers; pl++ {
 		if w.resourceCount > 0 {
@@ -303,6 +303,22 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		heco.WriteU32(uint32(hv.Capacity[i]))
 		heco.WriteU16(hv.GatherTicks[i])
 		heco.WriteU16(hv.Mask[i])
+	}
+	pq := w.Produce // production queues (#302): full slot arrays —
+	// freed slots are zero-filled canonically (shiftQueue)
+	heco.WriteU32(uint32(pq.count))
+	for i := int32(0); i < pq.count; i++ {
+		heco.WriteU32(uint32(pq.Entity[i]))
+		heco.WriteU8(pq.QCount[i])
+		for q := 0; q < ProduceQueueCap; q++ {
+			heco.WriteU16(pq.Queue[i][q])
+			heco.WriteU8(pq.QFlags[i][q])
+		}
+		heco.WriteU32(pq.Done[i])
+		heco.WriteU8(pq.RallyKind[i])
+		heco.WriteU32(uint32(pq.RallyEnt[i]))
+		heco.WriteI64(int64(pq.RallyPoint[i].X))
+		heco.WriteI64(int64(pq.RallyPoint[i].Y))
 	}
 
 	hin := h.next() // invents (#334)

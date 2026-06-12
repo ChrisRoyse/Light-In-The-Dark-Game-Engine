@@ -148,6 +148,36 @@ func (t *Tables) convertEconomy(file, unitID string, r *rawUnit) (food uint8, pr
 	return uint8(r.FoodCost), uint8(r.FoodProvided), depot, hv, nil
 }
 
+// convertProduction validates a unit's production block (#302):
+// costs keyed by registry resource names, train time on the tick
+// grid. Trains lists resolve post-sort in Load.
+func (t *Tables) convertProduction(file, unitID string, r *rawUnit) (costs []int64, trainTicks uint16, err error) {
+	fail := func(field string, e error) ([]int64, uint16, error) {
+		return nil, 0, fmt.Errorf("data: %s: unit %q: %s: %w", file, unitID, field, e)
+	}
+	if len(r.Costs) > 0 {
+		costs = make([]int64, len(t.ResourceTypes))
+		for name, v := range r.Costs {
+			res := indexOf(t.ResourceTypes, name)
+			if res < 0 {
+				return fail("costs", fmt.Errorf("resource %q is not in resource-types %v", name, t.ResourceTypes))
+			}
+			if v < 0 || v > 1_000_000 {
+				return fail("costs", fmt.Errorf("%s = %d out of range [0, 1e6]", name, v))
+			}
+			costs[res] = v
+		}
+	}
+	if r.TrainSeconds != 0 {
+		ticks, e := SecondsToTicks(r.TrainSeconds)
+		if e != nil || ticks == 0 {
+			return fail("train-seconds", fmt.Errorf("%v", r.TrainSeconds))
+		}
+		trainTicks = ticks
+	}
+	return costs, trainTicks, nil
+}
+
 // hashEconomy folds the registry, nodes, and is called from the
 // fingerprint (unit econ fields fold with their unit rows).
 func (t *Tables) hashEconomy(h *statehash.Hasher) {

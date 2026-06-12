@@ -43,9 +43,11 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v3: production section (#302) — produce rows (queues, head clock,
+// rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 2
+const SaveFormatVersion uint32 = 3
 
 // ---- little-endian writer / reader ----
 
@@ -422,6 +424,20 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u16(hv.GatherTicks[i])
 		s.u16(hv.Mask[i])
 	}
+	pq := w.Produce
+	s.u32(uint32(pq.count))
+	for i := int32(0); i < pq.count; i++ {
+		s.ent(pq.Entity[i])
+		s.u8(pq.QCount[i])
+		for q := 0; q < ProduceQueueCap; q++ {
+			s.u16(pq.Queue[i][q])
+			s.u8(pq.QFlags[i][q])
+		}
+		s.u32(pq.Done[i])
+		s.u8(pq.RallyKind[i])
+		s.ent(pq.RallyEnt[i])
+		s.vec2(pq.RallyPoint[i])
+	}
 
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
@@ -582,6 +598,16 @@ type decodedSave struct {
 	hvCap   []int32
 	hvGT    []uint16
 	hvMask  []uint16
+
+	pqN     int32
+	pqE     []EntityID
+	pqQ     [][ProduceQueueCap]uint16
+	pqFl    [][ProduceQueueCap]uint8
+	pqCount []uint8
+	pqDone  []uint32
+	pqRK    []uint8
+	pqRE    []EntityID
+	pqRP    []fixed.Vec2
 
 	schedBlob []byte
 
@@ -1109,6 +1135,30 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.hvGT[i] = r.u16()
 		d.hvMask[i] = r.u16()
 	}
+	if n, err = r.section("produce rows", len(w.Produce.QCount)); err != nil {
+		return err
+	}
+	d.pqN = n
+	d.pqE = make([]EntityID, n)
+	d.pqQ = make([][ProduceQueueCap]uint16, n)
+	d.pqFl = make([][ProduceQueueCap]uint8, n)
+	d.pqCount = make([]uint8, n)
+	d.pqDone = make([]uint32, n)
+	d.pqRK = make([]uint8, n)
+	d.pqRE = make([]EntityID, n)
+	d.pqRP = make([]fixed.Vec2, n)
+	for i := int32(0); i < n; i++ {
+		d.pqE[i] = r.ent()
+		d.pqCount[i] = r.u8()
+		for q := 0; q < ProduceQueueCap; q++ {
+			d.pqQ[i][q] = r.u16()
+			d.pqFl[i][q] = r.u8()
+		}
+		d.pqDone[i] = r.u32()
+		d.pqRK[i] = r.u8()
+		d.pqRE[i] = r.ent()
+		d.pqRP[i] = r.vec2()
+	}
 
 	// scheduler blob
 	r.what = "scheduler blob"
@@ -1194,6 +1244,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"combat", d.cbE}, {"abilities", d.abE}, {"inventories", d.inE},
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
+		{"produce rows", d.pqE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
@@ -1261,6 +1312,33 @@ func validateSave(d *decodedSave, w *World) error {
 	for i := range d.buffRows {
 		if d.buffLive[i] && int(d.buffRows[i].BuffID) >= len(w.buffTypes) {
 			return fmt.Errorf("sim: save: buff row %d references unbound BuffID %d (bind data tables before load)", i, d.buffRows[i].BuffID)
+		}
+	}
+
+	// produce rows: canonical queues — live prefix only, zero tail,
+	// bound type IDs (the ledger recompute needs the defs' food costs)
+	for i := int32(0); i < d.pqN; i++ {
+		qc := int(d.pqCount[i])
+		if qc > ProduceQueueCap {
+			return fmt.Errorf("sim: save: produce row %d queue count %d exceeds cap %d", i, qc, ProduceQueueCap)
+		}
+		if qc > 0 && w.unitDefs == nil {
+			return fmt.Errorf("sim: save: produce row %d has queued trains but no unit defs bound — BindUnitDefs before LoadState", i)
+		}
+		for q := 0; q < ProduceQueueCap; q++ {
+			if q < qc {
+				if int(d.pqQ[i][q]) >= len(w.unitDefs) {
+					return fmt.Errorf("sim: save: produce row %d slot %d references unbound typeID %d", i, q, d.pqQ[i][q])
+				}
+			} else if d.pqQ[i][q] != 0 || d.pqFl[i][q] != 0 {
+				return fmt.Errorf("sim: save: produce row %d slot %d past the live prefix has non-canonical (non-zero) payload", i, q)
+			}
+		}
+		if qc == 0 && d.pqDone[i] != 0 {
+			return fmt.Errorf("sim: save: produce row %d idle but head clock %d non-zero", i, d.pqDone[i])
+		}
+		if d.pqRK[i] > RallyEntity {
+			return fmt.Errorf("sim: save: produce row %d rally kind %d unknown", i, d.pqRK[i])
 		}
 	}
 
@@ -1546,6 +1624,29 @@ func applySave(d *decodedSave, w *World) {
 		hv.GatherTicks[i] = d.hvGT[i]
 		hv.Mask[i] = d.hvMask[i]
 		hv.rowOf[d.hvE[i].Index()] = i
+	}
+	pq := w.Produce
+	pq.count = d.pqN
+	resetRowOf(pq.rowOf)
+	for i := int32(0); i < d.pqN; i++ {
+		pq.Entity[i] = d.pqE[i]
+		pq.Queue[i] = d.pqQ[i]
+		pq.QFlags[i] = d.pqFl[i]
+		pq.QCount[i] = d.pqCount[i]
+		pq.Done[i] = d.pqDone[i]
+		pq.RallyKind[i] = d.pqRK[i]
+		pq.RallyEnt[i] = d.pqRE[i]
+		pq.RallyPoint[i] = d.pqRP[i]
+		pq.rowOf[d.pqE[i].Index()] = i
+		// queued trains hold food reservations — fold them back into
+		// the recomputed ledger
+		if or := w.Owners.Row(d.pqE[i]); or != -1 {
+			if pl := w.Owners.Player[or]; pl < MaxPlayers {
+				for q := 0; q < int(d.pqCount[i]); q++ {
+					w.foodUsed[pl] += int32(w.unitDefs[d.pqQ[i][q]].FoodCost)
+				}
+			}
+		}
 	}
 
 	// subscriptions
