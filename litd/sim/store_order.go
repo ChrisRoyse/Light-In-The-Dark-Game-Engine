@@ -23,6 +23,7 @@ const (
 
 type OrderStore struct {
 	Kind      []uint8      // current order
+	Phase     []uint8      // orderFresh / orderRunning (orders.go)
 	Target    []EntityID   // entity target (0 = none / point order)
 	Point     []fixed.Vec2 // point target
 	QueueHead []int32      // first pooled queue entry; NoOrderEntry = empty
@@ -40,6 +41,7 @@ func NewOrderStore(rowCap, entityCap int) *OrderStore {
 	}
 	s := &OrderStore{
 		Kind:      make([]uint8, rowCap),
+		Phase:     make([]uint8, rowCap),
 		Target:    make([]EntityID, rowCap),
 		Point:     make([]fixed.Vec2, rowCap),
 		QueueHead: make([]int32, rowCap),
@@ -68,6 +70,7 @@ func (s *OrderStore) Add(e *Entities, id EntityID) bool {
 	}
 	r := s.count
 	s.Kind[r] = OrderStop
+	s.Phase[r] = 0
 	s.Target[r] = 0
 	s.Point[r] = fixed.Vec2{}
 	s.QueueHead[r] = NoOrderEntry
@@ -91,6 +94,7 @@ func (s *OrderStore) Remove(id EntityID) bool {
 	last := s.count - 1
 	if r != last {
 		s.Kind[r] = s.Kind[last]
+		s.Phase[r] = s.Phase[last]
 		s.Target[r] = s.Target[last]
 		s.Point[r] = s.Point[last]
 		s.QueueHead[r] = s.QueueHead[last]

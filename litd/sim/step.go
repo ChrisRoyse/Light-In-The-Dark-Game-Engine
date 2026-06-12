@@ -96,8 +96,9 @@ func (w *World) phaseInput() {
 // suspensions in (wakeTick, seq) order (script_phase.go).
 func (w *World) phaseScripts() { w.scriptPhase() }
 
-// Phase 3 — orders: pop/translate orders into system intents (#144+).
-func (w *World) phaseOrders() {}
+// Phase 3 — orders: drive current orders, pop completed ones, fall
+// through to the default order (orders.go).
+func (w *World) phaseOrders() { w.ordersSystem() }
 
 // Phase 4 — movement: waypoint following, fixed-point integration,
 // turn-rate-limited facing (movement.go).

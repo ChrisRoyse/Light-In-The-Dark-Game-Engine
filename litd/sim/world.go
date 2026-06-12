@@ -141,14 +141,18 @@ type World struct {
 	OnEventDrop   func(tick uint32, e Event)
 	HashEvery     uint32
 
-	unitCount     int
-	orderPool     []orderEntry
-	events        []Event // per-tick pending ring (events.go)
-	eventCount    int
-	eventsDropped uint64
-	handlers      map[HandlerID]EventHandler // registry: lookup only, never iterated
-	subs          []kindSubs                 // kind-sorted, registration-ordered lists
-	pathReqs      []pathRequest
+	unitCount int
+	// pooled intrusive order-queue entries (orders.go): LIFO free
+	// list threaded through orderEntry.next
+	orderPool      []orderEntry
+	orderFreeHead  int32
+	orderFreeCount int32
+	events         []Event // per-tick pending ring (events.go)
+	eventCount     int
+	eventsDropped  uint64
+	handlers       map[HandlerID]EventHandler // registry: lookup only, never iterated
+	subs           []kindSubs                 // kind-sorted, registration-ordered lists
+	pathReqs       []pathRequest
 }
 
 // NewWorld allocates every pool at the resolved capacities. The
@@ -157,7 +161,7 @@ type World struct {
 func NewWorld(requested Caps) *World {
 	caps := requested.resolve()
 	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
-	return &World{
+	w := &World{
 		caps:            caps,
 		Cmds:            newCommandQueue(),
 		cmdStaging:      make([]WorldCommand, 0, 1024),
@@ -189,6 +193,13 @@ func NewWorld(requested Caps) *World {
 		Doodads:         NewDoodadStore(caps.ScriptedDoodads, entityCap),
 		Paths:           path.NewPathStore(caps.PathRequests, 1024),
 	}
+	for i := range w.orderPool {
+		w.orderPool[i].next = int32(i) + 1
+	}
+	w.orderPool[len(w.orderPool)-1].next = -1
+	w.orderFreeHead = 0
+	w.orderFreeCount = int32(len(w.orderPool))
+	return w
 }
 
 // Caps returns the resolved (effective) capacities.
@@ -249,7 +260,8 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.Invents.Row(id) != -1 {
 		w.Invents.Remove(id)
 	}
-	if w.Orders.Row(id) != -1 {
+	if r := w.Orders.Row(id); r != -1 {
+		w.clearOrderQueue(r) // recycle pooled entries (no leak)
 		w.Orders.Remove(id)
 	}
 	if !w.Ents.Destroy(id) {
@@ -292,7 +304,7 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Abilities.rowOf) * rowOfB
 	n += len(w.Invents.Slots) * (InventorySlots*4 + 4)
 	n += len(w.Invents.rowOf) * rowOfB
-	n += len(w.Orders.Kind) * (1 + 4 + 16 + 4 + 4)
+	n += len(w.Orders.Kind) * (1 + 1 + 4 + 16 + 4 + 4)
 	n += len(w.Orders.rowOf) * rowOfB
 	n += w.Projs.Cap() * 96 // ProjectileInstance + free/live bookkeeping
 	n += w.Buffs.Cap() * 24 // BuffInstance + free/live bookkeeping

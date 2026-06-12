@@ -421,9 +421,10 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 			if or == -1 {
 				continue
 			}
-			w.Orders.Kind[or] = orderKind
-			w.Orders.Target[or] = target
-			w.Orders.Point[or] = r.Point
+			// a player command is an unqueued issue: queue cleared,
+			// current order interrupted, new order installed (§2.3 —
+			// the shift-queue flag joins the wire format with #146)
+			w.issueOrderRow(or, w.cmdActors[i], Order{Kind: orderKind, Target: target, Point: r.Point}, false)
 		}
 	}
 	w.cmdApplied++
