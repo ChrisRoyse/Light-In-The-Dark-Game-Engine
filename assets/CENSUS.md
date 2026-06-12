@@ -27,8 +27,8 @@ exit-code · error.
 | Verdict | Models |
 |---|---|
 | OK-ANIMATED | 8 |
-| OK-STATIC | 617 |
-| R1-EMPTY-RENDER | 2 (both tracked: #289 near-plane, #290 heuristic false positive) |
+| OK-STATIC | 618 |
+| R1-EMPTY-RENDER | 1 (`ground.glb` — the #290 heuristic false positive; renders correctly) |
 
 *Updated post-#288: the LITD-PATCH implementing `KHR_materials_unlit` in
 the vendored g3n loader landed (patches/engine/0003) and all 105
@@ -40,7 +40,7 @@ textures.*
 | Pack | GLBs | Result |
 |---|---|---|
 | kaykit-adventurers | 5 | 5 OK-ANIMATED (the D-31 reference set) |
-| kaykit-builder | 41 | 40 OK-STATIC · 1 R1 (`trash_B.glb`, see #289) |
+| kaykit-builder | 41 | 41 OK-STATIC (`trash_B.glb` fixed by #289 near-plane scaling) |
 | kaykit-hexagon | 221 | 221 OK-STATIC |
 | kenney-castle | 76 | 75 OK-STATIC · 1 R1 flag that is a **false positive** (`ground.glb`, see #290) |
 | kenney-hexagon | 72 | 69 OK-STATIC · 3 OK-ANIMATED |
@@ -72,7 +72,7 @@ shots are correctly byte-identical) but remain screenshot-verified to render.
 | Cluster | Count | Root cause | Issue |
 |---|---|---|---|
 | kenney-retro-medieval (whole pack) | 105 | All 105 declare `extensionsRequired: ["KHR_materials_unlit"]`; the vendored g3n loader stubbed `loadMaterialUnlit` as nil,nil with its dispatch commented out → nil material, nothing drawn. **FIXED** by LITD-PATCH 0003 (#288); all 105 re-censused OK-STATIC. | #288 (closed) |
-| kaykit-builder/trash_B.glb | 1 | 7 cm prop: auto-framing distance (extent × 1.6 ≈ 0.15) puts the whole model inside the camera's 0.3 near plane → fully clipped. Frame pure black (manually inspected). | #289 |
+| kaykit-builder/trash_B.glb | 1 | 7 cm prop: auto-framing distance (extent × 1.6 ≈ 0.15) put the whole model inside the camera's fixed 0.3 near plane → fully clipped. **FIXED**: animtest now scales the near plane with the framed extent; re-censused OK-STATIC (304 colors). | #289 (closed) |
 | kenney-castle/ground.glb | 1 | **False positive.** 4-vertex flat plane renders as a clean solid-green quad (manually inspected — clearly visible) but one material × one normal = exactly 2 distinct colors, tripping the ≤2-color blank heuristic. Manual verdict override: **renders correctly**. | #290 |
 
 True non-rendering models: **106** (105 unlit + 1 near-plane), all tool/engine

@@ -100,9 +100,19 @@ func main() {
 		fmt.Printf("event: degenerate bounding box (extent %v), keeping default camera\n", extent)
 	} else {
 		dist := extent * 1.6
+		// The default camera's 0.3 near plane swallows models smaller
+		// than ~0.4 units whole (dist ≈ 0.15 for a 7 cm prop puts every
+		// surface in front of the plane). Scale the frustum with the
+		// framing instead of assuming meter-scale models.
+		near := extent * 0.01
+		if near < 0.0001 {
+			near = 0.0001
+		}
+		cam.SetNear(near)
+		cam.SetFar(near * 100000)
 		cam.SetPosition(center.X+dist*0.6, center.Y+dist*0.6, center.Z+dist)
 		cam.LookAt(&center, &math32.Vector3{X: 0, Y: 1, Z: 0})
-		fmt.Printf("event: framed bbox center=(%.2f,%.2f,%.2f) extent=%.2f\n", center.X, center.Y, center.Z, extent)
+		fmt.Printf("event: framed bbox center=(%.2f,%.2f,%.2f) extent=%.2f near=%.4f\n", center.X, center.Y, center.Z, extent, near)
 	}
 
 	var anim *animation.Animation

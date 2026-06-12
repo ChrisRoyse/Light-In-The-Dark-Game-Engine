@@ -42,7 +42,7 @@ kaykit-builder/trafficlight_A.glb	OK-STATIC	1	0		0	0	0	1840	0
 kaykit-builder/trafficlight_B.glb	OK-STATIC	1	0		0	0	0	1609	0	
 kaykit-builder/trafficlight_C.glb	OK-STATIC	1	0		0	0	0	1553	0	
 kaykit-builder/trash_A.glb	OK-STATIC	1	0		0	0	0	41	0	
-kaykit-builder/trash_B.glb	R1-EMPTY-RENDER	1	0		0	0	0	1	0	
+kaykit-builder/trash_B.glb	OK-STATIC	1	0		0	0	0	304	0	
 kaykit-builder/watertower.glb	OK-STATIC	1	0		0	0	0	418	0	
 kaykit-hexagon/barrel.glb	OK-STATIC	1	0		0	0	0	554	0	
 kaykit-hexagon/bucket_arrows.glb	OK-STATIC	1	0		0	0	0	1154	0	
