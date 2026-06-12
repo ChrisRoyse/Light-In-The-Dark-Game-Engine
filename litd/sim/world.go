@@ -94,7 +94,8 @@ type World struct {
 	Buffs      *BuffPool
 	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
 	Heroes     *HeroStore
-	Items      *ItemStore // item entities (#305): type + charges + carrier
+	Items      *ItemStore   // item entities (#305): type + charges + carrier
+	Patrol     *PatrolStore // patrol endpoints (#306)
 	Nodes      *ResourceNodeStore
 	Econs      *EconStore
 	Harvests   *HarvestStore
@@ -139,6 +140,9 @@ type World struct {
 	itemDefs []data.Item
 	// data-table content hash (#208 SaveData versioning)
 	dataFingerprint uint64
+	// patrol/follow behavior thresholds (#306, world units; 0 = default)
+	patrolLeash  fixed.F64
+	followRepath fixed.F64
 	// derived-stat cache (buff.go): per stat, per entity index, the
 	// folded flat Add and multiplicative factor; identity (+0, ×One)
 	// when the entity carries no modifying buff. Recomputed only on
@@ -288,6 +292,7 @@ func NewWorld(requested Caps) *World {
 		Produce:         NewProduceStore(caps.Units, idxSpace),
 		Heroes:          NewHeroStore(caps.Units, idxSpace),
 		Items:           NewItemStore(caps.Units, idxSpace),
+		Patrol:          NewPatrolStore(caps.Units, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -409,6 +414,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	}
 	if w.Items.Row(id) != -1 {
 		w.Items.Remove(id)
+	}
+	if w.Patrol.Row(id) != -1 {
+		w.Patrol.Remove(id)
 	}
 	if w.Invents.Row(id) != -1 {
 		w.Invents.Remove(id)

@@ -76,13 +76,15 @@ func (w *World) attackSystem() {
 		// explicit attack orders adopt their target every tick (the
 		// order is the authority while it is the head)
 		interrupted := false
+		orderKind := OrderStop
 		if or := w.Orders.Row(id); or != -1 {
-			switch w.Orders.Kind[or] {
+			orderKind = w.Orders.Kind[or]
+			switch orderKind {
 			case OrderAttack:
 				if t := w.Orders.Target[or]; t != 0 {
 					c.Target[cr] = t
 				}
-			case OrderStop, OrderHold:
+			case OrderStop, OrderHold, OrderPatrol:
 				// acquiring stances: auto-acquired target stands
 			default:
 				interrupted = true // move/cast/smart/…: combat yields
@@ -157,8 +159,9 @@ func (w *World) attackSystem() {
 
 		// chase movement is per UNIT: close until some weapon reaches
 		// range, then halt the feet. An explicit move order never gets
-		// here — it sets `interrupted` and combat yields above.
-		if mr := w.Movements.Row(id); mr != -1 {
+		// here — it sets `interrupted` and combat yields above. Hold
+		// position fires in range but never repositions (#306).
+		if mr := w.Movements.Row(id); mr != -1 && orderKind != OrderHold {
 			if !anyInRange {
 				w.StartMoveTo(id, w.Transforms.Pos[ttr])
 			} else if w.Movements.State[mr] == MoveFollowing {

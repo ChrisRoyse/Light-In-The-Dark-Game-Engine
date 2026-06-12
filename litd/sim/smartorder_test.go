@@ -17,7 +17,7 @@ func TestSmartOrderRegistryAgreement(t *testing.T) {
 		"patrol": OpPatrol, "cast-ability": OpCastAbility, "train": OpTrain,
 		"build": OpBuild, "cancel": OpCancel, "rally": OpRally,
 		"harvest": OpHarvest, "repair": OpRepair, "board": OpBoard, "unload": OpUnload,
-		"get-item": OpGetItem,
+		"get-item": OpGetItem, "follow": OpFollow,
 	}
 	if len(want) != len(data.OpcodeByName) {
 		t.Fatalf("registry size drift: sim %d vs data %d", len(want), len(data.OpcodeByName))
@@ -76,7 +76,7 @@ func TestSmartOrderMatrix(t *testing.T) {
 	want := [data.TargetClassCount][2]uint8{
 		data.TCGroundPoint: {OpMove, OpMove},
 		data.TCEnemy:       {OpAttack, OpAttack},
-		data.TCAlly:        {OpMove, OpMove},
+		data.TCAlly:        {OpFollow, OpFollow},
 		data.TCOwnBuilding: {OpRally, OpRally},
 		data.TCResource:    {OpMove, OpHarvest},
 		data.TCItem:        {OpGetItem, OpGetItem},

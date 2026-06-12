@@ -4,17 +4,16 @@
 # the v1 opcode registry (input.md §8); the loader rejects anything
 # else.
 #
-# v1 registry gaps (spec §4 wants them, the wire cannot carry them
-# yet): ally → "follow" is not a v1 opcode, so it resolves to "move"
-# until the registry grows with the system that executes it. Items
-# resolve to "get-item" (#305).
+# Every row resolves to a registered opcode: ally → follow (#306),
+# item → get-item (#305) — the §4 spec rows the v1 registry could not
+# carry, now closed (discovery #292).
 
 unit-classes = ["fighter", "worker"]
 
 [rules]
 ground-point = ["move", "move"]
 enemy = ["attack", "attack"]
-ally = ["move", "move"]
+ally = ["follow", "follow"]
 own-building = ["rally", "rally"]
 resource = ["move", "harvest"]
 item = ["get-item", "get-item"]

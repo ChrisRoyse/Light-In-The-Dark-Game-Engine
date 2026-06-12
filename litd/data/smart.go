@@ -35,6 +35,8 @@ var OpcodeByName = map[string]uint8{
 	// appended by #305 (same append discipline as the hash systems:
 	// prior opcode values stay stable, old replays stay valid)
 	"get-item": 14,
+	// appended by #306 (ally → follow, closing discovery #292)
+	"follow": 15,
 }
 
 // Target classes — the row vocabulary, fixed in code (the classifier

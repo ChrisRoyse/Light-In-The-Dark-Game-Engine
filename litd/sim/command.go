@@ -45,6 +45,8 @@ const (
 	// appended by #305 (append discipline: prior values stable, old
 	// replays stay valid)
 	OpGetItem
+	// appended by #306 (patrol already had OpPatrol; follow is new)
+	OpFollow
 	opcodeCount
 )
 
@@ -87,6 +89,7 @@ var opShapes = [opcodeCount]payloadShape{
 	OpBoard:       {units: true, target: true},
 	OpUnload:      {units: true, point: true},
 	OpGetItem:     {units: true, target: true},
+	OpFollow:      {units: true, target: true},
 }
 
 // CommandRecord is one decoded command — a fixed-size value struct,
@@ -422,6 +425,10 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 		orderKind, writeOrder = OrderCastAbility, true
 	case OpGetItem:
 		orderKind, writeOrder = OrderPickup, true
+	case OpPatrol:
+		orderKind, writeOrder = OrderPatrol, true
+	case OpFollow:
+		orderKind, writeOrder = OrderFollow, true
 	}
 	if writeOrder {
 		for i := 0; i < valid; i++ {

@@ -38,17 +38,18 @@ func TestSmartTableLoads(t *testing.T) {
 	}
 }
 
-// Edge 4 (issue FSV): an order name outside the v1 opcode registry —
-// e.g. the spec §4 "follow" the wire cannot carry — is a LOAD error
-// naming row, class, and name. Never a runtime fallback.
+// Edge 4 (issue FSV): an order name outside the opcode registry — here
+// the invented "teleport" — is a LOAD error naming row, class, and
+// name. Never a runtime fallback. ("follow"/"get-item" used to be
+// unrepresentable but joined the registry in #306/#305.)
 func TestSmartTableUnknownOrderName(t *testing.T) {
-	bad := strings.Replace(goodSmart, `ally = ["move", "move"]`, `ally = ["follow", "follow"]`, 1)
+	bad := strings.Replace(goodSmart, `ally = ["move", "move"]`, `ally = ["teleport", "teleport"]`, 1)
 	_, err := LoadSmart(smartFS(bad))
 	if err == nil {
 		t.Fatal("unknown order name must fail the load")
 	}
 	t.Logf("loader error: %v", err)
-	if !strings.Contains(err.Error(), "follow") || !strings.Contains(err.Error(), "registry") {
+	if !strings.Contains(err.Error(), "teleport") || !strings.Contains(err.Error(), "registry") {
 		t.Fatalf("error must name the rejected order: %v", err)
 	}
 }

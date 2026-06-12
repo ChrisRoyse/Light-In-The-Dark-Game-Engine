@@ -72,10 +72,16 @@ func (w *World) acquisitionSystem() {
 			}
 			c.Target[cr] = 0
 		}
-		// acquiring stance: default order (Stop) or Hold. Move and
-		// the rest do not auto-acquire (attack-move lands with #150).
+		// acquiring stances: default order (Stop), Hold, or Patrol
+		// (attack-move-like). A patroller leashing back to its segment
+		// suppresses acquisition until it is home (#306). Move/follow/
+		// cast and the rest do not auto-acquire.
 		if or := w.Orders.Row(id); or != -1 {
-			if k := w.Orders.Kind[or]; k != OrderStop && k != OrderHold {
+			k := w.Orders.Kind[or]
+			if k != OrderStop && k != OrderHold && k != OrderPatrol {
+				continue
+			}
+			if k == OrderPatrol && w.patrolReturningRow(id) {
 				continue
 			}
 		}

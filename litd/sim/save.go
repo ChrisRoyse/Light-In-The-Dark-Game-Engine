@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v7: patrol rows (endpoints + leg/leash flags) appended after the
+// item rows (#306).
 // v6: item rows appended after the hero section; the inventory
 // section grows per-class use cooldowns (#305).
 // v5: hero section (#304) — hero rows + per-player dead-hero pools
@@ -53,7 +55,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 6
+const SaveFormatVersion uint32 = 7
 
 // ---- little-endian writer / reader ----
 
@@ -507,6 +509,16 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(is.Carrier[i])
 	}
 
+	// patrol (#306): endpoints + leg/leash flags per row
+	ps := w.Patrol
+	s.u32(uint32(ps.count))
+	for i := int32(0); i < ps.count; i++ {
+		s.ent(ps.Entity[i])
+		s.vec2(ps.A[i])
+		s.vec2(ps.B[i])
+		s.u8(ps.Flags[i])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -692,6 +704,12 @@ type decodedSave struct {
 	itType    []uint16
 	itCharges []uint16
 	itCarrier []EntityID
+
+	paN     int32
+	paE     []EntityID
+	paA     []fixed.Vec2
+	paB     []fixed.Vec2
+	paFlags []uint8
 
 	schedBlob []byte
 
@@ -1334,6 +1352,22 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.itCarrier[i] = r.ent()
 	}
 
+	// patrol (#306)
+	if n, err = r.section("patrol rows", len(w.Patrol.A)); err != nil {
+		return err
+	}
+	d.paN = n
+	d.paE = make([]EntityID, n)
+	d.paA = make([]fixed.Vec2, n)
+	d.paB = make([]fixed.Vec2, n)
+	d.paFlags = make([]uint8, n)
+	for i := int32(0); i < n; i++ {
+		d.paE[i] = r.ent()
+		d.paA[i] = r.vec2()
+		d.paB[i] = r.vec2()
+		d.paFlags[i] = r.u8()
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1419,6 +1453,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
 		{"produce rows", d.pqE}, {"hero rows", d.hrE}, {"item rows", d.itE},
+		{"patrol rows", d.paE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
@@ -1962,6 +1997,17 @@ func applySave(d *decodedSave, w *World) {
 		its.Charges[i] = d.itCharges[i]
 		its.Carrier[i] = d.itCarrier[i]
 		its.rowOf[d.itE[i].Index()] = i
+	}
+
+	pas := w.Patrol
+	pas.count = d.paN
+	resetRowOf(pas.rowOf)
+	for i := int32(0); i < d.paN; i++ {
+		pas.Entity[i] = d.paE[i]
+		pas.A[i] = d.paA[i]
+		pas.B[i] = d.paB[i]
+		pas.Flags[i] = d.paFlags[i]
+		pas.rowOf[d.paE[i].Index()] = i
 	}
 
 	// subscriptions

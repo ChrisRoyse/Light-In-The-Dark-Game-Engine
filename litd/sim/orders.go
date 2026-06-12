@@ -226,6 +226,10 @@ func (w *World) ordersSystem() {
 			w.driveHarvest(r, id) // the #300 cycle state machine
 		case OrderPickup:
 			w.drivePickup(r, id) // move→take (#305)
+		case OrderPatrol:
+			w.drivePatrol(r, id) // ping-pong + leashed auto-engage (#306)
+		case OrderFollow:
+			w.driveFollow(r, id) // track entity with re-path hysteresis (#306)
 		case OrderAttack:
 			// the attack cycle (attack.go) drives the engagement; the
 			// order completes when its target is gone
