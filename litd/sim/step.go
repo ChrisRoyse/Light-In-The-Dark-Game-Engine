@@ -148,6 +148,7 @@ func (w *World) phaseEvents() {
 // removals (second pass), then state hash on cadence.
 func (w *World) phaseCleanup() {
 	w.buffExpirySystem() // before removals: dying carriers still resolvable (#162)
+	w.advanceTimeOfDay()
 	w.publishSnapshot()
 	for i := range w.killed {
 		w.DestroyUnit(w.killed[i])

@@ -79,6 +79,14 @@ type pathRequest struct {
 type World struct {
 	caps Caps
 	tick uint32
+	// deterministic game clock (clock.go): tod is fixed-point hours
+	// in [0,24); todCarry stores the fractional raw-hour remainder
+	// that makes full-day advancement drift-free.
+	tod            fixed.F64
+	todScale       fixed.F64
+	todFrozen      bool
+	todCarry       uint64
+	dayLengthTicks uint32
 
 	Ents       *Entities
 	Transforms *TransformStore
@@ -262,6 +270,8 @@ func NewWorld(requested Caps) *World {
 	idxSpace := entityCap + 1
 	w := &World{
 		caps:            caps,
+		todScale:        fixed.One,
+		dayLengthTicks:  DefaultDayLengthTicks,
 		Cmds:            newCommandQueue(),
 		cmdStaging:      make([]WorldCommand, 0, 1024),
 		cmdActive:       make([]WorldCommand, 0, 1024),
