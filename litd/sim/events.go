@@ -127,6 +127,9 @@ func (w *World) EventsDropped() uint64 { return w.eventsDropped }
 func (w *World) flushEvents() {
 	for i := 0; i < w.eventCount; i++ {
 		e := w.events[i]
+		if w.eventLog != nil {
+			w.logEvent(e) // R-FSV-3 structured log, dispatch order (#203)
+		}
 		if j, ok := w.subIdx(e.Kind); ok {
 			list := w.subs[j].list
 			for k := 0; k < len(list); k++ {

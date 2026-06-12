@@ -15,6 +15,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/prng"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
@@ -27,6 +28,8 @@ func main() {
 	ticks := flag.Int("ticks", 10000, "number of sim ticks to run")
 	cmdsPath := flag.String("cmds", "", "command stream file: lines of 'tick kind unitIdx x y'")
 	units := flag.Int("units", 256, "units to spawn in the built-in layout")
+	dumpPath := flag.String("dump", "", "write the full state-dump JSON here at run end (R-FSV-2)")
+	eventLogPath := flag.String("eventlog", "", "stream the structured event log here as JSONL (R-FSV-3)")
 	flag.Parse()
 
 	// Fail closed: no map format exists yet, so any -map value would
@@ -42,9 +45,39 @@ func main() {
 
 	w := sim.NewWorld(sim.Caps{})
 
+	var evw *bufio.Writer
+	if *eventLogPath != "" {
+		f, err := os.Create(*eventLogPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		evw = bufio.NewWriter(f)
+		w.AttachEventLog(evw)
+	}
+
 	// Built-in layout: -seed places -units units deterministically on a
-	// 512x512 board through the sim's seeded PRNG (R-SIM-2). The seed
-	// fully defines the spawn, so different seeds hash differently.
+	// 512x512 board through a seeded PRNG (R-SIM-2). The seed fully
+	// defines the spawn, so different seeds hash differently. Units are
+	// full combatants — alternating teams, health, movement, a melee
+	// weapon, acquisition — so the run produces real orders, damage,
+	// and death events for the R-FSV-3 log.
+	w.SetSeed(*seed)
+	if err := w.BindDamageMatrix([][]int32{{1000}}); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	weapon := data.Attack{
+		AttackType:       0,
+		Range:            fixed.FromInt(8),
+		DamageBase:       5,
+		Dice:             1,
+		Sides:            4,
+		CooldownTicks:    27,
+		DamagePointTicks: 10,
+		BackswingTicks:   10,
+	}
 	rng := prng.New(*seed, 0)
 	ids := make([]sim.EntityID, 0, *units)
 	for i := 0; i < *units; i++ {
@@ -58,6 +91,20 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: unit cap reached at %d/%d\n", i, *units)
 			os.Exit(1)
 		}
+		team := uint8(i % 2)
+		if !w.Owners.Add(w.Ents, id, team, team, team) ||
+			!w.Healths.Add(w.Ents, id, 100*fixed.One, 0, 0, 0) ||
+			!w.Combats.Add(w.Ents, id) ||
+			!w.Orders.Add(w.Ents, id) ||
+			!w.Movements.Add(w.Ents, w.Transforms, id, fixed.One*7/2, 2048) {
+			fmt.Fprintf(os.Stderr, "error: component add failed for unit %d\n", i)
+			os.Exit(1)
+		}
+		if !w.SetWeapon(id, 0, &weapon, 0, data.EffectList{}) {
+			fmt.Fprintf(os.Stderr, "error: weapon set failed for unit %d\n", i)
+			os.Exit(1)
+		}
+		w.Combats.AcquisitionRange[w.Combats.Row(id)] = fixed.FromInt(24)
 		ids = append(ids, id)
 	}
 
@@ -70,12 +117,17 @@ func main() {
 	next := 0
 	start := time.Now()
 	for t := 1; t <= *ticks; t++ {
-		// Commands for tick t enter staging now and apply in t's
-		// phase 1 — the same enqueue-then-Step contract as any driver.
+		// Commands for tick t issue as orders at the tick boundary —
+		// the same deterministic driver position as a script. kind 0 =
+		// move, anything else fails closed.
 		for next < len(cmds) && cmds[next].tick == uint32(t) {
-			if !w.EnqueueCommand(cmds[next].cmd) {
-				fmt.Fprintf(os.Stderr, "error: command staging full at tick %d\n", t)
+			c := &cmds[next]
+			if c.cmd.Kind != 0 {
+				fmt.Fprintf(os.Stderr, "error: unknown command kind %d at tick %d\n", c.cmd.Kind, t)
 				os.Exit(1)
+			}
+			if w.Ents.Alive(c.cmd.Unit) {
+				w.IssueOrder(c.cmd.Unit, sim.Order{Kind: sim.OrderMove, Point: c.cmd.Point}, false)
 			}
 			next++
 		}
@@ -83,10 +135,42 @@ func main() {
 	}
 	elapsed := time.Since(start)
 
-	snap := hashWorld(w)
+	reg := sim.NewHashRegistry()
+	var snap statehash.Snapshot
+	w.HashState(reg, &snap)
 	fmt.Printf("hash: %016x\n", snap.Top)
-	for i, name := range []string{"entities", "transforms", "sched"} {
+	for i, name := range sim.HashSystems {
 		fmt.Printf("sub: %-10s %016x\n", name, snap.Subs[i])
+	}
+	if evw != nil {
+		if err := evw.Flush(); err != nil {
+			fmt.Fprintf(os.Stderr, "error: event log flush: %v\n", err)
+			os.Exit(1)
+		}
+		if err := w.EventLogErr(); err != nil {
+			fmt.Fprintf(os.Stderr, "error: event log write: %v\n", err)
+			os.Exit(1)
+		}
+	}
+	if *dumpPath != "" {
+		f, err := os.Create(*dumpPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		if err := w.DumpState(f); err != nil {
+			fmt.Fprintf(os.Stderr, "error: state dump: %v\n", err)
+			os.Exit(1)
+		}
+		if err := f.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		// read-only proof, printed every run: the dump cannot have
+		// mutated state if the hash recomputes identically
+		var after statehash.Snapshot
+		w.HashState(reg, &after)
+		fmt.Printf("hash-after-dump: %016x (read-only: %v)\n", after.Top, after.Top == snap.Top)
 	}
 	fmt.Printf("ticks: %d\n", w.Tick())
 	fmt.Printf("units: %d\n", w.UnitCount())
@@ -151,30 +235,4 @@ func loadCommands(path string, ids []sim.EntityID) ([]timedCommand, error) {
 		return nil, err
 	}
 	return out, nil
-}
-
-// hashWorld hashes the full observable sim state: the entity table,
-// every transform row in store order (deterministic — SoA row order is
-// part of sim state), and the scheduler's canonical save blob.
-func hashWorld(w *sim.World) *statehash.Snapshot {
-	reg := statehash.NewRegistry()
-	hEnts := reg.Register("entities")
-	hTrans := reg.Register("transforms")
-	hSched := reg.Register("sched")
-
-	hEnts.WriteU32(w.Tick())
-	hEnts.WriteU32(uint32(w.UnitCount()))
-
-	n := w.Transforms.Count()
-	hTrans.WriteU32(uint32(n))
-	for i := int32(0); i < n; i++ {
-		hTrans.WriteU32(uint32(w.Transforms.Entity[i]))
-		hTrans.WriteI64(int64(w.Transforms.Pos[i].X))
-		hTrans.WriteI64(int64(w.Transforms.Pos[i].Y))
-		hTrans.WriteU16(uint16(w.Transforms.Facing[i]))
-	}
-
-	hSched.WriteBytes(w.Sched.Save(nil))
-
-	return reg.Sum(&statehash.Snapshot{})
 }

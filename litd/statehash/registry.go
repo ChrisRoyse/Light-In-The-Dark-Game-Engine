@@ -100,3 +100,7 @@ func (r *Registry) FirstDivergence(a, b *Snapshot) (string, bool) {
 	}
 	return "", false
 }
+
+// Hasher returns the i-th registered system's Hasher (registration
+// order). Panics out of range — callers walk the order they built.
+func (r *Registry) Hasher(i int) *Hasher { return r.hashes[i] }

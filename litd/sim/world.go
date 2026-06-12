@@ -203,9 +203,13 @@ type World struct {
 	events         []Event // per-tick pending ring (events.go)
 	eventCount     int
 	eventsDropped  uint64
-	handlers       map[HandlerID]EventHandler // registry: lookup only, never iterated
-	subs           []kindSubs                 // kind-sorted, registration-ordered lists
-	pathReqs       []pathRequest
+	// structured event log (#203, R-FSV-3): nil = disabled, zero tick
+	// cost; set via AttachEventLog
+	eventLog    interface{ Write([]byte) (int, error) }
+	eventLogErr error
+	handlers    map[HandlerID]EventHandler // registry: lookup only, never iterated
+	subs        []kindSubs                 // kind-sorted, registration-ordered lists
+	pathReqs    []pathRequest
 }
 
 // NewWorld allocates every pool at the resolved capacities. The
