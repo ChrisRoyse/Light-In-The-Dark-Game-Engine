@@ -144,7 +144,7 @@ func (w *World) attackSystem() {
 				}
 				if CooldownReady(w.tick, c.PhaseEnd[cr][s]) {
 					w.fireWeapon(id, tgt, cr, s) // FIRE edge
-					c.ReadyAt[cr][s] = c.PhaseEnd[cr][s] - uint32(c.DamagePt[cr][s]) + uint32(c.Cooldown[cr][s])
+					c.ReadyAt[cr][s] = c.PhaseEnd[cr][s] - uint32(c.DamagePt[cr][s]) + w.BuffedCooldown(id, c.Cooldown[cr][s])
 					c.PhaseEnd[cr][s] = w.tick + uint32(c.Backswing[cr][s])
 					w.atkTransition(id, cr, s, AtkBackswing)
 				}
@@ -174,7 +174,7 @@ func (w *World) attackSystem() {
 func (w *World) cancelWindup(id EntityID, cr int32, s int) {
 	if w.Combats.WFlags[cr][s]&WeaponCancelConsumesCooldown != 0 {
 		windupStart := w.Combats.PhaseEnd[cr][s] - uint32(w.Combats.DamagePt[cr][s])
-		w.Combats.ReadyAt[cr][s] = windupStart + uint32(w.Combats.Cooldown[cr][s])
+		w.Combats.ReadyAt[cr][s] = windupStart + w.BuffedCooldown(id, w.Combats.Cooldown[cr][s])
 	}
 	w.atkTransition(id, cr, s, AtkIdle)
 }

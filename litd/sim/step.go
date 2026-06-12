@@ -117,6 +117,7 @@ func (w *World) phaseCombat() {
 	w.abilitySystem() // casts before autoattacks: an ordered cast owns the unit
 	w.acquisitionSystem()
 	w.attackSystem()
+	w.buffPeriodicSystem() // periodic ticks land in this tick's apply pass (#162)
 	if w.OnCombatPhase != nil {
 		w.OnCombatPhase(w.tick)
 	}
@@ -140,6 +141,7 @@ func (w *World) phaseEvents() {
 // tick appear one last time with the death cue), then the deferred
 // removals (second pass), then state hash on cadence.
 func (w *World) phaseCleanup() {
+	w.buffExpirySystem() // before removals: dying carriers still resolvable (#162)
 	w.publishSnapshot()
 	for i := range w.killed {
 		w.DestroyUnit(w.killed[i])

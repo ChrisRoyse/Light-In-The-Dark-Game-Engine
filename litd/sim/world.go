@@ -109,6 +109,16 @@ type World struct {
 	effects []data.CompiledEffect
 	// loaded ability rows (ability.go #160); refs are defIndex+1
 	abilityDefs []data.Ability
+	// loaded buff-type rows (buff.go #162); BuffInstance.BuffID
+	// indexes this slice
+	buffTypes []data.BuffType
+	// derived-stat cache (buff.go): per stat, per entity index, the
+	// folded flat Add and multiplicative factor; identity (+0, ×One)
+	// when the entity carries no modifying buff. Recomputed only on
+	// buff-set change.
+	buffAdd     [data.BuffStatCount][]int64
+	buffMult    [data.BuffStatCount][]fixed.F64
+	buffScratch []int32 // recompute gather scratch, cap = BuffInstances
 	// spatial bucket grid (buckets.go) — derived from Transform
 	// positions, excluded from the state hash
 	bucketHead []int32
@@ -248,6 +258,14 @@ func NewWorld(requested Caps) *World {
 		areaScratch:     make([]EntityID, 0, 64),
 		areaDistHi:      make([]uint64, 0, 64),
 		areaDistLo:      make([]uint64, 0, 64),
+		buffScratch:     make([]int32, 0, caps.BuffInstances),
+	}
+	for s := 0; s < int(data.BuffStatCount); s++ {
+		w.buffAdd[s] = make([]int64, idxSpace)
+		w.buffMult[s] = make([]fixed.F64, idxSpace)
+		for i := range w.buffMult[s] {
+			w.buffMult[s][i] = fixed.One
+		}
 	}
 	for i := range w.orderPool {
 		w.orderPool[i].next = int32(i) + 1
@@ -332,6 +350,13 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if isMissile {
 		w.Missiles.Remove(id)
 	}
+	// derived-stat cache back to identity NOW — the entity index can
+	// be reused before the next buff sweep frees the dead carrier's
+	// instances (buff.go #162)
+	for s := 0; s < int(data.BuffStatCount); s++ {
+		w.buffAdd[s][id.Index()] = 0
+		w.buffMult[s][id.Index()] = fixed.One
+	}
 	if !w.Ents.Destroy(id) {
 		return false
 	}
@@ -378,6 +403,10 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Orders.rowOf) * rowOfB
 	n += cap(w.Missiles.Entity) * 120 // MissileStore columns
 	n += w.Buffs.Cap() * 24           // BuffInstance + free/live bookkeeping
+	for s := range w.buffAdd {        // derived-stat cache (#162)
+		n += len(w.buffAdd[s])*8 + len(w.buffMult[s])*8
+	}
+	n += cap(w.buffScratch) * 4
 	n += len(w.orderPool) * 32
 	n += len(w.events) * 24
 	n += len(w.pathReqs) * 24

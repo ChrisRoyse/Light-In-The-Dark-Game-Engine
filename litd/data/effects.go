@@ -56,7 +56,14 @@ const (
 	EPKFixed                             // authoring float (world units etc.) → fixed.F64 bits
 	EPKPermille                          // integer per-mille
 	EPKAttackType                        // name → damage-matrix row index
+	EPKBuffRef                           // name → buff-table index (#162)
 )
+
+// enumKind: enum params validate by converter membership; Min/Max
+// bounds apply to numeric kinds only.
+func enumKind(k EffectParamKind) bool {
+	return k == EPKAttackType || k == EPKBuffRef
+}
 
 // EffectParamDef is one named parameter of a primitive.
 type EffectParamDef struct {
@@ -89,8 +96,9 @@ var EffectSchemas = [EffectPrimCount]EffectSchema{
 		{Name: "amount", Kind: EPKInt, Min: 0, Max: 1 << 20, Required: true},
 	}},
 	EPApplyBuff: {Name: "apply-buff", Params: []EffectParamDef{
-		{Name: "buff", Kind: EPKInt, Min: 0, Max: math.MaxUint16, Required: true},
-		{Name: "duration", Kind: EPKFixed, Min: 0, Max: math.MaxInt64, Required: true},
+		// duration/stacking/period live on the buff-type row (#162) —
+		// the invocation names the type and an optional stack count
+		{Name: "buff", Kind: EPKBuffRef, Required: true},
 		{Name: "stacks", Kind: EPKInt, Min: 1, Max: 255, Default: 1},
 	}},
 	EPModifyStat: {Name: "modify-stat", Params: []EffectParamDef{
@@ -152,6 +160,7 @@ type EffectList struct {
 type effectCompiler struct {
 	file        string
 	attackTypes []string
+	buffTypes   []string // sorted buff IDs; filled before buff/ability compile (#162)
 	arena       []CompiledEffect
 }
 
@@ -228,7 +237,7 @@ func (c *effectCompiler) compileNode(where string, node map[string]any) (Compile
 		}
 		// Enum kinds validate by membership in the converter; Min/Max
 		// bounds apply to numeric kinds only.
-		if def.Kind != EPKAttackType && (conv < def.Min || conv > def.Max) {
+		if !enumKind(def.Kind) && (conv < def.Min || conv > def.Max) {
 			return fail(fmt.Errorf("data: %s: %s: %s.%s: value %d out of range [%d, %d]", c.file, where, primName, def.Name, conv, def.Min, def.Max))
 		}
 		ce.Params[pi] = conv
@@ -288,6 +297,16 @@ func (c *effectCompiler) convertParam(def EffectParamDef, v any) (int64, error) 
 		idx := indexOf(c.attackTypes, s)
 		if idx < 0 {
 			return 0, fmt.Errorf("%q is not a damage-matrix attack type %v", s, c.attackTypes)
+		}
+		return int64(idx), nil
+	case EPKBuffRef:
+		s, ok := v.(string)
+		if !ok {
+			return 0, fmt.Errorf("must be a buff id (got %T)", v)
+		}
+		idx := indexOf(c.buffTypes, s)
+		if idx < 0 {
+			return 0, fmt.Errorf("%q is not a defined buff %v", s, c.buffTypes)
 		}
 		return int64(idx), nil
 	}

@@ -67,6 +67,7 @@ type Tables struct {
 	AttackTypes []string         // damage-matrix row names, table order
 	ArmorTypes  []string         // damage-matrix column names, table order
 	Coeff       [][]int32        // [attackType][armorType] per-mille coefficient
+	BuffTypes   []BuffType       // sorted by ID (#162)
 	Abilities   []Ability        // sorted by ID
 	Units       []Unit           // sorted by ID
 	Effects     []CompiledEffect // flat effect-composition arena (ADR #294)
@@ -304,6 +305,14 @@ func Load(fsys fs.FS) (*Tables, error) {
 		return nil, err
 	}
 
+	// buffs before abilities: apply-buff params resolve buff names at
+	// compile time (#162). One compiler — buff periodic compositions
+	// and ability compositions share the arena.
+	comp := &effectCompiler{attackTypes: t.AttackTypes}
+	if err := t.loadBuffs(fsys, comp); err != nil {
+		return nil, err
+	}
+
 	// abilities (the reference set). Raw rows are collected with
 	// their source file, sorted by ID, THEN compiled — the effect
 	// arena layout depends only on the ID order, never on file
@@ -340,7 +349,6 @@ func Load(fsys fs.FS) (*Tables, error) {
 				pending[i].raw.ID, pending[i-1].file, pending[i].file)
 		}
 	}
-	comp := &effectCompiler{attackTypes: t.AttackTypes}
 	for _, p := range pending {
 		ab, err := convertAbilityCast(p.file, &p.raw)
 		if err != nil {
@@ -685,6 +693,7 @@ func (t *Tables) fingerprint() uint64 {
 		h.WriteI64(int64(a.CastRange))
 	}
 	hashEffects(h, t.Effects)
+	t.hashBuffs(h)
 	h.WriteU32(uint32(len(t.Units)))
 	for i := range t.Units {
 		u := &t.Units[i]

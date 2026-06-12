@@ -144,9 +144,9 @@ func (w *World) movementSystem() {
 			w.Transforms.Facing[tr] = fixed.TurnToward(w.Transforms.Facing[tr], want, m.TurnRate[r])
 		}
 
-		speed := m.Speed[r]
+		speed := w.BuffedMoveSpeed(m.Entity[r], m.Speed[r]) // #162 derived-stat cache
 		if speed <= 0 {
-			continue // immobile unit ordered to move: stays put
+			continue // immobile (or fully slowed) unit: stays put
 		}
 
 		// arrival: strictly closer than one tick's displacement (or

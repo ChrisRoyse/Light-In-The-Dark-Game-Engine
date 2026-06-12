@@ -144,7 +144,7 @@ func (w *World) damageApplySystem() {
 		post := p.Amount.
 			Mul(fixed.FromInt(w.coeff[p.AttackType][w.Healths.ArmorType[hr]])).
 			Div(fixed.FromInt(1000))
-		armor := int(w.Healths.ArmorValue[hr])
+		armor := w.BuffedArmor(p.Target, int(w.Healths.ArmorValue[hr])) // #162
 		if armor < ArmorLUTMin {
 			armor = ArmorLUTMin
 		} else if armor > ArmorLUTMax {
@@ -282,4 +282,5 @@ func execArea(w *World, ctx EffectCtx, e *data.CompiledEffect) {
 func RegisterCoreEffectExecs() {
 	RegisterEffectExec(data.EPDamage, execDamage)
 	RegisterEffectExec(data.EPArea, execArea)
+	RegisterEffectExec(data.EPApplyBuff, execApplyBuff)
 }
