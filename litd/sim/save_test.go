@@ -207,15 +207,24 @@ func TestSaveRoundTrip(t *testing.T) {
 const (
 	saveClockSectionLen     = 8 + 8 + 1 + 8 + 4
 	saveGameStateSectionLen = MaxPlayers
+	saveEffectRowLen        = 2 + 8 + 4 + 4 + 4
 )
+
+func effectSectionLenForTest(w *World) int {
+	return 4 + int(w.Effects.Count())*saveEffectRowLen
+}
 
 func clockSectionOffsetForTest(w *World, saved []byte) int {
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
-	return len(saved) - 4 - 4 - len(blob) - saveGameStateSectionLen - saveClockSectionLen
+	return len(saved) - 4 - 4 - len(blob) - effectSectionLenForTest(w) - saveGameStateSectionLen - saveClockSectionLen
 }
 
 func gameStateSectionOffsetForTest(w *World, saved []byte) int {
 	return clockSectionOffsetForTest(w, saved) + saveClockSectionLen
+}
+
+func effectSectionOffsetForTest(w *World, saved []byte) int {
+	return gameStateSectionOffsetForTest(w, saved) + saveGameStateSectionLen
 }
 
 func TestSaveClockRoundTripAndResume(t *testing.T) {
@@ -665,7 +674,7 @@ func TestSaveCorruptionNeverSilent(t *testing.T) {
 		t.Fatal(err)
 	}
 	full := buf.Bytes()
-	headerLen := len(SaveMagic) + 4 + 8 + 7*4 + 4 + 4 + 16
+	headerLen := len(SaveMagic) + 4 + 8 + 8*4 + 4 + 4 + 16
 	step := len(full)/97 + 1
 	refused, changed := 0, 0
 	for off := headerLen; off < len(full); off += step {

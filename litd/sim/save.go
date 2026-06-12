@@ -43,8 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v13: persistent effect rows appended after gamestate (#349).
 // v12: capability table includes persistent effect cap (#348);
-// worlds with live effects refuse save until the #349 effect section.
+// live effect rows are serialized starting in v13.
 // v11: gamestate section (per-player match results) appended after
 // the clock section (#345).
 // v10: clock section (tod, scale, frozen, carry, day length) appended
@@ -65,7 +66,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 12
+const SaveFormatVersion uint32 = 13
 
 // ---- little-endian writer / reader ----
 
@@ -156,9 +157,6 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		if pending != ResultPlaying {
 			return fmt.Errorf("sim: save: pending match result request for player %d — step before saving", player)
 		}
-	}
-	if w.Effects.Count() != 0 {
-		return fmt.Errorf("sim: save: %d persistent effects present — effect save section lands with #349", w.Effects.Count())
 	}
 	s := &saveWriter{w: out}
 	if _, err := io.WriteString(out, SaveMagic); err != nil {
@@ -568,6 +566,18 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(w.results[player])
 	}
 
+	// effects (#349): persistent script-spawned visual entities. Their
+	// Transform rows are saved in the normal transform section above.
+	fx := w.Effects
+	s.u32(uint32(fx.Count()))
+	for i := int32(0); i < fx.Count(); i++ {
+		s.u16(fx.ModelID[i])
+		s.f64(fx.Scale[i])
+		s.u32(fx.ColorRGBA[i])
+		s.u32(fx.BirthTick[i])
+		s.ent(fx.Entity[i])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -779,6 +789,13 @@ type decodedSave struct {
 	clockDayLength uint32
 
 	results [MaxPlayers]uint8
+
+	efN     int32
+	efModel []uint16
+	efScale []fixed.F64
+	efColor []uint32
+	efBirth []uint32
+	efE     []EntityID
 
 	schedBlob []byte
 
@@ -1486,6 +1503,27 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return r.err
 	}
 
+	// effects (#349)
+	if n, err = r.section("effects", len(w.Effects.ModelID)); err != nil {
+		return err
+	}
+	d.efN = n
+	d.efModel = make([]uint16, n)
+	d.efScale = make([]fixed.F64, n)
+	d.efColor = make([]uint32, n)
+	d.efBirth = make([]uint32, n)
+	d.efE = make([]EntityID, n)
+	for i := int32(0); i < n; i++ {
+		d.efModel[i] = r.u16()
+		d.efScale[i] = r.f64()
+		d.efColor[i] = r.u32()
+		d.efBirth[i] = r.u32()
+		d.efE[i] = r.ent()
+	}
+	if r.err != nil {
+		return r.err
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1571,10 +1609,24 @@ func validateSave(d *decodedSave, w *World) error {
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
 		{"produce rows", d.pqE}, {"hero rows", d.hrE}, {"item rows", d.itE},
-		{"patrol rows", d.paE}, {"build rows", d.bdE},
+		{"patrol rows", d.paE}, {"build rows", d.bdE}, {"effects", d.efE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
+		}
+	}
+	transformRows := make(map[EntityID]struct{}, len(d.trE))
+	for _, id := range d.trE {
+		transformRows[id] = struct{}{}
+	}
+	effectRows := make(map[EntityID]int32, len(d.efE))
+	for i, id := range d.efE {
+		if prev, ok := effectRows[id]; ok {
+			return fmt.Errorf("sim: save: effect rows %d and %d both reference entity %d", prev, i, id)
+		}
+		effectRows[id] = int32(i)
+		if _, ok := transformRows[id]; !ok {
+			return fmt.Errorf("sim: save: effect row %d entity %d has no transform row", i, id)
 		}
 	}
 
@@ -2179,6 +2231,18 @@ func applySave(d *decodedSave, w *World) {
 		bds.FW[i] = d.bdFW[i]
 		bds.Progress[i] = d.bdProg[i]
 		bds.rowOf[d.bdE[i].Index()] = i
+	}
+
+	fx := w.Effects
+	fx.count = d.efN
+	resetRowOf(fx.rowOf)
+	for i := int32(0); i < d.efN; i++ {
+		fx.ModelID[i] = d.efModel[i]
+		fx.Scale[i] = d.efScale[i]
+		fx.ColorRGBA[i] = d.efColor[i]
+		fx.BirthTick[i] = d.efBirth[i]
+		fx.Entity[i] = d.efE[i]
+		fx.rowOf[d.efE[i].Index()] = i
 	}
 
 	// subscriptions

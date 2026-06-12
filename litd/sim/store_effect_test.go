@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
 
 func eff(x int32) fixed.F64 { return fixed.FromInt(x) }
@@ -41,6 +42,24 @@ func effectRows(w *World) string {
 	return b.String()
 }
 
+func entityFreeChain(w *World, limit int) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "head=%d chain=[", w.Ents.freeHead)
+	seen := 0
+	for e := w.Ents.freeHead; e != -1 && seen < limit; e = w.Ents.slots[e].next {
+		if seen > 0 {
+			b.WriteString(" ")
+		}
+		fmt.Fprintf(&b, "%d", e)
+		seen++
+	}
+	if seen == limit {
+		b.WriteString(" ...")
+	}
+	b.WriteString("]")
+	return b.String()
+}
+
 func effectDump(w *World, id EntityID) string {
 	r := w.Effects.Row(id)
 	tr := w.Transforms.Row(id)
@@ -56,6 +75,48 @@ func effectDump(w *World, id EntityID) string {
 		uint32(id), w.Ents.Alive(id), r, tr, w.Effects.ModelID[r],
 		w.Effects.Scale[r].Floor(), w.Effects.ColorRGBA[r], w.Effects.BirthTick[r],
 		pos.X.Floor(), pos.Y.Floor(), w.Effects.Count())
+}
+
+func effectSaveCaps() Caps {
+	return Caps{Units: 1, Projectiles: 1, Effects: 4, ScriptedDoodads: 1}
+}
+
+func populateEffectSaveWorld(t *testing.T) *World {
+	t.Helper()
+	w := NewWorld(effectSaveCaps())
+	if _, ok := w.SpawnEffect(effectSpec(21, 7, 8, 1, 0xff00ffff)); !ok {
+		t.Fatal("SpawnEffect first failed")
+	}
+	w.Step()
+	if _, ok := w.SpawnEffect(effectSpec(22, 9, 10, 2, 0x11223344)); !ok {
+		t.Fatal("SpawnEffect second failed")
+	}
+	if _, ok := w.SpawnEffect(effectSpec(23, 11, 12, 3, 0xaabbccdd)); !ok {
+		t.Fatal("SpawnEffect third failed")
+	}
+	w.Step()
+	return w
+}
+
+func effectSnapshot(t *testing.T, w *World) statehash.Snapshot {
+	t.Helper()
+	reg := NewHashRegistry()
+	var snap statehash.Snapshot
+	w.HashState(reg, &snap)
+	return snap
+}
+
+func assertEffectRowOf(t *testing.T, w *World) {
+	t.Helper()
+	for i := int32(0); i < w.Effects.Count(); i++ {
+		id := w.Effects.Entity[i]
+		if got := w.Effects.Row(id); got != i {
+			t.Fatalf("effect rowOf for %d = %d, want %d; %s", id, got, i, effectRows(w))
+		}
+		if tr := w.Transforms.Row(id); tr == -1 {
+			t.Fatalf("effect %d has no transform row after load; %s", id, effectRows(w))
+		}
+	}
 }
 
 func findSnapshotEntry(s *Snapshot, id EntityID) (SnapshotEntry, bool) {
@@ -193,16 +254,147 @@ func TestEffectMutatorsZeroAlloc(t *testing.T) {
 	t.Logf("FSV effect mutators zero-alloc verified: %s", effectDump(w, id))
 }
 
-func TestEffectSaveRefusesUntilEffectSection(t *testing.T) {
-	w := NewWorld(Caps{Units: 1, Projectiles: 1, Effects: 4, ScriptedDoodads: 1})
-	id, ok := w.SpawnEffect(effectSpec(21, 7, 8, 1, 0xff00ffff))
-	if !ok {
-		t.Fatal("SpawnEffect failed")
-	}
+func TestEffectSaveRoundTripBytes(t *testing.T) {
+	src := populateEffectSaveWorld(t)
+	beforeRows := effectRows(src)
+	before := effectSnapshot(t, src)
+
 	var buf bytes.Buffer
-	err := w.SaveState(&buf, 0)
-	t.Logf("FSV effect save refusal: effect=%s bytes=%d err=%v", effectDump(w, id), buf.Len(), err)
-	if err == nil || !strings.Contains(err.Error(), "effect save section") || buf.Len() != 0 {
-		t.Fatalf("save with live effects must fail closed before writing: bytes=%d err=%v", buf.Len(), err)
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	saved := append([]byte(nil), buf.Bytes()...)
+	effOff := effectSectionOffsetForTest(src, saved)
+	effLen := effectSectionLenForTest(src)
+
+	dst := NewWorld(effectSaveCaps())
+	if err := dst.LoadState(bytes.NewReader(saved), 0); err != nil {
+		t.Fatal(err)
+	}
+	after := effectSnapshot(t, dst)
+	afterRows := effectRows(dst)
+	effIdx := hashSystemIndex(t, "effects")
+
+	t.Logf("FSV effect save SOURCE: %s top=%016x effects=%016x", beforeRows, before.Top, before.Subs[effIdx])
+	t.Logf("FSV effect section offset=%d len=%d hex=% x", effOff, effLen, saved[effOff:effOff+effLen])
+	t.Logf("FSV effect save LOADED: %s top=%016x effects=%016x", afterRows, after.Top, after.Subs[effIdx])
+
+	if before.Top != after.Top {
+		t.Fatalf("effect round-trip hash mismatch; systems=%v", snapDiff(t, &before, &after))
+	}
+	if beforeRows != afterRows {
+		t.Fatalf("effect rows changed:\nbefore %s\nafter  %s", beforeRows, afterRows)
+	}
+	assertEffectRowOf(t, dst)
+
+	var buf2 bytes.Buffer
+	if err := dst.SaveState(&buf2, 0); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(saved, buf2.Bytes()) {
+		t.Fatal("effect round-trip re-save is not byte-identical")
+	}
+}
+
+func TestHashEffectDivergence(t *testing.T) {
+	reg := NewHashRegistry()
+	a := NewWorld(effectSaveCaps())
+	b := NewWorld(effectSaveCaps())
+	idA, okA := a.SpawnEffect(effectSpec(31, 1, 2, 1, 0x01020304))
+	idB, okB := b.SpawnEffect(effectSpec(31, 1, 2, 1, 0x01020304))
+	if !okA || !okB || uint32(idA) != uint32(idB) {
+		t.Fatalf("failed to build identical effect worlds: idA=%d okA=%v idB=%d okB=%v", idA, okA, idB, okB)
+	}
+	if !b.SetEffectScale(idB, eff(5)) {
+		t.Fatal("SetEffectScale failed")
+	}
+	var same, diff statehash.Snapshot
+	a.HashState(reg, &same)
+	b.HashState(reg, &diff)
+	culprit, ok := reg.FirstDivergence(&same, &diff)
+	effIdx := hashSystemIndex(t, "effects")
+	t.Logf("FSV effect hash base: %s top=%016x effects=%016x", effectRows(a), same.Top, same.Subs[effIdx])
+	t.Logf("FSV effect hash changed: %s top=%016x effects=%016x", effectRows(b), diff.Top, diff.Subs[effIdx])
+	if !ok || culprit != "effects" {
+		t.Fatalf("first divergence=%q ok=%v, want effects", culprit, ok)
+	}
+}
+
+func TestEffectSaveTruncatedSectionRefusesAndDoesNotMutate(t *testing.T) {
+	src := populateEffectSaveWorld(t)
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	full := buf.Bytes()
+	effOff := effectSectionOffsetForTest(src, full)
+	effLen := effectSectionLenForTest(src)
+
+	dst := NewWorld(effectSaveCaps())
+	if _, ok := dst.SpawnEffect(effectSpec(44, 101, 202, 4, 0x55667788)); !ok {
+		t.Fatal("target SpawnEffect failed")
+	}
+	beforeRows := effectRows(dst)
+	before := effectSnapshot(t, dst)
+	err := dst.LoadState(bytes.NewReader(full[:effOff+10]), 0)
+	if err == nil {
+		t.Fatal("truncated effect section accepted")
+	}
+	after := effectSnapshot(t, dst)
+	afterRows := effectRows(dst)
+	t.Logf("FSV truncated effects source section offset=%d len=%d hex=% x", effOff, effLen, full[effOff:effOff+effLen])
+	t.Logf("FSV truncated effects target BEFORE: %s hash=%016x", beforeRows, before.Top)
+	t.Logf("FSV truncated effects target AFTER:  %s hash=%016x err=%v", afterRows, after.Top, err)
+	if before.Top != after.Top || beforeRows != afterRows {
+		t.Fatal("failed effect load mutated the target world")
+	}
+}
+
+func TestEffectSaveSpawnDestroySpawnReuseOrder(t *testing.T) {
+	caps := Caps{Units: 1, Projectiles: 1, Effects: 3, ScriptedDoodads: 1}
+	src := NewWorld(caps)
+	a, okA := src.SpawnEffect(effectSpec(51, 1, 1, 1, 0x11111111))
+	b, okB := src.SpawnEffect(effectSpec(52, 2, 2, 2, 0x22222222))
+	initial := effectRows(src)
+	destroyed := src.DestroyEffect(a)
+	afterDestroy := effectRows(src)
+	c, okC := src.SpawnEffect(effectSpec(53, 3, 3, 3, 0x33333333))
+	beforeRows := effectRows(src)
+	beforeFree := entityFreeChain(src, 8)
+	if !okA || !okB || !destroyed || !okC || a.Index() != c.Index() || a.Generation() == c.Generation() {
+		t.Fatalf("reuse fixture invalid: a=%d okA=%v b=%d okB=%v destroyed=%v c=%d okC=%v", a, okA, b, okB, destroyed, c, okC)
+	}
+
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	saved := append([]byte(nil), buf.Bytes()...)
+	dst := NewWorld(caps)
+	if err := dst.LoadState(bytes.NewReader(saved), 0); err != nil {
+		t.Fatal(err)
+	}
+	afterRows := effectRows(dst)
+	afterFree := entityFreeChain(dst, 8)
+	assertEffectRowOf(t, dst)
+	var buf2 bytes.Buffer
+	if err := dst.SaveState(&buf2, 0); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(saved, buf2.Bytes()) {
+		t.Fatal("effect reuse pattern re-save is not byte-identical")
+	}
+	nextSrc, okSrc := src.SpawnEffect(effectSpec(54, 4, 4, 4, 0x44444444))
+	nextDst, okDst := dst.SpawnEffect(effectSpec(54, 4, 4, 4, 0x44444444))
+	t.Logf("FSV effect reuse INITIAL:       %s", initial)
+	t.Logf("FSV effect reuse AFTER DESTROY: ok=%v %s", destroyed, afterDestroy)
+	t.Logf("FSV effect reuse BEFORE SAVE:   %s free=%s", beforeRows, beforeFree)
+	t.Logf("FSV effect reuse AFTER LOAD:    %s free=%s", afterRows, afterFree)
+	t.Logf("FSV effect reuse NEXT SPAWN:    src=%d ok=%v dst=%d ok=%v", nextSrc, okSrc, nextDst, okDst)
+	if beforeRows != afterRows || beforeFree != afterFree {
+		t.Fatalf("effect row/free order changed:\nrows before %s\nrows after  %s\nfree before %s\nfree after  %s", beforeRows, afterRows, beforeFree, afterFree)
+	}
+	if !okSrc || !okDst || nextSrc != nextDst {
+		t.Fatalf("entity free-list order not preserved: src=%d ok=%v dst=%d ok=%v", nextSrc, okSrc, nextDst, okDst)
 	}
 }

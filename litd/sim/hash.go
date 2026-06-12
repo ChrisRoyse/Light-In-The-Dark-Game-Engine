@@ -42,6 +42,8 @@ var HashSystems = []string{
 	"clock",
 	// appended by #345: per-player terminal match results.
 	"gamestate",
+	// appended by #349: persistent script-spawned effect rows.
+	"effects",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -439,6 +441,17 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hgs := h.next() // gamestate (#345): per-player terminal results
 	for player := 0; player < MaxPlayers; player++ {
 		hgs.WriteU8(w.results[player])
+	}
+
+	hfx := h.next() // effects (#349): persistent script effect rows
+	fx := w.Effects
+	hfx.WriteU32(uint32(fx.Count()))
+	for i := int32(0); i < fx.Count(); i++ {
+		hfx.WriteU16(fx.ModelID[i])
+		hfx.WriteI64(int64(fx.Scale[i]))
+		hfx.WriteU32(fx.ColorRGBA[i])
+		hfx.WriteU32(fx.BirthTick[i])
+		hfx.WriteU32(uint32(fx.Entity[i]))
 	}
 
 	return reg.Sum(dst)
