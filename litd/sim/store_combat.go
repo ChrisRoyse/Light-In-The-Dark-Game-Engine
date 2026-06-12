@@ -30,6 +30,7 @@ type CombatStore struct {
 	DamagePt   [][WeaponSlots]uint16 // windup ticks to FIRE
 	Range      [][WeaponSlots]fixed.F64
 	ProjRef    [][WeaponSlots]uint16          // projectile type row; 0 = instant
+	ProjSpeed  [][WeaponSlots]fixed.F64       // missile speed per tick; >0 = missile delivery (#158)
 	ReadyAt    [][WeaponSlots]uint32          // absolute next-attack tick
 	Backswing  [][WeaponSlots]uint16          // post-FIRE recovery ticks (freely interruptible)
 	WFlags     [][WeaponSlots]uint8           // Weapon* flag bits
@@ -63,6 +64,7 @@ func NewCombatStore(rowCap, entityCap int) *CombatStore {
 		DamagePt:         make([][WeaponSlots]uint16, rowCap),
 		Range:            make([][WeaponSlots]fixed.F64, rowCap),
 		ProjRef:          make([][WeaponSlots]uint16, rowCap),
+		ProjSpeed:        make([][WeaponSlots]fixed.F64, rowCap),
 		ReadyAt:          make([][WeaponSlots]uint32, rowCap),
 		Backswing:        make([][WeaponSlots]uint16, rowCap),
 		WFlags:           make([][WeaponSlots]uint8, rowCap),
@@ -106,6 +108,7 @@ func (s *CombatStore) Add(e *Entities, id EntityID) bool {
 	s.DamagePt[r] = [WeaponSlots]uint16{}
 	s.Range[r] = [WeaponSlots]fixed.F64{}
 	s.ProjRef[r] = [WeaponSlots]uint16{}
+	s.ProjSpeed[r] = [WeaponSlots]fixed.F64{}
 	s.ReadyAt[r] = [WeaponSlots]uint32{}
 	s.Backswing[r] = [WeaponSlots]uint16{}
 	s.WFlags[r] = [WeaponSlots]uint8{}
@@ -143,6 +146,7 @@ func (s *CombatStore) Remove(id EntityID) bool {
 		s.DamagePt[r] = s.DamagePt[last]
 		s.Range[r] = s.Range[last]
 		s.ProjRef[r] = s.ProjRef[last]
+		s.ProjSpeed[r] = s.ProjSpeed[last]
 		s.ReadyAt[r] = s.ReadyAt[last]
 		s.Backswing[r] = s.Backswing[last]
 		s.WFlags[r] = s.WFlags[last]

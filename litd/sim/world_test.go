@@ -13,7 +13,7 @@ func worldPointers(w *World) map[string]uintptr {
 		"ents.slots":  uintptr(unsafe.Pointer(unsafe.SliceData(w.Ents.slots))),
 		"trans.pos":   uintptr(unsafe.Pointer(unsafe.SliceData(w.Transforms.Pos))),
 		"trans.rowOf": uintptr(unsafe.Pointer(unsafe.SliceData(w.Transforms.rowOf))),
-		"projectiles": uintptr(unsafe.Pointer(unsafe.SliceData(w.Projs.rows))),
+		"missiles":    uintptr(unsafe.Pointer(unsafe.SliceData(w.Missiles.Speed))),
 		"buffs":       uintptr(unsafe.Pointer(unsafe.SliceData(w.Buffs.rows))),
 		"orderPool":   uintptr(unsafe.Pointer(unsafe.SliceData(w.orderPool))),
 		"events":      uintptr(unsafe.Pointer(unsafe.SliceData(w.events))),

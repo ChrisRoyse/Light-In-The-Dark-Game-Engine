@@ -9,9 +9,8 @@ package sim
 // FIRE resolves through the weapon's compiled effect list (#296) when
 // one is bound; a zero list is the degenerate built-in weapon — dice
 // rolled at launch on the sim PRNG, one DamagePacket queued (#152).
-// Projectile-delivery weapons queue their packet at FIRE too until
-// #158 adds flight (spawn-missile payload lists) — instant impact is
-// the documented interim, not a hidden fallback.
+// ProjSpeed > 0 launches a homing missile entity instead (#158); the
+// payload travels with the missile and delivers at impact.
 //
 // Order interplay (§3.3): an order head outside {Stop, Hold, Attack}
 // cancels WINDUP (cooldown NOT consumed unless the weapon's
@@ -180,22 +179,45 @@ func (w *World) cancelWindup(id EntityID, cr int32, s int) {
 	w.atkTransition(id, cr, s, AtkIdle)
 }
 
-// fireWeapon is the FIRE edge: the weapon's compiled effect list when
-// bound (#296), else the built-in degenerate damage — dice rolled at
-// launch (one PRNG call site), one packet to the #152 buffer.
+// fireWeapon is the FIRE edge. Damage rolls at launch (one PRNG call
+// site — R-SIM-2). Instant delivery resolves the payload now: the
+// weapon's compiled effect list (#296) when bound, else one packet to
+// the #152 buffer. ProjSpeed > 0 launches a homing missile entity
+// (#158) carrying the same payload; spawn failure (pool exhausted) is
+// a deterministic dud — NEVER a silent fire-as-instant fallback.
 func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 	c := w.Combats
+	if ps := c.ProjSpeed[cr][s]; ps > 0 {
+		spec := MissileSpec{
+			Source: src, Target: tgt, Speed: ps,
+			Payload: c.Effects[cr][s],
+		}
+		if tr := w.Transforms.Row(src); tr != -1 {
+			spec.Pos = w.Transforms.Pos[tr]
+		}
+		if spec.Payload.Len == 0 {
+			spec.Packet = DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s]}
+		}
+		w.SpawnMissile(spec)
+		return
+	}
 	if lst := c.Effects[cr][s]; lst.Len > 0 {
 		w.ExecuteEffects(lst, EffectCtx{Source: src, Target: tgt})
 		return
 	}
+	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s]})
+}
+
+// rollWeapon rolls base + Ndice×roll(sides) on the sim PRNG.
+func (w *World) rollWeapon(cr int32, s int) fixed.F64 {
+	c := w.Combats
 	amt := fixed.FromInt(c.DmgBase[cr][s])
 	if dice, sides := int(c.DmgDice[cr][s]), uint32(c.DmgSides[cr][s]); dice > 0 && sides > 0 {
 		for i := 0; i < dice; i++ {
 			amt = amt.Add(fixed.FromInt(int32(w.rng.Uint32()%sides) + 1))
 		}
 	}
-	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: amt, AttackType: c.AttackType[cr][s]})
+	return amt
 }
 
 // SetWeapon fills one weapon slot from converted data-table values
@@ -215,6 +237,7 @@ func (w *World) SetWeapon(id EntityID, slot int, a *data.Attack, flags uint8, ef
 	c.DamagePt[cr][slot] = a.DamagePointTicks
 	c.Backswing[cr][slot] = a.BackswingTicks
 	c.Range[cr][slot] = a.Range
+	c.ProjSpeed[cr][slot] = a.ProjectileSpeedPerTick
 	c.WFlags[cr][slot] = flags
 	c.Effects[cr][slot] = effects
 	c.AtkState[cr][slot] = AtkIdle

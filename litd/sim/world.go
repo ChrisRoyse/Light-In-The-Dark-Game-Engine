@@ -91,7 +91,7 @@ type World struct {
 	Invents    *InventoryStore
 	Orders     *OrderStore
 	Buffs      *BuffPool
-	Projs      *ProjectilePool
+	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
 	Doodads    *DoodadStore
 	Paths      *path.PathStore // pooled per-unit waypoint buffers (§7)
 	Grid       *path.Grid      // pathing grid; nil until SetGrid (map load)
@@ -140,6 +140,11 @@ type World struct {
 	// the sim PRNG (R-SIM-2): every gameplay roll draws here, one
 	// deterministic call order; reseeded per match via SetSeed
 	rng *prng.Stream
+	// area-effect candidate scratch (damage.go execArea), cap = the
+	// schema's max-targets ceiling — reused, never reallocated
+	areaScratch []EntityID
+	areaDistHi  []uint64
+	areaDistLo  []uint64
 
 	// render snapshot publication (snapshot.go): double buffer plus
 	// per-tick discontinuity marks and staged presentation cues
@@ -161,6 +166,9 @@ type World struct {
 	OnShove       func(tick uint32, mover, shoved EntityID, cell int32)
 	OnScriptPhase func(tick uint32)
 	OnCombatPhase func(tick uint32)
+	// missile flight traces (#158 FSV SoT)
+	OnMissileImpact func(tick uint32, id EntityID, at fixed.Vec2, tgt EntityID)
+	OnMissileExpire func(tick uint32, id EntityID, last fixed.Vec2)
 	// OnAttackTransition fires on every per-weapon state flip
 	// (attack.go #150 — the tick-stamped trace that is the FSV SoT).
 	OnAttackTransition func(tick uint32, id EntityID, slot int, from, to uint8)
@@ -198,7 +206,7 @@ func NewWorld(requested Caps) *World {
 		Cmds:            newCommandQueue(),
 		cmdStaging:      make([]WorldCommand, 0, 1024),
 		cmdActive:       make([]WorldCommand, 0, 1024),
-		killed:          make([]EntityID, 0, caps.Units),
+		killed:          make([]EntityID, 0, caps.Units+caps.Projectiles),
 		dmgBuf:          make([]DamagePacket, 0, caps.Units*4),
 		rng:             prng.New(0, 0),
 		Snaps:           newSnapshotBuffers(idxSpace, caps.PendingEvents),
@@ -219,7 +227,7 @@ func NewWorld(requested Caps) *World {
 		Invents:         NewInventoryStore(caps.Units, idxSpace),
 		Orders:          NewOrderStore(caps.Units, idxSpace),
 		Buffs:           NewBuffPool(caps.BuffInstances),
-		Projs:           NewProjectilePool(caps.Projectiles),
+		Missiles:        NewMissileStore(caps.Projectiles, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -232,6 +240,9 @@ func NewWorld(requested Caps) *World {
 		bucketCell:      make([]int32, idxSpace),
 		bucketID:        make([]EntityID, idxSpace),
 		acquireEvery:    DefaultAcquireInterval,
+		areaScratch:     make([]EntityID, 0, 64),
+		areaDistHi:      make([]uint64, 0, 64),
+		areaDistLo:      make([]uint64, 0, 64),
 	}
 	for i := range w.orderPool {
 		w.orderPool[i].next = int32(i) + 1
@@ -312,10 +323,16 @@ func (w *World) DestroyUnit(id EntityID) bool {
 		w.clearOrderQueue(r) // recycle pooled entries (no leak)
 		w.Orders.Remove(id)
 	}
+	isMissile := w.Missiles.Row(id) != -1
+	if isMissile {
+		w.Missiles.Remove(id)
+	}
 	if !w.Ents.Destroy(id) {
 		return false
 	}
-	w.unitCount--
+	if !isMissile {
+		w.unitCount-- // missiles never counted against the unit cap
+	}
 	return true
 }
 
@@ -354,8 +371,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Invents.rowOf) * rowOfB
 	n += len(w.Orders.Kind) * (1 + 1 + 4 + 16 + 4 + 4)
 	n += len(w.Orders.rowOf) * rowOfB
-	n += w.Projs.Cap() * 96 // ProjectileInstance + free/live bookkeeping
-	n += w.Buffs.Cap() * 24 // BuffInstance + free/live bookkeeping
+	n += cap(w.Missiles.Entity) * 120 // MissileStore columns
+	n += w.Buffs.Cap() * 24           // BuffInstance + free/live bookkeeping
 	n += len(w.orderPool) * 32
 	n += len(w.events) * 24
 	n += len(w.pathReqs) * 24

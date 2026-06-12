@@ -105,6 +105,7 @@ func (w *World) phaseOrders() { w.ordersSystem() }
 // bucket-grid rebuild over everything that moved (buckets.go §3.1).
 func (w *World) phaseMovement() {
 	w.movementSystem()
+	w.missileSystem() // flight at the movement-phase tail (#158)
 	w.bucketReconcile()
 }
 

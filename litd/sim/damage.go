@@ -21,6 +21,17 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/prng"
 )
 
+// DamagePacket is the §3.4 deferred-damage value struct — the
+// element of the phase-5 apply buffer and the rolled-at-launch
+// payload of degenerate missiles (#158).
+type DamagePacket struct {
+	Source     EntityID
+	Target     EntityID
+	Amount     fixed.F64 // rolled at launch
+	AttackType uint8
+	Flags      uint8
+}
+
 // EvUnitDamaged fires once per applied packet, before any same-tick
 // death event. Src = damage source, Dst = victim, Arg = the
 // post-mitigation amount in fixed.F64 bits.
@@ -178,10 +189,96 @@ func execDamage(w *World, ctx EffectCtx, e *data.CompiledEffect) {
 	})
 }
 
+// execArea is the `area` combinator backend: every valid target in
+// radius, nearest-first under the §3.2 total order (distSq128, then
+// entity index), capped at max-targets; the payload runs once per
+// target. Candidates are enemies of ctx.Source with a Health row —
+// the same filter as acquisition. Params in schema order: radius,
+// max-targets.
+func execArea(w *World, ctx EffectCtx, e *data.CompiledEffect) {
+	center := ctx.Point
+	if ctx.Target != 0 {
+		if tr := w.Transforms.Row(ctx.Target); tr != -1 {
+			center = w.Transforms.Pos[tr]
+		}
+	}
+	sor := w.Owners.Row(ctx.Source)
+	if sor == -1 {
+		return // unowned sources cannot classify enemies: no targets
+	}
+	team := w.Owners.Team[sor]
+	radius := fixed.F64(e.Params[0])
+	maxTargets := int(e.Params[1])
+	rHi, rLo := fixed.RadiusSq(radius)
+
+	// nearest-first selection into the reusable scratch (insertion
+	// sort under the total order; the schema caps max-targets at 64)
+	sel := w.areaScratch[:0]
+	selHi := w.areaDistHi[:0]
+	selLo := w.areaDistLo[:0]
+	x0, x1 := bucketCoord(center.X.Sub(radius)), bucketCoord(center.X.Add(radius))
+	y0, y1 := bucketCoord(center.Y.Sub(radius)), bucketCoord(center.Y.Add(radius))
+	for by := y0; by <= y1; by++ {
+		for bx := x0; bx <= x1; bx++ {
+			for be := w.bucketHead[by*BucketGridSize+bx]; be != -1; be = w.bucketNext[be] {
+				cid := w.bucketID[be]
+				if cid == ctx.Source || !w.Ents.Alive(cid) {
+					continue
+				}
+				cor := w.Owners.Row(cid)
+				if cor == -1 || w.Owners.Team[cor] == team || w.Healths.Row(cid) == -1 {
+					continue
+				}
+				ctr := w.Transforms.Row(cid)
+				if ctr == -1 {
+					continue
+				}
+				dHi, dLo := fixed.DistSq(center, w.Transforms.Pos[ctr])
+				if dHi > rHi || (dHi == rHi && dLo > rLo) {
+					continue
+				}
+				// insert position under (distSq, index) ascending
+				pos := len(sel)
+				for pos > 0 {
+					p := pos - 1
+					if selHi[p] < dHi || (selHi[p] == dHi && (selLo[p] < dLo ||
+						(selLo[p] == dLo && sel[p].Index() < cid.Index()))) {
+						break
+					}
+					pos--
+				}
+				if pos >= maxTargets {
+					continue // farther than every kept candidate
+				}
+				if len(sel) < maxTargets {
+					sel = append(sel, 0)
+					selHi = append(selHi, 0)
+					selLo = append(selLo, 0)
+				}
+				copy(sel[pos+1:], sel[pos:])
+				copy(selHi[pos+1:], selHi[pos:])
+				copy(selLo[pos+1:], selLo[pos:])
+				sel[pos], selHi[pos], selLo[pos] = cid, dHi, dLo
+			}
+		}
+	}
+	for _, cid := range sel {
+		child := ctx
+		child.Target = cid
+		if tr := w.Transforms.Row(cid); tr != -1 {
+			child.Point = w.Transforms.Pos[tr]
+		}
+		w.RunEffectChildren(e, child)
+	}
+	w.areaScratch = sel[:0]
+}
+
 // RegisterCoreEffectExecs registers the effect-primitive backends
 // implemented so far. Engine init calls this once, then registers any
 // game-specific execs, then FreezeEffectExecs. Grows as backends land
-// (#158 spawn-missile, #160 casts, #162 apply-buff).
+// (#160 casts, #162 apply-buff, spawn-missile once missile-type data
+// rows exist).
 func RegisterCoreEffectExecs() {
 	RegisterEffectExec(data.EPDamage, execDamage)
+	RegisterEffectExec(data.EPArea, execArea)
 }

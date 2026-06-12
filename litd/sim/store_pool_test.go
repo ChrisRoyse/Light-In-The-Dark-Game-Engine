@@ -2,8 +2,6 @@ package sim
 
 import (
 	"testing"
-
-	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 )
 
 // Edge 1: the 8,001st buff fails deterministically; count stays at
@@ -46,7 +44,7 @@ func TestStorePoolLIFOOrder(t *testing.T) {
 
 // Edge 3: 100k alloc/free churn never moves the backing array.
 func TestStorePoolChurnPointerStable(t *testing.T) {
-	p := NewProjectilePool(2000)
+	p := NewBuffPool(2000)
 	i0, _ := p.Alloc()
 	pre := p.Row(i0)
 	preAddr := &p.rows[0]
@@ -56,7 +54,7 @@ func TestStorePoolChurnPointerStable(t *testing.T) {
 		if !ok {
 			t.Fatalf("churn alloc failed at %d", i)
 		}
-		p.Row(j).Speed = fixed.One
+		p.Row(j).RemainingTicks = 100
 		p.Free(j)
 	}
 	postAddr := &p.rows[0]
@@ -65,33 +63,6 @@ func TestStorePoolChurnPointerStable(t *testing.T) {
 		t.Fatalf("backing array moved during churn")
 	}
 	_ = pre
-}
-
-// Edge 4: point-target projectile — TargetEnt 0 selects the point
-// variant; the payload is a plain value struct, nothing boxed.
-func TestStoreProjectilePointTarget(t *testing.T) {
-	w := NewWorld(Caps{})
-	allocs := testing.AllocsPerRun(100, func() {
-		i, _ := w.Projs.Alloc()
-		r := w.Projs.Row(i)
-		r.Source = 42
-		r.TargetEnt = 0 // point variant
-		r.TargetPt = fixed.Vec2{X: fixed.FromInt(100), Y: fixed.FromInt(200)}
-		r.Speed = fixed.FromInt(8)
-		r.Flags = ProjAoE
-		r.Payload = DamagePacket{Source: 42, Amount: fixed.FromInt(25), AttackType: 2}
-		w.Projs.Free(i)
-	})
-	i, _ := w.Projs.Alloc()
-	r := w.Projs.Row(i)
-	r.TargetEnt = 0
-	r.TargetPt = fixed.Vec2{X: fixed.FromInt(100), Y: fixed.FromInt(200)}
-	r.Payload = DamagePacket{Source: 42, Amount: fixed.FromInt(25), AttackType: 2}
-	t.Logf("point-target row: TargetEnt=%d TargetPt=(%d,%d raw) payload=%+v; encode/decode AllocsPerRun=%v",
-		r.TargetEnt, int64(r.TargetPt.X), int64(r.TargetPt.Y), r.Payload, allocs)
-	if allocs != 0 {
-		t.Fatalf("point-variant encoding allocated: %v/op", allocs)
-	}
 }
 
 // Double-free fails closed.
@@ -119,18 +90,6 @@ func BenchmarkPoolBuff(b *testing.B) {
 		r := p.Row(j)
 		r.BuffID = 7
 		r.RemainingTicks = 100
-		p.Free(j)
-	}
-}
-
-func BenchmarkPoolProjectile(b *testing.B) {
-	p := NewProjectilePool(2000)
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		j, _ := p.Alloc()
-		r := p.Row(j)
-		r.Speed = fixed.One
-		r.Payload.Amount = fixed.FromInt(10)
 		p.Free(j)
 	}
 }
