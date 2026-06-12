@@ -61,15 +61,6 @@ type orderEntry struct {
 	point  fixed.Vec2
 }
 
-type buffInstance struct {
-	buffID    uint16
-	stacks    uint8
-	target    EntityID
-	source    EntityID
-	remaining uint32
-	periodic  uint32
-}
-
 type pathRequest struct {
 	unit  EntityID
 	goal  fixed.Vec2
@@ -82,15 +73,6 @@ type doodadRow struct {
 	anim      uint16
 	pos       fixed.Vec2
 	facing    fixed.Angle
-}
-
-type projectileRow struct {
-	source EntityID
-	target EntityID
-	pos    fixed.Vec2
-	vel    fixed.Vec2
-	speed  fixed.F64
-	flags  uint8
 }
 
 // World owns every store and pool of one match. All capacities are
@@ -113,6 +95,8 @@ type World struct {
 	Abilities  *AbilityStore
 	Invents    *InventoryStore
 	Orders     *OrderStore
+	Buffs      *BuffPool
+	Projs      *ProjectilePool
 	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// double-buffered command staging (step.go): enqueue any time,
@@ -134,10 +118,6 @@ type World struct {
 	HashEvery     uint32
 
 	unitCount     int
-	projectiles   []projectileRow
-	projCount     int
-	buffs         []buffInstance
-	buffCount     int
 	orderPool     []orderEntry
 	events        []Event // per-tick pending ring (events.go)
 	eventCount    int
@@ -156,29 +136,29 @@ func NewWorld(requested Caps) *World {
 	caps := requested.resolve()
 	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
 	return &World{
-		caps:        caps,
-		cmdStaging:  make([]WorldCommand, 0, 1024),
-		cmdActive:   make([]WorldCommand, 0, 1024),
-		killed:      make([]EntityID, 0, caps.Units),
-		Sched:       sched.New(),
-		Ents:        NewEntities(entityCap),
-		Transforms:  NewTransformStore(entityCap, entityCap),
-		Movements:   NewMovementStore(caps.Units, entityCap),
-		Collisions:  NewCollisionStore(caps.Units, entityCap),
-		Healths:     NewHealthStore(caps.Units, entityCap),
-		Owners:      NewOwnerStore(caps.Units, entityCap),
-		UnitTypes:   NewUnitTypeStore(caps.Units, entityCap),
-		Combats:     NewCombatStore(caps.Units, entityCap),
-		Abilities:   NewAbilityStore(caps.Units, entityCap),
-		Invents:     NewInventoryStore(caps.Units, entityCap),
-		Orders:      NewOrderStore(caps.Units, entityCap),
-		projectiles: make([]projectileRow, caps.Projectiles),
-		buffs:       make([]buffInstance, caps.BuffInstances),
-		orderPool:   make([]orderEntry, caps.OrderQueueEntries),
-		events:      make([]Event, caps.PendingEvents),
-		handlers:    make(map[HandlerID]EventHandler),
-		pathReqs:    make([]pathRequest, caps.PathRequests),
-		doodads:     make([]doodadRow, caps.ScriptedDoodads),
+		caps:       caps,
+		cmdStaging: make([]WorldCommand, 0, 1024),
+		cmdActive:  make([]WorldCommand, 0, 1024),
+		killed:     make([]EntityID, 0, caps.Units),
+		Sched:      sched.New(),
+		Ents:       NewEntities(entityCap),
+		Transforms: NewTransformStore(entityCap, entityCap),
+		Movements:  NewMovementStore(caps.Units, entityCap),
+		Collisions: NewCollisionStore(caps.Units, entityCap),
+		Healths:    NewHealthStore(caps.Units, entityCap),
+		Owners:     NewOwnerStore(caps.Units, entityCap),
+		UnitTypes:  NewUnitTypeStore(caps.Units, entityCap),
+		Combats:    NewCombatStore(caps.Units, entityCap),
+		Abilities:  NewAbilityStore(caps.Units, entityCap),
+		Invents:    NewInventoryStore(caps.Units, entityCap),
+		Orders:     NewOrderStore(caps.Units, entityCap),
+		Buffs:      NewBuffPool(caps.BuffInstances),
+		Projs:      NewProjectilePool(caps.Projectiles),
+		orderPool:  make([]orderEntry, caps.OrderQueueEntries),
+		events:     make([]Event, caps.PendingEvents),
+		handlers:   make(map[HandlerID]EventHandler),
+		pathReqs:   make([]pathRequest, caps.PathRequests),
+		doodads:    make([]doodadRow, caps.ScriptedDoodads),
 	}
 }
 
@@ -283,8 +263,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Invents.rowOf) * rowOfB
 	n += len(w.Orders.Kind) * (1 + 4 + 16 + 4 + 4)
 	n += len(w.Orders.rowOf) * rowOfB
-	n += len(w.projectiles) * 64
-	n += len(w.buffs) * 24
+	n += w.Projs.Cap() * 96 // ProjectileInstance + free/live bookkeeping
+	n += w.Buffs.Cap() * 24 // BuffInstance + free/live bookkeeping
 	n += len(w.orderPool) * 32
 	n += len(w.events) * 24
 	n += len(w.pathReqs) * 24
