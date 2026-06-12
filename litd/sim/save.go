@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v10: clock section (tod, scale, frozen, carry, day length) appended
+// after the build rows (#339).
 // v9: build rows (footprint + construction progress + builder) appended
 // after the patrol rows (#301).
 // v8: missile rows grow linear/pierce skillshot fields (Dir, RangeLeft,
@@ -59,7 +61,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 9
+const SaveFormatVersion uint32 = 10
 
 // ---- little-endian writer / reader ----
 
@@ -539,6 +541,14 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u16(bs.Progress[i])
 	}
 
+	// clock (#339): all deterministic fields, including the fractional
+	// carry that makes 24h/dayLength advancement drift-free.
+	s.f64(w.tod)
+	s.f64(w.todScale)
+	s.boolean(w.todFrozen)
+	s.u64(w.todCarry)
+	s.u32(w.dayLengthTicks)
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -742,6 +752,12 @@ type decodedSave struct {
 	bdFY   []int32
 	bdFW   []int32
 	bdProg []uint16
+
+	clockTOD       fixed.F64
+	clockScale     fixed.F64
+	clockFrozen    bool
+	clockCarry     uint64
+	clockDayLength uint32
 
 	schedBlob []byte
 
@@ -1428,6 +1444,17 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.bdProg[i] = r.u16()
 	}
 
+	// clock (#339)
+	r.what = "clock"
+	d.clockTOD = r.f64()
+	d.clockScale = r.f64()
+	d.clockFrozen = r.boolean()
+	d.clockCarry = r.u64()
+	d.clockDayLength = r.u32()
+	if r.err != nil {
+		return r.err
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1667,6 +1694,20 @@ func validateSave(d *decodedSave, w *World) error {
 		}
 	}
 
+	// clock: fail closed on non-canonical or unsafe values.
+	if d.clockTOD < 0 || d.clockTOD >= clockDay {
+		return fmt.Errorf("sim: save: clock tod %d outside [0,24h)", int64(d.clockTOD))
+	}
+	if d.clockScale < 0 {
+		return fmt.Errorf("sim: save: clock scale %d is negative", int64(d.clockScale))
+	}
+	if d.clockDayLength == 0 {
+		return fmt.Errorf("sim: save: clock day length is zero")
+	}
+	if d.clockCarry >= uint64(d.clockDayLength) {
+		return fmt.Errorf("sim: save: clock carry %d outside denominator %d", d.clockCarry, d.clockDayLength)
+	}
+
 	// items (#305): bound defs, type bounds, and the bidirectional
 	// carrier↔slot invariant (no duplication, no orphans)
 	if d.itN > 0 && w.itemDefs == nil {
@@ -1731,6 +1772,11 @@ func applySave(d *decodedSave, w *World) {
 	w.tick = d.tick
 	w.unitCount = int(d.unitCount)
 	w.rng = prng.Restore(d.rngCursor)
+	w.tod = d.clockTOD
+	w.todScale = d.clockScale
+	w.todFrozen = d.clockFrozen
+	w.todCarry = d.clockCarry
+	w.dayLengthTicks = d.clockDayLength
 
 	copy(w.Ents.slots, d.entSlots)
 	w.Ents.freeHead = d.entFreeHead

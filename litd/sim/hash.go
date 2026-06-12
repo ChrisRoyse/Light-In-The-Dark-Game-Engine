@@ -38,6 +38,8 @@ var HashSystems = []string{
 	"patrol",
 	// appended by #301: building footprints + construction progress.
 	"build",
+	// appended by #339: deterministic game clock state.
+	"clock",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -424,6 +426,13 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hbd.WriteI64(int64(bs.FW[i]))
 		hbd.WriteU16(bs.Progress[i])
 	}
+
+	hcl := h.next() // clock (#339): fixed-point ToD + drift-free remainder
+	hcl.WriteI64(int64(w.tod))
+	hcl.WriteI64(int64(w.todScale))
+	hcl.WriteBool(w.todFrozen)
+	hcl.WriteU64(w.todCarry)
+	hcl.WriteU32(w.dayLengthTicks)
 
 	return reg.Sum(dst)
 }

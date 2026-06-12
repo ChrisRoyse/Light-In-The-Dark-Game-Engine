@@ -1,8 +1,8 @@
 package sim
 
 // #206 tests: full state serialization (R-SIM-6). SoT = the state
-// hash (17 systems, #334-extended) recomputed from the restored
-// world, the save bytes themselves, and the named refusal errors.
+// hash in HashSystems order recomputed from the restored world, the
+// save bytes themselves, and the named refusal errors.
 
 import (
 	"bytes"
@@ -192,6 +192,170 @@ func TestSaveRoundTrip(t *testing.T) {
 	t.Logf("resumed 100 ticks: both hashes %016x; suspension fired at tick %v in BOTH worlds", sa.Top, *firedSrc)
 }
 
+const saveClockSectionLen = 8 + 8 + 1 + 8 + 4
+
+func clockSectionOffsetForTest(w *World, saved []byte) int {
+	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
+	return len(saved) - 4 - 4 - len(blob) - saveClockSectionLen
+}
+
+func TestSaveClockRoundTripAndResume(t *testing.T) {
+	src := NewWorld(Caps{})
+	src.SetTimeOfDay(13*fixed.One + 37*fixed.One/100)
+	if !src.SetTimeOfDayScale(2*fixed.One + fixed.One/2) {
+		t.Fatal("positive scale rejected")
+	}
+	for i := 0; i < 7; i++ {
+		src.Step()
+	}
+	reg := NewHashRegistry()
+	var before statehash.Snapshot
+	src.HashState(reg, &before)
+
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	saved := append([]byte(nil), buf.Bytes()...)
+	clockOff := clockSectionOffsetForTest(src, saved)
+	t.Logf("FSV clock save BEFORE: %s hash=%016x", clockFSV(src), before.Top)
+	t.Logf("FSV clock section offset=%d hex=% x", clockOff, saved[clockOff:clockOff+saveClockSectionLen])
+
+	dst := NewWorld(Caps{})
+	if err := dst.LoadState(bytes.NewReader(saved), 0); err != nil {
+		t.Fatal(err)
+	}
+	var after statehash.Snapshot
+	dst.HashState(reg, &after)
+	t.Logf("FSV clock load AFTER:  %s hash=%016x", clockFSV(dst), after.Top)
+	t.Logf("FSV clock subhash before=%016x after=%016x", before.Subs[len(HashSystems)-1], after.Subs[len(HashSystems)-1])
+	if before.Top != after.Top {
+		t.Fatalf("clock round-trip hash mismatch; systems=%v", snapDiff(t, &before, &after))
+	}
+	if src.tod != dst.tod || src.todScale != dst.todScale || src.todFrozen != dst.todFrozen ||
+		src.todCarry != dst.todCarry || src.dayLengthTicks != dst.dayLengthTicks {
+		t.Fatalf("clock fields did not round-trip:\nsrc %s\ndst %s", clockFSV(src), clockFSV(dst))
+	}
+
+	var buf2 bytes.Buffer
+	if err := dst.SaveState(&buf2, 0); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(saved, buf2.Bytes()) {
+		t.Fatal("clock round-trip re-save is not byte-identical")
+	}
+
+	for i := 0; i < 300; i++ {
+		src.Step()
+		dst.Step()
+	}
+	var resumedSrc, resumedDst statehash.Snapshot
+	src.HashState(reg, &resumedSrc)
+	dst.HashState(reg, &resumedDst)
+	t.Logf("FSV clock resume src: %s hash=%016x", clockFSV(src), resumedSrc.Top)
+	t.Logf("FSV clock resume dst: %s hash=%016x", clockFSV(dst), resumedDst.Top)
+	if resumedSrc.Top != resumedDst.Top {
+		t.Fatalf("resumed clock worlds diverged; systems=%v", snapDiff(t, &resumedSrc, &resumedDst))
+	}
+}
+
+func TestSaveClockFrozenRoundTripBytes(t *testing.T) {
+	src := NewWorld(Caps{})
+	src.SetTimeOfDay(13*fixed.One + 37*fixed.One/100)
+	src.SuspendTimeOfDay(true)
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	saved := append([]byte(nil), buf.Bytes()...)
+	dst := NewWorld(Caps{})
+	if err := dst.LoadState(bytes.NewReader(saved), 0); err != nil {
+		t.Fatal(err)
+	}
+	var buf2 bytes.Buffer
+	if err := dst.SaveState(&buf2, 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV frozen clock saved: %s", clockFSV(src))
+	t.Logf("FSV frozen clock loaded: %s", clockFSV(dst))
+	if !bytes.Equal(saved, buf2.Bytes()) {
+		t.Fatal("frozen clock re-save is not byte-identical")
+	}
+	if dst.tod != src.tod || !dst.todFrozen || dst.todCarry != src.todCarry {
+		t.Fatalf("frozen clock fields changed:\nsrc %s\ndst %s", clockFSV(src), clockFSV(dst))
+	}
+}
+
+func TestSaveClockTruncatedSectionRefusesAndDoesNotMutate(t *testing.T) {
+	src := NewWorld(Caps{})
+	src.SetTimeOfDay(23*fixed.One + 99*fixed.One/100)
+	for i := 0; i < 8; i++ {
+		src.Step()
+	}
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatal(err)
+	}
+	full := buf.Bytes()
+	clockOff := clockSectionOffsetForTest(src, full)
+
+	dst := NewWorld(Caps{})
+	dst.SetTimeOfDay(7 * fixed.One)
+	if !dst.SetTimeOfDayScale(3 * fixed.One) {
+		t.Fatal("positive scale rejected")
+	}
+	dst.SuspendTimeOfDay(true)
+	reg := NewHashRegistry()
+	var pristine, after statehash.Snapshot
+	dst.HashState(reg, &pristine)
+	before := clockFSV(dst)
+	err := dst.LoadState(bytes.NewReader(full[:clockOff+10]), 0)
+	if err == nil {
+		t.Fatal("truncated clock section accepted")
+	}
+	dst.HashState(reg, &after)
+	t.Logf("FSV truncated clock source: %s section=% x", clockFSV(src), full[clockOff:clockOff+saveClockSectionLen])
+	t.Logf("FSV truncated clock target BEFORE: %s hash=%016x", before, pristine.Top)
+	t.Logf("FSV truncated clock target AFTER:  %s hash=%016x err=%v", clockFSV(dst), after.Top, err)
+	if pristine.Top != after.Top || before != clockFSV(dst) {
+		t.Fatal("failed clock load mutated the target world")
+	}
+}
+
+func TestHashClockDivergence(t *testing.T) {
+	reg := NewHashRegistry()
+	w1 := NewWorld(Caps{})
+	w2 := NewWorld(Caps{})
+	w1.SetTimeOfDay(6 * fixed.One)
+	w2.SetTimeOfDay(6 * fixed.One)
+	w2.SuspendTimeOfDay(true)
+	w1.Step()
+	w2.Step()
+	var a, b statehash.Snapshot
+	w1.HashState(reg, &a)
+	w2.HashState(reg, &b)
+	culprit, ok := reg.FirstDivergence(&a, &b)
+	t.Logf("FSV clock hash active: %s top=%016x clock=%016x", clockFSV(w1), a.Top, a.Subs[len(HashSystems)-1])
+	t.Logf("FSV clock hash frozen: %s top=%016x clock=%016x", clockFSV(w2), b.Top, b.Subs[len(HashSystems)-1])
+	if !ok || culprit != "clock" {
+		t.Fatalf("first divergence=%q ok=%v, want clock", culprit, ok)
+	}
+
+	w3 := NewWorld(Caps{})
+	w4 := NewWorld(Caps{})
+	w3.SetTimeOfDay(5 * fixed.One)
+	w4.SetTimeOfDay(5 * fixed.One)
+	w4.todCarry = 1
+	w3.HashState(reg, &a)
+	w4.HashState(reg, &b)
+	culprit, ok = reg.FirstDivergence(&a, &b)
+	t.Logf("FSV clock carry hash zero: %s clock=%016x", clockFSV(w3), a.Subs[len(HashSystems)-1])
+	t.Logf("FSV clock carry hash one:  %s clock=%016x", clockFSV(w4), b.Subs[len(HashSystems)-1])
+	if !ok || culprit != "clock" {
+		t.Fatalf("carry first divergence=%q ok=%v, want clock", culprit, ok)
+	}
+}
+
 func equalU32(a, b []uint32) bool {
 	if len(a) != len(b) {
 		return false
@@ -243,12 +407,21 @@ func TestSaveLoadVersionRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 	b := buf.Bytes()
-	b[len(SaveMagic)]++ // version field
-	err := NewWorld(Caps{}).LoadState(bytes.NewReader(b), tb.Fingerprint)
-	if err == nil {
-		t.Fatal("version mismatch accepted")
+	for _, tc := range []struct {
+		name string
+		edit func([]byte)
+	}{
+		{"future", func(b []byte) { b[len(SaveMagic)]++ }},
+		{"previous", func(b []byte) { b[len(SaveMagic)]-- }},
+	} {
+		mut := append([]byte(nil), b...)
+		tc.edit(mut)
+		err := NewWorld(Caps{}).LoadState(bytes.NewReader(mut), tb.Fingerprint)
+		if err == nil {
+			t.Fatalf("%s version mismatch accepted", tc.name)
+		}
+		t.Logf("%s version refusal: %v", tc.name, err)
 	}
-	t.Logf("refusal: %v", err)
 }
 
 // Edge: fingerprint mismatch (same save, different bound tables) is
