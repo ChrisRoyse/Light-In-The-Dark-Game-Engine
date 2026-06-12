@@ -32,6 +32,8 @@ var HashSystems = []string{
 	"economy",
 	// appended by #304: hero rows + per-player dead-hero pools.
 	"heroes",
+	// appended by #305: item rows (type/charges/carrier).
+	"items",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -265,13 +267,16 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hut.WriteU16(ut.TypeID[i])
 	}
 
-	hin := h.next() // invents (#334)
+	hin := h.next() // invents (#334; class cooldowns appended by #305)
 	in := w.Invents
 	hin.WriteU32(uint32(in.count))
 	for i := int32(0); i < in.count; i++ {
 		hin.WriteU32(uint32(in.Entity[i]))
 		for s := 0; s < InventorySlots; s++ {
 			hin.WriteU32(uint32(in.Slots[i][s]))
+		}
+		for c := 0; c < data.ItemClassCount; c++ {
+			hin.WriteU32(in.ClassReady[i][c])
 		}
 	}
 
@@ -375,6 +380,16 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 				hhr.WriteU8(rec.SkillLevel[k])
 			}
 		}
+	}
+
+	hit := h.next() // items (#305): type/charges/carrier per row
+	is := w.Items
+	hit.WriteU32(uint32(is.count))
+	for i := int32(0); i < is.count; i++ {
+		hit.WriteU32(uint32(is.Entity[i]))
+		hit.WriteU16(is.TypeID[i])
+		hit.WriteU16(is.Charges[i])
+		hit.WriteU32(uint32(is.Carrier[i]))
 	}
 
 	return reg.Sum(dst)

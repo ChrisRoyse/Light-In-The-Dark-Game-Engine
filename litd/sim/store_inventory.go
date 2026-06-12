@@ -5,12 +5,17 @@ package sim
 // components, and campaign persistence saves their type IDs (§5.3).
 // T2 pattern — see store_transform.go. Slot value 0 = empty.
 
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+
 // InventorySlots is the WC3-style six-slot inventory.
 const InventorySlots = 6
 
 type InventoryStore struct {
-	Slots  [][InventorySlots]EntityID
-	Entity []EntityID
+	Slots [][InventorySlots]EntityID
+	// ClassReady is the per-item-CLASS use-cooldown expiry tick
+	// (#305 — items of one class share a cooldown, WC3-style).
+	ClassReady [][data.ItemClassCount]uint32
+	Entity     []EntityID
 
 	rowOf []int32
 	count int32
@@ -23,9 +28,10 @@ func NewInventoryStore(rowCap, entityCap int) *InventoryStore {
 		panic("sim: store caps must satisfy 0 < rowCap <= entityCap")
 	}
 	s := &InventoryStore{
-		Slots:  make([][InventorySlots]EntityID, rowCap),
-		Entity: make([]EntityID, rowCap),
-		rowOf:  make([]int32, entityCap),
+		Slots:      make([][InventorySlots]EntityID, rowCap),
+		ClassReady: make([][data.ItemClassCount]uint32, rowCap),
+		Entity:     make([]EntityID, rowCap),
+		rowOf:      make([]int32, entityCap),
 	}
 	for i := range s.rowOf {
 		s.rowOf[i] = -1
@@ -49,6 +55,7 @@ func (s *InventoryStore) Add(e *Entities, id EntityID) bool {
 	}
 	r := s.count
 	s.Slots[r] = [InventorySlots]EntityID{}
+	s.ClassReady[r] = [data.ItemClassCount]uint32{}
 	s.Entity[r] = id
 	s.rowOf[idx] = r
 	s.count++
@@ -102,6 +109,7 @@ func (s *InventoryStore) Remove(id EntityID) bool {
 	last := s.count - 1
 	if r != last {
 		s.Slots[r] = s.Slots[last]
+		s.ClassReady[r] = s.ClassReady[last]
 		moved := s.Entity[last]
 		s.Entity[r] = moved
 		s.rowOf[moved.Index()] = r

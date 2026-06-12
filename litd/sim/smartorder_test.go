@@ -17,6 +17,7 @@ func TestSmartOrderRegistryAgreement(t *testing.T) {
 		"patrol": OpPatrol, "cast-ability": OpCastAbility, "train": OpTrain,
 		"build": OpBuild, "cancel": OpCancel, "rally": OpRally,
 		"harvest": OpHarvest, "repair": OpRepair, "board": OpBoard, "unload": OpUnload,
+		"get-item": OpGetItem,
 	}
 	if len(want) != len(data.OpcodeByName) {
 		t.Fatalf("registry size drift: sim %d vs data %d", len(want), len(data.OpcodeByName))
@@ -69,16 +70,16 @@ func TestSmartOrderMatrix(t *testing.T) {
 		id   EntityID
 	}{{"fighter", fighter}, {"worker", worker}}
 
-	// expected matrix — the §2.2 baseline within the v1 opcode
-	// registry (follow/pickup are not v1 opcodes → move; see table
-	// comment + the spec-gap discovery issue)
+	// expected matrix — the §2.2 baseline within the opcode registry
+	// (follow is not an opcode yet → move; items resolve to get-item
+	// since #305; see table comment + the spec-gap discovery issue)
 	want := [data.TargetClassCount][2]uint8{
 		data.TCGroundPoint: {OpMove, OpMove},
 		data.TCEnemy:       {OpAttack, OpAttack},
 		data.TCAlly:        {OpMove, OpMove},
 		data.TCOwnBuilding: {OpRally, OpRally},
 		data.TCResource:    {OpMove, OpHarvest},
-		data.TCItem:        {OpMove, OpMove},
+		data.TCItem:        {OpGetItem, OpGetItem},
 	}
 	pt := fixed.Vec2{X: 500 * fixed.One, Y: 500 * fixed.One}
 	for tc := uint8(0); tc < data.TargetClassCount; tc++ {

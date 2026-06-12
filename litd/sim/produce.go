@@ -463,21 +463,28 @@ func (w *World) produceSystem() {
 // Without a bound grid every cell is free — the first candidate
 // wins.
 func (w *World) spawnCell(building EntityID, def *data.Unit) (fixed.Vec2, bool) {
-	tr := w.Transforms.Row(building)
-	if tr == -1 {
-		return fixed.Vec2{}, false
-	}
-	center := w.Transforms.Pos[tr]
 	base := int32(0)
 	if ut := w.UnitTypes.Row(building); ut != -1 {
 		if btid := w.UnitTypes.TypeID[ut]; int(btid) < len(w.unitDefs) {
 			base = w.unitDefs[btid].CollisionSize
 		}
 	}
-	base += def.CollisionSize
+	return w.adjacentCell(building, base+def.CollisionSize, 0)
+}
+
+// adjacentCell is the shared footprint-adjacent ring scan (spawnCell,
+// item drops #305). seed rotates the direction order deterministically
+// so successive callers spread instead of stacking one candidate.
+func (w *World) adjacentCell(around EntityID, base int32, seed int) (fixed.Vec2, bool) {
+	tr := w.Transforms.Row(around)
+	if tr == -1 {
+		return fixed.Vec2{}, false
+	}
+	center := w.Transforms.Pos[tr]
 	for ring := int32(1); ring <= spawnRings; ring++ {
 		d := fixed.FromInt(base + ring*32)
-		for dir := 0; dir < 8; dir++ {
+		for di := 0; di < 8; di++ {
+			dir := (di + seed) & 7
 			cand := center
 			switch dir {
 			case 0:

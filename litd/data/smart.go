@@ -32,6 +32,9 @@ var OpcodeByName = map[string]uint8{
 	"repair":       11,
 	"board":        12,
 	"unload":       13,
+	// appended by #305 (same append discipline as the hash systems:
+	// prior opcode values stay stable, old replays stay valid)
+	"get-item": 14,
 }
 
 // Target classes — the row vocabulary, fixed in code (the classifier

@@ -73,6 +73,12 @@ func (w *World) ClassifyTarget(team uint8, target EntityID) (uint8, bool) {
 	if !w.Ents.Alive(target) {
 		return 0, false
 	}
+	if ir := w.Items.Row(target); ir != -1 { // ground items (#305)
+		if w.Items.Carrier[ir] != 0 {
+			return 0, false // carried: not clickable
+		}
+		return data.TCItem, true
+	}
 	or := w.Owners.Row(target)
 	if or == -1 {
 		return data.TCGroundPoint, true // unowned scenery: treat as ground

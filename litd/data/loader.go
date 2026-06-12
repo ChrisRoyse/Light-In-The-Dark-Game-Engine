@@ -77,6 +77,7 @@ type Tables struct {
 	Upgrades      []Upgrade          // tech upgrades, sorted by ID (#303)
 	Requires      []Require          // admission requirements, sorted (#303)
 	Hero          *HeroTables        // hero rule set; nil when heroes/ absent (#304)
+	Items         []Item             // item types, sorted by ID (#305)
 	Fingerprint   uint64             // canonical content hash (state-hash preamble)
 }
 
@@ -397,7 +398,7 @@ func Load(fsys fs.FS) (*Tables, error) {
 		}
 		t.Abilities = append(t.Abilities, ab)
 	}
-	t.Effects = comp.arena
+	// the arena seals AFTER items: their use pipelines share it (#305)
 
 	// economy registry before units: unit econ blocks validate
 	// against the resource-type vocabulary (#300)
@@ -466,6 +467,13 @@ func Load(fsys fs.FS) (*Tables, error) {
 	if err := t.loadHeroes(fsys); err != nil {
 		return nil, err
 	}
+
+	// items after economy (costs) + buffs (mod vocabulary); they
+	// compile into the shared effect arena, which seals here (#305)
+	if err := t.loadItems(fsys, comp); err != nil {
+		return nil, err
+	}
+	t.Effects = comp.arena
 
 	// smart-order table (optional directory; absence is visible as nil,
 	// never silently defaulted)
@@ -826,6 +834,7 @@ func (t *Tables) fingerprint() uint64 {
 	t.hashEconomy(h)
 	t.hashTech(h)
 	t.hashHero(h)
+	t.hashItems(h)
 	h.WriteBool(t.Smart != nil)
 	if t.Smart != nil {
 		t.Smart.hashInto(h)

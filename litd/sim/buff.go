@@ -208,7 +208,8 @@ func (w *World) recomputeBuffStats(target EntityID) {
 		w.buffMult[s][idx] = fixed.One
 	}
 	w.foldUpgradeStats(target)  // upgrades first (#303)
-	w.foldHeroAttrStats(target) // then hero attributes (#304); buffs stack on top
+	w.foldHeroAttrStats(target) // then hero attributes (#304)
+	w.foldItemStats(target)     // then carried items (#305); buffs stack on top
 	// gather the target's instances; pool-index ascending, then a
 	// stable insertion sort by BuffID keeps (BuffID, pool index) order
 	sel := w.buffScratch[:0]

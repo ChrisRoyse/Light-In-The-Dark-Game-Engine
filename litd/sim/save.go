@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v6: item rows appended after the hero section; the inventory
+// section grows per-class use cooldowns (#305).
 // v5: hero section (#304) — hero rows + per-player dead-hero pools
 // appended after the tech arrays.
 // v4: tech section (#303) — per-player upgrade level/cap arrays
@@ -51,7 +53,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 5
+const SaveFormatVersion uint32 = 6
 
 // ---- little-endian writer / reader ----
 
@@ -281,13 +283,16 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
-	// inventories
+	// inventories (v6 appends the per-class use cooldowns, #305)
 	in := w.Invents
 	s.u32(uint32(in.count))
 	for i := int32(0); i < in.count; i++ {
 		s.ent(in.Entity[i])
 		for sl := 0; sl < InventorySlots; sl++ {
 			s.ent(in.Slots[i][sl])
+		}
+		for c := 0; c < data.ItemClassCount; c++ {
+			s.u32(in.ClassReady[i][c])
 		}
 	}
 
@@ -492,6 +497,16 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
+	// items (#305): type/charges/carrier per row
+	is := w.Items
+	s.u32(uint32(is.count))
+	for i := int32(0); i < is.count; i++ {
+		s.ent(is.Entity[i])
+		s.u16(is.TypeID[i])
+		s.u16(is.Charges[i])
+		s.ent(is.Carrier[i])
+	}
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -585,6 +600,7 @@ type decodedSave struct {
 	inN     int32
 	inE     []EntityID
 	inSlots [][InventorySlots]EntityID
+	inReady [][data.ItemClassCount]uint32
 
 	orN     int32
 	orE     []EntityID
@@ -670,6 +686,12 @@ type decodedSave struct {
 	hrE     []EntityID
 	hrRec   []HeroRecord
 	deadRec [][MaxDeadHeroes]HeroRecord
+
+	itN       int32
+	itE       []EntityID
+	itType    []uint16
+	itCharges []uint16
+	itCarrier []EntityID
 
 	schedBlob []byte
 
@@ -977,10 +999,14 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.inN = n
 	d.inE = make([]EntityID, n)
 	d.inSlots = make([][InventorySlots]EntityID, n)
+	d.inReady = make([][data.ItemClassCount]uint32, n)
 	for i := int32(0); i < n; i++ {
 		d.inE[i] = r.ent()
 		for sl := 0; sl < InventorySlots; sl++ {
 			d.inSlots[i][sl] = r.ent()
+		}
+		for c := 0; c < data.ItemClassCount; c++ {
+			d.inReady[i][c] = r.u32()
 		}
 	}
 
@@ -1292,6 +1318,22 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		}
 	}
 
+	// items (#305)
+	if n, err = r.section("item rows", len(w.Items.TypeID)); err != nil {
+		return err
+	}
+	d.itN = n
+	d.itE = make([]EntityID, n)
+	d.itType = make([]uint16, n)
+	d.itCharges = make([]uint16, n)
+	d.itCarrier = make([]EntityID, n)
+	for i := int32(0); i < n; i++ {
+		d.itE[i] = r.ent()
+		d.itType[i] = r.u16()
+		d.itCharges[i] = r.u16()
+		d.itCarrier[i] = r.ent()
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1376,7 +1418,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"combat", d.cbE}, {"abilities", d.abE}, {"inventories", d.inE},
 		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
-		{"produce rows", d.pqE}, {"hero rows", d.hrE},
+		{"produce rows", d.pqE}, {"hero rows", d.hrE}, {"item rows", d.itE},
 	} {
 		if err := check(c.name, c.ents); err != nil {
 			return err
@@ -1527,6 +1569,44 @@ func validateSave(d *decodedSave, w *World) error {
 			if int(d.pqQ[i][q]) >= MaxDeadHeroes {
 				return fmt.Errorf("sim: save: produce row %d slot %d revive index %d out of pool range", i, q, d.pqQ[i][q])
 			}
+		}
+	}
+
+	// items (#305): bound defs, type bounds, and the bidirectional
+	// carrier↔slot invariant (no duplication, no orphans)
+	if d.itN > 0 && w.itemDefs == nil {
+		return fmt.Errorf("sim: save: %d item rows present but no item tables bound — BindItemDefs before LoadState", d.itN)
+	}
+	itemRow := map[EntityID]int32{}
+	for i := int32(0); i < d.itN; i++ {
+		if int(d.itType[i]) >= len(w.itemDefs) {
+			return fmt.Errorf("sim: save: item row %d type %d outside the bound table (%d)", i, d.itType[i], len(w.itemDefs))
+		}
+		itemRow[d.itE[i]] = i
+	}
+	slotOf := map[EntityID]bool{}
+	for i := int32(0); i < d.inN; i++ {
+		for sl := 0; sl < InventorySlots; sl++ {
+			item := d.inSlots[i][sl]
+			if item == 0 {
+				continue
+			}
+			ir, ok := itemRow[item]
+			if !ok {
+				return fmt.Errorf("sim: save: inventory of %d slot %d holds %d which has no item row", d.inE[i], sl, item)
+			}
+			if d.itCarrier[ir] != d.inE[i] {
+				return fmt.Errorf("sim: save: item %d carried by %d but slotted on %d", item, d.itCarrier[ir], d.inE[i])
+			}
+			if slotOf[item] {
+				return fmt.Errorf("sim: save: item %d appears in two inventory slots", item)
+			}
+			slotOf[item] = true
+		}
+	}
+	for i := int32(0); i < d.itN; i++ {
+		if d.itCarrier[i] != 0 && !slotOf[d.itE[i]] {
+			return fmt.Errorf("sim: save: item %d claims carrier %d but no inventory slot holds it", d.itE[i], d.itCarrier[i])
 		}
 	}
 
@@ -1695,6 +1775,7 @@ func applySave(d *decodedSave, w *World) {
 	for i := int32(0); i < d.inN; i++ {
 		in.Entity[i] = d.inE[i]
 		in.Slots[i] = d.inSlots[i]
+		in.ClassReady[i] = d.inReady[i]
 		in.rowOf[d.inE[i].Index()] = i
 	}
 
@@ -1872,6 +1953,17 @@ func applySave(d *decodedSave, w *World) {
 		w.deadHeroes[pl] = d.deadRec[pl]
 	}
 
+	its := w.Items
+	its.count = d.itN
+	resetRowOf(its.rowOf)
+	for i := int32(0); i < d.itN; i++ {
+		its.Entity[i] = d.itE[i]
+		its.TypeID[i] = d.itType[i]
+		its.Charges[i] = d.itCharges[i]
+		its.Carrier[i] = d.itCarrier[i]
+		its.rowOf[d.itE[i].Index()] = i
+	}
+
 	// subscriptions
 	w.subs = d.subs
 
@@ -1930,6 +2022,13 @@ func applySave(d *decodedSave, w *World) {
 		ut := w.UnitTypes
 		for i := int32(0); i < ut.Count(); i++ {
 			w.recomputeBuffStats(ut.Entity[i])
+		}
+	}
+	// carried-item modifiers too: re-derive every carrier (#305 —
+	// carriers may be untyped, the loops above can miss them)
+	for i := int32(0); i < its.count; i++ {
+		if c := its.Carrier[i]; c != 0 {
+			w.recomputeBuffStats(c)
 		}
 	}
 }

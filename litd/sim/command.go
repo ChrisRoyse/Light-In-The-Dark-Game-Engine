@@ -42,6 +42,9 @@ const (
 	OpRepair
 	OpBoard
 	OpUnload
+	// appended by #305 (append discipline: prior values stable, old
+	// replays stay valid)
+	OpGetItem
 	opcodeCount
 )
 
@@ -83,6 +86,7 @@ var opShapes = [opcodeCount]payloadShape{
 	OpRepair:      {units: true, target: true},
 	OpBoard:       {units: true, target: true},
 	OpUnload:      {units: true, point: true},
+	OpGetItem:     {units: true, target: true},
 }
 
 // CommandRecord is one decoded command — a fixed-size value struct,
@@ -416,6 +420,8 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 		orderKind, writeOrder = OrderHold, true
 	case OpCastAbility:
 		orderKind, writeOrder = OrderCastAbility, true
+	case OpGetItem:
+		orderKind, writeOrder = OrderPickup, true
 	}
 	if writeOrder {
 		for i := 0; i < valid; i++ {

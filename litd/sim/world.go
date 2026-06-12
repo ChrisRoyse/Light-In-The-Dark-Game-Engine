@@ -94,6 +94,7 @@ type World struct {
 	Buffs      *BuffPool
 	Missiles   *MissileStore // first-class missile entities (#158, ADR #295)
 	Heroes     *HeroStore
+	Items      *ItemStore // item entities (#305): type + charges + carrier
 	Nodes      *ResourceNodeStore
 	Econs      *EconStore
 	Harvests   *HarvestStore
@@ -134,6 +135,8 @@ type World struct {
 	// hero rule set (#304) + per-player dead-hero pools (D-15 records)
 	heroTables *data.HeroTables
 	deadHeroes [MaxPlayers][MaxDeadHeroes]HeroRecord
+	// item type table (#305)
+	itemDefs []data.Item
 	// derived-stat cache (buff.go): per stat, per entity index, the
 	// folded flat Add and multiplicative factor; identity (+0, ×One)
 	// when the entity carries no modifying buff. Recomputed only on
@@ -282,6 +285,7 @@ func NewWorld(requested Caps) *World {
 		Harvests:        NewHarvestStore(caps.Units, idxSpace),
 		Produce:         NewProduceStore(caps.Units, idxSpace),
 		Heroes:          NewHeroStore(caps.Units, idxSpace),
+		Items:           NewItemStore(caps.Units, idxSpace),
 		orderPool:       make([]orderEntry, caps.OrderQueueEntries),
 		events:          make([]Event, caps.PendingEvents),
 		handlers:        make(map[HandlerID]EventHandler),
@@ -355,6 +359,12 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if !w.Ents.Alive(id) {
 		return false
 	}
+	w.detachItem(id) // a dying ITEM clears its carrier's slot (#305)
+	if ir := w.Invents.Row(id); ir != -1 {
+		// before the Transform goes: death drops need the carrier's
+		// position to find adjacent ground cells
+		w.releaseInventory(id, ir)
+	}
 	w.bucketRemove(id)
 	w.Transforms.Remove(id)
 	if r := w.Movements.Row(id); r != -1 {
@@ -394,6 +404,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	}
 	if w.Abilities.Row(id) != -1 {
 		w.Abilities.Remove(id)
+	}
+	if w.Items.Row(id) != -1 {
+		w.Items.Remove(id)
 	}
 	if w.Invents.Row(id) != -1 {
 		w.Invents.Remove(id)

@@ -206,6 +206,9 @@ func TestBuiltinEventKindsUnique(t *testing.T) {
 		"EvResearchFinished":  EvResearchFinished,
 		"EvHeroLevel":         EvHeroLevel,
 		"EvHeroDied":          EvHeroDied,
+		"EvItemPickedUp":      EvItemPickedUp,
+		"EvItemUsed":          EvItemUsed,
+		"EvItemDropped":       EvItemDropped,
 	}
 	byVal := map[uint16]string{}
 	for name, v := range kinds {
