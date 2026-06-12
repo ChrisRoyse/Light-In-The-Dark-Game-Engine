@@ -1,5 +1,5 @@
 // The determinism harness: the spikes/fixedpoint 10k-tick workload
-// promoted onto the production packages (determinism.md §3). A World
+// promoted onto the production packages (determinism.md §3). A DetWorld
 // runs a fixed seed plus a scripted command stream through litd/fixed
 // movement/distance/damage math, litd/prng draws, and litd/sim/sched
 // suspensions, and emits a 64-bit litd/statehash top hash every
@@ -42,8 +42,8 @@ const (
 	syncPeriod uint32        = 64
 )
 
-// World is the deterministic workload state.
-type World struct {
+// DetWorld is the deterministic workload state.
+type DetWorld struct {
 	ents  []entity
 	rng   *prng.Stream
 	sched *sched.Scheduler
@@ -58,10 +58,10 @@ type World struct {
 	nextCmd int
 }
 
-// NewWorld builds the workload: n entities placed from the seed's
+// NewDetWorld builds the workload: n entities placed from the seed's
 // master stream, 8 pulse scripts on the scheduler, 4 event watchers.
-func NewWorld(seed uint64, n int, cmds []Command) *World {
-	w := &World{
+func NewDetWorld(seed uint64, n int, cmds []Command) *DetWorld {
+	w := &DetWorld{
 		ents:  make([]entity, n),
 		rng:   prng.New(seed, 0),
 		sched: sched.New(),
@@ -106,7 +106,7 @@ func NewWorld(seed uint64, n int, cmds []Command) *World {
 }
 
 // Step advances exactly one tick: commands, scripts, movement/combat.
-func (w *World) Step() {
+func (w *DetWorld) Step() {
 	w.tick++
 
 	for w.nextCmd < len(w.cmds) && w.cmds[w.nextCmd].Tick <= w.tick {
@@ -152,7 +152,7 @@ func (w *World) Step() {
 
 // Hash writes the full state field-by-field into the per-system
 // sub-hashes and returns the snapshot (top hash + per-system subs).
-func (w *World) Hash() *statehash.Snapshot {
+func (w *DetWorld) Hash() *statehash.Snapshot {
 	w.reg.Reset()
 	w.hUnits.WriteU32(uint32(len(w.ents)))
 	for i := range w.ents {
@@ -174,7 +174,7 @@ func (w *World) Hash() *statehash.Snapshot {
 // RunHashTrace runs ticks ticks and records the top hash every `every`
 // ticks — the divergence-localizing trace (determinism.md §3).
 func RunHashTrace(seed uint64, n int, cmds []Command, ticks, every int) []uint64 {
-	w := NewWorld(seed, n, cmds)
+	w := NewDetWorld(seed, n, cmds)
 	trace := make([]uint64, 0, ticks/every)
 	for t := 1; t <= ticks; t++ {
 		w.Step()

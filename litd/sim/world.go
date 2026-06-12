@@ -1,0 +1,201 @@
+package sim
+
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+
+// Caps fixes every pool capacity for a match. The zero value of a
+// field means "engine default". A map header may LOWER a cap, never
+// raise it: NewWorld clamps every request to the engine ceiling
+// (ecs-architecture.md §2, R-GC-2).
+type Caps struct {
+	Units             int
+	Projectiles       int
+	BuffInstances     int
+	OrderQueueEntries int
+	PendingEvents     int // per-tick ring
+	PathRequests      int // in flight
+	ScriptedDoodads   int
+}
+
+// EngineCaps are the engine ceilings — the §2 pool table, exactly.
+var EngineCaps = Caps{
+	Units:             4000,
+	Projectiles:       2000,
+	BuffInstances:     8000,
+	OrderQueueEntries: 16000,
+	PendingEvents:     4096,
+	PathRequests:      512,
+	ScriptedDoodads:   1024,
+}
+
+func clampCap(requested, ceiling int) int {
+	if requested <= 0 || requested > ceiling {
+		return ceiling
+	}
+	return requested
+}
+
+// resolve clamps every requested cap to the engine ceiling.
+func (c Caps) resolve() Caps {
+	return Caps{
+		Units:             clampCap(c.Units, EngineCaps.Units),
+		Projectiles:       clampCap(c.Projectiles, EngineCaps.Projectiles),
+		BuffInstances:     clampCap(c.BuffInstances, EngineCaps.BuffInstances),
+		OrderQueueEntries: clampCap(c.OrderQueueEntries, EngineCaps.OrderQueueEntries),
+		PendingEvents:     clampCap(c.PendingEvents, EngineCaps.PendingEvents),
+		PathRequests:      clampCap(c.PathRequests, EngineCaps.PathRequests),
+		ScriptedDoodads:   clampCap(c.ScriptedDoodads, EngineCaps.ScriptedDoodads),
+	}
+}
+
+// Pool element shapes. These rows will grow fields as their systems
+// land (orders #144, buffs #162, events #88, pathing #110, doodads
+// D-13); the capacity discipline and backing arrays land here.
+
+type orderEntry struct {
+	next   int32 // pooled free-list / queue link
+	kind   uint8
+	target EntityID
+	point  fixed.Vec2
+}
+
+type buffInstance struct {
+	buffID    uint16
+	stacks    uint8
+	target    EntityID
+	source    EntityID
+	remaining uint32
+	periodic  uint32
+}
+
+type pendingEvent struct {
+	kind uint16
+	src  EntityID
+	dst  EntityID
+	arg  int64
+}
+
+type pathRequest struct {
+	unit  EntityID
+	goal  fixed.Vec2
+	state uint8
+}
+
+type doodadRow struct {
+	placement int32
+	visible   bool
+	anim      uint16
+	pos       fixed.Vec2
+	facing    fixed.Angle
+}
+
+type projectileRow struct {
+	source EntityID
+	target EntityID
+	pos    fixed.Vec2
+	vel    fixed.Vec2
+	speed  fixed.F64
+	flags  uint8
+}
+
+// World owns every store and pool of one match. All capacities are
+// fixed by NewWorld — `make` runs exactly once per pool at map load
+// and nothing here ever reallocates mid-match (R-GC-2). Exhaustion is
+// a gameplay outcome: creation fails, like WC3 refusing past its
+// handle limits.
+type World struct {
+	caps Caps
+
+	Ents       *Entities
+	Transforms *TransformStore
+
+	unitCount  int
+	projectiles []projectileRow
+	projCount   int
+	buffs       []buffInstance
+	buffCount   int
+	orderPool   []orderEntry
+	events      []pendingEvent // per-tick ring
+	pathReqs    []pathRequest
+	doodads     []doodadRow
+	doodadCount int
+}
+
+// NewWorld allocates every pool at the resolved capacities. The
+// entity table covers everything that can hold an EntityID: units,
+// projectiles, and promoted doodads.
+func NewWorld(requested Caps) *World {
+	caps := requested.resolve()
+	entityCap := caps.Units + caps.Projectiles + caps.ScriptedDoodads
+	return &World{
+		caps:        caps,
+		Ents:        NewEntities(entityCap),
+		Transforms:  NewTransformStore(entityCap, entityCap),
+		projectiles: make([]projectileRow, caps.Projectiles),
+		buffs:       make([]buffInstance, caps.BuffInstances),
+		orderPool:   make([]orderEntry, caps.OrderQueueEntries),
+		events:      make([]pendingEvent, caps.PendingEvents),
+		pathReqs:    make([]pathRequest, caps.PathRequests),
+		doodads:     make([]doodadRow, caps.ScriptedDoodads),
+	}
+}
+
+// Caps returns the resolved (effective) capacities.
+func (w *World) Caps() Caps { return w.caps }
+
+// UnitCount returns the number of live units.
+func (w *World) UnitCount() int { return w.unitCount }
+
+// CreateUnit spawns a unit entity with a Transform. Fails (gameplay
+// outcome) when the unit cap is reached — never reallocates.
+func (w *World) CreateUnit(pos fixed.Vec2, facing fixed.Angle) (EntityID, bool) {
+	if w.unitCount >= w.caps.Units {
+		return 0, false
+	}
+	id, ok := w.Ents.Create()
+	if !ok {
+		return 0, false
+	}
+	if !w.Transforms.Add(w.Ents, id, pos, facing) {
+		w.Ents.Destroy(id)
+		return 0, false
+	}
+	w.unitCount++
+	return id, true
+}
+
+// DestroyUnit removes a unit and its components. Stale handles are
+// no-ops (R-API-5).
+func (w *World) DestroyUnit(id EntityID) bool {
+	if !w.Ents.Alive(id) {
+		return false
+	}
+	w.Transforms.Remove(id)
+	if !w.Ents.Destroy(id) {
+		return false
+	}
+	w.unitCount--
+	return true
+}
+
+// PreallocatedBytes reports the total bytes held by the fixed pools —
+// the ecs §5.1 sanity number printed at load in debug builds.
+func (w *World) PreallocatedBytes() int {
+	const (
+		slotB  = 8  // entitySlot
+		vec2B  = 16 // fixed.Vec2
+		rowOfB = 4
+	)
+	n := 0
+	n += len(w.Ents.slots) * slotB
+	n += len(w.Transforms.Pos) * vec2B
+	n += len(w.Transforms.Facing) * 2
+	n += len(w.Transforms.Entity) * 4
+	n += len(w.Transforms.rowOf) * rowOfB
+	n += len(w.projectiles) * 64
+	n += len(w.buffs) * 24
+	n += len(w.orderPool) * 32
+	n += len(w.events) * 24
+	n += len(w.pathReqs) * 24
+	n += len(w.doodads) * 32
+	return n
+}

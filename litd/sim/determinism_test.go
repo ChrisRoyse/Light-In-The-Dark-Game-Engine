@@ -100,8 +100,8 @@ func TestCommandPerturbationLocalizedToWindow(t *testing.T) {
 // hp nudge — the divergence report must name "units" first.
 func TestSubHashNamesDivergentSystem(t *testing.T) {
 	cmds := ScriptedCommands(katSeed, 50)
-	wa := NewWorld(katSeed, katN, cmds)
-	wb := NewWorld(katSeed, katN, cmds)
+	wa := NewDetWorld(katSeed, katN, cmds)
+	wb := NewDetWorld(katSeed, katN, cmds)
 	for i := 0; i < 500; i++ {
 		wa.Step()
 		wb.Step()

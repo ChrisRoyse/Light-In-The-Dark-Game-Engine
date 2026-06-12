@@ -23,7 +23,7 @@ const goldenPath = "testdata/golden-10ktick.trace"
 
 func goldenHeader() string {
 	return fmt.Sprintf(`# golden 10k-tick hash trace — determinism.md §3, frozen per §2.4
-# workload: NewWorld(seed=0x%X, n=%d, ScriptedCommands(seed, 300)); %d ticks; top hash every %d
+# workload: NewDetWorld(seed=0x%X, n=%d, ScriptedCommands(seed, 300)); %d ticks; top hash every %d
 # one entry per line: <entryIndex> <topHash hex>
 # regenerate ONLY with: go test ./litd/sim -run Golden -args -update  (justification required in PR)
 `, uint64(katSeed), katN, katTicks, katEvery)

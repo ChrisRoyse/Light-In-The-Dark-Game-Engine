@@ -8,7 +8,7 @@ import "testing"
 // ns/op against tick_ms_max and allocs/op against allocs_per_tick
 // from benchmarks/budgets.toml (R-GC-5).
 func BenchmarkWorldTick(b *testing.B) {
-	w := NewWorld(katSeed, katN, ScriptedCommands(katSeed, 300))
+	w := NewDetWorld(katSeed, katN, ScriptedCommands(katSeed, 300))
 	for i := 0; i < 256; i++ { // warm pools and heap capacities
 		w.Step()
 	}
