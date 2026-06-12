@@ -67,14 +67,6 @@ type pathRequest struct {
 	state uint8
 }
 
-type doodadRow struct {
-	placement int32
-	visible   bool
-	anim      uint16
-	pos       fixed.Vec2
-	facing    fixed.Angle
-}
-
 // World owns every store and pool of one match. All capacities are
 // fixed by NewWorld — `make` runs exactly once per pool at map load
 // and nothing here ever reallocates mid-match (R-GC-2). Exhaustion is
@@ -97,6 +89,7 @@ type World struct {
 	Orders     *OrderStore
 	Buffs      *BuffPool
 	Projs      *ProjectilePool
+	Doodads    *DoodadStore
 	Sched      *sched.Scheduler // phase-2 script scheduler, lockstep with tick
 
 	// double-buffered command staging (step.go): enqueue any time,
@@ -125,8 +118,6 @@ type World struct {
 	handlers      map[HandlerID]EventHandler // registry: lookup only, never iterated
 	subs          []kindSubs                 // kind-sorted, registration-ordered lists
 	pathReqs      []pathRequest
-	doodads       []doodadRow
-	doodadCount   int
 }
 
 // NewWorld allocates every pool at the resolved capacities. The
@@ -158,7 +149,7 @@ func NewWorld(requested Caps) *World {
 		events:     make([]Event, caps.PendingEvents),
 		handlers:   make(map[HandlerID]EventHandler),
 		pathReqs:   make([]pathRequest, caps.PathRequests),
-		doodads:    make([]doodadRow, caps.ScriptedDoodads),
+		Doodads:    NewDoodadStore(caps.ScriptedDoodads, entityCap),
 	}
 }
 
@@ -268,6 +259,6 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.orderPool) * 32
 	n += len(w.events) * 24
 	n += len(w.pathReqs) * 24
-	n += len(w.doodads) * 32
+	n += int(0) + len(w.Doodads.Placement)*32
 	return n
 }

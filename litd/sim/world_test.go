@@ -18,7 +18,7 @@ func worldPointers(w *World) map[string]uintptr {
 		"orderPool":   uintptr(unsafe.Pointer(unsafe.SliceData(w.orderPool))),
 		"events":      uintptr(unsafe.Pointer(unsafe.SliceData(w.events))),
 		"pathReqs":    uintptr(unsafe.Pointer(unsafe.SliceData(w.pathReqs))),
-		"doodads":     uintptr(unsafe.Pointer(unsafe.SliceData(w.doodads))),
+		"doodads":     uintptr(unsafe.Pointer(unsafe.SliceData(w.Doodads.Placement))),
 	}
 }
 
