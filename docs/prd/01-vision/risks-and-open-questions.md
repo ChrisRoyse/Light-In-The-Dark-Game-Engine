@@ -15,6 +15,12 @@
 
 *Likelihood: Medium · Impact: High*
 
+**STATUS 2026-06-11: smoke test EXECUTED and green (D-2026-06-11-31, `cmd/animtest`).** All 5
+KayKit Adventurers GLBs (76 clips, 41-joint rigs) load, render skinned + textured, and
+animate in the vendored g3n — FSV screenshot evidence, frames byte-distinct. Residual risk
+is future packs (Quaternius pending); the per-pack `animtest` census in M0 ingestion is the
+standing guard. Likelihood downgraded Medium → Low.
+
 **Mitigation (per PRD).** Core-profile-only assets (R-FMT-1); vendored engine with loader
 patches; fallback to a [qmuntal/gltf](https://github.com/qmuntal/gltf) parser feeding G3N
 meshes directly.

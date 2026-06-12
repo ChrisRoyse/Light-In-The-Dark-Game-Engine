@@ -314,6 +314,18 @@ Vendored `repoes/engine/gls/glapi.c` already loads `glDrawArraysInstanced`,
 graphic + per-instance transform/team-color attribute buffer. No GL capability risk;
 scheduled M4 per D-18.
 
+## D-2026-06-11-31 — Spike S5 result: g3n skinned GLB animation VALIDATED (risk R1)
+
+`cmd/animtest` (kept as a permanent asset-smoke tool) loaded all 5 KayKit
+Character Pack Adventures GLBs (CC0, github.com/KayKit-Game-Assets) in the vendored g3n:
+**76 animation clips and a 41-joint skin per character, every model parsed, rendered
+skinned + atlas-textured, and animated** — FSV evidence: 3 staggered screenshots per model,
+all byte-distinct (~96k differing bytes frame 0→2 = visible arm/sword motion), characters
+clearly posed (not bind-pose). The clip inventory (Idle/Walking/Running/Attack/Death/
+Spellcast/Hit…) exceeds the R-AST-3 required set. R1's "patch trigger" stands for future
+packs (Quaternius pack pending — Google-Drive-hosted, same Blender exporter class); the
+per-pack census stays in M0 asset ingestion via `animtest`.
+
 ---
 
 ## No remaining deferred decisions
