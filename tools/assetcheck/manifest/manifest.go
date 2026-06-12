@@ -1,0 +1,226 @@
+// Package manifest parses and verifies assets/MANIFEST, the asset
+// provenance ledger (G4.2, G4.7; docs/prd/09-roadmap/tooling.md §3.2).
+//
+// The format is a strict subset of TOML: comment lines, [[asset]] table
+// headers, and key = "string" pairs. Anything else is a parse error —
+// the ledger fails closed rather than silently skipping malformed entries.
+package manifest
+
+import (
+	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+)
+
+// Asset is one [[asset]] entry.
+type Asset struct {
+	Path      string // relative to assets/, forward slashes
+	Pack      string
+	Source    string
+	License   string // SPDX id; policy: CC0-1.0 (free-commercial needs operator sign-off)
+	Retrieved string // YYYY-MM-DD
+	SHA256    string // lowercase hex
+	Line      int    // line number of the [[asset]] header, for diagnostics
+}
+
+var requiredKeys = []string{"path", "pack", "source", "license", "retrieved", "sha256"}
+
+// Parse reads the MANIFEST format. It returns an error on the first
+// malformed line, duplicate key, missing required key, or duplicate path.
+func Parse(r io.Reader) ([]Asset, error) {
+	sc := bufio.NewScanner(r)
+	var assets []Asset
+	var cur map[string]string
+	var curLine int
+	seenPaths := make(map[string]int)
+
+	flush := func() error {
+		if cur == nil {
+			return nil
+		}
+		for _, k := range requiredKeys {
+			if cur[k] == "" {
+				return fmt.Errorf("line %d: [[asset]] missing required key %q", curLine, k)
+			}
+		}
+		p := cur["path"]
+		if strings.Contains(p, "\\") || strings.HasPrefix(p, "/") || strings.Contains(p, "..") {
+			return fmt.Errorf("line %d: path %q must be relative with forward slashes", curLine, p)
+		}
+		if prev, dup := seenPaths[p]; dup {
+			return fmt.Errorf("line %d: duplicate entry for path %q (first at line %d)", curLine, p, prev)
+		}
+		seenPaths[p] = curLine
+		assets = append(assets, Asset{
+			Path: p, Pack: cur["pack"], Source: cur["source"], License: cur["license"],
+			Retrieved: cur["retrieved"], SHA256: strings.ToLower(cur["sha256"]), Line: curLine,
+		})
+		return nil
+	}
+
+	n := 0
+	for sc.Scan() {
+		n++
+		line := strings.TrimSpace(sc.Text())
+		switch {
+		case line == "" || strings.HasPrefix(line, "#"):
+		case line == "[[asset]]":
+			if err := flush(); err != nil {
+				return nil, err
+			}
+			cur, curLine = make(map[string]string), n
+		default:
+			k, v, ok := strings.Cut(line, "=")
+			if !ok {
+				return nil, fmt.Errorf("line %d: not a comment, [[asset]], or key = \"value\": %q", n, line)
+			}
+			if cur == nil {
+				return nil, fmt.Errorf("line %d: key outside any [[asset]] table", n)
+			}
+			k = strings.TrimSpace(k)
+			v = strings.TrimSpace(v)
+			if i := strings.Index(v, "#"); i >= 0 && !insideQuotes(v, i) {
+				v = strings.TrimSpace(v[:i])
+			}
+			if len(v) < 2 || v[0] != '"' || v[len(v)-1] != '"' {
+				return nil, fmt.Errorf("line %d: value for %q must be a double-quoted string", n, k)
+			}
+			v = v[1 : len(v)-1]
+			valid := false
+			for _, rk := range requiredKeys {
+				if k == rk {
+					valid = true
+				}
+			}
+			if !valid {
+				return nil, fmt.Errorf("line %d: unknown key %q", n, k)
+			}
+			if _, dup := cur[k]; dup {
+				return nil, fmt.Errorf("line %d: duplicate key %q in entry at line %d", n, k, curLine)
+			}
+			cur[k] = v
+		}
+	}
+	if err := sc.Err(); err != nil {
+		return nil, err
+	}
+	if err := flush(); err != nil {
+		return nil, err
+	}
+	return assets, nil
+}
+
+func insideQuotes(s string, idx int) bool {
+	in := false
+	for i, c := range s {
+		if i == idx {
+			return in
+		}
+		if c == '"' {
+			in = !in
+		}
+	}
+	return in
+}
+
+// Violation is one provenance failure. RuleID is one of
+// PROV-UNLISTED, PROV-MISSING, PROV-HASH, PROV-LICENSE.
+type Violation struct {
+	Path   string
+	RuleID string
+	Msg    string
+}
+
+func (v Violation) String() string { return v.Path + ": " + v.RuleID + ": " + v.Msg }
+
+// Verify checks the ledger in assetsDir/MANIFEST against the files on disk:
+// every file listed exactly once, every entry present, every hash matching,
+// every license CC0-1.0. Returned violations are sorted by path.
+func Verify(assetsDir string) ([]Violation, error) {
+	f, err := os.Open(filepath.Join(assetsDir, "MANIFEST"))
+	if err != nil {
+		return nil, fmt.Errorf("open MANIFEST: %w", err)
+	}
+	defer f.Close()
+	assets, err := Parse(f)
+	if err != nil {
+		return nil, fmt.Errorf("parse MANIFEST: %w", err)
+	}
+
+	var violations []Violation
+	listed := make(map[string]Asset, len(assets))
+	for _, a := range assets {
+		listed[a.Path] = a
+	}
+
+	onDisk := make(map[string]bool)
+	err = filepath.WalkDir(assetsDir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(assetsDir, p)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		if rel == "MANIFEST" {
+			return nil
+		}
+		onDisk[rel] = true
+		if _, ok := listed[rel]; !ok {
+			violations = append(violations, Violation{rel, "PROV-UNLISTED", "file under assets/ has no MANIFEST entry"})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, a := range assets {
+		if !onDisk[a.Path] {
+			violations = append(violations, Violation{a.Path, "PROV-MISSING", fmt.Sprintf("MANIFEST entry (line %d) but file does not exist", a.Line)})
+			continue
+		}
+		sum, err := fileSHA256(filepath.Join(assetsDir, filepath.FromSlash(a.Path)))
+		if err != nil {
+			return nil, err
+		}
+		if sum != a.SHA256 {
+			violations = append(violations, Violation{a.Path, "PROV-HASH", fmt.Sprintf("sha256 mismatch: MANIFEST has %s, file is %s", a.SHA256, sum)})
+		}
+		if a.License != "CC0-1.0" {
+			violations = append(violations, Violation{a.Path, "PROV-LICENSE", fmt.Sprintf("license %q: policy is CC0-1.0 only (free-commercial needs operator sign-off)", a.License)})
+		}
+	}
+
+	sort.Slice(violations, func(i, j int) bool {
+		if violations[i].Path != violations[j].Path {
+			return violations[i].Path < violations[j].Path
+		}
+		return violations[i].RuleID < violations[j].RuleID
+	})
+	return violations, nil
+}
+
+func fileSHA256(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+}

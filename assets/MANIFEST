@@ -1,0 +1,19 @@
+# assets/MANIFEST — asset provenance ledger (G4.2, G4.7; docs/prd/09-roadmap/tooling.md §3.2)
+#
+# Format: TOML. One [[asset]] table per file under assets/.
+#
+#   [[asset]]
+#   path      = "units/knight.glb"        # relative to assets/, forward slashes
+#   pack      = "KayKit Adventurers 1.0"  # human-readable pack name + version
+#   source    = "https://kaylousberg.itch.io/kaykit-adventurers"
+#   license   = "CC0-1.0"                 # SPDX id; CC0-1.0 only (CLAUDE.md conventions);
+#                                         # "free-commercial" allowed only with operator sign-off
+#   retrieved = "2026-06-11"              # date the file was downloaded (YYYY-MM-DD)
+#   sha256    = "<hex digest of the file as committed>"
+#
+# Invariants enforced by tools/assetcheck (provenance rule):
+#   - every file under assets/ (except this MANIFEST) MUST have exactly one entry
+#   - every entry MUST point at an existing file
+#   - recorded sha256 MUST match the file bytes
+#
+# No assets are in the tree yet. Pack ingestion (#30, #41, #42) appends entries here.
