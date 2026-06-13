@@ -119,6 +119,18 @@ func (u Unit) PointValue() int {
 	return int(u.g.w.UnitPointValue(u.id))
 }
 
+// Level returns the unit's level: a hero's current level for heroes,
+// otherwise the type's configured design level. Zero on an invalid
+// handle, an untyped unit, or a non-hero type with no level set.
+// JASS: GetUnitLevel.
+func (u Unit) Level() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Level")
+		return 0
+	}
+	return int(u.g.w.UnitLevel(u.id))
+}
+
 // Invulnerable reports whether the unit currently ignores all incoming damage,
 // false on an invalid handle or a unit with no health row. JASS:
 // BlzIsUnitInvulnerable.

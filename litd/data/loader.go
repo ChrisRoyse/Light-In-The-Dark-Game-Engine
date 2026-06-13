@@ -115,6 +115,7 @@ type Unit struct {
 	Model            string
 	Name             string // display/proper name (GetUnitName); "" = unnamed
 	PointValue       int32  // score/bounty weight (GetUnitPointValue); 0 = none
+	Level            int32  // design level (GetUnitLevel for non-heroes); 0 = unset
 	Attacks          []Attack
 	Abilities        []uint16 // indices into Tables.Abilities
 
@@ -179,6 +180,7 @@ type rawUnit struct {
 	Model            string           `toml:"model" json:"model"`
 	Name             string           `toml:"name" json:"name"`
 	PointValue       int64            `toml:"point-value" json:"point-value"`
+	Level            int64            `toml:"level" json:"level"`
 	Abilities        []string         `toml:"abilities" json:"abilities"`
 	Attacks          []rawAttack      `toml:"attack" json:"attack"`
 	FoodCost         int64            `toml:"food-cost" json:"food-cost"`
@@ -645,6 +647,9 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 	if r.PointValue < 0 || r.PointValue > 1_000_000 {
 		return fail("point-value", fmt.Errorf("%d out of range [0, 1000000]", r.PointValue))
 	}
+	if r.Level < 0 || r.Level > 1000 {
+		return fail("level", fmt.Errorf("%d out of range [0, 1000]", r.Level))
+	}
 	u := Unit{
 		ID:               r.ID,
 		Life:             int32(r.Life),
@@ -662,6 +667,7 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		Model:            r.Model,
 		Name:             r.Name,
 		PointValue:       int32(r.PointValue),
+		Level:            int32(r.Level),
 	}
 	if u.FoodCost, u.FoodProvided, u.DepotMask, u.Harvest, err = t.convertEconomy(file, r.ID, r); err != nil {
 		return Unit{}, err

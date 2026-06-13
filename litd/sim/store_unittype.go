@@ -111,6 +111,19 @@ func (w *World) UnitPointValue(id EntityID) int32 {
 	return 0
 }
 
+// UnitLevel returns the unit's level: a hero's current level when the
+// unit is a hero, otherwise the type's configured design level (0 when
+// untyped or unconfigured). GetUnitLevel.
+func (w *World) UnitLevel(id EntityID) int32 {
+	if w.IsHero(id) {
+		return int32(w.HeroLevel(id))
+	}
+	if d := w.typeDefOf(id); d != nil {
+		return d.Level
+	}
+	return 0
+}
+
 // UnitIsStructure reports whether the unit's type is a building (footprint > 0).
 // UNIT_TYPE_STRUCTURE. False when untyped.
 func (w *World) UnitIsStructure(id EntityID) bool {

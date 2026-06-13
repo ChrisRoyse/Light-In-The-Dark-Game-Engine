@@ -357,6 +357,7 @@ collision-size = 8
 pathing = "ground"
 acquisition-range = 500
 point-value = 30
+level = 5
 name = "Scout Trooper"
 `
 	tables, err := Load(mapFS(withPV))
@@ -388,6 +389,35 @@ name = "Scout Trooper"
 	}
 	if grunt.Name != "" {
 		t.Errorf("grunt.Name=%q, want empty (omitted)", grunt.Name)
+	}
+	// level decodes; omitted level defaults to 0.
+	t.Logf("scout.Level=%d (want 5)  grunt.Level=%d (want 0, omitted)", scout.Level, grunt.Level)
+	if scout.Level != 5 {
+		t.Errorf("scout.Level=%d, want 5", scout.Level)
+	}
+	if grunt.Level != 0 {
+		t.Errorf("grunt.Level=%d, want 0 (omitted default)", grunt.Level)
+	}
+
+	// EDGE: out-of-range level must be rejected (fail-closed).
+	const badLevel = testUnitTOML + `
+[[unit]]
+id = "bad"
+life = 100
+regen = 0
+armor = 0
+armor-type = "light"
+move-speed = 200
+turn-rate = 0.6
+collision-size = 8
+pathing = "ground"
+acquisition-range = 500
+level = 1001
+`
+	if _, err := Load(mapFS(badLevel)); err == nil {
+		t.Fatal("out-of-range level must fail to load")
+	} else {
+		t.Logf("out-of-range level rejected -> %v", err)
 	}
 
 	// EDGE: negative point-value must be rejected (fail-closed), not clamped.

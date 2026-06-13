@@ -505,6 +505,50 @@ func TestHeroStatAccessorsFSV(t *testing.T) {
 	}
 }
 
+// TestUnitLevelHeroPrecedenceFSV: World.UnitLevel returns a hero's
+// current level (overriding any type Level) and tracks it across a
+// level-up; a non-hero falls through to the type's design level.
+// SoT = Heroes.Level store (hero) and the bound type Level (non-hero).
+func TestUnitLevelHeroPrecedenceFSV(t *testing.T) {
+	w := heroWorld(t)
+	id, ok := w.SpawnHero(hPaladin, 0, 0, pt2(100, 100))
+	if !ok {
+		t.Fatal("spawn hero failed")
+	}
+	hr := w.Heroes.Row(id)
+
+	// Fresh hero: level 1 in the store -> UnitLevel 1.
+	t.Logf("FSV UnitLevel hero BEFORE: Heroes.Level=%d UnitLevel=%d (want 1/1)", w.Heroes.Level[hr], w.UnitLevel(id))
+	if w.HeroLevel(id) != 1 || w.UnitLevel(id) != 1 {
+		t.Fatalf("fresh hero UnitLevel=%d (HeroLevel=%d), want 1", w.UnitLevel(id), w.HeroLevel(id))
+	}
+
+	// Level up to 2 (curve {0,200,...}) -> UnitLevel tracks HeroLevel.
+	w.AddXP(id, 200)
+	w.Step() // drain the EvHeroLevel event
+	t.Logf("FSV UnitLevel hero AFTER AddXP(200): Heroes.Level=%d UnitLevel=%d (want 2/2)", w.Heroes.Level[hr], w.UnitLevel(id))
+	if w.HeroLevel(id) != 2 || w.UnitLevel(id) != 2 {
+		t.Fatalf("leveled hero UnitLevel=%d (HeroLevel=%d), want 2", w.UnitLevel(id), w.HeroLevel(id))
+	}
+
+	// Non-hero: no Heroes row -> falls through to the type's design level
+	// (the techDefs worker has none configured -> 0).
+	worker, ok := w.SpawnFromTable(tWorker, 1, 1, pt2(120, 100))
+	if !ok {
+		t.Fatal("spawn worker failed")
+	}
+	t.Logf("FSV UnitLevel non-hero worker: isHero=%v UnitLevel=%d (want false/0)", w.IsHero(worker), w.UnitLevel(worker))
+	if w.IsHero(worker) || w.UnitLevel(worker) != 0 {
+		t.Fatalf("non-hero worker UnitLevel=%d, want 0", w.UnitLevel(worker))
+	}
+
+	// EDGE: never-used id -> 0, no panic.
+	var nobody EntityID
+	if w.UnitLevel(nobody) != 0 {
+		t.Error("zero EntityID reported a non-zero UnitLevel")
+	}
+}
+
 // TestSetHeroStatsFSV: SetHeroStr/Agi/Int set the attribute AND apply the
 // derived consequences. SoT = the derived stores (Healths.MaxLife/Life,
 // Abilities.MaxMana, buffAdd[StatArmor]) plus the Heroes attribute columns.

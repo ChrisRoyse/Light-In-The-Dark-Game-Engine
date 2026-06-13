@@ -337,6 +337,14 @@ package = "litd/api"
 reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
 
 [[override]]
+name = "GetUnitLevel"
+class = "D1"
+goMapping = "Unit.Level"
+goSignature = "() int"
+package = "litd/api"
+reason = "unit level getter: a hero's current level for heroes, else the type's configured design level (data.Unit.Level, [0,1000]); 0 when untyped/unset (D1) (#217)"
+
+[[override]]
 name = "IsUnitOwnedByPlayer"
 class = "D2"
 goMapping = "Unit.OwnedBy"

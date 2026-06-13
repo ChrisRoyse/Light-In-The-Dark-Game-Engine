@@ -759,6 +759,51 @@ func TestUnitSetOwnerFSV(t *testing.T) {
 	(Unit{}).SetOwner(pa, true)
 }
 
+// TestUnitLevelFSV: the non-hero Level accessor returns the type's
+// configured design level. SoT = the bound data.Unit.Level via sim
+// World.UnitLevel. (Hero precedence is covered in the sim layer where
+// the hero machinery lives — see sim.TestUnitLevelHeroPrecedenceFSV.)
+func TestUnitLevelFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hlvl", Life: 100, Level: 2 + 3}, // 2+3=5
+		{ID: "hzro", Life: 100},               // Level omitted -> 0
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+
+	u := g.CreateUnit(owner, g.UnitType("hlvl"), Vec2{X: 64, Y: 64}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit hlvl invalid")
+	}
+	t.Logf("FSV Level: hlvl api=%d simSoT=%d (want 5)", u.Level(), w.UnitLevel(u.id))
+	if got, sot := u.Level(), int(w.UnitLevel(u.id)); got != 5 || sot != 5 {
+		t.Errorf("hlvl Level: api=%d sim=%d, want 5", got, sot)
+	}
+
+	// EDGE: type with no level -> 0.
+	z := g.CreateUnit(owner, g.UnitType("hzro"), Vec2{X: 96, Y: 96}, Deg(0))
+	if z.Level() != 0 {
+		t.Errorf("hzro Level = %d, want 0", z.Level())
+	}
+
+	// EDGE: untyped unit -> 0.
+	bare, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(8), Y: fixed.FromInt(8)}, 0)
+	if !ok {
+		t.Fatal("bare CreateUnit failed")
+	}
+	if lvl := (Unit{id: bare, g: g}).Level(); lvl != 0 {
+		t.Errorf("untyped Level = %d, want 0", lvl)
+	}
+
+	// EDGE: invalid handle -> 0, no panic.
+	if (Unit{}).Level() != 0 {
+		t.Error("zero-handle Level != 0")
+	}
+}
+
 // TestUnitOwnedByFSV verifies Unit.OwnedBy against the sim Owners.Player
 // slot: true only for the owning player, false for everyone else and on
 // every invalid combination.
