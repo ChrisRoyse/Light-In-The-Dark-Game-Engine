@@ -63,6 +63,9 @@ jobs:
       - name: determinism lint gate (no map iteration / wall clock / floats / raw F64 ops)
         run: go run ./tools/determlint ./litd/...
 
+      - name: API-surface lint gate (R-API-1..6 / G2.2-G2.5; #214, milestones §8 exit-2)
+        run: go run ./tools/apilint ./litd/api
+
       - name: license-scan gate (permissive allowlist, copyleft hard-fail)
         run: ./scripts/license-scan.sh
 
