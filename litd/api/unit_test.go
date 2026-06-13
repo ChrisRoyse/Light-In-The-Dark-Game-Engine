@@ -1164,3 +1164,52 @@ func TestUnitShowHideFSV(t *testing.T) {
 		t.Error("removed unit IsHidden() true")
 	}
 }
+
+// TestUnitFoodFSV: FoodUsed/FoodMade surface the unit type's economy fields.
+// SoT = the bound data.Unit FoodCost/FoodProvided, verified via api + sim
+// accessor. A consumer (footman: uses 3, makes 0) and a provider (farm: uses 0,
+// makes 10) prove the two fields don't cross-wire.
+func TestUnitFoodFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hfoo", Life: 100, FoodCost: 3, FoodProvided: 0},
+		{ID: "hfrm", Life: 100, FoodCost: 0, FoodProvided: 10},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+
+	foo := g.CreateUnit(owner, g.UnitType("hfoo"), Vec2{X: 64, Y: 64}, Deg(0))
+	frm := g.CreateUnit(owner, g.UnitType("hfrm"), Vec2{X: 96, Y: 96}, Deg(0))
+	if !foo.Valid() || !frm.Valid() {
+		t.Fatal("CreateUnit invalid")
+	}
+	t.Logf("footman: used api=%d sim=%d made api=%d sim=%d", foo.FoodUsed(), w.UnitFoodUsed(foo.id), foo.FoodMade(), w.UnitFoodMade(foo.id))
+	t.Logf("farm:    used api=%d sim=%d made api=%d sim=%d", frm.FoodUsed(), w.UnitFoodUsed(frm.id), frm.FoodMade(), w.UnitFoodMade(frm.id))
+
+	if foo.FoodUsed() != 3 || foo.FoodMade() != 0 || w.UnitFoodUsed(foo.id) != 3 || w.UnitFoodMade(foo.id) != 0 {
+		t.Errorf("footman food: used=%d made=%d, want 3/0", foo.FoodUsed(), foo.FoodMade())
+	}
+	if frm.FoodUsed() != 0 || frm.FoodMade() != 10 || w.UnitFoodUsed(frm.id) != 0 || w.UnitFoodMade(frm.id) != 10 {
+		t.Errorf("farm food: used=%d made=%d, want 0/10", frm.FoodUsed(), frm.FoodMade())
+	}
+
+	// EDGE: untyped unit -> 0/0.
+	bare, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(8), Y: fixed.FromInt(8)}, 0)
+	if !ok {
+		t.Fatal("bare CreateUnit failed")
+	}
+	if w.UnitFoodUsed(bare) != 0 || w.UnitFoodMade(bare) != 0 {
+		t.Errorf("untyped food: used=%d made=%d, want 0/0", w.UnitFoodUsed(bare), w.UnitFoodMade(bare))
+	}
+
+	// EDGE: zero / removed handle -> 0.
+	if (Unit{}).FoodUsed() != 0 || (Unit{}).FoodMade() != 0 {
+		t.Error("zero Unit food != 0")
+	}
+	foo.Remove()
+	if foo.FoodUsed() != 0 || foo.FoodMade() != 0 {
+		t.Errorf("removed unit food: used=%d made=%d, want 0/0", foo.FoodUsed(), foo.FoodMade())
+	}
+}

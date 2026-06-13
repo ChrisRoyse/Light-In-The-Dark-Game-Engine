@@ -111,6 +111,24 @@ func (w *World) UnitPointValue(id EntityID) int32 {
 	return 0
 }
 
+// UnitFoodUsed returns the food the unit's type consumes (GetUnitFoodUsed), 0
+// when untyped. Static type property — the upkeep cost charged to the owner.
+func (w *World) UnitFoodUsed(id EntityID) uint8 {
+	if d := w.typeDefOf(id); d != nil {
+		return d.FoodCost
+	}
+	return 0
+}
+
+// UnitFoodMade returns the food the unit's type provides (GetUnitFoodMade), 0
+// when untyped. Static type property — farms/town halls raise the food cap.
+func (w *World) UnitFoodMade(id EntityID) uint8 {
+	if d := w.typeDefOf(id); d != nil {
+		return d.FoodProvided
+	}
+	return 0
+}
+
 // UnitDefaultMoveSpeed returns the type's base move speed (per tick), 0 when
 // untyped. GetUnitDefaultMoveSpeed — the spawn value before SetUnitMoveSpeed.
 func (w *World) UnitDefaultMoveSpeed(id EntityID) fixed.F64 {

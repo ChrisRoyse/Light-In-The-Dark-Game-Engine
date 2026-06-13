@@ -568,8 +568,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitTypeId | common.j | D3 | `litd/api.Unit.Type` |
 | GetUnitRace | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitName | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitFoodUsed | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitFoodMade | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitFoodUsed | common.j | D1 | `litd/api.Unit.FoodUsed` |
+| GetUnitFoodMade | common.j | D1 | `litd/api.Unit.FoodMade` |
 | GetFoodMade | common.j | unclassified | _pending (M2 backlog)_ |
 | GetFoodUsed | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitUseFood | common.j | unclassified | _pending (M2 backlog)_ |

@@ -24,6 +24,8 @@ var Bindings = []Binding{
 	{LuaName: "Unit_DefaultMoveSpeed", Package: "litd/api", Symbol: "Unit.DefaultMoveSpeed", GoSignature: "() float64"},
 	{LuaName: "Unit_DefaultTurnSpeed", Package: "litd/api", Symbol: "Unit.DefaultTurnSpeed", GoSignature: "() float64"},
 	{LuaName: "Unit_Facing", Package: "litd/api", Symbol: "Unit.Facing", GoSignature: "() Angle"},
+	{LuaName: "Unit_FoodMade", Package: "litd/api", Symbol: "Unit.FoodMade", GoSignature: "() int"},
+	{LuaName: "Unit_FoodUsed", Package: "litd/api", Symbol: "Unit.FoodUsed", GoSignature: "() int"},
 	{LuaName: "Unit_Invulnerable", Package: "litd/api", Symbol: "Unit.Invulnerable", GoSignature: "() bool"},
 	{LuaName: "Unit_IsHidden", Package: "litd/api", Symbol: "Unit.IsHidden", GoSignature: "() bool"},
 	{LuaName: "Unit_Kill", Package: "litd/api", Symbol: "Unit.Kill", GoSignature: "()"},

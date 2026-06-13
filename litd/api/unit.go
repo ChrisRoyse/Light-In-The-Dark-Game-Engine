@@ -442,6 +442,28 @@ func (u Unit) DefaultTurnSpeed() float64 {
 	return angleFromBrad(u.g.w.UnitDefaultTurnSpeed(u.id)).Radians() * float64(data.TicksPerSecond)
 }
 
+// FoodUsed returns the food (upkeep) the unit's type consumes from its owner's
+// food total. Zero on an invalid handle or an untyped unit. JASS:
+// GetUnitFoodUsed.
+func (u Unit) FoodUsed() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.FoodUsed")
+		return 0
+	}
+	return int(u.g.w.UnitFoodUsed(u.id))
+}
+
+// FoodMade returns the food the unit's type provides (raising its owner's food
+// cap, e.g. a farm). Zero on an invalid handle or an untyped unit. JASS:
+// GetUnitFoodMade.
+func (u Unit) FoodMade() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.FoodMade")
+		return 0
+	}
+	return int(u.g.w.UnitFoodMade(u.id))
+}
+
 // IsHidden reports whether the unit is suppressed from rendering and
 // selection (it still exists in the simulation). False on an invalid handle.
 // JASS: IsUnitHidden.
