@@ -172,6 +172,26 @@ func TestBuildMapDataDumpFSV(t *testing.T) {
 	}
 }
 
+func TestBuildTerrainFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	scene := core.NewNode()
+	spec, dump, err := buildTerrainFSV(scene, "terrain-units", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo terrain spec=%+v triangles=%d maxDiff=%d inverted=%d border=%+v units=%+v",
+		spec, dump.TriangleCount, dump.MaxHeightDiff, dump.InvertedTriangles, dump.BorderVertices, dump.Units)
+	if !dump.OK || dump.VertexCount != 4225 || dump.TriangleCount != 8192 || dump.MaxHeightDiff != 0 || dump.InvertedTriangles != 0 {
+		t.Fatalf("terrain dump wrong: %+v", dump)
+	}
+	if len(dump.HeightSamples) != 100 || len(dump.BorderVertices) != 4 || len(dump.Units) != 4 {
+		t.Fatalf("terrain FSV coverage wrong: samples=%d border=%d units=%d", len(dump.HeightSamples), len(dump.BorderVertices), len(dump.Units))
+	}
+	if spec.expected.VisibleGraphics != 5 || spec.expected.OpaqueDrawCalls != 5 {
+		t.Fatalf("terrain-units expected stats wrong: %+v", spec.expected)
+	}
+}
+
 func chdirRepoRoot(t *testing.T) func() {
 	t.Helper()
 	cwd, err := os.Getwd()

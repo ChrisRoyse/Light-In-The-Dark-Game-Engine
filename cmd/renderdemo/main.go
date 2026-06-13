@@ -29,6 +29,7 @@ import (
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
+	litterrain "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/terrain"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/core"
@@ -60,6 +61,7 @@ type renderDemoDump struct {
 	Camera    litrender.RTSCameraDump `json:"camera"`
 	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
 	Groups    *groupRuntimeDump       `json:"groups,omitempty"`
+	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -113,6 +115,38 @@ type mapDataSplatSample struct {
 	X      int                    `json:"x"`
 	Y      int                    `json:"y"`
 	Weight litmapdata.SplatWeight `json:"weight"`
+}
+
+type terrainRuntimeDump struct {
+	Scene             string                    `json:"scene"`
+	MapPath           string                    `json:"mapPath"`
+	Wireframe         bool                      `json:"wireframe"`
+	VertexCount       int                       `json:"vertexCount"`
+	TriangleCount     int                       `json:"triangleCount"`
+	InvertedTriangles int                       `json:"invertedTriangles"`
+	MaxHeightDiff     int32                     `json:"maxHeightDiff"`
+	HeightSamples     []litterrain.HeightSample `json:"heightSamples"`
+	BorderVertices    []terrainBorderDump       `json:"borderVertices"`
+	Units             []terrainUnitDump         `json:"units,omitempty"`
+	OK                bool                      `json:"ok"`
+	Errors            []string                  `json:"errors,omitempty"`
+}
+
+type terrainBorderDump struct {
+	X      int     `json:"x"`
+	Y      int     `json:"y"`
+	WorldX float32 `json:"worldX"`
+	WorldY float32 `json:"worldY"`
+	WorldZ float32 `json:"worldZ"`
+}
+
+type terrainUnitDump struct {
+	Name    string  `json:"name"`
+	VertexX int     `json:"vertexX"`
+	VertexY int     `json:"vertexY"`
+	WorldX  float32 `json:"worldX"`
+	GroundY float32 `json:"groundY"`
+	WorldZ  float32 `json:"worldZ"`
 }
 
 type resolutionFlag struct {
@@ -319,13 +353,14 @@ type resourceBarValues struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	autotestSelect := flag.Bool("autotest-select", false, "render the drag-select input FSV fixture")
 	autotestGroups := flag.Bool("autotest-groups", false, "render the control-group input FSV fixture")
+	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
@@ -369,6 +404,7 @@ func main() {
 	var canvasFSV canvasDump
 	var selectionFSV *selectionRuntimeDump
 	var groupFSV *groupRuntimeDump
+	var terrainFSV *terrainRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -398,10 +434,18 @@ func main() {
 	} else {
 		buildLights(scene)
 		var err error
-		spec, err = buildScene(scene, *sceneName)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
-			os.Exit(1)
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(*sceneName)), "terrain") {
+			spec, terrainFSV, err = buildTerrainFSV(scene, *sceneName, *wireframe)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: terrain: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			spec, err = buildScene(scene, *sceneName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
+				os.Exit(1)
+			}
 		}
 		addStatsHUD(scene, spec)
 	}
@@ -432,10 +476,12 @@ func main() {
 				pass = pass && selectionFSV.OK
 			} else if groupFSV != nil {
 				pass = pass && groupFSV.OK
+			} else if terrainFSV != nil {
+				pass = pass && terrainFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Terrain: terrainFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -646,6 +692,111 @@ func buildScene(scene *core.Node, name string) (sceneSpec, error) {
 		return sceneSpec{name: name, expected: expectedStats(6, 0, 6, 0, 3, 0)}, nil
 	default:
 		return sceneSpec{}, fmt.Errorf("unknown scene %q", name)
+	}
+}
+
+func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, *terrainRuntimeDump, error) {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "" {
+		name = "terrain"
+	}
+	if name != "terrain" && name != "terrain-units" {
+		return sceneSpec{}, nil, fmt.Errorf("unknown terrain scene %q", name)
+	}
+	const mapPath = "data/maps/test64"
+	m, err := litmapdata.Load(os.DirFS("."), mapPath)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	mesh, err := litterrain.Build(m)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	samples, maxDiff, err := litterrain.CompareHeights(mesh, m, litterrain.HundredVertexSamples(m.Width, m.Height))
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	mat := material.NewStandard(&math32.Color{R: 0.28, G: 0.45, B: 0.22})
+	mat.SetSpecularColor(&math32.Color{R: 0.08, G: 0.08, B: 0.06})
+	mat.SetWireframe(wireframe)
+	terrainMesh := graphic.NewMesh(mesh.Geometry, mat)
+	scene.Add(terrainMesh)
+
+	dump := &terrainRuntimeDump{
+		Scene:             name,
+		MapPath:           mapPath,
+		Wireframe:         wireframe,
+		VertexCount:       mesh.VertexCount,
+		TriangleCount:     mesh.TriangleCount,
+		InvertedTriangles: mesh.InvertedTriangles(),
+		MaxHeightDiff:     maxDiff,
+		HeightSamples:     samples,
+		OK:                true,
+	}
+	for _, p := range [][2]int{{0, 0}, {m.Width, 0}, {0, m.Height}, {m.Width, m.Height}} {
+		pos, ok := mesh.PositionAtVertex(p[0], p[1])
+		if !ok {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("missing border vertex (%d,%d)", p[0], p[1]))
+			continue
+		}
+		dump.BorderVertices = append(dump.BorderVertices, terrainBorderDump{
+			X: p[0], Y: p[1], WorldX: pos.X, WorldY: pos.Y, WorldZ: pos.Z,
+		})
+	}
+	if maxDiff != 0 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("height max diff %d, want 0", maxDiff))
+	}
+	if dump.InvertedTriangles != 0 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("%d inverted triangles", dump.InvertedTriangles))
+	}
+	if mesh.TriangleCount != m.Width*m.Height*2 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("triangles %d, want %d", mesh.TriangleCount, m.Width*m.Height*2))
+	}
+
+	visible, opaqueStates := 1, 1
+	if name == "terrain" && !wireframe {
+		wireMat := material.NewStandard(&math32.Color{R: 0.06, G: 0.12, B: 0.05})
+		wireMat.SetWireframe(true)
+		scene.Add(graphic.NewMesh(mesh.Geometry, wireMat))
+		visible++
+		opaqueStates++
+	}
+	if name == "terrain-units" {
+		addTerrainUnits(scene, mesh, dump)
+		visible += len(dump.Units)
+		opaqueStates++
+	}
+	return sceneSpec{name: name, expected: expectedStats(visible, 0, visible, 0, opaqueStates, 0)}, dump, nil
+}
+
+func addTerrainUnits(scene *core.Node, mesh *litterrain.Mesh, dump *terrainRuntimeDump) {
+	unitMat := material.NewStandard(&math32.Color{R: 0.24, G: 0.52, B: 0.92})
+	unitGeom := geometry.NewBox(120, 160, 120)
+	for _, u := range []struct {
+		name string
+		x, y int
+	}{
+		{name: "low-ground", x: 31, y: 32},
+		{name: "slope-mid", x: 32, y: 32},
+		{name: "high-ground", x: 33, y: 32},
+		{name: "high-offset", x: 34, y: 34},
+	} {
+		pos, ok := mesh.PositionAtVertex(u.x, u.y)
+		if !ok {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("unit %s missing vertex (%d,%d)", u.name, u.x, u.y))
+			continue
+		}
+		box := graphic.NewMesh(unitGeom, unitMat)
+		box.SetPosition(pos.X, pos.Y+80, pos.Z)
+		scene.Add(box)
+		dump.Units = append(dump.Units, terrainUnitDump{
+			Name: u.name, VertexX: u.x, VertexY: u.y, WorldX: pos.X, GroundY: pos.Y, WorldZ: pos.Z,
+		})
 	}
 }
 
