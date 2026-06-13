@@ -496,15 +496,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitDefaultFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitOwner | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitColor | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitScale | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitTimeScale | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitBlendTime | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitVertexColor | common.j | unclassified | _pending (M2 backlog)_ |
-| QueueUnitAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitAnimationByIndex | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitScale | common.j | D1 | **tombstoned** (deferred-v2): render-only model scale; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
+| SetUnitTimeScale | common.j | D1 | **tombstoned** (deferred-v2): render-only animation playback rate; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
+| SetUnitBlendTime | common.j | D1 | **tombstoned** (deferred-v2): render-only animation blend duration; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
+| SetUnitVertexColor | common.j | D1 | **tombstoned** (deferred-v2): render-only vertex tint; no deterministic-sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
+| QueueUnitAnimation | common.j | D1 | **tombstoned** (deferred-v2): render-only queued animation; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
+| SetUnitAnimation | common.j | D1 | **tombstoned** (deferred-v2): render-only animation override; render derives clips (Idle/Walk/Attack/Death) from sim state, not the reverse (R-API-6, R-AST-3). Deferred to a render/cinematic API (#364) |
+| SetUnitAnimationByIndex | common.j | D1 | **tombstoned** (deferred-v2): render-only animation override by index; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
 | SetUnitAnimationWithRarity | common.j | unclassified | _pending (M2 backlog)_ |
-| AddUnitAnimationProperties | common.j | unclassified | _pending (M2 backlog)_ |
+| AddUnitAnimationProperties | common.j | D1 | **tombstoned** (deferred-v2): render-only animation-tag toggle; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
 | SetUnitLookAt | common.j | unclassified | _pending (M2 backlog)_ |
 | ResetUnitLookAt | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitRescuable | common.j | unclassified | _pending (M2 backlog)_ |

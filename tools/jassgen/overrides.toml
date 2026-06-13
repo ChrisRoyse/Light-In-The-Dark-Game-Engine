@@ -198,3 +198,56 @@ goSignature = "(ord Order, target OrderTarget) bool"
 collapsesWith = ["IssueImmediateOrder", "IssueTargetOrder", "IssuePointOrderById", "IssueImmediateOrderById", "IssueTargetOrderById", "IssuePointOrderLoc", "IssueInstantPointOrder", "IssueInstantTargetOrder", "IssueInstantPointOrderById", "IssueInstantTargetOrderById", "IssuePointOrderByIdLoc", "IssuePointOrderLocBJ", "IssueTargetOrderBJ", "IssueImmediateOrderBJ"]
 package = "litd/api"
 reason = "the order matrix — immediate/point/target × string/ById × instant, plus the Loc and BJ variants — collapses onto one typed Order(ord, target) verb where OrderTarget is the none|point|unit sum (dedup §4 ex.3)"
+
+# --- Render-only unit natives: tombstoned deferred-v2 per DECISION #364.
+# These touch only render state (tint, scale, animation playback); R-API-6 bars
+# the sim API from render and they have zero deterministic-sim effect. Deferred
+# to a future render/cinematic API, not part of the units gameplay core.
+
+[[override]]
+name = "SetUnitVertexColor"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only vertex tint; no deterministic-sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "SetUnitScale"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only model scale; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "SetUnitTimeScale"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only animation playback rate; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "SetUnitBlendTime"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only animation blend duration; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "SetUnitAnimation"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only animation override; render derives clips (Idle/Walk/Attack/Death) from sim state, not the reverse (R-API-6, R-AST-3). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "SetUnitAnimationByIndex"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only animation override by index; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "QueueUnitAnimation"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only queued animation; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+[[override]]
+name = "AddUnitAnimationProperties"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "render-only animation-tag toggle; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"

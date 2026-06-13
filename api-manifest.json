@@ -147,6 +147,37 @@
       }
     },
     {
+      "name": "AddUnitAnimationProperties",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "animProperties",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "add",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only animation-tag toggle; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
       "name": "CreateUnit",
       "origin": "common.j",
       "signature": {
@@ -414,6 +445,32 @@
       }
     },
     {
+      "name": "QueueUnitAnimation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichAnimation",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only queued animation; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
       "name": "RemoveUnit",
       "origin": "common.j",
       "signature": {
@@ -433,6 +490,84 @@
         "symbol": "Unit.Remove",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "SetUnitAnimation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichAnimation",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only animation override; render derives clips (Idle/Walk/Attack/Death) from sim state, not the reverse (R-API-6, R-AST-3). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "SetUnitAnimationByIndex",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichAnimation",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only animation override by index; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "SetUnitBlendTime",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "blendTime",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only animation blend duration; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
       }
     },
     {
@@ -558,6 +693,42 @@
       }
     },
     {
+      "name": "SetUnitScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "scaleX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scaleY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scaleZ",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only model scale; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
       "name": "SetUnitState",
       "origin": "common.j",
       "signature": {
@@ -593,6 +764,73 @@
           "SetUnitManaBJ",
           "SetUnitManaPercentBJ"
         ]
+      }
+    },
+    {
+      "name": "SetUnitTimeScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "timeScale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only animation playback rate; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "SetUnitVertexColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "render-only vertex tint; no deterministic-sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
       }
     },
     {
