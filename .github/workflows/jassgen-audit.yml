@@ -1,0 +1,43 @@
+# jassgen API-manifest + dedup-audit gates (#8, tooling.md §2.3).
+# TRIGGERS: workflow_dispatch ONLY — Actions activation is gated on the billing
+# decision (#284, operator-only) and the project-end CI policy. Flip to
+# push/pull_request when #284 resolves and #260 turns the green gate on.
+#
+# Gates enforced here:
+#   - schema validation  : -emit fails if api-manifest.json violates the schema
+#   - reproducibility     : -check fails if committed outputs are not byte-identical
+#   - M2 dedup gate       : -audit fails while unclassified>0 or unmapped>0
+# NOTE: the M2 audit gate is intentionally RED until overrides map/tombstone
+# every symbol (the M2 content backlog); it flips green at M2 completion (#260).
+name: jassgen-audit
+on:
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - name: Restore vendored war3-types (gitignored)
+        run: git clone --depth 1 https://github.com/cipherxof/war3-types repoes/war3-types
+      - name: Build jassgen
+        run: go build ./tools/jassgen/
+      - name: Emit + validate manifest (schema gate)
+        run: go run ./tools/jassgen -emit
+      - name: Reproducibility gate (outputs byte-identical to committed)
+        run: go run ./tools/jassgen -check
+      - name: Generate audit report
+        run: go run ./tools/jassgen -audit
+      - name: Unit tests
+        run: go test ./tools/jassgen/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jassgen-reports
+          path: |
+            api-manifest.json
+            audit-report.md
+            audit-report.json

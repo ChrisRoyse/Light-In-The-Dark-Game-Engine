@@ -19,6 +19,8 @@ func main() {
 	dumpClasses := flag.Bool("dump-classes", false, "classify all source symbols D1-D5 (+ unclassified); dump per-class counts and verdicts")
 	emit := flag.Bool("emit", false, "emit api-manifest.json (validated, byte-identical on re-run)")
 	out := flag.String("o", "api-manifest.json", "output path for -emit")
+	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
+	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
 	flag.Parse()
 	overridesFilePath = *overridesPath
@@ -34,10 +36,83 @@ func main() {
 		runDumpClasses()
 	case *emit:
 		runEmit(*out)
+	case *audit:
+		runAudit()
+	case *check:
+		runCheck()
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check")
 		os.Exit(2)
 	}
+}
+
+// generateOutputs builds the manifest + audit bytes from the current sources.
+func generateOutputs() (manifestBytes, auditJSON, auditMD []byte, report AuditReport) {
+	cs, sigs, sources := buildClassifiedUniverse()
+	m, _ := BuildManifest(cs, sigs, sources)
+	if err := ValidateManifest(m); err != nil {
+		fatal(fmt.Errorf("manifest failed schema validation: %w", err))
+	}
+	mb, err := MarshalManifest(m)
+	if err != nil {
+		fatal(err)
+	}
+	report = ComputeAudit(cs, m)
+	aj, err := MarshalAuditJSON(report)
+	if err != nil {
+		fatal(err)
+	}
+	return mb, aj, []byte(RenderAuditMarkdown(report)), report
+}
+
+func runAudit() {
+	_, auditJSON, auditMD, report := generateOutputs()
+	if err := os.WriteFile("audit-report.json", auditJSON, 0o644); err != nil {
+		fatal(err)
+	}
+	if err := os.WriteFile("audit-report.md", auditMD, 0o644); err != nil {
+		fatal(err)
+	}
+	fmt.Fprintf(os.Stderr, "audit: total=%d unclassified=%d unmapped=%d mapped=%d tombstoned=%d\n",
+		report.Total, report.Unclassified, report.Unmapped, report.Mapped, report.Tombstoned)
+	if len(report.Violations) > 0 {
+		fmt.Fprintf(os.Stderr, "M2 GATE FAIL — %d violation(s):\n", len(report.Violations))
+		for _, v := range report.Violations {
+			fmt.Fprintln(os.Stderr, "  -", v)
+		}
+		os.Exit(1)
+	}
+	fmt.Fprintln(os.Stderr, "M2 gates: GREEN")
+}
+
+// runCheck regenerates all outputs and fails if any differs from the committed
+// file (reproducibility gate).
+func runCheck() {
+	mb, aj, amd, _ := generateOutputs()
+	fail := false
+	for _, f := range []struct {
+		path string
+		want []byte
+	}{
+		{"api-manifest.json", mb},
+		{"audit-report.json", aj},
+		{"audit-report.md", amd},
+	} {
+		got, err := os.ReadFile(f.path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "check: cannot read committed %s: %v\n", f.path, err)
+			fail = true
+			continue
+		}
+		if string(got) != string(f.want) {
+			fmt.Fprintf(os.Stderr, "check: %s differs from regenerated output (re-run -emit/-audit and commit)\n", f.path)
+			fail = true
+		}
+	}
+	if fail {
+		os.Exit(1)
+	}
+	fmt.Fprintln(os.Stderr, "check: all outputs reproducible (byte-identical to committed)")
 }
 
 // buildClassifiedUniverse parses all sources, classifies, and applies overrides.
