@@ -88,7 +88,10 @@
       "goMapping": {
         "symbol": "Unit.Paused",
         "package": "litd/api",
-        "goSignature": "() bool"
+        "goSignature": "() bool",
+        "collapsesWith": [
+          "IsUnitPaused"
+        ]
       }
     },
     {
@@ -115,7 +118,10 @@
       "goMapping": {
         "symbol": "Unit.SetPaused",
         "package": "litd/api",
-        "goSignature": "(paused bool)"
+        "goSignature": "(paused bool)",
+        "collapsesWith": [
+          "PauseUnit"
+        ]
       }
     },
     {
@@ -278,7 +284,10 @@
       "goMapping": {
         "symbol": "Unit.Life",
         "package": "litd/api",
-        "goSignature": "() float64"
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetUnitStateSwap"
+        ]
       }
     },
     {
@@ -557,7 +566,10 @@
         "package": "litd/api",
         "goSignature": "(v float64)",
         "collapsesWith": [
-          "SetUnitLifeBJ"
+          "SetUnitLifeBJ",
+          "SetUnitLifePercentBJ",
+          "SetUnitManaBJ",
+          "SetUnitManaPercentBJ"
         ]
       }
     },

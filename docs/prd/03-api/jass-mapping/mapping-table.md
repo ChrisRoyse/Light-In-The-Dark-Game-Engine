@@ -536,8 +536,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ReviveHeroLoc | common.j | D3 | _pending (M2 backlog)_ |
 | SetUnitExploded | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
-| PauseUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitPaused | common.j | unclassified | _pending (M2 backlog)_ |
+| PauseUnit | common.j | D2 | `litd/api.Unit.SetPaused` (D3 collapse → PauseUnitBJ) |
+| IsUnitPaused | common.j | D1 | `litd/api.Unit.Paused` (D3 collapse → IsUnitPausedBJ) |
 | SetUnitPathing | common.j | unclassified | _pending (M2 backlog)_ |
 | ClearSelection | common.j | unclassified | _pending (M2 backlog)_ |
 | SelectUnit | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1878,7 +1878,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DelayedSuspendDecay | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DelayedSuspendDecayCreate | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CreatePermanentCorpseLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetUnitStateSwap | blizzard.j | D5 | _pending (M2 backlog)_ |
+| GetUnitStateSwap | blizzard.j | D5 | `litd/api.Unit.Life` (D3 collapse → GetUnitState) |
 | GetUnitStatePercent | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitLifePercent | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetUnitManaPercent | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1893,9 +1893,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SelectUnitAddForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SelectUnitRemoveForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetUnitLifeBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
-| SetUnitManaBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
-| SetUnitLifePercentBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
-| SetUnitManaPercentBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
+| SetUnitManaBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
+| SetUnitLifePercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
+| SetUnitManaPercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
 | IsUnitDeadBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitAliveBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitGroupDeadBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |

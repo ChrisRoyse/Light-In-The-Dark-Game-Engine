@@ -10,9 +10,9 @@
   },
   "mapped": 17,
   "tombstoned": 4,
-  "collapsed": 24,
+  "collapsed": 30,
   "unclassified": 1643,
-  "unmapped": 2597,
+  "unmapped": 2591,
   "tombstonesByReason": {
     "deferred-v2": 1,
     "deprecated": 1,
@@ -25,6 +25,6 @@
   "featureTags": {},
   "violations": [
     "unclassified=1643 (M2 gate requires 0)",
-    "unmapped=2597 (M2 gate requires 0; every symbol mapped or tombstoned)"
+    "unmapped=2591 (M2 gate requires 0; every symbol mapped or tombstoned)"
   ]
 }

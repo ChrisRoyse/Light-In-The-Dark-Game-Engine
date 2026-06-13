@@ -21,16 +21,18 @@ name = "IsUnitPausedBJ"
 class = "D1"
 goMapping = "Unit.Paused"
 goSignature = "() bool"
+collapsesWith = ["IsUnitPaused"]
 package = "litd/api"
-reason = "confirmed pure passthrough of native IsUnitPaused (dedup §2 ex.3)"
+reason = "confirmed pure passthrough of native IsUnitPaused (dedup §2 ex.3); the native folds onto the same getter"
 
 [[override]]
 name = "PauseUnitBJ"
 class = "D2"
 goMapping = "Unit.SetPaused"
 goSignature = "(paused bool)"
+collapsesWith = ["PauseUnit"]
 package = "litd/api"
-reason = "reorders args over native PauseUnit; canonical keeps full set (dedup §3 ex.1)"
+reason = "reorders args over native PauseUnit; canonical keeps full set (dedup §3 ex.1); the native folds onto the same setter"
 
 [[override]]
 name = "SetUnitPosition"
@@ -54,9 +56,9 @@ name = "SetUnitState"
 class = "D5"
 goMapping = "Unit.SetLife"
 goSignature = "(v float64)"
-collapsesWith = ["SetUnitLifeBJ"]
+collapsesWith = ["SetUnitLifeBJ", "SetUnitLifePercentBJ", "SetUnitManaBJ", "SetUnitManaPercentBJ"]
 package = "litd/api"
-reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1); already hand-implemented in M5 — generator must skip. SetUnitLifeBJ is the clamp-on-set BJ passthrough onto the same Unit.SetLife (D1), folded here so it shares the canonical target"
+reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1); already hand-implemented in M5 — generator must skip. The whole state-setter BJ family folds here onto the typed Unit.Set{Life,Mana} accessors over the one state table: SetUnitLifeBJ (clamp-on-set life), SetUnitLifePercentBJ/SetUnitManaPercentBJ (percent forms), SetUnitManaBJ (mana) — one canonical target avoids the duplicateTargets gate"
 
 [[override]]
 name = "GetUnitCount"
@@ -152,8 +154,9 @@ name = "GetUnitState"
 class = "D5"
 goMapping = "Unit.Life"
 goSignature = "() float64"
+collapsesWith = ["GetUnitStateSwap"]
 package = "litd/api"
-reason = "enum-keyed state getter collapses onto the typed accessor family (Life/MaxLife/Mana/MaxMana) over one state table (dedup §6 ex.1); Unit.Life is the representative canonical symbol, mirroring the SetUnitState → Unit.SetLife setter"
+reason = "enum-keyed state getter collapses onto the typed accessor family (Life/MaxLife/Mana/MaxMana) over one state table (dedup §6 ex.1); Unit.Life is the representative canonical symbol, mirroring the SetUnitState → Unit.SetLife setter. GetUnitStateSwap is the arg-swapped BJ form, folded onto the same family"
 
 [[override]]
 name = "GetUnitMoveSpeed"
