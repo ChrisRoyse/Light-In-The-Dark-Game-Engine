@@ -1106,3 +1106,61 @@ func TestUnitDefaultStatsFSV(t *testing.T) {
 		t.Error("removed unit default stats != 0")
 	}
 }
+
+// TestUnitShowHideFSV: Show/IsHidden round-trip through the sparse HiddenStore.
+// SoT = the store row (w.Hiddens.Row / Count), read directly. Proves presence-
+// is-the-signal: a row exists iff hidden, hide is idempotent, and Remove on the
+// unit reclaims the row.
+func TestUnitShowHideFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	// BEFORE: visible -> no store row.
+	if w.Hiddens.Row(id) != -1 || u.IsHidden() {
+		t.Fatalf("spawned hidden: row=%d getter=%v", w.Hiddens.Row(id), u.IsHidden())
+	}
+	t.Logf("BEFORE: row=%d getter=%v count=%d", w.Hiddens.Row(id), u.IsHidden(), w.Hiddens.Count())
+
+	// Hide -> store row appears, getter true.
+	u.Show(false)
+	t.Logf("after Show(false): row=%d getter=%v count=%d", w.Hiddens.Row(id), u.IsHidden(), w.Hiddens.Count())
+	if w.Hiddens.Row(id) == -1 || !u.IsHidden() {
+		t.Errorf("hide: row=%d getter=%v, want present+true", w.Hiddens.Row(id), u.IsHidden())
+	}
+
+	// Hiding again is idempotent (no second row).
+	cnt := w.Hiddens.Count()
+	u.Show(false)
+	if w.Hiddens.Count() != cnt {
+		t.Errorf("double-hide grew count %d->%d", cnt, w.Hiddens.Count())
+	}
+
+	// Reveal -> row gone, getter false.
+	u.Show(true)
+	if w.Hiddens.Row(id) != -1 || u.IsHidden() {
+		t.Errorf("reveal: row=%d getter=%v, want absent+false", w.Hiddens.Row(id), u.IsHidden())
+	}
+	// Revealing an already-visible unit is a harmless no-op.
+	u.Show(true)
+	if u.IsHidden() {
+		t.Error("double-reveal made unit hidden")
+	}
+
+	// EDGE: zero handle -> false, no panic.
+	if (Unit{}).IsHidden() {
+		t.Error("zero Unit IsHidden() true")
+	}
+	(Unit{}).Show(false) // no panic
+
+	// EDGE: Remove reclaims the hidden row (DestroyUnit path); dead handle no-op.
+	u.Show(false)
+	u.Remove()
+	if w.Hiddens.Row(id) != -1 {
+		t.Errorf("removed unit kept hidden row %d (DestroyUnit leak)", w.Hiddens.Row(id))
+	}
+	u.Show(false) // no-op on dead handle
+	if u.IsHidden() {
+		t.Error("removed unit IsHidden() true")
+	}
+}

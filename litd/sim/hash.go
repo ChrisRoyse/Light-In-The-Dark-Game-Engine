@@ -55,6 +55,9 @@ var HashSystems = []string{
 	// state with no sim consumer, but scripts branch on it, so it must be
 	// hashed. Sparse store — only rows that were set contribute.
 	"userdata",
+	// appended by #217: per-unit hidden bit (ShowUnit/IsUnitHidden). Sparse
+	// presence store — only hidden units contribute.
+	"hidden",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -504,6 +507,13 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := int32(0); i < ud.count; i++ {
 		hud.WriteU32(uint32(ud.Entity[i]))
 		hud.WriteU32(uint32(ud.Value[i]))
+	}
+
+	hhd := h.next() // hidden (#217): presence = hidden
+	hd2 := w.Hiddens
+	hhd.WriteU32(uint32(hd2.count))
+	for i := int32(0); i < hd2.count; i++ {
+		hhd.WriteU32(uint32(hd2.Entity[i]))
 	}
 
 	return reg.Sum(dst)

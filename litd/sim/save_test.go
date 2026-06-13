@@ -82,6 +82,12 @@ func saveWorld(t *testing.T) (*World, *data.Tables, *[]uint32) {
 		w.Combats.AcquisitionRange[w.Combats.Row(id)] = 200 * fixed.One
 		ids = append(ids, id)
 	}
+	// per-unit custom values + a hidden unit straddle the save point (#217):
+	// sparse stores with no sim consumer, so they must survive purely via
+	// save/load and contribute to the state hash.
+	w.SetUserData(ids[0], 0x7FFFFFFF) // int32 max
+	w.SetUserData(ids[4], -12345)
+	w.ShowUnit(ids[5], false) // hide
 	// current order + two queued pooled entries
 	pt := func(x, y int32) fixed.Vec2 { return fixed.Vec2{X: fixed.FromInt(x), Y: fixed.FromInt(y)} }
 	if !w.IssueOrder(ids[0], Order{Kind: OrderMove, Point: pt(1100, 1100)}, false) ||
@@ -112,6 +118,12 @@ func saveWorld(t *testing.T) (*World, *data.Tables, *[]uint32) {
 	}
 	if w.Sched.PendingSleepers() == 0 {
 		t.Fatal("degenerate fixture: no pending suspension at the save point")
+	}
+	if w.UserDatas.Count() == 0 {
+		t.Fatal("degenerate fixture: no userdata rows at the save point")
+	}
+	if w.Hiddens.Count() == 0 {
+		t.Fatal("degenerate fixture: no hidden units at the save point")
 	}
 	return w, tb, fired
 }

@@ -267,6 +267,13 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.i32(ud.Value[i])
 	}
 
+	// hidden (#217): presence = hidden
+	hd := w.Hiddens
+	s.u32(uint32(hd.count))
+	for i := int32(0); i < hd.count; i++ {
+		s.ent(hd.Entity[i])
+	}
+
 	// health
 	hl := w.Healths
 	s.u32(uint32(hl.Count()))
@@ -724,6 +731,9 @@ type decodedSave struct {
 	udE   []EntityID
 	udVal []int32
 
+	hdN int32
+	hdE []EntityID
+
 	hlN     int32
 	hlE     []EntityID
 	hlLife  []fixed.F64
@@ -1116,6 +1126,16 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	for i := int32(0); i < n; i++ {
 		d.udE[i] = r.ent()
 		d.udVal[i] = r.i32()
+	}
+
+	// hidden (#217)
+	if n, err = r.section("hidden", len(w.Hiddens.Entity)); err != nil {
+		return err
+	}
+	d.hdN = n
+	d.hdE = make([]EntityID, n)
+	for i := int32(0); i < n; i++ {
+		d.hdE[i] = r.ent()
 	}
 
 	// health
@@ -2271,6 +2291,14 @@ func applySave(d *decodedSave, w *World) {
 		ud.Entity[i] = d.udE[i]
 		ud.Value[i] = d.udVal[i]
 		ud.rowOf[d.udE[i].Index()] = i
+	}
+
+	hd := w.Hiddens
+	hd.count = d.hdN
+	resetRowOf(hd.rowOf)
+	for i := int32(0); i < d.hdN; i++ {
+		hd.Entity[i] = d.hdE[i]
+		hd.rowOf[d.hdE[i].Index()] = i
 	}
 
 	hl := w.Healths

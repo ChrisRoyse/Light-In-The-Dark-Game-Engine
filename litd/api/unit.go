@@ -442,6 +442,28 @@ func (u Unit) DefaultTurnSpeed() float64 {
 	return angleFromBrad(u.g.w.UnitDefaultTurnSpeed(u.id)).Radians() * float64(data.TicksPerSecond)
 }
 
+// IsHidden reports whether the unit is suppressed from rendering and
+// selection (it still exists in the simulation). False on an invalid handle.
+// JASS: IsUnitHidden.
+func (u Unit) IsHidden() bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.IsHidden")
+		return false
+	}
+	return u.g.w.IsUnitHidden(u.id)
+}
+
+// Show reveals (show=true) or hides (show=false) the unit. Hiding suppresses it
+// from rendering and selection without removing it from the simulation. No-op
+// on an invalid handle. JASS: ShowUnit.
+func (u Unit) Show(show bool) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Show")
+		return
+	}
+	u.g.w.ShowUnit(u.id, show)
+}
+
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
 // death event). A unit already dead or invalid is a no-op. JASS: KillUnit,
 // KillUnitBJ (D1 passthrough collapses here).

@@ -721,6 +721,28 @@
       }
     },
     {
+      "name": "IsUnitHidden",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.IsHidden",
+        "package": "litd/api",
+        "goSignature": "() bool"
+      }
+    },
+    {
       "name": "IssuePointOrder",
       "origin": "common.j",
       "signature": {
@@ -1328,6 +1350,33 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "render-only vertex tint; no deterministic-sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "ShowUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Show",
+        "package": "litd/api",
+        "goSignature": "(show bool)"
       }
     },
     {

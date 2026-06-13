@@ -136,6 +136,22 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "ShowUnit"
+class = "D1"
+goMapping = "Unit.Show"
+goSignature = "(show bool)"
+package = "litd/api"
+reason = "show/hide toggle maps directly onto the typed setter (dedup §2); hides the unit from render/selection while it persists in the sim, backed by the sparse HiddenStore (#217)"
+
+[[override]]
+name = "IsUnitHidden"
+class = "D1"
+goMapping = "Unit.IsHidden"
+goSignature = "() bool"
+package = "litd/api"
+reason = "hidden-state getter maps directly onto the typed accessor (dedup §2); see ShowUnit (#217)"
+
+[[override]]
 name = "GetUnitDefaultMoveSpeed"
 class = "D1"
 goMapping = "Unit.DefaultMoveSpeed"

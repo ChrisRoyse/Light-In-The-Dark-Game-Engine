@@ -472,7 +472,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CreateCorpse | common.j | unclassified | _pending (M2 backlog)_ |
 | KillUnit | common.j | D1 | `litd/api.Unit.Kill` |
 | RemoveUnit | common.j | D1 | `litd/api.Unit.Remove` |
-| ShowUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| ShowUnit | common.j | D1 | `litd/api.Unit.Show` |
 | SetUnitState | common.j | D5 | `litd/api.Unit.SetLife` |
 | SetUnitX | common.j | D3 | `litd/api.Unit.SetPosition` (D3 collapse → SetUnitPosition) |
 | SetUnitY | common.j | D3 | `litd/api.Unit.SetPosition` (D3 collapse → SetUnitPosition) |
@@ -593,7 +593,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitInRange | common.j | D3 | _pending (M2 backlog)_ |
 | IsUnitInRangeXY | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInRangeLoc | common.j | D3 | _pending (M2 backlog)_ |
-| IsUnitHidden | common.j | unclassified | _pending (M2 backlog)_ |
+| IsUnitHidden | common.j | D1 | `litd/api.Unit.IsHidden` |
 | IsUnitIllusion | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInTransport | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitLoaded | common.j | unclassified | _pending (M2 backlog)_ |
