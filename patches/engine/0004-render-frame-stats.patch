@@ -1,0 +1,348 @@
+diff --git a/renderer/renderer.go b/renderer/renderer.go
+index cf77fb1..95de243 100644
+--- a/renderer/renderer.go
++++ b/renderer/renderer.go
+@@ -10,6 +10,7 @@ import (
+ 
+ 	"github.com/g3n/engine/camera"
+ 	"github.com/g3n/engine/core"
++	"github.com/g3n/engine/geometry"
+ 	"github.com/g3n/engine/gls"
+ 	"github.com/g3n/engine/graphic"
+ 	"github.com/g3n/engine/gui"
+@@ -30,6 +31,13 @@ type Renderer struct {
+ 	specs       ShaderSpecs     // Preallocated Shader specs
+ 	sortObjects bool            // Flag indicating whether objects should be sorted before rendering
+ 	stats       Stats           // Renderer statistics
++	currentPass renderPass      // LITD-PATCH: current render pass bucket for frame counters
++	stateValid  bool            // LITD-PATCH: whether lastState can be compared
++	lastState   renderStateKey  // LITD-PATCH: last material/geometry state rendered
++
++	// LITD-PATCH: scratch GL stats used to derive per-frame draw-call deltas without allocation.
++	glStatsBefore gls.Stats
++	glStatsAfter  gls.Stats
+ 
+ 	// Populated each frame
+ 	ambLights    []*light.Ambient           // Ambient lights in the scene
+@@ -44,6 +52,27 @@ type Renderer struct {
+ 	zLayerKeys   []int                      // Z-layers being used (initially in no particular order, sorted later)
+ }
+ 
++// LITD-PATCH: renderPass identifies the coarse renderer bucket used for per-frame stats.
++type renderPass uint8
++
++const (
++	renderPassOpaque renderPass = iota
++	renderPassTransparent
++	renderPassGUI
++)
++
++// LITD-PATCH: renderStateKey captures the state that materially changes a draw.
++type renderStateKey struct {
++	material     *material.Material
++	geometry     *geometry.Geometry
++	shader       string
++	shaderUnique bool
++	useLights    material.UseLights
++	textureCount int
++	side         material.Side
++	transparent  bool
++}
++
+ // Stats describes how many objects of each type are being rendered.
+ // It is cleared at the start of each render.
+ type Stats struct {
+@@ -51,6 +80,18 @@ type Stats struct {
+ 	Lights      int // Number of lights rendered
+ 	Panels      int // Number of GUI panels rendered
+ 	Others      int // Number of other objects rendered
++
++	// LITD-PATCH: per-frame render counters for benchmark gates and in-engine overlays.
++	VisibleGraphics      int // Number of renderable 3D graphics inside the camera frustum
++	CulledGraphics       int // Number of renderable 3D graphics rejected by frustum culling
++	DrawCalls            int // Number of GL draw calls issued this frame
++	OpaqueDrawCalls      int // Number of draw calls in the opaque world pass
++	TransparentDrawCalls int // Number of draw calls in the transparent world pass
++	GUIDrawCalls         int // Number of draw calls in the GUI pass
++	StateChanges         int // Number of material/geometry state changes this frame
++	OpaqueStates         int // Number of state changes in the opaque world pass
++	TransparentStates    int // Number of state changes in the transparent world pass
++	GUIStates            int // Number of state changes in the GUI pass
+ }
+ 
+ // NewRenderer creates and returns a pointer to a new Renderer.
+@@ -107,6 +148,8 @@ func (r *Renderer) Render(scene core.INode, cam camera.ICamera) error {
+ 
+ 	// Clear stats and scene arrays
+ 	r.stats = Stats{}
++	r.currentPass = renderPassOpaque
++	r.stateValid = false
+ 	r.ambLights = r.ambLights[0:0]
+ 	r.dirLights = r.dirLights[0:0]
+ 	r.pointLights = r.pointLights[0:0]
+@@ -179,6 +222,7 @@ func (r *Renderer) Render(scene core.INode, cam camera.ICamera) error {
+ 	}
+ 
+ 	// Render opaque objects front to back
++	r.currentPass = renderPassOpaque
+ 	for i := len(r.grmatsOpaque) - 1; i >= 0; i-- {
+ 		err := r.renderGraphicMaterial(r.grmatsOpaque[i])
+ 		if err != nil {
+@@ -187,6 +231,7 @@ func (r *Renderer) Render(scene core.INode, cam camera.ICamera) error {
+ 	}
+ 
+ 	// Render transparent objects back to front
++	r.currentPass = renderPassTransparent
+ 	for _, grmat := range r.grmatsTransp {
+ 		err := r.renderGraphicMaterial(grmat)
+ 		if err != nil {
+@@ -240,10 +285,14 @@ func (r *Renderer) classifyAndCull(inode core.INode, frustum *math32.Frustum, zL
+ 				if frustum.IntersectsBox(&bb) {
+ 					// Append graphic to list of graphics to be rendered
+ 					r.graphics = append(r.graphics, gr)
++					r.stats.VisibleGraphics++
++				} else {
++					r.stats.CulledGraphics++
+ 				}
+ 			} else {
+ 				// Append graphic to list of graphics to be rendered
+ 				r.graphics = append(r.graphics, gr)
++				r.stats.VisibleGraphics++
+ 			}
+ 		}
+ 		// Node is not a Graphic
+@@ -321,6 +370,7 @@ func (r *Renderer) renderGraphicMaterial(grmat *graphic.GraphicMaterial) error {
+ 	if err != nil {
+ 		return err
+ 	}
++	r.recordStateChange(grmat, mat, geom)
+ 
+ 	// Set up lights (transfer lights' uniforms)
+ 	if r.specs.UseLights != material.UseLightNone {
+@@ -351,7 +401,62 @@ func (r *Renderer) renderGraphicMaterial(grmat *graphic.GraphicMaterial) error {
+ 	}
+ 
+ 	// Render this graphic material
++	r.gs.Stats(&r.glStatsBefore)
+ 	grmat.Render(r.gs, &r.rinfo)
++	r.gs.Stats(&r.glStatsAfter)
++	r.recordDrawCalls(grmat, int(r.glStatsAfter.Drawcalls-r.glStatsBefore.Drawcalls))
+ 
+ 	return nil
+ }
++
++// LITD-PATCH: recordStateChange increments the frame state-change counters when the draw state changes.
++func (r *Renderer) recordStateChange(grmat *graphic.GraphicMaterial, mat *material.Material, geom *geometry.Geometry) {
++	key := renderStateKey{
++		material:     mat,
++		geometry:     geom,
++		shader:       mat.Shader(),
++		shaderUnique: mat.ShaderUnique(),
++		useLights:    mat.UseLights(),
++		textureCount: mat.TextureCount(),
++		side:         mat.Side(),
++		transparent:  mat.Transparent(),
++	}
++	if r.stateValid && r.lastState == key {
++		return
++	}
++	r.stateValid = true
++	r.lastState = key
++	r.stats.StateChanges++
++	switch r.passFor(grmat) {
++	case renderPassGUI:
++		r.stats.GUIStates++
++	case renderPassTransparent:
++		r.stats.TransparentStates++
++	default:
++		r.stats.OpaqueStates++
++	}
++}
++
++// LITD-PATCH: recordDrawCalls attributes GL draw calls to the current coarse render pass.
++func (r *Renderer) recordDrawCalls(grmat *graphic.GraphicMaterial, n int) {
++	if n <= 0 {
++		return
++	}
++	r.stats.DrawCalls += n
++	switch r.passFor(grmat) {
++	case renderPassGUI:
++		r.stats.GUIDrawCalls += n
++	case renderPassTransparent:
++		r.stats.TransparentDrawCalls += n
++	default:
++		r.stats.OpaqueDrawCalls += n
++	}
++}
++
++// LITD-PATCH: passFor treats GUI panels as their own pass even when queued with opaque/translucent materials.
++func (r *Renderer) passFor(grmat *graphic.GraphicMaterial) renderPass {
++	if _, ok := grmat.IGraphic().(gui.IPanel); ok {
++		return renderPassGUI
++	}
++	return r.currentPass
++}
+diff --git a/renderer/stats_litd_test.go b/renderer/stats_litd_test.go
+new file mode 100644
+index 0000000..735eb69
+--- /dev/null
++++ b/renderer/stats_litd_test.go
+@@ -0,0 +1,158 @@
++package renderer
++
++import (
++	"testing"
++
++	"github.com/g3n/engine/camera"
++	"github.com/g3n/engine/core"
++	"github.com/g3n/engine/geometry"
++	"github.com/g3n/engine/graphic"
++	"github.com/g3n/engine/gui"
++	"github.com/g3n/engine/material"
++	"github.com/g3n/engine/math32"
++)
++
++func litdTestFrustum(cam *camera.Camera) *math32.Frustum {
++	var view, proj, combined math32.Matrix4
++	cam.ViewMatrix(&view)
++	cam.ProjMatrix(&proj)
++	combined.MultiplyMatrices(&proj, &view)
++	return math32.NewFrustumFromMatrix(&combined)
++}
++
++func litdTestRenderer() *Renderer {
++	return &Renderer{
++		zLayers:    map[int][]gui.IPanel{0: nil},
++		zLayerKeys: []int{0},
++	}
++}
++
++func litdTestMesh(geom geometry.IGeometry, mat material.IMaterial, x, y, z float32) *graphic.Mesh {
++	mesh := graphic.NewMesh(geom, mat)
++	mesh.SetPosition(x, y, z)
++	return mesh
++}
++
++func TestLITDFrameStatsClassifyVisibleAndCulledGraphics(t *testing.T) {
++	scene := core.NewNode()
++	geom := geometry.NewBox(1, 1, 1)
++	mat := material.NewBasic()
++	visible := litdTestMesh(geom, mat, 0, 0, 0)
++	culled := litdTestMesh(geom, mat, 1000, 0, 0)
++	scene.Add(visible)
++	scene.Add(culled)
++	scene.UpdateMatrixWorld()
++
++	cam := camera.New(1)
++	cam.SetPosition(0, 0, 8)
++	cam.LookAt(&math32.Vector3{}, &math32.Vector3{X: 0, Y: 1, Z: 0})
++
++	r := litdTestRenderer()
++	before := r.stats
++	r.classifyAndCull(scene, litdTestFrustum(cam), 0)
++	after := r.stats
++	t.Logf("FSV classify before=%+v after=%+v renderQueue=%d", before, after, len(r.graphics))
++
++	if after.VisibleGraphics != 1 || after.CulledGraphics != 1 || len(r.graphics) != 1 {
++		t.Fatalf("classify stats got visible=%d culled=%d queued=%d, want 1/1/1",
++			after.VisibleGraphics, after.CulledGraphics, len(r.graphics))
++	}
++}
++
++func TestLITDFrameStatsClassifyUncullableAndHiddenEdges(t *testing.T) {
++	scene := core.NewNode()
++	geom := geometry.NewBox(1, 1, 1)
++	mat := material.NewBasic()
++	uncullable := litdTestMesh(geom, mat, 1000, 0, 0)
++	uncullable.SetCullable(false)
++	hidden := litdTestMesh(geom, mat, 0, 0, 0)
++	hidden.SetVisible(false)
++	scene.Add(uncullable)
++	scene.Add(hidden)
++	scene.UpdateMatrixWorld()
++
++	cam := camera.New(1)
++	cam.SetPosition(0, 0, 8)
++	cam.LookAt(&math32.Vector3{}, &math32.Vector3{X: 0, Y: 1, Z: 0})
++
++	r := litdTestRenderer()
++	before := r.stats
++	r.classifyAndCull(scene, litdTestFrustum(cam), 0)
++	after := r.stats
++	t.Logf("FSV classify edges before=%+v after=%+v renderQueue=%d", before, after, len(r.graphics))
++
++	if after.VisibleGraphics != 1 || after.CulledGraphics != 0 || len(r.graphics) != 1 {
++		t.Fatalf("edge classify stats got visible=%d culled=%d queued=%d, want 1/0/1",
++			after.VisibleGraphics, after.CulledGraphics, len(r.graphics))
++	}
++}
++
++func TestLITDFrameStatsStateChangeSharedVsDifferentMaterials(t *testing.T) {
++	geom := geometry.NewBox(1, 1, 1)
++	shared := material.NewBasic()
++	first := litdTestMesh(geom, shared, 0, 0, 0)
++	secondShared := litdTestMesh(geom, shared, 1, 0, 0)
++	secondDifferent := litdTestMesh(geom, material.NewBasic(), 2, 0, 0)
++
++	firstMat := first.Materials()[0]
++	sharedMat := secondShared.Materials()[0]
++	differentMat := secondDifferent.Materials()[0]
++	r := litdTestRenderer()
++
++	before := r.stats
++	r.recordStateChange(&firstMat, firstMat.IMaterial().GetMaterial(), first.GetGeometry())
++	r.recordStateChange(&sharedMat, sharedMat.IMaterial().GetMaterial(), secondShared.GetGeometry())
++	afterShared := r.stats
++	r.recordStateChange(&differentMat, differentMat.IMaterial().GetMaterial(), secondDifferent.GetGeometry())
++	afterDifferent := r.stats
++	t.Logf("FSV state before=%+v afterShared=%+v afterDifferent=%+v", before, afterShared, afterDifferent)
++
++	if afterShared.StateChanges != 1 || afterShared.OpaqueStates != 1 {
++		t.Fatalf("shared material/geometry changed state: %+v", afterShared)
++	}
++	if afterDifferent.StateChanges != 2 || afterDifferent.OpaqueStates != 2 {
++		t.Fatalf("different material did not change state: %+v", afterDifferent)
++	}
++}
++
++func TestLITDFrameStatsDrawCallPassBuckets(t *testing.T) {
++	geom := geometry.NewBox(1, 1, 1)
++	mat := material.NewBasic()
++	mesh := litdTestMesh(geom, mat, 0, 0, 0)
++	meshMat := mesh.Materials()[0]
++	panel := gui.NewPanel(32, 16)
++	panelMat := panel.GetGraphic().Materials()[0]
++
++	r := litdTestRenderer()
++	before := r.stats
++	r.currentPass = renderPassOpaque
++	r.recordDrawCalls(&meshMat, 1)
++	r.currentPass = renderPassTransparent
++	r.recordDrawCalls(&meshMat, 2)
++	r.recordDrawCalls(&panelMat, 3)
++	after := r.stats
++	t.Logf("FSV draw pass buckets before=%+v after=%+v", before, after)
++
++	if after.DrawCalls != 6 || after.OpaqueDrawCalls != 1 || after.TransparentDrawCalls != 2 || after.GUIDrawCalls != 3 {
++		t.Fatalf("draw buckets got total=%d opaque=%d transparent=%d gui=%d, want 6/1/2/3",
++			after.DrawCalls, after.OpaqueDrawCalls, after.TransparentDrawCalls, after.GUIDrawCalls)
++	}
++}
++
++func TestLITDFrameStatsRecordersZeroAlloc(t *testing.T) {
++	geom := geometry.NewBox(1, 1, 1)
++	mat := material.NewBasic()
++	mesh := litdTestMesh(geom, mat, 0, 0, 0)
++	meshMat := mesh.Materials()[0]
++	r := litdTestRenderer()
++	r.recordStateChange(&meshMat, meshMat.IMaterial().GetMaterial(), mesh.GetGeometry())
++
++	allocs := testing.AllocsPerRun(1000, func() {
++		r.recordStateChange(&meshMat, meshMat.IMaterial().GetMaterial(), mesh.GetGeometry())
++		r.recordDrawCalls(&meshMat, 1)
++	})
++	t.Logf("FSV recorder allocs/op=%v stats=%+v", allocs, r.stats)
++	if allocs != 0 {
++		t.Fatalf("recorders allocated: %v", allocs)
++	}
++}
