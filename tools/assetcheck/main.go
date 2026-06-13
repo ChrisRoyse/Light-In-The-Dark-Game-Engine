@@ -16,12 +16,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/tools/assetcheck/manifest"
 )
 
@@ -66,7 +70,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "assetcheck: %s is not a directory\n", dir)
 		os.Exit(2)
 	}
-	root, prefix, err := resolveAssetRoot(dir)
+	root, prefix, dataMode, err := resolveCheckRoot(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "assetcheck:", err)
 		os.Exit(2)
@@ -83,6 +87,10 @@ func main() {
 		}
 	}
 
+	if *ingest && dataMode {
+		fmt.Fprintln(os.Stderr, "assetcheck: --ingest is only supported for assets/")
+		os.Exit(2)
+	}
 	if *ingest {
 		if err := census(root, files, *jsonMode); err != nil {
 			fmt.Fprintln(os.Stderr, "assetcheck: census:", err)
@@ -91,7 +99,12 @@ func main() {
 		return
 	}
 
-	findings := check(root, files, prefix)
+	var findings []finding
+	if dataMode {
+		findings = checkData(root, files, prefix)
+	} else {
+		findings = check(root, files, prefix)
+	}
 	if *jsonMode {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -125,6 +138,18 @@ func main() {
 	}
 }
 
+func resolveCheckRoot(dir string) (root string, prefix string, dataMode bool, err error) {
+	root, prefix, err = resolveAssetRoot(dir)
+	if err == nil {
+		return root, prefix, false, nil
+	}
+	root, prefix, err = resolveDataRoot(dir)
+	if err == nil {
+		return root, prefix, true, nil
+	}
+	return "", "", false, fmt.Errorf("no MANIFEST or data/ root found at %s or its parents", dir)
+}
+
 func resolveAssetRoot(dir string) (root string, prefix string, err error) {
 	dir, err = filepath.Abs(dir)
 	if err != nil {
@@ -147,6 +172,30 @@ func resolveAssetRoot(dir string) (root string, prefix string, err error) {
 		}
 	}
 	return "", "", fmt.Errorf("no MANIFEST found at %s or its parents", dir)
+}
+
+func resolveDataRoot(dir string) (root string, prefix string, err error) {
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return "", "", err
+	}
+	for cur := dir; ; cur = filepath.Dir(cur) {
+		if filepath.Base(cur) == "data" {
+			rel, relErr := filepath.Rel(cur, dir)
+			if relErr != nil {
+				return "", "", relErr
+			}
+			if rel == "." {
+				rel = ""
+			}
+			return cur, filepath.ToSlash(rel), nil
+		}
+		next := filepath.Dir(cur)
+		if next == cur {
+			break
+		}
+	}
+	return "", "", fmt.Errorf("no data root found")
 }
 
 func listFiles(dir string) ([]string, error) {
@@ -264,6 +313,105 @@ func checkUIAtlas(files []string, add func(path, rule, msg string)) {
 	if uiPNGs > 0 && atlases != 1 {
 		add("ui", "UI-ATLAS", fmt.Sprintf("expected exactly one UI *.atlas.png, found %d", atlases))
 	}
+}
+
+func checkData(dir string, files []string, _ string) []finding {
+	var findings []finding
+	add := func(path, rule, msg string) { findings = append(findings, finding{path, rule, msg}) }
+
+	for _, rel := range files {
+		if strings.ToLower(filepath.Ext(rel)) != ".toml" {
+			add(rel, "DATA-FMT", "data files must be TOML in this validation pass")
+		}
+	}
+	checkLocaleTables(dir, files, add)
+	checkHardcodedRenderLabels(filepath.Dir(dir), add)
+
+	sort.Slice(findings, func(i, j int) bool {
+		if findings[i].Path != findings[j].Path {
+			return findings[i].Path < findings[j].Path
+		}
+		return findings[i].Rule < findings[j].Rule
+	})
+	return findings
+}
+
+func checkLocaleTables(dir string, files []string, add func(path, rule, msg string)) {
+	haveEN := false
+	required := litlocale.RequiredKeys()
+	for _, rel := range files {
+		if !strings.HasPrefix(rel, "locale/") || strings.ToLower(filepath.Ext(rel)) != ".toml" {
+			continue
+		}
+		tag := strings.TrimSuffix(strings.TrimPrefix(rel, "locale/"), ".toml")
+		if tag == "en" {
+			haveEN = true
+		}
+		table, err := litlocale.Read(os.DirFS(dir), tag)
+		if err != nil {
+			add(rel, "LOCALE-PARSE", err.Error())
+			continue
+		}
+		for _, v := range litlocale.ValidateTable(rel, table, required) {
+			add(v.Path, v.Rule, v.Msg)
+		}
+	}
+	if !haveEN {
+		add("locale/en.toml", "LOCALE-MISSING", "English locale table is required")
+	}
+}
+
+func checkHardcodedRenderLabels(repoRoot string, add func(path, rule, msg string)) {
+	for _, rel := range []string{"litd/render"} {
+		root := filepath.Join(repoRoot, filepath.FromSlash(rel))
+		_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || filepath.Ext(path) != ".go" || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			checkHardcodedRenderLabelsFile(repoRoot, path, add)
+			return nil
+		})
+	}
+}
+
+func checkHardcodedRenderLabelsFile(repoRoot, file string, add func(path, rule, msg string)) {
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, file, nil, 0)
+	rel, relErr := filepath.Rel(repoRoot, file)
+	if relErr != nil {
+		rel = file
+	}
+	rel = filepath.ToSlash(rel)
+	if err != nil {
+		add(rel, "STRING-LINT", err.Error())
+		return
+	}
+	ast.Inspect(node, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok || len(call.Args) == 0 || !isStringLiteral(call.Args[0]) {
+			return true
+		}
+		if isScreenTextCall(call.Fun) {
+			pos := fset.Position(call.Pos())
+			add(fmt.Sprintf("%s:%d", rel, pos.Line), "STRING-LINT", "hard-coded GUI text literal must use a locale key")
+		}
+		return true
+	})
+}
+
+func isStringLiteral(expr ast.Expr) bool {
+	lit, ok := expr.(*ast.BasicLit)
+	return ok && lit.Kind == token.STRING
+}
+
+func isScreenTextCall(fun ast.Expr) bool {
+	switch f := fun.(type) {
+	case *ast.SelectorExpr:
+		return f.Sel.Name == "SetText" || f.Sel.Name == "NewLabel"
+	case *ast.Ident:
+		return f.Name == "NewLabel"
+	}
+	return false
 }
 
 // census emits the --ingest extension/clip census (R1 detection signal).

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -251,4 +252,126 @@ func TestEmptyAssetsDirPasses(t *testing.T) {
 	if got := f.run(t); len(got) != 0 {
 		t.Fatalf("empty assets dir should pass, got %v", got)
 	}
+}
+
+func TestDataLocalePassesFSV(t *testing.T) {
+	root, data := newDataFixture(t)
+	writeLocale(t, data, "en", goodLocaleTOML())
+	writeLocale(t, data, "xx", pseudoLocaleTOML())
+	files, err := listFiles(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := checkData(data, files, "")
+	t.Logf("FSV data locale pass root=%s files=%v findings=%v", root, files, got)
+	if len(got) != 0 {
+		t.Fatalf("clean locale data should pass, got %v", got)
+	}
+}
+
+func TestDataLocaleMissingAndUnusedRejectedFSV(t *testing.T) {
+	_, data := newDataFixture(t)
+	missing := strings.Replace(goodLocaleTOML(), `"hud.queue.prefix" = "queue v"`+"\n", "", 1)
+	writeLocale(t, data, "en", missing)
+	files, err := listFiles(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := checkData(data, files, "")
+	t.Logf("FSV missing locale findings=%v", got)
+	if len(got) != 1 || got[0].Rule != "LOCALE-MISSING" || !strings.Contains(got[0].Msg, "hud.queue.prefix") {
+		t.Fatalf("missing locale key should be named, got %v", got)
+	}
+
+	_, data = newDataFixture(t)
+	writeLocale(t, data, "en", goodLocaleTOML()+`"hud.extra.unused" = "unused"`+"\n")
+	files, err = listFiles(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got = checkData(data, files, "")
+	t.Logf("FSV unused locale findings=%v", got)
+	if len(got) != 1 || got[0].Rule != "LOCALE-UNUSED" || !strings.Contains(got[0].Msg, "hud.extra.unused") {
+		t.Fatalf("unused locale key should be named, got %v", got)
+	}
+}
+
+func TestDataHardcodedHUDLabelRejectedFSV(t *testing.T) {
+	root, data := newDataFixture(t)
+	writeLocale(t, data, "en", goodLocaleTOML())
+	hudDir := filepath.Join(root, "litd", "render", "hud")
+	if err := os.MkdirAll(hudDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(hudDir, "bad.go"), []byte(`package hud
+
+func leak() {
+	gui.NewLabel("leaked literal")
+}
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	files, err := listFiles(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := checkData(data, files, "")
+	t.Logf("FSV hard-coded HUD label findings=%v", got)
+	if len(got) != 1 || got[0].Rule != "STRING-LINT" || !strings.Contains(got[0].Path, "bad.go:4") {
+		t.Fatalf("hard-coded GUI label should be rejected with file:line, got %v", got)
+	}
+}
+
+func newDataFixture(t *testing.T) (root, data string) {
+	t.Helper()
+	root = t.TempDir()
+	data = filepath.Join(root, "data")
+	if err := os.MkdirAll(filepath.Join(data, "locale"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "litd", "render", "hud"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return root, data
+}
+
+func writeLocale(t *testing.T, data, tag, body string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(data, "locale", tag+".toml"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func goodLocaleTOML() string {
+	return `[strings]
+"hud.resource.gold" = "G"
+"hud.resource.lumber" = "L"
+"hud.resource.food" = "F"
+"hud.vital.life" = "HP"
+"hud.vital.mana" = "MP"
+"hud.selection.prefix" = "selection v"
+"hud.queue.prefix" = "queue v"
+"hud.groups.prefix" = "groups v"
+"hud.menu.ok_true" = "HUD ok"
+"hud.menu.ok_false" = "HUD error"
+"hud.widget.idle_worker" = "idle worker"
+"hud.widget.minimap" = "minimap"
+`
+}
+
+func pseudoLocaleTOML() string {
+	return `[strings]
+"hud.resource.gold" = "[xx.01]"
+"hud.resource.lumber" = "[xx.02]"
+"hud.resource.food" = "[xx.03]"
+"hud.vital.life" = "[xx.04]"
+"hud.vital.mana" = "[xx.05]"
+"hud.selection.prefix" = "[xx.06]"
+"hud.queue.prefix" = "[xx.07]"
+"hud.groups.prefix" = "[xx.08]"
+"hud.menu.ok_true" = "[xx.09]"
+"hud.menu.ok_false" = "[xx.10]"
+"hud.widget.idle_worker" = "[xx.11]"
+"hud.widget.minimap" = "[xx.12]"
+`
 }

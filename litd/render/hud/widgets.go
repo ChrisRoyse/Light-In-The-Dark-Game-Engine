@@ -3,6 +3,8 @@ package hud
 import (
 	"strconv"
 	"time"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 )
 
 const (
@@ -10,7 +12,7 @@ const (
 	DefaultHUDDrawCallCap  = 20
 	DefaultHUDWidgetCount  = 10
 	DefaultHUDLabelCount   = 8
-	defaultTextBufferBytes = 48
+	defaultTextBufferBytes = 96
 )
 
 type WidgetKind uint8
@@ -117,6 +119,7 @@ type FSVScenarios struct {
 
 type DefaultHUD struct {
 	Canvas      Canvas
+	Labels      HUDStrings
 	widgets     [DefaultHUDWidgetCount]Widget
 	Resource    TextBuffer
 	Vitals      TextBuffer
@@ -125,6 +128,21 @@ type DefaultHUD struct {
 	Groups      TextBuffer
 	state       HUDState
 	initialized bool
+}
+
+type HUDStrings struct {
+	ResourceGold    string
+	ResourceLumber  string
+	ResourceFood    string
+	VitalLife       string
+	VitalMana       string
+	SelectionPrefix string
+	QueuePrefix     string
+	GroupsPrefix    string
+	MenuOKTrue      string
+	MenuOKFalse     string
+	IdleWorker      string
+	Minimap         string
 }
 
 var defaultWidgetSpecs = [DefaultHUDWidgetCount]WidgetSpec{
@@ -156,11 +174,29 @@ func DefaultHUDState() HUDState {
 	}
 }
 
-func NewDefaultHUD(canvas Canvas) DefaultHUD {
+func NewDefaultHUDWithStrings(canvas Canvas, labels HUDStrings) DefaultHUD {
 	var h DefaultHUD
+	h.Labels = labels
 	h.Layout(canvas)
 	h.Update(DefaultHUDState())
 	return h
+}
+
+func HUDStringsFromLocale(table *locale.Table) HUDStrings {
+	return HUDStrings{
+		ResourceGold:    table.Must(locale.HUDResourceGold),
+		ResourceLumber:  table.Must(locale.HUDResourceLumber),
+		ResourceFood:    table.Must(locale.HUDResourceFood),
+		VitalLife:       table.Must(locale.HUDVitalLife),
+		VitalMana:       table.Must(locale.HUDVitalMana),
+		SelectionPrefix: table.Must(locale.HUDSelectionPrefix),
+		QueuePrefix:     table.Must(locale.HUDQueuePrefix),
+		GroupsPrefix:    table.Must(locale.HUDGroupsPrefix),
+		MenuOKTrue:      table.Must(locale.HUDMenuOKTrue),
+		MenuOKFalse:     table.Must(locale.HUDMenuOKFalse),
+		IdleWorker:      table.Must(locale.HUDIdleWorker),
+		Minimap:         table.Must(locale.HUDMinimap),
+	}
 }
 
 func (h *DefaultHUD) Layout(canvas Canvas) {
@@ -275,11 +311,16 @@ func churnSelection(i int, s *HUDState) {
 
 func (h *DefaultHUD) setResourceText(s HUDState) {
 	p := h.Resource.reset()
-	p = append(p, "G "...)
+	p = append(p, h.Labels.ResourceGold...)
+	p = append(p, ' ')
 	p = strconv.AppendInt(p, int64(s.Gold), 10)
-	p = append(p, "  L "...)
+	p = append(p, ' ', ' ')
+	p = append(p, h.Labels.ResourceLumber...)
+	p = append(p, ' ')
 	p = strconv.AppendInt(p, int64(s.Lumber), 10)
-	p = append(p, "  F "...)
+	p = append(p, ' ', ' ')
+	p = append(p, h.Labels.ResourceFood...)
+	p = append(p, ' ')
 	p = strconv.AppendInt(p, int64(s.FoodUsed), 10)
 	p = append(p, '/')
 	p = strconv.AppendInt(p, int64(s.FoodCap), 10)
@@ -288,11 +329,14 @@ func (h *DefaultHUD) setResourceText(s HUDState) {
 
 func (h *DefaultHUD) setVitalsText(s HUDState) {
 	p := h.Vitals.reset()
-	p = append(p, "HP "...)
+	p = append(p, h.Labels.VitalLife...)
+	p = append(p, ' ')
 	p = strconv.AppendInt(p, int64(s.Life), 10)
 	p = append(p, '/')
 	p = strconv.AppendInt(p, int64(s.LifeMax), 10)
-	p = append(p, "  MP "...)
+	p = append(p, ' ', ' ')
+	p = append(p, h.Labels.VitalMana...)
+	p = append(p, ' ')
 	p = strconv.AppendInt(p, int64(s.Mana), 10)
 	p = append(p, '/')
 	p = strconv.AppendInt(p, int64(s.ManaMax), 10)
@@ -301,21 +345,21 @@ func (h *DefaultHUD) setVitalsText(s HUDState) {
 
 func (h *DefaultHUD) setSelectionText(version int) {
 	p := h.Selection.reset()
-	p = append(p, "selection v"...)
+	p = append(p, h.Labels.SelectionPrefix...)
 	p = strconv.AppendInt(p, int64(version), 10)
 	h.Selection.commit(p)
 }
 
 func (h *DefaultHUD) setQueueText(version int) {
 	p := h.Queue.reset()
-	p = append(p, "queue v"...)
+	p = append(p, h.Labels.QueuePrefix...)
 	p = strconv.AppendInt(p, int64(version), 10)
 	h.Queue.commit(p)
 }
 
 func (h *DefaultHUD) setGroupsText(version int) {
 	p := h.Groups.reset()
-	p = append(p, "groups v"...)
+	p = append(p, h.Labels.GroupsPrefix...)
 	p = strconv.AppendInt(p, int64(version), 10)
 	h.Groups.commit(p)
 }

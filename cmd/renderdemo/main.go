@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/g3n/engine/app"
@@ -115,6 +116,7 @@ type canvasDump struct {
 
 type hudRuntimeDump struct {
 	AtlasPath              string              `json:"atlasPath"`
+	Locale                 string              `json:"locale"`
 	WidgetPanels           int                 `json:"widgetPanels"`
 	Labels                 int                 `json:"labels"`
 	ExpectedGUIDrawCalls   int                 `json:"expectedGuiDrawCalls"`
@@ -133,6 +135,7 @@ func main() {
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
+	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
@@ -148,8 +151,12 @@ func main() {
 	var spec sceneSpec
 	var canvasFSV canvasDump
 	if *hudMode {
-		var err error
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom)
+		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
+			os.Exit(1)
+		}
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *localeTag, lithud.HUDStringsFromLocale(table))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -296,12 +303,12 @@ func addStatsHUD(scene *core.Node, spec sceneSpec) {
 	scene.Add(label)
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, localeTag string, labels lithud.HUDStrings) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
 	}
-	hud := lithud.NewDefaultHUD(canvas)
+	hud := lithud.NewDefaultHUDWithStrings(canvas, labels)
 	after := canvasSnapshotFor(canvas, hud.Widgets())
 	scenarios := hud.RunFSVScenarios()
 	dump := canvasDump{
@@ -309,6 +316,7 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 		After: after,
 		HUD: hudRuntimeDump{
 			AtlasPath:              lithud.DefaultAtlasPath,
+			Locale:                 localeTag,
 			WidgetPanels:           hud.PanelDrawCalls(),
 			Labels:                 hud.LabelDrawCalls(),
 			ExpectedGUIDrawCalls:   hud.ExpectedGUIDrawCalls(),
@@ -322,7 +330,7 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 		if err != nil {
 			return canvasDump{}, fmt.Errorf("resize-from: %w", err)
 		}
-		beforeHUD := lithud.NewDefaultHUD(beforeCanvas)
+		beforeHUD := lithud.NewDefaultHUDWithStrings(beforeCanvas, labels)
 		before := canvasSnapshotFor(beforeCanvas, beforeHUD.Widgets())
 		dump.Before = &before
 	}
@@ -456,7 +464,14 @@ func hudLabel(name string, hud *lithud.DefaultHUD, ok bool) string {
 	case "control-groups":
 		return hud.Groups.String()
 	case "menu-cluster":
-		return fmt.Sprintf("HUD ok=%v", ok)
+		if ok {
+			return hud.Labels.MenuOKTrue
+		}
+		return hud.Labels.MenuOKFalse
+	case "idle-worker":
+		return hud.Labels.IdleWorker
+	case "minimap":
+		return hud.Labels.Minimap
 	default:
 		return name
 	}

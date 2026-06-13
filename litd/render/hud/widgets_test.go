@@ -1,7 +1,11 @@
 package hud
 
 import (
+	"os"
+	"strings"
 	"testing"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 )
 
 func TestDefaultHUDLayoutAndBudgetFSV(t *testing.T) {
@@ -9,7 +13,7 @@ func TestDefaultHUDLayoutAndBudgetFSV(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	h := NewDefaultHUD(canvas)
+	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "en"))
 	widgets := h.Widgets()
 	issues := ValidateWidgets(widgets, canvas.Width, canvas.Height)
 	t.Logf("FSV default HUD canvas=%+v widgets=%d expectedGUIDrawCalls=%d issues=%v", canvas, len(widgets), h.ExpectedGUIDrawCalls(), issues)
@@ -29,7 +33,7 @@ func TestDefaultHUDLayoutAndBudgetFSV(t *testing.T) {
 
 func TestDefaultHUDDirtyUpdateFSV(t *testing.T) {
 	canvas, _ := NewCanvas(1920, 1080, 1)
-	h := NewDefaultHUD(canvas)
+	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "en"))
 	state := DefaultHUDState()
 
 	static := h.Update(state)
@@ -56,7 +60,7 @@ func TestDefaultHUDDirtyUpdateFSV(t *testing.T) {
 
 func TestDefaultHUDScenariosFSV(t *testing.T) {
 	canvas, _ := NewCanvas(1366, 768, 1)
-	h := NewDefaultHUD(canvas)
+	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "en"))
 	stats := h.RunFSVScenarios()
 	t.Logf("FSV scenarios %+v", stats)
 	if stats.Static100.Repaints != 0 || stats.Static100.DirtyLabels != 0 {
@@ -72,7 +76,7 @@ func TestDefaultHUDScenariosFSV(t *testing.T) {
 
 func TestDefaultHUDUpdateZeroAllocFSV(t *testing.T) {
 	canvas, _ := NewCanvas(2560, 1080, 1)
-	h := NewDefaultHUD(canvas)
+	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "en"))
 	state := DefaultHUDState()
 	allocs := testing.AllocsPerRun(1000, func() {
 		state.Gold++
@@ -83,4 +87,34 @@ func TestDefaultHUDUpdateZeroAllocFSV(t *testing.T) {
 	if allocs != 0 {
 		t.Fatalf("default HUD update allocated: %v", allocs)
 	}
+}
+
+func TestDefaultHUDLocalizedStringsZeroAllocFSV(t *testing.T) {
+	canvas, _ := NewCanvas(1366, 768, 1)
+	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "xx"))
+	state := DefaultHUDState()
+	allocs := testing.AllocsPerRun(1000, func() {
+		state.Gold++
+		state.Lumber++
+		state.SelectionVersion++
+		_ = h.Update(state)
+	})
+	t.Logf("FSV localized HUD update allocs/op=%v resource=%q selection=%q queue=%q groups=%q", allocs, h.Resource.String(), h.Selection.String(), h.Queue.String(), h.Groups.String())
+	for _, got := range []string{h.Resource.String(), h.Selection.String(), h.Queue.String(), h.Groups.String()} {
+		if !strings.Contains(got, "[xx.") {
+			t.Fatalf("localized HUD buffer should contain pseudo-locale key text, got %q", got)
+		}
+	}
+	if allocs != 0 {
+		t.Fatalf("localized HUD update allocated: %v", allocs)
+	}
+}
+
+func loadHUDStrings(t *testing.T, tag string) HUDStrings {
+	t.Helper()
+	table, err := locale.Load(os.DirFS("../../../data"), tag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return HUDStringsFromLocale(table)
 }

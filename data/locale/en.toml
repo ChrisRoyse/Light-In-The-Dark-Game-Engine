@@ -1,0 +1,13 @@
+[strings]
+"hud.resource.gold" = "G"
+"hud.resource.lumber" = "L"
+"hud.resource.food" = "F"
+"hud.vital.life" = "HP"
+"hud.vital.mana" = "MP"
+"hud.selection.prefix" = "selection v"
+"hud.queue.prefix" = "queue v"
+"hud.groups.prefix" = "groups v"
+"hud.menu.ok_true" = "HUD ok"
+"hud.menu.ok_false" = "HUD error"
+"hud.widget.idle_worker" = "idle worker"
+"hud.widget.minimap" = "minimap"

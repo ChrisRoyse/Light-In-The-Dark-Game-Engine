@@ -1,0 +1,13 @@
+[strings]
+"hud.resource.gold" = "[xx.01]"
+"hud.resource.lumber" = "[xx.02]"
+"hud.resource.food" = "[xx.03]"
+"hud.vital.life" = "[xx.04]"
+"hud.vital.mana" = "[xx.05]"
+"hud.selection.prefix" = "[xx.06]"
+"hud.queue.prefix" = "[xx.07]"
+"hud.groups.prefix" = "[xx.08]"
+"hud.menu.ok_true" = "[xx.09]"
+"hud.menu.ok_false" = "[xx.10]"
+"hud.widget.idle_worker" = "[xx.11]"
+"hud.widget.minimap" = "[xx.12]"
