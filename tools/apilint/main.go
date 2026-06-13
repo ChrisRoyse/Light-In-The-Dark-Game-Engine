@@ -212,11 +212,11 @@ func (c *checker) checkFreeFuncHandleParam(d *ast.FuncDecl, sig *types.Signature
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		if c.isNounHandle(params.At(i).Type()) {
-			if c.returnsOption(sig) {
-				return // option constructor (e.g. ForPlayer(p Player) EventOption)
+			if c.isValueConstructor(sig) {
+				return // value/option constructor (e.g. ForPlayer(p Player) EventOption, TargetUnit(u Unit) OrderTarget)
 			}
 			c.report(d.Name.Pos(),
-				"G2.4/R-API-1: package-level func %s takes a noun-handle param %s — make it a method on that noun (only option constructors may take a handle)",
+				"G2.4/R-API-1: package-level func %s takes a noun-handle param %s — make it a method on that noun (only value/option constructors may take a handle)",
 				c.funcName(d), types.TypeString(params.At(i).Type(), relativeTo(c.pkg)))
 			return
 		}
@@ -372,26 +372,39 @@ func (c *checker) structHasGameField(st *types.Struct) bool {
 	return false
 }
 
-// returnsOption reports whether the signature returns an option type — a
-// named type whose name ends in "Option", or a function type (the functional
-// option shape). This marks a free func as an allowed option constructor.
-func (c *checker) returnsOption(sig *types.Signature) bool {
+// isValueConstructor reports whether the signature is a pure constructor: it
+// has at least one result and *every* result is either an in-package value
+// type (a named type from this package that is not a noun handle — e.g.
+// OrderTarget, EventOption) or a function type (the functional-option shape).
+//
+// R-API-1 only bans *mutating* free funcs that take a noun handle; a func that
+// merely packages a handle into a value to hand back (TargetUnit(u) OrderTarget,
+// ForPlayer(p) EventOption) is the sanctioned escape hatch. A void func (no
+// results) or one returning a primitive/foreign type is treated as a mutator or
+// a misplaced getter and stays flagged — it belongs on the noun as a method.
+func (c *checker) isValueConstructor(sig *types.Signature) bool {
 	res := sig.Results()
+	if res.Len() == 0 {
+		return false // void → mutator, not a constructor
+	}
 	for i := 0; i < res.Len(); i++ {
 		t := res.At(i).Type()
-		if named, ok := t.(*types.Named); ok {
-			if strings.HasSuffix(named.Obj().Name(), "Option") {
-				return true
-			}
-			if _, ok := named.Underlying().(*types.Signature); ok {
-				return true
-			}
-		}
 		if _, ok := t.Underlying().(*types.Signature); ok {
-			return true
+			continue // function type — functional-option shape
+		}
+		named, ok := t.(*types.Named)
+		if !ok {
+			return false // primitive/foreign result → not a constructor
+		}
+		obj := named.Obj()
+		if obj.Pkg() == nil || obj.Pkg().Path() != c.pkg.PkgPath {
+			return false // result type lives outside the public package
+		}
+		if c.isNounHandle(named) {
+			return false // returning a handle is not what makes this a constructor
 		}
 	}
-	return false
+	return true
 }
 
 func relativeTo(pkg *packages.Package) types.Qualifier {

@@ -47,6 +47,16 @@ func KillThing(x Gizmo) {} // WANT G2.4
 // ForThing takes a handle but returns an option type: allowed option ctor.
 func ForThing(x Gizmo) GizmoOption { return func(*Game) {} } // OK
 
+// Marker is an in-package value type (exported fields, no *Game) — a value, not
+// a noun handle.
+type Marker struct{ X, Y int }
+
+// TargetThing takes a handle but returns an in-package value type whose name
+// does NOT end in "Option": allowed value constructor (R-API-1 bans only
+// mutating free funcs that take a handle, not those that package it into a
+// value to hand back — mirrors TargetUnit(u Unit) OrderTarget).
+func TargetThing(x Gizmo) Marker { return Marker{} } // OK
+
 // Leaky has a *Game field (so it is a handle) but an exported field -> §2. It
 // has Valid(), so only the exported-field rule fires (mirrors "exported field
 // injected on Unit").
