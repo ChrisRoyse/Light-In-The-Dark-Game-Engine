@@ -1,9 +1,13 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
+	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/g3n/engine/core"
 )
 
@@ -121,6 +125,55 @@ func TestBuildGroupFSVFSV(t *testing.T) {
 		t.Fatalf("group FSV edge cases missing: recall=%+v late=%+v gen=%+v",
 			seen["recall-pruned"], seen["doubletap-350"], seen["generation-reuse"])
 	}
+}
+
+func TestBuildCommandCardKeymapFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "custom.toml")
+	if err := os.WriteFile(path, []byte("profile = \"grid\"\n[game]\n\"card.slot.0\" = [\"T\"]\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	localeTable := mustRenderDemoLocale(t)
+	dump, display, err := buildCommandCardFSV(localeTable, "unit", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo keymap profile=%s summary=%q keypresses=%+v", dump.KeymapProfile, display.Summary.String(), dump.KeyPresses)
+	if display.Slots[0].Hotkey != "T" || len(dump.KeyPresses) != 2 {
+		t.Fatalf("custom keymap did not relabel slot0 or emit keypresses: hotkey=%q presses=%+v", display.Slots[0].Hotkey, dump.KeyPresses)
+	}
+	if dump.KeyPresses[0].Key != "T" || !dump.KeyPresses[0].Accepted || dump.KeyPresses[0].Emitted == nil || dump.KeyPresses[0].Emitted.Opcode != sim.OpMove {
+		t.Fatalf("T did not emit slot0 command: %+v", dump.KeyPresses[0])
+	}
+	if dump.KeyPresses[1].Key != "Q" || dump.KeyPresses[1].Accepted || dump.KeyPresses[1].Reason != "unbound" {
+		t.Fatalf("Q should be unbound after Q->T rebind: %+v", dump.KeyPresses[1])
+	}
+}
+
+func chdirRepoRoot(t *testing.T) func() {
+	t.Helper()
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir("../.."); err != nil {
+		t.Fatal(err)
+	}
+	return func() {
+		if err := os.Chdir(cwd); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func mustRenderDemoLocale(t *testing.T) *litlocale.Table {
+	t.Helper()
+	table, err := litlocale.Load(os.DirFS("data"), "en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return table
 }
 
 func litrenderClose32(got, want float32) bool {

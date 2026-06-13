@@ -142,12 +142,15 @@ type hudRuntimeDump struct {
 }
 
 type commandCardRuntimeDump struct {
-	TablePath string                    `json:"tablePath"`
-	Scenario  string                    `json:"scenario"`
-	Current   commandCardCaseDump       `json:"current"`
-	Cases     []commandCardCaseDump     `json:"cases"`
-	Clicks    []lithud.CommandCardClick `json:"clicks"`
-	Emitted   []commandRecordDump       `json:"emitted"`
+	TablePath     string                    `json:"tablePath"`
+	KeymapPath    string                    `json:"keymapPath"`
+	KeymapProfile string                    `json:"keymapProfile"`
+	Scenario      string                    `json:"scenario"`
+	Current       commandCardCaseDump       `json:"current"`
+	Cases         []commandCardCaseDump     `json:"cases"`
+	Clicks        []lithud.CommandCardClick `json:"clicks"`
+	KeyPresses    []commandCardKeyPressDump `json:"keyPresses,omitempty"`
+	Emitted       []commandRecordDump       `json:"emitted"`
 }
 
 type commandCardCaseDump struct {
@@ -158,6 +161,16 @@ type commandCardCaseDump struct {
 	Summary        string                        `json:"summary"`
 	Update         lithud.CommandCardUpdate      `json:"update"`
 	Slots          []lithud.CommandCardSlotState `json:"slots"`
+}
+
+type commandCardKeyPressDump struct {
+	Key           string             `json:"key"`
+	Action        string             `json:"action,omitempty"`
+	Slot          uint8              `json:"slot,omitempty"`
+	Accepted      bool               `json:"accepted"`
+	PendingTarget bool               `json:"pendingTarget,omitempty"`
+	Reason        string             `json:"reason,omitempty"`
+	Emitted       *commandRecordDump `json:"emitted,omitempty"`
 }
 
 type commandRecordDump struct {
@@ -266,6 +279,7 @@ func main() {
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
 	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
+	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
@@ -293,7 +307,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *localeTag, table, lithud.HUDStringsFromLocale(table))
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -962,7 +976,7 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, localeTag string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
@@ -986,7 +1000,7 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	}
 	var card *lithud.CommandCard
 	if sceneName == "basecamp" || cardScenario != "" {
-		cardDump, displayCard, err := buildCommandCardFSV(localeTable, cardScenario)
+		cardDump, displayCard, err := buildCommandCardFSV(localeTable, cardScenario, keymapPath)
 		if err != nil {
 			return canvasDump{}, err
 		}
@@ -1111,7 +1125,7 @@ func resourceValuesFor(state lithud.HUDState) resourceBarValues {
 	}
 }
 
-func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*commandCardRuntimeDump, *lithud.CommandCard, error) {
+func buildCommandCardFSV(localeTable *litlocale.Table, scenario, keymapPath string) (*commandCardRuntimeDump, *lithud.CommandCard, error) {
 	if scenario == "" {
 		scenario = "unit"
 	}
@@ -1119,6 +1133,11 @@ func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*comman
 	if err != nil {
 		return nil, nil, err
 	}
+	keymap, keymapLabel, err := renderDemoKeymap(keymapPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	applyCommandCardKeymap(table, keymap)
 	states := []struct {
 		name  string
 		state lithud.CommandCardState
@@ -1130,7 +1149,7 @@ func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*comman
 		{name: "cooldown", state: renderDemoCardCooldownState()},
 		{name: "empty", state: renderDemoCardEmptyState()},
 	}
-	dump := &commandCardRuntimeDump{TablePath: table.Path, Scenario: scenario}
+	dump := &commandCardRuntimeDump{TablePath: table.Path, KeymapPath: keymapLabel, KeymapProfile: keymap.Profile, Scenario: scenario}
 	for _, entry := range states {
 		card := lithud.NewCommandCard(table, localeTable)
 		dump.Cases = append(dump.Cases, snapshotCommandCardCase(entry.name, &card, entry.state))
@@ -1148,6 +1167,13 @@ func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*comman
 	disabled := lithud.NewCommandCard(table, localeTable)
 	disabled.Refresh(renderDemoCardCooldownState())
 	dump.Clicks = append(dump.Clicks, disabled.ClickSlot(1, false))
+	keyEmitter := lithud.NewCommandCard(table, localeTable)
+	keyEmitter.Refresh(renderDemoCardUnitState())
+	slot0Key := table.GridHotkeys[0]
+	dump.KeyPresses = append(dump.KeyPresses, commandCardKeyPress(keyEmitter, keymap, slot0Key))
+	if slot0Key != "Q" {
+		dump.KeyPresses = append(dump.KeyPresses, commandCardKeyPress(keyEmitter, keymap, "Q"))
+	}
 
 	currentState, ok := renderDemoCardScenarioState(scenario)
 	if !ok {
@@ -1156,6 +1182,61 @@ func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*comman
 	display := lithud.NewCommandCard(table, localeTable)
 	dump.Current = snapshotCommandCardCase(scenario, &display, currentState)
 	return dump, &display, nil
+}
+
+func renderDemoKeymap(path string) (*litinput.Keymap, string, error) {
+	base, err := litinput.LoadKeymap(os.DirFS("data"), litinput.DefaultKeymapPath)
+	if err != nil {
+		return nil, "", err
+	}
+	if strings.TrimSpace(path) == "" {
+		return base, litinput.DefaultKeymapPath, nil
+	}
+	override, err := litinput.LoadKeymapFile(path)
+	if err != nil {
+		return nil, "", err
+	}
+	merged, err := base.Overlay(override)
+	if err != nil {
+		return nil, "", err
+	}
+	return merged, path, nil
+}
+
+func applyCommandCardKeymap(table *lithud.CommandCardTable, keymap *litinput.Keymap) {
+	keys := keymap.CommandCardHotkeys(litinput.ContextGame)
+	for i := range keys {
+		if keys[i] != "" {
+			table.GridHotkeys[i] = keys[i]
+		}
+	}
+}
+
+func commandCardKeyPress(card lithud.CommandCard, keymap *litinput.Keymap, key string) commandCardKeyPressDump {
+	out := commandCardKeyPressDump{Key: key}
+	binding, ok := keymap.Resolve(litinput.ContextGame, litinput.Key(key))
+	if !ok {
+		out.Reason = "unbound"
+		return out
+	}
+	out.Action = binding.Action
+	slot, ok := litinput.CommandCardSlot(binding.Action)
+	if !ok {
+		out.Reason = "not command-card slot"
+		return out
+	}
+	out.Slot = slot
+	click := card.ClickSlot(slot, false)
+	out.Accepted = click.Accepted
+	out.PendingTarget = click.PendingTarget
+	out.Reason = click.Reason
+	if click.Accepted && click.PendingTarget {
+		if rec, ok := card.ConfirmTarget(fixed.Vec2{X: fixed.FromInt(320), Y: fixed.FromInt(480)}, 0, false); ok {
+			dump := commandRecordDumpFor(rec)
+			out.Emitted = &dump
+		}
+	}
+	return out
 }
 
 func snapshotCommandCardCase(name string, card *lithud.CommandCard, state lithud.CommandCardState) commandCardCaseDump {
