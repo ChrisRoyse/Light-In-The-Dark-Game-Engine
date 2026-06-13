@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 )
 
 // rawPos reads the unit's position straight out of the sim Transform store —
@@ -48,6 +49,76 @@ func TestUnitPositionFSV(t *testing.T) {
 	if z := (Unit{}).Position(); z != (Vec2{}) {
 		t.Fatalf("zero Unit Position()=%+v, want zero", z)
 	}
+}
+
+// TestUnitSetPositionFSV: the D3 SetPosition collapse. Default placement
+// respects static pathing (nudges off an unpathable cell); Teleport() places
+// raw. SoT = the sim Transform store + the grid walkability flags.
+func TestUnitSetPositionFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+
+	// Build a grid: an 11×11 walkable block of cells, with the single cell
+	// (5,5) made unpathable. Cell = 32 world units; cell center = (x*32+16).
+	grid := path.NewGrid()
+	for y := int32(0); y <= 10; y++ {
+		for x := int32(0); x <= 10; x++ {
+			grid.SetFlags(x, y, path.Walkable)
+		}
+	}
+	grid.SetFlags(5, 5, 0) // the blocked target cell
+	w.SetGrid(grid)
+
+	u, id := liveUnit(t, w, g, 0, 100)
+	target := Vec2{X: 176, Y: 176} // center of the blocked cell (5,5)
+
+	// --- default (pathed): must NOT land on the blocked cell ---
+	u.SetPosition(target)
+	got, _ := rawPos(w, id)
+	gotCellX, gotCellY := int32(got.X)/32, int32(got.Y)/32
+	cheb := func(a, b int32) int32 {
+		if a < 0 {
+			a = -a
+		}
+		if b < 0 {
+			b = -b
+		}
+		if a > b {
+			return a
+		}
+		return b
+	}
+	t.Logf("pathed SetPosition(%.0f,%.0f) -> %+v cell(%d,%d) walkable=%v",
+		target.X, target.Y, got, gotCellX, gotCellY, grid.CellWalkable(gotCellX, gotCellY))
+	if gotCellX == 5 && gotCellY == 5 {
+		t.Fatalf("unit placed on the blocked cell (5,5): %+v", got)
+	}
+	if !grid.CellWalkable(gotCellX, gotCellY) {
+		t.Fatalf("unit nudged onto a non-walkable cell (%d,%d)", gotCellX, gotCellY)
+	}
+	if d := cheb(gotCellX-5, gotCellY-5); d != 1 {
+		t.Fatalf("nudge landed %d cells away, want nearest ring (1): %+v", d, got)
+	}
+
+	// --- Teleport(): raw placement, exact coords even on the blocked cell ---
+	u.SetPosition(target, Teleport())
+	got, _ = rawPos(w, id)
+	t.Logf("teleport SetPosition(%.0f,%.0f) -> %+v (raw, ignores pathing)", target.X, target.Y, got)
+	if got != target {
+		t.Fatalf("Teleport() did not place raw: got %+v want %+v", got, target)
+	}
+
+	// --- already-pathable target keeps exact coords (no needless snap) ---
+	clear := Vec2{X: 100, Y: 100} // cell (3,3), walkable
+	u.SetPosition(clear)
+	got, _ = rawPos(w, id)
+	t.Logf("pathed SetPosition onto walkable (%.0f,%.0f) -> %+v (exact)", clear.X, clear.Y, got)
+	if got != clear {
+		t.Fatalf("pathable target was moved: got %+v want %+v", got, clear)
+	}
+
+	// EDGE: zero-value handle is a no-op.
+	(Unit{}).SetPosition(target)
 }
 
 // TestUnitFacingFSV: SetFacing writes the Transform store; the getter reads it

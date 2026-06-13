@@ -42,6 +42,29 @@ func TestExistingSymbolsSkipsHandWritten(t *testing.T) {
 	}
 }
 
+// TestExistingSymbolsExcludesGeneratedStub is the regression guard for the
+// stub-retirement bug: existingSymbols must NOT count jassgen's own generated
+// stub file, or a stub could never retire — once a symbol is hand-written it
+// would collide with its own panic stub as a duplicate method. Unit.Paused
+// lives ONLY in the generated api_stubs_gen.go, so it must read as NOT existing;
+// Unit.SetPosition and Unit.SetLife are hand-written and must read as existing.
+// (Before the fix, Unit.Paused was reported existing and the stub was permanent.)
+func TestExistingSymbolsExcludesGeneratedStub(t *testing.T) {
+	existing, err := existingSymbols("../../litd/api")
+	if err != nil {
+		t.Fatalf("scan litd/api: %v", err)
+	}
+	if existing["Unit.Paused"] {
+		t.Error("Unit.Paused (only in the generated stub) must not count as an existing implementation")
+	}
+	if !existing["Unit.SetPosition"] {
+		t.Error("hand-written Unit.SetPosition must be detected as existing")
+	}
+	if !existing["Unit.SetLife"] {
+		t.Error("hand-written Unit.SetLife must be detected as existing")
+	}
+}
+
 // TestGenerateStubsD3CollapseAndSkip drives GenerateStubs over a temp dir-free
 // manifest path that targets only new packages, asserting D3 collapse (one
 // symbol claimed twice => one stub) does not double-emit.

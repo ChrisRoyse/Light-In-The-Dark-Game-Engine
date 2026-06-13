@@ -26,6 +26,40 @@ func (u Unit) Position() Vec2 {
 	return Vec2{X: toFloat(p.X), Y: toFloat(p.Y)}
 }
 
+// PositionOption configures SetPosition (R-API-3 functional option).
+type PositionOption func(*positionConfig)
+
+type positionConfig struct {
+	skipPathing bool
+}
+
+// Teleport places the unit at the exact target, ignoring pathing and
+// collision — the raw SetUnitX/SetUnitY capability. Without it, SetPosition
+// respects static pathing and nudges an unpathable target to the nearest
+// walkable cell (units.md hazard 3: the capability is preserved, not averaged
+// away).
+func Teleport() PositionOption {
+	return func(c *positionConfig) { c.skipPathing = true }
+}
+
+// SetPosition relocates the unit. By default it respects static pathing
+// (the SetUnitPosition semantics): a target on an unpathable cell is nudged to
+// the nearest walkable cell; an already-pathable target keeps its exact
+// coordinates. With Teleport() it places raw (the SetUnitX/SetUnitY teleport
+// semantics). No-op on an invalid handle. JASS: SetUnitX, SetUnitY,
+// SetUnitPosition, SetUnitPositionLoc all collapse here (D3).
+func (u Unit) SetPosition(pos Vec2, opts ...PositionOption) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetPosition")
+		return
+	}
+	var c positionConfig
+	for _, o := range opts {
+		o(&c)
+	}
+	u.g.w.PlaceUnit(u.id, vec(pos), c.skipPathing)
+}
+
 // Facing returns the unit's facing angle, or the zero Angle on an invalid
 // handle. JASS: GetUnitFacing.
 func (u Unit) Facing() Angle {

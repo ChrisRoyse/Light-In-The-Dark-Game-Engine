@@ -11,7 +11,3 @@ func (u Unit) SetPaused(paused bool) {
 	panic("litd: not implemented (M5)")
 }
 
-func (u Unit) SetPosition(pos Vec2) {
-	panic("litd: not implemented (M5)")
-}
-
