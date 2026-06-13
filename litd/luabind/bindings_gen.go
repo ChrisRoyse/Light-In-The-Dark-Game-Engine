@@ -16,6 +16,7 @@ type Binding struct {
 var Bindings = []Binding{
 	{LuaName: "Game_CreateUnit", Package: "litd/api", Symbol: "Game.CreateUnit", GoSignature: "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"},
 	{LuaName: "PolledWait", Package: "litd/api/helpers", Symbol: "PolledWait", GoSignature: "(seconds float64)"},
+	{LuaName: "Unit_AcquireRange", Package: "litd/api", Symbol: "Unit.AcquireRange", GoSignature: "() float64"},
 	{LuaName: "Unit_Alive", Package: "litd/api", Symbol: "Unit.Alive", GoSignature: "() bool"},
 	{LuaName: "Unit_Armor", Package: "litd/api", Symbol: "Unit.Armor", GoSignature: "() float64"},
 	{LuaName: "Unit_CurrentOrder", Package: "litd/api", Symbol: "Unit.CurrentOrder", GoSignature: "() Order"},
@@ -31,6 +32,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_Paused", Package: "litd/api", Symbol: "Unit.Paused", GoSignature: "() bool"},
 	{LuaName: "Unit_Position", Package: "litd/api", Symbol: "Unit.Position", GoSignature: "() Vec2"},
 	{LuaName: "Unit_Remove", Package: "litd/api", Symbol: "Unit.Remove", GoSignature: "()"},
+	{LuaName: "Unit_SetAcquireRange", Package: "litd/api", Symbol: "Unit.SetAcquireRange", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetFacing", Package: "litd/api", Symbol: "Unit.SetFacing", GoSignature: "(a Angle)"},
 	{LuaName: "Unit_SetInvulnerable", Package: "litd/api", Symbol: "Unit.SetInvulnerable", GoSignature: "(on bool)"},
 	{LuaName: "Unit_SetLife", Package: "litd/api", Symbol: "Unit.SetLife", GoSignature: "(v float64)"},

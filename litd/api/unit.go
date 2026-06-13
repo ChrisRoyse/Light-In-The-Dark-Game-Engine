@@ -345,6 +345,39 @@ func (u Unit) SetTurnSpeed(radPerSec float64) {
 	u.g.w.Movements.TurnRate[r] = angleToBrad(Rad(radPerSec / float64(data.TicksPerSecond)))
 }
 
+// AcquireRange returns the unit's auto-acquisition range in world units (the
+// radius within which it auto-targets hostiles), or 0 on an invalid handle / a
+// unit with no combat row. JASS: GetUnitAcquireRange.
+func (u Unit) AcquireRange() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.AcquireRange")
+		return 0
+	}
+	r := u.g.w.Combats.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	return toFloat(u.g.w.Combats.AcquisitionRange[r])
+}
+
+// SetAcquireRange sets the unit's auto-acquisition range in world units.
+// Negative values clamp to 0 (no acquisition). No-op on an invalid handle or a
+// unit with no combat row. JASS: SetUnitAcquireRange.
+func (u Unit) SetAcquireRange(v float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetAcquireRange")
+		return
+	}
+	r := u.g.w.Combats.Row(u.id)
+	if r < 0 {
+		return
+	}
+	if v < 0 {
+		v = 0
+	}
+	u.g.w.Combats.AcquisitionRange[r] = fromFloat(v)
+}
+
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
 // death event). A unit already dead or invalid is a no-op. JASS: KillUnit,
 // KillUnitBJ (D1 passthrough collapses here).

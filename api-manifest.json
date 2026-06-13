@@ -423,6 +423,28 @@
       }
     },
     {
+      "name": "GetUnitAcquireRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.AcquireRange",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "GetUnitCurrentOrder",
       "origin": "common.j",
       "signature": {
@@ -709,6 +731,36 @@
         "symbol": "Unit.Remove",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "SetUnitAcquireRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newAcquireRange",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetAcquireRange",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetUnitAcquireRangeBJ"
+        ]
       }
     },
     {

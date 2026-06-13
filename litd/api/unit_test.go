@@ -872,3 +872,48 @@ func TestUnitTurnSpeedFSV(t *testing.T) {
 		t.Error("removed unit TurnSpeed() != 0")
 	}
 }
+
+// TestUnitAcquireRangeFSV: SetAcquireRange/AcquireRange round-trip through the
+// Combat store. SoT = Combats.AcquisitionRange.
+func TestUnitAcquireRangeFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	// No combat row → getter 0, setter no-op.
+	if u.AcquireRange() != 0 {
+		t.Fatalf("no-combat AcquireRange=%v, want 0", u.AcquireRange())
+	}
+	u.SetAcquireRange(500) // no-op
+	if u.AcquireRange() != 0 {
+		t.Fatalf("SetAcquireRange on no-combat unit took effect: %v", u.AcquireRange())
+	}
+
+	if !w.Combats.Add(w.Ents, id) {
+		t.Fatal("Combats.Add failed")
+	}
+	r := w.Combats.Row(id)
+
+	// Known input 600 → store holds it, getter reads it back.
+	u.SetAcquireRange(600)
+	t.Logf("SetAcquireRange(600): store=%v getter=%.0f", w.Combats.AcquisitionRange[r], u.AcquireRange())
+	if w.Combats.AcquisitionRange[r] != fromFloat(600) {
+		t.Errorf("store=%v, want %v", w.Combats.AcquisitionRange[r], fromFloat(600))
+	}
+	if u.AcquireRange() != 600 {
+		t.Errorf("AcquireRange()=%.0f, want 600", u.AcquireRange())
+	}
+	// EDGE: negative clamps to 0.
+	u.SetAcquireRange(-50)
+	if w.Combats.AcquisitionRange[r] != 0 || u.AcquireRange() != 0 {
+		t.Errorf("negative not clamped: store=%v getter=%.0f", w.Combats.AcquisitionRange[r], u.AcquireRange())
+	}
+	// EDGE: zero / removed handle → 0, no panic.
+	if (Unit{}).AcquireRange() != 0 {
+		t.Error("zero Unit AcquireRange() != 0")
+	}
+	u.Remove()
+	if u.AcquireRange() != 0 {
+		t.Error("removed unit AcquireRange() != 0")
+	}
+}

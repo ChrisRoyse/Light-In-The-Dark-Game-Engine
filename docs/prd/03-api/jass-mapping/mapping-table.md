@@ -484,9 +484,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.SetTurnSpeed` |
 | SetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitAcquireRange | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitAcquireRange | common.j | D1 | `litd/api.Unit.SetAcquireRange` |
 | SetUnitCreepGuard | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitAcquireRange | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitAcquireRange | common.j | D1 | `litd/api.Unit.AcquireRange` |
 | GetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.TurnSpeed` |
 | GetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1920,7 +1920,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitPropWindowBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitDefaultPropWindowBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitBlendTimeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetUnitAcquireRangeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| SetUnitAcquireRangeBJ | blizzard.j | D1 | `litd/api.Unit.SetAcquireRange` (D3 collapse → SetUnitAcquireRange) |
 | UnitSetCanSleepBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | UnitCanSleepBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | UnitWakeUpBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
