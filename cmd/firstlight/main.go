@@ -32,10 +32,13 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
+	litobs "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
+	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/g3n/engine/animation"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
@@ -44,11 +47,13 @@ import (
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/loader/gltf"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
+	"github.com/g3n/engine/texture"
 	"github.com/g3n/engine/window"
 )
 
@@ -120,6 +125,27 @@ type demo struct {
 	todHours  float64
 	todSource func() float64
 	dayNight  *litrender.DayNight
+
+	counters *litobs.Counters
+	std      litobs.StandardCounters
+
+	frame        uint32
+	simTick      uint32
+	simTickAccum time.Duration
+	lastMallocs  uint64
+
+	perfStartVisible bool
+	perfDumpPath     string
+	perfToggleSpam   int
+	perfTogglesDone  int
+	stressUnits      int
+
+	perfOverlay  *lithud.PerfOverlay
+	perfTexture  *texture.Texture2D
+	perfImage    *gui.Image
+	lastPerf     lithud.PerfInput
+	lastStats    litrender.FrameStats
+	phaseScratch [7]int64
 }
 
 // state is the FSV state dump printed by -autotest (R-FSV-2).
@@ -130,6 +156,43 @@ type state struct {
 	Selected         bool
 	ArrivedAtTarget  bool
 	TimeOfDay        float64
+}
+
+type perfDump struct {
+	Enabled          bool                   `json:"enabled"`
+	StressUnits      int                    `json:"stressUnits"`
+	ToggleSpamTarget int                    `json:"toggleSpamTarget"`
+	TogglesDone      int                    `json:"togglesDone"`
+	FrameStats       litrender.FrameStats   `json:"frameStats"`
+	Counters         perfCounterDump        `json:"counters"`
+	Overlay          lithud.PerfOverlayDump `json:"overlay"`
+	CrossCheck       perfCrossCheck         `json:"crossCheck"`
+}
+
+type perfCounterDump struct {
+	Tick            uint32 `json:"tick"`
+	Frame           uint32 `json:"frame"`
+	RenderDrawCalls int64  `json:"renderDrawCalls"`
+	RenderFPS       int64  `json:"renderFPS"`
+	RenderBatches   int64  `json:"renderBatches"`
+	RenderInstances int64  `json:"renderInstances"`
+	RenderAllocs    int64  `json:"renderAllocsFrame"`
+	SimAllocs       int64  `json:"simAllocsTick"`
+	HeapBytes       int64  `json:"heapBytes"`
+	Units           int64  `json:"units"`
+	Missiles        int64  `json:"missiles"`
+	Buffs           int64  `json:"buffs"`
+}
+
+type perfCrossCheck struct {
+	OverlayDrawCalls      int   `json:"overlayDrawCalls"`
+	OverlayDrawCallBudget int   `json:"overlayDrawCallBudget"`
+	GUIDrawCalls          int   `json:"guiDrawCalls"`
+	CounterDrawCalls      int64 `json:"counterDrawCalls"`
+	StatsDrawCalls        int   `json:"statsDrawCalls"`
+	DisplayedDrawCalls    int64 `json:"displayedDrawCalls"`
+	DrawCallsMatch        bool  `json:"drawCallsMatch"`
+	OverlayWithinBudget   bool  `json:"overlayWithinBudget"`
 }
 
 type todFlag struct {
@@ -162,8 +225,20 @@ func main() {
 	flag.StringVar(&d.shotPath, "shot", "artifacts/firstlight.png", "screenshot output path")
 	flag.BoolVar(&d.autotest, "autotest", false, "scripted FSV run: order unit, verify arrival, screenshot, exit")
 	flag.Var(&d.fixedTOD, "tod", "fixed time-of-day hour for render verification; valid [0,24)")
+	flag.BoolVar(&d.perfStartVisible, "perf-overlay", false, "start with the F11 perf overlay visible")
+	flag.StringVar(&d.perfDumpPath, "perf-dump", "", "write F11 perf overlay/counter JSON at autotest completion")
+	flag.IntVar(&d.perfToggleSpam, "perf-toggle-spam", 0, "autotest-only: toggle the F11 overlay this many times at 10 Hz")
+	flag.IntVar(&d.stressUnits, "stress-units", 0, "spawn N synthetic visible units for perf overlay stress counters")
 	flag.Parse()
+	if d.perfToggleSpam < 0 {
+		fatalf("perf-toggle-spam must be >=0, got %d", d.perfToggleSpam)
+	}
+	if d.stressUnits < 0 {
+		fatalf("stress-units must be >=0, got %d", d.stressUnits)
+	}
 	d.configureTODSource(time.Now())
+	d.counters = litobs.NewDefaultCounters()
+	d.std = litobs.RegisterStandardCounters(d.counters)
 
 	d.app = app.App(1280, 720, "Light in the Dark — First Light (M0.5)")
 	d.scene = core.NewNode()
@@ -173,10 +248,20 @@ func main() {
 	d.buildGround()
 	d.buildScenery()
 	d.buildUnit()
+	d.buildStressUnits()
+	if err := d.buildPerfOverlay(); err != nil {
+		fatalf("perf overlay: %v", err)
+	}
 	d.installInput()
+	d.resetAllocBaseline()
 
 	d.autoStart = time.Now()
 	d.app.Run(d.update)
+}
+
+func fatalf(format string, a ...any) {
+	fmt.Fprintf(os.Stderr, "firstlight: "+format+"\n", a...)
+	os.Exit(1)
 }
 
 func (d *demo) configureTODSource(now time.Time) {
@@ -359,6 +444,77 @@ func (d *demo) buildFallbackBox() {
 	d.unit.Add(box)
 }
 
+func (d *demo) buildStressUnits() {
+	if d.stressUnits == 0 {
+		return
+	}
+	geom := geometry.NewGeometry()
+	positions := math32.NewArrayF32(0, d.stressUnits*4*3)
+	normals := math32.NewArrayF32(0, d.stressUnits*4*3)
+	uvs := math32.NewArrayF32(0, d.stressUnits*4*2)
+	indices := math32.NewArrayU32(0, d.stressUnits*6)
+
+	mat := material.NewStandard(&math32.Color{R: 0.30, G: 0.62, B: 0.76})
+	cols := int(math.Ceil(math.Sqrt(float64(d.stressUnits))))
+	spacing := float32(0.42)
+	size := float32(0.08)
+	y := float32(0.035)
+	for i := 0; i < d.stressUnits; i++ {
+		col := i % cols
+		row := i / cols
+		x := (float32(col) - float32(cols)/2) * spacing
+		z := 2.0 + (float32(row)-float32(cols)/2)*spacing
+		base := uint32(i * 4)
+
+		positions.Append(
+			x-size, y, z-size,
+			x+size, y, z-size,
+			x+size, y, z+size,
+			x-size, y, z+size,
+		)
+		for j := 0; j < 4; j++ {
+			normals.Append(0, 1, 0)
+		}
+		uvs.Append(0, 0, 1, 0, 1, 1, 0, 1)
+		indices.Append(base, base+2, base+1, base, base+3, base+2)
+	}
+	geom.SetIndices(indices)
+	geom.AddVBO(gls.NewVBO(positions).AddAttrib(gls.VertexPosition))
+	geom.AddVBO(gls.NewVBO(normals).AddAttrib(gls.VertexNormal))
+	geom.AddVBO(gls.NewVBO(uvs).AddAttrib(gls.VertexTexcoord))
+	geom.AddGroup(0, indices.Size(), 0)
+
+	mesh := graphic.NewMesh(geom, mat)
+	d.scene.Add(mesh)
+	fmt.Printf("event: perf stress units spawned count=%d renderables=1 markers=%d\n", d.stressUnits, d.stressUnits)
+}
+
+func (d *demo) buildPerfOverlay() error {
+	overlay, err := lithud.NewPerfOverlay(lithud.DefaultPerfOverlayWidth, lithud.DefaultPerfOverlayHeight)
+	if err != nil {
+		return err
+	}
+	overlay.SetVisible(d.perfStartVisible)
+	tex := texture.NewTexture2DFromRGBA(overlay.Image())
+	tex.SetMagFilter(gls.NEAREST)
+	tex.SetMinFilter(gls.NEAREST)
+	img := gui.NewImageFromTex(tex)
+	img.SetPosition(12, 12)
+	img.SetVisible(overlay.Visible())
+	d.scene.Add(img)
+
+	d.perfOverlay = overlay
+	d.perfTexture = tex
+	d.perfImage = img
+	return nil
+}
+
+func (d *demo) resetAllocBaseline() {
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	d.lastMallocs = mem.Mallocs
+}
+
 // setMoving switches the active clip between Idle and Running_A.
 func (d *demo) setMoving(moving bool) {
 	if d.idleAnim == nil || d.runAnim == nil {
@@ -386,10 +542,22 @@ func (d *demo) installInput() {
 	})
 	d.app.Subscribe(window.OnKeyDown, func(evname string, ev interface{}) {
 		kev := ev.(*window.KeyEvent)
-		if kev.Key == window.KeyF12 {
+		switch kev.Key {
+		case window.KeyF11:
+			d.togglePerfOverlay()
+		case window.KeyF12:
 			d.shotPending = true
 		}
 	})
+}
+
+func (d *demo) togglePerfOverlay() {
+	if d.perfOverlay == nil || d.perfImage == nil {
+		return
+	}
+	d.perfOverlay.Toggle()
+	d.perfImage.SetVisible(d.perfOverlay.Visible())
+	fmt.Printf("event: perf overlay visible=%v toggles=%d\n", d.perfOverlay.Visible(), d.perfOverlay.ToggleCount())
 }
 
 // raycast casts a picking ray through window coordinates (x, y).
@@ -433,19 +601,36 @@ func (d *demo) orderMove(x, z float32) {
 }
 
 func (d *demo) update(rend *renderer.Renderer, deltaTime time.Duration) {
+	d.frame++
+	frameStart := time.Now()
+	phaseStart := frameStart
 	d.advanceTOD(deltaTime)
 	d.dayNight.Update(d.todSource())
+	d.phaseScratch[1] = time.Since(phaseStart).Nanoseconds()
+
+	phaseStart = time.Now()
 	d.stepMovement(float32(deltaTime.Seconds()))
+	d.phaseScratch[3] = time.Since(phaseStart).Nanoseconds()
+
+	phaseStart = time.Now()
 	if d.active != nil {
 		d.active.Update(float32(deltaTime.Seconds()))
 	}
+	d.phaseScratch[4] = time.Since(phaseStart).Nanoseconds()
+
+	phaseStart = time.Now()
 	d.runAutotest()
+	d.phaseScratch[6] = time.Since(phaseStart).Nanoseconds()
+	d.updatePerfOverlayTexture()
 
 	d.app.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 	if err := rend.Render(d.scene, d.cam); err != nil {
 		fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 		os.Exit(1)
 	}
+	stats := litrender.ReadFrameStats(rend)
+	d.lastStats = stats
+	d.recordPerfCounters(deltaTime, stats, d.phaseScratch, time.Since(frameStart))
 
 	if d.shotPending {
 		d.shotPending = false
@@ -457,6 +642,92 @@ func (d *demo) update(rend *renderer.Renderer, deltaTime time.Duration) {
 		if d.autotest {
 			d.finishAutotest()
 		}
+	}
+	for i := range d.phaseScratch {
+		d.phaseScratch[i] = 0
+	}
+}
+
+func (d *demo) updatePerfOverlayTexture() {
+	if d.perfOverlay == nil || d.perfTexture == nil || d.perfImage == nil {
+		return
+	}
+	d.perfOverlay.Update(d.lastPerf)
+	visible := d.perfOverlay.Visible()
+	d.perfImage.SetVisible(visible)
+	if visible {
+		d.perfTexture.SetFromRGBA(d.perfOverlay.Image())
+	}
+}
+
+func (d *demo) recordPerfCounters(deltaTime time.Duration, stats litrender.FrameStats, phases [7]int64, frameCPU time.Duration) {
+	d.simTickAccum += deltaTime
+	for d.simTickAccum >= 50*time.Millisecond {
+		d.simTick++
+		d.simTickAccum -= 50 * time.Millisecond
+	}
+
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	var frameAllocs int64
+	if mem.Mallocs >= d.lastMallocs {
+		frameAllocs = int64(mem.Mallocs - d.lastMallocs)
+	}
+	d.lastMallocs = mem.Mallocs
+
+	tickNS := int64(0)
+	for i := 0; i < len(phases); i++ {
+		tickNS += phases[i]
+	}
+	if tickNS == 0 {
+		tickNS = frameCPU.Nanoseconds()
+	}
+	fps := int64(0)
+	if deltaTime > 0 {
+		fps = int64(time.Second / deltaTime)
+	}
+	units := int64(1 + d.stressUnits)
+
+	d.counters.Set(d.std.SimTickNS, tickNS)
+	d.counters.Set(d.std.SimPhaseInputNS, phases[0])
+	d.counters.Set(d.std.SimPhaseScriptsNS, phases[1])
+	d.counters.Set(d.std.SimPhaseOrdersNS, phases[2])
+	d.counters.Set(d.std.SimPhaseMovementNS, phases[3])
+	d.counters.Set(d.std.SimPhaseCombatNS, phases[4])
+	d.counters.Set(d.std.SimPhaseEventsNS, phases[5])
+	d.counters.Set(d.std.SimPhaseCleanupNS, phases[6])
+	d.counters.Set(d.std.RenderFrameNS, deltaTime.Nanoseconds())
+	d.counters.Set(d.std.RenderFPS, fps)
+	d.counters.Set(d.std.RenderDrawCalls, int64(stats.DrawCalls))
+	d.counters.Set(d.std.RenderBatches, int64(stats.StateChanges))
+	d.counters.Set(d.std.RenderInstances, int64(stats.VisibleGraphics))
+	d.counters.Set(d.std.RenderAllocsFrame, frameAllocs)
+	d.counters.Set(d.std.SimAllocsTick, 0)
+	d.counters.Set(d.std.HeapBytes, int64(mem.HeapAlloc))
+	d.counters.Set(d.std.SimPathExpansionsTick, 0)
+	d.counters.Set(d.std.SimPathQueueDepth, 0)
+	d.counters.Set(d.std.SimEntitiesUnitsActive, units)
+	d.counters.Set(d.std.SimEntitiesMissiles, 0)
+	d.counters.Set(d.std.SimEntitiesBuffs, 0)
+	d.counters.Set(d.std.AudioVoicesActive, 0)
+	d.counters.Sample(d.simTick, d.frame)
+
+	d.lastPerf = lithud.PerfInput{
+		Tick:        d.simTick,
+		Frame:       d.frame,
+		TickNS:      d.counters.Value(d.std.SimTickNS),
+		PhaseNS:     phases,
+		FrameNS:     d.counters.Value(d.std.RenderFrameNS),
+		FPS:         d.counters.Value(d.std.RenderFPS),
+		DrawCalls:   d.counters.Value(d.std.RenderDrawCalls),
+		Batches:     d.counters.Value(d.std.RenderBatches),
+		Instances:   d.counters.Value(d.std.RenderInstances),
+		AllocsFrame: d.counters.Value(d.std.RenderAllocsFrame),
+		AllocsTick:  d.counters.Value(d.std.SimAllocsTick),
+		HeapBytes:   d.counters.Value(d.std.HeapBytes),
+		Units:       d.counters.Value(d.std.SimEntitiesUnitsActive),
+		Missiles:    d.counters.Value(d.std.SimEntitiesMissiles),
+		Buffs:       d.counters.Value(d.std.SimEntitiesBuffs),
 	}
 }
 
@@ -491,6 +762,7 @@ func (d *demo) runAutotest() {
 		return
 	}
 	elapsed := time.Since(d.autoStart)
+	d.runPerfToggleSpam(elapsed)
 	if !d.autoOrdered && elapsed > 500*time.Millisecond {
 		d.autoOrdered = true
 		d.setSelected(true)
@@ -505,6 +777,20 @@ func (d *demo) runAutotest() {
 	}
 }
 
+func (d *demo) runPerfToggleSpam(elapsed time.Duration) {
+	if d.perfToggleSpam == 0 || d.perfOverlay == nil {
+		return
+	}
+	want := int(elapsed / (100 * time.Millisecond))
+	if want > d.perfToggleSpam {
+		want = d.perfToggleSpam
+	}
+	for d.perfTogglesDone < want {
+		d.togglePerfOverlay()
+		d.perfTogglesDone++
+	}
+}
+
 func (d *demo) finishAutotest() {
 	pos := d.unit.Position()
 	s := state{
@@ -516,10 +802,84 @@ func (d *demo) finishAutotest() {
 	}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
+	if d.perfDumpPath != "" {
+		if err := d.writePerfDump(d.perfDumpPath); err != nil {
+			fmt.Fprintf(os.Stderr, "perf dump error: %v\n", err)
+			os.Exit(4)
+		}
+		fmt.Printf("event: perf dump saved path=%s\n", d.perfDumpPath)
+	}
 	if !s.ArrivedAtTarget {
 		os.Exit(3)
 	}
 	os.Exit(0)
+}
+
+func (d *demo) writePerfDump(path string) error {
+	if d.perfOverlay != nil {
+		d.perfOverlay.Update(d.lastPerf)
+	}
+	dump := d.perfDump()
+	if dir := filepath.Dir(path); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	return enc.Encode(dump)
+}
+
+func (d *demo) perfDump() perfDump {
+	snap := d.perfOverlay.Snapshot()
+	displayedDrawCalls := perfOverlayRowCurrent(snap, "DRAW")
+	counterDrawCalls := d.counters.Value(d.std.RenderDrawCalls)
+	return perfDump{
+		Enabled:          snap.Visible,
+		StressUnits:      d.stressUnits,
+		ToggleSpamTarget: d.perfToggleSpam,
+		TogglesDone:      d.perfTogglesDone,
+		FrameStats:       d.lastStats,
+		Counters: perfCounterDump{
+			Tick:            d.lastPerf.Tick,
+			Frame:           d.lastPerf.Frame,
+			RenderDrawCalls: d.counters.Value(d.std.RenderDrawCalls),
+			RenderFPS:       d.counters.Value(d.std.RenderFPS),
+			RenderBatches:   d.counters.Value(d.std.RenderBatches),
+			RenderInstances: d.counters.Value(d.std.RenderInstances),
+			RenderAllocs:    d.counters.Value(d.std.RenderAllocsFrame),
+			SimAllocs:       d.counters.Value(d.std.SimAllocsTick),
+			HeapBytes:       d.counters.Value(d.std.HeapBytes),
+			Units:           d.counters.Value(d.std.SimEntitiesUnitsActive),
+			Missiles:        d.counters.Value(d.std.SimEntitiesMissiles),
+			Buffs:           d.counters.Value(d.std.SimEntitiesBuffs),
+		},
+		Overlay: snap,
+		CrossCheck: perfCrossCheck{
+			OverlayDrawCalls:      snap.DrawCalls,
+			OverlayDrawCallBudget: snap.DrawCallBudget,
+			GUIDrawCalls:          d.lastStats.GUIDrawCalls,
+			CounterDrawCalls:      counterDrawCalls,
+			StatsDrawCalls:        d.lastStats.DrawCalls,
+			DisplayedDrawCalls:    displayedDrawCalls,
+			DrawCallsMatch:        displayedDrawCalls == counterDrawCalls && int64(d.lastStats.DrawCalls) == counterDrawCalls,
+			OverlayWithinBudget:   snap.DrawCalls <= snap.DrawCallBudget && d.lastStats.GUIDrawCalls <= snap.DrawCallBudget,
+		},
+	}
+}
+
+func perfOverlayRowCurrent(snap lithud.PerfOverlayDump, name string) int64 {
+	for _, row := range snap.Rows {
+		if row.Name == name {
+			return row.Current
+		}
+	}
+	return 0
 }
 
 // screenshot reads the framebuffer and writes it as PNG (R-FSV-1).
