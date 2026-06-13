@@ -353,6 +353,22 @@ package = "litd/api"
 reason = "unit level getter: a hero's current level for heroes, else the type's configured design level (data.Unit.Level, [0,1000]); 0 when untyped/unset (D1) (#217)"
 
 [[override]]
+name = "GetUnitRace"
+class = "D1"
+goMapping = "Unit.Race"
+goSignature = "() Race"
+package = "litd/api"
+reason = "unit race getter maps onto the typed accessor; the Race enum mirrors the WC3 race constants (HUMAN=1..DEMON=5, OTHER=7) so the integer round-trips, RaceNone=0 for untyped/unset (D1) (#217)"
+
+[[override]]
+name = "IsUnitRace"
+class = "D2"
+goMapping = "Unit.IsRace"
+goSignature = "(r Race) bool"
+package = "litd/api"
+reason = "race predicate; (unit, race) becomes a typed Unit method comparing the type race to r, false on invalid handle (D2) (#217)"
+
+[[override]]
 name = "IsUnitOwnedByPlayer"
 class = "D2"
 goMapping = "Unit.OwnedBy"

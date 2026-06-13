@@ -710,6 +710,42 @@ func (u Unit) IsType(class UnitClass) bool {
 	}
 }
 
+// Race is a unit's faction race (GetUnitRace). Values mirror the WC3 race
+// constants so the underlying integer round-trips. RaceNone is the unset
+// default for an untyped or unconfigured unit.
+type Race uint8
+
+const (
+	RaceNone     Race = 0 // unset / untyped
+	RaceHuman    Race = 1 // RACE_HUMAN
+	RaceOrc      Race = 2 // RACE_ORC
+	RaceUndead   Race = 3 // RACE_UNDEAD
+	RaceNightElf Race = 4 // RACE_NIGHTELF
+	RaceDemon    Race = 5 // RACE_DEMON
+	RaceOther    Race = 7 // RACE_OTHER
+)
+
+// Race returns the unit type's race, or RaceNone on an invalid handle, an
+// untyped unit, or a type with no race configured. JASS: GetUnitRace.
+func (u Unit) Race() Race {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Race")
+		return RaceNone
+	}
+	return Race(u.g.w.UnitRace(u.id))
+}
+
+// IsRace reports whether the unit's race equals r. False on an invalid handle.
+// Note a unit with no configured race (RaceNone) only matches IsRace(RaceNone).
+// JASS: IsUnitRace.
+func (u Unit) IsRace(r Race) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.IsRace")
+		return false
+	}
+	return Race(u.g.w.UnitRace(u.id)) == r
+}
+
 // InRange reports whether this unit is within distance world units of other
 // (center-to-center, inclusive). False on an invalid handle, an invalid other,
 // or a negative distance. JASS: IsUnitInRange.

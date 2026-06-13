@@ -49,6 +49,19 @@ const (
 	PathingAir
 )
 
+// Unit races (GetUnitRace). Values mirror the WC3 race constants so the
+// ConvertRace integer mapping round-trips: HUMAN=1..DEMON=5, OTHER=7.
+// RaceNone (0) is the unset/unconfigured default.
+const (
+	RaceNone     uint8 = 0
+	RaceHuman    uint8 = 1
+	RaceOrc      uint8 = 2
+	RaceUndead   uint8 = 3
+	RaceNightElf uint8 = 4
+	RaceDemon    uint8 = 5
+	RaceOther    uint8 = 7
+)
+
 // Attack delivery (combat-and-orders.md §3.4).
 const (
 	DeliveryInstant uint8 = iota
@@ -116,6 +129,7 @@ type Unit struct {
 	Name             string // display/proper name (GetUnitName); "" = unnamed
 	PointValue       int32  // score/bounty weight (GetUnitPointValue); 0 = none
 	Level            int32  // design level (GetUnitLevel for non-heroes); 0 = unset
+	Race             uint8  // Race* (GetUnitRace); RaceNone = unset
 	Attacks          []Attack
 	Abilities        []uint16 // indices into Tables.Abilities
 
@@ -181,6 +195,7 @@ type rawUnit struct {
 	Name             string           `toml:"name" json:"name"`
 	PointValue       int64            `toml:"point-value" json:"point-value"`
 	Level            int64            `toml:"level" json:"level"`
+	Race             string           `toml:"race" json:"race"`
 	Abilities        []string         `toml:"abilities" json:"abilities"`
 	Attacks          []rawAttack      `toml:"attack" json:"attack"`
 	FoodCost         int64            `toml:"food-cost" json:"food-cost"`
@@ -650,6 +665,25 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 	if r.Level < 0 || r.Level > 1000 {
 		return fail("level", fmt.Errorf("%d out of range [0, 1000]", r.Level))
 	}
+	var race uint8
+	switch r.Race {
+	case "":
+		race = RaceNone
+	case "human":
+		race = RaceHuman
+	case "orc":
+		race = RaceOrc
+	case "undead":
+		race = RaceUndead
+	case "nightelf":
+		race = RaceNightElf
+	case "demon":
+		race = RaceDemon
+	case "other":
+		race = RaceOther
+	default:
+		return fail("race", fmt.Errorf("%q is not human|orc|undead|nightelf|demon|other", r.Race))
+	}
 	u := Unit{
 		ID:               r.ID,
 		Life:             int32(r.Life),
@@ -668,6 +702,7 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		Name:             r.Name,
 		PointValue:       int32(r.PointValue),
 		Level:            int32(r.Level),
+		Race:             race,
 	}
 	if u.FoodCost, u.FoodProvided, u.DepotMask, u.Harvest, err = t.convertEconomy(file, r.ID, r); err != nil {
 		return Unit{}, err

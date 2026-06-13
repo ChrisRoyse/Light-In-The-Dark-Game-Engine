@@ -358,6 +358,7 @@ pathing = "ground"
 acquisition-range = 500
 point-value = 30
 level = 5
+race = "orc"
 name = "Scout Trooper"
 `
 	tables, err := Load(mapFS(withPV))
@@ -397,6 +398,35 @@ name = "Scout Trooper"
 	}
 	if grunt.Level != 0 {
 		t.Errorf("grunt.Level=%d, want 0 (omitted default)", grunt.Level)
+	}
+	// race decodes to the WC3 constant; omitted race defaults to RaceNone.
+	t.Logf("scout.Race=%d (want %d=orc)  grunt.Race=%d (want %d=none)", scout.Race, RaceOrc, grunt.Race, RaceNone)
+	if scout.Race != RaceOrc {
+		t.Errorf("scout.Race=%d, want %d (orc)", scout.Race, RaceOrc)
+	}
+	if grunt.Race != RaceNone {
+		t.Errorf("grunt.Race=%d, want %d (none, omitted)", grunt.Race, RaceNone)
+	}
+
+	// EDGE: unknown race string must be rejected (fail-closed).
+	const badRace = testUnitTOML + `
+[[unit]]
+id = "bad"
+life = 100
+regen = 0
+armor = 0
+armor-type = "light"
+move-speed = 200
+turn-rate = 0.6
+collision-size = 8
+pathing = "ground"
+acquisition-range = 500
+race = "elf"
+`
+	if _, err := Load(mapFS(badRace)); err == nil {
+		t.Fatal("unknown race must fail to load")
+	} else {
+		t.Logf("unknown race rejected -> %v", err)
 	}
 
 	// EDGE: out-of-range level must be rejected (fail-closed).

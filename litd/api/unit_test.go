@@ -804,6 +804,50 @@ func TestUnitLevelFSV(t *testing.T) {
 	}
 }
 
+// TestUnitRaceFSV: Race/IsRace read the type's configured race off the
+// sim. SoT = bound data.Unit.Race via World.UnitRace.
+func TestUnitRaceFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "horc", Life: 100, Race: data.RaceOrc},
+		{ID: "hnil", Life: 100}, // race omitted -> RaceNone
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+
+	u := g.CreateUnit(owner, g.UnitType("horc"), Vec2{X: 64, Y: 64}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit horc invalid")
+	}
+	t.Logf("FSV Race: horc api=%d simSoT=%d (want %d=orc)", u.Race(), w.UnitRace(u.id), RaceOrc)
+	if u.Race() != RaceOrc || uint8(u.Race()) != w.UnitRace(u.id) {
+		t.Errorf("horc Race: api=%d sim=%d, want %d", u.Race(), w.UnitRace(u.id), RaceOrc)
+	}
+	// IsRace: true only for the matching race.
+	if !u.IsRace(RaceOrc) {
+		t.Error("horc IsRace(Orc) = false")
+	}
+	if u.IsRace(RaceHuman) || u.IsRace(RaceNone) {
+		t.Errorf("horc IsRace cross-match: human=%v none=%v, want false", u.IsRace(RaceHuman), u.IsRace(RaceNone))
+	}
+
+	// EDGE: type with no race -> RaceNone, matches only IsRace(RaceNone).
+	z := g.CreateUnit(owner, g.UnitType("hnil"), Vec2{X: 96, Y: 96}, Deg(0))
+	if z.Race() != RaceNone || !z.IsRace(RaceNone) || z.IsRace(RaceOrc) {
+		t.Errorf("hnil Race=%d IsRace(None)=%v IsRace(Orc)=%v, want None/true/false", z.Race(), z.IsRace(RaceNone), z.IsRace(RaceOrc))
+	}
+
+	// EDGE: invalid handle -> RaceNone, IsRace false (even for RaceNone).
+	if (Unit{}).Race() != RaceNone {
+		t.Error("zero-handle Race != RaceNone")
+	}
+	if (Unit{}).IsRace(RaceNone) {
+		t.Error("zero-handle IsRace(None) = true, want false (invalid guard)")
+	}
+}
+
 // TestUnitOwnedByFSV verifies Unit.OwnedBy against the sim Owners.Player
 // slot: true only for the owning player, false for everyone else and on
 // every invalid combination.

@@ -234,6 +234,15 @@ func (w *World) UnitFoodMade(id EntityID) uint8 {
 	return 0
 }
 
+// UnitRace returns the unit type's race (data.Race*), data.RaceNone when
+// untyped or unconfigured. GetUnitRace.
+func (w *World) UnitRace(id EntityID) uint8 {
+	if d := w.typeDefOf(id); d != nil {
+		return d.Race
+	}
+	return data.RaceNone
+}
+
 // UnitDefaultMoveSpeed returns the type's base move speed (per tick), 0 when
 // untyped. GetUnitDefaultMoveSpeed — the spawn value before SetUnitMoveSpeed.
 func (w *World) UnitDefaultMoveSpeed(id EntityID) fixed.F64 {

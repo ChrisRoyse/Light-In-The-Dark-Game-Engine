@@ -994,6 +994,28 @@
       }
     },
     {
+      "name": "GetUnitRace",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "race"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Race",
+        "package": "litd/api",
+        "goSignature": "() Race"
+      }
+    },
+    {
       "name": "GetUnitState",
       "origin": "common.j",
       "signature": {
@@ -1283,6 +1305,33 @@
         "symbol": "Unit.OwnedBy",
         "package": "litd/api",
         "goSignature": "(p Player) bool"
+      }
+    },
+    {
+      "name": "IsUnitRace",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichRace",
+            "jassType": "race",
+            "tsType": "race"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.IsRace",
+        "package": "litd/api",
+        "goSignature": "(r Race) bool"
       }
     },
     {
