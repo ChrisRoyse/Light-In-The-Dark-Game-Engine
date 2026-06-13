@@ -311,3 +311,35 @@ func TestDamageApplyAllocs(t *testing.T) {
 		t.Fatalf("damage pipeline allocates %v/run, want 0 (R-GC-1)", allocs)
 	}
 }
+
+// TestDamageInvulnerableGate is the FSV for #365: while a unit is invulnerable,
+// damage packets land on nothing — life unchanged, not killed; toggling it off
+// lets the next packet through. SoT = Healths.Life + Ents.Alive.
+func TestDamageInvulnerableGate(t *testing.T) {
+	w, victim, attacker := dmgWorld(t, 0, 0)
+	hr := w.Healths.Row(victim)
+
+	// BEFORE: full life, vulnerable.
+	if w.Healths.Life[hr] != 100*fixed.One {
+		t.Fatalf("precondition life = %d, want 100", w.Healths.Life[hr])
+	}
+
+	// Make invulnerable, then deal an overkill packet (500 > 100 life).
+	w.Healths.Invulnerable[hr] = true
+	stepWithPackets(w, DamagePacket{Source: attacker, Target: victim, Amount: 500 * fixed.One, AttackType: 0})
+	t.Logf("invulnerable + 500 dmg: life=%d alive=%v (want 100, true)", w.Healths.Life[hr], w.Ents.Alive(victim))
+	if w.Healths.Life[hr] != 100*fixed.One {
+		t.Errorf("invulnerable unit lost life: %d, want 100", w.Healths.Life[hr])
+	}
+	if !w.Ents.Alive(victim) {
+		t.Error("invulnerable unit was killed by damage")
+	}
+
+	// Drop invulnerability; the next packet lands normally (armor 0 = full).
+	w.Healths.Invulnerable[hr] = false
+	stepWithPackets(w, DamagePacket{Source: attacker, Target: victim, Amount: 30 * fixed.One, AttackType: 0})
+	t.Logf("vulnerable + 30 dmg: life=%d (want 70)", w.Healths.Life[hr])
+	if w.Healths.Life[hr] != 70*fixed.One {
+		t.Errorf("vulnerable unit life = %d, want 70 (took 30)", w.Healths.Life[hr])
+	}
+}

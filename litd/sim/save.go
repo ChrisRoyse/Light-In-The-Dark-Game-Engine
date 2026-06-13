@@ -271,6 +271,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(hl.ArmorType[i])
 		s.u8(hl.DeathState[i])
 		s.u32(hl.DecayTicks[i])
+		s.boolean(hl.Invulnerable[i])
 	}
 
 	// owners
@@ -720,6 +721,7 @@ type decodedSave struct {
 	hlAT    []uint8
 	hlDS    []uint8
 	hlDecay []uint32
+	hlInv   []bool
 
 	owN int32
 	owE []EntityID
@@ -1105,6 +1107,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.hlAT = make([]uint8, n)
 	d.hlDS = make([]uint8, n)
 	d.hlDecay = make([]uint32, n)
+	d.hlInv = make([]bool, n)
 	for i := int32(0); i < n; i++ {
 		d.hlE[i] = r.ent()
 		d.hlLife[i] = r.f64()
@@ -1114,6 +1117,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.hlAT[i] = r.u8()
 		d.hlDS[i] = r.u8()
 		d.hlDecay[i] = r.u32()
+		d.hlInv[i] = r.boolean()
 	}
 
 	// owners
@@ -2248,6 +2252,7 @@ func applySave(d *decodedSave, w *World) {
 		hl.ArmorType[i] = d.hlAT[i]
 		hl.DeathState[i] = d.hlDS[i]
 		hl.DecayTicks[i] = d.hlDecay[i]
+		hl.Invulnerable[i] = d.hlInv[i]
 		hl.rowOf[d.hlE[i].Index()] = i
 	}
 

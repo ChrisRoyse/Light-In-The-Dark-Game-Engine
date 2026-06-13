@@ -126,6 +126,7 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hh.WriteU8(hl.ArmorType[i])
 		hh.WriteU8(hl.DeathState[i])
 		hh.WriteU32(hl.DecayTicks[i])
+		hh.WriteBool(hl.Invulnerable[i])
 	}
 
 	ho := h.next() // owners

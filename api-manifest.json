@@ -331,6 +331,28 @@
       }
     },
     {
+      "name": "BlzIsUnitInvulnerable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Invulnerable",
+        "package": "litd/api",
+        "goSignature": "() bool"
+      }
+    },
+    {
       "name": "CreateUnit",
       "origin": "common.j",
       "signature": {
@@ -801,6 +823,33 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed)"
+      }
+    },
+    {
+      "name": "SetUnitInvulnerable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetInvulnerable",
+        "package": "litd/api",
+        "goSignature": "(on bool)"
       }
     },
     {

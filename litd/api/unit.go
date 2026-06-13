@@ -87,6 +87,37 @@ func (u Unit) Type() UnitType {
 	return UnitType{ref: u.g.w.UnitTypes.TypeID[r] + 1}
 }
 
+// Invulnerable reports whether the unit currently ignores all incoming damage,
+// false on an invalid handle or a unit with no health row. JASS:
+// BlzIsUnitInvulnerable.
+func (u Unit) Invulnerable() bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Invulnerable")
+		return false
+	}
+	r := u.g.w.Healths.Row(u.id)
+	if r < 0 {
+		return false
+	}
+	return u.g.w.Healths.Invulnerable[r]
+}
+
+// SetInvulnerable sets the unit's damage immunity. While on, every incoming
+// damage packet is skipped at the damage step — the unit takes no damage, is
+// not killed by damage, and grants no kill XP. No-op on an invalid handle or a
+// unit with no health row. JASS: SetUnitInvulnerable.
+func (u Unit) SetInvulnerable(on bool) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetInvulnerable")
+		return
+	}
+	r := u.g.w.Healths.Row(u.id)
+	if r < 0 {
+		return
+	}
+	u.g.w.Healths.Invulnerable[r] = on
+}
+
 // Armor returns the unit's effective armor — the base armor value plus any
 // active buff/debuff modifiers (the displayed armor), or 0 on an invalid handle
 // or a unit with no health row. JASS: BlzGetUnitArmor.

@@ -15,14 +15,15 @@ const (
 )
 
 type HealthStore struct {
-	Life       []fixed.F64
-	MaxLife    []fixed.F64
-	Regen      []fixed.F64 // life per TICK
-	ArmorValue []int16
-	ArmorType  []uint8 // indexes the damage table (combat-and-orders.md)
-	DeathState []uint8 // Death* constants
-	DecayTicks []uint32
-	Entity     []EntityID
+	Life         []fixed.F64
+	MaxLife      []fixed.F64
+	Regen        []fixed.F64 // life per TICK
+	ArmorValue   []int16
+	ArmorType    []uint8 // indexes the damage table (combat-and-orders.md)
+	DeathState   []uint8 // Death* constants
+	DecayTicks   []uint32
+	Invulnerable []bool // damage packets are skipped while true (#365)
+	Entity       []EntityID
 
 	rowOf []int32
 	count int32
@@ -35,15 +36,16 @@ func NewHealthStore(rowCap, entityCap int) *HealthStore {
 		panic("sim: store caps must satisfy 0 < rowCap <= entityCap")
 	}
 	s := &HealthStore{
-		Life:       make([]fixed.F64, rowCap),
-		MaxLife:    make([]fixed.F64, rowCap),
-		Regen:      make([]fixed.F64, rowCap),
-		ArmorValue: make([]int16, rowCap),
-		ArmorType:  make([]uint8, rowCap),
-		DeathState: make([]uint8, rowCap),
-		DecayTicks: make([]uint32, rowCap),
-		Entity:     make([]EntityID, rowCap),
-		rowOf:      make([]int32, entityCap),
+		Life:         make([]fixed.F64, rowCap),
+		MaxLife:      make([]fixed.F64, rowCap),
+		Regen:        make([]fixed.F64, rowCap),
+		ArmorValue:   make([]int16, rowCap),
+		ArmorType:    make([]uint8, rowCap),
+		DeathState:   make([]uint8, rowCap),
+		DecayTicks:   make([]uint32, rowCap),
+		Invulnerable: make([]bool, rowCap),
+		Entity:       make([]EntityID, rowCap),
+		rowOf:        make([]int32, entityCap),
 	}
 	for i := range s.rowOf {
 		s.rowOf[i] = -1
@@ -72,6 +74,7 @@ func (s *HealthStore) Add(e *Entities, id EntityID, maxLife, regenPerTick fixed.
 	s.ArmorType[r] = armorType
 	s.DeathState[r] = DeathAlive
 	s.DecayTicks[r] = 0
+	s.Invulnerable[r] = false // units spawn vulnerable
 	s.Entity[r] = id
 	s.rowOf[idx] = r
 	s.count++
@@ -98,6 +101,7 @@ func (s *HealthStore) Remove(id EntityID) bool {
 		s.ArmorType[r] = s.ArmorType[last]
 		s.DeathState[r] = s.DeathState[last]
 		s.DecayTicks[r] = s.DecayTicks[last]
+		s.Invulnerable[r] = s.Invulnerable[last]
 		moved := s.Entity[last]
 		s.Entity[r] = moved
 		s.rowOf[moved.Index()] = r

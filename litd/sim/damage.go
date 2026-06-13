@@ -133,6 +133,11 @@ func (w *World) damageApplySystem() {
 		if hr == -1 || !w.Ents.Alive(p.Target) {
 			continue // victim already gone: deterministic no-op
 		}
+		if w.Healths.Invulnerable[hr] {
+			continue // invulnerable: the packet lands on nothing — no life
+			// change, no kill, no XP, no EvUnitDamaged (#365). Defense at the
+			// single damage chokepoint.
+		}
 		// dead-source packets still land — the damage was already in
 		// flight when the source died (WC3 semantics)
 		if w.coeff == nil ||

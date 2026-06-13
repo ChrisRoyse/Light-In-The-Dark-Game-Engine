@@ -800,3 +800,37 @@ func TestUnitArmorFSV(t *testing.T) {
 		t.Error("removed unit Armor() != 0")
 	}
 }
+
+// TestUnitInvulnerableFSV: SetInvulnerable/Invulnerable round-trip through the
+// Health store flag. SoT = w.Healths.Invulnerable.
+func TestUnitInvulnerableFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+	r := w.Healths.Row(id)
+
+	// Default vulnerable.
+	if u.Invulnerable() || w.Healths.Invulnerable[r] {
+		t.Fatal("unit spawned invulnerable")
+	}
+	// Toggle on → store + getter agree.
+	u.SetInvulnerable(true)
+	t.Logf("after SetInvulnerable(true): store=%v getter=%v", w.Healths.Invulnerable[r], u.Invulnerable())
+	if !w.Healths.Invulnerable[r] || !u.Invulnerable() {
+		t.Errorf("set true: store=%v getter=%v", w.Healths.Invulnerable[r], u.Invulnerable())
+	}
+	// Toggle off.
+	u.SetInvulnerable(false)
+	if w.Healths.Invulnerable[r] || u.Invulnerable() {
+		t.Errorf("set false: store=%v getter=%v", w.Healths.Invulnerable[r], u.Invulnerable())
+	}
+	// EDGE: zero / removed handle → false, no panic.
+	if (Unit{}).Invulnerable() {
+		t.Error("zero Unit Invulnerable() true")
+	}
+	u.Remove()
+	u.SetInvulnerable(true) // no-op, no panic
+	if u.Invulnerable() {
+		t.Error("removed unit Invulnerable() true")
+	}
+}

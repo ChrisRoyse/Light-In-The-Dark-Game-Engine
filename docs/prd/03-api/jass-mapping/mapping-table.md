@@ -535,7 +535,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ReviveHero | common.j | D3 | _pending (M2 backlog)_ |
 | ReviveHeroLoc | common.j | D3 | _pending (M2 backlog)_ |
 | SetUnitExploded | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitInvulnerable | common.j | D1 | `litd/api.Unit.SetInvulnerable` |
 | PauseUnit | common.j | D2 | `litd/api.Unit.SetPaused` (D3 collapse → PauseUnitBJ) |
 | IsUnitPaused | common.j | D1 | `litd/api.Unit.Paused` (D3 collapse → IsUnitPausedBJ) |
 | SetUnitPathing | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1344,7 +1344,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzUnitDisableAbility | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzUnitCancelTimedLife | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsUnitSelectable | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzIsUnitInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzIsUnitInvulnerable | common.j | D1 | `litd/api.Unit.Invulnerable` |
 | BlzUnitInterruptAttack | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitCollisionSize | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetAbilityManaCost | common.j | unclassified | _pending (M2 backlog)_ |
