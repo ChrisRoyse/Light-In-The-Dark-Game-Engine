@@ -136,6 +136,22 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "SetHeroXP"
+class = "D2"
+goMapping = "Unit.SetHeroXP"
+goSignature = "(xp int)"
+package = "litd/api"
+reason = "absolute XP setter with level-up resolution; never de-levels; bypasses the suspend gate (explicit set). showEyeCandy dropped (cosmetic) (dedup §3, D2) (#217, #304)"
+
+[[override]]
+name = "SetHeroLevel"
+class = "D2"
+goMapping = "Unit.SetHeroLevel"
+goSignature = "(level int)"
+package = "litd/api"
+reason = "raise-to-level setter (grants XP to the curve threshold); never lowers. showEyeCandy dropped (cosmetic) (dedup §3, D2) (#217, #304)"
+
+[[override]]
 name = "SuspendHeroXP"
 class = "D1"
 goMapping = "Unit.SuspendExperience"

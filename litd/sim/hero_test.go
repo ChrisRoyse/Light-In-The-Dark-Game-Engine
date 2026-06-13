@@ -677,3 +677,59 @@ func TestSuspendHeroXPFSV(t *testing.T) {
 		t.Error("non-hero accepted XP suspension")
 	}
 }
+
+// TestSetHeroXPAndLevelFSV: SetHeroXP/SetHeroLevel set absolute XP/level and
+// resolve level-ups, never de-leveling, and apply even while XP is suspended.
+// SoT = Heroes.XP/Level/SkillPoints. Curve {0,200,500,900}; +1 skill pt/level.
+func TestSetHeroXPAndLevelFSV(t *testing.T) {
+	w := heroWorld(t)
+	id, ok := w.SpawnHero(hPaladin, 0, 0, pt2(100, 100))
+	if !ok {
+		t.Fatal("spawn failed")
+	}
+	r := w.Heroes.Row(id)
+	t.Logf("spawn: level=%d xp=%d skillPts=%d", w.Heroes.Level[r], w.Heroes.XP[r], w.Heroes.SkillPoints[r])
+
+	// SetHeroXP(550) crosses 200 and 500 -> level 3, skill pts 1 -> 3.
+	if !w.SetHeroXP(id, 550) {
+		t.Fatal("SetHeroXP returned false")
+	}
+	t.Logf("after SetHeroXP(550): level=%d xp=%d skillPts=%d", w.Heroes.Level[r], w.Heroes.XP[r], w.Heroes.SkillPoints[r])
+	if w.Heroes.XP[r] != 550 || w.Heroes.Level[r] != 3 || w.Heroes.SkillPoints[r] != 3 {
+		t.Errorf("SetHeroXP(550): xp=%d level=%d pts=%d, want 550/3/3", w.Heroes.XP[r], w.Heroes.Level[r], w.Heroes.SkillPoints[r])
+	}
+
+	// Never de-levels: a lower SetHeroXP is ignored.
+	if !w.SetHeroXP(id, 10) || w.Heroes.XP[r] != 550 || w.Heroes.Level[r] != 3 {
+		t.Errorf("SetHeroXP(10) lowered: xp=%d level=%d, want unchanged 550/3", w.Heroes.XP[r], w.Heroes.Level[r])
+	}
+
+	// SetHeroLevel(4) -> XP threshold 900, level 4.
+	if !w.SetHeroLevel(id, 4) || w.Heroes.Level[r] != 4 || w.Heroes.XP[r] != 900 {
+		t.Errorf("SetHeroLevel(4): level=%d xp=%d, want 4/900", w.Heroes.Level[r], w.Heroes.XP[r])
+	}
+	// Clamp above max and never-lower.
+	if !w.SetHeroLevel(id, 99) || w.Heroes.Level[r] != 4 {
+		t.Errorf("SetHeroLevel(99) clamp: level=%d, want 4", w.Heroes.Level[r])
+	}
+	if !w.SetHeroLevel(id, 1) || w.Heroes.Level[r] != 4 {
+		t.Errorf("SetHeroLevel(1) lowered: level=%d, want 4 (no de-level)", w.Heroes.Level[r])
+	}
+
+	// Explicit set applies even while XP is SUSPENDED (suspend blocks gain only).
+	id2, _ := w.SpawnHero(hPaladin, 0, 0, pt2(150, 100))
+	w.SuspendHeroXP(id2, true)
+	if w.AddXP(id2, 300) {
+		t.Error("AddXP succeeded under suspension")
+	}
+	r2 := w.Heroes.Row(id2)
+	if !w.SetHeroXP(id2, 300) || w.Heroes.XP[r2] != 300 || w.Heroes.Level[r2] != 2 {
+		t.Errorf("suspended SetHeroXP(300): xp=%d level=%d, want 300/2", w.Heroes.XP[r2], w.Heroes.Level[r2])
+	}
+
+	// EDGE: non-hero -> both false, no change.
+	worker, _ := w.SpawnFromTable(tWorker, 1, 1, pt2(180, 100))
+	if w.SetHeroXP(worker, 500) || w.SetHeroLevel(worker, 3) {
+		t.Error("non-hero accepted SetHeroXP/SetHeroLevel")
+	}
+}

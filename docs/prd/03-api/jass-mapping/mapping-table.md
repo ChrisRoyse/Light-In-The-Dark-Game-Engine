@@ -517,11 +517,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetHeroInt | common.j | D2 | `litd/api.Unit.Intelligence` |
 | UnitStripHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroXP | common.j | D1 | `litd/api.Unit.HeroXP` |
-| SetHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
+| SetHeroXP | common.j | D2 | `litd/api.Unit.SetHeroXP` |
 | GetHeroSkillPoints | common.j | D1 | `litd/api.Unit.SkillPoints` |
 | UnitModifySkillPoints | common.j | D1 | `litd/api.Unit.ModifySkillPoints` |
 | AddHeroXP | common.j | D2 | `litd/api.Unit.AddExperience` |
-| SetHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
+| SetHeroLevel | common.j | D2 | `litd/api.Unit.SetHeroLevel` |
 | GetHeroLevel | common.j | D1 | `litd/api.Unit.HeroLevel` |
 | GetUnitLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |

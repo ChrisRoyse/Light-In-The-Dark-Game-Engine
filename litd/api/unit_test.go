@@ -1433,6 +1433,13 @@ func TestUnitHeroStatsContract(t *testing.T) {
 		t.Error("non-hero accepted XP suspension")
 	}
 
+	// XP/level setters on a non-hero: no-op (level/xp stay 0).
+	u.SetHeroXP(500)
+	u.SetHeroLevel(3)
+	if u.HeroXP() != 0 || u.HeroLevel() != 0 {
+		t.Error("hero XP/level setters mutated a non-hero")
+	}
+
 	// EDGE: removed unit -> all zero/false, setters no-op.
 	u.Remove()
 	z.SetStrength(1) // zero handle, no panic

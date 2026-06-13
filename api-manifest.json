@@ -1224,6 +1224,38 @@
       }
     },
     {
+      "name": "SetHeroLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "showEyeCandy",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetHeroLevel",
+        "package": "litd/api",
+        "goSignature": "(level int)"
+      }
+    },
+    {
       "name": "SetHeroStr",
       "origin": "common.j",
       "signature": {
@@ -1253,6 +1285,38 @@
         "symbol": "Unit.SetStrength",
         "package": "litd/api",
         "goSignature": "(v int)"
+      }
+    },
+    {
+      "name": "SetHeroXP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newXpVal",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "showEyeCandy",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetHeroXP",
+        "package": "litd/api",
+        "goSignature": "(xp int)"
       }
     },
     {

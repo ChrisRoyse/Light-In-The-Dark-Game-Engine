@@ -415,15 +415,28 @@ func (w *World) AddXP(id EntityID, amount int64) bool {
 	if w.XPSuspends.Has(id) {
 		return false // experience suspended (#217): no XP, no level-ups
 	}
+	w.setXPTo(id, r, w.Heroes.XP[r]+amount)
+	return true
+}
+
+// setXPTo sets a hero's XP to target (clamped to the curve top, and never below
+// the current value — heroes do not de-level) and resolves any level-ups, with
+// the per-level attribute growth + skill point + EvHeroLevel exactly as a kill
+// grant does. Shared by AddXP and the explicit XP/level setters; it does NOT
+// consult the suspend flag — explicit sets always apply (suspension only blocks
+// XP *gain*). Caller guarantees r is a live hero row and heroTables is bound.
+func (w *World) setXPTo(id EntityID, r int32, target int64) {
 	h := w.Heroes
 	curve := w.heroTables.Curve
-	xp := h.XP[r] + amount
-	if top := curve[len(curve)-1]; xp > top {
-		xp = top
+	if top := curve[len(curve)-1]; target > top {
+		target = top
 	}
-	h.XP[r] = xp
+	if target < h.XP[r] {
+		target = h.XP[r] // never lower XP / de-level
+	}
+	h.XP[r] = target
 	hd := &w.heroTables.Heroes[h.HeroType[r]]
-	for int(h.Level[r]) < len(curve) && xp >= curve[h.Level[r]] {
+	for int(h.Level[r]) < len(curve) && target >= curve[h.Level[r]] {
 		h.Level[r]++
 		h.Str[r] = h.Str[r].Add(hd.StrG)
 		h.Agi[r] = h.Agi[r].Add(hd.AgiG)
@@ -433,6 +446,37 @@ func (w *World) AddXP(id EntityID, amount int64) bool {
 		w.Emit(Event{Kind: EvHeroLevel, Src: id, Arg: int64(h.Level[r])})
 	}
 	w.recomputeBuffStats(id)
+}
+
+// SetHeroXP sets a hero's experience to an absolute value, resolving any
+// level-ups (SetHeroXP). Experience never decreases — a target below the
+// current value is ignored (WC3 heroes do not de-level). Bypasses the XP-suspend
+// gate (an explicit set always applies). No-op on a non-hero / unbound tables.
+func (w *World) SetHeroXP(id EntityID, newXP int64) bool {
+	r := w.Heroes.Row(id)
+	if r == -1 || w.heroTables == nil {
+		return false
+	}
+	w.setXPTo(id, r, newXP)
+	return true
+}
+
+// SetHeroLevel raises a hero to the given level by granting the XP needed to
+// reach it (SetHeroLevel). Clamped to [1, maxLevel]; never lowers the level.
+// No-op on a non-hero / unbound tables.
+func (w *World) SetHeroLevel(id EntityID, level int) bool {
+	r := w.Heroes.Row(id)
+	if r == -1 || w.heroTables == nil {
+		return false
+	}
+	curve := w.heroTables.Curve
+	if level < 1 {
+		level = 1
+	}
+	if level > len(curve) {
+		level = len(curve)
+	}
+	w.setXPTo(id, r, curve[level-1]) // curve[L-1] = XP threshold to be level L
 	return true
 }
 

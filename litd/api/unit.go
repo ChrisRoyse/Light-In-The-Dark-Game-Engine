@@ -538,6 +538,29 @@ func (u Unit) SuspendExperience(suspend bool) {
 	u.g.w.SuspendHeroXP(u.id, suspend)
 }
 
+// SetHeroXP sets the hero's experience to an absolute value, leveling it up as
+// needed. Experience never decreases (WC3 heroes do not de-level), and an
+// explicit set applies even while experience is suspended. No-op on an invalid
+// handle or a non-hero. JASS: SetHeroXP (showEyeCandy dropped — cosmetic).
+func (u Unit) SetHeroXP(xp int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetHeroXP")
+		return
+	}
+	u.g.w.SetHeroXP(u.id, int64(xp))
+}
+
+// SetHeroLevel raises the hero to the given level, granting the experience
+// needed to reach it (clamped to [1, max]; never lowers). No-op on an invalid
+// handle or a non-hero. JASS: SetHeroLevel (showEyeCandy dropped — cosmetic).
+func (u Unit) SetHeroLevel(level int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetHeroLevel")
+		return
+	}
+	u.g.w.SetHeroLevel(u.id, level)
+}
+
 // SkillPoints returns the hero's unspent skill points, or 0 if not a hero.
 // JASS: GetHeroSkillPoints.
 func (u Unit) SkillPoints() int {

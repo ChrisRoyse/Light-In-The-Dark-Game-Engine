@@ -52,6 +52,8 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SetAcquireRange", Package: "litd/api", Symbol: "Unit.SetAcquireRange", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetAgility", Package: "litd/api", Symbol: "Unit.SetAgility", GoSignature: "(v int)"},
 	{LuaName: "Unit_SetFacing", Package: "litd/api", Symbol: "Unit.SetFacing", GoSignature: "(a Angle)"},
+	{LuaName: "Unit_SetHeroLevel", Package: "litd/api", Symbol: "Unit.SetHeroLevel", GoSignature: "(level int)"},
+	{LuaName: "Unit_SetHeroXP", Package: "litd/api", Symbol: "Unit.SetHeroXP", GoSignature: "(xp int)"},
 	{LuaName: "Unit_SetIntelligence", Package: "litd/api", Symbol: "Unit.SetIntelligence", GoSignature: "(v int)"},
 	{LuaName: "Unit_SetInvulnerable", Package: "litd/api", Symbol: "Unit.SetInvulnerable", GoSignature: "(on bool)"},
 	{LuaName: "Unit_SetLife", Package: "litd/api", Symbol: "Unit.SetLife", GoSignature: "(v float64)"},
