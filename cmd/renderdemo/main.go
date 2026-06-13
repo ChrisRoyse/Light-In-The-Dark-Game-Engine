@@ -25,6 +25,7 @@ import (
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
@@ -54,9 +55,10 @@ type sceneSpec struct {
 
 type renderDemoDump struct {
 	litrender.FrameStats
-	Scene  string                  `json:"scene"`
-	Camera litrender.RTSCameraDump `json:"camera"`
-	OK     bool                    `json:"ok"`
+	Scene     string                  `json:"scene"`
+	Camera    litrender.RTSCameraDump `json:"camera"`
+	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
+	OK        bool                    `json:"ok"`
 }
 
 type resolutionFlag struct {
@@ -171,6 +173,30 @@ type commandRecordDump struct {
 	Data      uint16   `json:"data,omitempty"`
 }
 
+type selectionRuntimeDump struct {
+	Scenario string              `json:"scenario"`
+	Current  selectionCaseDump   `json:"current"`
+	Cases    []selectionCaseDump `json:"cases"`
+	OK       bool                `json:"ok"`
+	Errors   []string            `json:"errors,omitempty"`
+}
+
+type selectionCaseDump struct {
+	Name                  string        `json:"name"`
+	Gesture               string        `json:"gesture"`
+	Marquee               litinput.Rect `json:"marquee,omitempty"`
+	ClickX                float32       `json:"clickX,omitempty"`
+	ClickY                float32       `json:"clickY,omitempty"`
+	Selection             []uint32      `json:"selection"`
+	Expected              []uint32      `json:"expected"`
+	ActiveSubgroup        uint8         `json:"activeSubgroup,omitempty"`
+	ActiveSubgroupTypeID  uint16        `json:"activeSubgroupTypeID,omitempty"`
+	Candidates            uint16        `json:"candidates,omitempty"`
+	NormalPriority        uint16        `json:"normalPriority,omitempty"`
+	CommandRecordsEmitted uint16        `json:"commandRecordsEmitted"`
+	OK                    bool          `json:"ok"`
+}
+
 type resourceBarRuntimeDump struct {
 	Scenario string                    `json:"scenario"`
 	Current  resourceBarCaseDump       `json:"current"`
@@ -201,12 +227,14 @@ func main() {
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
+	autotestSelect := flag.Bool("autotest-select", false, "render the drag-select input FSV fixture")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
 	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
 	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
+	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
@@ -226,6 +254,7 @@ func main() {
 
 	var spec sceneSpec
 	var canvasFSV canvasDump
+	var selectionFSV *selectionRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -237,6 +266,16 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
 		}
+	} else if *autotestSelect {
+		buildLights(scene)
+		var err error
+		selectionFSV, err = buildSelectionFSV(scene, cameraRig, res, *selectScenario)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: selection: %v\n", err)
+			os.Exit(1)
+		}
+		spec = sceneSpec{name: "select-" + selectionFSV.Scenario, expected: expectedStats(0, 0, 0, 0, 0, 0)}
+		addStatsHUD(scene, spec)
 	} else {
 		buildLights(scene)
 		var err error
@@ -269,8 +308,13 @@ func main() {
 		var sceneDump renderDemoDump
 		if !*hudMode {
 			cameraDump := cameraRig.DumpWithLockProbeForViewport(91, 12, 45, res.W, res.H)
-			pass := stats == spec.expected && cameraDump.OK
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, OK: pass}
+			pass := cameraDump.OK
+			if selectionFSV != nil {
+				pass = pass && selectionFSV.OK
+			} else {
+				pass = pass && stats == spec.expected
+			}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -432,6 +476,313 @@ func addStatsHUD(scene *core.Node, spec sceneSpec) {
 	label := gui.NewLabel(text)
 	label.SetPosition(14, 28)
 	scene.Add(label)
+}
+
+type selectionFixtureEntity struct {
+	Name  string
+	World math32.Vector3
+	Item  litinput.Selectable
+}
+
+func buildSelectionFSV(scene *core.Node, cameraRig *litrender.RTSCamera, res resolutionFlag, scenario string) (*selectionRuntimeDump, error) {
+	scenario = strings.ToLower(strings.TrimSpace(scenario))
+	if scenario == "" {
+		scenario = "mixed"
+	}
+	switch scenario {
+	case "mixed", "cap", "typesel":
+	default:
+		return nil, fmt.Errorf("unknown select-scenario %q", scenario)
+	}
+
+	names := []string{"mixed", "cap", "lowprio-mixed", "lowprio-workers", "shift-toggle", "enemy-click", "typesel", "tab"}
+	dump := &selectionRuntimeDump{Scenario: scenario, OK: true}
+	var currentItems []selectionFixtureEntity
+	for _, name := range names {
+		items := selectionFixtureItems(name)
+		projectSelectionItems(cameraRig.Camera, res, items)
+		c := runSelectionCase(name, items)
+		dump.Cases = append(dump.Cases, c)
+		if !c.OK {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("%s selection mismatch", name))
+		}
+		if name == scenario {
+			dump.Current = c
+			currentItems = items
+		}
+	}
+	drawSelectionFixture(scene, currentItems, dump.Current)
+	return dump, nil
+}
+
+func selectionFixtureItems(name string) []selectionFixtureEntity {
+	switch name {
+	case "cap":
+		out := make([]selectionFixtureEntity, 20)
+		for i := range out {
+			x := float32(-950 + i*100)
+			out[i] = selectionFixtureEntity{
+				Name:  fmt.Sprintf("unit-%02d", i+1),
+				World: math32.Vector3{X: x, Y: 18, Z: 0},
+				Item:  selectionItem(uint32(i+1), 1, litinput.SelectUnit, 0, false),
+			}
+		}
+		return out
+	case "typesel", "tab":
+		return []selectionFixtureEntity{
+			{Name: "footman-a", World: math32.Vector3{X: -220, Y: 18, Z: 0}, Item: selectionItem(1, 7, litinput.SelectUnit, 0, false)},
+			{Name: "archer", World: math32.Vector3{X: -40, Y: 18, Z: 0}, Item: selectionItem(2, 8, litinput.SelectUnit, 0, false)},
+			{Name: "footman-b", World: math32.Vector3{X: 140, Y: 18, Z: 0}, Item: selectionItem(3, 7, litinput.SelectUnit, 0, false)},
+			{Name: "enemy-footman", World: math32.Vector3{X: 320, Y: 18, Z: 0}, Item: selectionItem(4, 7, litinput.SelectUnit, 1, false)},
+		}
+	case "lowprio-mixed", "lowprio-workers":
+		return []selectionFixtureEntity{
+			{Name: "worker-a", World: math32.Vector3{X: -160, Y: 18, Z: 0}, Item: selectionItem(1, 1, litinput.SelectUnit, 0, true)},
+			{Name: "worker-b", World: math32.Vector3{X: 0, Y: 18, Z: 0}, Item: selectionItem(2, 1, litinput.SelectUnit, 0, true)},
+			{Name: "footman", World: math32.Vector3{X: 160, Y: 18, Z: 0}, Item: selectionItem(3, 2, litinput.SelectUnit, 0, false)},
+		}
+	default:
+		return []selectionFixtureEntity{
+			{Name: "own-footman-a", World: math32.Vector3{X: -220, Y: 18, Z: 40}, Item: selectionItem(1, 10, litinput.SelectUnit, 0, false)},
+			{Name: "own-footman-b", World: math32.Vector3{X: -40, Y: 18, Z: 40}, Item: selectionItem(2, 10, litinput.SelectUnit, 0, false)},
+			{Name: "own-barracks", World: math32.Vector3{X: 160, Y: 35, Z: 40}, Item: selectionItem(3, 20, litinput.SelectBuilding, 0, false)},
+			{Name: "enemy-grunt", World: math32.Vector3{X: -20, Y: 18, Z: -180}, Item: selectionItem(4, 10, litinput.SelectUnit, 1, false)},
+			{Name: "enemy-tower", World: math32.Vector3{X: 240, Y: 35, Z: -180}, Item: selectionItem(5, 20, litinput.SelectBuilding, 1, false)},
+		}
+	}
+}
+
+func selectionItem(id uint32, typ uint16, class litinput.SelectClass, owner uint8, low bool) litinput.Selectable {
+	return litinput.Selectable{ID: sim.EntityID(id), TypeID: typ, Class: class, OwnerPlayer: owner, LowPriority: low}
+}
+
+func projectSelectionItems(cam interface {
+	Project(*math32.Vector3) *math32.Vector3
+}, res resolutionFlag, items []selectionFixtureEntity) {
+	for i := range items {
+		p := items[i].World
+		cam.Project(&p)
+		x := (p.X + 1) * 0.5 * float32(res.W)
+		y := (1 - p.Y) * 0.5 * float32(res.H)
+		half := float32(18)
+		if items[i].Item.Class == litinput.SelectBuilding {
+			half = 30
+		}
+		items[i].Item.Screen = litinput.Rect{MinX: x - half, MinY: y - half, MaxX: x + half, MaxY: y + half}
+	}
+}
+
+func runSelectionCase(name string, items []selectionFixtureEntity) selectionCaseDump {
+	selectables := selectionSelectables(items)
+	r := litinput.NewResolver(litinput.DefaultConfig(0))
+	var res litinput.Result
+	var gesture string
+	var marquee litinput.Rect
+	var clickX, clickY float32
+	var expected []sim.EntityID
+
+	switch name {
+	case "shift-toggle":
+		gesture = "shift-click toggle remove id=1, add id=3"
+		r.SetSelection([]sim.EntityID{1, 2}, selectables)
+		clickX, clickY = selectionCenter(items, 1)
+		_ = r.Click(selectables, clickX, clickY, litinput.Modifiers{Shift: true})
+		clickX, clickY = selectionCenter(items, 3)
+		res = r.Click(selectables, clickX, clickY, litinput.Modifiers{Shift: true})
+		expected = []sim.EntityID{2, 3}
+	case "enemy-click":
+		gesture = "enemy click view-only"
+		clickX, clickY = selectionCenter(items, 4)
+		res = r.Click(selectables, clickX, clickY, litinput.Modifiers{})
+		expected = []sim.EntityID{4}
+	case "typesel":
+		gesture = "double-click type-select"
+		clickX, clickY = selectionCenter(items, 1)
+		res = r.Click(selectables, clickX, clickY, litinput.Modifiers{Double: true})
+		expected = []sim.EntityID{1, 3}
+	case "tab":
+		gesture = "tab subgroup cycle"
+		r.SetSelection([]sim.EntityID{1, 2, 3}, selectables)
+		res = r.Tab(selectables)
+		expected = []sim.EntityID{1, 2, 3}
+	case "lowprio-mixed":
+		gesture = "marquee workers plus normal unit"
+		marquee = selectionBounds(items)
+		res = r.Drag(selectables, marquee, litinput.Modifiers{})
+		expected = []sim.EntityID{3}
+	case "lowprio-workers":
+		gesture = "marquee workers only"
+		workerItems := items[:2]
+		selectables = selectionSelectables(workerItems)
+		marquee = selectionBounds(workerItems)
+		res = r.Drag(selectables, marquee, litinput.Modifiers{})
+		expected = []sim.EntityID{1, 2}
+	case "cap":
+		gesture = "20-unit marquee cap"
+		marquee = selectionBounds(items)
+		res = r.Drag(selectables, marquee, litinput.Modifiers{})
+		expected = []sim.EntityID{10, 11, 9, 12, 8, 13, 7, 14, 15, 6, 5, 16}
+	default:
+		gesture = "mixed own units/buildings/enemies marquee"
+		marquee = selectionBounds(items)
+		res = r.Drag(selectables, marquee, litinput.Modifiers{})
+		expected = []sim.EntityID{2, 1}
+	}
+
+	out := selectionCaseDump{
+		Name:                  name,
+		Gesture:               gesture,
+		Marquee:               marquee,
+		ClickX:                clickX,
+		ClickY:                clickY,
+		Selection:             selectionCommandIDs(selectionIDs(res.Selection)),
+		Expected:              selectionCommandIDs(expected),
+		ActiveSubgroup:        res.ActiveSubgroup,
+		ActiveSubgroupTypeID:  res.ActiveSubgroupTypeID,
+		Candidates:            res.Candidates,
+		NormalPriority:        res.NormalPriority,
+		CommandRecordsEmitted: res.CommandRecordsEmitted,
+	}
+	out.OK = sameEntityIDs(selectionIDs(res.Selection), expected)
+	if name == "tab" {
+		out.OK = out.OK && res.ActiveSubgroup == 1 && res.ActiveSubgroupTypeID == 8
+	}
+	return out
+}
+
+func selectionSelectables(items []selectionFixtureEntity) []litinput.Selectable {
+	out := make([]litinput.Selectable, len(items))
+	for i := range items {
+		out[i] = items[i].Item
+	}
+	return out
+}
+
+func selectionBounds(items []selectionFixtureEntity) litinput.Rect {
+	if len(items) == 0 {
+		return litinput.Rect{}
+	}
+	r := items[0].Item.Screen
+	for i := 1; i < len(items); i++ {
+		s := items[i].Item.Screen
+		if s.MinX < r.MinX {
+			r.MinX = s.MinX
+		}
+		if s.MinY < r.MinY {
+			r.MinY = s.MinY
+		}
+		if s.MaxX > r.MaxX {
+			r.MaxX = s.MaxX
+		}
+		if s.MaxY > r.MaxY {
+			r.MaxY = s.MaxY
+		}
+	}
+	return r
+}
+
+func selectionCenter(items []selectionFixtureEntity, id sim.EntityID) (float32, float32) {
+	for i := range items {
+		if items[i].Item.ID == id {
+			return items[i].Item.Screen.Center()
+		}
+	}
+	return 0, 0
+}
+
+func selectionIDs(s litinput.Selection) []sim.EntityID {
+	return s.IDs[:s.Count]
+}
+
+func selectionCommandIDs(ids []sim.EntityID) []uint32 {
+	out := make([]uint32, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, uint32(id))
+	}
+	return out
+}
+
+func sameEntityIDs(got, want []sim.EntityID) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func drawSelectionFixture(scene *core.Node, items []selectionFixtureEntity, current selectionCaseDump) {
+	groundMat := material.NewStandard(&math32.Color{R: 0.18, G: 0.37, B: 0.23})
+	ground := graphic.NewMesh(geometry.NewPlane(6400, 6400), groundMat)
+	ground.SetRotationX(-math32.Pi / 2)
+	scene.Add(ground)
+
+	ownMat := material.NewStandard(&math32.Color{R: 0.18, G: 0.42, B: 0.92})
+	workerMat := material.NewStandard(&math32.Color{R: 0.22, G: 0.62, B: 0.58})
+	buildingMat := material.NewStandard(&math32.Color{R: 0.45, G: 0.52, B: 0.62})
+	enemyMat := material.NewStandard(&math32.Color{R: 0.88, G: 0.24, B: 0.20})
+	selectedMat := material.NewStandard(&math32.Color{R: 1.0, G: 0.82, B: 0.18})
+
+	for _, ent := range items {
+		mat := ownMat
+		if ent.Item.OwnerPlayer != 0 {
+			mat = enemyMat
+		} else if ent.Item.Class == litinput.SelectBuilding {
+			mat = buildingMat
+		} else if ent.Item.LowPriority {
+			mat = workerMat
+		}
+		size := float32(62)
+		height := float32(36)
+		if ent.Item.Class == litinput.SelectBuilding {
+			size = 118
+			height = 72
+		}
+		mesh := graphic.NewMesh(geometry.NewBox(size, height, size), mat)
+		mesh.SetPosition(ent.World.X, height*0.5, ent.World.Z)
+		scene.Add(mesh)
+		if selectionCaseContains(current.Selection, uint32(ent.Item.ID)) {
+			ring := graphic.NewMesh(geometry.NewTorus(float64(size*0.64), 4, 28, 8, math32.Pi*2), selectedMat)
+			ring.SetRotationX(math32.Pi / 2)
+			ring.SetPosition(ent.World.X, 3, ent.World.Z)
+			scene.Add(ring)
+		}
+	}
+
+	if current.Marquee.MaxX != 0 || current.Marquee.MaxY != 0 {
+		drawSelectionMarquee(scene, current.Marquee)
+	}
+}
+
+func drawSelectionMarquee(scene *core.Node, rect litinput.Rect) {
+	rect = litinput.NormalizeRect(rect)
+	color := math32.Color4{R: 0.92, G: 0.84, B: 0.22, A: 0.90}
+	thick := float32(3)
+	add := func(x, y, w, h float32) {
+		p := gui.NewPanel(w, h)
+		p.SetColor4(&color)
+		p.SetPosition(x, y)
+		scene.Add(p)
+	}
+	w := rect.MaxX - rect.MinX
+	h := rect.MaxY - rect.MinY
+	add(rect.MinX, rect.MinY, w, thick)
+	add(rect.MinX, rect.MaxY-thick, w, thick)
+	add(rect.MinX, rect.MinY, thick, h)
+	add(rect.MaxX-thick, rect.MinY, thick, h)
+}
+
+func selectionCaseContains(ids []uint32, id uint32) bool {
+	for _, got := range ids {
+		if got == id {
+			return true
+		}
+	}
+	return false
 }
 
 func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, localeTag string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
