@@ -1,6 +1,7 @@
 package litd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
@@ -211,6 +212,85 @@ func TestMissilePoolExhaustion(t *testing.T) {
 	if a1 != a2 || b1 != b2 || c1 != c2 {
 		t.Fatalf("pool exhaustion nondeterministic across runs")
 	}
+}
+
+func TestMissileNamedGuidanceImpactIDsFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 64, Projectiles: 8})
+	g := newGame(w)
+	launcher, _ := unitAt(t, w, g, 0, 0, 0)
+
+	expired, impacts := 0, 0
+	g.OnEvent(EventMissileExpired, func(Event) { expired++ })
+	g.OnEvent(EventMissileImpact, func(Event) { impacts++ })
+
+	before := apiMissileRows(w)
+	m := g.SpawnMissile(MissileOptions{
+		Source: launcher, Origin: Vec2{},
+		GuidanceID: MissileGuidancePointID, ImpactBehaviorID: MissileImpactExpireID,
+		Point: Vec2{X: 100, Y: 0}, Speed: 200, Acceleration: 5, Damage: 50,
+	})
+	afterSpawn := apiMissileDump(w, m)
+	w.Step()
+	afterStep := apiMissileDump(w, m)
+	t.Logf("FSV API missile named IDs BEFORE: rows=%d", before)
+	t.Logf("FSV API missile named IDs AFTER spawn: %s", afterSpawn)
+	t.Logf("FSV API missile named IDs AFTER step:  expired=%d impacts=%d %s", expired, impacts, afterStep)
+
+	if !m.Valid() && expired == 0 {
+		t.Fatal("named-ID missile failed before the verification step")
+	}
+	if expired != 1 || impacts != 0 || m.Valid() {
+		t.Fatalf("expire impact behavior wrong: expired=%d impacts=%d valid=%v", expired, impacts, m.Valid())
+	}
+}
+
+func TestMissileUnknownNamedIDsFailClosedFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 64, Projectiles: 8})
+	g := newGame(w)
+	g.SetDebug(true)
+	var reports []string
+	g.OnInvalidHandle(func(s string) { reports = append(reports, s) })
+	launcher, _ := unitAt(t, w, g, 0, 0, 0)
+
+	before := apiMissileRows(w)
+	reportsBefore := append([]string(nil), reports...)
+	badGuidance := g.SpawnMissile(MissileOptions{
+		Source: launcher, Origin: Vec2{},
+		GuidanceID: "spiral", Point: Vec2{X: 100, Y: 0}, Speed: 100,
+	})
+	afterGuidance := apiMissileRows(w)
+	reportsAfterGuidance := append([]string(nil), reports...)
+	badImpact := g.SpawnMissile(MissileOptions{
+		Source: launcher, Origin: Vec2{},
+		GuidanceID: MissileGuidancePointID, ImpactBehaviorID: "fork-now",
+		Point: Vec2{X: 100, Y: 0}, Speed: 100,
+	})
+	afterImpact := apiMissileRows(w)
+	reportsAfterImpact := append([]string(nil), reports...)
+	t.Logf("FSV API missile unknown IDs BEFORE rows=%d reports=%v", before, reportsBefore)
+	t.Logf("FSV API missile unknown guidance AFTER: valid=%v rows=%d reports=%v", badGuidance.Valid(), afterGuidance, reportsAfterGuidance)
+	t.Logf("FSV API missile unknown impact AFTER:   valid=%v rows=%d reports=%v", badImpact.Valid(), afterImpact, reportsAfterImpact)
+
+	if badGuidance.Valid() || badImpact.Valid() || afterGuidance != before || afterImpact != before {
+		t.Fatalf("unknown IDs must fail closed without row mutation: before=%d afterGuidance=%d afterImpact=%d", before, afterGuidance, afterImpact)
+	}
+	if len(reportsAfterImpact) != 2 ||
+		!containsStr(reportsAfterImpact[0], "unknown guidance ID") ||
+		!containsStr(reportsAfterImpact[1], "unknown impact behavior ID") {
+		t.Fatalf("unexpected debug reports: %v", reportsAfterImpact)
+	}
+}
+
+func apiMissileRows(w *sim.World) int32 { return w.Missiles.Count() }
+
+func apiMissileDump(w *sim.World, m Missile) string {
+	r := w.Missiles.Row(m.id)
+	if r == -1 {
+		return "row=<none>"
+	}
+	return fmt.Sprintf("valid=%v row=%d speed=%d accel=%d guid=%d impact=%d hit=%04x rows=%d",
+		m.Valid(), r, int64(w.Missiles.Speed[r]), int64(w.Missiles.Accel[r]),
+		w.Missiles.GuidanceID[r], w.Missiles.ImpactID[r], w.Missiles.HitMask[r], w.Missiles.Count())
 }
 
 func containsStr(s, sub string) bool {

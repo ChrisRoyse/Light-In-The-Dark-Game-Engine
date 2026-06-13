@@ -29,24 +29,52 @@ const (
 	GuidanceLinear
 )
 
+const (
+	MissileGuidanceHomingID = "homing"
+	MissileGuidancePointID  = "point"
+	MissileGuidanceLinearID = "linear"
+)
+
+const (
+	MissileImpactDeliverID  = "deliver"
+	MissileImpactDetonateID = "detonate"
+	MissileImpactPierceID   = "pierce"
+	MissileImpactExpireID   = "expire"
+)
+
+// MissileHitMask filters linear skillshot collision candidates. A zero
+// mask preserves the historical default: enemies only, with no
+// ground/air/structure class filter.
+type MissileHitMask uint16
+
+const (
+	MissileHitGround    MissileHitMask = MissileHitMask(sim.MissileHitGround)
+	MissileHitAir       MissileHitMask = MissileHitMask(sim.MissileHitAir)
+	MissileHitStructure MissileHitMask = MissileHitMask(sim.MissileHitStructure)
+	MissileHitEnemy     MissileHitMask = MissileHitMask(sim.MissileHitEnemy)
+	MissileHitAlly      MissileHitMask = MissileHitMask(sim.MissileHitAlly)
+)
+
 // MissileOptions parameterizes SpawnMissile (R-API-3 options struct).
 // Zero options spawn nothing useful — Source, Origin, Speed, and a
-// guidance-appropriate aim are the meaningful inputs. Unsupported WC3
-// knobs (acceleration, hit-mask, named guidance/impact registries) are
-// deferred to follow-up issues and are not yet fields here.
+// guidance-appropriate aim are the meaningful inputs.
 type MissileOptions struct {
 	Source Unit // the launcher (its team scopes a linear skillshot's foes)
 	Origin Vec2 // spawn position
 
-	Guidance  Guidance
-	Target    Unit  // GuidanceHoming: the unit to track
-	Point     Vec2  // GuidancePoint: the destination
-	Direction Angle // GuidanceLinear: the flight heading
-	AoE       bool  // GuidanceHoming: detonate at the last point if the target dies
+	Guidance         Guidance
+	GuidanceID       string // optional built-in registry ID: homing|point|linear
+	ImpactBehaviorID string // optional built-in registry ID: deliver|detonate|pierce|expire
+	Target           Unit   // GuidanceHoming: the unit to track
+	Point            Vec2   // GuidancePoint: the destination
+	Direction        Angle  // GuidanceLinear: the flight heading
+	AoE              bool   // GuidanceHoming: detonate at the last point if the target dies
 
-	Speed  float64 // world units per tick (> 0, required)
-	Arc    float64 // presentation arc height (render-only)
-	Damage float64 // payload: damage delivered on impact
+	Speed        float64 // world units per tick (> 0, required)
+	Acceleration float64 // non-negative world units per tick^2
+	Arc          float64 // presentation arc height (render-only)
+	Damage       float64 // payload: damage delivered on impact
+	HitMask      MissileHitMask
 
 	Range  float64 // GuidanceLinear: travel before expiry (> 0)
 	Pierce int     // GuidanceLinear: max hits (>= 1)
@@ -62,21 +90,49 @@ func (g *Game) SpawnMissile(o MissileOptions) Missile {
 		return Missile{}
 	}
 	spec := sim.MissileSpec{
-		Pos:    vec(o.Origin),
-		Source: o.Source.id,
-		Speed:  fromFloat(o.Speed),
-		Arc:    fromFloat(o.Arc),
-		Packet: sim.DamagePacket{Source: o.Source.id, Amount: fromFloat(o.Damage)},
+		Pos:     vec(o.Origin),
+		Source:  o.Source.id,
+		Speed:   fromFloat(o.Speed),
+		Accel:   fromFloat(o.Acceleration),
+		Arc:     fromFloat(o.Arc),
+		HitMask: uint16(o.HitMask),
+		Packet:  sim.DamagePacket{Source: o.Source.id, Amount: fromFloat(o.Damage)},
+	}
+	if o.GuidanceID != "" {
+		guidance, id, ok := missileGuidanceFromID(o.GuidanceID)
+		if !ok {
+			g.reportInvalid("SpawnMissile (unknown guidance ID)")
+			return Missile{}
+		}
+		o.Guidance = guidance
+		spec.GuidanceID = id
+	}
+	if o.ImpactBehaviorID != "" {
+		id, ok := missileImpactFromID(o.ImpactBehaviorID)
+		if !ok {
+			g.reportInvalid("SpawnMissile (unknown impact behavior ID)")
+			return Missile{}
+		}
+		spec.ImpactID = id
 	}
 	switch o.Guidance {
 	case GuidanceHoming:
+		if spec.GuidanceID == 0 {
+			spec.GuidanceID = sim.MissileGuidanceHoming
+		}
 		spec.Target = o.Target.id
 		if o.AoE {
 			spec.Flags |= sim.MissileAoE
 		}
 	case GuidancePoint:
+		if spec.GuidanceID == 0 {
+			spec.GuidanceID = sim.MissileGuidancePoint
+		}
 		spec.Point = vec(o.Point)
 	case GuidanceLinear:
+		if spec.GuidanceID == 0 {
+			spec.GuidanceID = sim.MissileGuidanceLinear
+		}
 		spec.Flags |= sim.MissileLinear
 		spec.Dir = dirFromAngle(o.Direction)
 		spec.Range = fromFloat(o.Range)
@@ -91,6 +147,34 @@ func (g *Game) SpawnMissile(o MissileOptions) Missile {
 		return Missile{}
 	}
 	return Missile{id: id, g: g}
+}
+
+func missileGuidanceFromID(id string) (Guidance, uint16, bool) {
+	switch id {
+	case MissileGuidanceHomingID:
+		return GuidanceHoming, sim.MissileGuidanceHoming, true
+	case MissileGuidancePointID, "ballistic":
+		return GuidancePoint, sim.MissileGuidancePoint, true
+	case MissileGuidanceLinearID:
+		return GuidanceLinear, sim.MissileGuidanceLinear, true
+	default:
+		return 0, 0, false
+	}
+}
+
+func missileImpactFromID(id string) (uint16, bool) {
+	switch id {
+	case MissileImpactDeliverID:
+		return sim.MissileImpactDeliver, true
+	case MissileImpactDetonateID:
+		return sim.MissileImpactDetonate, true
+	case MissileImpactPierceID:
+		return sim.MissileImpactPierce, true
+	case MissileImpactExpireID:
+		return sim.MissileImpactExpire, true
+	default:
+		return 0, false
+	}
 }
 
 // Position returns the missile's current world position, or the zero

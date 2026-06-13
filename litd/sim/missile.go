@@ -28,15 +28,19 @@ import (
 // payload per hit (per-mille Decay between hits) until Pierce hits or
 // range is spent.
 type MissileSpec struct {
-	Pos     fixed.Vec2
-	Source  EntityID
-	Target  EntityID
-	Point   fixed.Vec2
-	Speed   fixed.F64 // world units per tick, must be positive
-	Arc     fixed.F64
-	Flags   uint8
-	Payload data.EffectList
-	Packet  DamagePacket
+	Pos        fixed.Vec2
+	Source     EntityID
+	Target     EntityID
+	Point      fixed.Vec2
+	Speed      fixed.F64 // world units per tick, must be positive
+	Accel      fixed.F64 // world units per tick^2, non-negative; applied after each tick
+	Arc        fixed.F64
+	Flags      uint8
+	HitMask    uint16 // MissileHit* bits; 0 = enemy-only, no class filter
+	GuidanceID uint16 // MissileGuidance*; 0 infers from Target/Point/Linear
+	ImpactID   uint16 // MissileImpact*; 0 infers from flags/linear fields
+	Payload    data.EffectList
+	Packet     DamagePacket
 
 	// Linear skillshot fields (Flags&MissileLinear).
 	Dir    fixed.Vec2 // flight direction (need not be normalized; SpawnMissile normalizes)
@@ -70,18 +74,43 @@ const dirIntScale = 1024
 // (0, false) on pool exhaustion or a bad spec — NEVER a silent
 // fire-as-instant fallback (ecs §2).
 func (w *World) SpawnMissile(m MissileSpec) (EntityID, bool) {
-	if m.Speed <= 0 {
+	if m.Speed <= 0 || m.Accel < 0 {
 		return 0, false
 	}
+	guidanceID, ok := normalizeMissileGuidance(m)
+	if !ok {
+		return 0, false
+	}
+	impactID, ok := normalizeMissileImpact(m, guidanceID)
+	if !ok {
+		return 0, false
+	}
+	hitMask, ok := normalizeMissileHitMask(m.HitMask)
+	if !ok {
+		return 0, false
+	}
+	if impactID == MissileImpactDetonate {
+		m.Flags |= MissileAoE
+	}
 	var dir fixed.Vec2
-	if m.Flags&MissileLinear != 0 {
+	switch guidanceID {
+	case MissileGuidanceLinear:
+		if m.Flags&MissileLinear == 0 {
+			return 0, false
+		}
 		// skillshot: validated independently of a guide target
 		dir = unitStep(m.Dir, fixed.FromInt(1)) // normalize to unit length
 		if dir == (fixed.Vec2{}) || m.Range <= 0 || m.Pierce < 1 {
 			return 0, false // degenerate skillshot: deterministic failure
 		}
-	} else if m.Target != 0 && !w.Ents.Alive(m.Target) {
-		return 0, false // launch at a corpse resolves to nothing
+	case MissileGuidanceHoming:
+		if m.Flags&MissileLinear != 0 || m.Target == 0 || !w.Ents.Alive(m.Target) {
+			return 0, false // launch at a corpse resolves to nothing
+		}
+	case MissileGuidancePoint:
+		if m.Flags&MissileLinear != 0 || m.Target != 0 {
+			return 0, false
+		}
 	}
 	if int(w.Missiles.Count()) >= w.caps.Projectiles {
 		return 0, false // pool exhausted: creation fails, like WC3 handle limits
@@ -102,8 +131,12 @@ func (w *World) SpawnMissile(m MissileSpec) (EntityID, bool) {
 	s := w.Missiles
 	r := s.Row(id)
 	s.Speed[r] = m.Speed
+	s.Accel[r] = m.Accel
 	s.Arc[r] = m.Arc
 	s.Flags[r] = m.Flags
+	s.HitMask[r] = hitMask
+	s.GuidanceID[r] = guidanceID
+	s.ImpactID[r] = impactID
 	s.GuideEnt[r] = m.Target
 	s.GuidePt[r] = m.Point
 	if m.Target != 0 {
@@ -127,6 +160,58 @@ func (w *World) SpawnMissile(m MissileSpec) (EntityID, bool) {
 		s.GuideEnt[r] = 0
 	}
 	return id, true
+}
+
+func normalizeMissileGuidance(m MissileSpec) (uint16, bool) {
+	if m.GuidanceID != MissileGuidanceInfer {
+		switch m.GuidanceID {
+		case MissileGuidanceHoming, MissileGuidancePoint, MissileGuidanceLinear:
+			return m.GuidanceID, true
+		default:
+			return 0, false
+		}
+	}
+	if m.Flags&MissileLinear != 0 {
+		return MissileGuidanceLinear, true
+	}
+	if m.Target != 0 {
+		return MissileGuidanceHoming, true
+	}
+	return MissileGuidancePoint, true
+}
+
+func normalizeMissileImpact(m MissileSpec, guidanceID uint16) (uint16, bool) {
+	if m.ImpactID != MissileImpactInfer {
+		switch m.ImpactID {
+		case MissileImpactDeliver, MissileImpactDetonate, MissileImpactPierce, MissileImpactExpire:
+			if m.ImpactID == MissileImpactPierce && guidanceID != MissileGuidanceLinear {
+				return 0, false
+			}
+			return m.ImpactID, true
+		default:
+			return 0, false
+		}
+	}
+	if guidanceID == MissileGuidanceLinear && m.Pierce > 1 {
+		return MissileImpactPierce, true
+	}
+	if m.Flags&MissileAoE != 0 {
+		return MissileImpactDetonate, true
+	}
+	return MissileImpactDeliver, true
+}
+
+func normalizeMissileHitMask(mask uint16) (uint16, bool) {
+	if mask == 0 {
+		return MissileDefaultHitMask, true
+	}
+	if mask&^MissileHitAllMask != 0 {
+		return 0, false
+	}
+	if mask&MissileHitRelationMask == 0 {
+		mask |= MissileHitEnemy
+	}
+	return mask, true
 }
 
 // missileSystem advances every missile one tick (movement-phase
@@ -180,6 +265,7 @@ func (w *World) missileSystem() {
 			continue
 		}
 		w.Transforms.Pos[tr] = pos.Add(step)
+		w.accelerateMissile(r)
 	}
 }
 
@@ -187,6 +273,10 @@ func (w *World) missileSystem() {
 // the missile for standard deferred removal.
 func (w *World) impactMissile(id EntityID, r int32, at fixed.Vec2) {
 	s := w.Missiles
+	if s.ImpactID[r] == MissileImpactExpire {
+		w.expireMissileAt(id, at)
+		return
+	}
 	tgt := s.GuideEnt[r]
 	if tgt != 0 && !w.Ents.Alive(tgt) {
 		tgt = 0
@@ -206,6 +296,14 @@ func (w *World) impactMissile(id EntityID, r int32, at fixed.Vec2) {
 		w.OnMissileImpact(w.tick, id, at, tgt)
 	}
 	w.Emit(Event{Kind: EvMissileImpact, Src: id, Dst: tgt})
+	w.KillUnit(id)
+}
+
+func (w *World) expireMissileAt(id EntityID, at fixed.Vec2) {
+	if w.OnMissileExpire != nil {
+		w.OnMissileExpire(w.tick, id, at)
+	}
+	w.Emit(Event{Kind: EvMissileExpired, Src: id})
 	w.KillUnit(id)
 }
 
@@ -239,19 +337,19 @@ func (w *World) advanceLinear(id EntityID, r int32) {
 		l := int64(fixed.SqrtU64(uint64(l2)))
 		stepL := (int64(step) * l) >> 32 // window upper bound in along-space
 		radiusSqL2 := int64(missileHitRadius) * int64(missileHitRadius) * l2
-		w.linearHits(id, r, pos, dx, dy, stepL, radiusSqL2)
+		if w.linearHits(id, r, pos, dx, dy, stepL, radiusSqL2) {
+			return
+		}
 	}
 
 	// advance the body and spend range; die when pierce or range is out.
 	w.Transforms.Pos[tr] = pos.Add(dir.Scale(step))
 	s.RangeLeft[r] = s.RangeLeft[r].Sub(step)
 	if s.PierceLeft[r] <= 0 || s.RangeLeft[r] <= 0 {
-		if w.OnMissileExpire != nil {
-			w.OnMissileExpire(w.tick, id, w.Transforms.Pos[tr])
-		}
-		w.Emit(Event{Kind: EvMissileExpired, Src: id})
-		w.KillUnit(id)
+		w.expireMissileAt(id, w.Transforms.Pos[tr])
+		return
 	}
+	w.accelerateMissile(r)
 }
 
 // linearHits resolves the foes this advance crosses, in (along, index)
@@ -259,11 +357,11 @@ func (w *World) advanceLinear(id EntityID, r int32) {
 // spent. Foes are units on a team different from the live launcher's;
 // if the launcher is gone the missile classifies nothing (fail-closed)
 // and flies through. Zero alloc.
-func (w *World) linearHits(id EntityID, r int32, pos fixed.Vec2, dx, dy, stepL, radiusSqL2 int64) {
+func (w *World) linearHits(id EntityID, r int32, pos fixed.Vec2, dx, dy, stepL, radiusSqL2 int64) bool {
 	s := w.Missiles
 	sor := w.Owners.Row(s.Source[r])
 	if sor == -1 {
-		return // launcher dead/unowned: no foe team to test against
+		return false // launcher dead/unowned: no foe team to test against
 	}
 	team := w.Owners.Team[sor]
 	radius := fixed.FromInt(missileHitRadius)
@@ -290,12 +388,11 @@ func (w *World) linearHits(id EntityID, r int32, pos fixed.Vec2, dx, dy, stepL, 
 					if cid == id || !w.Ents.Alive(cid) {
 						continue
 					}
-					cor := w.Owners.Row(cid)
-					if cor == -1 || w.Owners.Team[cor] == team {
-						continue
-					}
 					if w.Healths.Row(cid) == -1 {
 						continue // not damageable
+					}
+					if !w.missileHitAllowed(cid, team, s.HitMask[r]) {
+						continue
 					}
 					ctr := w.Transforms.Row(cid)
 					if ctr == -1 {
@@ -322,7 +419,14 @@ func (w *World) linearHits(id EntityID, r int32, pos fixed.Vec2, dx, dy, stepL, 
 			}
 		}
 		if !found {
-			return
+			return false
+		}
+		if s.ImpactID[r] == MissileImpactExpire {
+			if tr := w.Transforms.Row(id); tr != -1 {
+				w.Transforms.Pos[tr] = bestAt
+			}
+			w.expireMissileAt(id, bestAt)
+			return true
 		}
 		w.deliverLinearHit(id, r, best, bestAt)
 		lastAlong, lastIdx = bestAlong, bestIdx
@@ -331,6 +435,7 @@ func (w *World) linearHits(id EntityID, r int32, pos fixed.Vec2, dx, dy, stepL, 
 			s.Packet[r].Amount = scalePermille(s.Packet[r].Amount, s.Decay[r])
 		}
 	}
+	return false
 }
 
 // deliverLinearHit applies the (already decay-scaled) payload to one
@@ -350,6 +455,52 @@ func (w *World) deliverLinearHit(id EntityID, r int32, victim EntityID, at fixed
 		w.OnMissileImpact(w.tick, id, at, victim)
 	}
 	w.Emit(Event{Kind: EvMissileImpact, Src: id, Dst: victim})
+}
+
+func (w *World) missileHitAllowed(target EntityID, sourceTeam uint8, mask uint16) bool {
+	or := w.Owners.Row(target)
+	if or == -1 {
+		return false
+	}
+	sameTeam := w.Owners.Team[or] == sourceTeam
+	if sameTeam {
+		if mask&MissileHitAlly == 0 {
+			return false
+		}
+	} else if mask&MissileHitEnemy == 0 {
+		return false
+	}
+	classMask := mask & MissileHitClassMask
+	if classMask == 0 {
+		return true
+	}
+	return w.missileTargetClass(target)&classMask != 0
+}
+
+func (w *World) missileTargetClass(target EntityID) uint16 {
+	if cr := w.Collisions.Row(target); cr != -1 {
+		flags := w.Collisions.PathFlags[cr]
+		if flags&PathBuild != 0 {
+			return MissileHitStructure
+		}
+		if flags&PathAir != 0 {
+			return MissileHitAir
+		}
+		if flags&PathGround != 0 {
+			return MissileHitGround
+		}
+	}
+	if ur := w.UnitTypes.Row(target); ur != -1 && int(w.UnitTypes.TypeID[ur]) < len(w.unitDefs) {
+		def := &w.unitDefs[w.UnitTypes.TypeID[ur]]
+		if def.Footprint > 0 || def.BuildTicks > 0 {
+			return MissileHitStructure
+		}
+		if def.Pathing == data.PathingAir {
+			return MissileHitAir
+		}
+		return MissileHitGround
+	}
+	return MissileHitGround
 }
 
 // DetonateMissile delivers a missile's payload at its current position
@@ -406,11 +557,30 @@ func (w *World) SetMissileTarget(id, target EntityID) bool {
 	s.Flags[r] &^= MissileLinear // a retargeted missile is guided, not a skillshot
 	s.GuideEnt[r] = target
 	if target != 0 {
+		s.GuidanceID[r] = MissileGuidanceHoming
 		if tr := w.Transforms.Row(target); tr != -1 {
 			s.GuidePt[r] = w.Transforms.Pos[tr]
 		}
+	} else {
+		s.GuidanceID[r] = MissileGuidancePoint
+	}
+	if s.ImpactID[r] == MissileImpactPierce {
+		s.ImpactID[r] = MissileImpactDeliver
 	}
 	return true
+}
+
+func (w *World) accelerateMissile(r int32) {
+	accel := w.Missiles.Accel[r]
+	if accel == 0 {
+		return
+	}
+	speed := w.Missiles.Speed[r]
+	if fixed.MaxF64.Sub(speed) < accel {
+		w.Missiles.Speed[r] = fixed.MaxF64
+		return
+	}
+	w.Missiles.Speed[r] = speed.Add(accel)
 }
 
 // stepF64 clamps the advance distance to the remaining range.

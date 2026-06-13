@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v16: missile rows grow Accel, HitMask, GuidanceID, ImpactID after
+// Speed/Flags (#336).
 // v15: runtime ability definitions appended after ability field
 // overrides (#355); capability table includes RuntimeAbilityDefs.
 // v14: ability field override rows + free-list order appended after
@@ -70,7 +72,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 15
+const SaveFormatVersion uint32 = 16
 
 // ---- little-endian writer / reader ----
 
@@ -407,8 +409,12 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	for i := int32(0); i < ms.Count(); i++ {
 		s.ent(ms.Entity[i])
 		s.f64(ms.Speed[i])
+		s.f64(ms.Accel[i])
 		s.f64(ms.Arc[i])
 		s.u8(ms.Flags[i])
+		s.u16(ms.HitMask[i])
+		s.u16(ms.GuidanceID[i])
+		s.u16(ms.ImpactID[i])
 		s.ent(ms.GuideEnt[i])
 		s.vec2(ms.GuidePt[i])
 		s.u16(ms.Payload[i].Off)
@@ -757,8 +763,12 @@ type decodedSave struct {
 	msN      int32
 	msE      []EntityID
 	msSpeed  []fixed.F64
+	msAccel  []fixed.F64
 	msArc    []fixed.F64
 	msFlags  []uint8
+	msHit    []uint16
+	msGuid   []uint16
+	msImpact []uint16
 	msGE     []EntityID
 	msGP     []fixed.Vec2
 	msPay    []data.EffectList
@@ -1287,8 +1297,12 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.msN = n
 	d.msE = make([]EntityID, n)
 	d.msSpeed = make([]fixed.F64, n)
+	d.msAccel = make([]fixed.F64, n)
 	d.msArc = make([]fixed.F64, n)
 	d.msFlags = make([]uint8, n)
+	d.msHit = make([]uint16, n)
+	d.msGuid = make([]uint16, n)
+	d.msImpact = make([]uint16, n)
 	d.msGE = make([]EntityID, n)
 	d.msGP = make([]fixed.Vec2, n)
 	d.msPay = make([]data.EffectList, n)
@@ -1302,8 +1316,12 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	for i := int32(0); i < n; i++ {
 		d.msE[i] = r.ent()
 		d.msSpeed[i] = r.f64()
+		d.msAccel[i] = r.f64()
 		d.msArc[i] = r.f64()
 		d.msFlags[i] = r.u8()
+		d.msHit[i] = r.u16()
+		d.msGuid[i] = r.u16()
+		d.msImpact[i] = r.u16()
 		d.msGE[i] = r.ent()
 		d.msGP[i] = r.vec2()
 		d.msPay[i] = data.EffectList{Off: r.u16(), Len: r.u16()}
@@ -2345,8 +2363,12 @@ func applySave(d *decodedSave, w *World) {
 	for i := int32(0); i < d.msN; i++ {
 		ms.Entity[i] = d.msE[i]
 		ms.Speed[i] = d.msSpeed[i]
+		ms.Accel[i] = d.msAccel[i]
 		ms.Arc[i] = d.msArc[i]
 		ms.Flags[i] = d.msFlags[i]
+		ms.HitMask[i] = d.msHit[i]
+		ms.GuidanceID[i] = d.msGuid[i]
+		ms.ImpactID[i] = d.msImpact[i]
 		ms.GuideEnt[i] = d.msGE[i]
 		ms.GuidePt[i] = d.msGP[i]
 		ms.Payload[i] = d.msPay[i]

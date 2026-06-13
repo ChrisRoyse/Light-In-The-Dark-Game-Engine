@@ -535,7 +535,7 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Invents.rowOf) * rowOfB
 	n += len(w.Orders.Kind) * (1 + 1 + 4 + 16 + 4 + 4)
 	n += len(w.Orders.rowOf) * rowOfB
-	n += cap(w.Missiles.Entity) * 120 // MissileStore columns
+	n += cap(w.Missiles.Entity) * 138 // MissileStore columns
 	n += len(w.Effects.ModelID) * (2 + 8 + 4 + 4 + 4)
 	n += len(w.Effects.rowOf) * rowOfB
 	n += w.Buffs.Cap() * 24    // BuffInstance + free/live bookkeeping

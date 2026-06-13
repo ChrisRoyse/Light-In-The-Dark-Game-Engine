@@ -237,8 +237,12 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := int32(0); i < ms.Count(); i++ {
 		hmi.WriteU32(uint32(ms.Entity[i]))
 		hmi.WriteI64(int64(ms.Speed[i]))
+		hmi.WriteI64(int64(ms.Accel[i]))
 		hmi.WriteI64(int64(ms.Arc[i]))
 		hmi.WriteU8(ms.Flags[i])
+		hmi.WriteU16(ms.HitMask[i])
+		hmi.WriteU16(ms.GuidanceID[i])
+		hmi.WriteU16(ms.ImpactID[i])
 		hmi.WriteU32(uint32(ms.GuideEnt[i]))
 		hmi.WriteI64(int64(ms.GuidePt[i].X))
 		hmi.WriteI64(int64(ms.GuidePt[i].Y))

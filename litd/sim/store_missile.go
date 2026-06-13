@@ -29,17 +29,53 @@ const (
 	MissileLinear uint8 = 1 << 1
 )
 
+// Missile hit-mask bits. A zero mask normalizes to MissileHitEnemy,
+// preserving the original linear-skillshot behavior.
+const (
+	MissileHitGround    uint16 = data.TargetGround
+	MissileHitAir       uint16 = data.TargetAir
+	MissileHitStructure uint16 = data.TargetStructure
+	MissileHitEnemy     uint16 = 1 << 8
+	MissileHitAlly      uint16 = 1 << 9
+
+	MissileDefaultHitMask  uint16 = MissileHitEnemy
+	MissileHitClassMask    uint16 = MissileHitGround | MissileHitAir | MissileHitStructure
+	MissileHitRelationMask uint16 = MissileHitEnemy | MissileHitAlly
+	MissileHitAllMask      uint16 = MissileHitClassMask | MissileHitRelationMask
+)
+
+// Built-in missile guidance/impact IDs. Zero means "infer from the
+// legacy structural fields" at spawn time.
+const (
+	MissileGuidanceInfer uint16 = iota
+	MissileGuidanceHoming
+	MissileGuidancePoint
+	MissileGuidanceLinear
+)
+
+const (
+	MissileImpactInfer uint16 = iota
+	MissileImpactDeliver
+	MissileImpactDetonate
+	MissileImpactPierce
+	MissileImpactExpire
+)
+
 type MissileStore struct {
-	Speed     []fixed.F64       // world units per tick
-	Arc       []fixed.F64       // presentation arc height (render-only; flight is straight)
-	Flags     []uint8           // Missile* bits
-	GuideEnt  []EntityID        // homing target; 0 = point missile
-	GuidePt   []fixed.Vec2      // goal point / last known target position
-	Payload   []data.EffectList // compiled effect list; Len 0 = Packet variant
-	Packet    []DamagePacket    // rolled-at-launch degenerate payload
-	Source    []EntityID        // launcher (may die mid-flight; delivery unaffected)
-	BirthTick []uint32
-	Entity    []EntityID
+	Speed      []fixed.F64       // world units per tick
+	Accel      []fixed.F64       // non-negative speed delta applied after each tick
+	Arc        []fixed.F64       // presentation arc height (render-only; flight is straight)
+	Flags      []uint8           // Missile* bits
+	HitMask    []uint16          // MissileHit* bits; relation + target-class filter
+	GuidanceID []uint16          // MissileGuidance* built-in ID
+	ImpactID   []uint16          // MissileImpact* built-in ID
+	GuideEnt   []EntityID        // homing target; 0 = point missile
+	GuidePt    []fixed.Vec2      // goal point / last known target position
+	Payload    []data.EffectList // compiled effect list; Len 0 = Packet variant
+	Packet     []DamagePacket    // rolled-at-launch degenerate payload
+	Source     []EntityID        // launcher (may die mid-flight; delivery unaffected)
+	BirthTick  []uint32
+	Entity     []EntityID
 
 	// Linear/pierce skillshot state (#331; meaningful iff MissileLinear).
 	Dir        []fixed.Vec2 // unit flight direction
@@ -59,8 +95,12 @@ func NewMissileStore(rowCap, entityCap int) *MissileStore {
 	}
 	s := &MissileStore{
 		Speed:      make([]fixed.F64, rowCap),
+		Accel:      make([]fixed.F64, rowCap),
 		Arc:        make([]fixed.F64, rowCap),
 		Flags:      make([]uint8, rowCap),
+		HitMask:    make([]uint16, rowCap),
+		GuidanceID: make([]uint16, rowCap),
+		ImpactID:   make([]uint16, rowCap),
 		GuideEnt:   make([]EntityID, rowCap),
 		GuidePt:    make([]fixed.Vec2, rowCap),
 		Payload:    make([]data.EffectList, rowCap),
@@ -95,8 +135,12 @@ func (s *MissileStore) Add(e *Entities, id EntityID) bool {
 	}
 	r := s.count
 	s.Speed[r] = 0
+	s.Accel[r] = 0
 	s.Arc[r] = 0
 	s.Flags[r] = 0
+	s.HitMask[r] = 0
+	s.GuidanceID[r] = 0
+	s.ImpactID[r] = 0
 	s.GuideEnt[r] = 0
 	s.GuidePt[r] = fixed.Vec2{}
 	s.Payload[r] = data.EffectList{}
@@ -127,8 +171,12 @@ func (s *MissileStore) Remove(id EntityID) bool {
 	last := s.count - 1
 	if r != last {
 		s.Speed[r] = s.Speed[last]
+		s.Accel[r] = s.Accel[last]
 		s.Arc[r] = s.Arc[last]
 		s.Flags[r] = s.Flags[last]
+		s.HitMask[r] = s.HitMask[last]
+		s.GuidanceID[r] = s.GuidanceID[last]
+		s.ImpactID[r] = s.ImpactID[last]
 		s.GuideEnt[r] = s.GuideEnt[last]
 		s.GuidePt[r] = s.GuidePt[last]
 		s.Payload[r] = s.Payload[last]
