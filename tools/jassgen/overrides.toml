@@ -337,6 +337,14 @@ package = "litd/api"
 reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
 
 [[override]]
+name = "IsUnitOwnedByPlayer"
+class = "D2"
+goMapping = "Unit.OwnedBy"
+goSignature = "(p Player) bool"
+package = "litd/api"
+reason = "ownership predicate; the (unit, player) pair becomes a typed Unit method over the Owners.Player slot, returning false on any invalid/foreign combination (D2) (#217)"
+
+[[override]]
 name = "GetUnitLifePercent"
 class = "D4"
 goMapping = "Unit.LifePercent"

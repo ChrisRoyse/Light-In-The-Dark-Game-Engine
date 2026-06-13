@@ -210,6 +210,26 @@ func (u Unit) SetOwner(p Player, changeColor bool) {
 	u.g.w.ChangeOwner(u.id, slot, slot, changeColor)
 }
 
+// OwnedBy reports whether p owns this unit. Returns false on an invalid
+// unit handle, an invalid/foreign player, or when the owner slot does
+// not match p — never panics. SoT: the unit's Owners.Player slot.
+// JASS: IsUnitOwnedByPlayer(whichUnit, whichPlayer).
+func (u Unit) OwnedBy(p Player) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.OwnedBy")
+		return false
+	}
+	if p.g != u.g || !p.Valid() {
+		u.g.reportInvalid("Unit.OwnedBy (player not from this game)")
+		return false
+	}
+	r := u.g.w.Owners.Row(u.id)
+	if r < 0 {
+		return false
+	}
+	return int32(u.g.w.Owners.Player[r]) == p.idx
+}
+
 // Name returns the player's display name, or "" on an invalid handle —
 // the tail that lets Unit{}.Owner().Name() degrade to "" rather than
 // panic. With no name assigned, returns the slot-derived default.

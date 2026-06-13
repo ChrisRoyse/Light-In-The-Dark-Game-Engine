@@ -53,6 +53,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_MoveSpeed", Package: "litd/api", Symbol: "Unit.MoveSpeed", GoSignature: "() float64"},
 	{LuaName: "Unit_Name", Package: "litd/api", Symbol: "Unit.Name", GoSignature: "() string"},
 	{LuaName: "Unit_Order", Package: "litd/api", Symbol: "Unit.Order", GoSignature: "(ord Order, target OrderTarget) bool"},
+	{LuaName: "Unit_OwnedBy", Package: "litd/api", Symbol: "Unit.OwnedBy", GoSignature: "(p Player) bool"},
 	{LuaName: "Unit_Owner", Package: "litd/api", Symbol: "Unit.Owner", GoSignature: "() Player"},
 	{LuaName: "Unit_Paused", Package: "litd/api", Symbol: "Unit.Paused", GoSignature: "() bool"},
 	{LuaName: "Unit_PointValue", Package: "litd/api", Symbol: "Unit.PointValue", GoSignature: "() int"},

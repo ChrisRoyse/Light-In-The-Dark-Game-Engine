@@ -578,7 +578,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitRallyDestructable | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInGroup | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInForce | common.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitOwnedByPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| IsUnitOwnedByPlayer | common.j | D2 | `litd/api.Unit.OwnedBy` |
 | IsUnitAlly | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitEnemy | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitVisible | common.j | unclassified | _pending (M2 backlog)_ |

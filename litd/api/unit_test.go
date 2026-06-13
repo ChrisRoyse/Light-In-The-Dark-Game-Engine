@@ -759,6 +759,55 @@ func TestUnitSetOwnerFSV(t *testing.T) {
 	(Unit{}).SetOwner(pa, true)
 }
 
+// TestUnitOwnedByFSV verifies Unit.OwnedBy against the sim Owners.Player
+// slot: true only for the owning player, false for everyone else and on
+// every invalid combination.
+func TestUnitOwnedByFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	const A, B = int32(2), int32(5)
+	pa := Player{idx: A, g: g}
+	pb := Player{idx: B, g: g}
+
+	u, id := liveUnit(t, w, g, uint8(A), 100) // spawned owned by player A
+	or := w.Owners.Row(id)
+	t.Logf("FSV OwnedBy BEFORE: store owner=%d (A=%d B=%d)", w.Owners.Player[or], A, B)
+
+	// Happy: owner matches, non-owner does not.
+	if !u.OwnedBy(pa) {
+		t.Fatalf("OwnedBy(A) = false, want true; store owner=%d", w.Owners.Player[or])
+	}
+	if u.OwnedBy(pb) {
+		t.Fatalf("OwnedBy(B) = true, want false; store owner=%d", w.Owners.Player[or])
+	}
+
+	// After reassigning to B, the verdict flips with the store.
+	u.SetOwner(pb, true)
+	t.Logf("FSV OwnedBy AFTER SetOwner(B): store owner=%d", w.Owners.Player[or])
+	if u.OwnedBy(pa) || !u.OwnedBy(pb) {
+		t.Fatalf("post-reassign OwnedBy A=%v B=%v, want false/true; store owner=%d",
+			u.OwnedBy(pa), u.OwnedBy(pb), w.Owners.Player[or])
+	}
+
+	// EDGE: invalid player handle -> false, no panic.
+	if u.OwnedBy(Player{}) {
+		t.Fatal("OwnedBy(zero player) = true, want false")
+	}
+	// EDGE: player from a different game -> false.
+	other := newGame(sim.NewWorld(sim.Caps{Units: 4}))
+	if u.OwnedBy(Player{idx: B, g: other}) {
+		t.Fatal("OwnedBy(foreign-game player) = true, want false")
+	}
+	// EDGE: invalid (removed) unit -> false, no panic.
+	w.DestroyUnit(id)
+	if u.OwnedBy(pb) {
+		t.Fatal("OwnedBy on dead unit = true, want false")
+	}
+	if (Unit{}).OwnedBy(pb) {
+		t.Fatal("zero-handle OwnedBy = true, want false")
+	}
+}
+
 // TestUnitAliveFSV: Alive tracks the life store (WC3 Life>0), false for corpses
 // and invalid handles. SoT = the sim Health store life value.
 func TestUnitAliveFSV(t *testing.T) {
