@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
+)
 
 func TestResolutionFlagSetFSV(t *testing.T) {
 	var r resolutionFlag
@@ -32,5 +36,35 @@ func TestResolutionFlagSetFSV(t *testing.T) {
 		if r != before {
 			t.Fatalf("invalid resolution %q mutated state: got %+v want %+v", input, r, before)
 		}
+	}
+}
+
+func TestCameraZoomRequestFSV(t *testing.T) {
+	cfg := litrender.DefaultRTSCameraConfig(16.0 / 9.0)
+	cases := []struct {
+		input string
+		want  float32
+	}{
+		{input: "", want: cfg.Zoom},
+		{input: "default", want: cfg.Zoom},
+		{input: "min", want: cfg.ZoomMin},
+		{input: "zmin", want: cfg.ZoomMin},
+		{input: "max", want: cfg.ZoomMax},
+		{input: "zmax", want: cfg.ZoomMax},
+		{input: "below-min", want: cfg.ZoomMin * 0.5},
+		{input: "above-max", want: cfg.ZoomMax * 2},
+		{input: "1700", want: 1700},
+	}
+	for _, tc := range cases {
+		got, err := cameraZoomRequest(tc.input, cfg)
+		t.Logf("FSV camera zoom request input=%q got=%.3f err=%v", tc.input, got, err)
+		if err != nil || got != tc.want {
+			t.Fatalf("cameraZoomRequest(%q) = %.3f, %v; want %.3f nil", tc.input, got, err, tc.want)
+		}
+	}
+	if got, err := cameraZoomRequest("bogus", cfg); err == nil {
+		t.Fatalf("invalid zoom accepted: got %.3f", got)
+	} else {
+		t.Logf("FSV camera invalid zoom input=%q err=%v", "bogus", err)
 	}
 }

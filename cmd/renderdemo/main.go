@@ -28,7 +28,6 @@ import (
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/g3n/engine/app"
-	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
@@ -50,6 +49,13 @@ const (
 type sceneSpec struct {
 	name     string
 	expected litrender.FrameStats
+}
+
+type renderDemoDump struct {
+	litrender.FrameStats
+	Scene  string                  `json:"scene"`
+	Camera litrender.RTSCameraDump `json:"camera"`
+	OK     bool                    `json:"ok"`
 }
 
 type resolutionFlag struct {
@@ -190,11 +196,12 @@ type resourceBarValues struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
+	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
 	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
 	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
@@ -208,7 +215,12 @@ func main() {
 
 	a := app.App(res.W, res.H, "LitD render stats demo")
 	scene := core.NewNode()
-	cam := buildCamera(res.W, res.H)
+	cameraRig, err := buildCamera(res.W, res.H, *zoomMode)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "renderdemo: camera: %v\n", err)
+		os.Exit(1)
+	}
+	cam := cameraRig.Camera
 
 	var spec sceneSpec
 	var canvasFSV canvasDump
@@ -237,7 +249,7 @@ func main() {
 	a.Subscribe(window.OnWindowSize, func(string, interface{}) {
 		w, h := a.GetSize()
 		a.Gls().Viewport(0, 0, int32(w), int32(h))
-		cam.SetAspect(float32(w) / float32(h))
+		cameraRig.SetAspect(float32(w) / float32(h))
 	})
 	a.Gls().Viewport(0, 0, int32(res.W), int32(res.H))
 	a.Gls().ClearColor(0.03, 0.04, 0.05, 1)
@@ -252,6 +264,12 @@ func main() {
 		if *hudMode {
 			canvasFSV.recordFrameStats(stats)
 		}
+		var sceneDump renderDemoDump
+		if !*hudMode {
+			cameraDump := cameraRig.DumpWithLockProbe(91, 12, 45)
+			pass := stats == spec.expected && cameraDump.OK
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, OK: pass}
+		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: screenshot: %v\n", err)
@@ -265,7 +283,7 @@ func main() {
 					os.Exit(1)
 				}
 			} else {
-				if err := litrender.DumpFrameStatsFile(*dumpPath, stats); err != nil {
+				if err := writeJSONFile(*dumpPath, sceneDump); err != nil {
 					fmt.Fprintf(os.Stderr, "renderdemo: dump: %v\n", err)
 					os.Exit(1)
 				}
@@ -281,23 +299,47 @@ func main() {
 			os.Exit(0)
 		}
 
-		pass := stats == spec.expected
 		actualJSON, _ := json.Marshal(stats)
 		expectedJSON, _ := json.Marshal(spec.expected)
 		fmt.Printf("stats: scene=%s actual=%s expected=%s pass=%v shot=%s dump=%s\n",
-			spec.name, actualJSON, expectedJSON, pass, *shotPath, *dumpPath)
-		if *autotest && !pass {
+			spec.name, actualJSON, expectedJSON, sceneDump.OK, *shotPath, *dumpPath)
+		if *autotest && !sceneDump.OK {
 			os.Exit(2)
 		}
 		os.Exit(0)
 	})
 }
 
-func buildCamera(width, height int) *camera.Camera {
-	cam := camera.New(float32(width) / float32(height))
-	cam.SetPosition(0, 4, 8)
-	cam.LookAt(&math32.Vector3{X: 0, Y: 0, Z: 0}, &math32.Vector3{X: 0, Y: 1, Z: 0})
-	return cam
+func buildCamera(width, height int, zoomText string) (*litrender.RTSCamera, error) {
+	cfg := litrender.DefaultRTSCameraConfig(float32(width) / float32(height))
+	zoom, err := cameraZoomRequest(zoomText, cfg)
+	if err != nil {
+		return nil, err
+	}
+	rig := litrender.NewRTSCamera(cfg)
+	rig.SetZoomRequested(zoom)
+	return rig, nil
+}
+
+func cameraZoomRequest(zoomText string, cfg litrender.RTSCameraConfig) (float32, error) {
+	switch strings.ToLower(strings.TrimSpace(zoomText)) {
+	case "", "default", "zdefault":
+		return cfg.Zoom, nil
+	case "min", "zmin":
+		return cfg.ZoomMin, nil
+	case "max", "zmax":
+		return cfg.ZoomMax, nil
+	case "below-min":
+		return cfg.ZoomMin * 0.5, nil
+	case "above-max":
+		return cfg.ZoomMax * 2, nil
+	default:
+		value, err := strconv.ParseFloat(zoomText, 32)
+		if err != nil {
+			return 0, fmt.Errorf("unknown zoom request %q", zoomText)
+		}
+		return float32(value), nil
+	}
 }
 
 func buildLights(scene *core.Node) {
@@ -325,7 +367,7 @@ func buildScene(scene *core.Node, name string) (sceneSpec, error) {
 		return sceneSpec{name: name, expected: expectedStats(5, 0, 5, 0, 1, 0)}, nil
 	case "culled":
 		addMesh(scene, geom, blue, 0, 0, 0)
-		addMesh(scene, geom, blue, 1000, 0, 0)
+		addMesh(scene, geom, blue, 100000, 0, 0)
 		return sceneSpec{name: name, expected: expectedStats(1, 1, 1, 0, 1, 0)}, nil
 	case "shared":
 		addMesh(scene, geom, blue, -0.6, 0, 0)
@@ -340,9 +382,27 @@ func buildScene(scene *core.Node, name string) (sceneSpec, error) {
 		blue.SetOpacity(0.65)
 		addMesh(scene, geom, blue, 0, 0, 0)
 		return sceneSpec{name: name, expected: expectedStats(1, 0, 0, 1, 0, 1)}, nil
+	case "camera-rig":
+		addCameraRigScene(scene)
+		return sceneSpec{name: name, expected: expectedStats(6, 0, 6, 0, 3, 0)}, nil
 	default:
 		return sceneSpec{}, fmt.Errorf("unknown scene %q", name)
 	}
+}
+
+func addCameraRigScene(scene *core.Node) {
+	groundMat := material.NewStandard(&math32.Color{R: 0.20, G: 0.44, B: 0.24})
+	markerMat := material.NewStandard(&math32.Color{R: 0.82, G: 0.68, B: 0.30})
+	ground := graphic.NewMesh(geometry.NewPlane(6400, 6400), groundMat)
+	ground.SetRotationX(-math32.Pi / 2)
+	scene.Add(ground)
+
+	markerGeom := geometry.NewBox(90, 24, 90)
+	addMesh(scene, markerGeom, markerMat, 0, 12, 0)
+	addMesh(scene, markerGeom, markerMat, -320, 12, -320)
+	addMesh(scene, markerGeom, markerMat, 320, 12, -320)
+	addMesh(scene, markerGeom, markerMat, -320, 12, 320)
+	addMesh(scene, markerGeom, markerMat, 320, 12, 320)
 }
 
 func addMesh(scene *core.Node, geom geometry.IGeometry, mat material.IMaterial, x, y, z float32) {
