@@ -248,6 +248,14 @@ package = "litd/api"
 reason = "inventory-capacity getter maps onto the typed accessor (dedup §2); engine models inventory all-or-nothing (6 slots or none) (#217)"
 
 [[override]]
+name = "IsUnitType"
+class = "D2"
+goMapping = "Unit.IsType"
+goSignature = "(class UnitClass) bool"
+package = "litd/api"
+reason = "unit classification predicate; the unittype enum arg becomes a typed UnitClass (dedup §3, D2). Supports the structural subset the engine can derive (Hero/Dead/Structure/Flying/Ground); status/combat classes (stunned/poisoned/melee/ranged/undead/…) deferred until their backing state is modeled (#217)"
+
+[[override]]
 name = "GetUnitName"
 class = "D1"
 goMapping = "Unit.Name"

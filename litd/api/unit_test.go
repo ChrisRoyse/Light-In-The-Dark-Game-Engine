@@ -1165,6 +1165,59 @@ func TestUnitShowHideFSV(t *testing.T) {
 	}
 }
 
+// TestUnitIsTypeFSV: Unit.IsType classifies units by the structural UNIT_TYPE_*
+// subset. SoT = the unit type's pathing/footprint (data) and life (Healths).
+func TestUnitIsTypeFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hgnd", Life: 100, Pathing: data.PathingGround},
+		{ID: "hair", Life: 100, Pathing: data.PathingAir},
+		{ID: "hbld", Life: 100, Pathing: data.PathingGround, Footprint: 3},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+	gnd := g.CreateUnit(owner, g.UnitType("hgnd"), Vec2{X: 64, Y: 64}, Deg(0))
+	air := g.CreateUnit(owner, g.UnitType("hair"), Vec2{X: 96, Y: 96}, Deg(0))
+	bld := g.CreateUnit(owner, g.UnitType("hbld"), Vec2{X: 200, Y: 200}, Deg(0))
+
+	check := func(label string, u Unit, class UnitClass, want bool) {
+		if got := u.IsType(class); got != want {
+			t.Errorf("%s IsType(%d)=%v, want %v", label, class, got, want)
+		}
+	}
+	// Ground unit: ground yes, flying/structure/hero no.
+	check("gnd", gnd, ClassGround, true)
+	check("gnd", gnd, ClassFlying, false)
+	check("gnd", gnd, ClassStructure, false)
+	check("gnd", gnd, ClassHero, false)
+	// Flying unit: flying yes, ground no.
+	check("air", air, ClassFlying, true)
+	check("air", air, ClassGround, false)
+	// Building: structure yes, and still ground-pathing.
+	check("bld", bld, ClassStructure, true)
+	check("bld", bld, ClassGround, true)
+	check("bld", bld, ClassFlying, false)
+	t.Logf("gnd: ground=%v flying=%v | air: flying=%v | bld: structure=%v ground=%v",
+		gnd.IsType(ClassGround), gnd.IsType(ClassFlying), air.IsType(ClassFlying), bld.IsType(ClassStructure), bld.IsType(ClassGround))
+
+	// Dead: a living unit is not Dead; zeroing its life flips it (SoT = Healths).
+	check("gnd-alive", gnd, ClassDead, false)
+	hr := w.Healths.Row(gnd.id)
+	w.Healths.Life[hr] = 0
+	check("gnd-life0", gnd, ClassDead, true)
+	t.Logf("after life=0: Dead=%v Alive=%v", gnd.IsType(ClassDead), gnd.Alive())
+
+	// EDGE: unrecognized class -> false; zero handle -> false.
+	if gnd.IsType(UnitClass(200)) {
+		t.Error("unknown class returned true")
+	}
+	if (Unit{}).IsType(ClassGround) {
+		t.Error("zero Unit IsType true")
+	}
+}
+
 // TestUnitNameFSV: Unit.Name surfaces the unit type's proper name. SoT = the
 // bound data.Unit.Name, via api + sim accessor.
 func TestUnitNameFSV(t *testing.T) {

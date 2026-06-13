@@ -1010,6 +1010,33 @@
       }
     },
     {
+      "name": "IsUnitType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichUnitType",
+            "jassType": "unittype",
+            "tsType": "unittype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.IsType",
+        "package": "litd/api",
+        "goSignature": "(class UnitClass) bool"
+      }
+    },
+    {
       "name": "IssuePointOrder",
       "origin": "common.j",
       "signature": {

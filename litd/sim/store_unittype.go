@@ -111,6 +111,33 @@ func (w *World) UnitPointValue(id EntityID) int32 {
 	return 0
 }
 
+// UnitIsStructure reports whether the unit's type is a building (footprint > 0).
+// UNIT_TYPE_STRUCTURE. False when untyped.
+func (w *World) UnitIsStructure(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		return d.Footprint > 0
+	}
+	return false
+}
+
+// UnitIsFlying reports whether the unit's type uses air pathing.
+// UNIT_TYPE_FLYING. False when untyped.
+func (w *World) UnitIsFlying(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		return d.Pathing == data.PathingAir
+	}
+	return false
+}
+
+// UnitIsGround reports whether the unit's type uses ground pathing.
+// UNIT_TYPE_GROUND. False when untyped.
+func (w *World) UnitIsGround(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		return d.Pathing == data.PathingGround
+	}
+	return false
+}
+
 // UnitName returns the unit type's proper/display name (GetUnitName), or "" when
 // the unit has no type row. Static type property.
 func (w *World) UnitName(id EntityID) string {

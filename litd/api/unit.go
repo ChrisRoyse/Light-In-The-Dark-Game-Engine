@@ -604,6 +604,44 @@ func (u Unit) InventorySize() int {
 	return int(u.g.w.UnitInventorySize(u.id))
 }
 
+// UnitClass is a structural classification tested by Unit.IsType — the subset
+// of WC3's UNIT_TYPE_* constants the engine can derive today. Status/combat
+// classes (stunned, poisoned, melee/ranged, undead, …) are deferred until their
+// backing state is modeled.
+type UnitClass uint8
+
+const (
+	ClassHero      UnitClass = iota // UNIT_TYPE_HERO
+	ClassDead                       // UNIT_TYPE_DEAD
+	ClassStructure                  // UNIT_TYPE_STRUCTURE (building footprint)
+	ClassFlying                     // UNIT_TYPE_FLYING (air pathing)
+	ClassGround                     // UNIT_TYPE_GROUND (ground pathing)
+)
+
+// IsType reports whether the unit belongs to the given structural class.
+// False on an invalid handle or an unrecognized class. JASS: IsUnitType (the
+// structural UNIT_TYPE_* subset; see UnitClass).
+func (u Unit) IsType(class UnitClass) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.IsType")
+		return false
+	}
+	switch class {
+	case ClassHero:
+		return u.g.w.IsHero(u.id)
+	case ClassDead:
+		return !u.Alive()
+	case ClassStructure:
+		return u.g.w.UnitIsStructure(u.id)
+	case ClassFlying:
+		return u.g.w.UnitIsFlying(u.id)
+	case ClassGround:
+		return u.g.w.UnitIsGround(u.id)
+	default:
+		return false
+	}
+}
+
 // Name returns the unit's display name. Currently this is the unit type's
 // proper name (per-instance rename via BlzSetUnitName is deferred). Empty string
 // on an invalid handle or an unnamed/untyped unit. JASS: GetUnitName.

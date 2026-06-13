@@ -35,6 +35,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_InventorySize", Package: "litd/api", Symbol: "Unit.InventorySize", GoSignature: "() int"},
 	{LuaName: "Unit_Invulnerable", Package: "litd/api", Symbol: "Unit.Invulnerable", GoSignature: "() bool"},
 	{LuaName: "Unit_IsHidden", Package: "litd/api", Symbol: "Unit.IsHidden", GoSignature: "() bool"},
+	{LuaName: "Unit_IsType", Package: "litd/api", Symbol: "Unit.IsType", GoSignature: "(class UnitClass) bool"},
 	{LuaName: "Unit_Kill", Package: "litd/api", Symbol: "Unit.Kill", GoSignature: "()"},
 	{LuaName: "Unit_Life", Package: "litd/api", Symbol: "Unit.Life", GoSignature: "() float64"},
 	{LuaName: "Unit_MaxLife", Package: "litd/api", Symbol: "Unit.MaxLife", GoSignature: "() float64"},
