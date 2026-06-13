@@ -87,7 +87,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "Unit.Paused",
-        "package": "litd/api"
+        "package": "litd/api",
+        "goSignature": "() bool"
       }
     },
     {
@@ -113,7 +114,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "Unit.SetPaused",
-        "package": "litd/api"
+        "package": "litd/api",
+        "goSignature": "(paused bool)"
       }
     },
     {
@@ -134,7 +136,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "PolledWait",
-        "package": "litd/api/helpers"
+        "package": "litd/api/helpers",
+        "goSignature": "(seconds float64)"
       }
     },
     {
@@ -165,7 +168,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "Unit.SetPosition",
-        "package": "litd/api"
+        "package": "litd/api",
+        "goSignature": "(pos Vec2)"
       }
     },
     {
@@ -196,7 +200,30 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "Unit.SetLife",
-        "package": "litd/api"
+        "package": "litd/api",
+        "goSignature": "(v float64)"
+      }
+    },
+    {
+      "name": "GetUnitCount",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitCount",
+        "package": "litd/ai",
+        "goSignature": "(unitTypeID int) int"
       }
     }
   ]

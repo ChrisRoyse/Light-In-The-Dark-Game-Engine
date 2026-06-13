@@ -41,6 +41,7 @@ type Classification struct {
 	Family       string // D3 family stem, if any
 	Evidence     string
 	GoMapping    string // canonical Go symbol (override-supplied)
+	GoSignature  string // Go signature text e.g. "() bool" (override-supplied, optional)
 	Package      string // litd/api | litd/api/helpers | litd/ai
 	Tombstone    string // tombstone reason enum value, if tombstoned via override
 }

@@ -18,12 +18,13 @@ import (
 
 // Override is one reviewed classification/mapping decision.
 type Override struct {
-	Name      string `toml:"name"`
-	Class     string `toml:"class"`     // D1-D5 (optional when tombstoning)
-	GoMapping string `toml:"goMapping"` // canonical symbol, optional
-	Package   string `toml:"package"`   // litd/api | litd/api/helpers | litd/ai
-	Tombstone string `toml:"tombstone"` // tombstone reason enum value, optional
-	Reason    string `toml:"reason"`    // mandatory
+	Name        string `toml:"name"`
+	Class       string `toml:"class"`       // D1-D5 (optional when tombstoning)
+	GoMapping   string `toml:"goMapping"`   // canonical symbol, optional
+	GoSignature string `toml:"goSignature"` // Go signature text e.g. "() bool", optional
+	Package     string `toml:"package"`     // litd/api | litd/api/helpers | litd/ai
+	Tombstone   string `toml:"tombstone"`   // tombstone reason enum value, optional
+	Reason      string `toml:"reason"`      // mandatory
 }
 
 type overridesFile struct {
@@ -114,6 +115,7 @@ func ApplyOverrides(cs []Classification, ovs []Override) ([]Classification, erro
 			c.Evidence = "override: " + o.Reason
 		}
 		c.GoMapping = o.GoMapping
+		c.GoSignature = o.GoSignature
 		c.Package = o.Package
 	}
 	return out, nil

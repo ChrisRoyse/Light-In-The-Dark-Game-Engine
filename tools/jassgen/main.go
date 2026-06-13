@@ -19,6 +19,7 @@ func main() {
 	dumpClasses := flag.Bool("dump-classes", false, "classify all source symbols D1-D5 (+ unclassified); dump per-class counts and verdicts")
 	emit := flag.Bool("emit", false, "emit api-manifest.json (validated, byte-identical on re-run)")
 	out := flag.String("o", "api-manifest.json", "output path for -emit")
+	emitStubs := flag.Bool("emit-stubs", false, "generate compiling panic-body Go API stubs from manifest goMapping")
 	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
 	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
@@ -36,6 +37,8 @@ func main() {
 		runDumpClasses()
 	case *emit:
 		runEmit(*out)
+	case *emitStubs:
+		runEmitStubs()
 	case *audit:
 		runAudit()
 	case *check:
@@ -193,6 +196,24 @@ func runEmit(outPath string) {
 	}
 	fmt.Fprintf(os.Stderr, "wrote %s: %d functions emitted, %d unresolved (no D1-D5 class / no mapping)\n",
 		outPath, len(m.Functions), skipped)
+}
+
+func runEmitStubs() {
+	cs, sigs, sources := buildClassifiedUniverse()
+	m, _ := BuildManifest(cs, sigs, sources)
+	if err := ValidateManifest(m); err != nil {
+		fatal(fmt.Errorf("manifest invalid, refusing to stub: %w", err))
+	}
+	emitted, skipped, err := GenerateStubs(m)
+	if err != nil {
+		fatal(err)
+	}
+	for pkg := range pkgTargets {
+		fmt.Fprintf(os.Stderr, "%s: %d emitted, %d skipped (already implemented)\n", pkg, len(emitted[pkg]), len(skipped[pkg]))
+		for _, s := range skipped[pkg] {
+			fmt.Fprintf(os.Stderr, "    skip %s\n", s)
+		}
+	}
 }
 
 func fatal(err error) {

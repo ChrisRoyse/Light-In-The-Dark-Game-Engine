@@ -20,6 +20,7 @@
 name = "IsUnitPausedBJ"
 class = "D1"
 goMapping = "Unit.Paused"
+goSignature = "() bool"
 package = "litd/api"
 reason = "confirmed pure passthrough of native IsUnitPaused (dedup §2 ex.3)"
 
@@ -27,6 +28,7 @@ reason = "confirmed pure passthrough of native IsUnitPaused (dedup §2 ex.3)"
 name = "PauseUnitBJ"
 class = "D2"
 goMapping = "Unit.SetPaused"
+goSignature = "(paused bool)"
 package = "litd/api"
 reason = "reorders args over native PauseUnit; canonical keeps full set (dedup §3 ex.1)"
 
@@ -34,13 +36,15 @@ reason = "reorders args over native PauseUnit; canonical keeps full set (dedup �
 name = "SetUnitPosition"
 class = "D3"
 goMapping = "Unit.SetPosition"
+goSignature = "(pos Vec2)"
 package = "litd/api"
-reason = "x/y/Loc position family collapses onto Vec2 setter (dedup §4 ex.1)"
+reason = "x/y/Loc position family collapses onto Vec2 setter (dedup §4 ex.1); collapsesWith SetUnitX/SetUnitY/SetUnitPositionLoc"
 
 [[override]]
 name = "PolledWait"
 class = "D4"
 goMapping = "PolledWait"
+goSignature = "(seconds float64)"
 package = "litd/api/helpers"
 reason = "genuine timer-polling wait; lives as a scheduler helper (dedup §5 ex.1)"
 
@@ -48,8 +52,17 @@ reason = "genuine timer-polling wait; lives as a scheduler helper (dedup §5 ex.
 name = "SetUnitState"
 class = "D5"
 goMapping = "Unit.SetLife"
+goSignature = "(v float64)"
 package = "litd/api"
-reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1)"
+reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1); already hand-implemented in M5 — generator must skip"
+
+[[override]]
+name = "GetUnitCount"
+class = "D2"
+goMapping = "UnitCount"
+goSignature = "(unitTypeID int) int"
+package = "litd/ai"
+reason = "commonai query native maps canonically into the AI domain (D-2026-06-11-6); no capability tombstone"
 
 # --- Tombstones (deduplication-policy.md §7) ---
 

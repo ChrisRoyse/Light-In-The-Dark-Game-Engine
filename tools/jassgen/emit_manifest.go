@@ -64,6 +64,7 @@ type ParamEntry struct {
 type GoMapping struct {
 	Symbol        string   `json:"symbol"`
 	Package       string   `json:"package"`
+	GoSignature   string   `json:"goSignature,omitempty"`
 	CollapsesWith []string `json:"collapsesWith,omitempty"`
 	Notes         string   `json:"notes,omitempty"`
 }
@@ -132,7 +133,7 @@ func toFunctionEntry(c Classification, sigs map[string]MergedEntry) (FunctionEnt
 		e.Tombstone = &TombstoneT{Reason: c.Tombstone, Detail: detail}
 	} else {
 		e.Disposition = "mapped"
-		e.GoMapping = &GoMapping{Symbol: c.GoMapping, Package: c.Package}
+		e.GoMapping = &GoMapping{Symbol: c.GoMapping, Package: c.Package, GoSignature: c.GoSignature}
 	}
 	return e, true
 }
