@@ -12,7 +12,10 @@ unit-classes = ["fighter", "worker"]
 ground-point = ["move", "move"]
 enemy = ["attack", "attack"]
 ally = ["move", "move"]
+transport = ["board", "board"]
 own-building = ["rally", "rally"]
+damaged-own = ["move", "repair"]
+construction = ["move", "resume-construction"]
 resource = ["move", "harvest"]
 item = ["move", "move"]
 `
@@ -57,7 +60,7 @@ func TestSmartTableUnknownOrderName(t *testing.T) {
 // A missing target-class row is a load error — the table must be
 // total.
 func TestSmartTableMissingRow(t *testing.T) {
-	bad := strings.Replace(goodSmart, "item = [\"move\", \"move\"]\n", "", 1)
+	bad := strings.Replace(goodSmart, "construction = [\"move\", \"resume-construction\"]\n", "", 1)
 	_, err := LoadSmart(smartFS(bad))
 	if err == nil {
 		t.Fatal("missing target class must fail the load")

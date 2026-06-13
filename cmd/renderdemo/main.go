@@ -25,6 +25,7 @@ import (
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
+	litdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
@@ -61,6 +62,7 @@ type renderDemoDump struct {
 	Camera    litrender.RTSCameraDump `json:"camera"`
 	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
 	Groups    *groupRuntimeDump       `json:"groups,omitempty"`
+	Orders    *orderRuntimeDump       `json:"orders,omitempty"`
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
 	OK        bool                    `json:"ok"`
 }
@@ -327,6 +329,27 @@ type groupCaseDump struct {
 	OK                    bool     `json:"ok"`
 }
 
+type orderRuntimeDump struct {
+	Scenario string          `json:"scenario"`
+	Current  orderCaseDump   `json:"current"`
+	Cases    []orderCaseDump `json:"cases"`
+	OK       bool            `json:"ok"`
+	Errors   []string        `json:"errors,omitempty"`
+}
+
+type orderCaseDump struct {
+	Name            string              `json:"name"`
+	Gesture         string              `json:"gesture"`
+	TargetClass     string              `json:"targetClass"`
+	Selection       []uint32            `json:"selection"`
+	Target          uint32              `json:"target,omitempty"`
+	Feedback        string              `json:"feedback"`
+	EncodedBytes    int                 `json:"encodedBytes"`
+	Records         []commandRecordDump `json:"records"`
+	ExpectedOpcodes []uint32            `json:"expectedOpcodes"`
+	OK              bool                `json:"ok"`
+}
+
 type resourceBarRuntimeDump struct {
 	Scenario string                    `json:"scenario"`
 	Current  resourceBarCaseDump       `json:"current"`
@@ -360,6 +383,7 @@ func main() {
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	autotestSelect := flag.Bool("autotest-select", false, "render the drag-select input FSV fixture")
 	autotestGroups := flag.Bool("autotest-groups", false, "render the control-group input FSV fixture")
+	autotestOrders := flag.Bool("autotest-orders", false, "render the smart-right-click order FSV fixture")
 	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
@@ -404,6 +428,7 @@ func main() {
 	var canvasFSV canvasDump
 	var selectionFSV *selectionRuntimeDump
 	var groupFSV *groupRuntimeDump
+	var orderFSV *orderRuntimeDump
 	var terrainFSV *terrainRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
@@ -430,6 +455,20 @@ func main() {
 		buildLights(scene)
 		groupFSV = buildGroupFSV(scene, cameraRig)
 		spec = sceneSpec{name: "group-recall", expected: expectedStats(0, 0, 0, 0, 0, 0)}
+		addStatsHUD(scene, spec)
+	} else if *autotestOrders {
+		if strings.ToLower(strings.TrimSpace(*sceneName)) != "economy" {
+			fmt.Fprintf(os.Stderr, "renderdemo: orders fixture requires -scene economy\n")
+			os.Exit(1)
+		}
+		buildLights(scene)
+		var err error
+		orderFSV, err = buildSmartOrderFSV(scene)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: orders: %v\n", err)
+			os.Exit(1)
+		}
+		spec = sceneSpec{name: "orders-" + orderFSV.Scenario, expected: expectedStats(0, 0, 0, 0, 0, 0)}
 		addStatsHUD(scene, spec)
 	} else {
 		buildLights(scene)
@@ -476,12 +515,14 @@ func main() {
 				pass = pass && selectionFSV.OK
 			} else if groupFSV != nil {
 				pass = pass && groupFSV.OK
+			} else if orderFSV != nil {
+				pass = pass && orderFSV.OK
 			} else if terrainFSV != nil {
 				pass = pass && terrainFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Terrain: terrainFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Terrain: terrainFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1189,6 +1230,186 @@ func buildGroupFSV(scene *core.Node, cameraRig *litrender.RTSCamera) *groupRunti
 
 	drawSelectionFixture(scene, liveAfterDeaths, selectionCaseDump{Name: "group-recall", Selection: dump.Current.Selection})
 	return dump
+}
+
+func buildSmartOrderFSV(scene *core.Node) (*orderRuntimeDump, error) {
+	w, workerA, fighter, workerB, mine, err := renderSmartOrderWorld()
+	if err != nil {
+		return nil, err
+	}
+	dump := &orderRuntimeDump{Scenario: "economy", OK: true}
+	addCase := func(c orderCaseDump) {
+		dump.Cases = append(dump.Cases, c)
+		if !c.OK {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("%s smart-order mismatch", c.Name))
+		}
+	}
+
+	selection := renderOrderSelection(workerA, fighter, workerB)
+	resourceReq := litinput.SmartOrderRequest{
+		Player:    0,
+		Team:      0,
+		Seq:       21,
+		Selection: selection,
+		Target: litinput.SmartTarget{
+			Entity:   mine,
+			Point:    fixed.Vec2{X: fixed.FromInt(1024), Y: fixed.FromInt(768)},
+			Class:    litdata.TCResource,
+			ClassSet: true,
+		},
+	}
+	harvest := renderSmartOrderCase(w, "harvest-split", "right-click gold mine with workers + escort",
+		"resource", resourceReq, []uint8{sim.OpHarvest, sim.OpMove}, litinput.SmartFeedbackNone)
+	addCase(harvest)
+
+	hidden := resourceReq
+	hidden.Selection = renderOrderSelection(fighter)
+	hidden.Target = litinput.SmartTarget{
+		Entity:   mine,
+		Point:    fixed.Vec2{X: fixed.FromInt(1200), Y: fixed.FromInt(700)},
+		Class:    litdata.TCEnemy,
+		ClassSet: true,
+		Hidden:   true,
+	}
+	addCase(renderSmartOrderCase(w, "hidden-enemy", "right-click fog-hidden enemy",
+		"enemy", hidden, nil, litinput.SmartFeedbackHiddenTarget))
+
+	dead, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(1300), Y: fixed.FromInt(700)}, 0)
+	if !ok {
+		return nil, fmt.Errorf("dead target setup failed")
+	}
+	w.DestroyUnit(dead)
+	deadReq := resourceReq
+	deadReq.Selection = renderOrderSelection(fighter)
+	deadReq.Target = litinput.SmartTarget{
+		Entity:   dead,
+		Point:    fixed.Vec2{X: fixed.FromInt(1300), Y: fixed.FromInt(700)},
+		Class:    litdata.TCEnemy,
+		ClassSet: true,
+	}
+	addCase(renderSmartOrderCase(w, "dead-target", "right-click target destroyed before encode",
+		"enemy", deadReq, nil, litinput.SmartFeedbackDeadTarget))
+
+	dump.Current = harvest
+	drawSmartOrderFixture(scene)
+	return dump, nil
+}
+
+func renderSmartOrderWorld() (*sim.World, sim.EntityID, sim.EntityID, sim.EntityID, sim.EntityID, error) {
+	tables, err := litdata.Load(os.DirFS("data"))
+	if err != nil {
+		return nil, 0, 0, 0, 0, err
+	}
+	w := sim.NewWorld(sim.Caps{})
+	if !w.BindSmartTable(tables.Smart, []uint8{0, 1}) {
+		return nil, 0, 0, 0, 0, fmt.Errorf("BindSmartTable failed")
+	}
+	workerA, ok := renderSmartOrderUnit(w, 1)
+	if !ok {
+		return nil, 0, 0, 0, 0, fmt.Errorf("workerA setup failed")
+	}
+	fighter, ok := renderSmartOrderUnit(w, 0)
+	if !ok {
+		return nil, 0, 0, 0, 0, fmt.Errorf("fighter setup failed")
+	}
+	workerB, ok := renderSmartOrderUnit(w, 1)
+	if !ok {
+		return nil, 0, 0, 0, 0, fmt.Errorf("workerB setup failed")
+	}
+	mine, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(1024), Y: fixed.FromInt(768)}, 0)
+	if !ok {
+		return nil, 0, 0, 0, 0, fmt.Errorf("mine target setup failed")
+	}
+	return w, workerA, fighter, workerB, mine, nil
+}
+
+func renderSmartOrderUnit(w *sim.World, typeID uint16) (sim.EntityID, bool) {
+	id, ok := w.CreateUnit(fixed.Vec2{X: fixed.One, Y: fixed.One}, 0)
+	if !ok {
+		return 0, false
+	}
+	return id, w.Owners.Add(w.Ents, id, 0, 0, 0) && w.UnitTypes.Add(w.Ents, id, typeID)
+}
+
+func renderOrderSelection(ids ...sim.EntityID) litinput.Selection {
+	var s litinput.Selection
+	for _, id := range ids {
+		if s.Count >= sim.MaxCommandUnits {
+			break
+		}
+		s.IDs[s.Count] = id
+		s.Count++
+	}
+	return s
+}
+
+func renderSmartOrderCase(w *sim.World, name, gesture, targetClass string, req litinput.SmartOrderRequest, wantOps []uint8, wantFeedback litinput.SmartFeedback) orderCaseDump {
+	var out litinput.SmartOrderResult
+	encoded, ok := litinput.ResolveRightClick(w, req, make([]byte, 0, 256), &out)
+	c := orderCaseDump{
+		Name:            name,
+		Gesture:         gesture,
+		TargetClass:     targetClass,
+		Selection:       selectionCommandIDs(selectionIDs(req.Selection)),
+		Target:          uint32(req.Target.Entity),
+		Feedback:        out.Feedback.String(),
+		EncodedBytes:    len(encoded),
+		Records:         make([]commandRecordDump, 0, out.Count),
+		ExpectedOpcodes: opcodesForJSON(wantOps),
+		OK:              out.Feedback == wantFeedback && int(out.Count) == len(wantOps),
+	}
+	if wantFeedback == litinput.SmartFeedbackNone {
+		c.OK = c.OK && ok
+	} else {
+		c.OK = c.OK && !ok
+	}
+	for i := uint8(0); i < out.Count; i++ {
+		rec := commandRecordDumpFor(out.Records[i])
+		c.Records = append(c.Records, rec)
+		if int(i) >= len(wantOps) || rec.Opcode != wantOps[i] {
+			c.OK = false
+		}
+	}
+	return c
+}
+
+func opcodesForJSON(ops []uint8) []uint32 {
+	if ops == nil {
+		return []uint32{}
+	}
+	out := make([]uint32, 0, len(ops))
+	for _, op := range ops {
+		out = append(out, uint32(op))
+	}
+	return out
+}
+
+func drawSmartOrderFixture(scene *core.Node) {
+	groundMat := material.NewStandard(&math32.Color{R: 0.20, G: 0.32, B: 0.24})
+	ground := graphic.NewMesh(geometry.NewPlane(1800, 1200), groundMat)
+	ground.SetRotationX(-math32.Pi / 2)
+	scene.Add(ground)
+
+	mineMat := material.NewStandard(&math32.Color{R: 0.96, G: 0.72, B: 0.18})
+	workerMat := material.NewStandard(&math32.Color{R: 0.20, G: 0.58, B: 0.90})
+	escortMat := material.NewStandard(&math32.Color{R: 0.28, G: 0.78, B: 0.38})
+	ringMat := material.NewStandard(&math32.Color{R: 0.95, G: 0.86, B: 0.20})
+
+	addOrderMesh(scene, geometry.NewBox(180, 120, 180), mineMat, 0, 60, 0)
+	addOrderMesh(scene, geometry.NewBox(70, 80, 70), workerMat, -120, 40, 120)
+	addOrderMesh(scene, geometry.NewBox(70, 80, 70), workerMat, 120, 40, 120)
+	addOrderMesh(scene, geometry.NewBox(82, 96, 82), escortMat, 260, 48, -130)
+	ring := graphic.NewMesh(geometry.NewTorus(180, 5, 32, 8, math32.Pi*2), ringMat)
+	ring.SetRotationX(math32.Pi / 2)
+	ring.SetPosition(0, 4, 0)
+	scene.Add(ring)
+}
+
+func addOrderMesh(scene *core.Node, geom geometry.IGeometry, mat material.IMaterial, x, y, z float32) {
+	mesh := graphic.NewMesh(geom, mat)
+	mesh.SetPosition(x, y, z)
+	scene.Add(mesh)
 }
 
 func groupFixtureItems() []selectionFixtureEntity {

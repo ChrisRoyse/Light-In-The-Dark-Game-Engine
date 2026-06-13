@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/g3n/engine/core"
@@ -124,6 +125,34 @@ func TestBuildGroupFSVFSV(t *testing.T) {
 	if seen["recall-pruned"].Pruned != 2 || seen["doubletap-350"].CenterRequested || seen["generation-reuse"].RecycledID != 0x01000007 {
 		t.Fatalf("group FSV edge cases missing: recall=%+v late=%+v gen=%+v",
 			seen["recall-pruned"], seen["doubletap-350"], seen["generation-reuse"])
+	}
+}
+
+func TestBuildSmartOrderFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	dump, err := buildSmartOrderFSV(core.NewNode())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo smart orders ok=%v current=%+v cases=%+v", dump.OK, dump.Current, dump.Cases)
+	if !dump.OK || dump.Current.Name != "harvest-split" || len(dump.Current.Records) != 2 {
+		t.Fatalf("smart-order fixture current mismatch: %+v", dump)
+	}
+	if dump.Current.Records[0].Opcode != sim.OpHarvest || dump.Current.Records[1].Opcode != sim.OpMove {
+		t.Fatalf("harvest split should emit harvest then move: %+v", dump.Current.Records)
+	}
+	if len(dump.Current.Records[0].Units) != 2 || len(dump.Current.Records[1].Units) != 1 {
+		t.Fatalf("harvest split unit groups wrong: %+v", dump.Current.Records)
+	}
+	seen := map[string]orderCaseDump{}
+	for _, c := range dump.Cases {
+		seen[c.Name] = c
+	}
+	if seen["hidden-enemy"].Feedback != litinput.SmartFeedbackHiddenTarget.String() || len(seen["hidden-enemy"].Records) != 0 {
+		t.Fatalf("hidden target edge wrong: %+v", seen["hidden-enemy"])
+	}
+	if seen["dead-target"].Feedback != litinput.SmartFeedbackDeadTarget.String() || len(seen["dead-target"].Records) != 0 {
+		t.Fatalf("dead target edge wrong: %+v", seen["dead-target"])
 	}
 }
 

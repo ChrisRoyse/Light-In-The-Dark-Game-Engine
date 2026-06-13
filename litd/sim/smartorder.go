@@ -29,6 +29,21 @@ type SmartCommand struct {
 	Point  fixed.Vec2
 }
 
+// SmartRecordRequest is the input-layer bridge for right-click
+// resolution. The caller supplies player/seq metadata because the
+// output is already the explicit command-stream record; the sim does
+// not see a raw "smart" opcode.
+type SmartRecordRequest struct {
+	Player         uint8
+	Team           uint8
+	Seq            uint16
+	Target         EntityID
+	Point          fixed.Vec2
+	TargetClass    uint8
+	TargetClassSet bool
+	Queued         bool
+}
+
 // BindSmartTable installs the loaded resolution table and the
 // TypeID → capability-class mapping (column index into the table).
 // Fails closed on out-of-range class indices.
@@ -98,6 +113,73 @@ func (w *World) ResolveSmart(team uint8, sel []EntityID, target EntityID, point 
 		return nil, false
 	}
 	return w.ResolveSmartClass(tc, sel, target, point)
+}
+
+// ResolveSmartRecords resolves directly into preallocated command
+// records. This is the zero-allocation path used by litd/input:
+// selection order is preserved inside each record, and records are
+// ordered by the first selected unit that produced each opcode.
+func (w *World) ResolveSmartRecords(req SmartRecordRequest, sel []EntityID, out []CommandRecord) (int, uint8, bool) {
+	if w.smart == nil || len(sel) == 0 || len(out) == 0 {
+		return 0, 0, false
+	}
+	tc := req.TargetClass
+	if req.TargetClassSet {
+		if tc >= data.TargetClassCount {
+			return 0, tc, false
+		}
+	} else {
+		var ok bool
+		tc, ok = w.ClassifyTarget(req.Team, req.Target)
+		if !ok {
+			return 0, tc, false
+		}
+	}
+	row := w.smart.Rules[tc]
+	flags := uint8(0)
+	if req.Queued {
+		flags = CmdFlagQueued
+	}
+	n := 0
+	for _, id := range sel {
+		if !w.Ents.Alive(id) {
+			continue
+		}
+		op := row[w.unitClassOf(id)]
+		found := -1
+		for i := 0; i < n; i++ {
+			if out[i].Opcode == op {
+				found = i
+				break
+			}
+		}
+		if found == -1 {
+			if n == len(out) {
+				return 0, tc, false
+			}
+			out[n] = CommandRecord{
+				Version: CommandVersion,
+				Player:  req.Player,
+				Seq:     req.Seq + uint16(n),
+				Opcode:  op,
+				Flags:   flags,
+				Target:  req.Target,
+				Point:   req.Point,
+			}
+			found = n
+			n++
+		}
+		rec := &out[found]
+		if rec.UnitCount == MaxCommandUnits {
+			return 0, tc, false
+		}
+		rec.Units[rec.UnitCount] = id
+		rec.UnitCount++
+	}
+	if n == 0 {
+		return 0, tc, false
+	}
+	return n, tc, true
 }
 
 // ResolveSmartClass resolves a selection against an explicit target

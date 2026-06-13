@@ -37,6 +37,8 @@ var OpcodeByName = map[string]uint8{
 	"get-item": 14,
 	// appended by #306 (ally → follow, closing discovery #292)
 	"follow": 15,
+	// appended by #223: explicit smart-order construction resume.
+	"resume-construction": 16,
 }
 
 // Target classes — the row vocabulary, fixed in code (the classifier
@@ -45,7 +47,10 @@ const (
 	TCGroundPoint uint8 = iota
 	TCEnemy
 	TCAlly
+	TCTransport
 	TCOwnBuilding
+	TCDamagedOwn
+	TCConstruction
 	TCResource
 	TCItem
 	TargetClassCount
@@ -53,7 +58,8 @@ const (
 
 // TargetClassNames index the rows of SmartTable.Rules.
 var TargetClassNames = [TargetClassCount]string{
-	"ground-point", "enemy", "ally", "own-building", "resource", "item",
+	"ground-point", "enemy", "ally", "transport", "own-building",
+	"damaged-own", "construction", "resource", "item",
 }
 
 // SmartTable is the loaded resolution table.

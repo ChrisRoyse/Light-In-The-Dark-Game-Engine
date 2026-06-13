@@ -17,7 +17,7 @@ func TestSmartOrderRegistryAgreement(t *testing.T) {
 		"patrol": OpPatrol, "cast-ability": OpCastAbility, "train": OpTrain,
 		"build": OpBuild, "cancel": OpCancel, "rally": OpRally,
 		"harvest": OpHarvest, "repair": OpRepair, "board": OpBoard, "unload": OpUnload,
-		"get-item": OpGetItem, "follow": OpFollow,
+		"get-item": OpGetItem, "follow": OpFollow, "resume-construction": OpResumeConstruction,
 	}
 	if len(want) != len(data.OpcodeByName) {
 		t.Fatalf("registry size drift: sim %d vs data %d", len(want), len(data.OpcodeByName))
@@ -74,12 +74,15 @@ func TestSmartOrderMatrix(t *testing.T) {
 	// (follow is not an opcode yet → move; items resolve to get-item
 	// since #305; see table comment + the spec-gap discovery issue)
 	want := [data.TargetClassCount][2]uint8{
-		data.TCGroundPoint: {OpMove, OpMove},
-		data.TCEnemy:       {OpAttack, OpAttack},
-		data.TCAlly:        {OpFollow, OpFollow},
-		data.TCOwnBuilding: {OpRally, OpRally},
-		data.TCResource:    {OpMove, OpHarvest},
-		data.TCItem:        {OpGetItem, OpGetItem},
+		data.TCGroundPoint:  {OpMove, OpMove},
+		data.TCEnemy:        {OpAttack, OpAttack},
+		data.TCAlly:         {OpFollow, OpFollow},
+		data.TCTransport:    {OpBoard, OpBoard},
+		data.TCOwnBuilding:  {OpRally, OpRally},
+		data.TCDamagedOwn:   {OpMove, OpRepair},
+		data.TCConstruction: {OpMove, OpResumeConstruction},
+		data.TCResource:     {OpMove, OpHarvest},
+		data.TCItem:         {OpGetItem, OpGetItem},
 	}
 	pt := fixed.Vec2{X: 500 * fixed.One, Y: 500 * fixed.One}
 	for tc := uint8(0); tc < data.TargetClassCount; tc++ {

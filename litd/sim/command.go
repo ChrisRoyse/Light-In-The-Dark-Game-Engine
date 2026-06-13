@@ -48,6 +48,9 @@ const (
 	OpGetItem
 	// appended by #306 (patrol already had OpPatrol; follow is new)
 	OpFollow
+	// appended by #223: under-construction smart order. The command
+	// stream can carry it before the construction system consumes it.
+	OpResumeConstruction
 	opcodeCount
 )
 
@@ -75,22 +78,23 @@ type payloadShape struct {
 
 // opShapes is the frozen per-opcode payload registry for version 1.
 var opShapes = [opcodeCount]payloadShape{
-	OpMove:        {units: true, point: true},
-	OpAttack:      {units: true, target: true, point: true},
-	OpStop:        {units: true},
-	OpHold:        {units: true},
-	OpPatrol:      {units: true, point: true},
-	OpCastAbility: {units: true, target: true, point: true, data: true},
-	OpTrain:       {units: true, data: true},
-	OpBuild:       {units: true, point: true, data: true},
-	OpCancel:      {units: true},
-	OpRally:       {units: true, point: true},
-	OpHarvest:     {units: true, target: true},
-	OpRepair:      {units: true, target: true},
-	OpBoard:       {units: true, target: true},
-	OpUnload:      {units: true, point: true},
-	OpGetItem:     {units: true, target: true},
-	OpFollow:      {units: true, target: true},
+	OpMove:               {units: true, point: true},
+	OpAttack:             {units: true, target: true, point: true},
+	OpStop:               {units: true},
+	OpHold:               {units: true},
+	OpPatrol:             {units: true, point: true},
+	OpCastAbility:        {units: true, target: true, point: true, data: true},
+	OpTrain:              {units: true, data: true},
+	OpBuild:              {units: true, point: true, data: true},
+	OpCancel:             {units: true},
+	OpRally:              {units: true, point: true},
+	OpHarvest:            {units: true, target: true},
+	OpRepair:             {units: true, target: true},
+	OpBoard:              {units: true, target: true},
+	OpUnload:             {units: true, point: true},
+	OpGetItem:            {units: true, target: true},
+	OpFollow:             {units: true, target: true},
+	OpResumeConstruction: {units: true, target: true},
 }
 
 // CommandRecord is one decoded command — a fixed-size value struct,
