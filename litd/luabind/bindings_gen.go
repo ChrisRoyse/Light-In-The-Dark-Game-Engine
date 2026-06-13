@@ -14,9 +14,20 @@ type Binding struct {
 
 // Bindings is the core API surface (litd/api + litd/api/helpers).
 var Bindings = []Binding{
+	{LuaName: "Game_CreateUnit", Package: "litd/api", Symbol: "Game.CreateUnit", GoSignature: "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"},
 	{LuaName: "PolledWait", Package: "litd/api/helpers", Symbol: "PolledWait", GoSignature: "(seconds float64)"},
+	{LuaName: "Unit_Facing", Package: "litd/api", Symbol: "Unit.Facing", GoSignature: "() Angle"},
+	{LuaName: "Unit_Kill", Package: "litd/api", Symbol: "Unit.Kill", GoSignature: "()"},
+	{LuaName: "Unit_Life", Package: "litd/api", Symbol: "Unit.Life", GoSignature: "() float64"},
+	{LuaName: "Unit_MoveSpeed", Package: "litd/api", Symbol: "Unit.MoveSpeed", GoSignature: "() float64"},
+	{LuaName: "Unit_Order", Package: "litd/api", Symbol: "Unit.Order", GoSignature: "(ord Order, target OrderTarget) bool"},
+	{LuaName: "Unit_Owner", Package: "litd/api", Symbol: "Unit.Owner", GoSignature: "() Player"},
 	{LuaName: "Unit_Paused", Package: "litd/api", Symbol: "Unit.Paused", GoSignature: "() bool"},
+	{LuaName: "Unit_Position", Package: "litd/api", Symbol: "Unit.Position", GoSignature: "() Vec2"},
+	{LuaName: "Unit_Remove", Package: "litd/api", Symbol: "Unit.Remove", GoSignature: "()"},
+	{LuaName: "Unit_SetFacing", Package: "litd/api", Symbol: "Unit.SetFacing", GoSignature: "(a Angle)"},
 	{LuaName: "Unit_SetLife", Package: "litd/api", Symbol: "Unit.SetLife", GoSignature: "(v float64)"},
+	{LuaName: "Unit_SetMoveSpeed", Package: "litd/api", Symbol: "Unit.SetMoveSpeed", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetPaused", Package: "litd/api", Symbol: "Unit.SetPaused", GoSignature: "(paused bool)"},
 	{LuaName: "Unit_SetPosition", Package: "litd/api", Symbol: "Unit.SetPosition", GoSignature: "(pos Vec2)"},
 }

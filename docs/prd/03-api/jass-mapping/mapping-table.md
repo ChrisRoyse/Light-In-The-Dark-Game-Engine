@@ -465,22 +465,22 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetItemCharges | common.j | unclassified | _pending (M2 backlog)_ |
 | GetItemUserData | common.j | unclassified | _pending (M2 backlog)_ |
 | SetItemUserData | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateUnit | common.j | D3 | _pending (M2 backlog)_ |
-| CreateUnitByName | common.j | D3 | _pending (M2 backlog)_ |
-| CreateUnitAtLoc | common.j | D3 | _pending (M2 backlog)_ |
-| CreateUnitAtLocByName | common.j | D3 | _pending (M2 backlog)_ |
+| CreateUnit | common.j | D2 | `litd/api.Game.CreateUnit` |
+| CreateUnitByName | common.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
+| CreateUnitAtLoc | common.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
+| CreateUnitAtLocByName | common.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
 | CreateCorpse | common.j | unclassified | _pending (M2 backlog)_ |
-| KillUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| KillUnit | common.j | D1 | `litd/api.Unit.Kill` |
+| RemoveUnit | common.j | D1 | `litd/api.Unit.Remove` |
 | ShowUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitState | common.j | D5 | `litd/api.Unit.SetLife` |
 | SetUnitX | common.j | D3 | `litd/api.Unit.SetPosition` (D3 collapse → SetUnitPosition) |
 | SetUnitY | common.j | D3 | `litd/api.Unit.SetPosition` (D3 collapse → SetUnitPosition) |
 | SetUnitPosition | common.j | D3 | `litd/api.Unit.SetPosition` |
 | SetUnitPositionLoc | common.j | D3 | `litd/api.Unit.SetPosition` (D3 collapse → SetUnitPosition) |
-| SetUnitFacing | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitFacingTimed | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitMoveSpeed | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitFacing | common.j | D1 | `litd/api.Unit.SetFacing` |
+| SetUnitFacingTimed | common.j | D2 | **tombstoned** (deferred-v2): gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed) |
+| SetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.SetMoveSpeed` |
 | SetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitTurnSpeed | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
@@ -557,14 +557,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitUseItem | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitUseItemPoint | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitUseItemTarget | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitX | common.j | D3 | _pending (M2 backlog)_ |
-| GetUnitY | common.j | D3 | _pending (M2 backlog)_ |
-| GetUnitLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitFacing | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitMoveSpeed | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitX | common.j | D3 | `litd/api.Unit.Position` |
+| GetUnitY | common.j | D3 | `litd/api.Unit.Position` (D3 collapse → GetUnitX) |
+| GetUnitLoc | common.j | D3 | `litd/api.Unit.Position` (D3 collapse → GetUnitX) |
+| GetUnitFacing | common.j | D1 | `litd/api.Unit.Facing` |
+| GetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.MoveSpeed` |
 | GetUnitDefaultMoveSpeed | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitState | common.j | D5 | _pending (M2 backlog)_ |
-| GetOwningPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitState | common.j | D5 | `litd/api.Unit.Life` |
+| GetOwningPlayer | common.j | D1 | `litd/api.Unit.Owner` |
 | GetUnitTypeId | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitRace | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitName | common.j | unclassified | _pending (M2 backlog)_ |
@@ -626,18 +626,18 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitSetUsesAltIcon | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitDamagePoint | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitDamageTarget | common.j | unclassified | _pending (M2 backlog)_ |
-| IssueImmediateOrder | common.j | D3 | _pending (M2 backlog)_ |
-| IssueImmediateOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| IssuePointOrder | common.j | D3 | _pending (M2 backlog)_ |
-| IssuePointOrderLoc | common.j | D3 | _pending (M2 backlog)_ |
-| IssuePointOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| IssuePointOrderByIdLoc | common.j | D3 | _pending (M2 backlog)_ |
-| IssueTargetOrder | common.j | D3 | _pending (M2 backlog)_ |
-| IssueTargetOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| IssueInstantPointOrder | common.j | D3 | _pending (M2 backlog)_ |
-| IssueInstantPointOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| IssueInstantTargetOrder | common.j | D3 | _pending (M2 backlog)_ |
-| IssueInstantTargetOrderById | common.j | D3 | _pending (M2 backlog)_ |
+| IssueImmediateOrder | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueImmediateOrderById | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssuePointOrder | common.j | D3 | `litd/api.Unit.Order` |
+| IssuePointOrderLoc | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssuePointOrderById | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssuePointOrderByIdLoc | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueTargetOrder | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueTargetOrderById | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueInstantPointOrder | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueInstantPointOrderById | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueInstantTargetOrder | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueInstantTargetOrderById | common.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssueBuildOrder | common.j | D3 | _pending (M2 backlog)_ |
 | IssueBuildOrderById | common.j | D3 | _pending (M2 backlog)_ |
 | IssueNeutralImmediateOrder | common.j | D3 | _pending (M2 backlog)_ |
@@ -1864,7 +1864,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | OrderId2StringBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetIssuedOrderIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetKillingUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| CreateUnitAtLocSaveLast | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CreateUnitAtLocSaveLast | blizzard.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
 | GetLastCreatedUnit | blizzard.j | D2 | **tombstoned** (superseded): Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel |
 | CreateNUnitsAtLoc | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CreateNUnitsAtLocFacingLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1892,7 +1892,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SelectGroupForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SelectUnitAddForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SelectUnitRemoveForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetUnitLifeBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
+| SetUnitLifeBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
 | SetUnitManaBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
 | SetUnitLifePercentBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
 | SetUnitManaPercentBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
@@ -2380,11 +2380,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetPlayerUnitAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | LockGameSpeedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnlockGameSpeedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| IssueTargetOrderBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| IssuePointOrderLocBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| IssueTargetOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssuePointOrderLocBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssueTargetDestructableOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
 | IssueTargetItemOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
-| IssueImmediateOrderBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| IssueImmediateOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | GroupTargetOrderBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GroupPointOrderLocBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GroupImmediateOrderBJ | blizzard.j | D1 | _pending (M2 backlog)_ |

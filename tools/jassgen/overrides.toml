@@ -54,8 +54,9 @@ name = "SetUnitState"
 class = "D5"
 goMapping = "Unit.SetLife"
 goSignature = "(v float64)"
+collapsesWith = ["SetUnitLifeBJ"]
 package = "litd/api"
-reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1); already hand-implemented in M5 — generator must skip"
+reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1); already hand-implemented in M5 — generator must skip. SetUnitLifeBJ is the clamp-on-set BJ passthrough onto the same Unit.SetLife (D1), folded here so it shares the canonical target"
 
 [[override]]
 name = "GetUnitCount"
@@ -84,3 +85,105 @@ name = "CommentString"
 class = "D4"
 tombstone = "deprecated"
 reason = "empty-body GUI comment-row artifact; dead even in WC3"
+
+# --- Units category (#217): natives/BJs backed by the implemented litd/api
+# units surface (unit.go, handle_validity.go, order.go). Each canonical entry
+# folds its dedup family via collapsesWith so the family resolves under one
+# symbol without tripping the duplicateTargets (M5) gate. See jass-mapping/units.md.
+
+[[override]]
+name = "CreateUnit"
+class = "D2"
+goMapping = "Game.CreateUnit"
+goSignature = "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"
+collapsesWith = ["CreateUnitByName", "CreateUnitAtLoc", "CreateUnitAtLocByName", "CreateUnitAtLocSaveLast"]
+package = "litd/api"
+reason = "create family collapses onto one ctor returning the unit (dedup §3); the ByName, AtLoc (location), and SaveLast (side-channel) variants are arg-shape/last-handle reorderings — the Go return value supersedes bj_lastCreatedUnit"
+
+[[override]]
+name = "KillUnit"
+class = "D1"
+goMapping = "Unit.Kill"
+goSignature = "()"
+package = "litd/api"
+reason = "lifecycle kill native maps directly onto the lifecycle verb (dedup §2); marks the unit dead for the step's death pass"
+
+[[override]]
+name = "RemoveUnit"
+class = "D1"
+goMapping = "Unit.Remove"
+goSignature = "()"
+package = "litd/api"
+reason = "removal native maps directly onto the lifecycle verb (dedup §2); deletes all component rows with no death event"
+
+[[override]]
+name = "GetUnitX"
+class = "D3"
+goMapping = "Unit.Position"
+goSignature = "() Vec2"
+collapsesWith = ["GetUnitY", "GetUnitLoc"]
+package = "litd/api"
+reason = "x/y/location position getters collapse onto one Vec2 getter (dedup §4 ex.1)"
+
+[[override]]
+name = "GetUnitFacing"
+class = "D1"
+goMapping = "Unit.Facing"
+goSignature = "() Angle"
+package = "litd/api"
+reason = "facing getter maps directly onto the typed Angle accessor (dedup §2)"
+
+[[override]]
+name = "SetUnitFacing"
+class = "D1"
+goMapping = "Unit.SetFacing"
+goSignature = "(a Angle)"
+package = "litd/api"
+reason = "instant facing setter maps directly onto the snap setter (dedup §2); the gradual SetUnitFacingTimed is a distinct capability, tombstoned deferred-v2 (turn-to-face order is future work)"
+
+[[override]]
+name = "SetUnitFacingTimed"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed)"
+
+[[override]]
+name = "GetUnitState"
+class = "D5"
+goMapping = "Unit.Life"
+goSignature = "() float64"
+package = "litd/api"
+reason = "enum-keyed state getter collapses onto the typed accessor family (Life/MaxLife/Mana/MaxMana) over one state table (dedup §6 ex.1); Unit.Life is the representative canonical symbol, mirroring the SetUnitState → Unit.SetLife setter"
+
+[[override]]
+name = "GetUnitMoveSpeed"
+class = "D1"
+goMapping = "Unit.MoveSpeed"
+goSignature = "() float64"
+package = "litd/api"
+reason = "move-speed getter maps directly; the per-tick sim rate is surfaced as per-second (dedup §2)"
+
+[[override]]
+name = "SetUnitMoveSpeed"
+class = "D1"
+goMapping = "Unit.SetMoveSpeed"
+goSignature = "(v float64)"
+package = "litd/api"
+reason = "move-speed setter maps directly; per-second value quantized to the per-tick rate (dedup §2)"
+
+[[override]]
+name = "GetOwningPlayer"
+class = "D1"
+goMapping = "Unit.Owner"
+goSignature = "() Player"
+package = "litd/api"
+reason = "owning-player getter maps directly onto the typed Player accessor (dedup §2)"
+
+[[override]]
+name = "IssuePointOrder"
+class = "D3"
+goMapping = "Unit.Order"
+goSignature = "(ord Order, target OrderTarget) bool"
+collapsesWith = ["IssueImmediateOrder", "IssueTargetOrder", "IssuePointOrderById", "IssueImmediateOrderById", "IssueTargetOrderById", "IssuePointOrderLoc", "IssueInstantPointOrder", "IssueInstantTargetOrder", "IssueInstantPointOrderById", "IssueInstantTargetOrderById", "IssuePointOrderByIdLoc", "IssuePointOrderLocBJ", "IssueTargetOrderBJ", "IssueImmediateOrderBJ"]
+package = "litd/api"
+reason = "the order matrix — immediate/point/target × string/ById × instant, plus the Loc and BJ variants — collapses onto one typed Order(ord, target) verb where OrderTarget is the none|point|unit sum (dedup §4 ex.3)"

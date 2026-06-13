@@ -141,6 +141,355 @@
       }
     },
     {
+      "name": "CreateUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.CreateUnit",
+        "package": "litd/api",
+        "goSignature": "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit",
+        "collapsesWith": [
+          "CreateUnitByName",
+          "CreateUnitAtLoc",
+          "CreateUnitAtLocByName",
+          "CreateUnitAtLocSaveLast"
+        ]
+      }
+    },
+    {
+      "name": "GetOwningPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "player"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Owner",
+        "package": "litd/api",
+        "goSignature": "() Player"
+      }
+    },
+    {
+      "name": "GetUnitFacing",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Facing",
+        "package": "litd/api",
+        "goSignature": "() Angle"
+      }
+    },
+    {
+      "name": "GetUnitMoveSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.MoveSpeed",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetUnitState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichUnitState",
+            "jassType": "unitstate",
+            "tsType": "unitstate"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Life",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetUnitX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Position",
+        "package": "litd/api",
+        "goSignature": "() Vec2",
+        "collapsesWith": [
+          "GetUnitY",
+          "GetUnitLoc"
+        ]
+      }
+    },
+    {
+      "name": "IssuePointOrder",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Order",
+        "package": "litd/api",
+        "goSignature": "(ord Order, target OrderTarget) bool",
+        "collapsesWith": [
+          "IssueImmediateOrder",
+          "IssueTargetOrder",
+          "IssuePointOrderById",
+          "IssueImmediateOrderById",
+          "IssueTargetOrderById",
+          "IssuePointOrderLoc",
+          "IssueInstantPointOrder",
+          "IssueInstantTargetOrder",
+          "IssueInstantPointOrderById",
+          "IssueInstantTargetOrderById",
+          "IssuePointOrderByIdLoc",
+          "IssuePointOrderLocBJ",
+          "IssueTargetOrderBJ",
+          "IssueImmediateOrderBJ"
+        ]
+      }
+    },
+    {
+      "name": "KillUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Kill",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "RemoveUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Remove",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "SetUnitFacing",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "facingAngle",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetFacing",
+        "package": "litd/api",
+        "goSignature": "(a Angle)"
+      }
+    },
+    {
+      "name": "SetUnitFacingTimed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "facingAngle",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed)"
+      }
+    },
+    {
+      "name": "SetUnitMoveSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newSpeed",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetMoveSpeed",
+        "package": "litd/api",
+        "goSignature": "(v float64)"
+      }
+    },
+    {
       "name": "SetUnitPosition",
       "origin": "common.j",
       "signature": {
@@ -206,7 +555,10 @@
       "goMapping": {
         "symbol": "Unit.SetLife",
         "package": "litd/api",
-        "goSignature": "(v float64)"
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetUnitLifeBJ"
+        ]
       }
     },
     {
