@@ -1,6 +1,7 @@
 package litd
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -417,4 +418,141 @@ func TestUnitRemoveIsSilentAndImmediate(t *testing.T) {
 	// EDGE: Remove on an invalid handle is a no-op.
 	u.Remove()
 	(Unit{}).Remove()
+}
+
+// orderDump renders the sim OrderStore head for a unit — the Source of Truth
+// for Unit.Order. Reads Kind/Target/Point straight from the dense order row.
+func orderDump(w *sim.World, id sim.EntityID) string {
+	r := w.Orders.Row(id)
+	if r < 0 {
+		return "no-order-row"
+	}
+	p := w.Orders.Point[r]
+	return fmt.Sprintf("kind=%d target=%d point=(%.1f,%.1f)",
+		w.Orders.Kind[r], uint64(w.Orders.Target[r]), toFloat(p.X), toFloat(p.Y))
+}
+
+// TestUnitOrderCatalogMapsToSimKinds is the X+X=Y discipline for the catalog:
+// each public Order's wire id MUST be its sim kind + 1 (so the zero Order is
+// "unset", never aliasing OrderStop=0). Known input (catalog var) → known
+// output (sim kind). Verified against the sim constants directly.
+func TestUnitOrderCatalogMapsToSimKinds(t *testing.T) {
+	cases := []struct {
+		name string
+		ord  Order
+		kind uint8
+	}{
+		{"Stop", OrderStop, sim.OrderStop},
+		{"Move", OrderMove, sim.OrderMove},
+		{"Attack", OrderAttack, sim.OrderAttack},
+		{"Smart", OrderSmart, sim.OrderSmart},
+		{"Hold", OrderHold, sim.OrderHold},
+		{"Patrol", OrderPatrol, sim.OrderPatrol},
+		{"Follow", OrderFollow, sim.OrderFollow},
+	}
+	for _, c := range cases {
+		if c.ord.IsZero() {
+			t.Errorf("Order%s is the zero value — would be rejected as unset", c.name)
+		}
+		if got := uint8(c.ord.id - 1); got != c.kind {
+			t.Errorf("Order%s maps to sim kind %d, want %d", c.name, got, c.kind)
+		}
+	}
+	// The unset (zero) Order must be distinct from OrderStop.
+	if (Order{}).id == OrderStop.id {
+		t.Fatal("zero Order aliases OrderStop — IsZero() guard would never fire")
+	}
+}
+
+// TestUnitOrderFSV verifies Unit.Order installs the right sim order head for
+// each target shape, and fails closed on the documented edges. SoT = the sim
+// OrderStore (w.Orders.Kind/Target/Point), read back via orderDump.
+func TestUnitOrderFSV(t *testing.T) {
+	w, g, _ := newDriverGame(t)
+	u, id := apiOrderUnit(t, w, g, 0, Vec2{X: 64, Y: 64})
+	victim, vid := apiOrderUnit(t, w, g, 1, Vec2{X: 256, Y: 256})
+
+	// Fresh unit: order head defaults to OrderStop (kind 0), no target/point.
+	t.Logf("BEFORE: %s", orderDump(w, id))
+	if k := w.Orders.Kind[w.Orders.Row(id)]; k != sim.OrderStop {
+		t.Fatalf("fresh order head kind=%d, want OrderStop=%d", k, sim.OrderStop)
+	}
+
+	// HAPPY 1 — point order (Move): Kind=OrderMove, Point=target, no entity target.
+	if !u.Order(OrderMove, TargetPoint(Vec2{X: 500, Y: 600})) {
+		t.Fatal("Order(Move, point) returned false")
+	}
+	r := w.Orders.Row(id)
+	t.Logf("AFTER Move:   %s", orderDump(w, id))
+	if w.Orders.Kind[r] != sim.OrderMove {
+		t.Errorf("kind=%d, want OrderMove=%d", w.Orders.Kind[r], sim.OrderMove)
+	}
+	if p := w.Orders.Point[r]; p != vec(Vec2{X: 500, Y: 600}) {
+		t.Errorf("point=(%.1f,%.1f), want (500,600)", toFloat(p.X), toFloat(p.Y))
+	}
+	if w.Orders.Target[r] != 0 {
+		t.Errorf("point order left a stray entity target %d", uint64(w.Orders.Target[r]))
+	}
+
+	// HAPPY 2 — target order (Attack a unit): Kind=OrderAttack, Target=victim.
+	// Unqueued, so it replaces the Move head (point must clear is not required;
+	// the kind+target is what drives combat).
+	if !u.Order(OrderAttack, TargetUnit(victim)) {
+		t.Fatal("Order(Attack, unit) returned false")
+	}
+	t.Logf("AFTER Attack: %s", orderDump(w, id))
+	if w.Orders.Kind[r] != sim.OrderAttack {
+		t.Errorf("kind=%d, want OrderAttack=%d", w.Orders.Kind[r], sim.OrderAttack)
+	}
+	if w.Orders.Target[r] != vid {
+		t.Errorf("target=%d, want victim %d", uint64(w.Orders.Target[r]), uint64(vid))
+	}
+
+	// HAPPY 3 — immediate order (Stop): Kind=OrderStop, target cleared.
+	if !u.Order(OrderStop, TargetNone()) {
+		t.Fatal("Order(Stop, none) returned false")
+	}
+	t.Logf("AFTER Stop:   %s", orderDump(w, id))
+	if w.Orders.Kind[r] != sim.OrderStop {
+		t.Errorf("kind=%d, want OrderStop=%d", w.Orders.Kind[r], sim.OrderStop)
+	}
+	if w.Orders.Target[r] != 0 {
+		t.Errorf("immediate order left a stray target %d", uint64(w.Orders.Target[r]))
+	}
+
+	// EDGE 1 — unset (zero) order: rejected, SoT unchanged.
+	before := orderDump(w, id)
+	if u.Order(Order{}, TargetPoint(Vec2{X: 9, Y: 9})) {
+		t.Error("Order(zero) returned true — must reject the unset order")
+	}
+	if after := orderDump(w, id); after != before {
+		t.Errorf("unset order mutated SoT: %s -> %s", before, after)
+	}
+
+	// EDGE 2 — dead target unit: fail closed, no order issued, SoT unchanged.
+	victim.Remove() // destroys the entity row immediately
+	if victim.Valid() {
+		t.Fatal("victim still valid after Remove()")
+	}
+	before = orderDump(w, id)
+	if u.Order(OrderAttack, TargetUnit(victim)) {
+		t.Error("Order(Attack, dead unit) returned true — must fail closed")
+	}
+	if after := orderDump(w, id); after != before {
+		t.Errorf("order against dead target mutated SoT: %s -> %s", before, after)
+	}
+
+	// EDGE 3 — invalid ordering unit: no-op, returns false.
+	u.Remove()
+	if u.Order(OrderMove, TargetPoint(Vec2{X: 1, Y: 1})) {
+		t.Error("Order on a removed unit returned true")
+	}
+	if w.Orders.Row(id) >= 0 {
+		t.Error("removed unit still has an order row")
+	}
+
+	// EDGE 4 — zero-value handle: no panic, returns false.
+	if (Unit{}).Order(OrderMove, TargetPoint(Vec2{})) {
+		t.Error("Order on the zero Unit returned true")
+	}
 }
