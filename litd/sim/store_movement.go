@@ -12,6 +12,7 @@ const (
 	MoveIdle      uint8 = iota // no active path
 	MoveFollowing              // walking the waypoint list
 	MoveBlocked                // local avoidance stalled, awaiting re-path
+	MoveFlow                   // following a shared flow-field slot
 )
 
 // NoPath is the PathHandle value meaning "no cached path held".

@@ -102,6 +102,7 @@ func (w *World) phaseScripts() { w.scriptPhase() }
 // through to the default order (orders.go), then advance production
 // queues (produce.go #302).
 func (w *World) phaseOrders() {
+	w.pathSeq = 0
 	w.ordersSystem()
 	w.produceSystem()
 	w.constructionSystem() // rising structures ramp HP / complete (#301)
@@ -111,6 +112,7 @@ func (w *World) phaseOrders() {
 // turn-rate-limited facing (movement.go), then the incremental
 // bucket-grid rebuild over everything that moved (buckets.go §3.1).
 func (w *World) phaseMovement() {
+	w.pathingSystem()
 	w.movementSystem()
 	w.missileSystem() // flight at the movement-phase tail (#158)
 	w.bucketReconcile()

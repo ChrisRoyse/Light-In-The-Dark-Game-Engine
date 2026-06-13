@@ -19,10 +19,7 @@ package sim
 // transitions raise EvOrderIssued/EvOrderDone through the event ring,
 // dispatched in the phase-6 flush in deterministic order.
 
-import (
-	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
-	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
-)
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 
 // Order-transition events. EvOrderIssued fires when an order BECOMES
 // CURRENT (install/pop/default fall-through), not on queue append —
@@ -40,6 +37,7 @@ const MaxOrderQueue = 16
 const (
 	orderFresh   uint8 = 0 // installed, has not yet started driving its system
 	orderRunning uint8 = 1
+	orderPathing uint8 = 2 // waiting for the pathing phase to deliver
 )
 
 // Order is the value-struct verb (combat-and-orders.md §2.1): order
@@ -133,16 +131,9 @@ func (w *World) interruptCurrentOrder(id EntityID) {
 	if mr == -1 {
 		return
 	}
-	m := w.Movements
-	if m.PathHandle[mr] != NoPath {
-		pid := path.PathID(m.PathHandle[mr])
-		if w.Paths.Valid(pid) {
-			w.Paths.Release(pid)
-		}
-		m.PathHandle[mr] = NoPath
-	}
-	m.State[mr] = MoveIdle
-	m.Stall[mr] = 0
+	w.releaseMoveHandle(mr)
+	w.Movements.State[mr] = MoveIdle
+	w.Movements.Stall[mr] = 0
 }
 
 // completeOrder pops the next queued order or falls through to the
@@ -209,17 +200,24 @@ func (w *World) ordersSystem() {
 				continue
 			}
 			if s.Phase[r] == orderFresh {
-				if !w.StartMoveTo(id, s.Point[r]) {
+				phase, ok := w.startMoveOrder(r, id)
+				if !ok {
 					w.completeOrder(r, id, false)
 					continue
 				}
-				s.Phase[r] = orderRunning
+				s.Phase[r] = phase
+				continue
+			}
+			if s.Phase[r] == orderPathing {
 				continue
 			}
 			switch w.Movements.State[mr] {
 			case MoveIdle: // arrived (movement emitted EvMoveDone)
 				w.completeOrder(r, id, true)
 			case MoveBlocked: // stalled out: unreachable for now
+				w.releaseMoveHandle(mr)
+				w.Movements.State[mr] = MoveIdle
+				w.Movements.Stall[mr] = 0
 				w.completeOrder(r, id, false)
 			}
 		case OrderHarvest:

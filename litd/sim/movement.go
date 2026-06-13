@@ -125,13 +125,16 @@ func unitStep(dir fixed.Vec2, speed fixed.F64) fixed.Vec2 {
 func (w *World) movementSystem() {
 	m := w.Movements
 	for r := int32(0); r < m.count; r++ { // dense rows, fixed order (ecs §6)
-		if m.State[r] != MoveFollowing {
+		if m.State[r] != MoveFollowing && m.State[r] != MoveFlow {
 			continue
 		}
 		id := m.Entity[r]
 		tr := w.Transforms.Row(id) // ecs §7 join probe
 		if tr == -1 {
 			m.State[r] = MoveIdle // transform vanished: fail closed
+			continue
+		}
+		if m.State[r] == MoveFlow && !w.prepareFlowTarget(r, tr) {
 			continue
 		}
 		pos := w.Transforms.Pos[tr]
@@ -170,7 +173,11 @@ func (w *World) movementSystem() {
 		}
 		w.Transforms.Pos[tr] = nextPos
 		if arrived {
-			w.advanceWaypoint(r)
+			if m.State[r] == MoveFlow {
+				w.advanceFlow(r)
+			} else {
+				w.advanceWaypoint(r)
+			}
 		}
 	}
 }

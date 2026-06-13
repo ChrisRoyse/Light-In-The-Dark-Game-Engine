@@ -20,6 +20,7 @@ import (
 	"sync"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 )
 
 // CommandVersion is the encoding version. Replays refuse mismatches:
@@ -431,6 +432,19 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 		orderKind, writeOrder = OrderFollow, true
 	}
 	if writeOrder {
+		if r.Opcode == OpMove && r.Flags&CmdFlagQueued == 0 &&
+			w.pathProvider != nil &&
+			w.pathProvider.SelectBackend(valid) == path.BackendFlow {
+			if !w.issueFlowMoveGroup(r.Point, w.cmdActors[:valid]) {
+				w.cmdRejected++
+				return
+			}
+			w.cmdApplied++
+			if w.OnCommandRecord != nil {
+				w.OnCommandRecord(w.tick, r, w.cmdActors[:valid])
+			}
+			return
+		}
 		for i := 0; i < valid; i++ {
 			or := w.Orders.Row(w.cmdActors[i])
 			if or == -1 {

@@ -45,9 +45,19 @@ var avoidNeighborOrder = [8][2]int32{
 // reservation table (map-load time, R-GC-2).
 func (w *World) SetGrid(g *path.Grid) {
 	w.Grid = g
-	if g != nil && w.reservedBy == nil {
+	if g == nil {
+		w.pathDilated = nil
+		w.pathHPA = nil
+		w.pathQueue = nil
+		w.pathFlow = nil
+		w.pathProvider = nil
+		w.flowRefs = [path.FlowSlots]uint16{}
+		return
+	}
+	if w.reservedBy == nil {
 		w.reservedBy = make([]EntityID, path.GridSize*path.GridSize)
 	}
+	w.bindPathingGrid(g)
 }
 
 // StallRepathTicks returns the active stall threshold.
@@ -157,7 +167,11 @@ func (w *World) moveWithAvoidance(r, tr int32, id EntityID, nextPos fixed.Vec2, 
 		w.Transforms.Pos[tr] = nextPos
 		m.Stall[r] = 0
 		if arrived {
-			w.advanceWaypoint(r)
+			if m.State[r] == MoveFlow {
+				w.advanceFlow(r)
+			} else {
+				w.advanceWaypoint(r)
+			}
 		}
 		return
 	}
@@ -239,6 +253,9 @@ func (w *World) moveWithAvoidance(r, tr int32, id EntityID, nextPos fixed.Vec2, 
 
 	// 3. stall threshold → hand back to the order layer
 	if m.Stall[r] >= w.StallRepathTicks() {
+		if m.State[r] == MoveFlow {
+			w.releaseFlowRow(r)
+		}
 		m.State[r] = MoveBlocked
 		m.Stall[r] = 0
 		w.Emit(Event{Kind: EvRepathNeeded, Src: id})

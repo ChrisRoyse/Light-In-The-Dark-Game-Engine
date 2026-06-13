@@ -68,6 +68,7 @@ func (s RequestStatus) String() string {
 
 // ServiceEvent is one line of the per-tick service log (FSV surface).
 type ServiceEvent struct {
+	Owner      uint32 // opaque owner handle from Request
 	Tick       uint32 // request tick
 	Seq        uint16 // request seq
 	Expansions int32  // expansions this request consumed THIS service
@@ -203,7 +204,8 @@ func (q *Queue) Service(budget int32) int32 {
 		if q.run.active {
 			// budget boundary: parked
 			q.logEvent(ServiceEvent{
-				Tick: q.run.req.Tick, Seq: q.run.req.Seq,
+				Owner: q.run.req.Owner,
+				Tick:  q.run.req.Tick, Seq: q.run.req.Seq,
 				Expansions: used,
 				Parked:     true, Resumed: q.run.resumed,
 			})
@@ -364,7 +366,8 @@ func (q *Queue) refineCapped(px, py, cx, cy int32) ([]int32, bool) {
 func (q *Queue) deliver(status RequestStatus, usedThisService int32) {
 	r := &q.run
 	ev := ServiceEvent{
-		Tick: r.req.Tick, Seq: r.req.Seq,
+		Owner: r.req.Owner,
+		Tick:  r.req.Tick, Seq: r.req.Seq,
 		Expansions: usedThisService,
 		Resumed:    r.resumed,
 		Done:       true,

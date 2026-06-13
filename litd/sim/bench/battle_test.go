@@ -13,9 +13,8 @@
 //
 // Wall clock is measured here and ONLY here — gameplay never reads
 // it. The pathing scenes (mass re-path on stamp, 1,000-unit
-// shared-goal blob) run against litd/sim/path directly: the World
-// has no pathfinding wired yet (movement is straight-line waypoint
-// following; SetGrid feeds local avoidance only).
+// shared-goal blob) still stress litd/sim/path directly; World
+// services Queue/FlowSet at the head of phase 4 before movement.
 package bench
 
 import (
@@ -177,10 +176,9 @@ func runBattle(w *sim.World, ticks int) battleStats {
 func ms(d time.Duration) float64 { return float64(d.Nanoseconds()) / 1e6 }
 
 // provisionalBudget maps the actual 7 phases onto the §1 split.
-// Abilities execute inside phase 5 and missiles inside phase 4 in
-// the shipped tick (step.go), so those budget lines merge here; the
-// 2.0 ms pathing slice has no World phase yet (no pathfinding wired
-// into movement) and is covered by the path-package scenes below.
+// Abilities execute inside phase 5, missiles inside phase 4, and
+// pathing is serviced at the head of phase 4 in the shipped tick
+// (step.go), so those budget lines merge here.
 func logPhaseTable(tb testing.TB, st *battleStats) {
 	tb.Helper()
 	n := time.Duration(st.ticks)
@@ -195,8 +193,7 @@ func logPhaseTable(tb testing.TB, st *battleStats) {
 	}
 	line("input+scripts", []int{1, 2}, 1.0)
 	line("orders (+abilities p5)", []int{3}, 1.0)
-	line("pathing (not wired)", nil, 2.0)
-	line("movement (+missiles)", []int{4}, 2.0)
+	line("pathing+movement (+missiles)", []int{4}, 4.0)
 	line("combat", []int{5}, 2.0)
 	line("events+cleanup", []int{6, 7}, 1.5)
 	for i := 1; i <= 7; i++ {

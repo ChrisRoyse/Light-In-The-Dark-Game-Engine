@@ -121,6 +121,13 @@ type World struct {
 	Doodads       *DoodadStore
 	Paths         *path.PathStore // pooled per-unit waypoint buffers (§7)
 	Grid          *path.Grid      // pathing grid; nil until SetGrid (map load)
+	pathDilated   *path.DilatedSet
+	pathHPA       *path.HPA
+	pathQueue     *path.Queue
+	pathFlow      *path.FlowSet
+	pathProvider  *path.Provider
+	pathSeq       uint16
+	flowRefs      [path.FlowSlots]uint16
 	// local avoidance (avoidance.go): cell → owning entity, plus the
 	// stall threshold override (0 = DefaultStallRepathTicks)
 	reservedBy  []EntityID
@@ -406,6 +413,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	w.bucketRemove(id)
 	w.Transforms.Remove(id)
 	if r := w.Movements.Row(id); r != -1 {
+		w.releaseMoveHandle(r)      // free pooled path or shared flow slot
 		w.releaseReservation(r, id) // free the avoidance cell (no leak)
 		w.Movements.Remove(id)
 	}

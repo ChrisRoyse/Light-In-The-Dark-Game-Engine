@@ -189,9 +189,7 @@ func (w *World) startConstruction(worker EntityID, typeID uint16, site fixed.Vec
 	}
 	// committed: spend, stamp, link, set the foundation HP.
 	w.spendBuild(p, def)
-	if w.Grid != nil {
-		w.Grid.StampStatic(path.Rect{X: fx, Y: fy, W: fw, H: fw})
-	}
+	w.stampStatic(path.Rect{X: fx, Y: fy, W: fw, H: fw})
 	w.Build.Builder[br] = worker
 	w.setConstructHP(b, def, 0)
 	w.Emit(Event{Kind: EvConstructStarted, Src: worker, Dst: b})
@@ -332,9 +330,7 @@ func (w *World) IsUnderConstruction(b EntityID) bool {
 // is lost). No refund — destruction is not a cancel.
 func (w *World) destroyBuild(id EntityID) {
 	if br := w.Build.Row(id); br != -1 { // a structure
-		if w.Grid != nil {
-			w.Grid.ClearStatic(path.Rect{X: w.Build.FX[br], Y: w.Build.FY[br], W: w.Build.FW[br], H: w.Build.FW[br]})
-		}
+		w.clearStatic(path.Rect{X: w.Build.FX[br], Y: w.Build.FY[br], W: w.Build.FW[br], H: w.Build.FW[br]})
 		w.Build.Remove(id)
 		return
 	}
