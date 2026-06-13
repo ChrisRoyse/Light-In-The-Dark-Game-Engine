@@ -191,6 +191,15 @@ package = "litd/api"
 reason = "owning-player getter maps directly onto the typed Player accessor (dedup §2)"
 
 [[override]]
+name = "IsUnitAliveBJ"
+class = "D3"
+goMapping = "Unit.Alive"
+goSignature = "() bool"
+collapsesWith = ["IsUnitDeadBJ"]
+package = "litd/api"
+reason = "the alive/dead BJ twins collapse onto one life-based predicate (dedup §4); the dead-check is the complement (!Alive) expressed at the call site"
+
+[[override]]
 name = "SetUnitOwner"
 class = "D1"
 goMapping = "Unit.SetOwner"

@@ -1896,8 +1896,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitManaBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
 | SetUnitLifePercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
 | SetUnitManaPercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
-| IsUnitDeadBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitAliveBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| IsUnitDeadBJ | blizzard.j | D3 | `litd/api.Unit.Alive` (D3 collapse → IsUnitAliveBJ) |
+| IsUnitAliveBJ | blizzard.j | D3 | `litd/api.Unit.Alive` |
 | IsUnitGroupDeadBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | IsUnitGroupDeadBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | IsUnitGroupEmptyBJEnum | blizzard.j | unclassified | _pending (M2 backlog)_ |

@@ -70,6 +70,31 @@
       }
     },
     {
+      "name": "IsUnitAliveBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Alive",
+        "package": "litd/api",
+        "goSignature": "() bool",
+        "collapsesWith": [
+          "IsUnitDeadBJ"
+        ]
+      }
+    },
+    {
       "name": "IsUnitPausedBJ",
       "origin": "blizzard.j",
       "signature": {

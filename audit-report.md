@@ -5,19 +5,19 @@
 Source functions ......... 2642  (common.j+blizzard.j = 2519, +commonai = 2642)
   Classified (D1) .......   147
   Classified (D2) .......   345
-  Classified (D3) .......   126
+  Classified (D3) .......   127
   Classified (D4) .......   380
   Classified (D5) .......   11
-  Unclassified ..........   1633
+  Unclassified ..........   1632
 Disposition
-  Mapped ................   19
+  Mapped ................   20
   Tombstoned ............   12  (superseded 1, gameplay-irrelevant 1, deprecated 1, deferred-v2 9)
-  Collapsed (D3 members) .   30
-  Unmapped ..............   2581
+  Collapsed (D3 members) .   31
+  Unmapped ..............   2579
 commonai capability tombstones: 0 (must be 0)
 duplicate canonical targets:    0 (M5 gate)
 
 ## VIOLATIONS
 
-- unclassified=1633 (M2 gate requires 0)
-- unmapped=2581 (M2 gate requires 0; every symbol mapped or tombstoned)
+- unclassified=1632 (M2 gate requires 0)
+- unmapped=2579 (M2 gate requires 0; every symbol mapped or tombstoned)

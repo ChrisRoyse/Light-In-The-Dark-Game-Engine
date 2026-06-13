@@ -87,6 +87,21 @@ func (u Unit) Type() UnitType {
 	return UnitType{ref: u.g.w.UnitTypes.TypeID[r] + 1}
 }
 
+// Alive reports whether the unit is alive — a valid handle with positive life.
+// A corpse (life 0, awaiting decay) and an invalid/removed handle are both not
+// alive. This is the WC3 life-based definition (UNIT_STATE_LIFE > 0); the
+// dead-check is its complement (!Alive). JASS: IsUnitAliveBJ, IsUnitDeadBJ.
+func (u Unit) Alive() bool {
+	if !u.Valid() {
+		return false
+	}
+	r := u.g.w.Healths.Row(u.id)
+	if r < 0 {
+		return false
+	}
+	return u.g.w.Healths.Life[r] > 0
+}
+
 // Position returns the unit's current world position, or the zero Vec2 on an
 // invalid handle. JASS: GetUnitX/GetUnitY, GetUnitLoc (D3 → one Vec2).
 func (u Unit) Position() Vec2 {

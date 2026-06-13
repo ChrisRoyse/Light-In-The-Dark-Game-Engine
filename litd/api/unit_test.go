@@ -701,3 +701,37 @@ func TestUnitSetOwnerFSV(t *testing.T) {
 	// EDGE 4 — zero handle: no panic.
 	(Unit{}).SetOwner(pa, true)
 }
+
+// TestUnitAliveFSV: Alive tracks the life store (WC3 Life>0), false for corpses
+// and invalid handles. SoT = the sim Health store life value.
+func TestUnitAliveFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+	lf := func() float64 { v, _ := rawLife(w, id); return v }
+
+	// Alive at full life.
+	t.Logf("spawn: life=%.0f alive=%v", lf(), u.Alive())
+	if !u.Alive() {
+		t.Fatal("freshly spawned unit not Alive")
+	}
+	// Wound but not kill — still alive.
+	u.SetLife(1)
+	if !u.Alive() {
+		t.Errorf("unit at life 1 not Alive (life=%.0f)", lf())
+	}
+	// Lethal SetLife(0): life store hits 0 -> not alive (corpse).
+	u.SetLife(0)
+	t.Logf("after SetLife(0): life=%.0f alive=%v", lf(), u.Alive())
+	if u.Alive() {
+		t.Errorf("unit at life 0 reports Alive (life=%.0f)", lf())
+	}
+	// EDGE: invalid/removed handle -> not alive.
+	u.Remove()
+	if u.Alive() {
+		t.Error("removed unit reports Alive")
+	}
+	if (Unit{}).Alive() {
+		t.Error("zero Unit reports Alive")
+	}
+}
