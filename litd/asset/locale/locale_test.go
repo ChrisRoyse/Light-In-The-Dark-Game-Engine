@@ -23,22 +23,13 @@ func TestLocaleLoadRealTablesFSV(t *testing.T) {
 }
 
 func TestLocaleMissingAndUnusedFSV(t *testing.T) {
-	good := `[strings]
-"hud.resource.gold" = "G"
-"hud.resource.lumber" = "L"
-"hud.resource.food" = "F"
-"hud.vital.life" = "HP"
-"hud.vital.mana" = "MP"
-"hud.selection.prefix" = "selection v"
-"hud.queue.prefix" = "queue v"
-"hud.groups.prefix" = "groups v"
-"hud.menu.ok_true" = "HUD ok"
-"hud.menu.ok_false" = "HUD error"
-"hud.widget.idle_worker" = "idle worker"
-"hud.widget.minimap" = "minimap"
-`
+	blob, err := os.ReadFile("../../../data/locale/en.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	good := string(blob)
 	missing := strings.Replace(good, `"hud.queue.prefix" = "queue v"`+"\n", "", 1)
-	_, err := Load(fstest.MapFS{"locale/en.toml": &fstest.MapFile{Data: []byte(missing)}}, "en")
+	_, err = Load(fstest.MapFS{"locale/en.toml": &fstest.MapFile{Data: []byte(missing)}}, "en")
 	t.Logf("FSV missing-key error=%v", err)
 	if err == nil || !strings.Contains(err.Error(), "hud.queue.prefix") {
 		t.Fatalf("missing key should name hud.queue.prefix, got %v", err)

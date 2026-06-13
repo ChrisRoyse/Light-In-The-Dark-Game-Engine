@@ -256,8 +256,8 @@ func TestEmptyAssetsDirPasses(t *testing.T) {
 
 func TestDataLocalePassesFSV(t *testing.T) {
 	root, data := newDataFixture(t)
-	writeLocale(t, data, "en", goodLocaleTOML())
-	writeLocale(t, data, "xx", pseudoLocaleTOML())
+	writeLocale(t, data, "en", goodLocaleTOML(t))
+	writeLocale(t, data, "xx", pseudoLocaleTOML(t))
 	files, err := listFiles(data)
 	if err != nil {
 		t.Fatal(err)
@@ -271,7 +271,7 @@ func TestDataLocalePassesFSV(t *testing.T) {
 
 func TestDataLocaleMissingAndUnusedRejectedFSV(t *testing.T) {
 	_, data := newDataFixture(t)
-	missing := strings.Replace(goodLocaleTOML(), `"hud.queue.prefix" = "queue v"`+"\n", "", 1)
+	missing := strings.Replace(goodLocaleTOML(t), `"hud.queue.prefix" = "queue v"`+"\n", "", 1)
 	writeLocale(t, data, "en", missing)
 	files, err := listFiles(data)
 	if err != nil {
@@ -284,7 +284,7 @@ func TestDataLocaleMissingAndUnusedRejectedFSV(t *testing.T) {
 	}
 
 	_, data = newDataFixture(t)
-	writeLocale(t, data, "en", goodLocaleTOML()+`"hud.extra.unused" = "unused"`+"\n")
+	writeLocale(t, data, "en", goodLocaleTOML(t)+`"hud.extra.unused" = "unused"`+"\n")
 	files, err = listFiles(data)
 	if err != nil {
 		t.Fatal(err)
@@ -298,7 +298,7 @@ func TestDataLocaleMissingAndUnusedRejectedFSV(t *testing.T) {
 
 func TestDataHardcodedHUDLabelRejectedFSV(t *testing.T) {
 	root, data := newDataFixture(t)
-	writeLocale(t, data, "en", goodLocaleTOML())
+	writeLocale(t, data, "en", goodLocaleTOML(t))
 	hudDir := filepath.Join(root, "litd", "render", "hud")
 	if err := os.MkdirAll(hudDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -322,11 +322,35 @@ func leak() {
 	}
 }
 
+func TestDataCommandCardRejectedFSV(t *testing.T) {
+	_, data := newDataFixture(t)
+	writeLocale(t, data, "en", goodLocaleTOML(t))
+	bad := strings.Replace(goodCommandCardTOML(t), `opcode = "move"`, `opcode = "teleport"`, 1)
+	if err := os.WriteFile(filepath.Join(data, "hud", "command-card.toml"), []byte(bad), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	files, err := listFiles(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := checkData(data, files, "")
+	t.Logf("FSV bad command-card findings=%v", got)
+	if len(got) != 1 || got[0].Rule != "COMMAND-CARD" || !strings.Contains(got[0].Msg, "teleport") {
+		t.Fatalf("bad command-card opcode should be rejected, got %v", got)
+	}
+}
+
 func newDataFixture(t *testing.T) (root, data string) {
 	t.Helper()
 	root = t.TempDir()
 	data = filepath.Join(root, "data")
 	if err := os.MkdirAll(filepath.Join(data, "locale"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(data, "hud"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(data, "hud", "command-card.toml"), []byte(goodCommandCardTOML(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.MkdirAll(filepath.Join(root, "litd", "render", "hud"), 0o755); err != nil {
@@ -342,36 +366,26 @@ func writeLocale(t *testing.T, data, tag, body string) {
 	}
 }
 
-func goodLocaleTOML() string {
-	return `[strings]
-"hud.resource.gold" = "G"
-"hud.resource.lumber" = "L"
-"hud.resource.food" = "F"
-"hud.vital.life" = "HP"
-"hud.vital.mana" = "MP"
-"hud.selection.prefix" = "selection v"
-"hud.queue.prefix" = "queue v"
-"hud.groups.prefix" = "groups v"
-"hud.menu.ok_true" = "HUD ok"
-"hud.menu.ok_false" = "HUD error"
-"hud.widget.idle_worker" = "idle worker"
-"hud.widget.minimap" = "minimap"
-`
+func goodLocaleTOML(t *testing.T) string {
+	t.Helper()
+	return readRepoText(t, filepath.Join("..", "..", "data", "locale", "en.toml"))
 }
 
-func pseudoLocaleTOML() string {
-	return `[strings]
-"hud.resource.gold" = "[xx.01]"
-"hud.resource.lumber" = "[xx.02]"
-"hud.resource.food" = "[xx.03]"
-"hud.vital.life" = "[xx.04]"
-"hud.vital.mana" = "[xx.05]"
-"hud.selection.prefix" = "[xx.06]"
-"hud.queue.prefix" = "[xx.07]"
-"hud.groups.prefix" = "[xx.08]"
-"hud.menu.ok_true" = "[xx.09]"
-"hud.menu.ok_false" = "[xx.10]"
-"hud.widget.idle_worker" = "[xx.11]"
-"hud.widget.minimap" = "[xx.12]"
-`
+func pseudoLocaleTOML(t *testing.T) string {
+	t.Helper()
+	return readRepoText(t, filepath.Join("..", "..", "data", "locale", "xx.toml"))
+}
+
+func goodCommandCardTOML(t *testing.T) string {
+	t.Helper()
+	return readRepoText(t, filepath.Join("..", "..", "data", "hud", "command-card.toml"))
+}
+
+func readRepoText(t *testing.T, path string) string {
+	t.Helper()
+	blob, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(blob)
 }

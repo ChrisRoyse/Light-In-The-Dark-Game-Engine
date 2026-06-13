@@ -13,18 +13,38 @@ import (
 type Key string
 
 const (
-	HUDResourceGold    Key = "hud.resource.gold"
-	HUDResourceLumber  Key = "hud.resource.lumber"
-	HUDResourceFood    Key = "hud.resource.food"
-	HUDVitalLife       Key = "hud.vital.life"
-	HUDVitalMana       Key = "hud.vital.mana"
-	HUDSelectionPrefix Key = "hud.selection.prefix"
-	HUDQueuePrefix     Key = "hud.queue.prefix"
-	HUDGroupsPrefix    Key = "hud.groups.prefix"
-	HUDMenuOKTrue      Key = "hud.menu.ok_true"
-	HUDMenuOKFalse     Key = "hud.menu.ok_false"
-	HUDIdleWorker      Key = "hud.widget.idle_worker"
-	HUDMinimap         Key = "hud.widget.minimap"
+	HUDResourceGold               Key = "hud.resource.gold"
+	HUDResourceLumber             Key = "hud.resource.lumber"
+	HUDResourceFood               Key = "hud.resource.food"
+	HUDVitalLife                  Key = "hud.vital.life"
+	HUDVitalMana                  Key = "hud.vital.mana"
+	HUDSelectionPrefix            Key = "hud.selection.prefix"
+	HUDQueuePrefix                Key = "hud.queue.prefix"
+	HUDGroupsPrefix               Key = "hud.groups.prefix"
+	HUDMenuOKTrue                 Key = "hud.menu.ok_true"
+	HUDMenuOKFalse                Key = "hud.menu.ok_false"
+	HUDIdleWorker                 Key = "hud.widget.idle_worker"
+	HUDMinimap                    Key = "hud.widget.minimap"
+	HUDCommandFootman             Key = "hud.command.group.footman"
+	HUDCommandBarracks            Key = "hud.command.group.barracks"
+	HUDCommandMoveLabel           Key = "hud.command.move.label"
+	HUDCommandMoveTooltip         Key = "hud.command.move.tooltip"
+	HUDCommandStopLabel           Key = "hud.command.stop.label"
+	HUDCommandStopTooltip         Key = "hud.command.stop.tooltip"
+	HUDCommandHoldLabel           Key = "hud.command.hold.label"
+	HUDCommandHoldTooltip         Key = "hud.command.hold.tooltip"
+	HUDCommandAttackLabel         Key = "hud.command.attack.label"
+	HUDCommandAttackTooltip       Key = "hud.command.attack.tooltip"
+	HUDCommandPatrolLabel         Key = "hud.command.patrol.label"
+	HUDCommandPatrolTooltip       Key = "hud.command.patrol.tooltip"
+	HUDCommandDefendLabel         Key = "hud.command.defend.label"
+	HUDCommandDefendTooltip       Key = "hud.command.defend.tooltip"
+	HUDCommandTrainFootmanLabel   Key = "hud.command.train_footman.label"
+	HUDCommandTrainFootmanTooltip Key = "hud.command.train_footman.tooltip"
+	HUDCommandTrainArcherLabel    Key = "hud.command.train_archer.label"
+	HUDCommandTrainArcherTooltip  Key = "hud.command.train_archer.tooltip"
+	HUDCommandRallyLabel          Key = "hud.command.rally.label"
+	HUDCommandRallyTooltip        Key = "hud.command.rally.tooltip"
 )
 
 var requiredKeys = []string{
@@ -40,6 +60,26 @@ var requiredKeys = []string{
 	string(HUDMenuOKFalse),
 	string(HUDIdleWorker),
 	string(HUDMinimap),
+	string(HUDCommandFootman),
+	string(HUDCommandBarracks),
+	string(HUDCommandMoveLabel),
+	string(HUDCommandMoveTooltip),
+	string(HUDCommandStopLabel),
+	string(HUDCommandStopTooltip),
+	string(HUDCommandHoldLabel),
+	string(HUDCommandHoldTooltip),
+	string(HUDCommandAttackLabel),
+	string(HUDCommandAttackTooltip),
+	string(HUDCommandPatrolLabel),
+	string(HUDCommandPatrolTooltip),
+	string(HUDCommandDefendLabel),
+	string(HUDCommandDefendTooltip),
+	string(HUDCommandTrainFootmanLabel),
+	string(HUDCommandTrainFootmanTooltip),
+	string(HUDCommandTrainArcherLabel),
+	string(HUDCommandTrainArcherTooltip),
+	string(HUDCommandRallyLabel),
+	string(HUDCommandRallyTooltip),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)

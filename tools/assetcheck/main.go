@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/tools/assetcheck/manifest"
 )
 
@@ -324,6 +325,7 @@ func checkData(dir string, files []string, _ string) []finding {
 			add(rel, "DATA-FMT", "data files must be TOML in this validation pass")
 		}
 	}
+	checkCommandCardTables(dir, files, add)
 	checkLocaleTables(dir, files, add)
 	checkHardcodedRenderLabels(filepath.Dir(dir), add)
 
@@ -334,6 +336,33 @@ func checkData(dir string, files []string, _ string) []finding {
 		return findings[i].Rule < findings[j].Rule
 	})
 	return findings
+}
+
+func checkCommandCardTables(dir string, files []string, add func(path, rule, msg string)) {
+	have := false
+	for _, rel := range files {
+		if rel != lithud.DefaultCommandCardPath {
+			continue
+		}
+		have = true
+		table, err := lithud.ReadCommandCardTable(os.DirFS(dir), rel)
+		if err != nil {
+			add(rel, "COMMAND-CARD", err.Error())
+			continue
+		}
+		required := map[string]bool{}
+		for _, key := range litlocale.RequiredKeys() {
+			required[key] = true
+		}
+		for _, key := range table.LocaleKeys() {
+			if !required[key] {
+				add(rel, "COMMAND-CARD", fmt.Sprintf("locale key %q is not in the extracted string-key set", key))
+			}
+		}
+	}
+	if !have {
+		add(lithud.DefaultCommandCardPath, "COMMAND-CARD", "default command-card table is required")
+	}
 }
 
 func checkLocaleTables(dir string, files []string, add func(path, rule, msg string)) {

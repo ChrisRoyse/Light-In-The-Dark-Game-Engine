@@ -23,8 +23,10 @@ import (
 	"time"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
@@ -106,12 +108,13 @@ type canvasSnapshot struct {
 }
 
 type canvasDump struct {
-	Mode   string          `json:"mode"`
-	Before *canvasSnapshot `json:"before,omitempty"`
-	After  canvasSnapshot  `json:"after"`
-	HUD    hudRuntimeDump  `json:"hud,omitempty"`
-	OK     bool            `json:"ok"`
-	Errors []string        `json:"errors,omitempty"`
+	Mode        string                  `json:"mode"`
+	Before      *canvasSnapshot         `json:"before,omitempty"`
+	After       canvasSnapshot          `json:"after"`
+	HUD         hudRuntimeDump          `json:"hud,omitempty"`
+	CommandCard *commandCardRuntimeDump `json:"commandCard,omitempty"`
+	OK          bool                    `json:"ok"`
+	Errors      []string                `json:"errors,omitempty"`
 }
 
 type hudRuntimeDump struct {
@@ -127,6 +130,39 @@ type hudRuntimeDump struct {
 	UpdateScenarios        lithud.FSVScenarios `json:"updateScenarios"`
 }
 
+type commandCardRuntimeDump struct {
+	TablePath string                    `json:"tablePath"`
+	Scenario  string                    `json:"scenario"`
+	Current   commandCardCaseDump       `json:"current"`
+	Cases     []commandCardCaseDump     `json:"cases"`
+	Clicks    []lithud.CommandCardClick `json:"clicks"`
+	Emitted   []commandRecordDump       `json:"emitted"`
+}
+
+type commandCardCaseDump struct {
+	Name           string                        `json:"name"`
+	Selection      string                        `json:"selection"`
+	ActiveSubgroup string                        `json:"activeSubgroup,omitempty"`
+	Visible        bool                          `json:"visible"`
+	Summary        string                        `json:"summary"`
+	Update         lithud.CommandCardUpdate      `json:"update"`
+	Slots          []lithud.CommandCardSlotState `json:"slots"`
+}
+
+type commandRecordDump struct {
+	Version   uint8    `json:"version"`
+	Player    uint8    `json:"player"`
+	Seq       uint16   `json:"seq"`
+	Opcode    uint8    `json:"opcode"`
+	Flags     uint8    `json:"flags"`
+	UnitCount uint8    `json:"unitCount"`
+	Units     []uint32 `json:"units"`
+	Target    uint32   `json:"target,omitempty"`
+	PointX    int64    `json:"pointX"`
+	PointY    int64    `json:"pointY"`
+	Data      uint16   `json:"data,omitempty"`
+}
+
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
@@ -136,6 +172,7 @@ func main() {
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
+	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
@@ -156,7 +193,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *localeTag, lithud.HUDStringsFromLocale(table))
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *localeTag, table, lithud.HUDStringsFromLocale(table))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -303,7 +340,7 @@ func addStatsHUD(scene *core.Node, spec sceneSpec) {
 	scene.Add(label)
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, localeTag string, labels lithud.HUDStrings) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, localeTag string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
@@ -325,6 +362,15 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 			UpdateScenarios:        scenarios,
 		},
 	}
+	var card *lithud.CommandCard
+	if sceneName == "basecamp" || cardScenario != "" {
+		cardDump, displayCard, err := buildCommandCardFSV(localeTable, cardScenario)
+		if err != nil {
+			return canvasDump{}, err
+		}
+		dump.CommandCard = cardDump
+		card = displayCard
+	}
 	if resizeFrom.set {
 		beforeCanvas, err := lithud.NewCanvas(resizeFrom.W, resizeFrom.H, uiScale)
 		if err != nil {
@@ -339,8 +385,177 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	if err != nil {
 		return canvasDump{}, fmt.Errorf("ui atlas: %w", err)
 	}
-	drawCanvasHUD(scene, after, &hud, atlasTex, dump.OK)
+	drawCanvasHUD(scene, after, &hud, card, atlasTex, dump.OK)
 	return dump, nil
+}
+
+func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*commandCardRuntimeDump, *lithud.CommandCard, error) {
+	if scenario == "" {
+		scenario = "unit"
+	}
+	table, err := lithud.LoadCommandCardTable(os.DirFS("data"))
+	if err != nil {
+		return nil, nil, err
+	}
+	states := []struct {
+		name  string
+		state lithud.CommandCardState
+	}{
+		{name: "unit", state: renderDemoCardUnitState()},
+		{name: "building", state: renderDemoCardBuildingState()},
+		{name: "subgroup", state: renderDemoCardSubgroupState()},
+		{name: "enemy", state: renderDemoCardEnemyState()},
+		{name: "cooldown", state: renderDemoCardCooldownState()},
+		{name: "empty", state: renderDemoCardEmptyState()},
+	}
+	dump := &commandCardRuntimeDump{TablePath: table.Path, Scenario: scenario}
+	for _, entry := range states {
+		card := lithud.NewCommandCard(table, localeTable)
+		dump.Cases = append(dump.Cases, snapshotCommandCardCase(entry.name, &card, entry.state))
+	}
+
+	emitter := lithud.NewCommandCard(table, localeTable)
+	emitter.Refresh(renderDemoCardUnitState())
+	click := emitter.ClickSlot(0, false)
+	dump.Clicks = append(dump.Clicks, click)
+	if click.Accepted && click.PendingTarget {
+		if rec, ok := emitter.ConfirmTarget(fixed.Vec2{X: fixed.FromInt(320), Y: fixed.FromInt(480)}, 0, false); ok {
+			dump.Emitted = append(dump.Emitted, commandRecordDumpFor(rec))
+		}
+	}
+	disabled := lithud.NewCommandCard(table, localeTable)
+	disabled.Refresh(renderDemoCardCooldownState())
+	dump.Clicks = append(dump.Clicks, disabled.ClickSlot(1, false))
+
+	currentState, ok := renderDemoCardScenarioState(scenario)
+	if !ok {
+		return nil, nil, fmt.Errorf("command-card: unknown scenario %q", scenario)
+	}
+	display := lithud.NewCommandCard(table, localeTable)
+	dump.Current = snapshotCommandCardCase(scenario, &display, currentState)
+	return dump, &display, nil
+}
+
+func snapshotCommandCardCase(name string, card *lithud.CommandCard, state lithud.CommandCardState) commandCardCaseDump {
+	update := card.Refresh(state)
+	return commandCardCaseDump{
+		Name:           name,
+		Selection:      state.SelectionLabel,
+		ActiveSubgroup: card.ActiveSubgroup,
+		Visible:        card.Visible,
+		Summary:        card.Summary.String(),
+		Update:         update,
+		Slots:          visibleCommandCardSlots(card),
+	}
+}
+
+func visibleCommandCardSlots(card *lithud.CommandCard) []lithud.CommandCardSlotState {
+	out := make([]lithud.CommandCardSlotState, 0, lithud.CommandCardSlots)
+	for _, slot := range card.Slots {
+		if slot.Visible {
+			out = append(out, slot)
+		}
+	}
+	return out
+}
+
+func commandRecordDumpFor(r sim.CommandRecord) commandRecordDump {
+	out := commandRecordDump{
+		Version:   r.Version,
+		Player:    r.Player,
+		Seq:       r.Seq,
+		Opcode:    r.Opcode,
+		Flags:     r.Flags,
+		UnitCount: r.UnitCount,
+		Target:    uint32(r.Target),
+		PointX:    int64(r.Point.X),
+		PointY:    int64(r.Point.Y),
+		Data:      r.Data,
+	}
+	out.Units = make([]uint32, 0, r.UnitCount)
+	for i := uint8(0); i < r.UnitCount; i++ {
+		out.Units = append(out.Units, uint32(r.Units[i]))
+	}
+	return out
+}
+
+func renderDemoCardScenarioState(name string) (lithud.CommandCardState, bool) {
+	switch name {
+	case "unit":
+		return renderDemoCardUnitState(), true
+	case "building":
+		return renderDemoCardBuildingState(), true
+	case "subgroup":
+		return renderDemoCardSubgroupState(), true
+	case "enemy":
+		return renderDemoCardEnemyState(), true
+	case "cooldown":
+		return renderDemoCardCooldownState(), true
+	case "empty":
+		return renderDemoCardEmptyState(), true
+	default:
+		return lithud.CommandCardState{}, false
+	}
+}
+
+func renderDemoCardUnitState() lithud.CommandCardState {
+	var state lithud.CommandCardState
+	state.Player = 0
+	state.OwnSelection = true
+	state.SelectionLabel = "footman"
+	state.Subgroups[0] = "footman"
+	state.SubgroupCount = 1
+	state.UnitCount = 2
+	state.Units[0], state.Units[1] = 101, 102
+	state.Gold, state.Lumber = 725, 240
+	return state
+}
+
+func renderDemoCardBuildingState() lithud.CommandCardState {
+	var state lithud.CommandCardState
+	state.Player = 0
+	state.OwnSelection = true
+	state.SelectionLabel = "barracks"
+	state.Subgroups[0] = "barracks"
+	state.SubgroupCount = 1
+	state.UnitCount = 1
+	state.Units[0] = 201
+	state.Gold, state.Lumber = 725, 240
+	return state
+}
+
+func renderDemoCardSubgroupState() lithud.CommandCardState {
+	state := renderDemoCardUnitState()
+	state.SelectionLabel = "mixed"
+	state.Subgroups[1] = "barracks"
+	state.SubgroupCount = 2
+	state.UnitCount = 3
+	state.Units[2] = 201
+	lithud.CycleCommandSubgroup(&state)
+	return state
+}
+
+func renderDemoCardEnemyState() lithud.CommandCardState {
+	state := renderDemoCardUnitState()
+	state.OwnSelection = false
+	state.SelectionLabel = "enemy-footman"
+	return state
+}
+
+func renderDemoCardCooldownState() lithud.CommandCardState {
+	state := renderDemoCardBuildingState()
+	state.SelectionLabel = "barracks-low"
+	state.Gold = 100
+	state.Lumber = 0
+	state.Cooldown[0] = 5
+	return state
+}
+
+func renderDemoCardEmptyState() lithud.CommandCardState {
+	state := renderDemoCardUnitState()
+	state.SelectionLabel = "empty"
+	state.UnitCount = 0
+	return state
 }
 
 func canvasSnapshotFor(canvas lithud.Canvas, widgets []lithud.Widget) canvasSnapshot {
@@ -398,7 +613,7 @@ func snapshotRect(rects []canvasRegionDump, name string) (lithud.Rect, bool) {
 	return lithud.Rect{}, false
 }
 
-func drawCanvasHUD(scene *core.Node, snap canvasSnapshot, hud *lithud.DefaultHUD, atlasTex *texture.Texture2D, ok bool) {
+func drawCanvasHUD(scene *core.Node, snap canvasSnapshot, hud *lithud.DefaultHUD, card *lithud.CommandCard, atlasTex *texture.Texture2D, ok bool) {
 	for _, region := range snap.Rects {
 		rect := region.Rect
 		panel := gui.NewPanel(float32(rect.W), float32(rect.H))
@@ -414,7 +629,7 @@ func drawCanvasHUD(scene *core.Node, snap canvasSnapshot, hud *lithud.DefaultHUD
 			continue
 		}
 		rect := region.Rect
-		label := gui.NewLabel(hudLabel(region.Name, hud, ok))
+		label := gui.NewLabel(hudLabel(region.Name, hud, card, ok))
 		y := rect.Y + 22
 		if rect.H < 34 {
 			y = rect.Y + rect.H - 12
@@ -451,7 +666,7 @@ func hudColor(region canvasRegionDump) math32.Color4 {
 	}
 }
 
-func hudLabel(name string, hud *lithud.DefaultHUD, ok bool) string {
+func hudLabel(name string, hud *lithud.DefaultHUD, card *lithud.CommandCard, ok bool) string {
 	switch name {
 	case "resource-bar":
 		return hud.Resource.String()
@@ -460,6 +675,9 @@ func hudLabel(name string, hud *lithud.DefaultHUD, ok bool) string {
 	case "info-panel":
 		return hud.Selection.String()
 	case "command-card":
+		if card != nil {
+			return card.Summary.String()
+		}
 		return hud.Queue.String()
 	case "control-groups":
 		return hud.Groups.String()

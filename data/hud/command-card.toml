@@ -1,0 +1,103 @@
+# Default command-card slots. Positions are row/col in the 4x3 grid;
+# hotkeys are grid-positional per input.md §5.
+
+grid-hotkeys = ["Q", "W", "E", "R", "A", "S", "D", "F", "Z", "X", "C", "V"]
+
+[[group]]
+id = "footman"
+label-key = "hud.command.group.footman"
+
+[[group.slot]]
+row = 0
+col = 0
+id = "move"
+opcode = "move"
+icon = "command/move"
+label-key = "hud.command.move.label"
+tooltip-key = "hud.command.move.tooltip"
+requires-target = true
+
+[[group.slot]]
+row = 0
+col = 1
+id = "stop"
+opcode = "stop"
+icon = "command/stop"
+label-key = "hud.command.stop.label"
+tooltip-key = "hud.command.stop.tooltip"
+
+[[group.slot]]
+row = 0
+col = 2
+id = "hold"
+opcode = "hold"
+icon = "command/hold"
+label-key = "hud.command.hold.label"
+tooltip-key = "hud.command.hold.tooltip"
+
+[[group.slot]]
+row = 1
+col = 0
+id = "attack"
+opcode = "attack"
+icon = "command/attack"
+label-key = "hud.command.attack.label"
+tooltip-key = "hud.command.attack.tooltip"
+requires-target = true
+
+[[group.slot]]
+row = 1
+col = 1
+id = "patrol"
+opcode = "patrol"
+icon = "command/patrol"
+label-key = "hud.command.patrol.label"
+tooltip-key = "hud.command.patrol.tooltip"
+requires-target = true
+
+[[group.slot]]
+row = 2
+col = 0
+id = "defend"
+opcode = "cast"
+data = 1
+icon = "command/defend"
+label-key = "hud.command.defend.label"
+tooltip-key = "hud.command.defend.tooltip"
+
+[[group]]
+id = "barracks"
+label-key = "hud.command.group.barracks"
+
+[[group.slot]]
+row = 0
+col = 0
+id = "train-footman"
+opcode = "train"
+data = 1
+icon = "command/train-footman"
+label-key = "hud.command.train_footman.label"
+tooltip-key = "hud.command.train_footman.tooltip"
+gold-cost = 135
+
+[[group.slot]]
+row = 0
+col = 1
+id = "train-archer"
+opcode = "train"
+data = 2
+icon = "command/train-archer"
+label-key = "hud.command.train_archer.label"
+tooltip-key = "hud.command.train_archer.tooltip"
+gold-cost = 160
+lumber-cost = 20
+
+[[group.slot]]
+row = 0
+col = 2
+id = "rally"
+opcode = "rally"
+icon = "command/rally"
+label-key = "hud.command.rally.label"
+tooltip-key = "hud.command.rally.tooltip"
+requires-target = true
