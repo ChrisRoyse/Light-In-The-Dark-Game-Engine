@@ -16,6 +16,7 @@ const (
 	HUDResourceGold               Key = "hud.resource.gold"
 	HUDResourceLumber             Key = "hud.resource.lumber"
 	HUDResourceFood               Key = "hud.resource.food"
+	HUDResourceUpkeep             Key = "hud.resource.upkeep"
 	HUDVitalLife                  Key = "hud.vital.life"
 	HUDVitalMana                  Key = "hud.vital.mana"
 	HUDSelectionPrefix            Key = "hud.selection.prefix"
@@ -51,6 +52,7 @@ var requiredKeys = []string{
 	string(HUDResourceGold),
 	string(HUDResourceLumber),
 	string(HUDResourceFood),
+	string(HUDResourceUpkeep),
 	string(HUDVitalLife),
 	string(HUDVitalMana),
 	string(HUDSelectionPrefix),

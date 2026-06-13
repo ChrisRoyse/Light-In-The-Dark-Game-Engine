@@ -75,10 +75,12 @@ func (b *TextBuffer) commit(p []byte) {
 }
 
 type HUDState struct {
+	Tick                uint32
 	Gold                int
 	Lumber              int
 	FoodUsed            int
 	FoodCap             int
+	Upkeep              int
 	Life                int
 	LifeMax             int
 	Mana                int
@@ -122,6 +124,7 @@ type DefaultHUD struct {
 	Labels      HUDStrings
 	widgets     [DefaultHUDWidgetCount]Widget
 	Resource    TextBuffer
+	ResourceBar ResourceBar
 	Vitals      TextBuffer
 	Selection   TextBuffer
 	Queue       TextBuffer
@@ -134,6 +137,7 @@ type HUDStrings struct {
 	ResourceGold    string
 	ResourceLumber  string
 	ResourceFood    string
+	ResourceUpkeep  string
 	VitalLife       string
 	VitalMana       string
 	SelectionPrefix string
@@ -164,6 +168,7 @@ func DefaultHUDState() HUDState {
 		Lumber:              240,
 		FoodUsed:            18,
 		FoodCap:             30,
+		Upkeep:              0,
 		Life:                420,
 		LifeMax:             500,
 		Mana:                110,
@@ -177,6 +182,7 @@ func DefaultHUDState() HUDState {
 func NewDefaultHUDWithStrings(canvas Canvas, labels HUDStrings) DefaultHUD {
 	var h DefaultHUD
 	h.Labels = labels
+	h.ResourceBar = NewResourceBar(&h.Resource, ResourceBarStringsFromHUD(labels))
 	h.Layout(canvas)
 	h.Update(DefaultHUDState())
 	return h
@@ -187,6 +193,7 @@ func HUDStringsFromLocale(table *locale.Table) HUDStrings {
 		ResourceGold:    table.Must(locale.HUDResourceGold),
 		ResourceLumber:  table.Must(locale.HUDResourceLumber),
 		ResourceFood:    table.Must(locale.HUDResourceFood),
+		ResourceUpkeep:  table.Must(locale.HUDResourceUpkeep),
 		VitalLife:       table.Must(locale.HUDVitalLife),
 		VitalMana:       table.Must(locale.HUDVitalMana),
 		SelectionPrefix: table.Must(locale.HUDSelectionPrefix),
@@ -226,8 +233,12 @@ func (h *DefaultHUD) Update(s HUDState) UpdateStats {
 	var stats UpdateStats
 	first := !h.initialized
 
-	if first || s.Gold != h.state.Gold || s.Lumber != h.state.Lumber || s.FoodUsed != h.state.FoodUsed || s.FoodCap != h.state.FoodCap {
-		h.setResourceText(s)
+	if h.ResourceBar.Text == nil {
+		h.ResourceBar = NewResourceBar(&h.Resource, ResourceBarStringsFromHUD(h.Labels))
+	}
+	h.ResourceBar.Text = &h.Resource
+	resource := h.ResourceBar.Update(ResourceBarState{Gold: s.Gold, Lumber: s.Lumber, FoodUsed: s.FoodUsed, FoodCap: s.FoodCap, Upkeep: s.Upkeep, Tick: s.Tick})
+	if first || resource.Dirty {
 		stats.DirtyLabels++
 		stats.ResourceRepaints++
 	}
@@ -282,6 +293,7 @@ func (h *DefaultHUD) runScenario(frames int, state HUDState, mutate func(int, *H
 	out.Frames = frames
 	start := time.Now()
 	for i := 0; i < frames; i++ {
+		state.Tick++
 		mutate(i, &state)
 		stats := h.Update(state)
 		out.Repaints += stats.Repaints
@@ -307,24 +319,6 @@ func churnSelection(i int, s *HUDState) {
 	if i%8 == 0 {
 		s.QueueVersion++
 	}
-}
-
-func (h *DefaultHUD) setResourceText(s HUDState) {
-	p := h.Resource.reset()
-	p = append(p, h.Labels.ResourceGold...)
-	p = append(p, ' ')
-	p = strconv.AppendInt(p, int64(s.Gold), 10)
-	p = append(p, ' ', ' ')
-	p = append(p, h.Labels.ResourceLumber...)
-	p = append(p, ' ')
-	p = strconv.AppendInt(p, int64(s.Lumber), 10)
-	p = append(p, ' ', ' ')
-	p = append(p, h.Labels.ResourceFood...)
-	p = append(p, ' ')
-	p = strconv.AppendInt(p, int64(s.FoodUsed), 10)
-	p = append(p, '/')
-	p = strconv.AppendInt(p, int64(s.FoodCap), 10)
-	h.Resource.commit(p)
 }
 
 func (h *DefaultHUD) setVitalsText(s HUDState) {

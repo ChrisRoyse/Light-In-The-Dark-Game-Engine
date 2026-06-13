@@ -2,6 +2,7 @@
 "hud.resource.gold" = "G"
 "hud.resource.lumber" = "L"
 "hud.resource.food" = "F"
+"hud.resource.upkeep" = "U"
 "hud.vital.life" = "HP"
 "hud.vital.mana" = "MP"
 "hud.selection.prefix" = "selection v"

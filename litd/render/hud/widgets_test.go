@@ -58,6 +58,27 @@ func TestDefaultHUDDirtyUpdateFSV(t *testing.T) {
 	}
 }
 
+func TestDefaultHUDResourceFlashExpiresFSV(t *testing.T) {
+	canvas, _ := NewCanvas(1920, 1080, 1)
+	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "en"))
+	state := DefaultHUDState()
+
+	event := h.ResourceBar.InsufficientGold(12, state.Gold)
+	state.Tick = 12
+	flash := h.Update(state)
+	t.Logf("FSV default HUD resource flash event=%+v stats=%+v resource=%q", event, flash, h.Resource.String())
+	if !strings.HasPrefix(h.Resource.String(), "!G ") || flash.ResourceRepaints != 1 {
+		t.Fatalf("resource flash should repaint active error state: event=%+v stats=%+v resource=%q", event, flash, h.Resource.String())
+	}
+
+	state.Tick = 42
+	expired := h.Update(state)
+	t.Logf("FSV default HUD resource flash expired stats=%+v resource=%q", expired, h.Resource.String())
+	if strings.HasPrefix(h.Resource.String(), "!") || expired.ResourceRepaints != 1 {
+		t.Fatalf("resource flash should expire through HUD tick: stats=%+v resource=%q", expired, h.Resource.String())
+	}
+}
+
 func TestDefaultHUDScenariosFSV(t *testing.T) {
 	canvas, _ := NewCanvas(1366, 768, 1)
 	h := NewDefaultHUDWithStrings(canvas, loadHUDStrings(t, "en"))

@@ -113,6 +113,7 @@ type canvasDump struct {
 	After       canvasSnapshot          `json:"after"`
 	HUD         hudRuntimeDump          `json:"hud,omitempty"`
 	CommandCard *commandCardRuntimeDump `json:"commandCard,omitempty"`
+	ResourceBar *resourceBarRuntimeDump `json:"resourceBar,omitempty"`
 	OK          bool                    `json:"ok"`
 	Errors      []string                `json:"errors,omitempty"`
 }
@@ -163,6 +164,29 @@ type commandRecordDump struct {
 	Data      uint16   `json:"data,omitempty"`
 }
 
+type resourceBarRuntimeDump struct {
+	Scenario string                    `json:"scenario"`
+	Current  resourceBarCaseDump       `json:"current"`
+	Cases    []resourceBarCaseDump     `json:"cases"`
+	Feedback []lithud.ResourceFeedback `json:"feedback,omitempty"`
+}
+
+type resourceBarCaseDump struct {
+	Name      string                    `json:"name"`
+	Sim       resourceBarValues         `json:"sim"`
+	Displayed string                    `json:"displayed"`
+	Update    lithud.ResourceBarUpdate  `json:"update"`
+	Feedback  []lithud.ResourceFeedback `json:"feedback,omitempty"`
+}
+
+type resourceBarValues struct {
+	Gold     int `json:"gold"`
+	Lumber   int `json:"lumber"`
+	FoodUsed int `json:"foodUsed"`
+	FoodCap  int `json:"foodCap"`
+	Upkeep   int `json:"upkeep"`
+}
+
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
@@ -173,6 +197,7 @@ func main() {
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
+	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
@@ -193,7 +218,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *localeTag, table, lithud.HUDStringsFromLocale(table))
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *localeTag, table, lithud.HUDStringsFromLocale(table))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -340,7 +365,7 @@ func addStatsHUD(scene *core.Node, spec sceneSpec) {
 	scene.Add(label)
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, localeTag string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, localeTag string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
@@ -371,6 +396,13 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 		dump.CommandCard = cardDump
 		card = displayCard
 	}
+	if sceneName == "basecamp" || resbarScenario != "" {
+		resourceDump, err := buildResourceBarFSV(&hud, resbarScenario)
+		if err != nil {
+			return canvasDump{}, err
+		}
+		dump.ResourceBar = resourceDump
+	}
 	if resizeFrom.set {
 		beforeCanvas, err := lithud.NewCanvas(resizeFrom.W, resizeFrom.H, uiScale)
 		if err != nil {
@@ -387,6 +419,99 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	}
 	drawCanvasHUD(scene, after, &hud, card, atlasTex, dump.OK)
 	return dump, nil
+}
+
+func buildResourceBarFSV(hud *lithud.DefaultHUD, scenario string) (*resourceBarRuntimeDump, error) {
+	if scenario == "" {
+		scenario = "initial"
+	}
+	names := []string{"initial", "after-spend", "foodcap", "insufficient", "large"}
+	dump := &resourceBarRuntimeDump{Scenario: scenario}
+	for _, name := range names {
+		state, ok := renderDemoResourceScenarioState(name)
+		if !ok {
+			return nil, fmt.Errorf("resourcebar: unknown scenario %q", name)
+		}
+		dump.Cases = append(dump.Cases, snapshotResourceBarCase(hud.Labels, name, state))
+	}
+	state, ok := renderDemoResourceScenarioState(scenario)
+	if !ok {
+		return nil, fmt.Errorf("resourcebar: unknown scenario %q", scenario)
+	}
+	dump.Current = applyResourceBarCase(hud, scenario, state)
+	dump.Feedback = hud.ResourceBar.FeedbackEvents()
+	return dump, nil
+}
+
+func snapshotResourceBarCase(labels lithud.HUDStrings, name string, state lithud.HUDState) resourceBarCaseDump {
+	var text lithud.TextBuffer
+	bar := lithud.NewResourceBar(&text, lithud.ResourceBarStringsFromHUD(labels))
+	var feedback []lithud.ResourceFeedback
+	if name == "insufficient" {
+		feedback = append(feedback, bar.InsufficientGold(12, state.Gold))
+	}
+	update := bar.Update(lithud.ResourceBarState{Gold: state.Gold, Lumber: state.Lumber, FoodUsed: state.FoodUsed, FoodCap: state.FoodCap, Upkeep: state.Upkeep, Tick: resourceBarTickFor(name)})
+	return resourceBarCaseDump{Name: name, Sim: resourceValuesFor(state), Displayed: text.String(), Update: update, Feedback: feedback}
+}
+
+func applyResourceBarCase(hud *lithud.DefaultHUD, name string, state lithud.HUDState) resourceBarCaseDump {
+	hud.Update(state)
+	var feedback []lithud.ResourceFeedback
+	if name == "insufficient" {
+		feedback = append(feedback, hud.ResourceBar.InsufficientGold(12, state.Gold))
+	}
+	update := hud.ResourceBar.Update(lithud.ResourceBarState{Gold: state.Gold, Lumber: state.Lumber, FoodUsed: state.FoodUsed, FoodCap: state.FoodCap, Upkeep: state.Upkeep, Tick: resourceBarTickFor(name)})
+	return resourceBarCaseDump{Name: name, Sim: resourceValuesFor(state), Displayed: hud.Resource.String(), Update: update, Feedback: feedback}
+}
+
+func resourceBarTickFor(name string) uint32 {
+	if name == "insufficient" {
+		return 12
+	}
+	if name == "large" {
+		return 60
+	}
+	return 0
+}
+
+func renderDemoResourceScenarioState(name string) (lithud.HUDState, bool) {
+	state := lithud.DefaultHUDState()
+	switch name {
+	case "initial":
+		return state, true
+	case "after-spend":
+		state.Gold -= 135
+		state.FoodUsed++
+		return state, true
+	case "foodcap":
+		state.Gold = 999
+		state.Lumber = 888
+		state.FoodUsed = 100
+		state.FoodCap = 100
+		state.Upkeep = 2
+		return state, true
+	case "insufficient":
+		return state, true
+	case "large":
+		state.Gold = 9999
+		state.Lumber = 12000
+		state.FoodUsed = 99
+		state.FoodCap = 100
+		state.Upkeep = 3
+		return state, true
+	default:
+		return lithud.HUDState{}, false
+	}
+}
+
+func resourceValuesFor(state lithud.HUDState) resourceBarValues {
+	return resourceBarValues{
+		Gold:     state.Gold,
+		Lumber:   state.Lumber,
+		FoodUsed: state.FoodUsed,
+		FoodCap:  state.FoodCap,
+		Upkeep:   state.Upkeep,
+	}
 }
 
 func buildCommandCardFSV(localeTable *litlocale.Table, scenario string) (*commandCardRuntimeDump, *lithud.CommandCard, error) {
