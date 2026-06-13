@@ -30,18 +30,39 @@ func main() {
 
 func runDumpDecls(path string) {
 	src := mustRead(path)
-	decls := ParseDecls(string(src))
-	for _, d := range decls {
-		// SoT line: 1-based source line, kind, verbatim normalized signature.
-		fmt.Printf("%d\t%s\n", d.Line, d.Signature())
+	origin := OriginForFile(path)
+	res := ParseDeclsFull(string(src))
+	for i := range res.Decls {
+		res.Decls[i].Origin = origin
+	}
+	for _, d := range res.Decls {
+		// SoT line: source line, origin, verbatim normalized signature.
+		fmt.Printf("%d\t[%s]\t%s\n", d.Line, d.Origin, d.Signature())
 	}
 
-	c := Tally(decls)
-	fmt.Fprintf(os.Stderr, "--- counts (%s) ---\n", path)
+	c := Tally(res.Decls)
+	fmt.Fprintf(os.Stderr, "--- counts (%s, origin=%s) ---\n", path, origin)
 	fmt.Fprintf(os.Stderr, "types:            %d\n", c.Types)
 	fmt.Fprintf(os.Stderr, "native (plain):   %d\n", c.PlainNatives)
 	fmt.Fprintf(os.Stderr, "constant native:  %d\n", c.ConstantNatives)
 	fmt.Fprintf(os.Stderr, "total native:     %d\n", c.TotalNatives())
+	fmt.Fprintf(os.Stderr, "excluded funcs:   %d\n", len(res.ExcludedFuncs))
+}
+
+// OriginForFile maps a JASS source path to its manifest origin enum value
+// (tooling.md §2.4). Unknown files default to the base name without extension.
+func OriginForFile(path string) string {
+	base := filepath.Base(path)
+	switch base {
+	case "common.j":
+		return "common"
+	case "blizzard.j":
+		return "blizzard"
+	case "common.ai":
+		return "commonai"
+	default:
+		return strings.TrimSuffix(base, filepath.Ext(base))
+	}
 }
 
 func runDumpBodies(path string) {

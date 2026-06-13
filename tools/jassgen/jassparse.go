@@ -34,6 +34,7 @@ type Param struct {
 type Decl struct {
 	Kind     DeclKind
 	Name     string
+	Origin   string // source origin: "common" | "blizzard" | "commonai"
 	Line     int    // 1-based source line of the declaration keyword
 	Extends  string // type decls only
 	Constant bool   // native decls: true for `constant native`
@@ -182,12 +183,26 @@ func (p *parser) expectIdent() (string, bool) {
 	return t.lit, true
 }
 
+// ParseResult is the full output of declaration parsing: the recognized decls
+// plus the names of top-level functions that were excluded from the native
+// count (common.ai carries AI-script function definitions interleaved with
+// natives). Nothing is silently dropped — exclusions are reported.
+type ParseResult struct {
+	Decls         []Decl
+	ExcludedFuncs []string // top-level `function` names skipped (not natives)
+}
+
 // ParseDecls parses all top-level type and native declarations from src in
-// source order. Unrecognized constructs (globals blocks, function bodies,
-// operators, bare constants) are skipped, never silently turned into decls.
-func ParseDecls(src string) []Decl {
+// source order. Convenience wrapper over ParseDeclsFull.
+func ParseDecls(src string) []Decl { return ParseDeclsFull(src).Decls }
+
+// ParseDeclsFull parses top-level declarations and records excluded function
+// names. Unrecognized constructs (globals blocks, function bodies, operators,
+// bare constants) are skipped, never silently turned into decls.
+func ParseDeclsFull(src string) ParseResult {
 	p := &parser{toks: lex(src)}
-	var decls []Decl
+	var res ParseResult
+	decls := &res.Decls
 	for !p.atEOF() {
 		t := p.peek()
 		if t.kind != tIdent {
@@ -198,14 +213,18 @@ func ParseDecls(src string) []Decl {
 		case "globals":
 			p.skipUntil("endglobals")
 		case "function":
+			// capture the function name before skipping its body
+			if p.peekN(1).kind == tIdent {
+				res.ExcludedFuncs = append(res.ExcludedFuncs, p.peekN(1).lit)
+			}
 			p.skipUntil("endfunction")
 		case "type":
 			if d, ok := p.parseType(); ok {
-				decls = append(decls, d)
+				*decls = append(*decls, d)
 			}
 		case "native":
 			if d, ok := p.parseNative(false); ok {
-				decls = append(decls, d)
+				*decls = append(*decls, d)
 			}
 		case "constant":
 			// `constant native ...` is a native; any other `constant`
@@ -213,7 +232,7 @@ func ParseDecls(src string) []Decl {
 			if p.peekN(1).kind == tIdent && p.peekN(1).lit == "native" {
 				p.next() // consume `constant`
 				if d, ok := p.parseNative(true); ok {
-					decls = append(decls, d)
+					*decls = append(*decls, d)
 				}
 			} else {
 				p.next()
@@ -222,7 +241,7 @@ func ParseDecls(src string) []Decl {
 			p.next()
 		}
 	}
-	return decls
+	return res
 }
 
 // skipUntil consumes tokens through the next identifier equal to lit (inclusive).
