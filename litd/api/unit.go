@@ -108,6 +108,17 @@ func (u Unit) SetUserData(v int) {
 	u.g.w.SetUserData(u.id, int32(v))
 }
 
+// PointValue returns the unit type's score/bounty weight — a static data-table
+// property, not per-unit state. Zero on an invalid handle, an untyped unit, or
+// a type with no point value. JASS: GetUnitPointValue.
+func (u Unit) PointValue() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.PointValue")
+		return 0
+	}
+	return int(u.g.w.UnitPointValue(u.id))
+}
+
 // Invulnerable reports whether the unit currently ignores all incoming damage,
 // false on an invalid handle or a unit with no health row. JASS:
 // BlzIsUnitInvulnerable.

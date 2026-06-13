@@ -85,6 +85,18 @@ func (s *UnitTypeStore) Row(id EntityID) int32 {
 
 func (s *UnitTypeStore) Count() int32 { return s.count }
 
+// UnitPointValue resolves a unit's type to its data-table point value
+// (GetUnitPointValue), or 0 when the unit has no type row or the type is out
+// of range. Read-only over immutable type data — no per-unit state.
+func (w *World) UnitPointValue(id EntityID) int32 {
+	if ut := w.UnitTypes.Row(id); ut != -1 {
+		if tid := w.UnitTypes.TypeID[ut]; int(tid) < len(w.unitDefs) {
+			return w.unitDefs[tid].PointValue
+		}
+	}
+	return 0
+}
+
 func (s *UnitTypeStore) assert(msg string, id EntityID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)

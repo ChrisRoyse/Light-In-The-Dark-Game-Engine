@@ -128,6 +128,14 @@ package = "litd/api"
 reason = "x/y/location position getters collapse onto one Vec2 getter (dedup §4 ex.1)"
 
 [[override]]
+name = "GetUnitPointValue"
+class = "D1"
+goMapping = "Unit.PointValue"
+goSignature = "() int"
+package = "litd/api"
+reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
+
+[[override]]
 name = "GetUnitUserData"
 class = "D1"
 goMapping = "Unit.UserData"

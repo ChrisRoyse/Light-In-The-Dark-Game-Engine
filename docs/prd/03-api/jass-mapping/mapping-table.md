@@ -541,7 +541,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitPathing | common.j | unclassified | _pending (M2 backlog)_ |
 | ClearSelection | common.j | unclassified | _pending (M2 backlog)_ |
 | SelectUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitPointValue | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitPointValue | common.j | D1 | `litd/api.Unit.PointValue` |
 | GetUnitPointValueByType | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitAddItem | common.j | D3 | _pending (M2 backlog)_ |
 | UnitAddItemById | common.j | D3 | _pending (M2 backlog)_ |

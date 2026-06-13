@@ -986,3 +986,52 @@ func TestUnitUserDataFSV(t *testing.T) {
 		t.Errorf("removed unit UserData()=%d, want 0", u.UserData())
 	}
 }
+
+// TestUnitPointValueFSV: Unit.PointValue surfaces the unit type's static
+// point value. SoT = the bound data.Unit table (known input, X+X=Y) read back
+// through the sim accessor w.UnitPointValue, independent of the getter return.
+func TestUnitPointValueFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hbnt", Life: 100, PointValue: 12 + 13}, // 12+13=25
+		{ID: "hzro", Life: 100},                      // PointValue omitted -> 0
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+
+	// Happy: typed unit returns its type's value, via both api and sim SoT.
+	u := g.CreateUnit(owner, g.UnitType("hbnt"), Vec2{X: 64, Y: 64}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit hbnt invalid")
+	}
+	t.Logf("hbnt: api=%d simSoT=%d", u.PointValue(), w.UnitPointValue(u.id))
+	if got, sot := u.PointValue(), w.UnitPointValue(u.id); got != 25 || sot != 25 {
+		t.Errorf("hbnt PointValue: api=%d sim=%d, want 25", got, sot)
+	}
+
+	// EDGE: type with no point value -> 0.
+	z := g.CreateUnit(owner, g.UnitType("hzro"), Vec2{X: 96, Y: 96}, Deg(0))
+	if z.PointValue() != 0 || w.UnitPointValue(z.id) != 0 {
+		t.Errorf("hzro PointValue: api=%d sim=%d, want 0", z.PointValue(), w.UnitPointValue(z.id))
+	}
+
+	// EDGE: untyped unit (no UnitTypes row) -> 0.
+	bare, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(8), Y: fixed.FromInt(8)}, 0)
+	if !ok {
+		t.Fatal("bare CreateUnit failed")
+	}
+	if w.UnitPointValue(bare) != 0 {
+		t.Errorf("untyped unit PointValue=%d, want 0", w.UnitPointValue(bare))
+	}
+
+	// EDGE: zero / removed handle -> 0, no panic.
+	if (Unit{}).PointValue() != 0 {
+		t.Error("zero Unit PointValue() != 0")
+	}
+	u.Remove()
+	if u.PointValue() != 0 || w.UnitPointValue(u.id) != 0 {
+		t.Errorf("removed unit PointValue: api=%d sim=%d, want 0", u.PointValue(), w.UnitPointValue(u.id))
+	}
+}

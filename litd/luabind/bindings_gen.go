@@ -30,6 +30,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_Order", Package: "litd/api", Symbol: "Unit.Order", GoSignature: "(ord Order, target OrderTarget) bool"},
 	{LuaName: "Unit_Owner", Package: "litd/api", Symbol: "Unit.Owner", GoSignature: "() Player"},
 	{LuaName: "Unit_Paused", Package: "litd/api", Symbol: "Unit.Paused", GoSignature: "() bool"},
+	{LuaName: "Unit_PointValue", Package: "litd/api", Symbol: "Unit.PointValue", GoSignature: "() int"},
 	{LuaName: "Unit_Position", Package: "litd/api", Symbol: "Unit.Position", GoSignature: "() Vec2"},
 	{LuaName: "Unit_Remove", Package: "litd/api", Symbol: "Unit.Remove", GoSignature: "()"},
 	{LuaName: "Unit_SetAcquireRange", Package: "litd/api", Symbol: "Unit.SetAcquireRange", GoSignature: "(v float64)"},

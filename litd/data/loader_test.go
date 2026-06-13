@@ -338,3 +338,68 @@ func TestLoaderRejections(t *testing.T) {
 	}
 	t.Logf("short matrix row → %v", err)
 }
+
+// TestLoaderPointValue: the optional point-value field decodes onto Unit.PointValue.
+// SoT = the parsed Unit struct field (the byte the decoder lands), with the
+// X+X=Y discipline (point-value 30 in TOML -> PointValue==30), an omitted-field
+// default of 0, and a fail-closed rejection of a negative value.
+func TestLoaderPointValue(t *testing.T) {
+	const withPV = testUnitTOML + `
+[[unit]]
+id = "scout"
+life = 100
+regen = 0
+armor = 0
+armor-type = "light"
+move-speed = 200
+turn-rate = 0.6
+collision-size = 8
+pathing = "ground"
+acquisition-range = 500
+point-value = 30
+`
+	tables, err := Load(mapFS(withPV))
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	var scout, grunt *Unit
+	for i := range tables.Units {
+		switch tables.Units[i].ID {
+		case "scout":
+			scout = &tables.Units[i]
+		case "grunt":
+			grunt = &tables.Units[i]
+		}
+	}
+	if scout == nil || grunt == nil {
+		t.Fatal("scout/grunt rows missing")
+	}
+	t.Logf("scout.PointValue=%d (want 30)  grunt.PointValue=%d (want 0, omitted)", scout.PointValue, grunt.PointValue)
+	if scout.PointValue != 30 {
+		t.Errorf("scout.PointValue=%d, want 30", scout.PointValue)
+	}
+	if grunt.PointValue != 0 { // testUnitTOML omits point-value -> default 0
+		t.Errorf("grunt.PointValue=%d, want 0 (omitted default)", grunt.PointValue)
+	}
+
+	// EDGE: negative point-value must be rejected (fail-closed), not clamped.
+	const negPV = testUnitTOML + `
+[[unit]]
+id = "bad"
+life = 100
+regen = 0
+armor = 0
+armor-type = "light"
+move-speed = 200
+turn-rate = 0.6
+collision-size = 8
+pathing = "ground"
+acquisition-range = 500
+point-value = -1
+`
+	if _, err := Load(mapFS(negPV)); err == nil {
+		t.Fatal("negative point-value must fail to load")
+	} else {
+		t.Logf("negative point-value rejected -> %v", err)
+	}
+}
