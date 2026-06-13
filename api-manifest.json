@@ -172,6 +172,68 @@
       }
     },
     {
+      "name": "SetUnitPositionLocFacingBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "facing",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "one-call position+facing combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle) — the two canonical setters express it without a bundling helper"
+      }
+    },
+    {
+      "name": "SetUnitPositionLocFacingLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "lookAt",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points"
+      }
+    },
+    {
       "name": "AddUnitAnimationProperties",
       "origin": "common.j",
       "signature": {

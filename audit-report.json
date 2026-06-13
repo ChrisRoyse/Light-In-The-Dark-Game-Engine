@@ -9,15 +9,15 @@
     "D5": 11
   },
   "mapped": 20,
-  "tombstoned": 12,
+  "tombstoned": 14,
   "collapsed": 31,
   "unclassified": 1632,
-  "unmapped": 2579,
+  "unmapped": 2577,
   "tombstonesByReason": {
     "deferred-v2": 9,
     "deprecated": 1,
     "gameplay-irrelevant": 1,
-    "superseded": 1
+    "superseded": 3
   },
   "duplicateTargets": [],
   "helperShadowsCore": [],
@@ -25,6 +25,6 @@
   "featureTags": {},
   "violations": [
     "unclassified=1632 (M2 gate requires 0)",
-    "unmapped=2579 (M2 gate requires 0; every symbol mapped or tombstoned)"
+    "unmapped=2577 (M2 gate requires 0; every symbol mapped or tombstoned)"
   ]
 }

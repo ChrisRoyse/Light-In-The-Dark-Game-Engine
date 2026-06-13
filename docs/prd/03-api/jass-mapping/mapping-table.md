@@ -1954,8 +1954,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitIllusionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | ReplaceUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetLastReplacedUnitBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitPositionLocFacingBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetUnitPositionLocFacingLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetUnitPositionLocFacingBJ | blizzard.j | D4 | **tombstoned** (superseded): one-call position+facing combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle) — the two canonical setters express it without a bundling helper |
+| SetUnitPositionLocFacingLocBJ | blizzard.j | D4 | **tombstoned** (superseded): position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points |
 | AddItemToStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | AddUnitToStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | RemoveItemFromStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |

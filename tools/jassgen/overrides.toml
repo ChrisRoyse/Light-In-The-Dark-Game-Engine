@@ -268,3 +268,16 @@ name = "AddUnitAnimationProperties"
 class = "D1"
 tombstone = "deferred-v2"
 reason = "render-only animation-tag toggle; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+
+# --- Position+facing combo BJs: superseded by the two canonical setters.
+[[override]]
+name = "SetUnitPositionLocFacingBJ"
+class = "D4"
+tombstone = "superseded"
+reason = "one-call position+facing combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle) — the two canonical setters express it without a bundling helper"
+
+[[override]]
+name = "SetUnitPositionLocFacingLocBJ"
+class = "D4"
+tombstone = "superseded"
+reason = "position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points"
