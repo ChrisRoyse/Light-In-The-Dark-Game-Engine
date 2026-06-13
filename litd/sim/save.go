@@ -274,6 +274,13 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(hd.Entity[i])
 	}
 
+	// xpsuspend (#217): presence = XP suspended
+	xs := w.XPSuspends
+	s.u32(uint32(xs.count))
+	for i := int32(0); i < xs.count; i++ {
+		s.ent(xs.Entity[i])
+	}
+
 	// health
 	hl := w.Healths
 	s.u32(uint32(hl.Count()))
@@ -734,6 +741,9 @@ type decodedSave struct {
 	hdN int32
 	hdE []EntityID
 
+	xsN int32
+	xsE []EntityID
+
 	hlN     int32
 	hlE     []EntityID
 	hlLife  []fixed.F64
@@ -1136,6 +1146,16 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.hdE = make([]EntityID, n)
 	for i := int32(0); i < n; i++ {
 		d.hdE[i] = r.ent()
+	}
+
+	// xpsuspend (#217)
+	if n, err = r.section("xpsuspend", len(w.XPSuspends.Entity)); err != nil {
+		return err
+	}
+	d.xsN = n
+	d.xsE = make([]EntityID, n)
+	for i := int32(0); i < n; i++ {
+		d.xsE[i] = r.ent()
 	}
 
 	// health
@@ -2299,6 +2319,14 @@ func applySave(d *decodedSave, w *World) {
 	for i := int32(0); i < d.hdN; i++ {
 		hd.Entity[i] = d.hdE[i]
 		hd.rowOf[d.hdE[i].Index()] = i
+	}
+
+	xs := w.XPSuspends
+	xs.count = d.xsN
+	resetRowOf(xs.rowOf)
+	for i := int32(0); i < d.xsN; i++ {
+		xs.Entity[i] = d.xsE[i]
+		xs.rowOf[d.xsE[i].Index()] = i
 	}
 
 	hl := w.Healths

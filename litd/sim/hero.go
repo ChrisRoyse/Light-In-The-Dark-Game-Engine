@@ -412,6 +412,9 @@ func (w *World) AddXP(id EntityID, amount int64) bool {
 	if r == -1 || amount <= 0 || w.heroTables == nil {
 		return false
 	}
+	if w.XPSuspends.Has(id) {
+		return false // experience suspended (#217): no XP, no level-ups
+	}
 	h := w.Heroes
 	curve := w.heroTables.Curve
 	xp := h.XP[r] + amount

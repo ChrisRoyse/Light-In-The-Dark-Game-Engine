@@ -525,8 +525,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetHeroLevel | common.j | D1 | `litd/api.Unit.HeroLevel` |
 | GetUnitLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |
-| SuspendHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
-| IsSuspendedXP | common.j | unclassified | _pending (M2 backlog)_ |
+| SuspendHeroXP | common.j | D1 | `litd/api.Unit.SuspendExperience` |
+| IsSuspendedXP | common.j | D1 | `litd/api.Unit.ExperienceSuspended` |
 | SelectHeroSkill | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitAbilityLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | DecUnitAbilityLevel | common.j | unclassified | _pending (M2 backlog)_ |

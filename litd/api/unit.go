@@ -517,6 +517,27 @@ func (u Unit) AddExperience(xp int) {
 	u.g.w.AddXP(u.id, int64(xp))
 }
 
+// ExperienceSuspended reports whether the hero's experience gain is currently
+// suspended. False on an invalid handle or a non-hero. JASS: IsSuspendedXP.
+func (u Unit) ExperienceSuspended() bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.ExperienceSuspended")
+		return false
+	}
+	return u.g.w.IsHeroXPSuspended(u.id)
+}
+
+// SuspendExperience turns the hero's experience gain off (suspend=true) or back
+// on (false). While suspended the hero gains no XP and cannot level. No-op on an
+// invalid handle or a non-hero. JASS: SuspendHeroXP.
+func (u Unit) SuspendExperience(suspend bool) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SuspendExperience")
+		return
+	}
+	u.g.w.SuspendHeroXP(u.id, suspend)
+}
+
 // SkillPoints returns the hero's unspent skill points, or 0 if not a hero.
 // JASS: GetHeroSkillPoints.
 func (u Unit) SkillPoints() int {

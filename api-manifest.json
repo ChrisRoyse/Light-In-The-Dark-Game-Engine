@@ -944,6 +944,28 @@
       }
     },
     {
+      "name": "IsSuspendedXP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.ExperienceSuspended",
+        "package": "litd/api",
+        "goSignature": "() bool"
+      }
+    },
+    {
       "name": "IsUnitHidden",
       "origin": "common.j",
       "signature": {
@@ -1696,6 +1718,33 @@
         "symbol": "Unit.Show",
         "package": "litd/api",
         "goSignature": "(show bool)"
+      }
+    },
+    {
+      "name": "SuspendHeroXP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SuspendExperience",
+        "package": "litd/api",
+        "goSignature": "(suspend bool)"
       }
     },
     {

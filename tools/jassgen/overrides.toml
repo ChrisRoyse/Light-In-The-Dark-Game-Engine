@@ -136,6 +136,22 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "SuspendHeroXP"
+class = "D1"
+goMapping = "Unit.SuspendExperience"
+goSignature = "(suspend bool)"
+package = "litd/api"
+reason = "XP-suspend toggle maps onto the typed setter (dedup §2); gates AddXP at the chokepoint, backed by a sparse presenceSet (#217, #304)"
+
+[[override]]
+name = "IsSuspendedXP"
+class = "D1"
+goMapping = "Unit.ExperienceSuspended"
+goSignature = "() bool"
+package = "litd/api"
+reason = "XP-suspend getter maps onto the typed accessor (dedup §2); see SuspendHeroXP (#217)"
+
+[[override]]
 name = "AddHeroXP"
 class = "D2"
 goMapping = "Unit.AddExperience"

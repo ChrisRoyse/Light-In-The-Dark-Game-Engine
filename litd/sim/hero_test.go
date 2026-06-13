@@ -610,3 +610,70 @@ func TestHeroSkillPointsAndXPFSV(t *testing.T) {
 		t.Error("non-hero accepted skill-point / XP ops")
 	}
 }
+
+// TestSuspendHeroXPFSV: SuspendHeroXP gates AddXP at the chokepoint, and the
+// suspended bit persists across save/load. SoT = Heroes.XP (the consumer's
+// effect) + the XPSuspends presence set + the post-load state hash.
+func TestSuspendHeroXPFSV(t *testing.T) {
+	w := heroWorld(t)
+	id, ok := w.SpawnHero(hPaladin, 0, 0, pt2(100, 100))
+	if !ok {
+		t.Fatal("spawn failed")
+	}
+
+	// Suspend -> presence set has the row, getter true.
+	if !w.SuspendHeroXP(id, true) {
+		t.Fatal("SuspendHeroXP(true) returned false")
+	}
+	if !w.IsHeroXPSuspended(id) || !w.XPSuspends.Has(id) {
+		t.Errorf("suspend: getter=%v presence=%v, want true/true", w.IsHeroXPSuspended(id), w.XPSuspends.Has(id))
+	}
+
+	// AddXP is a no-op while suspended (the consumer SoT): XP stays 0.
+	before := w.HeroXP(id)
+	if w.AddXP(id, 300) {
+		t.Error("AddXP succeeded while suspended")
+	}
+	t.Logf("suspended AddXP(300): xp %d -> %d (want unchanged)", before, w.HeroXP(id))
+	if w.HeroXP(id) != before {
+		t.Errorf("suspended hero gained XP: %d -> %d", before, w.HeroXP(id))
+	}
+
+	// Resume -> AddXP works again.
+	if !w.SuspendHeroXP(id, false) || w.IsHeroXPSuspended(id) {
+		t.Errorf("resume failed: getter=%v", w.IsHeroXPSuspended(id))
+	}
+	if !w.AddXP(id, 300) || w.HeroXP(id) != 300 {
+		t.Errorf("post-resume AddXP: xp=%d, want 300", w.HeroXP(id))
+	}
+
+	// Re-suspend, then save -> load into a twin: the bit must persist.
+	w.SuspendHeroXP(id, true)
+	w.Step() // drain the level-up event so the save lands between ticks
+	reg := NewHashRegistry()
+	var before2 statehash.Snapshot
+	w.HashState(reg, &before2)
+	var buf bytes.Buffer
+	if err := w.SaveState(&buf, 7); err != nil {
+		t.Fatal(err)
+	}
+	w2 := heroWorld(t)
+	if err := w2.LoadState(bytes.NewReader(buf.Bytes()), 7); err != nil {
+		t.Fatal(err)
+	}
+	var after2 statehash.Snapshot
+	w2.HashState(NewHashRegistry(), &after2)
+	t.Logf("save/load: suspended persisted=%v hashBefore=%016x hashAfter=%016x", w2.IsHeroXPSuspended(id), before2.Top, after2.Top)
+	if !w2.IsHeroXPSuspended(id) {
+		t.Error("suspended bit lost across save/load")
+	}
+	if before2.Top != after2.Top {
+		t.Fatalf("hash diverged across save/load: %016x vs %016x", before2.Top, after2.Top)
+	}
+
+	// EDGE: non-hero -> SuspendHeroXP false, IsHeroXPSuspended false.
+	worker, _ := w.SpawnFromTable(tWorker, 1, 1, pt2(140, 100))
+	if w.SuspendHeroXP(worker, true) || w.IsHeroXPSuspended(worker) {
+		t.Error("non-hero accepted XP suspension")
+	}
+}

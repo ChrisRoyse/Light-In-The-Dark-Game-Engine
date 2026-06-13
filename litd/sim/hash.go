@@ -58,6 +58,9 @@ var HashSystems = []string{
 	// appended by #217: per-unit hidden bit (ShowUnit/IsUnitHidden). Sparse
 	// presence store — only hidden units contribute.
 	"hidden",
+	// appended by #217: per-hero XP-suspended bit (SuspendHeroXP). Sparse
+	// presence store — only suspended heroes contribute.
+	"xpsuspend",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -514,6 +517,13 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hhd.WriteU32(uint32(hd2.count))
 	for i := int32(0); i < hd2.count; i++ {
 		hhd.WriteU32(uint32(hd2.Entity[i]))
+	}
+
+	hxs := h.next() // xpsuspend (#217): presence = XP suspended
+	xs := w.XPSuspends
+	hxs.WriteU32(uint32(xs.count))
+	for i := int32(0); i < xs.count; i++ {
+		hxs.WriteU32(uint32(xs.Entity[i]))
 	}
 
 	return reg.Sum(dst)
