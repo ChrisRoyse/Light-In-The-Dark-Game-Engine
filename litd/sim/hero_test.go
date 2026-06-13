@@ -444,3 +444,63 @@ func TestHeroTickAllocs(t *testing.T) {
 		t.Fatalf("hero tick allocates: %v", allocs)
 	}
 }
+
+// TestHeroStatAccessorsFSV: the World hero-stat accessors (HeroLevel/HeroXP/
+// HeroStr/HeroAgi/HeroInt/IsHero) read the matching Heroes store columns. SoT =
+// the Heroes store rows. Paladin base attributes are deliberately distinct
+// (str 25, agi 13, int 15) so any cross-wiring between columns is caught.
+func TestHeroStatAccessorsFSV(t *testing.T) {
+	w := heroWorld(t)
+	id, ok := w.SpawnHero(hPaladin, 0, 0, pt2(100, 100))
+	if !ok {
+		t.Fatal("spawn failed")
+	}
+	r := w.Heroes.Row(id)
+	t.Logf("spawn SoT: lvl=%d xp=%d str=%d agi=%d int=%d", w.Heroes.Level[r], w.Heroes.XP[r],
+		int64(w.Heroes.Str[r]), int64(w.Heroes.Agi[r]), int64(w.Heroes.Int[r]))
+
+	// Base attributes from the paladin hero table (distinct: str22/agi13/int17,
+	// confirmed against the store SoT above — any cross-wiring would show).
+	if !w.IsHero(id) {
+		t.Fatal("IsHero false on a spawned hero")
+	}
+	if w.HeroLevel(id) != 1 || w.HeroXP(id) != 0 {
+		t.Errorf("fresh hero: level=%d xp=%d, want 1/0", w.HeroLevel(id), w.HeroXP(id))
+	}
+	if w.HeroStr(id).Floor() != 22 || w.HeroAgi(id).Floor() != 13 || w.HeroInt(id).Floor() != 17 {
+		t.Errorf("base attrs: str=%d agi=%d int=%d, want 22/13/17 (cross-wire?)",
+			w.HeroStr(id).Floor(), w.HeroAgi(id).Floor(), w.HeroInt(id).Floor())
+	}
+
+	// Mutate the store to distinct values incl. a fractional Str (Floor test).
+	w.Heroes.Level[r] = 5
+	w.Heroes.XP[r] = 777
+	w.Heroes.Str[r] = fixed.FromInt(40) + fixed.One/2 // 40.5 -> Floor 40
+	w.Heroes.Agi[r] = fixed.FromInt(33)
+	w.Heroes.Int[r] = fixed.FromInt(28)
+	t.Logf("mutated SoT: lvl=%d xp=%d str=%d.5 agi=%d int=%d",
+		w.Heroes.Level[r], w.Heroes.XP[r], w.Heroes.Str[r].Floor(), w.Heroes.Agi[r].Floor(), w.Heroes.Int[r].Floor())
+	if w.HeroLevel(id) != 5 || w.HeroXP(id) != 777 {
+		t.Errorf("mutated: level=%d xp=%d, want 5/777", w.HeroLevel(id), w.HeroXP(id))
+	}
+	if w.HeroStr(id).Floor() != 40 || w.HeroAgi(id).Floor() != 33 || w.HeroInt(id).Floor() != 28 {
+		t.Errorf("mutated attrs: str=%d agi=%d int=%d, want 40/33/28",
+			w.HeroStr(id).Floor(), w.HeroAgi(id).Floor(), w.HeroInt(id).Floor())
+	}
+
+	// EDGE: a non-hero unit -> all zero, IsHero false.
+	worker, ok := w.SpawnFromTable(tWorker, 1, 1, pt2(120, 100))
+	if !ok {
+		t.Fatal("spawn worker failed")
+	}
+	if w.IsHero(worker) || w.HeroLevel(worker) != 0 || w.HeroXP(worker) != 0 ||
+		w.HeroStr(worker) != 0 || w.HeroAgi(worker) != 0 || w.HeroInt(worker) != 0 {
+		t.Errorf("non-hero worker: isHero=%v level=%d str=%d", w.IsHero(worker), w.HeroLevel(worker), w.HeroStr(worker).Floor())
+	}
+
+	// EDGE: a never-used entity id -> all zero, no panic.
+	var nobody EntityID
+	if w.IsHero(nobody) || w.HeroLevel(nobody) != 0 || w.HeroStr(nobody) != 0 {
+		t.Error("zero EntityID reported hero state")
+	}
+}

@@ -1246,3 +1246,31 @@ func TestUnitInventorySizeFSV(t *testing.T) {
 		t.Errorf("removed unit InventorySize=%d (row=%d), want 0", u.InventorySize(), w.Invents.Row(id))
 	}
 }
+
+// TestUnitHeroStatsContract: the api hero getters delegate to the sim accessors
+// and honor the handle contract. The hero-present SoT is proven in the sim
+// package (TestHeroStatAccessorsFSV, distinct attrs catch cross-wiring); here we
+// verify a plain (non-hero) unit and invalid/removed handles all read 0/false.
+func TestUnitHeroStatsContract(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, _ := liveUnit(t, w, g, 0, 100)
+
+	t.Logf("non-hero: isHero=%v level=%d xp=%d str=%d agi=%d int=%d",
+		u.IsHero(), u.HeroLevel(), u.HeroXP(), u.Strength(), u.Agility(), u.Intelligence())
+	if u.IsHero() || u.HeroLevel() != 0 || u.HeroXP() != 0 || u.Strength() != 0 || u.Agility() != 0 || u.Intelligence() != 0 {
+		t.Error("non-hero unit reported hero state")
+	}
+
+	// EDGE: zero handle -> all zero/false, no panic.
+	z := Unit{}
+	if z.IsHero() || z.HeroLevel() != 0 || z.HeroXP() != 0 || z.Strength() != 0 || z.Agility() != 0 || z.Intelligence() != 0 {
+		t.Error("zero Unit reported hero state")
+	}
+
+	// EDGE: removed unit -> all zero/false.
+	u.Remove()
+	if u.IsHero() || u.HeroLevel() != 0 || u.Strength() != 0 {
+		t.Error("removed unit reported hero state")
+	}
+}

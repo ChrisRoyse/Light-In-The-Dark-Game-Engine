@@ -442,6 +442,69 @@ func (u Unit) DefaultTurnSpeed() float64 {
 	return angleFromBrad(u.g.w.UnitDefaultTurnSpeed(u.id)).Radians() * float64(data.TicksPerSecond)
 }
 
+// IsHero reports whether the unit is a hero (carries a hero record with level,
+// experience, and attributes). False on an invalid handle. JASS: no direct
+// native; the engine's hero test behind GetHero* / IsUnitType(HERO).
+func (u Unit) IsHero() bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.IsHero")
+		return false
+	}
+	return u.g.w.IsHero(u.id)
+}
+
+// HeroLevel returns the unit's hero level, or 0 if it is not a hero. JASS:
+// GetHeroLevel.
+func (u Unit) HeroLevel() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.HeroLevel")
+		return 0
+	}
+	return int(u.g.w.HeroLevel(u.id))
+}
+
+// HeroXP returns the unit's accumulated hero experience, or 0 if it is not a
+// hero. JASS: GetHeroXP.
+func (u Unit) HeroXP() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.HeroXP")
+		return 0
+	}
+	return int(u.g.w.HeroXP(u.id))
+}
+
+// Strength returns the hero's strength attribute (integer part), or 0 if the
+// unit is not a hero. The engine has no separate attribute-bonus layer, so the
+// JASS includeBonuses parameter is dropped. JASS: GetHeroStr.
+func (u Unit) Strength() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Strength")
+		return 0
+	}
+	return int(u.g.w.HeroStr(u.id).Floor())
+}
+
+// Agility returns the hero's agility attribute (integer part), or 0 if the unit
+// is not a hero. JASS: GetHeroAgi (includeBonuses dropped; see Strength).
+func (u Unit) Agility() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Agility")
+		return 0
+	}
+	return int(u.g.w.HeroAgi(u.id).Floor())
+}
+
+// Intelligence returns the hero's intelligence attribute (integer part), or 0
+// if the unit is not a hero. JASS: GetHeroInt (includeBonuses dropped; see
+// Strength).
+func (u Unit) Intelligence() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Intelligence")
+		return 0
+	}
+	return int(u.g.w.HeroInt(u.id).Floor())
+}
+
 // InventorySize returns the number of item slots the unit can carry — six for
 // a unit with an inventory, zero otherwise. Zero on an invalid handle. JASS:
 // UnitInventorySize.

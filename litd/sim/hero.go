@@ -156,6 +156,53 @@ func (s *HeroStore) Count() int32 { return s.count }
 
 // ---- world surface ----
 
+// IsHero reports whether the unit carries a hero record.
+func (w *World) IsHero(id EntityID) bool { return w.Heroes.Row(id) != -1 }
+
+// HeroLevel returns the hero's current level, or 0 when the unit is not a hero
+// (GetHeroLevel returns 0 for non-heroes).
+func (w *World) HeroLevel(id EntityID) uint8 {
+	if r := w.Heroes.Row(id); r != -1 {
+		return w.Heroes.Level[r]
+	}
+	return 0
+}
+
+// HeroXP returns the hero's accumulated experience, or 0 when not a hero
+// (GetHeroXP).
+func (w *World) HeroXP(id EntityID) int64 {
+	if r := w.Heroes.Row(id); r != -1 {
+		return w.Heroes.XP[r]
+	}
+	return 0
+}
+
+// HeroStr/HeroAgi/HeroInt return the hero's primary attributes. The engine
+// stores a single effective attribute value per hero — there is no separate
+// base/bonus split — so GetHeroStr's includeBonuses parameter is moot and is
+// dropped in the Go API (see the type:discovery filed with #217). 0 when the
+// unit is not a hero.
+func (w *World) HeroStr(id EntityID) fixed.F64 {
+	if r := w.Heroes.Row(id); r != -1 {
+		return w.Heroes.Str[r]
+	}
+	return 0
+}
+
+func (w *World) HeroAgi(id EntityID) fixed.F64 {
+	if r := w.Heroes.Row(id); r != -1 {
+		return w.Heroes.Agi[r]
+	}
+	return 0
+}
+
+func (w *World) HeroInt(id EntityID) fixed.F64 {
+	if r := w.Heroes.Row(id); r != -1 {
+		return w.Heroes.Int[r]
+	}
+	return 0
+}
+
 // BindHeroes installs the loaded hero rule set. Requires
 // BindUnitDefs (+ BindAbilityDefs for skills, BindEconomy for revive
 // costs) first; rebinding is refused.

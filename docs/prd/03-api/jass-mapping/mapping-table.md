@@ -512,17 +512,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetHeroStr | common.j | unclassified | _pending (M2 backlog)_ |
 | SetHeroAgi | common.j | unclassified | _pending (M2 backlog)_ |
 | SetHeroInt | common.j | unclassified | _pending (M2 backlog)_ |
-| GetHeroStr | common.j | unclassified | _pending (M2 backlog)_ |
-| GetHeroAgi | common.j | unclassified | _pending (M2 backlog)_ |
-| GetHeroInt | common.j | unclassified | _pending (M2 backlog)_ |
+| GetHeroStr | common.j | D2 | `litd/api.Unit.Strength` |
+| GetHeroAgi | common.j | D2 | `litd/api.Unit.Agility` |
+| GetHeroInt | common.j | D2 | `litd/api.Unit.Intelligence` |
 | UnitStripHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
-| GetHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
+| GetHeroXP | common.j | D1 | `litd/api.Unit.HeroXP` |
 | SetHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroSkillPoints | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitModifySkillPoints | common.j | unclassified | _pending (M2 backlog)_ |
 | AddHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
 | SetHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
-| GetHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
+| GetHeroLevel | common.j | D1 | `litd/api.Unit.HeroLevel` |
 | GetUnitLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |
 | SuspendHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
