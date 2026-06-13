@@ -1,0 +1,67 @@
+# jassgen overrides — reviewed human judgment over the mechanical D1-D5 classifier.
+#
+# This file is the ONLY place tombstones may originate (G1.4) and the only place
+# heuristic classes are corrected. Every entry needs a `reason`. Fields:
+#   name      = source function name (must exist in common.j/blizzard.j/common.ai)
+#   class     = "D1".."D5"            (optional; omit when tombstoning)
+#   goMapping = canonical Go symbol   (optional)
+#   package   = litd/api | litd/api/helpers | litd/ai   (optional)
+#   tombstone = deprecated | gameplay-irrelevant | superseded | deferred-v2
+#   reason    = required, human-readable justification
+#
+# Tombstone reasons are a closed enum (deduplication-policy.md §7).
+
+# --- Tombstones (deduplication-policy.md §7) ---
+
+[[override]]
+name = "DoNothing"
+tombstone = "gameplay-irrelevant"
+reason = "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+
+[[override]]
+name = "Cheat"
+tombstone = "gameplay-irrelevant"
+reason = "debug cheat console string; not a shippable capability"
+
+[[override]]
+name = "Preload"
+tombstone = "gameplay-irrelevant"
+reason = "asset loading is owned by litd/asset pipeline, not script-driven preloading"
+
+[[override]]
+name = "PreloadEnd"
+tombstone = "gameplay-irrelevant"
+reason = "pairs with Preload; asset pipeline owns load timing"
+
+[[override]]
+name = "GetLastCreatedUnit"
+tombstone = "superseded"
+reason = "Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel"
+
+[[override]]
+name = "CommentString"
+tombstone = "deprecated"
+reason = "empty-body GUI comment-row artifact; dead even in WC3"
+
+# --- Confirmations / corrections of heuristic classes ---
+
+[[override]]
+name = "IsUnitPausedBJ"
+class = "D1"
+goMapping = "Unit.Paused"
+package = "litd/api"
+reason = "confirmed pure passthrough of native IsUnitPaused"
+
+[[override]]
+name = "PolledWait"
+class = "D4"
+goMapping = "PolledWait"
+package = "litd/api/helpers"
+reason = "genuine timer-polling wait; lives as a scheduler helper (dedup §5 ex.1)"
+
+[[override]]
+name = "SetUnitState"
+class = "D5"
+goMapping = "Unit.SetLife"
+package = "litd/api"
+reason = "enum-keyed state setter collapses onto typed accessors (dedup §6)"

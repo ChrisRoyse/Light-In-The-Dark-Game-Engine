@@ -31,14 +31,18 @@ const (
 	ClassUnclassified Class = "unclassified"
 )
 
-// Classification is the heuristic verdict for one source symbol.
+// Classification is the verdict for one source symbol. Fields below Evidence
+// are populated only when a reviewed override is applied (overrides.go).
 type Classification struct {
 	Name         string
 	Origin       string
 	Class        Class
-	ClassifiedBy string // always "heuristic" at this stage
+	ClassifiedBy string // "heuristic" until an override flips it to "override"
 	Family       string // D3 family stem, if any
 	Evidence     string
+	GoMapping    string // canonical Go symbol (override-supplied)
+	Package      string // litd/api | litd/api/helpers | litd/ai
+	Tombstone    string // tombstone reason enum value, if tombstoned via override
 }
 
 // stateAccessorNatives are the enum-keyed state natives that anchor D5.

@@ -17,7 +17,9 @@ func main() {
 	dumpBodies := flag.String("dump-bodies", "", "parse the named JASS file and dump function bodies (AST) in source order")
 	dumpMerge := flag.Bool("dump-merge", false, "merge .j natives with .d.ts functions; dump enrichment + discrepancy list")
 	dumpClasses := flag.Bool("dump-classes", false, "classify all source symbols D1-D5 (+ unclassified); dump per-class counts and verdicts")
+	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
 	flag.Parse()
+	overridesFilePath = *overridesPath
 
 	switch {
 	case *dumpDecls != "":
@@ -52,23 +54,46 @@ func runDumpClasses() {
 	}
 
 	cs := ClassifyAll(bj, "blizzard", natives, origins)
+
+	// Apply reviewed overrides (human judgment); validation failures are fatal.
+	ovs, err := LoadOverrides(overridesFilePath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "jassgen:", err)
+		os.Exit(1)
+	}
+	cs, err = ApplyOverrides(cs, ovs)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "jassgen:", err)
+		os.Exit(1)
+	}
+
 	for _, c := range cs {
-		fam := ""
+		extra := ""
 		if c.Family != "" {
-			fam = " family=" + c.Family
+			extra += " family=" + c.Family
 		}
-		fmt.Printf("%-4s %-10s %-32s %s%s\n", c.Class, c.Origin, c.Name, c.Evidence, fam)
+		if c.Tombstone != "" {
+			extra += " tombstone=" + c.Tombstone
+		}
+		if c.GoMapping != "" {
+			extra += " -> " + c.GoMapping
+		}
+		fmt.Printf("%-4s %-9s %-9s %-32s %s%s\n", c.Class, c.ClassifiedBy, c.Origin, c.Name, c.Evidence, extra)
 	}
 
 	counts := TallyClasses(cs)
-	fmt.Fprintf(os.Stderr, "--- classification counts (heuristic) ---\n")
+	fmt.Fprintf(os.Stderr, "--- classification counts ---\n")
 	total := 0
 	for _, k := range []Class{ClassD1, ClassD2, ClassD3, ClassD4, ClassD5, ClassUnclassified} {
 		fmt.Fprintf(os.Stderr, "  %-14s %d\n", k, counts[k])
 		total += counts[k]
 	}
 	fmt.Fprintf(os.Stderr, "  %-14s %d\n", "TOTAL", total)
+	fmt.Fprintf(os.Stderr, "  overrides applied: %d (classifiedBy=override)\n", CountOverridden(cs))
 }
+
+// overridesFilePath is the active overrides path (set from the -overrides flag).
+var overridesFilePath = "tools/jassgen/overrides.toml"
 
 // mergePair pairs a JASS source file with its .d.ts enrichment file.
 type mergePair struct {
