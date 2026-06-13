@@ -21,11 +21,13 @@ import (
 	"go/token"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/tools/assetcheck/manifest"
 )
@@ -316,18 +318,30 @@ func checkUIAtlas(files []string, add func(path, rule, msg string)) {
 	}
 }
 
-func checkData(dir string, files []string, _ string) []finding {
+func checkData(dir string, files []string, prefix string) []finding {
 	var findings []finding
 	add := func(path, rule, msg string) { findings = append(findings, finding{path, rule, msg}) }
 
 	for _, rel := range files {
+		if isMapDataFile(rel) {
+			continue
+		}
 		if strings.ToLower(filepath.Ext(rel)) != ".toml" {
 			add(rel, "DATA-FMT", "data files must be TOML in this validation pass")
 		}
 	}
-	checkCommandCardTables(dir, files, add)
-	checkLocaleTables(dir, files, add)
-	checkHardcodedRenderLabels(filepath.Dir(dir), add)
+	if prefix == "" || prefix == "maps" || strings.HasPrefix(prefix, "maps/") {
+		checkMapDataTables(dir, files, add)
+	}
+	if prefix == "" || prefix == "hud" || strings.HasPrefix(prefix, "hud/") {
+		checkCommandCardTables(dir, files, add)
+	}
+	if prefix == "" || prefix == "locale" || strings.HasPrefix(prefix, "locale/") {
+		checkLocaleTables(dir, files, add)
+	}
+	if prefix == "" {
+		checkHardcodedRenderLabels(filepath.Dir(dir), add)
+	}
 
 	sort.Slice(findings, func(i, j int) bool {
 		if findings[i].Path != findings[j].Path {
@@ -336,6 +350,33 @@ func checkData(dir string, files []string, _ string) []finding {
 		return findings[i].Rule < findings[j].Rule
 	})
 	return findings
+}
+
+func isMapDataFile(rel string) bool {
+	if !strings.HasPrefix(rel, "maps/") {
+		return false
+	}
+	switch path.Base(rel) {
+	case "terrain.toml", "doodads.toml", "pathing.txt", "cliff.txt", "height.txt", "splat.txt":
+		return true
+	default:
+		return false
+	}
+}
+
+func checkMapDataTables(dataRoot string, files []string, add func(path, rule, msg string)) {
+	dirs := map[string]bool{}
+	for _, rel := range files {
+		if isMapDataFile(rel) {
+			dirs[path.Dir(rel)] = true
+		}
+	}
+	repoRoot := filepath.Dir(dataRoot)
+	for _, dir := range sortedBoolKeys(dirs) {
+		if _, err := litmapdata.Load(os.DirFS(repoRoot), path.Join("data", dir)); err != nil {
+			add(dir, "MAPDATA", err.Error())
+		}
+	}
 }
 
 func checkCommandCardTables(dir string, files []string, add func(path, rule, msg string)) {
@@ -517,6 +558,15 @@ func census(dir string, files []string, jsonMode bool) error {
 }
 
 func sortedKeys(m map[string]int) []string {
+	ks := make([]string, 0, len(m))
+	for k := range m {
+		ks = append(ks, k)
+	}
+	sort.Strings(ks)
+	return ks
+}
+
+func sortedBoolKeys(m map[string]bool) []string {
 	ks := make([]string, 0, len(m))
 	for k := range m {
 		ks = append(ks, k)

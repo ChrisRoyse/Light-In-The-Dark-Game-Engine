@@ -1,0 +1,13 @@
+version = 1
+width = 64
+height = 64
+biome = "vigil-lowlands"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [32, 32]
+
+[[start]]
+player = 1
+cell = [224, 224]

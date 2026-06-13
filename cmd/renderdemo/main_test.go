@@ -151,6 +151,27 @@ func TestBuildCommandCardKeymapFSV(t *testing.T) {
 	}
 }
 
+func TestBuildMapDataDumpFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	dump, err := buildMapDataDump("data/maps/test64")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo mapdata fp=%s counts=%+v samples=%+v", dump.Fingerprint, dump.Counts, dump.PathingSamples)
+	if !dump.OK || dump.Width != 64 || dump.Height != 64 || dump.PathingWidth != 256 || dump.Counts.Water != 512 {
+		t.Fatalf("map dump metadata/counts wrong: %+v", dump)
+	}
+	if len(dump.PathingSamples) < 5 || dump.PathingSamples[1].Flags != 4 || dump.PathingSamples[2].CliffText != "r0" || dump.PathingSamples[3].CliffText != "1" {
+		t.Fatalf("map dump samples wrong: %+v", dump.PathingSamples)
+	}
+	if len(dump.HeightSamples) < 3 || dump.HeightSamples[0].Height != 0 || dump.HeightSamples[1].Height != 256 || dump.HeightSamples[2].Height != 512 {
+		t.Fatalf("map dump height samples wrong: %+v", dump.HeightSamples)
+	}
+	if len(dump.SplatSamples) < 2 || dump.SplatSamples[1].Weight.C != 255 {
+		t.Fatalf("map dump splat samples wrong: %+v", dump.SplatSamples)
+	}
+}
+
 func chdirRepoRoot(t *testing.T) func() {
 	t.Helper()
 	cwd, err := os.Getwd()

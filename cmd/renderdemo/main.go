@@ -24,6 +24,7 @@ import (
 	"time"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
@@ -60,6 +61,58 @@ type renderDemoDump struct {
 	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
 	Groups    *groupRuntimeDump       `json:"groups,omitempty"`
 	OK        bool                    `json:"ok"`
+}
+
+type mapDataRuntimeDump struct {
+	OK              bool                       `json:"ok"`
+	Path            string                     `json:"path"`
+	Width           int                        `json:"width"`
+	Height          int                        `json:"height"`
+	PathingWidth    int                        `json:"pathingWidth"`
+	PathingHeight   int                        `json:"pathingHeight"`
+	Biome           string                     `json:"biome"`
+	Fingerprint     string                     `json:"fingerprint"`
+	Counts          mapDataCounts              `json:"counts"`
+	Starts          []litmapdata.StartLocation `json:"starts"`
+	Doodads         []litmapdata.Doodad        `json:"doodads"`
+	PathingSamples  []mapDataPathingSample     `json:"pathingSamples"`
+	HeightSamples   []mapDataHeightSample      `json:"heightSamples"`
+	SplatSamples    []mapDataSplatSample       `json:"splatSamples"`
+	HandCheckSource []string                   `json:"handCheckSource"`
+}
+
+type mapDataCounts struct {
+	PathingCells int `json:"pathingCells"`
+	Walkable     int `json:"walkable"`
+	Buildable    int `json:"buildable"`
+	Water        int `json:"water"`
+	Ramps        int `json:"ramps"`
+	HeightVerts  int `json:"heightVerts"`
+	SplatCells   int `json:"splatCells"`
+	Doodads      int `json:"doodads"`
+}
+
+type mapDataPathingSample struct {
+	X         int              `json:"x"`
+	Y         int              `json:"y"`
+	Flags     uint8            `json:"flags"`
+	Walkable  bool             `json:"walkable"`
+	Buildable bool             `json:"buildable"`
+	Water     bool             `json:"water"`
+	Cliff     litmapdata.Cliff `json:"cliff"`
+	CliffText string           `json:"cliffText"`
+}
+
+type mapDataHeightSample struct {
+	X      int   `json:"x"`
+	Y      int   `json:"y"`
+	Height int32 `json:"height"`
+}
+
+type mapDataSplatSample struct {
+	X      int                    `json:"x"`
+	Y      int                    `json:"y"`
+	Weight litmapdata.SplatWeight `json:"weight"`
 }
 
 type resolutionFlag struct {
@@ -267,6 +320,7 @@ func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
 	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig")
+	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
@@ -284,6 +338,20 @@ func main() {
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
 	flag.Parse()
+	if strings.TrimSpace(*dumpMapPath) != "" {
+		dump, err := buildMapDataDump(*dumpMapPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-map: %v\n", err)
+			os.Exit(1)
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(dump); err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-map: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *hudMode && !res.set {
 		res = resolutionFlag{W: 1366, H: 768, set: true}
 	}
@@ -407,6 +475,91 @@ func main() {
 		}
 		os.Exit(0)
 	})
+}
+
+func buildMapDataDump(dir string) (mapDataRuntimeDump, error) {
+	m, err := litmapdata.Load(os.DirFS("."), dir)
+	if err != nil {
+		return mapDataRuntimeDump{}, err
+	}
+	dump := mapDataRuntimeDump{
+		OK:              true,
+		Path:            m.Path,
+		Width:           m.Width,
+		Height:          m.Height,
+		PathingWidth:    m.PathingWidth,
+		PathingHeight:   m.PathingHeight,
+		Biome:           m.Biome,
+		Fingerprint:     fmt.Sprintf("%016x", m.Fingerprint),
+		Starts:          m.Starts(),
+		Doodads:         m.Doodads(),
+		HandCheckSource: []string{"terrain.toml", "pathing.txt", "cliff.txt", "height.txt", "splat.txt", "doodads.toml"},
+	}
+	dump.Counts = mapDataCounts{
+		PathingCells: m.PathingWidth * m.PathingHeight,
+		HeightVerts:  (m.Width + 1) * (m.Height + 1),
+		SplatCells:   m.Width * m.Height,
+		Doodads:      len(dump.Doodads),
+	}
+	for y := 0; y < m.PathingHeight; y++ {
+		for x := 0; x < m.PathingWidth; x++ {
+			flags, _ := m.PathingAt(x, y)
+			if flags&litmapdata.PathWalkable != 0 {
+				dump.Counts.Walkable++
+			}
+			if flags&litmapdata.PathBuildable != 0 {
+				dump.Counts.Buildable++
+			}
+			if flags&litmapdata.PathWater != 0 {
+				dump.Counts.Water++
+			}
+			cliff, _ := m.CliffAt(x, y)
+			if cliff.Ramp {
+				dump.Counts.Ramps++
+			}
+		}
+	}
+	for _, p := range [][2]int{{10, 10}, {64, 124}, {126, 128}, {130, 128}, {224, 224}} {
+		if sample, ok := mapDataPathingSampleAt(m, p[0], p[1]); ok {
+			dump.PathingSamples = append(dump.PathingSamples, sample)
+		}
+	}
+	for _, p := range [][2]int{{31, 4}, {32, 4}, {33, 4}, {64, 64}} {
+		if h, ok := m.HeightAtVertex(p[0], p[1]); ok {
+			dump.HeightSamples = append(dump.HeightSamples, mapDataHeightSample{X: p[0], Y: p[1], Height: h})
+		}
+	}
+	for _, p := range [][2]int{{0, 0}, {16, 31}, {63, 63}} {
+		if s, ok := m.SplatAt(p[0], p[1]); ok {
+			dump.SplatSamples = append(dump.SplatSamples, mapDataSplatSample{X: p[0], Y: p[1], Weight: s})
+		}
+	}
+	return dump, nil
+}
+
+func mapDataPathingSampleAt(m *litmapdata.Map, x, y int) (mapDataPathingSample, bool) {
+	flags, ok := m.PathingAt(x, y)
+	if !ok {
+		return mapDataPathingSample{}, false
+	}
+	cliff, _ := m.CliffAt(x, y)
+	return mapDataPathingSample{
+		X:         x,
+		Y:         y,
+		Flags:     uint8(flags),
+		Walkable:  flags&litmapdata.PathWalkable != 0,
+		Buildable: flags&litmapdata.PathBuildable != 0,
+		Water:     flags&litmapdata.PathWater != 0,
+		Cliff:     cliff,
+		CliffText: cliffText(cliff),
+	}, true
+}
+
+func cliffText(c litmapdata.Cliff) string {
+	if c.Ramp {
+		return "r" + strconv.Itoa(int(c.Level))
+	}
+	return strconv.Itoa(int(c.Level))
 }
 
 func buildCamera(width, height int, zoomText, projectionText string) (*litrender.RTSCamera, error) {

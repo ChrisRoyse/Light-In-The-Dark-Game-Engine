@@ -1,0 +1,21 @@
+[[doodad]]
+id = 1
+asset = "kaykit-hexagon/tree_single_A.glb"
+cell = [40, 42]
+rotation = 0
+destructible = true
+footprint = [2, 2]
+
+[[doodad]]
+id = 2
+asset = "kaykit-hexagon/rock_single_A.glb"
+cell = [96, 88]
+rotation = 8192
+destructible = false
+
+[[doodad]]
+id = 3
+asset = "kaykit-hexagon/barrel.glb"
+cell = [176, 170]
+rotation = 32768
+destructible = true

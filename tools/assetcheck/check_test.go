@@ -340,6 +340,42 @@ func TestDataCommandCardRejectedFSV(t *testing.T) {
 	}
 }
 
+func TestDataMapDataScopedPassAndRejectFSV(t *testing.T) {
+	root := t.TempDir()
+	data := filepath.Join(root, "data")
+	mapDir := filepath.Join(data, "maps", "test64")
+	writeTinyMapData(t, root, mapDir, true)
+	files, err := listFiles(mapDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range files {
+		files[i] = filepath.ToSlash(filepath.Join("maps/test64", filepath.FromSlash(files[i])))
+	}
+	got := checkData(data, files, "maps/test64")
+	t.Logf("FSV scoped mapdata pass findings=%v", got)
+	if len(got) != 0 {
+		t.Fatalf("scoped mapdata should pass without global hud/locale files, got %v", got)
+	}
+
+	root = t.TempDir()
+	data = filepath.Join(root, "data")
+	mapDir = filepath.Join(data, "maps", "test64")
+	writeTinyMapData(t, root, mapDir, false)
+	files, err = listFiles(mapDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range files {
+		files[i] = filepath.ToSlash(filepath.Join("maps/test64", filepath.FromSlash(files[i])))
+	}
+	got = checkData(data, files, "maps/test64")
+	t.Logf("FSV scoped mapdata missing asset findings=%v", got)
+	if len(got) != 1 || got[0].Rule != "MAPDATA" || !strings.Contains(got[0].Msg, "tree_single_A.glb") {
+		t.Fatalf("missing map doodad asset should be MAPDATA, got %v", got)
+	}
+}
+
 func newDataFixture(t *testing.T) (root, data string) {
 	t.Helper()
 	root = t.TempDir()
@@ -357,6 +393,50 @@ func newDataFixture(t *testing.T) (root, data string) {
 		t.Fatal(err)
 	}
 	return root, data
+}
+
+func writeTinyMapData(t *testing.T, root, mapDir string, withAsset bool) {
+	t.Helper()
+	if err := os.MkdirAll(mapDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if withAsset {
+		asset := filepath.Join(root, "assets", "kaykit-hexagon", "tree_single_A.glb")
+		if err := os.MkdirAll(filepath.Dir(asset), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(asset, []byte("stub"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	files := map[string]string{
+		"terrain.toml": `version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [0, 0]
+`,
+		"pathing.txt": "3*4\n3*4\n3*4\n3*4\n",
+		"cliff.txt":   "0*4\n0*4\n0*4\n0*4\n",
+		"height.txt":  "0*2\n0*2\n",
+		"splat.txt":   "255,0,0,0\n",
+		"doodads.toml": `[[doodad]]
+id = 1
+asset = "kaykit-hexagon/tree_single_A.glb"
+cell = [1, 1]
+rotation = 0
+destructible = true
+`,
+	}
+	for name, body := range files {
+		if err := os.WriteFile(filepath.Join(mapDir, name), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 func writeLocale(t *testing.T, data, tag, body string) {
