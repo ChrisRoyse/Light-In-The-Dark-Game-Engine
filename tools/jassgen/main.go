@@ -16,6 +16,7 @@ func main() {
 	dumpDecls := flag.String("dump-decls", "", "parse the named JASS file and dump declarations (name+signature) in source order")
 	dumpBodies := flag.String("dump-bodies", "", "parse the named JASS file and dump function bodies (AST) in source order")
 	dumpMerge := flag.Bool("dump-merge", false, "merge .j natives with .d.ts functions; dump enrichment + discrepancy list")
+	dumpClasses := flag.Bool("dump-classes", false, "classify all source symbols D1-D5 (+ unclassified); dump per-class counts and verdicts")
 	flag.Parse()
 
 	switch {
@@ -25,10 +26,48 @@ func main() {
 		runDumpBodies(resolveInput(*dumpBodies))
 	case *dumpMerge:
 		runDumpMerge()
+	case *dumpClasses:
+		runDumpClasses()
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes")
 		os.Exit(2)
 	}
+}
+
+func runDumpClasses() {
+	const scripts = "repoes/war3-types/scripts"
+	bj := ParseFuncs(string(mustRead(scripts + "/blizzard.j")))
+	commonNatives := ParseDecls(string(mustRead(scripts + "/common.j")))
+	aiNatives := ParseDecls(string(mustRead(scripts + "/common.ai")))
+
+	natives := append(append([]Decl{}, commonNatives...), aiNatives...)
+	origins := map[string]string{}
+	for _, d := range commonNatives {
+		origins[d.Name] = "common"
+	}
+	for _, d := range aiNatives {
+		if _, ok := origins[d.Name]; !ok {
+			origins[d.Name] = "commonai"
+		}
+	}
+
+	cs := ClassifyAll(bj, "blizzard", natives, origins)
+	for _, c := range cs {
+		fam := ""
+		if c.Family != "" {
+			fam = " family=" + c.Family
+		}
+		fmt.Printf("%-4s %-10s %-32s %s%s\n", c.Class, c.Origin, c.Name, c.Evidence, fam)
+	}
+
+	counts := TallyClasses(cs)
+	fmt.Fprintf(os.Stderr, "--- classification counts (heuristic) ---\n")
+	total := 0
+	for _, k := range []Class{ClassD1, ClassD2, ClassD3, ClassD4, ClassD5, ClassUnclassified} {
+		fmt.Fprintf(os.Stderr, "  %-14s %d\n", k, counts[k])
+		total += counts[k]
+	}
+	fmt.Fprintf(os.Stderr, "  %-14s %d\n", "TOTAL", total)
 }
 
 // mergePair pairs a JASS source file with its .d.ts enrichment file.
