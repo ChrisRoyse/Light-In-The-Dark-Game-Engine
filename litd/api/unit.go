@@ -678,6 +678,31 @@ func (u Unit) IsType(class UnitClass) bool {
 	}
 }
 
+// InRange reports whether this unit is within distance world units of other
+// (center-to-center, inclusive). False on an invalid handle, an invalid other,
+// or a negative distance. JASS: IsUnitInRange.
+func (u Unit) InRange(other Unit, distance float64) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.InRange")
+		return false
+	}
+	if !other.Valid() || other.g != u.g {
+		return false
+	}
+	return u.g.w.UnitsInRange(u.id, other.id, fromFloat(distance))
+}
+
+// InRangeOf reports whether this unit is within distance world units of point
+// (center-to-center, inclusive). False on an invalid handle or a negative
+// distance. JASS: IsUnitInRangeXY, IsUnitInRangeLoc (D3 → one Vec2 overload).
+func (u Unit) InRangeOf(point Vec2, distance float64) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.InRangeOf")
+		return false
+	}
+	return u.g.w.UnitInRangeOfPoint(u.id, vec(point), fromFloat(distance))
+}
+
 // Name returns the unit's display name. Currently this is the unit type's
 // proper name (per-instance rename via BlzSetUnitName is deferred). Empty string
 // on an invalid handle or an unnamed/untyped unit. JASS: GetUnitName.

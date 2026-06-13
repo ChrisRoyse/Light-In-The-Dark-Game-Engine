@@ -1010,6 +1010,78 @@
       }
     },
     {
+      "name": "IsUnitInRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "otherUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "distance",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.InRange",
+        "package": "litd/api",
+        "goSignature": "(other Unit, distance float64) bool"
+      }
+    },
+    {
+      "name": "IsUnitInRangeXY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "distance",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.InRangeOf",
+        "package": "litd/api",
+        "goSignature": "(point Vec2, distance float64) bool",
+        "collapsesWith": [
+          "IsUnitInRangeLoc"
+        ]
+      }
+    },
+    {
       "name": "IsUnitType",
       "origin": "common.j",
       "signature": {

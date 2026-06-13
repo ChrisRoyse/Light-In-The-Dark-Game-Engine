@@ -590,9 +590,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitRace | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitType | common.j | D2 | `litd/api.Unit.IsType` |
 | IsUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitInRange | common.j | D3 | _pending (M2 backlog)_ |
-| IsUnitInRangeXY | common.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitInRangeLoc | common.j | D3 | _pending (M2 backlog)_ |
+| IsUnitInRange | common.j | D1 | `litd/api.Unit.InRange` |
+| IsUnitInRangeXY | common.j | D3 | `litd/api.Unit.InRangeOf` |
+| IsUnitInRangeLoc | common.j | D3 | `litd/api.Unit.InRangeOf` (D3 collapse → IsUnitInRangeXY) |
 | IsUnitHidden | common.j | D1 | `litd/api.Unit.IsHidden` |
 | IsUnitIllusion | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInTransport | common.j | unclassified | _pending (M2 backlog)_ |

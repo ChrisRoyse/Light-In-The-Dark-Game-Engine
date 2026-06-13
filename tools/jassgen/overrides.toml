@@ -272,6 +272,23 @@ package = "litd/api"
 reason = "unit classification predicate; the unittype enum arg becomes a typed UnitClass (dedup §3, D2). Supports the structural classes (Hero/Dead/Structure/Flying/Ground) and weapon classes (Melee/Ranged/AttacksGround/AttacksFlying) the engine can derive; status/race classes (stunned/poisoned/undead/mechanical/…) deferred until their backing state/tags are modeled (#217)"
 
 [[override]]
+name = "IsUnitInRange"
+class = "D1"
+goMapping = "Unit.InRange"
+goSignature = "(other Unit, distance float64) bool"
+package = "litd/api"
+reason = "unit-to-unit range predicate maps onto the typed accessor (dedup §2); center-to-center inclusive, matching the engine's acquisition convention (#217)"
+
+[[override]]
+name = "IsUnitInRangeXY"
+class = "D3"
+goMapping = "Unit.InRangeOf"
+goSignature = "(point Vec2, distance float64) bool"
+package = "litd/api"
+collapsesWith = ["IsUnitInRangeLoc"]
+reason = "unit-to-point range predicate; the (x,y) and location overloads collapse onto one Vec2 method (dedup §4, D3) (#217)"
+
+[[override]]
 name = "GetUnitName"
 class = "D1"
 goMapping = "Unit.Name"

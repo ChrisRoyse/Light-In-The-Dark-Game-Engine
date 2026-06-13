@@ -1272,6 +1272,52 @@ func TestUnitIsTypeCombatFSV(t *testing.T) {
 		arc.IsType(ClassRanged), arc.IsType(ClassAttacksFlying), un.IsType(ClassMelee))
 }
 
+// TestUnitInRangeFSV: InRange/InRangeOf test center-to-center distance with an
+// inclusive boundary. SoT = the Transform positions (known 100-unit gap).
+func TestUnitInRangeFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u1, _ := liveUnit(t, w, g, 0, 100) // spawns at (64,64)
+	id2, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(164), Y: fixed.FromInt(64)}, 0)
+	if !ok {
+		t.Fatal("second unit spawn failed")
+	}
+	u2 := Unit{id: id2, g: g} // (164,64): exactly 100 from u1
+
+	// Inclusive boundary at the exact distance.
+	t.Logf("gap=100: InRange(100)=%v InRange(99)=%v InRange(101)=%v",
+		u1.InRange(u2, 100), u1.InRange(u2, 99), u1.InRange(u2, 101))
+	if !u1.InRange(u2, 100) {
+		t.Error("InRange(100) false at exactly 100 (want inclusive true)")
+	}
+	if u1.InRange(u2, 99) {
+		t.Error("InRange(99) true (gap is 100)")
+	}
+	if !u1.InRange(u2, 101) {
+		t.Error("InRange(101) false")
+	}
+	// Symmetric.
+	if u2.InRange(u1, 100) != u1.InRange(u2, 100) {
+		t.Error("InRange not symmetric")
+	}
+
+	// InRangeOf a point: (64,164) is 100 from u1 (dy=100).
+	if !u1.InRangeOf(Vec2{X: 64, Y: 164}, 100) || u1.InRangeOf(Vec2{X: 64, Y: 164}, 99) {
+		t.Errorf("InRangeOf boundary wrong: 100=%v 99=%v", u1.InRangeOf(Vec2{X: 64, Y: 164}, 100), u1.InRangeOf(Vec2{X: 64, Y: 164}, 99))
+	}
+
+	// EDGE: negative distance -> false; invalid other -> false; zero handle.
+	if u1.InRange(u2, -5) {
+		t.Error("negative distance true")
+	}
+	if u1.InRange(Unit{}, 1000) {
+		t.Error("InRange against invalid other true")
+	}
+	if (Unit{}).InRange(u1, 1000) || (Unit{}).InRangeOf(Vec2{}, 1000) {
+		t.Error("zero handle InRange true")
+	}
+}
+
 // TestUnitNameFSV: Unit.Name surfaces the unit type's proper name. SoT = the
 // bound data.Unit.Name, via api + sim accessor.
 func TestUnitNameFSV(t *testing.T) {

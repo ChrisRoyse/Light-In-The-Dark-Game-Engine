@@ -31,6 +31,8 @@ var Bindings = []Binding{
 	{LuaName: "Unit_FoodUsed", Package: "litd/api", Symbol: "Unit.FoodUsed", GoSignature: "() int"},
 	{LuaName: "Unit_HeroLevel", Package: "litd/api", Symbol: "Unit.HeroLevel", GoSignature: "() int"},
 	{LuaName: "Unit_HeroXP", Package: "litd/api", Symbol: "Unit.HeroXP", GoSignature: "() int"},
+	{LuaName: "Unit_InRange", Package: "litd/api", Symbol: "Unit.InRange", GoSignature: "(other Unit, distance float64) bool"},
+	{LuaName: "Unit_InRangeOf", Package: "litd/api", Symbol: "Unit.InRangeOf", GoSignature: "(point Vec2, distance float64) bool"},
 	{LuaName: "Unit_Intelligence", Package: "litd/api", Symbol: "Unit.Intelligence", GoSignature: "() int"},
 	{LuaName: "Unit_InventorySize", Package: "litd/api", Symbol: "Unit.InventorySize", GoSignature: "() int"},
 	{LuaName: "Unit_Invulnerable", Package: "litd/api", Symbol: "Unit.Invulnerable", GoSignature: "() bool"},
