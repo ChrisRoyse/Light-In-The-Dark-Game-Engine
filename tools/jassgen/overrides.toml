@@ -305,6 +305,38 @@ package = "litd/api"
 reason = "per-instance unit name override backed by sparse UnitNameStore; BlzSetUnitName is the canonical rename native (the non-Blz SetUnitName does not exist in common.j). GetUnitName reads this override back (#217)"
 
 [[override]]
+name = "UnitAddAbility"
+class = "D2"
+goMapping = "Unit.AddAbility"
+goSignature = "(ref AbilityRef) Ability"
+package = "litd/api"
+reason = "equip an ability; the JASS integer rawcode becomes the typed AbilityRef (D2 arg-type), and the boolean success return becomes the per-unit Ability handle (a zero/invalid handle == failure) (#217)"
+
+[[override]]
+name = "UnitRemoveAbility"
+class = "D2"
+goMapping = "Unit.RemoveAbility"
+goSignature = "(ref AbilityRef) bool"
+package = "litd/api"
+reason = "remove an equipped ability; JASS rawcode becomes the typed AbilityRef (D2), boolean return preserved (#217)"
+
+[[override]]
+name = "GetUnitAbilityLevel"
+class = "D3"
+goMapping = "Ability.Level"
+goSignature = "() int"
+package = "litd/api"
+reason = "the flat (unit, abilcode) addressing collapses onto the resolved Ability noun handle's Level accessor (D3 family collapse); the abilcode->handle resolution is the binding layer's job (#217)"
+
+[[override]]
+name = "SetUnitAbilityLevel"
+class = "D3"
+goMapping = "Ability.SetLevel"
+goSignature = "(level int)"
+package = "litd/api"
+reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
+
+[[override]]
 name = "GetUnitFoodUsed"
 class = "D1"
 goMapping = "Unit.FoodUsed"

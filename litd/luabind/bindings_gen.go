@@ -14,9 +14,12 @@ type Binding struct {
 
 // Bindings is the core API surface (litd/api + litd/api/helpers).
 var Bindings = []Binding{
+	{LuaName: "Ability_Level", Package: "litd/api", Symbol: "Ability.Level", GoSignature: "() int"},
+	{LuaName: "Ability_SetLevel", Package: "litd/api", Symbol: "Ability.SetLevel", GoSignature: "(level int)"},
 	{LuaName: "Game_CreateUnit", Package: "litd/api", Symbol: "Game.CreateUnit", GoSignature: "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"},
 	{LuaName: "PolledWait", Package: "litd/api/helpers", Symbol: "PolledWait", GoSignature: "(seconds float64)"},
 	{LuaName: "Unit_AcquireRange", Package: "litd/api", Symbol: "Unit.AcquireRange", GoSignature: "() float64"},
+	{LuaName: "Unit_AddAbility", Package: "litd/api", Symbol: "Unit.AddAbility", GoSignature: "(ref AbilityRef) Ability"},
 	{LuaName: "Unit_AddExperience", Package: "litd/api", Symbol: "Unit.AddExperience", GoSignature: "(xp int)"},
 	{LuaName: "Unit_Agility", Package: "litd/api", Symbol: "Unit.Agility", GoSignature: "() int"},
 	{LuaName: "Unit_Alive", Package: "litd/api", Symbol: "Unit.Alive", GoSignature: "() bool"},
@@ -51,6 +54,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_PointValue", Package: "litd/api", Symbol: "Unit.PointValue", GoSignature: "() int"},
 	{LuaName: "Unit_Position", Package: "litd/api", Symbol: "Unit.Position", GoSignature: "() Vec2"},
 	{LuaName: "Unit_Remove", Package: "litd/api", Symbol: "Unit.Remove", GoSignature: "()"},
+	{LuaName: "Unit_RemoveAbility", Package: "litd/api", Symbol: "Unit.RemoveAbility", GoSignature: "(ref AbilityRef) bool"},
 	{LuaName: "Unit_SetAcquireRange", Package: "litd/api", Symbol: "Unit.SetAcquireRange", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetAgility", Package: "litd/api", Symbol: "Unit.SetAgility", GoSignature: "(v int)"},
 	{LuaName: "Unit_SetFacing", Package: "litd/api", Symbol: "Unit.SetFacing", GoSignature: "(a Angle)"},

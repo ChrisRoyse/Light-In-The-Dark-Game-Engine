@@ -629,6 +629,33 @@
       }
     },
     {
+      "name": "GetUnitAbilityLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Ability.Level",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
       "name": "GetUnitAcquireRange",
       "origin": "common.j",
       "signature": {
@@ -1419,6 +1446,38 @@
       }
     },
     {
+      "name": "SetUnitAbilityLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Ability.SetLevel",
+        "package": "litd/api",
+        "goSignature": "(level int)"
+      }
+    },
+    {
       "name": "SetUnitAcquireRange",
       "origin": "common.j",
       "signature": {
@@ -1960,6 +2019,33 @@
       }
     },
     {
+      "name": "UnitAddAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.AddAbility",
+        "package": "litd/api",
+        "goSignature": "(ref AbilityRef) Ability"
+      }
+    },
+    {
       "name": "UnitInventorySize",
       "origin": "common.j",
       "signature": {
@@ -2006,6 +2092,33 @@
         "symbol": "Unit.ModifySkillPoints",
         "package": "litd/api",
         "goSignature": "(delta int) bool"
+      }
+    },
+    {
+      "name": "UnitRemoveAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.RemoveAbility",
+        "package": "litd/api",
+        "goSignature": "(ref AbilityRef) bool"
       }
     },
     {

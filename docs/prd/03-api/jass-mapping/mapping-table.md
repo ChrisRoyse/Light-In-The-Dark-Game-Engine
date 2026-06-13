@@ -528,10 +528,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SuspendHeroXP | common.j | D1 | `litd/api.Unit.SuspendExperience` |
 | IsSuspendedXP | common.j | D1 | `litd/api.Unit.ExperienceSuspended` |
 | SelectHeroSkill | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitAbilityLevel | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitAbilityLevel | common.j | D3 | `litd/api.Ability.Level` |
 | DecUnitAbilityLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | IncUnitAbilityLevel | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitAbilityLevel | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitAbilityLevel | common.j | D3 | `litd/api.Ability.SetLevel` |
 | ReviveHero | common.j | D3 | _pending (M2 backlog)_ |
 | ReviveHeroLoc | common.j | D3 | _pending (M2 backlog)_ |
 | SetUnitExploded | common.j | unclassified | _pending (M2 backlog)_ |
@@ -603,8 +603,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitSuspendDecay | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitAddType | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitRemoveType | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitAddAbility | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitRemoveAbility | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitAddAbility | common.j | D2 | `litd/api.Unit.AddAbility` |
+| UnitRemoveAbility | common.j | D2 | `litd/api.Unit.RemoveAbility` |
 | UnitMakeAbilityPermanent | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitRemoveBuffs | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitRemoveBuffsEx | common.j | unclassified | _pending (M2 backlog)_ |
