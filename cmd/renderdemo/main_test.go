@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
+	"github.com/g3n/engine/core"
 )
 
 func TestResolutionFlagSetFSV(t *testing.T) {
@@ -92,6 +93,33 @@ func TestBuildCameraProjectionModeFSV(t *testing.T) {
 		t.Fatalf("invalid camera projection accepted")
 	} else {
 		t.Logf("FSV renderdemo invalid camera projection err=%v", err)
+	}
+}
+
+func TestBuildGroupFSVFSV(t *testing.T) {
+	rig, err := buildCamera(960, 540, "default", "persp")
+	if err != nil {
+		t.Fatalf("camera rejected: %v", err)
+	}
+	dump := buildGroupFSV(core.NewNode(), rig)
+	t.Logf("FSV renderdemo groups ok=%v current=%s selection=%v center=(%.1f,%.1f) cameraAnchor=%+v",
+		dump.OK, dump.Current.Name, dump.Current.Selection, dump.Current.CenterX, dump.Current.CenterZ, rig.Snapshot().Anchor)
+	if !dump.OK || dump.Current.Name != "doubletap-299" || !dump.Current.CenterRequested || dump.Current.CenterX != 120 || dump.Current.CenterZ != 80 {
+		t.Fatalf("group FSV current mismatch: %+v", dump.Current)
+	}
+	if rig.Snapshot().Anchor.X != 120 || rig.Snapshot().Anchor.Z != 80 {
+		t.Fatalf("double-tap did not center camera: %+v", rig.Snapshot().Anchor)
+	}
+	seen := map[string]groupCaseDump{}
+	for _, c := range dump.Cases {
+		seen[c.Name] = c
+		if !c.OK || c.CommandRecordsEmitted != 0 {
+			t.Fatalf("case %s failed or emitted commands: %+v", c.Name, c)
+		}
+	}
+	if seen["recall-pruned"].Pruned != 2 || seen["doubletap-350"].CenterRequested || seen["generation-reuse"].RecycledID != 0x01000007 {
+		t.Fatalf("group FSV edge cases missing: recall=%+v late=%+v gen=%+v",
+			seen["recall-pruned"], seen["doubletap-350"], seen["generation-reuse"])
 	}
 }
 

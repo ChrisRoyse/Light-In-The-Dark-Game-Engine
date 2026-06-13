@@ -58,6 +58,7 @@ type renderDemoDump struct {
 	Scene     string                  `json:"scene"`
 	Camera    litrender.RTSCameraDump `json:"camera"`
 	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
+	Groups    *groupRuntimeDump       `json:"groups,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -197,6 +198,35 @@ type selectionCaseDump struct {
 	OK                    bool          `json:"ok"`
 }
 
+type groupRuntimeDump struct {
+	Current groupCaseDump   `json:"current"`
+	Cases   []groupCaseDump `json:"cases"`
+	OK      bool            `json:"ok"`
+	Errors  []string        `json:"errors,omitempty"`
+}
+
+type groupCaseDump struct {
+	Name                  string   `json:"name"`
+	Gesture               string   `json:"gesture"`
+	Group                 uint8    `json:"group"`
+	GroupIDs              []uint32 `json:"groupIDs"`
+	ExpectedGroupIDs      []uint32 `json:"expectedGroupIDs"`
+	Selection             []uint32 `json:"selection"`
+	Expected              []uint32 `json:"expected"`
+	Pruned                uint8    `json:"pruned,omitempty"`
+	ExpectedPruned        uint8    `json:"expectedPruned,omitempty"`
+	CenterRequested       bool     `json:"centerRequested"`
+	ExpectedCenter        bool     `json:"expectedCenter"`
+	CenterX               float32  `json:"centerX,omitempty"`
+	CenterZ               float32  `json:"centerZ,omitempty"`
+	ExpectedCenterX       float32  `json:"expectedCenterX,omitempty"`
+	ExpectedCenterZ       float32  `json:"expectedCenterZ,omitempty"`
+	OldID                 uint32   `json:"oldID,omitempty"`
+	RecycledID            uint32   `json:"recycledID,omitempty"`
+	CommandRecordsEmitted uint16   `json:"commandRecordsEmitted"`
+	OK                    bool     `json:"ok"`
+}
+
 type resourceBarRuntimeDump struct {
 	Scenario string                    `json:"scenario"`
 	Current  resourceBarCaseDump       `json:"current"`
@@ -228,6 +258,7 @@ func main() {
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	autotestSelect := flag.Bool("autotest-select", false, "render the drag-select input FSV fixture")
+	autotestGroups := flag.Bool("autotest-groups", false, "render the control-group input FSV fixture")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
@@ -255,6 +286,7 @@ func main() {
 	var spec sceneSpec
 	var canvasFSV canvasDump
 	var selectionFSV *selectionRuntimeDump
+	var groupFSV *groupRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -275,6 +307,11 @@ func main() {
 			os.Exit(1)
 		}
 		spec = sceneSpec{name: "select-" + selectionFSV.Scenario, expected: expectedStats(0, 0, 0, 0, 0, 0)}
+		addStatsHUD(scene, spec)
+	} else if *autotestGroups {
+		buildLights(scene)
+		groupFSV = buildGroupFSV(scene, cameraRig)
+		spec = sceneSpec{name: "group-recall", expected: expectedStats(0, 0, 0, 0, 0, 0)}
 		addStatsHUD(scene, spec)
 	} else {
 		buildLights(scene)
@@ -311,10 +348,12 @@ func main() {
 			pass := cameraDump.OK
 			if selectionFSV != nil {
 				pass = pass && selectionFSV.OK
+			} else if groupFSV != nil {
+				pass = pass && groupFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -783,6 +822,144 @@ func selectionCaseContains(ids []uint32, id uint32) bool {
 		}
 	}
 	return false
+}
+
+func buildGroupFSV(scene *core.Node, cameraRig *litrender.RTSCamera) *groupRuntimeDump {
+	items := groupFixtureItems()
+	liveAfterDeaths := groupFixtureLiveAfterDeaths(items)
+	live := groupLiveEntities(liveAfterDeaths)
+	groups := litinput.NewControlGroups(litinput.DefaultGroupConfig())
+	dump := &groupRuntimeDump{OK: true}
+	addCase := func(c groupCaseDump) {
+		dump.Cases = append(dump.Cases, c)
+		if !c.OK {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("%s group mismatch", c.Name))
+		}
+	}
+
+	assign := groups.Assign(1, groupSelection(1, 2, 3, 4, 5))
+	addCase(groupCase("assign-5", "Ctrl+1 assign five units", groups, assign, []sim.EntityID{1, 2, 3, 4, 5}, []sim.EntityID{1, 2, 3, 4, 5}, 0, false, 0, 0))
+
+	recall := groups.Recall(1, live, 1000)
+	addCase(groupCase("recall-pruned", "1 recall after ids 2 and 4 died", groups, recall, []sim.EntityID{1, 3, 5}, []sim.EntityID{1, 3, 5}, 2, false, 0, 0))
+
+	center := groups.Recall(1, live, 1299)
+	addCase(groupCase("doubletap-299", "1 then 1 at 299 ms recalls and centers", groups, center, []sim.EntityID{1, 3, 5}, []sim.EntityID{1, 3, 5}, 0, true, 120, 80))
+	dump.Current = dump.Cases[len(dump.Cases)-1]
+	cameraRig.SetAnchor(math32.Vector3{X: center.CenterX, Z: center.CenterZ})
+
+	_ = groups.Recall(1, live, 2000)
+	late := groups.Recall(1, live, 2350)
+	addCase(groupCase("doubletap-350", "1 then 1 at 350 ms recalls without camera center", groups, late, []sim.EntityID{1, 3, 5}, []sim.EntityID{1, 3, 5}, 0, false, 0, 0))
+
+	added := groups.Add(1, groupSelection(6, 7, 8))
+	addCase(groupCase("shift-add", "Shift+1 adds three more units without changing selection", groups, added, []sim.EntityID{6, 7, 8}, []sim.EntityID{1, 3, 5, 6, 7, 8}, 0, false, 0, 0))
+
+	reassigned := groups.Assign(1, groupSelection(8))
+	addCase(groupCase("ctrl-reassign", "Ctrl+1 replaces old contents", groups, reassigned, []sim.EntityID{8}, []sim.EntityID{8}, 0, false, 0, 0))
+
+	old := sim.EntityID(7)
+	recycled := sim.EntityID(1<<24 | 7)
+	genGroups := litinput.NewControlGroups(litinput.DefaultGroupConfig())
+	genGroups.Assign(2, groupSelectionIDs(old))
+	gen := genGroups.Recall(2, []litinput.GroupEntity{{ID: recycled, X: 520, Z: 80}}, 1000)
+	genCase := groupCase("generation-reuse", "recycled slot keeps old group stale", genGroups, gen, nil, nil, 1, false, 0, 0)
+	genCase.OldID = uint32(old)
+	genCase.RecycledID = uint32(recycled)
+	addCase(genCase)
+
+	drawSelectionFixture(scene, liveAfterDeaths, selectionCaseDump{Name: "group-recall", Selection: dump.Current.Selection})
+	return dump
+}
+
+func groupFixtureItems() []selectionFixtureEntity {
+	return []selectionFixtureEntity{
+		{Name: "group-1", World: math32.Vector3{X: -80, Y: 18, Z: 80}, Item: selectionItem(1, 1, litinput.SelectUnit, 0, false)},
+		{Name: "group-dead-2", World: math32.Vector3{X: 20, Y: 18, Z: 80}, Item: selectionItem(2, 1, litinput.SelectUnit, 0, false)},
+		{Name: "group-3", World: math32.Vector3{X: 120, Y: 18, Z: 80}, Item: selectionItem(3, 1, litinput.SelectUnit, 0, false)},
+		{Name: "group-dead-4", World: math32.Vector3{X: 220, Y: 18, Z: 80}, Item: selectionItem(4, 1, litinput.SelectUnit, 0, false)},
+		{Name: "group-5", World: math32.Vector3{X: 320, Y: 18, Z: 80}, Item: selectionItem(5, 1, litinput.SelectUnit, 0, false)},
+		{Name: "add-6", World: math32.Vector3{X: 520, Y: 18, Z: 80}, Item: selectionItem(6, 1, litinput.SelectUnit, 0, false)},
+		{Name: "add-7", World: math32.Vector3{X: 660, Y: 18, Z: 80}, Item: selectionItem(7, 1, litinput.SelectUnit, 0, false)},
+		{Name: "add-8", World: math32.Vector3{X: 800, Y: 18, Z: 80}, Item: selectionItem(8, 1, litinput.SelectUnit, 0, false)},
+	}
+}
+
+func groupFixtureLiveAfterDeaths(items []selectionFixtureEntity) []selectionFixtureEntity {
+	out := make([]selectionFixtureEntity, 0, 6)
+	for _, item := range items {
+		switch item.Item.ID {
+		case 2, 4:
+			continue
+		default:
+			out = append(out, item)
+		}
+	}
+	return out
+}
+
+func groupLiveEntities(items []selectionFixtureEntity) []litinput.GroupEntity {
+	out := make([]litinput.GroupEntity, 0, len(items))
+	for _, item := range items {
+		out = append(out, litinput.GroupEntity{ID: item.Item.ID, X: item.World.X, Z: item.World.Z})
+	}
+	return out
+}
+
+func groupSelection(ids ...uint32) litinput.Selection {
+	var s litinput.Selection
+	for _, id := range ids {
+		if s.Count >= sim.MaxCommandUnits {
+			break
+		}
+		s.IDs[s.Count] = sim.EntityID(id)
+		s.Count++
+	}
+	return s
+}
+
+func groupSelectionIDs(ids ...sim.EntityID) litinput.Selection {
+	var s litinput.Selection
+	for _, id := range ids {
+		if s.Count >= sim.MaxCommandUnits {
+			break
+		}
+		s.IDs[s.Count] = id
+		s.Count++
+	}
+	return s
+}
+
+func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput.GroupResult, expectedSelection, expectedGroup []sim.EntityID, expectedPruned uint8, expectedCenter bool, expectedX, expectedZ float32) groupCaseDump {
+	groupIDs, _ := groups.IDs(int(res.Group))
+	out := groupCaseDump{
+		Name:                  name,
+		Gesture:               gesture,
+		Group:                 res.Group,
+		GroupIDs:              selectionCommandIDs(groupIDs),
+		ExpectedGroupIDs:      selectionCommandIDs(expectedGroup),
+		Selection:             selectionCommandIDs(selectionIDs(res.Selection)),
+		Expected:              selectionCommandIDs(expectedSelection),
+		Pruned:                res.Pruned,
+		ExpectedPruned:        expectedPruned,
+		CenterRequested:       res.CenterRequested,
+		ExpectedCenter:        expectedCenter,
+		CenterX:               res.CenterX,
+		CenterZ:               res.CenterZ,
+		ExpectedCenterX:       expectedX,
+		ExpectedCenterZ:       expectedZ,
+		CommandRecordsEmitted: res.CommandRecordsEmitted,
+	}
+	out.OK = sameEntityIDs(selectionIDs(res.Selection), expectedSelection) &&
+		sameEntityIDs(groupIDs, expectedGroup) &&
+		res.Pruned == expectedPruned &&
+		res.CenterRequested == expectedCenter &&
+		res.CommandRecordsEmitted == 0
+	if expectedCenter {
+		out.OK = out.OK && res.CenterX == expectedX && res.CenterZ == expectedZ
+	}
+	return out
 }
 
 func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, localeTag string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
