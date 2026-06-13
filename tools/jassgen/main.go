@@ -15,6 +15,7 @@ const defaultScriptsDir = "repoes/war3-types/scripts"
 func main() {
 	dumpDecls := flag.String("dump-decls", "", "parse the named JASS file and dump declarations (name+signature) in source order")
 	dumpBodies := flag.String("dump-bodies", "", "parse the named JASS file and dump function bodies (AST) in source order")
+	dumpMerge := flag.Bool("dump-merge", false, "merge .j natives with .d.ts functions; dump enrichment + discrepancy list")
 	flag.Parse()
 
 	switch {
@@ -22,10 +23,73 @@ func main() {
 		runDumpDecls(resolveInput(*dumpDecls))
 	case *dumpBodies != "":
 		runDumpBodies(resolveInput(*dumpBodies))
+	case *dumpMerge:
+		runDumpMerge()
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j>")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge")
 		os.Exit(2)
 	}
+}
+
+// mergePair pairs a JASS source file with its .d.ts enrichment file.
+type mergePair struct {
+	origin   string
+	jassPath string
+	dtsPath  string
+}
+
+func runDumpMerge() {
+	const scripts = "repoes/war3-types/scripts"
+	const core = "repoes/war3-types/core"
+	pairs := []mergePair{
+		{"common", scripts + "/common.j", core + "/common.d.ts"},
+		{"blizzard", scripts + "/blizzard.j", core + "/blizzard.d.ts"},
+		{"commonai", scripts + "/common.ai", core + "/commonai.d.ts"},
+	}
+	totalDisc := 0
+	for _, p := range pairs {
+		jassSrc := mustRead(p.jassPath)
+		dtsSrc := mustRead(p.dtsPath)
+		var sigs []JassSig
+		if p.origin == "blizzard" {
+			sigs = FuncsToSigs(ParseFuncs(string(jassSrc))) // blizzard.j = BJ functions
+		} else {
+			sigs = DeclsToSigs(ParseDecls(string(jassSrc))) // common/commonai = natives
+		}
+		dts := ParseDTS(string(dtsSrc))
+		res := Merge(sigs, p.origin, dts)
+
+		fmt.Printf("=== %s: %s <-> %s ===\n", p.origin, p.jassPath, p.dtsPath)
+		fmt.Printf("  jass natives:   %d\n", res.JassNatives)
+		fmt.Printf("  dts functions:  %d\n", res.DTSFunctions)
+		fmt.Printf("  merged entries: %d\n", len(res.Entries))
+		fmt.Printf("  hierarchy types:%d\n", len(res.Hierarchy))
+		fmt.Printf("  discrepancies:  %d\n", len(res.Discrepancies))
+		byKind := map[string]int{}
+		for _, d := range res.Discrepancies {
+			byKind[d.Kind]++
+		}
+		for _, k := range []string{"jass-only", "dts-only", "arity-mismatch"} {
+			if byKind[k] > 0 {
+				fmt.Printf("    %-14s %d\n", k, byKind[k])
+			}
+		}
+		for _, d := range res.Discrepancies {
+			fmt.Printf("    [%s] %s: %s\n", d.Kind, d.Name, d.Detail)
+		}
+		// enrichment sample: first 3 entries, jassType|tsType per param
+		for i, e := range res.Entries {
+			if i >= 3 {
+				break
+			}
+			fmt.Printf("  enrich %s -> %s/%s:\n", e.Name, e.JassReturns, e.TSReturns)
+			for _, p := range e.Params {
+				fmt.Printf("    %-16s jass=%-10s ts=%-12s nullable=%v\n", p.Name, p.JassType, p.TSType, p.Nullable)
+			}
+		}
+		totalDisc += len(res.Discrepancies)
+	}
+	fmt.Fprintf(os.Stderr, "total discrepancies across all files: %d\n", totalDisc)
 }
 
 func runDumpDecls(path string) {
