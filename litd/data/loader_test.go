@@ -93,6 +93,8 @@ func TestLoaderStarterTables(t *testing.T) {
 		{"turn/tick = round(0.6·65536/20)", int64(uint16(foot.TurnRatePerTick)), 1966},
 		{"collisionClass (16 → 1 ring)", int64(foot.CollisionClass), 1},
 		{"acqRange = 600·2^32", int64(foot.AcquisitionRange), 2576980377600},
+		{"sightDay = 1800·2^32", int64(foot.SightDay), 7730941132800},
+		{"sightNight = 800·2^32", int64(foot.SightNight), 3435973836800},
 		{"cooldown 1.35s → ticks", int64(foot.Attacks[0].CooldownTicks), 27},
 		{"damagePoint 0.5s → ticks", int64(foot.Attacks[0].DamagePointTicks), 10},
 		{"backswing 0.5s → ticks", int64(foot.Attacks[0].BackswingTicks), 10},

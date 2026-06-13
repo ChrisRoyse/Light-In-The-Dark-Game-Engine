@@ -116,6 +116,7 @@ func (w *World) phaseMovement() {
 	w.movementSystem()
 	w.missileSystem() // flight at the movement-phase tail (#158)
 	w.bucketReconcile()
+	w.visibilitySystem()
 }
 
 // Phase 5 — combat: throttled target acquisition (acquire.go), then

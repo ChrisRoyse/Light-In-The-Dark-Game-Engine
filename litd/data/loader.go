@@ -41,7 +41,7 @@ const TicksPerSecond = 1000 / TickMS
 
 // FormatVersion is the data-format version, folded into the
 // fingerprint; bump on schema change.
-const FormatVersion = 1
+const FormatVersion = 2
 
 // Pathing classes.
 const (
@@ -110,6 +110,8 @@ type Unit struct {
 	CollisionClass   uint8       // dilation margin in cells (path.CellRadius)
 	Pathing          uint8
 	AcquisitionRange fixed.F64
+	SightDay         fixed.F64
+	SightNight       fixed.F64
 	Model            string
 	Attacks          []Attack
 	Abilities        []uint16 // indices into Tables.Abilities
@@ -170,6 +172,8 @@ type rawUnit struct {
 	CollisionSize    int64            `toml:"collision-size" json:"collision-size"`
 	Pathing          string           `toml:"pathing" json:"pathing"`
 	AcquisitionRange float64          `toml:"acquisition-range" json:"acquisition-range"`
+	SightDay         float64          `toml:"sight-day" json:"sight-day"`
+	SightNight       float64          `toml:"sight-night" json:"sight-night"`
 	Model            string           `toml:"model" json:"model"`
 	Abilities        []string         `toml:"abilities" json:"abilities"`
 	Attacks          []rawAttack      `toml:"attack" json:"attack"`
@@ -626,6 +630,14 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 	if err != nil {
 		return fail("acquisition-range", err)
 	}
+	sightDay, err := worldUnits(r.SightDay)
+	if err != nil {
+		return fail("sight-day", err)
+	}
+	sightNight, err := worldUnits(r.SightNight)
+	if err != nil {
+		return fail("sight-night", err)
+	}
 	u := Unit{
 		ID:               r.ID,
 		Life:             int32(r.Life),
@@ -638,6 +650,8 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		CollisionClass:   cellRadius(int32(r.CollisionSize)),
 		Pathing:          pathing,
 		AcquisitionRange: acq,
+		SightDay:         sightDay,
+		SightNight:       sightNight,
 		Model:            r.Model,
 	}
 	if u.FoodCost, u.FoodProvided, u.DepotMask, u.Harvest, err = t.convertEconomy(file, r.ID, r); err != nil {
@@ -805,6 +819,8 @@ func (t *Tables) fingerprint() uint64 {
 		h.WriteU8(u.CollisionClass)
 		h.WriteU8(u.Pathing)
 		h.WriteI64(int64(u.AcquisitionRange))
+		h.WriteI64(int64(u.SightDay))
+		h.WriteI64(int64(u.SightNight))
 		writeString(h, u.Model)
 		h.WriteU32(uint32(len(u.Attacks)))
 		for j := range u.Attacks {
@@ -863,10 +879,11 @@ func (t *Tables) fingerprint() uint64 {
 // String renders a unit row for FSV dumps — raw integer values only.
 func (u *Unit) String() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "unit %q: life=%d regen/tick=%d armor=%d armorType=%d speed/tick=%d turn/tick=%d coll=%d class=%d pathing=%d acq=%d model=%q",
+	fmt.Fprintf(&b, "unit %q: life=%d regen/tick=%d armor=%d armorType=%d speed/tick=%d turn/tick=%d coll=%d class=%d pathing=%d acq=%d sightDay=%d sightNight=%d model=%q",
 		u.ID, u.Life, int64(u.RegenPerTick), u.Armor, u.ArmorType,
 		int64(u.MoveSpeedPerTick), uint16(u.TurnRatePerTick), u.CollisionSize,
-		u.CollisionClass, u.Pathing, int64(u.AcquisitionRange), u.Model)
+		u.CollisionClass, u.Pathing, int64(u.AcquisitionRange), int64(u.SightDay),
+		int64(u.SightNight), u.Model)
 	for i := range u.Attacks {
 		a := &u.Attacks[i]
 		fmt.Fprintf(&b, "\n  attack[%d]: type=%d range=%d dmg=%d+%dd%d cd=%dt dp=%dt bs=%dt delivery=%d projSpeed/tick=%d targets=%03b",

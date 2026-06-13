@@ -48,6 +48,9 @@ var HashSystems = []string{
 	"abilityfields",
 	// appended by #355: runtime ability definitions appended after static data.
 	"abilitydefs",
+	// appended by #299: per-player fog grid, entity detectability flags,
+	// and building last-seen ghosts.
+	"visibility",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -486,6 +489,9 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := range w.runtimeAbilityDefs {
 		hashAbilityDef(had, &w.runtimeAbilityDefs[i])
 	}
+
+	hvis := h.next() // visibility (#299)
+	w.Visibility.HashInto(hvis)
 
 	return reg.Sum(dst)
 }

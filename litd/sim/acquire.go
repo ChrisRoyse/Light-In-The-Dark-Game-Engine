@@ -98,7 +98,13 @@ func (w *World) validAcquireTarget(self, target EntityID) bool {
 	if sr == -1 || tr == -1 || w.Owners.Team[sr] == w.Owners.Team[tr] {
 		return false
 	}
-	return w.Healths.Row(target) != -1
+	if w.Healths.Row(target) == -1 {
+		return false
+	}
+	if w.visibilityGatesGameplay() && !w.CanSeeEntity(w.Owners.Player[sr], target) {
+		return false
+	}
+	return true
 }
 
 // threatClassOf ranks candidate cid for the scanner's combat row.
@@ -149,6 +155,9 @@ func (w *World) acquireScan(cr int32, id EntityID) EntityID {
 				}
 				if w.Healths.Row(cid) == -1 {
 					continue // not damageable, not acquirable
+				}
+				if w.visibilityGatesGameplay() && !w.CanSeeEntity(w.Owners.Player[sor], cid) {
+					continue
 				}
 				ctr := w.Transforms.Row(cid)
 				if ctr == -1 {

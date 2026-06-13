@@ -23,6 +23,10 @@ const (
 // TimeOfDay returns the deterministic game clock hour in [0, 24).
 func (w *World) TimeOfDay() fixed.F64 { return w.tod }
 
+// IsNight reports whether the deterministic game clock is outside the
+// canonical [dawn,dusk) daylight band.
+func (w *World) IsNight() bool { return w.tod < TimeDawn || w.tod >= TimeDusk }
+
 // SetTimeOfDay wraps h into the deterministic game clock range [0, 24).
 func (w *World) SetTimeOfDay(h fixed.F64) {
 	w.tod = wrapTimeOfDay(h)

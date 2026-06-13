@@ -13,6 +13,8 @@ turn-rate = 0.6
 collision-size = 16
 pathing = "ground"
 acquisition-range = 600
+sight-day = 1800
+sight-night = 800
 model = "units/footman.glb"
 abilities = ["defend"]
 
@@ -39,6 +41,8 @@ turn-rate = 0.7
 collision-size = 16
 pathing = "ground"
 acquisition-range = 700
+sight-day = 1800
+sight-night = 800
 model = "units/archer.glb"
 
 [[unit.attack]]

@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v17: visibility section appended after runtime ability definitions:
+// fog state/cycle bytes, entity detectability flags, last-seen buildings (#299).
 // v16: missile rows grow Accel, HitMask, GuidanceID, ImpactID after
 // Speed/Flags (#336).
 // v15: runtime ability definitions appended after ability field
@@ -72,7 +74,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 16
+const SaveFormatVersion uint32 = 17
 
 // ---- little-endian writer / reader ----
 
@@ -635,6 +637,10 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		abilityDefSave(s, &w.runtimeAbilityDefs[i])
 	}
 
+	// visibility (#299): authoritative fog grid and ghost-building
+	// records, plus the in-progress phase-spread stamp cycle.
+	w.saveVisibility(s)
+
 	// scheduler blob (sched/serialize.go owns its own format)
 	blob := w.Sched.Save(make([]byte, 0, w.Sched.SaveSize()))
 	s.u32(uint32(len(blob)))
@@ -881,6 +887,14 @@ type decodedSave struct {
 	afRejected uint64
 
 	runtimeAbilityDefs []data.Ability
+
+	visPresent       bool
+	visEvery         uint16
+	visState         []byte
+	visCycle         []byte
+	visFlags         []byte
+	visLastSeen      []LastSeenBuilding
+	visLastSeenCount [MaxPlayers]int32
 
 	schedBlob []byte
 
@@ -1683,6 +1697,11 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return r.err
 	}
 
+	// visibility (#299)
+	if err := readVisibility(r, w, d); err != nil {
+		return err
+	}
+
 	// scheduler blob
 	r.what = "scheduler blob"
 	blobLen := r.u32()
@@ -1831,6 +1850,9 @@ func validateSave(d *decodedSave, w *World) error {
 			return fmt.Errorf("sim: save: runtime ability def %d duplicates ability id %q at def %d", i, def.ID, prev)
 		}
 		abilityIDs[def.ID] = len(w.abilityDefs) + i
+	}
+	if err := validateVisibilitySave(d, w, entAlive); err != nil {
+		return err
 	}
 	abilityRows := make(map[EntityID]abilitySlotSave, len(d.abE))
 	for i, id := range d.abE {
@@ -2153,6 +2175,7 @@ func applySave(d *decodedSave, w *World) {
 	w.todCarry = d.clockCarry
 	w.dayLengthTicks = d.clockDayLength
 	w.results = d.results
+	applyVisibilitySave(d, w)
 	for player := range w.resultPending {
 		w.resultPending[player] = ResultPlaying
 	}

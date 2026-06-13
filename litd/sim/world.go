@@ -114,6 +114,7 @@ type World struct {
 	Items         *ItemStore   // item entities (#305): type + charges + carrier
 	Patrol        *PatrolStore // patrol endpoints (#306)
 	Build         *BuildStore  // building footprints + construction progress (#301)
+	Visibility    *VisibilityGrid
 	Nodes         *ResourceNodeStore
 	Econs         *EconStore
 	Harvests      *HarvestStore
@@ -330,6 +331,7 @@ func NewWorld(requested Caps) *World {
 		Items:              NewItemStore(caps.Units, idxSpace),
 		Patrol:             NewPatrolStore(caps.Units, idxSpace),
 		Build:              NewBuildStore(caps.Units, idxSpace),
+		Visibility:         newVisibilityGrid(idxSpace, caps.Units),
 		orderPool:          make([]orderEntry, caps.OrderQueueEntries),
 		events:             make([]Event, caps.PendingEvents),
 		handlers:           make(map[HandlerID]EventHandler),
@@ -480,6 +482,12 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if isEffect {
 		w.Effects.Remove(id)
 	}
+	if w.Visibility != nil {
+		idx := id.Index()
+		if idx < uint32(len(w.Visibility.entityFlags)) {
+			w.Visibility.entityFlags[idx] = 0
+		}
+	}
 	// derived-stat cache back to identity NOW — the entity index can
 	// be reused before the next buff sweep frees the dead carrier's
 	// instances (buff.go #162)
@@ -538,6 +546,7 @@ func (w *World) PreallocatedBytes() int {
 	n += cap(w.Missiles.Entity) * 138 // MissileStore columns
 	n += len(w.Effects.ModelID) * (2 + 8 + 4 + 4 + 4)
 	n += len(w.Effects.rowOf) * rowOfB
+	n += w.Visibility.PreallocatedBytes()
 	n += w.Buffs.Cap() * 24    // BuffInstance + free/live bookkeeping
 	for s := range w.buffAdd { // derived-stat cache (#162)
 		n += len(w.buffAdd[s])*8 + len(w.buffMult[s])*8
