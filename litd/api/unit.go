@@ -288,6 +288,26 @@ func (u Unit) MaxMana() float64 {
 	return toFloat(u.g.w.Abilities.MaxMana[r])
 }
 
+// ManaPercent returns the unit's current mana as a percentage of its
+// maximum, in [0,100]. Returns 0 on an invalid handle or a unit with no
+// mana pool (non-casters: MaxMana==0). D4: GetUnitManaPercent,
+// GetUnitStatePercent(MANA, MAX_MANA) = 100*Mana/MaxMana.
+func (u Unit) ManaPercent() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.ManaPercent")
+		return 0
+	}
+	r := u.g.w.Abilities.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	max := u.g.w.Abilities.MaxMana[r]
+	if max == 0 {
+		return 0
+	}
+	return toFloat(u.g.w.Abilities.Mana[r]) / toFloat(max) * 100
+}
+
 // SetMana sets the unit's current mana, clamped to [0, MaxMana]. No-op on an
 // invalid handle or a unit with no mana pool. D5: SetUnitState(UNIT_STATE_MANA).
 func (u Unit) SetMana(v float64) {

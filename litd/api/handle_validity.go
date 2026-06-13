@@ -122,6 +122,26 @@ func (u Unit) MaxLife() float64 {
 	return toFloat(u.g.w.Healths.MaxLife[r])
 }
 
+// LifePercent returns the unit's current life as a percentage of its
+// maximum, in [0,100]. Returns 0 on an invalid handle or a unit with no
+// max life (mirrors the BJ's divide-by-zero guard). D4: GetUnitLifePercent,
+// GetUnitStatePercent(LIFE, MAX_LIFE) = 100*Life/MaxLife.
+func (u Unit) LifePercent() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.LifePercent")
+		return 0
+	}
+	r := u.g.w.Healths.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	max := u.g.w.Healths.MaxLife[r]
+	if max == 0 {
+		return 0
+	}
+	return toFloat(u.g.w.Healths.Life[r]) / toFloat(max) * 100
+}
+
 // SetLife sets the unit's current life, clamped to [0, MaxLife]. No-op
 // on an invalid handle.
 //

@@ -70,6 +70,53 @@
       }
     },
     {
+      "name": "GetUnitLifePercent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.LifePercent",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetUnitStatePercent"
+        ]
+      }
+    },
+    {
+      "name": "GetUnitManaPercent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.ManaPercent",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "IsUnitAliveBJ",
       "origin": "blizzard.j",
       "signature": {

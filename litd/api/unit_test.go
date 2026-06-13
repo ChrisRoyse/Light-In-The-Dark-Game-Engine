@@ -304,6 +304,63 @@ func TestUnitManaFSV(t *testing.T) {
 	}
 }
 
+// TestUnitLifeManaPercentFSV: the D4 percent getters compute 100*cur/max
+// off the sim stores, guarding divide-by-zero. SoT = Healths/Abilities stores.
+func TestUnitLifeManaPercentFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100) // maxLife 100
+
+	hr := w.Healths.Row(id)
+	if hr < 0 {
+		t.Fatal("health row missing")
+	}
+
+	// EDGE: non-caster has no mana pool -> ManaPercent guards to 0.
+	t.Logf("FSV ManaPercent non-caster: maxMana store=0 -> %.2f (want 0)", u.ManaPercent())
+	if u.ManaPercent() != 0 {
+		t.Fatalf("ManaPercent non-caster = %v, want 0", u.ManaPercent())
+	}
+
+	// Life percent — known input/known output (X+X=Y): 25/100 -> 25%.
+	cases := []struct {
+		life float64
+		want float64
+	}{
+		{100, 100}, // full
+		{25, 25},   // quarter
+		{1, 1},     // single point (off-by-one bait)
+		{0, 0},     // empty (note: 0 life is lethal but the store read is pre-kill here)
+	}
+	for _, c := range cases {
+		w.Healths.Life[hr] = fromFloat(c.life)
+		got := u.LifePercent()
+		t.Logf("FSV LifePercent: life store=%.0f max=100 -> %.2f (want %.2f)", c.life, got, c.want)
+		if got != c.want {
+			t.Fatalf("LifePercent(life=%v) = %v, want %v", c.life, got, c.want)
+		}
+	}
+
+	// Mana percent with a pool: 50/200 -> 25%.
+	if !w.Abilities.Add(w.Ents, id) {
+		t.Fatal("Abilities.Add failed")
+	}
+	ar := w.Abilities.Row(id)
+	w.Abilities.MaxMana[ar] = fromFloat(200)
+	w.Abilities.Mana[ar] = fromFloat(50)
+	got := u.ManaPercent()
+	t.Logf("FSV ManaPercent: mana store=50 max=200 -> %.2f (want 25)", got)
+	if got != 25 {
+		t.Fatalf("ManaPercent(50/200) = %v, want 25", got)
+	}
+
+	// EDGE: invalid handle -> zero-value, no panic.
+	w.DestroyUnit(id)
+	if u.LifePercent() != 0 || u.ManaPercent() != 0 {
+		t.Fatalf("dead unit percent = %v/%v, want 0/0", u.LifePercent(), u.ManaPercent())
+	}
+}
+
 // TestUnitMoveSpeedFSV: MoveSpeed is per-second public, per-tick in the sim
 // (×20). SoT = Movements.Speed store.
 func TestUnitMoveSpeedFSV(t *testing.T) {

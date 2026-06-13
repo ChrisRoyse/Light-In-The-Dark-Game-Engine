@@ -1879,9 +1879,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DelayedSuspendDecayCreate | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CreatePermanentCorpseLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitStateSwap | blizzard.j | D5 | `litd/api.Unit.Life` (D3 collapse → GetUnitState) |
-| GetUnitStatePercent | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetUnitLifePercent | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetUnitManaPercent | blizzard.j | D2 | _pending (M2 backlog)_ |
+| GetUnitStatePercent | blizzard.j | D4 | `litd/api.Unit.LifePercent` (D3 collapse → GetUnitLifePercent) |
+| GetUnitLifePercent | blizzard.j | D4 | `litd/api.Unit.LifePercent` |
+| GetUnitManaPercent | blizzard.j | D4 | `litd/api.Unit.ManaPercent` |
 | SelectUnitSingle | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SelectGroupBJEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SelectGroupBJ | blizzard.j | D4 | _pending (M2 backlog)_ |

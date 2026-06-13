@@ -337,6 +337,23 @@ package = "litd/api"
 reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
 
 [[override]]
+name = "GetUnitLifePercent"
+class = "D4"
+goMapping = "Unit.LifePercent"
+goSignature = "() float64"
+collapsesWith = ["GetUnitStatePercent"]
+package = "litd/api"
+reason = "computed 100*Life/MaxLife with divide-by-zero guard (D4 real-logic helper). The generic GetUnitStatePercent(state,maxState) folds here as the representative percent symbol (mirrors GetUnitState->Life); the mana percentage is the distinct Unit.ManaPercent (#217)"
+
+[[override]]
+name = "GetUnitManaPercent"
+class = "D4"
+goMapping = "Unit.ManaPercent"
+goSignature = "() float64"
+package = "litd/api"
+reason = "computed 100*Mana/MaxMana with divide-by-zero guard for non-casters (MaxMana==0 -> 0) (D4 real-logic helper) (#217)"
+
+[[override]]
 name = "IncUnitAbilityLevel"
 class = "D3"
 goMapping = "Ability.IncLevel"
