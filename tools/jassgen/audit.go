@@ -26,6 +26,7 @@ type AuditReport struct {
 	ByRule                       map[string]int `json:"byRule"`       // D1..D5 over all classifications
 	Mapped                       int            `json:"mapped"`       // disposition=mapped
 	Tombstoned                   int            `json:"tombstoned"`   // disposition=tombstoned
+	Collapsed                    int            `json:"collapsed"`    // D3 members resolved via a canonical entry's collapsesWith
 	Unclassified                 int            `json:"unclassified"` // M2 gate: must be 0
 	Unmapped                     int            `json:"unmapped"`     // M2 gate: must be 0
 	TombstonesByReason           map[string]int `json:"tombstonesByReason"`
@@ -81,8 +82,40 @@ func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 		}
 	}
 
-	// unmapped = symbols that are neither mapped nor tombstoned.
-	r.Unmapped = r.Total - r.Mapped - r.Tombstoned
+	// D3 collapse members are resolved by their canonical entry's collapsesWith,
+	// not by a separate mapped/tombstoned record (deduplication-policy.md §4: a
+	// coordinate/location/axis family collapses onto one symbol). They are real
+	// source functions, so without crediting them here they would count as
+	// unmapped forever and the M2 gate could never go green for any collapsed
+	// family — even though the dedup decision for them is made. They are NOT
+	// independent mapped entries, so they never inflate duplicateTargets (that
+	// census counts manifest GoMapping symbols only). Credit each member that is
+	// a real source symbol and is not already mapped/tombstoned in its own right.
+	resolved := map[string]bool{}
+	for _, f := range m.Functions {
+		if f.Disposition == "mapped" || f.Disposition == "tombstoned" {
+			resolved[f.Name] = true
+		}
+	}
+	sourceNames := map[string]bool{}
+	for _, c := range cs {
+		sourceNames[c.Name] = true
+	}
+	collapsed := map[string]bool{}
+	for _, f := range m.Functions {
+		if f.Disposition != "mapped" || f.GoMapping == nil {
+			continue
+		}
+		for _, member := range f.GoMapping.CollapsesWith {
+			if !resolved[member] && sourceNames[member] {
+				collapsed[member] = true
+			}
+		}
+	}
+	r.Collapsed = len(collapsed)
+
+	// unmapped = source symbols neither mapped, tombstoned, nor collapsed.
+	r.Unmapped = r.Total - r.Mapped - r.Tombstoned - r.Collapsed
 
 	// duplicateTargets (M5 scaffold): a canonical symbol claimed by >1 entry.
 	for sym, n := range symbolUse {
@@ -161,6 +194,7 @@ func RenderAuditMarkdown(r AuditReport) string {
 		fmt.Fprintf(&b, "  (%s)", strings.Join(parts, ", "))
 	}
 	b.WriteString("\n")
+	fmt.Fprintf(&b, "  Collapsed (D3 members) .   %d\n", r.Collapsed)
 	fmt.Fprintf(&b, "  Unmapped ..............   %d\n", r.Unmapped)
 	fmt.Fprintf(&b, "commonai capability tombstones: %d (must be 0)\n", r.CommonaiCapabilityTombstones)
 	fmt.Fprintf(&b, "duplicate canonical targets:    %d (M5 gate)\n\n", len(r.DuplicateTargets))
