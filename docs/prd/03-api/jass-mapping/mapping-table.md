@@ -550,7 +550,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitRemoveItemFromSlot | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitHasItem | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitItemInSlot | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitInventorySize | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitInventorySize | common.j | D1 | `litd/api.Unit.InventorySize` |
 | UnitDropItemPoint | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitDropItemSlot | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitDropItemTarget | common.j | unclassified | _pending (M2 backlog)_ |

@@ -1424,6 +1424,28 @@
       }
     },
     {
+      "name": "UnitInventorySize",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.InventorySize",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
       "name": "GetUnitCount",
       "origin": "commonai",
       "signature": {

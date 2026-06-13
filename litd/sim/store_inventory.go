@@ -129,6 +129,17 @@ func (s *InventoryStore) Row(id EntityID) int32 {
 
 func (s *InventoryStore) Count() int32 { return s.count }
 
+// UnitInventorySize returns the unit's item-carry capacity: InventorySlots for
+// a unit that has an inventory, 0 otherwise. The engine models inventory as
+// all-or-nothing (a unit either carries the full six slots or none), so this is
+// the faithful capacity for GetUnitInventorySize / UnitInventorySize.
+func (w *World) UnitInventorySize(id EntityID) int32 {
+	if w.Invents.Row(id) != -1 {
+		return InventorySlots
+	}
+	return 0
+}
+
 func (s *InventoryStore) assert(msg string, id EntityID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)

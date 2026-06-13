@@ -442,6 +442,17 @@ func (u Unit) DefaultTurnSpeed() float64 {
 	return angleFromBrad(u.g.w.UnitDefaultTurnSpeed(u.id)).Radians() * float64(data.TicksPerSecond)
 }
 
+// InventorySize returns the number of item slots the unit can carry — six for
+// a unit with an inventory, zero otherwise. Zero on an invalid handle. JASS:
+// UnitInventorySize.
+func (u Unit) InventorySize() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.InventorySize")
+		return 0
+	}
+	return int(u.g.w.UnitInventorySize(u.id))
+}
+
 // FoodUsed returns the food (upkeep) the unit's type consumes from its owner's
 // food total. Zero on an invalid handle or an untyped unit. JASS:
 // GetUnitFoodUsed.

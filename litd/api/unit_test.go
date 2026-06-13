@@ -1213,3 +1213,36 @@ func TestUnitFoodFSV(t *testing.T) {
 		t.Errorf("removed unit food: used=%d made=%d, want 0/0", foo.FoodUsed(), foo.FoodMade())
 	}
 }
+
+// TestUnitInventorySizeFSV: InventorySize reflects whether the unit has an
+// inventory row. SoT = the Invents store presence (Row != -1). The engine
+// models inventory all-or-nothing, so the size is 6 with a row, 0 without.
+func TestUnitInventorySizeFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	// BEFORE: no inventory row -> size 0.
+	t.Logf("BEFORE: invRow=%d size=%d", w.Invents.Row(id), u.InventorySize())
+	if w.Invents.Row(id) != -1 || u.InventorySize() != 0 {
+		t.Fatalf("no-inventory size=%d (row=%d), want 0", u.InventorySize(), w.Invents.Row(id))
+	}
+
+	// Grant an inventory -> size becomes the full six slots.
+	if !w.Invents.Add(w.Ents, id) {
+		t.Fatal("Invents.Add failed")
+	}
+	t.Logf("AFTER Add: invRow=%d size=%d (InventorySlots=%d)", w.Invents.Row(id), u.InventorySize(), sim.InventorySlots)
+	if u.InventorySize() != sim.InventorySlots {
+		t.Errorf("with-inventory size=%d, want %d", u.InventorySize(), sim.InventorySlots)
+	}
+
+	// EDGE: zero / removed handle -> 0.
+	if (Unit{}).InventorySize() != 0 {
+		t.Error("zero Unit InventorySize() != 0")
+	}
+	u.Remove()
+	if w.Invents.Row(id) != -1 || u.InventorySize() != 0 {
+		t.Errorf("removed unit InventorySize=%d (row=%d), want 0", u.InventorySize(), w.Invents.Row(id))
+	}
+}

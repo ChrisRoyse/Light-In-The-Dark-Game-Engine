@@ -136,6 +136,14 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "UnitInventorySize"
+class = "D1"
+goMapping = "Unit.InventorySize"
+goSignature = "() int"
+package = "litd/api"
+reason = "inventory-capacity getter maps onto the typed accessor (dedup §2); engine models inventory all-or-nothing (6 slots or none) (#217)"
+
+[[override]]
 name = "GetUnitFoodUsed"
 class = "D1"
 goMapping = "Unit.FoodUsed"
