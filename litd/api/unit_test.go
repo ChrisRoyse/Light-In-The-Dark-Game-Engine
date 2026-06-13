@@ -146,6 +146,54 @@ func TestUnitFacingFSV(t *testing.T) {
 	(Unit{}).SetFacing(Deg(45))
 }
 
+// TestUnitSetLifeClampAndDeath is the D5 SetLife contract (issue edge case 1):
+// values clamp to [0, MaxLife], and a lethal set (≤0) kills the unit, firing
+// the death event in the step. SoT = the Health store + the event ring.
+func TestUnitSetLifeClampAndDeath(t *testing.T) {
+	// --- clamp high: 150 on a 100-max unit pins to 100, no death ---
+	t.Run("clamp-high", func(t *testing.T) {
+		w := sim.NewWorld(sim.Caps{Units: 16})
+		g := newGame(w)
+		u, id := liveUnit(t, w, g, 0, 100)
+		deaths := 0
+		g.OnEvent(EventUnitDeath, func(Event) { deaths++ })
+		before, _ := rawLife(w, id)
+		u.SetLife(150)
+		after, _ := rawLife(w, id)
+		w.Step()
+		t.Logf("SetLife(150): store %.0f -> %.0f, Valid=%v deaths=%d", before, after, u.Valid(), deaths)
+		if after != 100 || !u.Valid() || deaths != 0 {
+			t.Fatalf("clamp-high: life=%.0f Valid=%v deaths=%d, want 100/true/0", after, u.Valid(), deaths)
+		}
+	})
+
+	// --- lethal: SetLife(-10) clamps to 0 AND kills, firing one death ---
+	t.Run("lethal-set", func(t *testing.T) {
+		w := sim.NewWorld(sim.Caps{Units: 16})
+		g := newGame(w)
+		u, id := liveUnit(t, w, g, 0, 100)
+		deaths := 0
+		var deadID sim.EntityID
+		g.OnEvent(EventUnitDeath, func(e Event) { deaths++; deadID = e.Unit().id })
+
+		before, _ := rawLife(w, id)
+		u.SetLife(-10)
+		afterLife, _ := rawLife(w, id) // store written to 0; unit still present pre-step
+		t.Logf("BEFORE step: SetLife(-10) store %.0f -> %.0f, Valid=%v", before, afterLife, u.Valid())
+		if afterLife != 0 {
+			t.Fatalf("lethal set did not clamp to 0: %.0f", afterLife)
+		}
+		w.Step()
+		_, present := rawLife(w, id)
+		t.Logf("AFTER step: deaths=%d deadID==unit=%v Valid=%v storePresent=%v",
+			deaths, deadID == id, u.Valid(), present)
+		if deaths != 1 || deadID != id || u.Valid() || present {
+			t.Fatalf("lethal: deaths=%d deadID==unit=%v Valid=%v present=%v, want 1/true/false/false",
+				deaths, deadID == id, u.Valid(), present)
+		}
+	})
+}
+
 // TestUnitKillFiresDeathThenDestroys: Kill marks the unit; after one Step the
 // death event fires exactly once and the unit is gone from the store.
 func TestUnitKillFiresDeathThenDestroys(t *testing.T) {

@@ -127,7 +127,9 @@ func (u Unit) MaxLife() float64 {
 //
 // With no clamp adjustment, behaves like the WC3 SetUnitLifeBJ default:
 // values below 0 clamp to 0 (a unit is never set to negative life), and
-// values above MaxLife clamp to MaxLife.
+// values above MaxLife clamp to MaxLife. Setting life to 0 (or below) is
+// lethal — the unit is killed, firing the death event in the sim step, just
+// as SetUnitState(UNIT_STATE_LIFE, 0) kills in WC3.
 // JASS: SetUnitState(UNIT_STATE_LIFE), SetUnitLifeBJ.
 func (u Unit) SetLife(v float64) {
 	if !u.Valid() {
@@ -146,6 +148,11 @@ func (u Unit) SetLife(v float64) {
 		nv = max
 	}
 	u.g.w.Healths.Life[r] = nv
+	if nv == 0 {
+		// Lethal set: a unit at 0 life is dead. Mark it for the step's death
+		// pass (idempotent with a combat kill the same tick).
+		u.g.w.KillUnit(u.id)
+	}
 }
 
 // Owner returns the unit's owning player, or the zero-value Player on
