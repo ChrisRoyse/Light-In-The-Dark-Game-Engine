@@ -21,6 +21,7 @@ func main() {
 	out := flag.String("o", "api-manifest.json", "output path for -emit")
 	emitStubs := flag.Bool("emit-stubs", false, "generate compiling panic-body Go API stubs from manifest goMapping")
 	emitTable := flag.Bool("emit-table", false, "generate the JASS->Go mapping table doc (one row per source function)")
+	emitLua := flag.Bool("emit-lua", false, "generate Lua binding descriptors from the manifest")
 	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
 	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
@@ -42,6 +43,8 @@ func main() {
 		runEmitStubs()
 	case *emitTable:
 		runEmitTable()
+	case *emitLua:
+		runEmitLua()
 	case *audit:
 		runAudit()
 	case *check:
@@ -95,8 +98,10 @@ func runAudit() {
 // file (reproducibility gate).
 func runCheck() {
 	mb, aj, amd, _ := generateOutputs()
-	cs, _, _ := buildClassifiedUniverse()
+	cs, sigs, sources := buildClassifiedUniverse()
 	table, _ := RenderMappingTable(cs)
+	mForLua, _ := BuildManifest(cs, sigs, sources)
+	luaSrc := RenderLuaBindings(mForLua)
 	fail := false
 	for _, f := range []struct {
 		path string
@@ -106,6 +111,7 @@ func runCheck() {
 		{"audit-report.json", aj},
 		{"audit-report.md", amd},
 		{mappingTablePath, []byte(table)},
+		{filepath.Join(luabindDir, "bindings_gen.go"), []byte(luaSrc)},
 	} {
 		got, err := os.ReadFile(f.path)
 		if err != nil {
@@ -216,6 +222,19 @@ func runEmitTable() {
 		fatal(err)
 	}
 	fmt.Fprintf(os.Stderr, "wrote %s: %d rows\n", mappingTablePath, rows)
+}
+
+func runEmitLua() {
+	cs, sigs, sources := buildClassifiedUniverse()
+	m, _ := BuildManifest(cs, sigs, sources)
+	if err := ValidateManifest(m); err != nil {
+		fatal(fmt.Errorf("manifest invalid, refusing to bind: %w", err))
+	}
+	if err := WriteLuaBindings(m); err != nil {
+		fatal(err)
+	}
+	core, ai := CollectLuaBindings(m)
+	fmt.Fprintf(os.Stderr, "wrote %s/bindings_gen.go: %d core + %d ai bindings\n", luabindDir, len(core), len(ai))
 }
 
 func runEmitStubs() {
