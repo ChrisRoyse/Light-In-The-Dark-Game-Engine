@@ -156,6 +156,50 @@ func TestBuildSmartOrderFSV(t *testing.T) {
 	}
 }
 
+func TestBuildQueueFSV(t *testing.T) {
+	dump, err := buildQueueFSV(core.NewNode())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo queue ok=%v flag=%02x replay=%+v screenshot=%+v final=%+v cases=%+v",
+		dump.OK, dump.QueuedFlagByte, dump.Replay, dump.ScreenshotState, dump.FinalState, dump.Cases)
+	if !dump.OK {
+		t.Fatalf("queue fixture failed: %+v", dump.Errors)
+	}
+	if dump.QueuedFlagByte != sim.CmdFlagQueued || dump.QueuedFlagHex == "" {
+		t.Fatalf("queued flag hexdump missing/wrong: byte=%02x hex=%q", dump.QueuedFlagByte, dump.QueuedFlagHex)
+	}
+	if len(dump.Trace) < 2 || dump.Trace[1].QueueDepth != 4 {
+		t.Fatalf("queue did not grow to four shifted entries: trace=%+v", dump.Trace)
+	}
+	if dump.ScreenshotState.QueueDepth > 2 || dump.ScreenshotState.MoveState != sim.MoveFollowing || dump.ScreenshotState.Pos == dump.ScreenshotState.Current.Point {
+		t.Fatalf("screenshot state is not mid-route after queued drain: %+v", dump.ScreenshotState)
+	}
+	if !dump.Replay.Equal || dump.Replay.FirstHash == "" || dump.Replay.FirstHash != dump.Replay.SecondHash {
+		t.Fatalf("replay hash equality missing: %+v", dump.Replay)
+	}
+	if dump.FinalState.Pos != dump.SecondSequence[0] {
+		t.Fatalf("final position should be second sequence target: got %+v want %+v", dump.FinalState.Pos, dump.SecondSequence[0])
+	}
+	seen := map[string]queueCaseDump{}
+	for _, c := range dump.Cases {
+		seen[c.Name] = c
+		if !c.OK {
+			t.Fatalf("queue case %s failed: %+v", c.Name, c)
+		}
+	}
+	if seen["overflow-20-shift-orders"].After.QueueDepth != sim.MaxOrderQueue || len(seen["overflow-20-shift-orders"].Drops) != 4 {
+		t.Fatalf("overflow edge wrong: %+v", seen["overflow-20-shift-orders"])
+	}
+	if seen["unmodified-collapse"].After.QueueDepth != 0 || seen["unmodified-collapse"].After.TotalOrders != 1 {
+		t.Fatalf("collapse edge wrong: %+v", seen["unmodified-collapse"])
+	}
+	if seen["dead-unit-cleanup"].After.Alive || seen["dead-unit-cleanup"].After.TotalOrders != 0 ||
+		seen["dead-unit-cleanup"].After.OrderPoolFree != seen["dead-unit-cleanup"].PoolFreeBase {
+		t.Fatalf("dead cleanup edge wrong: %+v", seen["dead-unit-cleanup"])
+	}
+}
+
 func TestBuildCommandCardKeymapFSV(t *testing.T) {
 	defer chdirRepoRoot(t)()
 	dir := t.TempDir()

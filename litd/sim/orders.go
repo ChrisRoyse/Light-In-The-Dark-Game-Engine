@@ -108,6 +108,38 @@ func (w *World) QueueDepth(id EntityID) int {
 	return n
 }
 
+// CurrentOrder returns the current order head for FSV/UI readback.
+// It is read-only over sim state; false means the entity has no order
+// row (dead, stale, or not order-capable).
+func (w *World) CurrentOrder(id EntityID) (Order, bool) {
+	r := w.Orders.Row(id)
+	if r == -1 {
+		return Order{}, false
+	}
+	return Order{
+		Kind:   w.Orders.Kind[r],
+		Target: w.Orders.Target[r],
+		Point:  w.Orders.Point[r],
+		Data:   w.Orders.Data[r],
+	}, true
+}
+
+// AppendOrderQueue appends the queued FIFO entries for id to dst and
+// returns the extended slice. The current order head is not included.
+// Callers that reuse dst can inspect queue contents without forcing an
+// allocation.
+func (w *World) AppendOrderQueue(id EntityID, dst []Order) []Order {
+	r := w.Orders.Row(id)
+	if r == -1 {
+		return dst
+	}
+	for e := w.Orders.QueueHead[r]; e != NoOrderEntry; e = w.orderPool[e].next {
+		q := &w.orderPool[e]
+		dst = append(dst, Order{Kind: q.kind, Target: q.target, Point: q.point, Data: q.data})
+	}
+	return dst
+}
+
 // OrderPoolFree returns the free order-queue pool entries — the FSV
 // leak probe.
 func (w *World) OrderPoolFree() int32 { return w.orderFreeCount }

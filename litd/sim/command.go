@@ -417,6 +417,7 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 	}
 	var orderKind uint8
 	writeOrder := false
+	queued := r.Flags&CmdFlagQueued != 0
 	switch r.Opcode {
 	case OpMove:
 		orderKind, writeOrder = OrderMove, true
@@ -436,7 +437,7 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 		orderKind, writeOrder = OrderFollow, true
 	}
 	if writeOrder {
-		if r.Opcode == OpMove && r.Flags&CmdFlagQueued == 0 &&
+		if r.Opcode == OpMove && !queued &&
 			w.pathProvider != nil &&
 			w.pathProvider.SelectBackend(valid) == path.BackendFlow {
 			if !w.issueFlowMoveGroup(r.Point, w.cmdActors[:valid]) {
@@ -454,10 +455,7 @@ func (w *World) applyCommandRecord(r *CommandRecord) {
 			if or == -1 {
 				continue
 			}
-			// a player command is an unqueued issue: queue cleared,
-			// current order interrupted, new order installed (§2.3 —
-			// the shift-queue flag joins the wire format with #146)
-			w.issueOrderRow(or, w.cmdActors[i], Order{Kind: orderKind, Target: target, Point: r.Point, Data: r.Data}, false)
+			w.issueOrderRow(or, w.cmdActors[i], Order{Kind: orderKind, Target: target, Point: r.Point, Data: r.Data}, queued)
 		}
 	}
 	w.cmdApplied++

@@ -227,6 +227,117 @@ func TestCommandMoveWritesOrderHead(t *testing.T) {
 	}
 }
 
+func TestCommandQueuedFlagAppendsAndUnqueuedClearsFSV(t *testing.T) {
+	w := NewWorld(Caps{})
+	id := ownedUnit(t, w, 0)
+	pt0 := fixed.Vec2{X: 10 * fixed.One, Y: 10 * fixed.One}
+	pt1 := fixed.Vec2{X: 20 * fixed.One, Y: 10 * fixed.One}
+	pt2 := fixed.Vec2{X: 30 * fixed.One, Y: 10 * fixed.One}
+	mk := func(seq uint16, flags uint8, pt fixed.Vec2) CommandRecord {
+		r := CommandRecord{Version: CommandVersion, Opcode: OpMove, Player: 0, Seq: seq, Flags: flags, UnitCount: 1, Point: pt}
+		r.Units[0] = id
+		return r
+	}
+	queuedRec := mk(1, CmdFlagQueued, pt1)
+	enc, ok := AppendEncode(nil, &queuedRec)
+	if !ok {
+		t.Fatal("queued record encode refused")
+	}
+	before := dumpQueue(w, id)
+	w.StageCommand(mk(0, 0, pt0))
+	w.StageCommand(queuedRec)
+	w.StageCommand(mk(2, CmdFlagQueued, pt2))
+	w.IngestStagedCommands()
+	w.Step()
+	afterQueued := dumpQueue(w, id)
+	qpts := commandQueuedPoints(w, id)
+	t.Logf("FSV queued flag record hex=%x header.flags=%02x", enc, enc[9])
+	t.Logf("FSV queue BEFORE %s", before)
+	t.Logf("FSV queue AFTER  %s", afterQueued)
+	if enc[9] != CmdFlagQueued {
+		t.Fatalf("encoded queued flag byte = %02x, want %02x", enc[9], CmdFlagQueued)
+	}
+	r := w.Orders.Row(id)
+	if w.Orders.Kind[r] != OrderMove || w.Orders.Point[r] != pt0 {
+		t.Fatalf("current order wrong after queued command ingest: %s", afterQueued)
+	}
+	if w.QueueDepth(id) != 2 || len(qpts) != 2 || qpts[0] != pt1 || qpts[1] != pt2 {
+		t.Fatalf("queued entries wrong: depth=%d points=%v dump=%s", w.QueueDepth(id), qpts, afterQueued)
+	}
+
+	hold := CommandRecord{Version: CommandVersion, Opcode: OpHold, Player: 0, Seq: 3, UnitCount: 1}
+	hold.Units[0] = id
+	w.StageCommand(hold)
+	w.IngestStagedCommands()
+	w.Step()
+	afterClear := dumpQueue(w, id)
+	t.Logf("FSV unqueued collapse AFTER %s", afterClear)
+	if w.QueueDepth(id) != 0 || w.Orders.Kind[w.Orders.Row(id)] != OrderHold {
+		t.Fatalf("unqueued command must clear queue and install hold: %s", afterClear)
+	}
+}
+
+func TestCommandQueuedFlagOverflowDropsFSV(t *testing.T) {
+	w := NewWorld(Caps{})
+	id := ownedUnit(t, w, 0)
+	evs := traceOrderEvents(w, id, 33)
+	first := CommandRecord{Version: CommandVersion, Opcode: OpMove, Player: 0, Seq: 0, UnitCount: 1, Point: fixed.Vec2{X: fixed.One, Y: fixed.One}}
+	first.Units[0] = id
+	w.StageCommand(first)
+	for i := 0; i < MaxOrderQueue; i++ {
+		r := CommandRecord{Version: CommandVersion, Opcode: OpMove, Player: 0, Seq: uint16(i + 1), Flags: CmdFlagQueued, UnitCount: 1,
+			Point: fixed.Vec2{X: fixed.FromInt(int32(i + 2)), Y: fixed.One}}
+		r.Units[0] = id
+		w.StageCommand(r)
+	}
+	extra := CommandRecord{Version: CommandVersion, Opcode: OpAttack, Player: 0, Seq: uint16(MaxOrderQueue + 1), Flags: CmdFlagQueued, UnitCount: 1}
+	extra.Units[0] = id
+	w.StageCommand(extra)
+	w.IngestStagedCommands()
+	w.Step()
+	var drop *orderEv
+	for i := range *evs {
+		if (*evs)[i].kind == EvOrderDropped {
+			drop = &(*evs)[i]
+		}
+	}
+	t.Logf("FSV overflow queue AFTER depth=%d events=%+v dump=%s", w.QueueDepth(id), *evs, dumpQueue(w, id))
+	if w.QueueDepth(id) != MaxOrderQueue {
+		t.Fatalf("queue depth after overflow = %d, want %d", w.QueueDepth(id), MaxOrderQueue)
+	}
+	if drop == nil || drop.arg != int64(OrderAttack) {
+		t.Fatalf("queued overflow must emit dropped attack event: %+v", *evs)
+	}
+}
+
+func TestCommandQueuedFlagDestroyClearsQueueFSV(t *testing.T) {
+	w := NewWorld(Caps{})
+	id := ownedUnit(t, w, 0)
+	free0 := w.OrderPoolFree()
+	for i := 0; i < 3; i++ {
+		r := CommandRecord{Version: CommandVersion, Opcode: OpMove, Player: 0, Seq: uint16(i), UnitCount: 1,
+			Point: fixed.Vec2{X: fixed.FromInt(int32(i + 1)), Y: fixed.One}}
+		if i > 0 {
+			r.Flags = CmdFlagQueued
+		}
+		r.Units[0] = id
+		w.StageCommand(r)
+	}
+	w.IngestStagedCommands()
+	w.Step()
+	beforeDestroy := dumpQueue(w, id)
+	if w.QueueDepth(id) != 2 || w.OrderPoolFree() != free0-2 {
+		t.Fatalf("setup queue wrong: %s poolFree=%d", beforeDestroy, w.OrderPoolFree())
+	}
+	w.DestroyUnit(id)
+	t.Logf("FSV destroy cleanup BEFORE %s poolFree=%d AFTER orderRow=%d poolFree=%d alive=%v",
+		beforeDestroy, free0-2, w.Orders.Row(id), w.OrderPoolFree(), w.Ents.Alive(id))
+	if w.Orders.Row(id) != -1 || w.QueueDepth(id) != 0 || w.OrderPoolFree() != free0 {
+		t.Fatalf("destroy must clear queue and recycle pool: row=%d depth=%d free=%d wantFree=%d",
+			w.Orders.Row(id), w.QueueDepth(id), w.OrderPoolFree(), free0)
+	}
+}
+
 // Tick assignment + late drop: Tick 0 stamps to next tick; an
 // explicit already-simulated tick is dropped and counted.
 func TestCommandTickAssignment(t *testing.T) {
@@ -251,6 +362,18 @@ func TestCommandTickAssignment(t *testing.T) {
 	if len(appliedAt) != 1 || appliedAt[0] != 2 || lateDrops != 1 {
 		t.Fatalf("tick assignment wrong: applied=%v lateDrops=%d", appliedAt, lateDrops)
 	}
+}
+
+func commandQueuedPoints(w *World, id EntityID) []fixed.Vec2 {
+	r := w.Orders.Row(id)
+	if r == -1 {
+		return nil
+	}
+	var out []fixed.Vec2
+	for e := w.Orders.QueueHead[r]; e != NoOrderEntry; e = w.orderPool[e].next {
+		out = append(out, w.orderPool[e].point)
+	}
+	return out
 }
 
 // Phase-1 record path allocates nothing at steady state (R-GC-1).

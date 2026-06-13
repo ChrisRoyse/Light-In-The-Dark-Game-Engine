@@ -32,6 +32,7 @@ import (
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	litterrain "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/terrain"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
@@ -63,6 +64,7 @@ type renderDemoDump struct {
 	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
 	Groups    *groupRuntimeDump       `json:"groups,omitempty"`
 	Orders    *orderRuntimeDump       `json:"orders,omitempty"`
+	Queue     *queueRuntimeDump       `json:"queue,omitempty"`
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
 	OK        bool                    `json:"ok"`
 }
@@ -350,6 +352,82 @@ type orderCaseDump struct {
 	OK              bool                `json:"ok"`
 }
 
+type queueRuntimeDump struct {
+	Scenario        string              `json:"scenario"`
+	Unit            uint32              `json:"unit"`
+	InitialSequence []queuePointDump    `json:"initialSequence"`
+	SecondSequence  []queuePointDump    `json:"secondSequence"`
+	Records         []commandRecordDump `json:"records"`
+	QueuedFlagHex   string              `json:"queuedFlagHex"`
+	QueuedFlagByte  uint8               `json:"queuedFlagByte"`
+	Trace           []queueTraceDump    `json:"trace"`
+	ScreenshotState queueTraceDump      `json:"screenshotState"`
+	FinalState      queueTraceDump      `json:"finalState"`
+	Replay          queueReplayDump     `json:"replay"`
+	Cases           []queueCaseDump     `json:"cases"`
+	OK              bool                `json:"ok"`
+	Errors          []string            `json:"errors,omitempty"`
+}
+
+type queueTraceDump struct {
+	Label          string           `json:"label"`
+	Tick           uint32           `json:"tick"`
+	Alive          bool             `json:"alive"`
+	HasOrder       bool             `json:"hasOrder"`
+	Pos            queuePointDump   `json:"pos"`
+	MoveState      uint8            `json:"moveState"`
+	Current        queueOrderDump   `json:"current"`
+	Queue          []queueOrderDump `json:"queue"`
+	QueueDepth     int              `json:"queueDepth"`
+	TotalOrders    int              `json:"totalOrders"`
+	OrderPoolFree  int32            `json:"orderPoolFree"`
+	PathQueueDepth int              `json:"pathQueueDepth"`
+	PathExpansions int32            `json:"pathExpansions"`
+	Hash           string           `json:"hash"`
+}
+
+type queueOrderDump struct {
+	Kind   uint8          `json:"kind"`
+	Target uint32         `json:"target,omitempty"`
+	Point  queuePointDump `json:"point"`
+	Data   uint16         `json:"data,omitempty"`
+}
+
+type queuePointDump struct {
+	XRaw int64 `json:"xRaw"`
+	YRaw int64 `json:"yRaw"`
+	X    int64 `json:"x"`
+	Y    int64 `json:"y"`
+}
+
+type queueReplayDump struct {
+	FirstHash        string         `json:"firstHash"`
+	SecondHash       string         `json:"secondHash"`
+	Equal            bool           `json:"equal"`
+	FirstFinalPos    queuePointDump `json:"firstFinalPos"`
+	SecondFinalPos   queuePointDump `json:"secondFinalPos"`
+	CollapseAtTick   uint32         `json:"collapseAtTick"`
+	CommandsReplayed int            `json:"commandsReplayed"`
+}
+
+type queueCaseDump struct {
+	Name         string           `json:"name"`
+	Before       queueTraceDump   `json:"before"`
+	After        queueTraceDump   `json:"after"`
+	Drops        []queueEventDump `json:"drops,omitempty"`
+	Expected     string           `json:"expected"`
+	OK           bool             `json:"ok"`
+	Error        string           `json:"error,omitempty"`
+	PoolFreeBase int32            `json:"poolFreeBase,omitempty"`
+}
+
+type queueEventDump struct {
+	Tick uint32 `json:"tick"`
+	Kind uint16 `json:"kind"`
+	Src  uint32 `json:"src"`
+	Arg  int64  `json:"arg"`
+}
+
 type resourceBarRuntimeDump struct {
 	Scenario string                    `json:"scenario"`
 	Current  resourceBarCaseDump       `json:"current"`
@@ -384,6 +462,7 @@ func main() {
 	autotestSelect := flag.Bool("autotest-select", false, "render the drag-select input FSV fixture")
 	autotestGroups := flag.Bool("autotest-groups", false, "render the control-group input FSV fixture")
 	autotestOrders := flag.Bool("autotest-orders", false, "render the smart-right-click order FSV fixture")
+	autotestQueue := flag.Bool("autotest-queue", false, "render the shift-queue order FSV fixture")
 	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
@@ -429,6 +508,7 @@ func main() {
 	var selectionFSV *selectionRuntimeDump
 	var groupFSV *groupRuntimeDump
 	var orderFSV *orderRuntimeDump
+	var queueFSV *queueRuntimeDump
 	var terrainFSV *terrainRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
@@ -469,6 +549,20 @@ func main() {
 			os.Exit(1)
 		}
 		spec = sceneSpec{name: "orders-" + orderFSV.Scenario, expected: expectedStats(0, 0, 0, 0, 0, 0)}
+		addStatsHUD(scene, spec)
+	} else if *autotestQueue {
+		if strings.ToLower(strings.TrimSpace(*sceneName)) != "moveorder" {
+			fmt.Fprintf(os.Stderr, "renderdemo: queue fixture requires -scene moveorder\n")
+			os.Exit(1)
+		}
+		buildLights(scene)
+		var err error
+		queueFSV, err = buildQueueFSV(scene)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: queue: %v\n", err)
+			os.Exit(1)
+		}
+		spec = sceneSpec{name: "queue-" + queueFSV.Scenario, expected: expectedStats(0, 0, 0, 0, 0, 0)}
 		addStatsHUD(scene, spec)
 	} else {
 		buildLights(scene)
@@ -517,12 +611,14 @@ func main() {
 				pass = pass && groupFSV.OK
 			} else if orderFSV != nil {
 				pass = pass && orderFSV.OK
+			} else if queueFSV != nil {
+				pass = pass && queueFSV.OK
 			} else if terrainFSV != nil {
 				pass = pass && terrainFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Terrain: terrainFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1383,6 +1479,411 @@ func opcodesForJSON(ops []uint8) []uint32 {
 		out = append(out, uint32(op))
 	}
 	return out
+}
+
+type queueHappyRun struct {
+	unit           sim.EntityID
+	records        []sim.CommandRecord
+	trace          []queueTraceDump
+	screenshot     queueTraceDump
+	collapseBefore queueTraceDump
+	collapseAfter  queueTraceDump
+	final          queueTraceDump
+	collapseTick   uint32
+}
+
+func buildQueueFSV(scene *core.Node) (*queueRuntimeDump, error) {
+	first, err := runQueueHappyPath()
+	if err != nil {
+		return nil, err
+	}
+	second, err := runQueueHappyPath()
+	if err != nil {
+		return nil, err
+	}
+	overflow := buildQueueOverflowCase()
+	dead := buildQueueDeadCleanupCase()
+	collapse := queueCaseDump{
+		Name:     "unmodified-collapse",
+		Before:   first.collapseBefore,
+		After:    first.collapseAfter,
+		Expected: "plain unmodified order clears queued FIFO and leaves exactly one active current order",
+		OK: first.collapseBefore.QueueDepth > 0 &&
+			first.collapseAfter.QueueDepth == 0 &&
+			first.collapseAfter.TotalOrders == 1 &&
+			first.collapseAfter.Current.Kind == sim.OrderMove &&
+			first.collapseAfter.Current.Point == queuePoint(queueSecondSequence()[0]),
+	}
+	if !collapse.OK {
+		collapse.Error = fmt.Sprintf("before depth=%d after depth=%d total=%d kind=%d point=%+v",
+			first.collapseBefore.QueueDepth, first.collapseAfter.QueueDepth,
+			first.collapseAfter.TotalOrders, first.collapseAfter.Current.Kind,
+			first.collapseAfter.Current.Point)
+	}
+
+	dump := &queueRuntimeDump{
+		Scenario:        "moveorder",
+		Unit:            uint32(first.unit),
+		InitialSequence: queuePointList(queueInitialSequence()),
+		SecondSequence:  queuePointList(queueSecondSequence()),
+		Trace:           first.trace,
+		ScreenshotState: first.screenshot,
+		FinalState:      first.final,
+		Replay: queueReplayDump{
+			FirstHash:        first.final.Hash,
+			SecondHash:       second.final.Hash,
+			Equal:            first.final.Hash == second.final.Hash && first.final.Pos == second.final.Pos,
+			FirstFinalPos:    first.final.Pos,
+			SecondFinalPos:   second.final.Pos,
+			CollapseAtTick:   first.collapseTick,
+			CommandsReplayed: len(first.records),
+		},
+		Cases: []queueCaseDump{collapse, overflow, dead},
+		OK:    true,
+	}
+	for _, rec := range first.records {
+		dump.Records = append(dump.Records, commandRecordDumpFor(rec))
+	}
+	if len(first.records) > 1 {
+		encoded, ok := sim.AppendEncode(nil, &first.records[1])
+		if ok {
+			dump.QueuedFlagHex = fmt.Sprintf("%x", encoded)
+			if len(encoded) > 9 {
+				dump.QueuedFlagByte = encoded[9]
+			}
+		}
+	}
+	if dump.QueuedFlagByte != sim.CmdFlagQueued {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("queued flag byte=%02x want %02x", dump.QueuedFlagByte, sim.CmdFlagQueued))
+	}
+	if !dump.Replay.Equal {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("replay hash/position diverged: %s/%+v vs %s/%+v",
+			dump.Replay.FirstHash, dump.Replay.FirstFinalPos, dump.Replay.SecondHash, dump.Replay.SecondFinalPos))
+	}
+	if first.final.Pos != queuePoint(queueSecondSequence()[0]) {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("final position=%+v want %+v", first.final.Pos, queuePoint(queueSecondSequence()[0])))
+	}
+	for _, c := range dump.Cases {
+		if !c.OK {
+			dump.OK = false
+			if c.Error != "" {
+				dump.Errors = append(dump.Errors, c.Name+": "+c.Error)
+			} else {
+				dump.Errors = append(dump.Errors, c.Name+" failed")
+			}
+		}
+	}
+	drawQueueFixture(scene, first.screenshot, queueInitialSequence(), queueSecondSequence())
+	return dump, nil
+}
+
+func runQueueHappyPath() (queueHappyRun, error) {
+	w := sim.NewWorld(sim.Caps{})
+	unit, err := queueFixtureUnit(w, fixed.Vec2{}, 16*fixed.One)
+	if err != nil {
+		return queueHappyRun{}, err
+	}
+	reg, snap := sim.NewHashRegistry(), &statehash.Snapshot{}
+	run := queueHappyRun{unit: unit}
+	capture := func(label string) queueTraceDump {
+		t := queueTrace(w, unit, label, reg, snap)
+		run.trace = append(run.trace, t)
+		return t
+	}
+	capture("before")
+
+	initial := queueInitialSequence()
+	for i, pt := range initial {
+		queued := i > 0
+		rec := queueMoveRecord(unit, uint16(i), queued, pt)
+		run.records = append(run.records, rec)
+		w.StageCommand(rec)
+	}
+	w.IngestStagedCommands()
+	afterIngest := queueStepCapture(w, unit, "after-queued-ingest", reg, snap)
+	run.trace = append(run.trace, afterIngest)
+	if afterIngest.QueueDepth != 4 {
+		return queueHappyRun{}, fmt.Errorf("queued ingest depth=%d want 4: %+v", afterIngest.QueueDepth, afterIngest)
+	}
+
+	var shot queueTraceDump
+	for i := 0; i < 160; i++ {
+		label := fmt.Sprintf("queue-drain-%02d", i+1)
+		t := queueStepCapture(w, unit, label, reg, snap)
+		run.trace = append(run.trace, t)
+		if shot.Label == "" &&
+			t.QueueDepth <= 2 &&
+			t.MoveState == sim.MoveFollowing &&
+			t.Current.Kind == sim.OrderMove &&
+			t.Pos != t.Current.Point {
+			shot = t
+			shot.Label = "screenshot-mid-route"
+			run.trace[len(run.trace)-1] = shot
+			break
+		}
+	}
+	if shot.Label == "" {
+		return queueHappyRun{}, fmt.Errorf("never reached a mid-route state after queued waypoint drain")
+	}
+	run.screenshot = shot
+	run.collapseBefore = queueTrace(w, unit, "before-plain-click", reg, snap)
+	run.trace = append(run.trace, run.collapseBefore)
+
+	second := queueSecondSequence()[0]
+	rec := queueMoveRecord(unit, uint16(len(run.records)), false, second)
+	run.records = append(run.records, rec)
+	w.StageCommand(rec)
+	w.IngestStagedCommands()
+	run.collapseAfter = queueStepCapture(w, unit, "after-plain-click-collapse", reg, snap)
+	run.collapseTick = run.collapseAfter.Tick
+	run.trace = append(run.trace, run.collapseAfter)
+	if run.collapseAfter.QueueDepth != 0 || run.collapseAfter.TotalOrders != 1 {
+		return queueHappyRun{}, fmt.Errorf("plain click did not collapse queue: %+v", run.collapseAfter)
+	}
+
+	for i := 0; i < 180; i++ {
+		t := queueStepCapture(w, unit, fmt.Sprintf("second-sequence-%02d", i+1), reg, snap)
+		run.trace = append(run.trace, t)
+		if t.Pos == queuePoint(second) && t.QueueDepth == 0 && t.Current.Kind == sim.OrderStop {
+			run.final = t
+			run.final.Label = "final"
+			run.trace[len(run.trace)-1] = run.final
+			return run, nil
+		}
+	}
+	return queueHappyRun{}, fmt.Errorf("unit did not finish second sequence at %+v", queuePoint(second))
+}
+
+func buildQueueOverflowCase() queueCaseDump {
+	w := sim.NewWorld(sim.Caps{})
+	unit, err := queueFixtureUnit(w, fixed.Vec2{}, 8*fixed.One)
+	if err != nil {
+		return queueCaseDump{Name: "overflow-20-shift-orders", OK: false, Error: err.Error()}
+	}
+	var drops []queueEventDump
+	w.RegisterHandler(9001, func(ww *sim.World, e sim.Event) {
+		if e.Src == unit && e.Kind == sim.EvOrderDropped {
+			drops = append(drops, queueEventDump{Tick: ww.Tick(), Kind: e.Kind, Src: uint32(e.Src), Arg: e.Arg})
+		}
+	})
+	w.Subscribe(sim.EvOrderDropped, 9001)
+	reg, snap := sim.NewHashRegistry(), &statehash.Snapshot{}
+	before := queueTrace(w, unit, "before-overflow", reg, snap)
+	first := queueMoveRecord(unit, 0, false, fixed.Vec2{X: fixed.FromInt(64), Y: 0})
+	w.StageCommand(first)
+	for i := 0; i < 20; i++ {
+		pt := fixed.Vec2{X: fixed.FromInt(64), Y: fixed.FromInt(int32(16 * (i + 1)))}
+		w.StageCommand(queueMoveRecord(unit, uint16(i+1), true, pt))
+	}
+	w.IngestStagedCommands()
+	after := queueStepCapture(w, unit, "after-overflow", reg, snap)
+	c := queueCaseDump{
+		Name:     "overflow-20-shift-orders",
+		Before:   before,
+		After:    after,
+		Drops:    drops,
+		Expected: "20 shifted appends keep 16 FIFO entries and emit 4 deterministic drops",
+		OK:       after.QueueDepth == sim.MaxOrderQueue && len(drops) == 4,
+	}
+	if !c.OK {
+		c.Error = fmt.Sprintf("depth=%d drops=%d want depth=%d drops=4", after.QueueDepth, len(drops), sim.MaxOrderQueue)
+	}
+	return c
+}
+
+func buildQueueDeadCleanupCase() queueCaseDump {
+	w := sim.NewWorld(sim.Caps{})
+	unit, err := queueFixtureUnit(w, fixed.Vec2{}, 8*fixed.One)
+	if err != nil {
+		return queueCaseDump{Name: "dead-unit-cleanup", OK: false, Error: err.Error()}
+	}
+	reg, snap := sim.NewHashRegistry(), &statehash.Snapshot{}
+	baseFree := w.OrderPoolFree()
+	first := queueMoveRecord(unit, 0, false, fixed.Vec2{X: fixed.FromInt(96), Y: 0})
+	w.StageCommand(first)
+	for i := 0; i < 3; i++ {
+		pt := fixed.Vec2{X: fixed.FromInt(96), Y: fixed.FromInt(int32(32 * (i + 1)))}
+		w.StageCommand(queueMoveRecord(unit, uint16(i+1), true, pt))
+	}
+	w.IngestStagedCommands()
+	before := queueStepCapture(w, unit, "before-destroy", reg, snap)
+	w.DestroyUnit(unit)
+	after := queueTrace(w, unit, "after-destroy", reg, snap)
+	c := queueCaseDump{
+		Name:         "dead-unit-cleanup",
+		Before:       before,
+		After:        after,
+		Expected:     "destroying a unit with queued orders discards entries and restores the pool",
+		PoolFreeBase: baseFree,
+		OK:           before.QueueDepth == 3 && after.QueueDepth == 0 && after.TotalOrders == 0 && !after.Alive && w.OrderPoolFree() == baseFree,
+	}
+	if !c.OK {
+		c.Error = fmt.Sprintf("before depth=%d after depth=%d alive=%v total=%d pool=%d wantPool=%d",
+			before.QueueDepth, after.QueueDepth, after.Alive, after.TotalOrders, w.OrderPoolFree(), baseFree)
+	}
+	return c
+}
+
+func queueFixtureUnit(w *sim.World, pos fixed.Vec2, speed fixed.F64) (sim.EntityID, error) {
+	id, ok := w.CreateUnit(pos, 0)
+	if !ok {
+		return 0, fmt.Errorf("unit create failed")
+	}
+	if !w.Owners.Add(w.Ents, id, 0, 0, 0) ||
+		!w.Movements.Add(w.Ents, w.Transforms, id, speed, 0x4000) ||
+		!w.Orders.Add(w.Ents, id) {
+		return 0, fmt.Errorf("unit component setup failed")
+	}
+	return id, nil
+}
+
+func queueInitialSequence() []fixed.Vec2 {
+	return []fixed.Vec2{
+		{X: fixed.FromInt(96), Y: 0},
+		{X: fixed.FromInt(96), Y: fixed.FromInt(64)},
+		{X: fixed.FromInt(32), Y: fixed.FromInt(64)},
+		{X: fixed.FromInt(32), Y: fixed.FromInt(128)},
+		{X: fixed.FromInt(160), Y: fixed.FromInt(128)},
+	}
+}
+
+func queueSecondSequence() []fixed.Vec2 {
+	return []fixed.Vec2{{X: fixed.FromInt(220), Y: fixed.FromInt(32)}}
+}
+
+func queueMoveRecord(unit sim.EntityID, seq uint16, queued bool, pt fixed.Vec2) sim.CommandRecord {
+	flags := uint8(0)
+	if queued {
+		flags = sim.CmdFlagQueued
+	}
+	rec := sim.CommandRecord{
+		Version:   sim.CommandVersion,
+		Player:    0,
+		Seq:       seq,
+		Opcode:    sim.OpMove,
+		Flags:     flags,
+		UnitCount: 1,
+		Point:     pt,
+	}
+	rec.Units[0] = unit
+	return rec
+}
+
+func queueStepCapture(w *sim.World, unit sim.EntityID, label string, reg *statehash.Registry, snap *statehash.Snapshot) queueTraceDump {
+	w.Step()
+	return queueTrace(w, unit, label, reg, snap)
+}
+
+func queueTrace(w *sim.World, unit sim.EntityID, label string, reg *statehash.Registry, snap *statehash.Snapshot) queueTraceDump {
+	pos := fixed.Vec2{}
+	if tr := w.Transforms.Row(unit); tr != -1 {
+		pos = w.Transforms.Pos[tr]
+	}
+	moveState := uint8(255)
+	if mr := w.Movements.Row(unit); mr != -1 {
+		moveState = w.Movements.State[mr]
+	}
+	current, hasOrder := w.CurrentOrder(unit)
+	queue := w.AppendOrderQueue(unit, nil)
+	out := queueTraceDump{
+		Label:          label,
+		Tick:           w.Tick(),
+		Alive:          w.Ents.Alive(unit),
+		HasOrder:       hasOrder,
+		Pos:            queuePoint(pos),
+		MoveState:      moveState,
+		QueueDepth:     len(queue),
+		OrderPoolFree:  w.OrderPoolFree(),
+		PathQueueDepth: w.PathQueueDepth(),
+		PathExpansions: w.PathExpansionsLastTick(),
+		Hash:           queueHash(w, reg, snap),
+	}
+	if hasOrder {
+		out.Current = queueOrder(current)
+		out.TotalOrders = 1 + len(queue)
+	}
+	out.Queue = make([]queueOrderDump, 0, len(queue))
+	for _, order := range queue {
+		out.Queue = append(out.Queue, queueOrder(order))
+	}
+	return out
+}
+
+func queueHash(w *sim.World, reg *statehash.Registry, snap *statehash.Snapshot) string {
+	w.HashState(reg, snap)
+	return fmt.Sprintf("%016x", snap.Top)
+}
+
+func queueOrder(o sim.Order) queueOrderDump {
+	return queueOrderDump{
+		Kind:   o.Kind,
+		Target: uint32(o.Target),
+		Point:  queuePoint(o.Point),
+		Data:   o.Data,
+	}
+}
+
+func queuePoint(p fixed.Vec2) queuePointDump {
+	return queuePointDump{
+		XRaw: int64(p.X),
+		YRaw: int64(p.Y),
+		X:    p.X.Floor(),
+		Y:    p.Y.Floor(),
+	}
+}
+
+func queuePointList(points []fixed.Vec2) []queuePointDump {
+	out := make([]queuePointDump, 0, len(points))
+	for _, p := range points {
+		out = append(out, queuePoint(p))
+	}
+	return out
+}
+
+func drawQueueFixture(scene *core.Node, shot queueTraceDump, initial, second []fixed.Vec2) {
+	groundMat := material.NewStandard(&math32.Color{R: 0.18, G: 0.27, B: 0.22})
+	ground := graphic.NewMesh(geometry.NewPlane(520, 360), groundMat)
+	ground.SetRotationX(-math32.Pi / 2)
+	scene.Add(ground)
+
+	startMat := material.NewStandard(&math32.Color{R: 0.20, G: 0.55, B: 0.90})
+	queuedMat := material.NewStandard(&math32.Color{R: 0.92, G: 0.70, B: 0.20})
+	finalMat := material.NewStandard(&math32.Color{R: 0.25, G: 0.78, B: 0.42})
+	unitMat := material.NewStandard(&math32.Color{R: 0.88, G: 0.30, B: 0.24})
+	currentMat := material.NewStandard(&math32.Color{R: 0.96, G: 0.95, B: 0.68})
+
+	addQueueMarker(scene, fixed.Vec2{}, startMat, 42, 18)
+	for i, p := range initial {
+		mat := queuedMat
+		if i == 0 {
+			mat = startMat
+		}
+		addQueueMarker(scene, p, mat, 34, 16)
+	}
+	for _, p := range second {
+		addQueueMarker(scene, p, finalMat, 44, 18)
+	}
+	unitPos := fixed.Vec2{X: fixed.F64(shot.Pos.XRaw), Y: fixed.F64(shot.Pos.YRaw)}
+	x, z := queueRenderXZ(unitPos)
+	addOrderMesh(scene, geometry.NewBox(42, 58, 42), unitMat, x, 29, z)
+	current := fixed.Vec2{X: fixed.F64(shot.Current.Point.XRaw), Y: fixed.F64(shot.Current.Point.YRaw)}
+	cx, cz := queueRenderXZ(current)
+	ring := graphic.NewMesh(geometry.NewTorus(30, 4, 28, 8, math32.Pi*2), currentMat)
+	ring.SetRotationX(math32.Pi / 2)
+	ring.SetPosition(cx, 5, cz)
+	scene.Add(ring)
+}
+
+func addQueueMarker(scene *core.Node, pt fixed.Vec2, mat material.IMaterial, size, height float32) {
+	x, z := queueRenderXZ(pt)
+	addOrderMesh(scene, geometry.NewBox(size, height, size), mat, x, height/2, z)
+}
+
+func queueRenderXZ(pt fixed.Vec2) (float32, float32) {
+	return float32(pt.X.Floor()) - 110, float32(pt.Y.Floor()) - 70
 }
 
 func drawSmartOrderFixture(scene *core.Node) {
