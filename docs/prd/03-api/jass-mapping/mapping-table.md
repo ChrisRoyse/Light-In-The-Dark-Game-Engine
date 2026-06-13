@@ -490,8 +490,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.TurnSpeed` |
 | GetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitDefaultAcquireRange | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitDefaultTurnSpeed | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitDefaultAcquireRange | common.j | D1 | `litd/api.Unit.DefaultAcquireRange` |
+| GetUnitDefaultTurnSpeed | common.j | D1 | `litd/api.Unit.DefaultTurnSpeed` |
 | GetUnitDefaultPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitDefaultFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitOwner | common.j | D1 | `litd/api.Unit.SetOwner` |
@@ -562,7 +562,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitLoc | common.j | D3 | `litd/api.Unit.Position` (D3 collapse → GetUnitX) |
 | GetUnitFacing | common.j | D1 | `litd/api.Unit.Facing` |
 | GetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.MoveSpeed` |
-| GetUnitDefaultMoveSpeed | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitDefaultMoveSpeed | common.j | D1 | `litd/api.Unit.DefaultMoveSpeed` |
 | GetUnitState | common.j | D5 | `litd/api.Unit.Life` |
 | GetOwningPlayer | common.j | D1 | `litd/api.Unit.Owner` |
 | GetUnitTypeId | common.j | D3 | `litd/api.Unit.Type` |

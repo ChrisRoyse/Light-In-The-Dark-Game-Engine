@@ -410,6 +410,38 @@ func (u Unit) SetAcquireRange(v float64) {
 	u.g.w.Combats.AcquisitionRange[r] = fromFloat(v)
 }
 
+// DefaultMoveSpeed returns the unit type's base movement speed in world
+// units/second — the value the unit spawned with, before any SetMoveSpeed.
+// Zero on an invalid handle or an untyped unit. JASS: GetUnitDefaultMoveSpeed.
+func (u Unit) DefaultMoveSpeed() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.DefaultMoveSpeed")
+		return 0
+	}
+	return toFloat(u.g.w.UnitDefaultMoveSpeed(u.id)) * float64(data.TicksPerSecond)
+}
+
+// DefaultAcquireRange returns the unit type's base auto-acquisition range in
+// world units. Zero on an invalid handle or an untyped unit. JASS:
+// GetUnitDefaultAcquireRange.
+func (u Unit) DefaultAcquireRange() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.DefaultAcquireRange")
+		return 0
+	}
+	return toFloat(u.g.w.UnitDefaultAcquireRange(u.id))
+}
+
+// DefaultTurnSpeed returns the unit type's base turn rate in radians/second.
+// Zero on an invalid handle or an untyped unit. JASS: GetUnitDefaultTurnSpeed.
+func (u Unit) DefaultTurnSpeed() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.DefaultTurnSpeed")
+		return 0
+	}
+	return angleFromBrad(u.g.w.UnitDefaultTurnSpeed(u.id)).Radians() * float64(data.TicksPerSecond)
+}
+
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
 // death event). A unit already dead or invalid is a no-op. JASS: KillUnit,
 // KillUnitBJ (D1 passthrough collapses here).

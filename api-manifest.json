@@ -467,6 +467,72 @@
       }
     },
     {
+      "name": "GetUnitDefaultAcquireRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.DefaultAcquireRange",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetUnitDefaultMoveSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.DefaultMoveSpeed",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetUnitDefaultTurnSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.DefaultTurnSpeed",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "GetUnitFacing",
       "origin": "common.j",
       "signature": {

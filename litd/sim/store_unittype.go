@@ -1,5 +1,10 @@
 package sim
 
+import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+)
+
 // UnitTypeStore (ecs-architecture.md §5): unit-type ID → immutable
 // data-table row (the SLK analogue, R-AST-1). The store holds only
 // the 16-bit type ID; stats/model/sounds resolve through the loaded
@@ -85,14 +90,50 @@ func (s *UnitTypeStore) Row(id EntityID) int32 {
 
 func (s *UnitTypeStore) Count() int32 { return s.count }
 
+// typeDefOf resolves a unit to its immutable data-table row, or nil when the
+// unit has no type row or the type index is out of range.
+func (w *World) typeDefOf(id EntityID) *data.Unit {
+	if ut := w.UnitTypes.Row(id); ut != -1 {
+		if tid := w.UnitTypes.TypeID[ut]; int(tid) < len(w.unitDefs) {
+			return &w.unitDefs[tid]
+		}
+	}
+	return nil
+}
+
 // UnitPointValue resolves a unit's type to its data-table point value
 // (GetUnitPointValue), or 0 when the unit has no type row or the type is out
 // of range. Read-only over immutable type data — no per-unit state.
 func (w *World) UnitPointValue(id EntityID) int32 {
-	if ut := w.UnitTypes.Row(id); ut != -1 {
-		if tid := w.UnitTypes.TypeID[ut]; int(tid) < len(w.unitDefs) {
-			return w.unitDefs[tid].PointValue
-		}
+	if d := w.typeDefOf(id); d != nil {
+		return d.PointValue
+	}
+	return 0
+}
+
+// UnitDefaultMoveSpeed returns the type's base move speed (per tick), 0 when
+// untyped. GetUnitDefaultMoveSpeed — the spawn value before SetUnitMoveSpeed.
+func (w *World) UnitDefaultMoveSpeed(id EntityID) fixed.F64 {
+	if d := w.typeDefOf(id); d != nil {
+		return d.MoveSpeedPerTick
+	}
+	return 0
+}
+
+// UnitDefaultAcquireRange returns the type's base acquisition range (world
+// units), 0 when untyped. GetUnitDefaultAcquireRange.
+func (w *World) UnitDefaultAcquireRange(id EntityID) fixed.F64 {
+	if d := w.typeDefOf(id); d != nil {
+		return d.AcquisitionRange
+	}
+	return 0
+}
+
+// UnitDefaultTurnSpeed returns the type's base turn rate (brad per tick), 0
+// when untyped. GetUnitDefaultTurnSpeed.
+func (w *World) UnitDefaultTurnSpeed(id EntityID) fixed.Angle {
+	if d := w.typeDefOf(id); d != nil {
+		return d.TurnRatePerTick
 	}
 	return 0
 }

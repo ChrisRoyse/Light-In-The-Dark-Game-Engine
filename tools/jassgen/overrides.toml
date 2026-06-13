@@ -136,6 +136,30 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "GetUnitDefaultMoveSpeed"
+class = "D1"
+goMapping = "Unit.DefaultMoveSpeed"
+goSignature = "() float64"
+package = "litd/api"
+reason = "type's base move speed getter maps onto the typed accessor (dedup §2); reads immutable unit-type data, distinct from the instance GetUnitMoveSpeed (#217)"
+
+[[override]]
+name = "GetUnitDefaultAcquireRange"
+class = "D1"
+goMapping = "Unit.DefaultAcquireRange"
+goSignature = "() float64"
+package = "litd/api"
+reason = "type's base acquisition range getter maps onto the typed accessor (dedup §2); distinct from the instance GetUnitAcquireRange (#217)"
+
+[[override]]
+name = "GetUnitDefaultTurnSpeed"
+class = "D1"
+goMapping = "Unit.DefaultTurnSpeed"
+goSignature = "() float64"
+package = "litd/api"
+reason = "type's base turn rate getter maps onto the typed accessor (dedup §2); distinct from the instance GetUnitTurnSpeed (#217)"
+
+[[override]]
 name = "GetUnitUserData"
 class = "D1"
 goMapping = "Unit.UserData"

@@ -1035,3 +1035,74 @@ func TestUnitPointValueFSV(t *testing.T) {
 		t.Errorf("removed unit PointValue: api=%d sim=%d, want 0", u.PointValue(), w.UnitPointValue(u.id))
 	}
 }
+
+// TestUnitDefaultStatsFSV: the Default{MoveSpeed,AcquireRange,TurnSpeed} getters
+// read straight from the unit type's data row. SoT = the bound data.Unit fields
+// (known inputs), verified both through the sim accessor and the api method, and
+// against an exact hand-computed expectation (X+X=Y).
+func TestUnitDefaultStatsFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	const turnPerTick = fixed.Angle(16384) // 1/4 turn per tick => π/2 rad/tick
+	if !w.BindUnitDefs([]data.Unit{{
+		ID:               "hspd",
+		Life:             100,
+		MoveSpeedPerTick: 8 * fixed.One,      // 8 u/tick => 160 u/s
+		AcquisitionRange: fixed.FromInt(600), // 600 world units
+		TurnRatePerTick:  turnPerTick,
+	}}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+	u := g.CreateUnit(owner, g.UnitType("hspd"), Vec2{X: 64, Y: 64}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit hspd invalid")
+	}
+
+	wantTurn := angleFromBrad(turnPerTick).Radians() * float64(data.TicksPerSecond)
+	t.Logf("DefaultMoveSpeed api=%.4f (want 160)  DefaultAcquireRange api=%.4f (want 600)  DefaultTurnSpeed api=%.4f (want %.4f)",
+		u.DefaultMoveSpeed(), u.DefaultAcquireRange(), u.DefaultTurnSpeed(), wantTurn)
+
+	if got := u.DefaultMoveSpeed(); math.Abs(got-160) > 1e-6 {
+		t.Errorf("DefaultMoveSpeed=%.6f, want 160", got)
+	}
+	if got := u.DefaultAcquireRange(); math.Abs(got-600) > 1e-6 {
+		t.Errorf("DefaultAcquireRange=%.6f, want 600", got)
+	}
+	if got := u.DefaultTurnSpeed(); math.Abs(got-wantTurn) > 1e-6 {
+		t.Errorf("DefaultTurnSpeed=%.6f, want %.6f", got, wantTurn)
+	}
+	// sim accessor agrees with the raw def fields (independent SoT path).
+	if w.UnitDefaultMoveSpeed(u.id) != 8*fixed.One || w.UnitDefaultAcquireRange(u.id) != fixed.FromInt(600) || w.UnitDefaultTurnSpeed(u.id) != turnPerTick {
+		t.Errorf("sim accessors disagree with def: ms=%d acq=%d turn=%d",
+			w.UnitDefaultMoveSpeed(u.id), w.UnitDefaultAcquireRange(u.id), w.UnitDefaultTurnSpeed(u.id))
+	}
+
+	// Defaults are independent of instance mutation: change instance speed,
+	// the default must NOT move.
+	if w.Movements.Add(w.Ents, w.Transforms, u.id, fixed.FromInt(8), 0) {
+		u.SetMoveSpeed(50)
+		t.Logf("after SetMoveSpeed(50): instance=%.1f default=%.1f", u.MoveSpeed(), u.DefaultMoveSpeed())
+		if math.Abs(u.DefaultMoveSpeed()-160) > 1e-6 {
+			t.Errorf("default moved with instance: DefaultMoveSpeed=%.4f, want 160", u.DefaultMoveSpeed())
+		}
+	}
+
+	// EDGE: untyped unit -> all zero.
+	bare, ok := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(8), Y: fixed.FromInt(8)}, 0)
+	if !ok {
+		t.Fatal("bare CreateUnit failed")
+	}
+	if w.UnitDefaultMoveSpeed(bare) != 0 || w.UnitDefaultAcquireRange(bare) != 0 || w.UnitDefaultTurnSpeed(bare) != 0 {
+		t.Error("untyped unit default stats not all zero")
+	}
+
+	// EDGE: zero / removed handle -> 0.
+	if (Unit{}).DefaultMoveSpeed() != 0 || (Unit{}).DefaultAcquireRange() != 0 || (Unit{}).DefaultTurnSpeed() != 0 {
+		t.Error("zero Unit default stats != 0")
+	}
+	u.Remove()
+	if u.DefaultMoveSpeed() != 0 || u.DefaultAcquireRange() != 0 || u.DefaultTurnSpeed() != 0 {
+		t.Error("removed unit default stats != 0")
+	}
+}
