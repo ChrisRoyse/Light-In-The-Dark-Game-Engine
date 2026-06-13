@@ -311,6 +311,40 @@ func (u Unit) SetMoveSpeed(v float64) {
 	u.g.w.Movements.Speed[r] = fromFloat(v / float64(data.TicksPerSecond))
 }
 
+// TurnSpeed returns the unit's maximum turn rate in radians per second, or 0 on
+// an invalid handle / a unit with no movement. The sim stores a per-tick brad
+// delta; this surfaces it as the per-second radian rate modders set in the data
+// tables. JASS: GetUnitTurnSpeed.
+func (u Unit) TurnSpeed() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.TurnSpeed")
+		return 0
+	}
+	r := u.g.w.Movements.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	return angleFromBrad(u.g.w.Movements.TurnRate[r]).Radians() * float64(data.TicksPerSecond)
+}
+
+// SetTurnSpeed sets the unit's maximum turn rate in radians per second
+// (quantized to the per-tick brad delta). Negative values clamp to 0. No-op on
+// an invalid handle or a unit with no movement. JASS: SetUnitTurnSpeed.
+func (u Unit) SetTurnSpeed(radPerSec float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetTurnSpeed")
+		return
+	}
+	r := u.g.w.Movements.Row(u.id)
+	if r < 0 {
+		return
+	}
+	if radPerSec < 0 {
+		radPerSec = 0
+	}
+	u.g.w.Movements.TurnRate[r] = angleToBrad(Rad(radPerSec / float64(data.TicksPerSecond)))
+}
+
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
 // death event). A unit already dead or invalid is a no-op. JASS: KillUnit,
 // KillUnitBJ (D1 passthrough collapses here).

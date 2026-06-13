@@ -519,6 +519,28 @@
       }
     },
     {
+      "name": "GetUnitTurnSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.TurnSpeed",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "GetUnitTypeId",
       "origin": "common.j",
       "signature": {
@@ -1046,6 +1068,36 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "render-only animation playback rate; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "SetUnitTurnSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newTurnSpeed",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetTurnSpeed",
+        "package": "litd/api",
+        "goSignature": "(radPerSec float64)",
+        "collapsesWith": [
+          "SetUnitTurnSpeedBJ"
+        ]
       }
     },
     {

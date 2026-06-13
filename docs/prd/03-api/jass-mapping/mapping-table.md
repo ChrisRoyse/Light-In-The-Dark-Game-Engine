@@ -482,12 +482,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitFacingTimed | common.j | D2 | **tombstoned** (deferred-v2): gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed) |
 | SetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.SetMoveSpeed` |
 | SetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitTurnSpeed | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.SetTurnSpeed` |
 | SetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitAcquireRange | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitCreepGuard | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitAcquireRange | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitTurnSpeed | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.TurnSpeed` |
 | GetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitDefaultAcquireRange | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1915,7 +1915,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueUpgradeOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetAttackedUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitFlyHeightBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetUnitTurnSpeedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| SetUnitTurnSpeedBJ | blizzard.j | D1 | `litd/api.Unit.SetTurnSpeed` (D3 collapse → SetUnitTurnSpeed) |
 | SetUnitPropWindowBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitPropWindowBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitDefaultPropWindowBJ | blizzard.j | D1 | _pending (M2 backlog)_ |

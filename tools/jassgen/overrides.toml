@@ -191,6 +191,23 @@ package = "litd/api"
 reason = "current-order-id getter maps onto the typed Order getter; reports the order verb (dedup §2)"
 
 [[override]]
+name = "GetUnitTurnSpeed"
+class = "D1"
+goMapping = "Unit.TurnSpeed"
+goSignature = "() float64"
+package = "litd/api"
+reason = "turn-rate getter maps directly; per-tick brad delta surfaced as radians/second (dedup §2)"
+
+[[override]]
+name = "SetUnitTurnSpeed"
+class = "D1"
+goMapping = "Unit.SetTurnSpeed"
+goSignature = "(radPerSec float64)"
+collapsesWith = ["SetUnitTurnSpeedBJ"]
+package = "litd/api"
+reason = "turn-rate setter maps directly; radians/second quantized to the per-tick brad delta (dedup §2); the BJ wrapper folds onto the same setter"
+
+[[override]]
 name = "SetUnitInvulnerable"
 class = "D1"
 goMapping = "Unit.SetInvulnerable"

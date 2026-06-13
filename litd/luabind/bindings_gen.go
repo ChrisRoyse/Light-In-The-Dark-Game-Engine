@@ -38,6 +38,8 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SetOwner", Package: "litd/api", Symbol: "Unit.SetOwner", GoSignature: "(p Player, changeColor bool)"},
 	{LuaName: "Unit_SetPaused", Package: "litd/api", Symbol: "Unit.SetPaused", GoSignature: "(paused bool)"},
 	{LuaName: "Unit_SetPosition", Package: "litd/api", Symbol: "Unit.SetPosition", GoSignature: "(pos Vec2)"},
+	{LuaName: "Unit_SetTurnSpeed", Package: "litd/api", Symbol: "Unit.SetTurnSpeed", GoSignature: "(radPerSec float64)"},
+	{LuaName: "Unit_TurnSpeed", Package: "litd/api", Symbol: "Unit.TurnSpeed", GoSignature: "() float64"},
 	{LuaName: "Unit_Type", Package: "litd/api", Symbol: "Unit.Type", GoSignature: "() UnitType"},
 }
 

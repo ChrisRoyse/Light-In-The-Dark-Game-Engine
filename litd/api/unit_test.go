@@ -834,3 +834,41 @@ func TestUnitInvulnerableFSV(t *testing.T) {
 		t.Error("removed unit Invulnerable() true")
 	}
 }
+
+// TestUnitTurnSpeedFSV: SetTurnSpeed/TurnSpeed round-trip through the Movement
+// store TurnRate (per-second radians ↔ per-tick brad). SoT = Movements.TurnRate.
+func TestUnitTurnSpeedFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+	if !w.Movements.Add(w.Ents, w.Transforms, id, fixed.FromInt(8), 0) {
+		t.Fatal("Movements.Add failed")
+	}
+	r := w.Movements.Row(id)
+
+	// Known input: π rad/s. Store must equal the same per-tick quantization.
+	u.SetTurnSpeed(math.Pi)
+	wantBrad := angleToBrad(Rad(math.Pi / float64(data.TicksPerSecond)))
+	t.Logf("SetTurnSpeed(π): store=%d wantBrad=%d getter=%.4f rad/s", w.Movements.TurnRate[r], wantBrad, u.TurnSpeed())
+	if w.Movements.TurnRate[r] != wantBrad {
+		t.Errorf("store TurnRate=%d, want %d", w.Movements.TurnRate[r], wantBrad)
+	}
+	if math.Abs(u.TurnSpeed()-math.Pi) > 0.01 {
+		t.Errorf("TurnSpeed()=%.4f, want ~%.4f", u.TurnSpeed(), math.Pi)
+	}
+
+	// EDGE: negative clamps to 0.
+	u.SetTurnSpeed(-1)
+	if w.Movements.TurnRate[r] != 0 || u.TurnSpeed() != 0 {
+		t.Errorf("negative not clamped: store=%d getter=%.4f", w.Movements.TurnRate[r], u.TurnSpeed())
+	}
+	// EDGE: zero / removed handle → 0, no panic.
+	if (Unit{}).TurnSpeed() != 0 {
+		t.Error("zero Unit TurnSpeed() != 0")
+	}
+	u.Remove()
+	u.SetTurnSpeed(1) // no-op
+	if u.TurnSpeed() != 0 {
+		t.Error("removed unit TurnSpeed() != 0")
+	}
+}
