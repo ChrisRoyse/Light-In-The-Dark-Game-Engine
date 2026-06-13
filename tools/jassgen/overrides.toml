@@ -128,6 +128,22 @@ package = "litd/api"
 reason = "x/y/location position getters collapse onto one Vec2 getter (dedup §4 ex.1)"
 
 [[override]]
+name = "GetUnitUserData"
+class = "D1"
+goMapping = "Unit.UserData"
+goSignature = "() int"
+package = "litd/api"
+reason = "custom-value getter maps directly onto the typed accessor (dedup §2); WC3's per-unit integer scratch slot, backed by the sparse UserDataStore (#217)"
+
+[[override]]
+name = "SetUnitUserData"
+class = "D1"
+goMapping = "Unit.SetUserData"
+goSignature = "(v int)"
+package = "litd/api"
+reason = "custom-value setter maps directly onto the typed mutator (dedup §2); see GetUnitUserData (#217)"
+
+[[override]]
 name = "GetUnitFacing"
 class = "D1"
 goMapping = "Unit.Facing"

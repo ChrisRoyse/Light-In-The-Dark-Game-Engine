@@ -667,8 +667,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetAllUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
 | SetItemTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitUserData | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitUserData | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitUserData | common.j | D1 | `litd/api.Unit.UserData` |
+| SetUnitUserData | common.j | D1 | `litd/api.Unit.SetUserData` |
 | Player | common.j | unclassified | _pending (M2 backlog)_ |
 | GetLocalPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | IsPlayerAlly | common.j | unclassified | _pending (M2 backlog)_ |

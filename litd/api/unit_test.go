@@ -917,3 +917,72 @@ func TestUnitAcquireRangeFSV(t *testing.T) {
 		t.Error("removed unit AcquireRange() != 0")
 	}
 }
+
+// TestUnitUserDataFSV: SetUserData/UserData round-trip through the sparse
+// UserDataStore. SoT = the store row (w.UserDatas.Row/Value), read directly —
+// never via the getter return alone. Proves the lazy-allocation invariant:
+// no row exists until a value is set; an unset unit reads 0.
+func TestUnitUserDataFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	// BEFORE: never set → sparse store has NO row, getter reads default 0.
+	if r := w.UserDatas.Row(id); r != -1 {
+		t.Fatalf("unset unit already has a userdata row %d (not sparse)", r)
+	}
+	if got := u.UserData(); got != 0 {
+		t.Fatalf("unset UserData()=%d, want 0", got)
+	}
+	t.Logf("BEFORE: row=%d getter=%d count=%d", w.UserDatas.Row(id), u.UserData(), w.UserDatas.Count())
+
+	// X+X=Y: set 21+21=42, then read the byte in the store, not the return.
+	u.SetUserData(21 + 21)
+	r := w.UserDatas.Row(id)
+	if r == -1 {
+		t.Fatal("after SetUserData: still no store row (lazy-alloc failed)")
+	}
+	if w.UserDatas.Value[r] != 42 {
+		t.Errorf("store Value[%d]=%d, want 42", r, w.UserDatas.Value[r])
+	}
+	if u.UserData() != 42 {
+		t.Errorf("getter UserData()=%d, want 42", u.UserData())
+	}
+	t.Logf("AFTER set 42: row=%d store=%d getter=%d count=%d", r, w.UserDatas.Value[r], u.UserData(), w.UserDatas.Count())
+
+	// Overwrite reuses the SAME row (no leak): set again, count must not grow.
+	beforeCount := w.UserDatas.Count()
+	u.SetUserData(-7)
+	if w.UserDatas.Count() != beforeCount {
+		t.Errorf("overwrite grew count %d→%d (leaked a row)", beforeCount, w.UserDatas.Count())
+	}
+	if w.UserDatas.Value[w.UserDatas.Row(id)] != -7 || u.UserData() != -7 {
+		t.Errorf("overwrite: store=%d getter=%d, want -7", w.UserDatas.Value[w.UserDatas.Row(id)], u.UserData())
+	}
+
+	// EDGE: int32 extremes survive the int↔int32 boundary unchanged.
+	for _, v := range []int{math.MaxInt32, math.MinInt32, 0} {
+		u.SetUserData(v)
+		if got := u.UserData(); got != v {
+			t.Errorf("extreme %d: round-trip got %d", v, got)
+		}
+		if w.UserDatas.Value[w.UserDatas.Row(id)] != int32(v) {
+			t.Errorf("extreme %d: store=%d", v, w.UserDatas.Value[w.UserDatas.Row(id)])
+		}
+	}
+
+	// EDGE: zero / removed handle → getter 0, setter no-op, no panic, and the
+	// store row is reclaimed on removal (DestroyUnit path).
+	if (Unit{}).UserData() != 0 {
+		t.Error("zero Unit UserData() != 0")
+	}
+	u.SetUserData(99)
+	u.Remove()
+	if w.UserDatas.Row(id) != -1 {
+		t.Errorf("removed unit still has userdata row %d (DestroyUnit leak)", w.UserDatas.Row(id))
+	}
+	u.SetUserData(5) // no-op on dead handle
+	if u.UserData() != 0 {
+		t.Errorf("removed unit UserData()=%d, want 0", u.UserData())
+	}
+}

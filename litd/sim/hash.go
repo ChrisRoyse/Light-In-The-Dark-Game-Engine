@@ -51,6 +51,10 @@ var HashSystems = []string{
 	// appended by #299: per-player fog grid, entity detectability flags,
 	// and building last-seen ghosts.
 	"visibility",
+	// appended by #217: per-unit custom value (GetUnitUserData). Script
+	// state with no sim consumer, but scripts branch on it, so it must be
+	// hashed. Sparse store — only rows that were set contribute.
+	"userdata",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -493,6 +497,14 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 
 	hvis := h.next() // visibility (#299)
 	w.Visibility.HashInto(hvis)
+
+	hud := h.next() // userdata (#217): custom value per unit
+	ud := w.UserDatas
+	hud.WriteU32(uint32(ud.count))
+	for i := int32(0); i < ud.count; i++ {
+		hud.WriteU32(uint32(ud.Entity[i]))
+		hud.WriteU32(uint32(ud.Value[i]))
+	}
 
 	return reg.Sum(dst)
 }

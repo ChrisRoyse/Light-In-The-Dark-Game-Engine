@@ -102,6 +102,7 @@ type World struct {
 	Healths       *HealthStore
 	Owners        *OwnerStore
 	UnitTypes     *UnitTypeStore
+	UserDatas     *UserDataStore
 	Combats       *CombatStore
 	Abilities     *AbilityStore
 	AbilityFields *AbilityFieldStore
@@ -319,6 +320,7 @@ func NewWorld(requested Caps) *World {
 		Healths:            NewHealthStore(caps.Units, idxSpace),
 		Owners:             NewOwnerStore(caps.Units, idxSpace),
 		UnitTypes:          NewUnitTypeStore(caps.Units, idxSpace),
+		UserDatas:          NewUserDataStore(caps.Units, idxSpace),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
 		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
@@ -451,6 +453,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.UnitTypes.Row(id) != -1 {
 		w.UnitTypes.Remove(id)
 	}
+	if w.UserDatas.Row(id) != -1 {
+		w.UserDatas.Remove(id)
+	}
 	if w.Combats.Row(id) != -1 {
 		w.Combats.Remove(id)
 	}
@@ -536,6 +541,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Owners.rowOf) * rowOfB
 	n += len(w.UnitTypes.TypeID) * (2 + 4)
 	n += len(w.UnitTypes.rowOf) * rowOfB
+	n += len(w.UserDatas.Value) * (4 + 4)
+	n += len(w.UserDatas.rowOf) * rowOfB
 	n += len(w.Combats.DmgBase) * combatRowB
 	n += len(w.Combats.rowOf) * rowOfB
 	n += len(w.Abilities.AbilityID) * abilityRowB

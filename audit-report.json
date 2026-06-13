@@ -2,17 +2,17 @@
   "total": 2642,
   "totalCore": 2519,
   "byRule": {
-    "D1": 155,
+    "D1": 157,
     "D2": 345,
     "D3": 127,
     "D4": 380,
     "D5": 13
   },
-  "mapped": 30,
+  "mapped": 32,
   "tombstoned": 14,
   "collapsed": 33,
-  "unclassified": 1622,
-  "unmapped": 2565,
+  "unclassified": 1620,
+  "unmapped": 2563,
   "tombstonesByReason": {
     "deferred-v2": 9,
     "deprecated": 1,
@@ -24,7 +24,7 @@
   "commonaiCapabilityTombstones": 0,
   "featureTags": {},
   "violations": [
-    "unclassified=1622 (M2 gate requires 0)",
-    "unmapped=2565 (M2 gate requires 0; every symbol mapped or tombstoned)"
+    "unclassified=1620 (M2 gate requires 0)",
+    "unmapped=2563 (M2 gate requires 0; every symbol mapped or tombstoned)"
   ]
 }

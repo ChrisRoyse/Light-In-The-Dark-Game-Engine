@@ -87,6 +87,27 @@ func (u Unit) Type() UnitType {
 	return UnitType{ref: u.g.w.UnitTypes.TypeID[r] + 1}
 }
 
+// UserData returns the unit's custom value — an arbitrary integer scripts
+// attach for their own bookkeeping (the sim never reads it). Zero on an invalid
+// handle or a unit that was never assigned one. JASS: GetUnitUserData.
+func (u Unit) UserData() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.UserData")
+		return 0
+	}
+	return int(u.g.w.UserData(u.id))
+}
+
+// SetUserData assigns the unit's custom value. No-op on an invalid handle.
+// JASS: SetUnitUserData.
+func (u Unit) SetUserData(v int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetUserData")
+		return
+	}
+	u.g.w.SetUserData(u.id, int32(v))
+}
+
 // Invulnerable reports whether the unit currently ignores all incoming damage,
 // false on an invalid handle or a unit with no health row. JASS:
 // BlzIsUnitInvulnerable.

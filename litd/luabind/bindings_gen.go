@@ -41,8 +41,10 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SetPaused", Package: "litd/api", Symbol: "Unit.SetPaused", GoSignature: "(paused bool)"},
 	{LuaName: "Unit_SetPosition", Package: "litd/api", Symbol: "Unit.SetPosition", GoSignature: "(pos Vec2)"},
 	{LuaName: "Unit_SetTurnSpeed", Package: "litd/api", Symbol: "Unit.SetTurnSpeed", GoSignature: "(radPerSec float64)"},
+	{LuaName: "Unit_SetUserData", Package: "litd/api", Symbol: "Unit.SetUserData", GoSignature: "(v int)"},
 	{LuaName: "Unit_TurnSpeed", Package: "litd/api", Symbol: "Unit.TurnSpeed", GoSignature: "() float64"},
 	{LuaName: "Unit_Type", Package: "litd/api", Symbol: "Unit.Type", GoSignature: "() UnitType"},
+	{LuaName: "Unit_UserData", Package: "litd/api", Symbol: "Unit.UserData", GoSignature: "() int"},
 }
 
 // AIBindings is the AI-domain surface (litd/ai, R-EXEC-3 isolated).

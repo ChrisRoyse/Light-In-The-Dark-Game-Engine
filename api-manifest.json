@@ -585,6 +585,28 @@
       }
     },
     {
+      "name": "GetUnitUserData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.UserData",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
       "name": "GetUnitX",
       "origin": "common.j",
       "signature": {
@@ -1150,6 +1172,33 @@
         "collapsesWith": [
           "SetUnitTurnSpeedBJ"
         ]
+      }
+    },
+    {
+      "name": "SetUnitUserData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "data",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetUserData",
+        "package": "litd/api",
+        "goSignature": "(v int)"
       }
     },
     {
