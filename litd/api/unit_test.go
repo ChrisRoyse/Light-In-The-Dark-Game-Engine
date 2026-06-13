@@ -1276,6 +1276,12 @@ func TestUnitHeroStatsContract(t *testing.T) {
 		t.Error("hero setters mutated a non-hero")
 	}
 
+	// Skill points / XP on a non-hero: 0 / false / no-op.
+	u.AddExperience(500)
+	if u.SkillPoints() != 0 || u.ModifySkillPoints(3) {
+		t.Error("non-hero accepted skill-point / XP ops")
+	}
+
 	// EDGE: removed unit -> all zero/false, setters no-op.
 	u.Remove()
 	z.SetStrength(1) // zero handle, no panic

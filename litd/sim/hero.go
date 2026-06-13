@@ -203,6 +203,32 @@ func (w *World) HeroInt(id EntityID) fixed.F64 {
 	return 0
 }
 
+// HeroSkillPoints returns the hero's unspent skill points, 0 when not a hero
+// (GetHeroSkillPoints).
+func (w *World) HeroSkillPoints(id EntityID) uint8 {
+	if r := w.Heroes.Row(id); r != -1 {
+		return w.Heroes.SkillPoints[r]
+	}
+	return 0
+}
+
+// ModifySkillPoints adds delta to the hero's skill points, clamped to
+// [0, 255]. Returns false on a non-hero (UnitModifySkillPoints).
+func (w *World) ModifySkillPoints(id EntityID, delta int) bool {
+	r := w.Heroes.Row(id)
+	if r == -1 {
+		return false
+	}
+	n := int(w.Heroes.SkillPoints[r]) + delta
+	if n < 0 {
+		n = 0
+	} else if n > 255 {
+		n = 255
+	}
+	w.Heroes.SkillPoints[r] = uint8(n)
+	return true
+}
+
 // SetHeroStr sets the hero's strength to an absolute value and applies the
 // derived consequences (max life + regen) through the same delta path level-ups
 // use, then refolds derived stats. No-op on a non-hero or before hero tables are

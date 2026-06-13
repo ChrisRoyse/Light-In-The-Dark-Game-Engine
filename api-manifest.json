@@ -234,6 +234,38 @@
       }
     },
     {
+      "name": "AddHeroXP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "xpToAdd",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "showEyeCandy",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.AddExperience",
+        "package": "litd/api",
+        "goSignature": "(xp int)"
+      }
+    },
+    {
       "name": "AddUnitAnimationProperties",
       "origin": "common.j",
       "signature": {
@@ -472,6 +504,28 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "Unit.HeroLevel",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetHeroSkillPoints",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SkillPoints",
         "package": "litd/api",
         "goSignature": "() int"
       }
@@ -1664,6 +1718,33 @@
         "symbol": "Unit.InventorySize",
         "package": "litd/api",
         "goSignature": "() int"
+      }
+    },
+    {
+      "name": "UnitModifySkillPoints",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "skillPointDelta",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.ModifySkillPoints",
+        "package": "litd/api",
+        "goSignature": "(delta int) bool"
       }
     },
     {

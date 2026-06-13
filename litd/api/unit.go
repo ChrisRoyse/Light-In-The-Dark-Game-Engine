@@ -505,6 +505,39 @@ func (u Unit) Intelligence() int {
 	return int(u.g.w.HeroInt(u.id).Floor())
 }
 
+// AddExperience grants the hero experience, leveling it up at the curve
+// boundaries (capped at the curve top). No-op on an invalid handle, a non-hero,
+// or a non-positive amount. The JASS showEyeCandy flag is dropped (cosmetic).
+// JASS: AddHeroXP.
+func (u Unit) AddExperience(xp int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.AddExperience")
+		return
+	}
+	u.g.w.AddXP(u.id, int64(xp))
+}
+
+// SkillPoints returns the hero's unspent skill points, or 0 if not a hero.
+// JASS: GetHeroSkillPoints.
+func (u Unit) SkillPoints() int {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SkillPoints")
+		return 0
+	}
+	return int(u.g.w.HeroSkillPoints(u.id))
+}
+
+// ModifySkillPoints adds delta to the hero's unspent skill points (clamped to
+// [0, 255]), returning true on success and false on an invalid handle or a
+// non-hero. JASS: UnitModifySkillPoints.
+func (u Unit) ModifySkillPoints(delta int) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.ModifySkillPoints")
+		return false
+	}
+	return u.g.w.ModifySkillPoints(u.id, delta)
+}
+
 // SetStrength sets the hero's strength, updating its max life and regen
 // accordingly. No-op on an invalid handle or a non-hero. The JASS `permanent`
 // parameter is dropped — the engine has no temporary attribute layer (#366).

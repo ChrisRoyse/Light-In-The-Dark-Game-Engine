@@ -571,3 +571,42 @@ func TestSetHeroStatsFSV(t *testing.T) {
 		t.Error("SetHeroStr changed a non-hero's life")
 	}
 }
+
+// TestHeroSkillPointsAndXPFSV: HeroSkillPoints/ModifySkillPoints and AddXP via
+// the World surface. SoT = Heroes.SkillPoints / XP / Level columns. Curve is
+// {0,200,500,900}; a fresh paladin starts level 1 with 1 skill point.
+func TestHeroSkillPointsAndXPFSV(t *testing.T) {
+	w := heroWorld(t)
+	id, ok := w.SpawnHero(hPaladin, 0, 0, pt2(100, 100))
+	if !ok {
+		t.Fatal("spawn failed")
+	}
+	r := w.Heroes.Row(id)
+	t.Logf("BEFORE: level=%d xp=%d skillPts=%d", w.Heroes.Level[r], w.Heroes.XP[r], w.Heroes.SkillPoints[r])
+	if w.HeroSkillPoints(id) != 1 {
+		t.Fatalf("fresh skill points=%d, want 1", w.HeroSkillPoints(id))
+	}
+
+	// AddXP 250 crosses the 200 boundary -> level 2, +1 skill point (2 total).
+	if !w.AddXP(id, 250) {
+		t.Fatal("AddXP returned false")
+	}
+	t.Logf("AFTER AddXP(250): level=%d xp=%d skillPts=%d", w.Heroes.Level[r], w.Heroes.XP[r], w.Heroes.SkillPoints[r])
+	if w.HeroXP(id) != 250 || w.HeroLevel(id) != 2 || w.HeroSkillPoints(id) != 2 {
+		t.Errorf("after 250 XP: xp=%d level=%d skillPts=%d, want 250/2/2", w.HeroXP(id), w.HeroLevel(id), w.HeroSkillPoints(id))
+	}
+
+	// ModifySkillPoints: +3 -> 5; then -10 clamps to 0 (not negative).
+	if !w.ModifySkillPoints(id, 3) || w.HeroSkillPoints(id) != 5 {
+		t.Errorf("modify +3: skillPts=%d, want 5", w.HeroSkillPoints(id))
+	}
+	if !w.ModifySkillPoints(id, -10) || w.HeroSkillPoints(id) != 0 {
+		t.Errorf("modify -10: skillPts=%d, want 0 (clamped)", w.HeroSkillPoints(id))
+	}
+
+	// EDGE: non-hero -> ModifySkillPoints false, HeroSkillPoints 0, AddXP false.
+	worker, _ := w.SpawnFromTable(tWorker, 1, 1, pt2(140, 100))
+	if w.ModifySkillPoints(worker, 5) || w.HeroSkillPoints(worker) != 0 || w.AddXP(worker, 100) {
+		t.Error("non-hero accepted skill-point / XP ops")
+	}
+}

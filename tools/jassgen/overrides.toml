@@ -136,6 +136,30 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "AddHeroXP"
+class = "D2"
+goMapping = "Unit.AddExperience"
+goSignature = "(xp int)"
+package = "litd/api"
+reason = "hero XP grant maps onto AddXP; showEyeCandy dropped (cosmetic, no sim effect) (dedup §3, D2) (#217, #304)"
+
+[[override]]
+name = "GetHeroSkillPoints"
+class = "D1"
+goMapping = "Unit.SkillPoints"
+goSignature = "() int"
+package = "litd/api"
+reason = "unspent skill-point getter maps onto the typed accessor (dedup §2); 0 for non-heroes (#217, #304)"
+
+[[override]]
+name = "UnitModifySkillPoints"
+class = "D1"
+goMapping = "Unit.ModifySkillPoints"
+goSignature = "(delta int) bool"
+package = "litd/api"
+reason = "skill-point delta maps onto the typed mutator (dedup §2); clamps to [0,255], false for non-heroes (#217, #304)"
+
+[[override]]
 name = "SetHeroStr"
 class = "D2"
 goMapping = "Unit.SetStrength"

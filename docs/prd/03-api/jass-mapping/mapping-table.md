@@ -518,9 +518,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitStripHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroXP | common.j | D1 | `litd/api.Unit.HeroXP` |
 | SetHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
-| GetHeroSkillPoints | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitModifySkillPoints | common.j | unclassified | _pending (M2 backlog)_ |
-| AddHeroXP | common.j | unclassified | _pending (M2 backlog)_ |
+| GetHeroSkillPoints | common.j | D1 | `litd/api.Unit.SkillPoints` |
+| UnitModifySkillPoints | common.j | D1 | `litd/api.Unit.ModifySkillPoints` |
+| AddHeroXP | common.j | D2 | `litd/api.Unit.AddExperience` |
 | SetHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | GetHeroLevel | common.j | D1 | `litd/api.Unit.HeroLevel` |
 | GetUnitLevel | common.j | unclassified | _pending (M2 backlog)_ |
