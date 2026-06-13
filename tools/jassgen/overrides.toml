@@ -3,54 +3,39 @@
 # This file is the ONLY place tombstones may originate (G1.4) and the only place
 # heuristic classes are corrected. Every entry needs a `reason`. Fields:
 #   name      = source function name (must exist in common.j/blizzard.j/common.ai)
-#   class     = "D1".."D5"            (optional; omit when tombstoning)
-#   goMapping = canonical Go symbol   (optional)
-#   package   = litd/api | litd/api/helpers | litd/ai   (optional)
+#   class     = "D1".."D5"            (required for a schema-emittable entry)
+#   goMapping = canonical Go symbol   (required iff disposition == mapped)
+#   package   = litd/api | litd/api/helpers | litd/ai
 #   tombstone = deprecated | gameplay-irrelevant | superseded | deferred-v2
 #   reason    = required, human-readable justification
 #
-# Tombstone reasons are a closed enum (deduplication-policy.md §7).
+# Tombstone reasons are a closed enum (deduplication-policy.md §7). An entry is
+# emitted into api-manifest.json only when it is schema-complete: a D1-D5 class
+# plus either a goMapping (mapped) or a tombstone. Everything else is the
+# unresolved M2 backlog the audit report (#8) gates to zero.
 
-# --- Tombstones (deduplication-policy.md §7) ---
-
-[[override]]
-name = "DoNothing"
-tombstone = "gameplay-irrelevant"
-reason = "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
-
-[[override]]
-name = "Cheat"
-tombstone = "gameplay-irrelevant"
-reason = "debug cheat console string; not a shippable capability"
-
-[[override]]
-name = "Preload"
-tombstone = "gameplay-irrelevant"
-reason = "asset loading is owned by litd/asset pipeline, not script-driven preloading"
-
-[[override]]
-name = "PreloadEnd"
-tombstone = "gameplay-irrelevant"
-reason = "pairs with Preload; asset pipeline owns load timing"
-
-[[override]]
-name = "GetLastCreatedUnit"
-tombstone = "superseded"
-reason = "Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel"
-
-[[override]]
-name = "CommentString"
-tombstone = "deprecated"
-reason = "empty-body GUI comment-row artifact; dead even in WC3"
-
-# --- Confirmations / corrections of heuristic classes ---
+# --- Mapped: one confirmed canonical mapping per class D1..D5 ---
 
 [[override]]
 name = "IsUnitPausedBJ"
 class = "D1"
 goMapping = "Unit.Paused"
 package = "litd/api"
-reason = "confirmed pure passthrough of native IsUnitPaused"
+reason = "confirmed pure passthrough of native IsUnitPaused (dedup §2 ex.3)"
+
+[[override]]
+name = "PauseUnitBJ"
+class = "D2"
+goMapping = "Unit.SetPaused"
+package = "litd/api"
+reason = "reorders args over native PauseUnit; canonical keeps full set (dedup §3 ex.1)"
+
+[[override]]
+name = "SetUnitPosition"
+class = "D3"
+goMapping = "Unit.SetPosition"
+package = "litd/api"
+reason = "x/y/Loc position family collapses onto Vec2 setter (dedup §4 ex.1)"
 
 [[override]]
 name = "PolledWait"
@@ -64,4 +49,24 @@ name = "SetUnitState"
 class = "D5"
 goMapping = "Unit.SetLife"
 package = "litd/api"
-reason = "enum-keyed state setter collapses onto typed accessors (dedup §6)"
+reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1)"
+
+# --- Tombstones (deduplication-policy.md §7) ---
+
+[[override]]
+name = "GetLastCreatedUnit"
+class = "D2"
+tombstone = "superseded"
+reason = "Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel"
+
+[[override]]
+name = "DoNothing"
+class = "D4"
+tombstone = "gameplay-irrelevant"
+reason = "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+
+[[override]]
+name = "CommentString"
+class = "D4"
+tombstone = "deprecated"
+reason = "empty-body GUI comment-row artifact; dead even in WC3"

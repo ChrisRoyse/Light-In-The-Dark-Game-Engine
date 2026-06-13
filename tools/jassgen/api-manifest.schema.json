@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "litd:api-manifest",
+  "type": "object",
+  "required": ["schemaVersion", "sources", "functions"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "sha256", "declCount"],
+        "properties": {
+          "file": { "type": "string" },
+          "sha256": { "type": "string" },
+          "declCount": { "type": "integer" }
+        }
+      }
+    },
+    "functions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/functionEntry" }
+    }
+  },
+  "$defs": {
+    "functionEntry": {
+      "type": "object",
+      "required": ["name", "origin", "signature", "classification", "disposition"],
+      "properties": {
+        "name": { "type": "string" },
+        "origin": { "enum": ["common.j", "blizzard.j", "commonai"] },
+        "signature": {
+          "type": "object",
+          "required": ["params", "returns"],
+          "properties": {
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "jassType"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "jassType": { "type": "string" },
+                  "tsType": { "type": "string" }
+                }
+              }
+            },
+            "returns": { "type": "string" }
+          }
+        },
+        "classification": { "enum": ["D1", "D2", "D3", "D4", "D5"] },
+        "classifiedBy": { "enum": ["heuristic", "override"] },
+        "disposition": { "enum": ["mapped", "tombstoned"] },
+        "goMapping": {
+          "type": "object",
+          "required": ["symbol", "package"],
+          "properties": {
+            "symbol": { "type": "string" },
+            "package": { "enum": ["litd/api", "litd/api/helpers", "litd/ai"] },
+            "collapsesWith": { "type": "array", "items": { "type": "string" } },
+            "notes": { "type": "string" }
+          }
+        },
+        "tombstone": {
+          "type": "object",
+          "required": ["reason", "detail"],
+          "properties": {
+            "reason": { "enum": ["deprecated", "gameplay-irrelevant", "superseded", "deferred-v2"] },
+            "detail": { "type": "string" }
+          }
+        },
+        "featureTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Engine capabilities implied (fog-of-war, minimap, weather, cinematics, ...)"
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "disposition": { "const": "mapped" } } },
+          "then": { "required": ["goMapping"] } },
+        { "if": { "properties": { "disposition": { "const": "tombstoned" } } },
+          "then": { "required": ["tombstone"] } }
+      ]
+    }
+  }
+}

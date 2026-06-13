@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "file": "common.j",
+      "sha256": "679ba8627019677321bae04a1dc3f275f5fc8be2f4c215525ebcbd5140ce450f",
+      "declCount": 1534
+    },
+    {
+      "file": "blizzard.j",
+      "sha256": "f54187a1490cb1f805d7e4372aea225faf68b8a3399a5a3fee0d2bf01333684f",
+      "declCount": 985
+    },
+    {
+      "file": "commonai",
+      "sha256": "eeea84ab9938f9a1729bae2a5130edd000938dff21924d1561ca13abce8a6ccc",
+      "declCount": 123
+    }
+  ],
+  "functions": [
+    {
+      "name": "CommentString",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "commentString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deprecated",
+        "detail": "empty-body GUI comment-row artifact; dead even in WC3"
+      }
+    },
+    {
+      "name": "DoNothing",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+      }
+    },
+    {
+      "name": "GetLastCreatedUnit",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel"
+      }
+    },
+    {
+      "name": "IsUnitPausedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Paused",
+        "package": "litd/api"
+      }
+    },
+    {
+      "name": "PauseUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "pause",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetPaused",
+        "package": "litd/api"
+      }
+    },
+    {
+      "name": "PolledWait",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "PolledWait",
+        "package": "litd/api/helpers"
+      }
+    },
+    {
+      "name": "SetUnitPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "newY",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetPosition",
+        "package": "litd/api"
+      }
+    },
+    {
+      "name": "SetUnitState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichUnitState",
+            "jassType": "unitstate",
+            "tsType": "unitstate"
+          },
+          {
+            "name": "newVal",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetLife",
+        "package": "litd/api"
+      }
+    }
+  ]
+}

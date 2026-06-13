@@ -17,6 +17,8 @@ func main() {
 	dumpBodies := flag.String("dump-bodies", "", "parse the named JASS file and dump function bodies (AST) in source order")
 	dumpMerge := flag.Bool("dump-merge", false, "merge .j natives with .d.ts functions; dump enrichment + discrepancy list")
 	dumpClasses := flag.Bool("dump-classes", false, "classify all source symbols D1-D5 (+ unclassified); dump per-class counts and verdicts")
+	emit := flag.Bool("emit", false, "emit api-manifest.json (validated, byte-identical on re-run)")
+	out := flag.String("o", "api-manifest.json", "output path for -emit")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
 	flag.Parse()
 	overridesFilePath = *overridesPath
@@ -30,10 +32,97 @@ func main() {
 		runDumpMerge()
 	case *dumpClasses:
 		runDumpClasses()
+	case *emit:
+		runEmit(*out)
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit")
 		os.Exit(2)
 	}
+}
+
+// buildClassifiedUniverse parses all sources, classifies, and applies overrides.
+// Returns the classifications, the per-symbol merged signatures, and the source
+// metadata entries. Fatal on any error.
+func buildClassifiedUniverse() ([]Classification, map[string]MergedEntry, []SourceEntry) {
+	const scripts = "repoes/war3-types/scripts"
+	const core = "repoes/war3-types/core"
+
+	bj := ParseFuncs(string(mustRead(scripts + "/blizzard.j")))
+	commonN := ParseDecls(string(mustRead(scripts + "/common.j")))
+	aiN := ParseDecls(string(mustRead(scripts + "/common.ai")))
+
+	natives := append(append([]Decl{}, commonN...), aiN...)
+	origins := map[string]string{}
+	for _, d := range commonN {
+		origins[d.Name] = "common"
+	}
+	for _, d := range aiN {
+		if _, ok := origins[d.Name]; !ok {
+			origins[d.Name] = "commonai"
+		}
+	}
+
+	cs := ClassifyAll(bj, "blizzard", natives, origins)
+	ovs, err := LoadOverrides(overridesFilePath)
+	if err != nil {
+		fatal(err)
+	}
+	cs, err = ApplyOverrides(cs, ovs)
+	if err != nil {
+		fatal(err)
+	}
+
+	// Per-symbol signatures from the merge pass (jassType + tsType + returns).
+	sigs := map[string]MergedEntry{}
+	mergeInto := func(res MergeResult) {
+		for _, e := range res.Entries {
+			sigs[e.Name] = e
+		}
+	}
+	mergeInto(Merge(FuncsToSigs(bj), "blizzard", ParseDTS(string(mustRead(core+"/blizzard.d.ts")))))
+	mergeInto(Merge(DeclsToSigs(commonN), "common", ParseDTS(string(mustRead(core+"/common.d.ts")))))
+	mergeInto(Merge(DeclsToSigs(aiN), "commonai", ParseDTS(string(mustRead(core+"/commonai.d.ts")))))
+
+	cn := Tally(commonN)
+	an := Tally(aiN)
+	sources := []SourceEntry{}
+	for _, sm := range []struct {
+		path, file string
+		count      int
+	}{
+		{scripts + "/common.j", "common.j", cn.TotalNatives()},
+		{scripts + "/blizzard.j", "blizzard.j", len(bj)},
+		{scripts + "/common.ai", "commonai", an.TotalNatives()},
+	} {
+		se, err := sourceMeta(sm.path, sm.file, sm.count)
+		if err != nil {
+			fatal(err)
+		}
+		sources = append(sources, se)
+	}
+	return cs, sigs, sources
+}
+
+func runEmit(outPath string) {
+	cs, sigs, sources := buildClassifiedUniverse()
+	m, skipped := BuildManifest(cs, sigs, sources)
+	if err := ValidateManifest(m); err != nil {
+		fatal(fmt.Errorf("manifest failed schema validation: %w", err))
+	}
+	data, err := MarshalManifest(m)
+	if err != nil {
+		fatal(err)
+	}
+	if err := os.WriteFile(outPath, data, 0o644); err != nil {
+		fatal(err)
+	}
+	fmt.Fprintf(os.Stderr, "wrote %s: %d functions emitted, %d unresolved (no D1-D5 class / no mapping)\n",
+		outPath, len(m.Functions), skipped)
+}
+
+func fatal(err error) {
+	fmt.Fprintln(os.Stderr, "jassgen:", err)
+	os.Exit(1)
 }
 
 func runDumpClasses() {
