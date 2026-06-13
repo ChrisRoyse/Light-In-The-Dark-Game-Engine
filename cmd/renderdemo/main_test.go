@@ -68,3 +68,37 @@ func TestCameraZoomRequestFSV(t *testing.T) {
 		t.Logf("FSV camera invalid zoom input=%q err=%v", "bogus", err)
 	}
 }
+
+func TestBuildCameraProjectionModeFSV(t *testing.T) {
+	persp, err := buildCamera(960, 540, "default", "persp")
+	if err != nil {
+		t.Fatalf("perspective camera rejected: %v", err)
+	}
+	ortho, err := buildCamera(960, 540, "above-max", "ortho")
+	if err != nil {
+		t.Fatalf("orthographic camera rejected: %v", err)
+	}
+	t.Logf("FSV renderdemo camera persp=%+v", persp.Snapshot())
+	t.Logf("FSV renderdemo camera ortho=%+v", ortho.Snapshot())
+
+	if persp.Snapshot().Projection != "perspective" {
+		t.Fatalf("perspective camera flag produced wrong projection: %+v", persp.Snapshot())
+	}
+	orthoSnap := ortho.Snapshot()
+	if orthoSnap.Projection != "orthographic" || orthoSnap.Zoom != orthoSnap.ZoomMax || !litrenderClose32(orthoSnap.OrthoSize, orthoSnap.OrthoSizeMax) {
+		t.Fatalf("orthographic camera flag did not clamp zoom to Size_max: %+v", orthoSnap)
+	}
+	if _, err := buildCamera(960, 540, "default", "isometric"); err == nil {
+		t.Fatalf("invalid camera projection accepted")
+	} else {
+		t.Logf("FSV renderdemo invalid camera projection err=%v", err)
+	}
+}
+
+func litrenderClose32(got, want float32) bool {
+	d := got - want
+	if d < 0 {
+		d = -d
+	}
+	return d <= 0.001
+}

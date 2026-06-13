@@ -3,6 +3,7 @@
 // Usage:
 //
 //	renderdemo -scene counted -autotest -shot artifacts/stats-hud.png -dump artifacts/stats.json
+//	renderdemo -scene camera-rig -camera ortho -autotest -shot artifacts/ortho-zmax.png -dump artifacts/ortho.json
 //	renderdemo -hud -res 1920x1080 -autotest -shot artifacts/canvas.png -dump artifacts/canvas.json
 //
 // Scenes are synthetic and hand-countable. Each scene includes one GUI label
@@ -201,6 +202,7 @@ func main() {
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
+	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
 	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
@@ -215,7 +217,7 @@ func main() {
 
 	a := app.App(res.W, res.H, "LitD render stats demo")
 	scene := core.NewNode()
-	cameraRig, err := buildCamera(res.W, res.H, *zoomMode)
+	cameraRig, err := buildCamera(res.W, res.H, *zoomMode, *cameraMode)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "renderdemo: camera: %v\n", err)
 		os.Exit(1)
@@ -266,7 +268,7 @@ func main() {
 		}
 		var sceneDump renderDemoDump
 		if !*hudMode {
-			cameraDump := cameraRig.DumpWithLockProbe(91, 12, 45)
+			cameraDump := cameraRig.DumpWithLockProbeForViewport(91, 12, 45, res.W, res.H)
 			pass := stats == spec.expected && cameraDump.OK
 			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, OK: pass}
 		}
@@ -310,14 +312,21 @@ func main() {
 	})
 }
 
-func buildCamera(width, height int, zoomText string) (*litrender.RTSCamera, error) {
+func buildCamera(width, height int, zoomText, projectionText string) (*litrender.RTSCamera, error) {
 	cfg := litrender.DefaultRTSCameraConfig(float32(width) / float32(height))
 	zoom, err := cameraZoomRequest(zoomText, cfg)
 	if err != nil {
 		return nil, err
 	}
+	projection, err := litrender.ParseRTSCameraProjection(projectionText)
+	if err != nil {
+		return nil, err
+	}
 	rig := litrender.NewRTSCamera(cfg)
 	rig.SetZoomRequested(zoom)
+	if err := rig.SetProjectionMode(projection); err != nil {
+		return nil, err
+	}
 	return rig, nil
 }
 

@@ -44,6 +44,10 @@ type RTSCameraSnapshot struct {
 	ZoomMin              float32      `json:"zoomMin"`
 	ZoomDefault          float32      `json:"zoomDefault"`
 	ZoomMax              float32      `json:"zoomMax"`
+	OrthoSize            float32      `json:"orthoSize"`
+	OrthoSizeMin         float32      `json:"orthoSizeMin"`
+	OrthoSizeMax         float32      `json:"orthoSizeMax"`
+	OrthoSizeScale       float32      `json:"orthoSizeScale"`
 	PitchFromVerticalDeg float32      `json:"pitchFromVerticalDeg"`
 	YawDeg               float32      `json:"yawDeg"`
 	RollDeg              float32      `json:"rollDeg"`
@@ -62,10 +66,13 @@ type RTSCameraLockProbe struct {
 }
 
 type RTSCameraDump struct {
-	Snapshot  RTSCameraSnapshot  `json:"snapshot"`
-	LockProbe RTSCameraLockProbe `json:"lockProbe"`
-	OK        bool               `json:"ok"`
-	Errors    []string           `json:"errors,omitempty"`
+	Snapshot         RTSCameraSnapshot   `json:"snapshot"`
+	LockProbe        RTSCameraLockProbe  `json:"lockProbe"`
+	Footprint        RTSCameraFootprint  `json:"footprint"`
+	ProjectionParity RTSCameraParity     `json:"projectionParity"`
+	PickParity       RTSCameraPickParity `json:"pickParity"`
+	OK               bool                `json:"ok"`
+	Errors           []string            `json:"errors,omitempty"`
 }
 
 type RTSCamera struct {
@@ -74,6 +81,7 @@ type RTSCamera struct {
 	cfg           RTSCameraConfig
 	zoomRequested float32
 	zoom          float32
+	orthoScale    float32
 	unitOffset    math32.Vector3
 	eye           math32.Vector3
 	target        math32.Vector3
@@ -107,12 +115,16 @@ func NewRTSCamera(cfg RTSCameraConfig) *RTSCamera {
 	r.unitOffset = fixedRTSCameraUnitOffset(cfg.PitchFromVerticalDeg, cfg.YawDeg)
 	r.Camera = camera.NewPerspective(cfg.Aspect, cfg.Near, cfg.Far, cfg.FOVDeg, camera.Vertical)
 	r.Apply()
+	r.calibrateOrthographicSizeScale()
+	r.applyProjectionSize()
 	return r
 }
 
 func (r *RTSCamera) SetAspect(aspect float32) {
 	r.cfg.Aspect = aspect
 	r.Camera.SetAspect(aspect)
+	r.calibrateOrthographicSizeScale()
+	r.applyProjectionSize()
 }
 
 func (r *RTSCamera) SetAnchor(anchor math32.Vector3) {
@@ -135,6 +147,7 @@ func (r *RTSCamera) Apply() {
 	)
 	r.Camera.SetPosition(r.eye.X, r.eye.Y, r.eye.Z)
 	r.Camera.LookAt(&r.target, &r.up)
+	r.applyProjectionSize()
 }
 
 func (r *RTSCamera) TrySetAngles(_, _, _ float32) bool {
@@ -154,6 +167,10 @@ func (r *RTSCamera) Snapshot() RTSCameraSnapshot {
 		ZoomMin:              r.cfg.ZoomMin,
 		ZoomDefault:          RTSCameraDefaultZoom,
 		ZoomMax:              r.cfg.ZoomMax,
+		OrthoSize:            r.Camera.Size(),
+		OrthoSizeMin:         r.orthographicSizeForZoom(r.cfg.ZoomMin),
+		OrthoSizeMax:         r.orthographicSizeForZoom(r.cfg.ZoomMax),
+		OrthoSizeScale:       r.orthographicSizeScale(),
 		PitchFromVerticalDeg: r.cfg.PitchFromVerticalDeg,
 		YawDeg:               r.cfg.YawDeg,
 		RollDeg:              RTSCameraRollDeg,
@@ -164,6 +181,10 @@ func (r *RTSCamera) Snapshot() RTSCameraSnapshot {
 }
 
 func (r *RTSCamera) DumpWithLockProbe(yawDeg, pitchFromVerticalDeg, rollDeg float32) RTSCameraDump {
+	return r.DumpWithLockProbeForViewport(yawDeg, pitchFromVerticalDeg, rollDeg, 0, 0)
+}
+
+func (r *RTSCamera) DumpWithLockProbeForViewport(yawDeg, pitchFromVerticalDeg, rollDeg float32, width, height int) RTSCameraDump {
 	before := r.Snapshot()
 	_ = r.TrySetAngles(yawDeg, pitchFromVerticalDeg, rollDeg)
 	r.Apply()
@@ -176,10 +197,24 @@ func (r *RTSCamera) DumpWithLockProbe(yawDeg, pitchFromVerticalDeg, rollDeg floa
 		After:                         after,
 		Unchanged:                     snapshotsEqual(before, after),
 	}
-	dump := RTSCameraDump{Snapshot: after, LockProbe: probe, OK: true}
+	footprint, footprintOK := r.GroundFootprint()
+	parity := r.ProjectionParityFootprints()
+	pickParity := r.PickParityForViewport(width, height)
+	dump := RTSCameraDump{
+		Snapshot:         after,
+		LockProbe:        probe,
+		Footprint:        footprint,
+		ProjectionParity: parity,
+		PickParity:       pickParity,
+		OK:               true,
+	}
 	if after.Zoom < after.ZoomMin || after.Zoom > after.ZoomMax {
 		dump.OK = false
 		dump.Errors = append(dump.Errors, "zoom outside clamp")
+	}
+	if after.Projection == "orthographic" && (after.OrthoSize < after.OrthoSizeMin || after.OrthoSize > after.OrthoSizeMax) {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "orthographic size outside clamp")
 	}
 	if after.PitchFromVerticalDeg != RTSCameraPitchFromVerticalDeg || after.YawDeg != RTSCameraYawDeg || after.RollDeg != RTSCameraRollDeg {
 		dump.OK = false
@@ -188,6 +223,18 @@ func (r *RTSCamera) DumpWithLockProbe(yawDeg, pitchFromVerticalDeg, rollDeg floa
 	if !probe.Unchanged {
 		dump.OK = false
 		dump.Errors = append(dump.Errors, "script angle mutation changed camera")
+	}
+	if !footprintOK || footprint.Area <= 0 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "ground footprint unavailable")
+	}
+	if !parity.OK {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "projection footprint parity failed")
+	}
+	if !pickParity.SameCell {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "projection pick parity failed")
 	}
 	return dump
 }
