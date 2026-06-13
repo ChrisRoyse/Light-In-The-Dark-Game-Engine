@@ -646,7 +646,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueNeutralPointOrderById | common.j | D3 | _pending (M2 backlog)_ |
 | IssueNeutralTargetOrder | common.j | D3 | _pending (M2 backlog)_ |
 | IssueNeutralTargetOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| GetUnitCurrentOrder | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitCurrentOrder | common.j | D1 | `litd/api.Unit.CurrentOrder` |
 | SetResourceAmount | common.j | unclassified | _pending (M2 backlog)_ |
 | AddResourceAmount | common.j | unclassified | _pending (M2 backlog)_ |
 | GetResourceAmount | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1290,9 +1290,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetAbilityActivatedPosY | common.j | D3 | _pending (M2 backlog)_ |
 | BlzSetAbilityActivatedPosX | common.j | D3 | _pending (M2 backlog)_ |
 | BlzSetAbilityActivatedPosY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetUnitMaxHP | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetUnitMaxHP | common.j | D5 | `litd/api.Unit.MaxLife` |
 | BlzSetUnitMaxHP | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitMaxMana | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetUnitMaxMana | common.j | D5 | `litd/api.Unit.MaxMana` |
 | BlzSetUnitMaxMana | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetItemName | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetItemDescription | common.j | unclassified | _pending (M2 backlog)_ |

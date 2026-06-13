@@ -735,3 +735,33 @@ func TestUnitAliveFSV(t *testing.T) {
 		t.Error("zero Unit reports Alive")
 	}
 }
+
+// TestUnitCurrentOrderFSV: CurrentOrder reports the order head verb. SoT = the
+// sim OrderStore Kind, set via Unit.Order.
+func TestUnitCurrentOrderFSV(t *testing.T) {
+	w, g, _ := newDriverGame(t)
+	u, id := apiOrderUnit(t, w, g, 0, Vec2{X: 64, Y: 64})
+
+	// Fresh unit: order head is OrderStop.
+	t.Logf("fresh: simKind=%d CurrentOrder==OrderStop:%v", w.Orders.Kind[w.Orders.Row(id)], u.CurrentOrder() == OrderStop)
+	if u.CurrentOrder() != OrderStop {
+		t.Errorf("fresh CurrentOrder = %+v, want OrderStop", u.CurrentOrder())
+	}
+	// Issue Move → CurrentOrder reports OrderMove, agreeing with the store.
+	u.Order(OrderMove, TargetPoint(Vec2{X: 200, Y: 200}))
+	t.Logf("after Move: simKind=%d (OrderMove=%d) CurrentOrder==OrderMove:%v", w.Orders.Kind[w.Orders.Row(id)], sim.OrderMove, u.CurrentOrder() == OrderMove)
+	if u.CurrentOrder() != OrderMove {
+		t.Errorf("CurrentOrder = %+v, want OrderMove", u.CurrentOrder())
+	}
+	if got := uint8(u.CurrentOrder().id - 1); got != w.Orders.Kind[w.Orders.Row(id)] {
+		t.Errorf("CurrentOrder kind %d != store kind %d", got, w.Orders.Kind[w.Orders.Row(id)])
+	}
+	// EDGE: invalid/zero handle → zero Order.
+	if !(Unit{}).CurrentOrder().IsZero() {
+		t.Error("zero Unit CurrentOrder not zero")
+	}
+	u.Remove()
+	if !u.CurrentOrder().IsZero() {
+		t.Error("removed unit CurrentOrder not zero")
+	}
+}

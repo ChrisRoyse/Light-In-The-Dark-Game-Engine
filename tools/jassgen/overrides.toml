@@ -183,6 +183,30 @@ package = "litd/api"
 reason = "the integer rawcode getter surfaces as the opaque typed UnitType accessor; the FourCC int never enters the public surface (#361; dedup §4 representation collapse), round-tripping with Game.CreateUnit/Game.UnitType"
 
 [[override]]
+name = "GetUnitCurrentOrder"
+class = "D1"
+goMapping = "Unit.CurrentOrder"
+goSignature = "() Order"
+package = "litd/api"
+reason = "current-order-id getter maps onto the typed Order getter; reports the order verb (dedup §2)"
+
+[[override]]
+name = "BlzGetUnitMaxHP"
+class = "D5"
+goMapping = "Unit.MaxLife"
+goSignature = "() float64"
+package = "litd/api"
+reason = "direct max-HP accessor maps onto the typed Unit.MaxLife state accessor; integer rawcode surfaces as float64 (dedup §6, representation)"
+
+[[override]]
+name = "BlzGetUnitMaxMana"
+class = "D5"
+goMapping = "Unit.MaxMana"
+goSignature = "() float64"
+package = "litd/api"
+reason = "direct max-mana accessor maps onto the typed Unit.MaxMana state accessor; integer rawcode surfaces as float64 (dedup §6, representation)"
+
+[[override]]
 name = "GetOwningPlayer"
 class = "D1"
 goMapping = "Unit.Owner"

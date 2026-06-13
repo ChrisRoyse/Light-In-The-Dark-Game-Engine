@@ -265,6 +265,50 @@
       }
     },
     {
+      "name": "BlzGetUnitMaxHP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.MaxLife",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "BlzGetUnitMaxMana",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.MaxMana",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "CreateUnit",
       "origin": "common.j",
       "signature": {
@@ -332,6 +376,28 @@
         "symbol": "Unit.Owner",
         "package": "litd/api",
         "goSignature": "() Player"
+      }
+    },
+    {
+      "name": "GetUnitCurrentOrder",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.CurrentOrder",
+        "package": "litd/api",
+        "goSignature": "() Order"
       }
     },
     {

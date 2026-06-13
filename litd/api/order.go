@@ -76,6 +76,22 @@ func TargetUnit(u Unit) OrderTarget {
 	return OrderTarget{kind: targetUnit, unit: u}
 }
 
+// CurrentOrder returns the unit's current order verb (the order head), or the
+// zero Order on an invalid handle or a unit with no order capability. Only the
+// verb is reported, not its target — mirroring JASS GetUnitCurrentOrder, which
+// returns the order id. A freshly idle unit reports OrderStop.
+func (u Unit) CurrentOrder() Order {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.CurrentOrder")
+		return Order{}
+	}
+	o, ok := u.g.w.CurrentOrder(u.id)
+	if !ok {
+		return Order{}
+	}
+	return Order{id: uint16(o.Kind) + 1}
+}
+
 // Order issues ord to the unit with the given target, replacing any current
 // order (the unqueued IssueXxxOrder semantics). Returns true if the order was
 // installed, false on an invalid handle, an unset order, a dead unit target, or
