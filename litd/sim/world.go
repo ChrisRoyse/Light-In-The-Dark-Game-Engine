@@ -128,6 +128,7 @@ type World struct {
 	pathFlow      *path.FlowSet
 	pathProvider  *path.Provider
 	pathSeq       uint16
+	pathLastExp   int32
 	flowRefs      [path.FlowSlots]uint16
 	// local avoidance (avoidance.go): cell → owning entity, plus the
 	// stall threshold override (0 = DefaultStallRepathTicks)

@@ -13,15 +13,19 @@ func TestWorldPathingMoveOrderQueuesAndStartsPathFSV(t *testing.T) {
 	w, id := pathingOrderWorld(t)
 	target := CellCenter(cellIdx(26, 10))
 	before := worldPathingDump(w, id)
+	beforeExp, beforeDepth := w.PathExpansionsLastTick(), w.PathQueueDepth()
 	if !w.IssueOrder(id, Order{Kind: OrderMove, Point: target}, false) {
 		t.Fatal("IssueOrder refused move")
 	}
 	afterIssue := worldPathingDump(w, id)
 	w.Step()
 	afterStep := worldPathingDump(w, id)
+	afterExp, afterDepth := w.PathExpansionsLastTick(), w.PathQueueDepth()
 	t.Logf("FSV path move BEFORE: %s", before)
 	t.Logf("FSV path move AFTER issue: %s", afterIssue)
 	t.Logf("FSV path move AFTER step:  %s", afterStep)
+	t.Logf("FSV path counters: before exp=%d depth=%d; after exp=%d depth=%d",
+		beforeExp, beforeDepth, afterExp, afterDepth)
 
 	mr := w.Movements.Row(id)
 	if w.Movements.State[mr] != MoveFollowing {
@@ -35,7 +39,10 @@ func TestWorldPathingMoveOrderQueuesAndStartsPathFSV(t *testing.T) {
 	if len(wps) == 0 {
 		t.Fatalf("delivered path has no waypoints: %s", afterStep)
 	}
-	if w.pathQueue.InFlight() != 0 {
+	if afterExp <= 0 {
+		t.Fatalf("path expansion counter did not record the serviced path: before=%d after=%d", beforeExp, afterExp)
+	}
+	if afterDepth != 0 {
 		t.Fatalf("path queue still in flight after delivery: %s", afterStep)
 	}
 }
@@ -50,16 +57,18 @@ func TestWorldPathingInvalidTargetFailsClosedFSV(t *testing.T) {
 	afterIssue := worldPathingDump(w, id)
 	w.Step()
 	afterStep := worldPathingDump(w, id)
+	afterExp, afterDepth := w.PathExpansionsLastTick(), w.PathQueueDepth()
 	t.Logf("FSV path invalid target BEFORE: %s", before)
 	t.Logf("FSV path invalid target AFTER issue: %s", afterIssue)
 	t.Logf("FSV path invalid target AFTER step:  %s", afterStep)
+	t.Logf("FSV path invalid counters: after exp=%d depth=%d", afterExp, afterDepth)
 
 	or := w.Orders.Row(id)
 	mr := w.Movements.Row(id)
 	if w.Orders.Kind[or] != OrderStop || w.Movements.State[mr] != MoveIdle || w.Paths.Live() != 0 {
 		t.Fatalf("invalid target did not fail closed to stop/idle/no path: %s", afterStep)
 	}
-	if w.pathQueue.InFlight() != 0 || w.pathQueue.Dropped() != 0 {
+	if afterExp != 0 || afterDepth != 0 || w.pathQueue.Dropped() != 0 {
 		t.Fatalf("invalid target mutated queue counters: %s", afterStep)
 	}
 }

@@ -19,12 +19,15 @@ package bench
 
 import (
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 )
@@ -131,6 +134,13 @@ type battleStats struct {
 	missileHigh    int32
 	eventsDropped  uint64
 	worstTickIndex int
+	counters       *obs.Counters
+	std            obs.StandardCounters
+}
+
+func newBattleCounterSet() (*obs.Counters, obs.StandardCounters) {
+	c := obs.NewDefaultCounters()
+	return c, obs.RegisterStandardCounters(c)
 }
 
 // stepBattle is the measured loop: steps the world once per durs
@@ -144,10 +154,33 @@ func stepBattle(w *sim.World, durs []time.Duration, st *battleStats) {
 		w.Step()
 		st.timer.stepEnd()
 		durs[i] = time.Since(start)
+		st.sampleCounters(w, durs[i])
 		if c := w.Missiles.Count(); c > st.missileHigh {
 			st.missileHigh = c
 		}
 	}
+}
+
+func (st *battleStats) sampleCounters(w *sim.World, tickDur time.Duration) {
+	if st.counters == nil {
+		return
+	}
+	c := st.counters
+	std := st.std
+	c.Set(std.SimTickNS, tickDur.Nanoseconds())
+	c.Set(std.SimPhaseInputNS, st.timer.cur[1].Nanoseconds())
+	c.Set(std.SimPhaseScriptsNS, st.timer.cur[2].Nanoseconds())
+	c.Set(std.SimPhaseOrdersNS, st.timer.cur[3].Nanoseconds())
+	c.Set(std.SimPhaseMovementNS, st.timer.cur[4].Nanoseconds())
+	c.Set(std.SimPhaseCombatNS, st.timer.cur[5].Nanoseconds())
+	c.Set(std.SimPhaseEventsNS, st.timer.cur[6].Nanoseconds())
+	c.Set(std.SimPhaseCleanupNS, st.timer.cur[7].Nanoseconds())
+	c.Set(std.SimPathExpansionsTick, int64(w.PathExpansionsLastTick()))
+	c.Set(std.SimPathQueueDepth, int64(w.PathQueueDepth()))
+	c.Set(std.SimEntitiesUnitsActive, int64(w.UnitCount()))
+	c.Set(std.SimEntitiesMissiles, int64(w.Missiles.Count()))
+	c.Set(std.SimEntitiesBuffs, int64(w.Buffs.Live()))
+	c.Sample(w.Tick(), 0)
 }
 
 // summarize folds the per-tick durations (sorts durs in place).
@@ -166,7 +199,13 @@ func (st *battleStats) summarize(w *sim.World, durs []time.Duration) {
 // runBattle steps a warmed world `ticks` times with full
 // instrumentation and returns the measured run.
 func runBattle(w *sim.World, ticks int) battleStats {
+	return runBattleWithCounters(w, ticks, nil, obs.StandardCounters{})
+}
+
+func runBattleWithCounters(w *sim.World, ticks int, counters *obs.Counters, std obs.StandardCounters) battleStats {
 	var st battleStats
+	st.counters = counters
+	st.std = std
 	durs := make([]time.Duration, ticks)
 	stepBattle(w, durs, &st)
 	st.summarize(w, durs)
@@ -174,6 +213,21 @@ func runBattle(w *sim.World, ticks int) battleStats {
 }
 
 func ms(d time.Duration) float64 { return float64(d.Nanoseconds()) / 1e6 }
+
+func abs64(v int64) int64 {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+func battleCounterExcerpt(s string, n int) string {
+	lines := strings.Split(strings.TrimRight(s, "\n"), "\n")
+	if len(lines) < n {
+		n = len(lines)
+	}
+	return strings.Join(lines[:n], "\n")
+}
 
 // provisionalBudget maps the actual 7 phases onto the §1 split.
 // Abilities execute inside phase 5, missiles inside phase 4, and
@@ -210,12 +264,24 @@ func benchBattle(b *testing.B, units int) {
 	if w.Missiles.Count() == 0 {
 		b.Fatal("degenerate scene: no missiles in flight after warmup")
 	}
+	counters, std := newBattleCounterSet()
 	var st battleStats
+	st.counters = counters
+	st.std = std
 	durs := make([]time.Duration, b.N)
 	b.ResetTimer()
 	stepBattle(w, durs, &st)
 	b.StopTimer()
 	st.summarize(w, durs)
+	if p := os.Getenv("LITD_OBS_COUNTER_EXPORT"); p != "" {
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			b.Fatal(err)
+		}
+		if err := counters.ExportBenchFile(p); err != nil {
+			b.Fatal(err)
+		}
+		b.Logf("counter history exported: %s samples=%d retained=%d", p, counters.TotalSamples(), counters.Len())
+	}
 	b.ReportMetric(ms(st.worst), "worst-ms/tick")
 	b.ReportMetric(ms(st.median), "median-ms/tick")
 	b.ReportMetric(float64(st.missileHigh), "missiles-high")
@@ -229,6 +295,63 @@ func BenchmarkBattle500(b *testing.B) { benchBattle(b, 500) }
 
 // BenchmarkBattle1000 is tracked, not gated (recommended spec).
 func BenchmarkBattle1000(b *testing.B) { benchBattle(b, 1000) }
+
+func TestBattle500CounterExportFSV(t *testing.T) {
+	if testing.Short() {
+		t.Skip("500-unit counter FSV skipped in -short")
+	}
+	w := buildBattle(t, 500)
+	for i := 0; i < warmupTicks; i++ {
+		w.Step()
+	}
+	counters, std := newBattleCounterSet()
+	st := runBattleWithCounters(w, 64, counters, std)
+	path := filepath.Join(t.TempDir(), "bench_battle_500.counters")
+	if err := counters.ExportBenchFile(path); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(raw)
+
+	last := counters.Len() - 1
+	tickNS, _ := counters.HistoryValue(last, std.SimTickNS)
+	unitCount, _ := counters.HistoryValue(last, std.SimEntitiesUnitsActive)
+	missileCount, _ := counters.HistoryValue(last, std.SimEntitiesMissiles)
+	phaseSum := int64(0)
+	for _, id := range []obs.CounterID{
+		std.SimPhaseInputNS, std.SimPhaseScriptsNS, std.SimPhaseOrdersNS,
+		std.SimPhaseMovementNS, std.SimPhaseCombatNS, std.SimPhaseEventsNS,
+		std.SimPhaseCleanupNS,
+	} {
+		v, _ := counters.HistoryValue(last, id)
+		phaseSum += v
+	}
+	diff := abs64(tickNS - phaseSum)
+	t.Logf("SoT %s excerpt:\n%s", path, battleCounterExcerpt(text, 18))
+	t.Logf("cross-check: samples=%d tickNS=%d phaseSumNS=%d diffNS=%d units=%d missiles=%d worst=%.4fms median=%.4fms",
+		counters.Len(), tickNS, phaseSum, diff, unitCount, missileCount, ms(st.worst), ms(st.median))
+	if diff > int64(5*time.Millisecond) {
+		t.Fatalf("phase sum and tick total diverged: tick=%d phaseSum=%d diff=%d", tickNS, phaseSum, diff)
+	}
+	if unitCount != 500 {
+		t.Fatalf("unit counter=%d want 500", unitCount)
+	}
+	if missileCount == 0 {
+		t.Fatalf("missile counter stayed zero in sustained battle")
+	}
+	for _, want := range []string{
+		"BenchmarkLITDPerf/sim.tick/",
+		"BenchmarkLITDPerf/sim.phase.movement/",
+		"BenchmarkLITDPerf/sim.entities.units.active/",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("export missing %q", want)
+		}
+	}
+}
 
 // TestBattle500TickBudget is the CI gate + #202 edge 3: a sustained
 // 5,000-tick run where no tick may exceed 10 ms, no pool exhausts,

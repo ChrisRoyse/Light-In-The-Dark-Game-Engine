@@ -17,12 +17,26 @@ func (w *World) bindPathingGrid(g *path.Grid) {
 }
 
 func (w *World) pathingSystem() {
+	w.pathLastExp = 0
 	if w.pathQueue != nil {
-		w.pathQueue.Service(path.DefaultExpansionBudget)
+		w.pathLastExp = w.pathQueue.Service(path.DefaultExpansionBudget)
 	}
 	if w.pathFlow != nil {
 		w.pathFlow.Pump(path.DefaultIntegrationBudget)
 	}
+}
+
+// PathExpansionsLastTick reports the counted path-search expansions
+// consumed by the most recent pathing phase.
+func (w *World) PathExpansionsLastTick() int32 { return w.pathLastExp }
+
+// PathQueueDepth reports in-flight path requests, including a parked
+// head request. Worlds without a bound pathing grid report zero.
+func (w *World) PathQueueDepth() int {
+	if w.pathQueue == nil {
+		return 0
+	}
+	return w.pathQueue.InFlight()
 }
 
 func (w *World) startMoveOrder(or int32, id EntityID) (uint8, bool) {
