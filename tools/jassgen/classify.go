@@ -40,9 +40,10 @@ type Classification struct {
 	ClassifiedBy string // "heuristic" until an override flips it to "override"
 	Family       string // D3 family stem, if any
 	Evidence     string
-	GoMapping    string // canonical Go symbol (override-supplied)
-	GoSignature  string // Go signature text e.g. "() bool" (override-supplied, optional)
-	Package      string // litd/api | litd/api/helpers | litd/ai
+	GoMapping     string   // canonical Go symbol (override-supplied)
+	GoSignature   string   // Go signature text e.g. "() bool" (override-supplied, optional)
+	CollapsesWith []string // D3: source names that collapse into GoMapping
+	Package       string   // litd/api | litd/api/helpers | litd/ai
 	Tombstone    string // tombstone reason enum value, if tombstoned via override
 }
 

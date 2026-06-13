@@ -133,7 +133,7 @@ func toFunctionEntry(c Classification, sigs map[string]MergedEntry) (FunctionEnt
 		e.Tombstone = &TombstoneT{Reason: c.Tombstone, Detail: detail}
 	} else {
 		e.Disposition = "mapped"
-		e.GoMapping = &GoMapping{Symbol: c.GoMapping, Package: c.Package, GoSignature: c.GoSignature}
+		e.GoMapping = &GoMapping{Symbol: c.GoMapping, Package: c.Package, GoSignature: c.GoSignature, CollapsesWith: c.CollapsesWith}
 	}
 	return e, true
 }

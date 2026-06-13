@@ -169,7 +169,12 @@
       "goMapping": {
         "symbol": "Unit.SetPosition",
         "package": "litd/api",
-        "goSignature": "(pos Vec2)"
+        "goSignature": "(pos Vec2)",
+        "collapsesWith": [
+          "SetUnitX",
+          "SetUnitY",
+          "SetUnitPositionLoc"
+        ]
       }
     },
     {

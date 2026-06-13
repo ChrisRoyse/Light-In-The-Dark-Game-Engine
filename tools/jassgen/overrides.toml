@@ -37,8 +37,9 @@ name = "SetUnitPosition"
 class = "D3"
 goMapping = "Unit.SetPosition"
 goSignature = "(pos Vec2)"
+collapsesWith = ["SetUnitX", "SetUnitY", "SetUnitPositionLoc"]
 package = "litd/api"
-reason = "x/y/Loc position family collapses onto Vec2 setter (dedup §4 ex.1); collapsesWith SetUnitX/SetUnitY/SetUnitPositionLoc"
+reason = "x/y/Loc position family collapses onto Vec2 setter (dedup §4 ex.1)"
 
 [[override]]
 name = "PolledWait"

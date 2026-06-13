@@ -20,6 +20,7 @@ func main() {
 	emit := flag.Bool("emit", false, "emit api-manifest.json (validated, byte-identical on re-run)")
 	out := flag.String("o", "api-manifest.json", "output path for -emit")
 	emitStubs := flag.Bool("emit-stubs", false, "generate compiling panic-body Go API stubs from manifest goMapping")
+	emitTable := flag.Bool("emit-table", false, "generate the JASS->Go mapping table doc (one row per source function)")
 	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
 	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
@@ -39,6 +40,8 @@ func main() {
 		runEmit(*out)
 	case *emitStubs:
 		runEmitStubs()
+	case *emitTable:
+		runEmitTable()
 	case *audit:
 		runAudit()
 	case *check:
@@ -92,6 +95,8 @@ func runAudit() {
 // file (reproducibility gate).
 func runCheck() {
 	mb, aj, amd, _ := generateOutputs()
+	cs, _, _ := buildClassifiedUniverse()
+	table, _ := RenderMappingTable(cs)
 	fail := false
 	for _, f := range []struct {
 		path string
@@ -100,6 +105,7 @@ func runCheck() {
 		{"api-manifest.json", mb},
 		{"audit-report.json", aj},
 		{"audit-report.md", amd},
+		{mappingTablePath, []byte(table)},
 	} {
 		got, err := os.ReadFile(f.path)
 		if err != nil {
@@ -196,6 +202,20 @@ func runEmit(outPath string) {
 	}
 	fmt.Fprintf(os.Stderr, "wrote %s: %d functions emitted, %d unresolved (no D1-D5 class / no mapping)\n",
 		outPath, len(m.Functions), skipped)
+}
+
+const mappingTablePath = "docs/prd/03-api/jass-mapping/mapping-table.md"
+
+func runEmitTable() {
+	cs, _, _ := buildClassifiedUniverse()
+	table, rows := RenderMappingTable(cs)
+	if rows != 2642 {
+		fatal(fmt.Errorf("mapping table has %d rows, want 2642 (one per source function)", rows))
+	}
+	if err := os.WriteFile(mappingTablePath, []byte(table), 0o644); err != nil {
+		fatal(err)
+	}
+	fmt.Fprintf(os.Stderr, "wrote %s: %d rows\n", mappingTablePath, rows)
 }
 
 func runEmitStubs() {

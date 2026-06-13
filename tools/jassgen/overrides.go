@@ -20,9 +20,10 @@ import (
 type Override struct {
 	Name        string `toml:"name"`
 	Class       string `toml:"class"`       // D1-D5 (optional when tombstoning)
-	GoMapping   string `toml:"goMapping"`   // canonical symbol, optional
-	GoSignature string `toml:"goSignature"` // Go signature text e.g. "() bool", optional
-	Package     string `toml:"package"`     // litd/api | litd/api/helpers | litd/ai
+	GoMapping     string   `toml:"goMapping"`     // canonical symbol, optional
+	GoSignature   string   `toml:"goSignature"`   // Go signature text e.g. "() bool", optional
+	CollapsesWith []string `toml:"collapsesWith"` // D3: source names that collapse into this symbol
+	Package       string   `toml:"package"`       // litd/api | litd/api/helpers | litd/ai
 	Tombstone   string `toml:"tombstone"`   // tombstone reason enum value, optional
 	Reason      string `toml:"reason"`      // mandatory
 }
@@ -116,6 +117,7 @@ func ApplyOverrides(cs []Classification, ovs []Override) ([]Classification, erro
 		}
 		c.GoMapping = o.GoMapping
 		c.GoSignature = o.GoSignature
+		c.CollapsesWith = o.CollapsesWith
 		c.Package = o.Package
 	}
 	return out, nil
