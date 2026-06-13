@@ -103,7 +103,7 @@ type World struct {
 	Owners        *OwnerStore
 	UnitTypes     *UnitTypeStore
 	UserDatas     *UserDataStore
-	Hiddens       *HiddenStore
+	Hiddens       *presenceSet
 	Combats       *CombatStore
 	Abilities     *AbilityStore
 	AbilityFields *AbilityFieldStore
@@ -322,7 +322,7 @@ func NewWorld(requested Caps) *World {
 		Owners:             NewOwnerStore(caps.Units, idxSpace),
 		UnitTypes:          NewUnitTypeStore(caps.Units, idxSpace),
 		UserDatas:          NewUserDataStore(caps.Units, idxSpace),
-		Hiddens:            NewHiddenStore(caps.Units, idxSpace),
+		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
 		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
