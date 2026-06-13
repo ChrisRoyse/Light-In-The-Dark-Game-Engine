@@ -509,9 +509,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ResetUnitLookAt | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitRescuable | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitRescueRange | common.j | unclassified | _pending (M2 backlog)_ |
-| SetHeroStr | common.j | unclassified | _pending (M2 backlog)_ |
-| SetHeroAgi | common.j | unclassified | _pending (M2 backlog)_ |
-| SetHeroInt | common.j | unclassified | _pending (M2 backlog)_ |
+| SetHeroStr | common.j | D2 | `litd/api.Unit.SetStrength` |
+| SetHeroAgi | common.j | D2 | `litd/api.Unit.SetAgility` |
+| SetHeroInt | common.j | D2 | `litd/api.Unit.SetIntelligence` |
 | GetHeroStr | common.j | D2 | `litd/api.Unit.Strength` |
 | GetHeroAgi | common.j | D2 | `litd/api.Unit.Agility` |
 | GetHeroInt | common.j | D2 | `litd/api.Unit.Intelligence` |

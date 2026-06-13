@@ -203,6 +203,51 @@ func (w *World) HeroInt(id EntityID) fixed.F64 {
 	return 0
 }
 
+// SetHeroStr sets the hero's strength to an absolute value and applies the
+// derived consequences (max life + regen) through the same delta path level-ups
+// use, then refolds derived stats. No-op on a non-hero or before hero tables are
+// bound. SetHeroStr's `permanent` arg is moot here — there is no temporary
+// attribute layer (#366). Returns false if it could not apply.
+func (w *World) SetHeroStr(id EntityID, newStr fixed.F64) bool {
+	r := w.Heroes.Row(id)
+	if r == -1 || w.heroTables == nil {
+		return false
+	}
+	d := newStr.Sub(w.Heroes.Str[r])
+	w.Heroes.Str[r] = newStr
+	w.applyAttrDelta(id, d, 0)
+	w.recomputeBuffStats(id)
+	return true
+}
+
+// SetHeroAgi sets the hero's agility to an absolute value. Agility's derived
+// effects (armor, attack cooldown) are recomputed from the stored attribute, so
+// no delta is threaded — just refold. No-op on a non-hero / unbound tables.
+func (w *World) SetHeroAgi(id EntityID, newAgi fixed.F64) bool {
+	r := w.Heroes.Row(id)
+	if r == -1 || w.heroTables == nil {
+		return false
+	}
+	w.Heroes.Agi[r] = newAgi
+	w.recomputeBuffStats(id)
+	return true
+}
+
+// SetHeroInt sets the hero's intelligence to an absolute value and applies the
+// derived consequences (max mana + regen) through the delta path. No-op on a
+// non-hero / unbound tables.
+func (w *World) SetHeroInt(id EntityID, newInt fixed.F64) bool {
+	r := w.Heroes.Row(id)
+	if r == -1 || w.heroTables == nil {
+		return false
+	}
+	d := newInt.Sub(w.Heroes.Int[r])
+	w.Heroes.Int[r] = newInt
+	w.applyAttrDelta(id, 0, d)
+	w.recomputeBuffStats(id)
+	return true
+}
+
 // BindHeroes installs the loaded hero rule set. Requires
 // BindUnitDefs (+ BindAbilityDefs for skills, BindEconomy for revive
 // costs) first; rebinding is refused.

@@ -504,3 +504,70 @@ func TestHeroStatAccessorsFSV(t *testing.T) {
 		t.Error("zero EntityID reported hero state")
 	}
 }
+
+// TestSetHeroStatsFSV: SetHeroStr/Agi/Int set the attribute AND apply the
+// derived consequences. SoT = the derived stores (Healths.MaxLife/Life,
+// Abilities.MaxMana, buffAdd[StatArmor]) plus the Heroes attribute columns.
+// Paladin coeffs: StrHP=25, IntMana=15, AgiArmor=0.3 (base str22/agi13/int17 ->
+// life650 mana255 armor3).
+func TestSetHeroStatsFSV(t *testing.T) {
+	w := heroWorld(t)
+	id, ok := w.SpawnHero(hPaladin, 0, 0, pt2(100, 100))
+	if !ok {
+		t.Fatal("spawn failed")
+	}
+	hr := w.Healths.Row(id)
+	ar := w.Abilities.Row(id)
+	idx := id.Index()
+	t.Logf("BEFORE: str=%d life=%d/%d int=%d mana=%d agi=%d armorAdd=%d",
+		w.HeroStr(id).Floor(), w.Healths.Life[hr].Floor(), w.Healths.MaxLife[hr].Floor(),
+		w.HeroInt(id).Floor(), w.Abilities.MaxMana[ar].Floor(), w.HeroAgi(id).Floor(),
+		w.buffAdd[data.StatArmor][idx])
+	if w.Healths.MaxLife[hr] != fixed.FromInt(650) || w.Abilities.MaxMana[ar] != fixed.FromInt(255) || w.buffAdd[data.StatArmor][idx] != 3 {
+		t.Fatalf("unexpected baseline: life=%d mana=%d armor=%d", w.Healths.MaxLife[hr].Floor(), w.Abilities.MaxMana[ar].Floor(), w.buffAdd[data.StatArmor][idx])
+	}
+
+	// Strength 22 -> 32 (+10): max life +250 = 900, current life tracks.
+	if !w.SetHeroStr(id, fixed.FromInt(32)) {
+		t.Fatal("SetHeroStr returned false")
+	}
+	t.Logf("AFTER SetHeroStr(32): str=%d life=%d/%d", w.HeroStr(id).Floor(), w.Healths.Life[hr].Floor(), w.Healths.MaxLife[hr].Floor())
+	if w.HeroStr(id).Floor() != 32 || w.Healths.MaxLife[hr] != fixed.FromInt(900) || w.Healths.Life[hr] != fixed.FromInt(900) {
+		t.Errorf("str set: str=%d maxLife=%d life=%d, want 32/900/900", w.HeroStr(id).Floor(), w.Healths.MaxLife[hr].Floor(), w.Healths.Life[hr].Floor())
+	}
+
+	// Intelligence 17 -> 27 (+10): max mana +150 = 405.
+	if !w.SetHeroInt(id, fixed.FromInt(27)) {
+		t.Fatal("SetHeroInt returned false")
+	}
+	if w.HeroInt(id).Floor() != 27 || w.Abilities.MaxMana[ar] != fixed.FromInt(405) {
+		t.Errorf("int set: int=%d maxMana=%d, want 27/405", w.HeroInt(id).Floor(), w.Abilities.MaxMana[ar].Floor())
+	}
+
+	// Agility 13 -> 23: armor add floor(23*0.3)=floor(6.9)=6.
+	if !w.SetHeroAgi(id, fixed.FromInt(23)) {
+		t.Fatal("SetHeroAgi returned false")
+	}
+	t.Logf("AFTER SetHeroAgi(23): agi=%d armorAdd=%d", w.HeroAgi(id).Floor(), w.buffAdd[data.StatArmor][idx])
+	if w.HeroAgi(id).Floor() != 23 || w.buffAdd[data.StatArmor][idx] != 6 {
+		t.Errorf("agi set: agi=%d armorAdd=%d, want 23/6", w.HeroAgi(id).Floor(), w.buffAdd[data.StatArmor][idx])
+	}
+
+	// EDGE: lowering strength 32 -> 22 returns max life to 650.
+	if !w.SetHeroStr(id, fixed.FromInt(22)) {
+		t.Fatal("SetHeroStr lower returned false")
+	}
+	if w.Healths.MaxLife[hr] != fixed.FromInt(650) {
+		t.Errorf("str lowered: maxLife=%d, want 650", w.Healths.MaxLife[hr].Floor())
+	}
+
+	// EDGE: a non-hero unit -> false, no panic, no derived change.
+	worker, _ := w.SpawnFromTable(tWorker, 1, 1, pt2(140, 100))
+	wl := w.Healths.MaxLife[w.Healths.Row(worker)]
+	if w.SetHeroStr(worker, fixed.FromInt(50)) {
+		t.Error("SetHeroStr on a non-hero returned true")
+	}
+	if w.Healths.MaxLife[w.Healths.Row(worker)] != wl {
+		t.Error("SetHeroStr changed a non-hero's life")
+	}
+}

@@ -1035,6 +1035,102 @@
       }
     },
     {
+      "name": "SetHeroAgi",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newAgi",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetAgility",
+        "package": "litd/api",
+        "goSignature": "(v int)"
+      }
+    },
+    {
+      "name": "SetHeroInt",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newInt",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetIntelligence",
+        "package": "litd/api",
+        "goSignature": "(v int)"
+      }
+    },
+    {
+      "name": "SetHeroStr",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newStr",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetStrength",
+        "package": "litd/api",
+        "goSignature": "(v int)"
+      }
+    },
+    {
       "name": "SetUnitAcquireRange",
       "origin": "common.j",
       "signature": {

@@ -1268,9 +1268,19 @@ func TestUnitHeroStatsContract(t *testing.T) {
 		t.Error("zero Unit reported hero state")
 	}
 
-	// EDGE: removed unit -> all zero/false.
+	// Setters on a non-hero are safe no-ops (no panic; nothing to change).
+	u.SetStrength(50)
+	u.SetAgility(50)
+	u.SetIntelligence(50)
+	if u.Strength() != 0 || u.Agility() != 0 || u.Intelligence() != 0 {
+		t.Error("hero setters mutated a non-hero")
+	}
+
+	// EDGE: removed unit -> all zero/false, setters no-op.
 	u.Remove()
+	z.SetStrength(1) // zero handle, no panic
 	if u.IsHero() || u.HeroLevel() != 0 || u.Strength() != 0 {
 		t.Error("removed unit reported hero state")
 	}
+	u.SetStrength(1) // removed handle, no panic
 }

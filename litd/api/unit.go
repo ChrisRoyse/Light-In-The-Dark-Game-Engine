@@ -505,6 +505,40 @@ func (u Unit) Intelligence() int {
 	return int(u.g.w.HeroInt(u.id).Floor())
 }
 
+// SetStrength sets the hero's strength, updating its max life and regen
+// accordingly. No-op on an invalid handle or a non-hero. The JASS `permanent`
+// parameter is dropped — the engine has no temporary attribute layer (#366).
+// JASS: SetHeroStr.
+func (u Unit) SetStrength(v int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetStrength")
+		return
+	}
+	u.g.w.SetHeroStr(u.id, fromFloat(float64(v)))
+}
+
+// SetAgility sets the hero's agility, refolding its agility-derived stats
+// (armor, attack cooldown). No-op on an invalid handle or a non-hero. JASS:
+// SetHeroAgi (permanent dropped; see SetStrength).
+func (u Unit) SetAgility(v int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetAgility")
+		return
+	}
+	u.g.w.SetHeroAgi(u.id, fromFloat(float64(v)))
+}
+
+// SetIntelligence sets the hero's intelligence, updating its max mana and regen.
+// No-op on an invalid handle or a non-hero. JASS: SetHeroInt (permanent dropped;
+// see SetStrength).
+func (u Unit) SetIntelligence(v int) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetIntelligence")
+		return
+	}
+	u.g.w.SetHeroInt(u.id, fromFloat(float64(v)))
+}
+
 // InventorySize returns the number of item slots the unit can carry — six for
 // a unit with an inventory, zero otherwise. Zero on an invalid handle. JASS:
 // UnitInventorySize.

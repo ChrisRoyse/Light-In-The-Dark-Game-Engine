@@ -136,6 +136,30 @@ package = "litd/api"
 reason = "point-value getter maps directly onto the typed accessor (dedup §2); static unit-type score/bounty weight (#217). GetUnitPointValueByType (type-keyed, no instance) is deferred to the UnitType-accessor increment."
 
 [[override]]
+name = "SetHeroStr"
+class = "D2"
+goMapping = "Unit.SetStrength"
+goSignature = "(v int)"
+package = "litd/api"
+reason = "hero strength setter; applies str->life/regen via the level-up delta path. `permanent` dropped — no temporary attribute layer (#366), so permanent vs temporary is identical (dedup §3, D2 defaulted arg) (#217, #304)"
+
+[[override]]
+name = "SetHeroAgi"
+class = "D2"
+goMapping = "Unit.SetAgility"
+goSignature = "(v int)"
+package = "litd/api"
+reason = "hero agility setter; refolds agi-derived armor/cooldown. `permanent` dropped (see SetHeroStr) (#217, #304)"
+
+[[override]]
+name = "SetHeroInt"
+class = "D2"
+goMapping = "Unit.SetIntelligence"
+goSignature = "(v int)"
+package = "litd/api"
+reason = "hero intelligence setter; applies int->mana/regen via the delta path. `permanent` dropped (see SetHeroStr) (#217, #304)"
+
+[[override]]
 name = "GetHeroLevel"
 class = "D1"
 goMapping = "Unit.HeroLevel"
