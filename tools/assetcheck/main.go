@@ -66,22 +66,32 @@ func main() {
 		fmt.Fprintf(os.Stderr, "assetcheck: %s is not a directory\n", dir)
 		os.Exit(2)
 	}
+	root, prefix, err := resolveAssetRoot(dir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "assetcheck:", err)
+		os.Exit(2)
+	}
 
-	files, err := listFiles(dir)
+	files, err := listFiles(filepath.Join(root, filepath.FromSlash(prefix)))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "assetcheck: walk:", err)
 		os.Exit(2)
 	}
+	if prefix != "" {
+		for i := range files {
+			files[i] = filepath.ToSlash(filepath.Join(prefix, filepath.FromSlash(files[i])))
+		}
+	}
 
 	if *ingest {
-		if err := census(dir, files, *jsonMode); err != nil {
+		if err := census(root, files, *jsonMode); err != nil {
 			fmt.Fprintln(os.Stderr, "assetcheck: census:", err)
 			os.Exit(2)
 		}
 		return
 	}
 
-	findings := check(dir, files)
+	findings := check(root, files, prefix)
 	if *jsonMode {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -115,6 +125,30 @@ func main() {
 	}
 }
 
+func resolveAssetRoot(dir string) (root string, prefix string, err error) {
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return "", "", err
+	}
+	for cur := dir; ; cur = filepath.Dir(cur) {
+		if _, statErr := os.Stat(filepath.Join(cur, "MANIFEST")); statErr == nil {
+			rel, relErr := filepath.Rel(cur, dir)
+			if relErr != nil {
+				return "", "", relErr
+			}
+			if rel == "." {
+				rel = ""
+			}
+			return cur, filepath.ToSlash(rel), nil
+		}
+		next := filepath.Dir(cur)
+		if next == cur {
+			break
+		}
+	}
+	return "", "", fmt.Errorf("no MANIFEST found at %s or its parents", dir)
+}
+
 func listFiles(dir string) ([]string, error) {
 	var files []string
 	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
@@ -140,7 +174,7 @@ func listFiles(dir string) ([]string, error) {
 }
 
 // check runs every gate rule over the file list and returns sorted findings.
-func check(dir string, files []string) []finding {
+func check(dir string, files []string, prefix string) []finding {
 	var findings []finding
 	add := func(path, rule, msg string) { findings = append(findings, finding{path, rule, msg}) }
 
@@ -191,8 +225,9 @@ func check(dir string, files []string) []finding {
 			}
 		}
 	}
+	checkUIAtlas(files, add)
 
-	prov, err := manifest.Verify(dir)
+	prov, err := manifest.VerifyPrefix(dir, prefix)
 	if err != nil {
 		add("MANIFEST", "PROV-PARSE", err.Error())
 	}
@@ -207,6 +242,28 @@ func check(dir string, files []string) []finding {
 		return findings[i].Rule < findings[j].Rule
 	})
 	return findings
+}
+
+func checkUIAtlas(files []string, add func(path, rule, msg string)) {
+	uiPNGs := 0
+	atlases := 0
+	for _, rel := range files {
+		if !strings.HasPrefix(rel, "ui/") {
+			continue
+		}
+		if strings.ToLower(filepath.Ext(rel)) != ".png" {
+			continue
+		}
+		uiPNGs++
+		if strings.HasSuffix(filepath.Base(rel), ".atlas.png") {
+			atlases++
+			continue
+		}
+		add(rel, "UI-ATLAS", "UI PNG is not atlas-resident; all HUD iconography must be packed into one *.atlas.png")
+	}
+	if uiPNGs > 0 && atlases != 1 {
+		add("ui", "UI-ATLAS", fmt.Sprintf("expected exactly one UI *.atlas.png, found %d", atlases))
+	}
 }
 
 // census emits the --ingest extension/clip census (R1 detection signal).

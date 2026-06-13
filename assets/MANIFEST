@@ -5033,3 +5033,11 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "decb332416397e0b8c5ab3a55ab5ee91c8ce3c8f2767c2d2e282f868acbc9b8d"
+
+[[asset]]
+path = "ui/litd-default-ui.atlas.png"
+pack = "LitD generated default UI atlas"
+source = "generated:go run ./tools/uiatlas"
+license = "CC0-1.0"
+retrieved = "2026-06-13"
+sha256 = "9000c18a8bfc9ea707ca82606407a5db6cb99ec7812ec3467efb327fe1f3aaf4"

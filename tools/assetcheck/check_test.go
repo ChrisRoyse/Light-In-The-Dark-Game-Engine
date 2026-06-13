@@ -84,7 +84,22 @@ func (f *fixture) run(t *testing.T) []finding {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return check(f.dir, files)
+	return check(f.dir, files, "")
+}
+
+func (f *fixture) runSubdir(t *testing.T, subdir string) []finding {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(f.dir, "MANIFEST"), f.manifest.Bytes(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	files, err := listFiles(filepath.Join(f.dir, filepath.FromSlash(subdir)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range files {
+		files[i] = filepath.ToSlash(filepath.Join(subdir, filepath.FromSlash(files[i])))
+	}
+	return check(f.dir, files, subdir)
 }
 
 func rules(fs []finding) []string {
@@ -102,6 +117,37 @@ func TestCleanAssetsPass(t *testing.T) {
 	f.add(t, "atlas/vigil.png", []byte("PNG-synthetic"), true)
 	if got := f.run(t); len(got) != 0 {
 		t.Fatalf("clean fixture should pass, got %v", got)
+	}
+}
+
+func TestUIAtlasPassesFromAssetsRootAndSubdir(t *testing.T) {
+	f := newFixture(t)
+	f.add(t, "ui/litd-default-ui.atlas.png", []byte("PNG-synthetic"), true)
+	if got := f.run(t); len(got) != 0 {
+		t.Fatalf("single UI atlas should pass from root, got %v", got)
+	}
+	if got := f.runSubdir(t, "ui"); len(got) != 0 {
+		t.Fatalf("single UI atlas should pass from assets/ui, got %v", got)
+	}
+}
+
+func TestUILooseIconRejected(t *testing.T) {
+	f := newFixture(t)
+	f.add(t, "ui/litd-default-ui.atlas.png", []byte("PNG-synthetic"), true)
+	f.add(t, "ui/loose-command-icon.png", []byte("PNG-synthetic"), true)
+	got := f.runSubdir(t, "ui")
+	t.Logf("FSV loose UI icon findings=%v", got)
+	if len(got) != 1 || got[0].Path != "ui/loose-command-icon.png" || got[0].Rule != "UI-ATLAS" {
+		t.Fatalf("want loose icon UI-ATLAS, got %v", got)
+	}
+}
+
+func TestSubdirCheckIgnoresUnrelatedManifestEntries(t *testing.T) {
+	f := newFixture(t)
+	f.add(t, "ui/litd-default-ui.atlas.png", []byte("PNG-synthetic"), true)
+	f.manifest.WriteString("[[asset]]\npath = \"units/missing.glb\"\npack = \"T\"\nsource = \"https://example.com\"\nlicense = \"CC0-1.0\"\nretrieved = \"2026-06-11\"\nsha256 = \"0000000000000000000000000000000000000000000000000000000000000000\"\n")
+	if got := f.runSubdir(t, "ui"); len(got) != 0 {
+		t.Fatalf("subdir check should ignore unrelated manifest entries, got %v", got)
 	}
 }
 

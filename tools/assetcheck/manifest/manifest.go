@@ -144,6 +144,12 @@ func (v Violation) String() string { return v.Path + ": " + v.RuleID + ": " + v.
 // every file listed exactly once, every entry present, every hash matching,
 // every license CC0-1.0. Returned violations are sorted by path.
 func Verify(assetsDir string) ([]Violation, error) {
+	return VerifyPrefix(assetsDir, "")
+}
+
+// VerifyPrefix checks only the files and MANIFEST entries under prefix. Prefix
+// is relative to assetsDir and must use forward slashes.
+func VerifyPrefix(assetsDir string, prefix string) ([]Violation, error) {
 	f, err := os.Open(filepath.Join(assetsDir, "MANIFEST"))
 	if err != nil {
 		return nil, fmt.Errorf("open MANIFEST: %w", err)
@@ -155,13 +161,25 @@ func Verify(assetsDir string) ([]Violation, error) {
 	}
 
 	var violations []Violation
+	prefix = strings.Trim(prefix, "/")
+	if prefix != "" {
+		prefix += "/"
+	}
+
 	listed := make(map[string]Asset, len(assets))
 	for _, a := range assets {
+		if prefix != "" && !strings.HasPrefix(a.Path, prefix) {
+			continue
+		}
 		listed[a.Path] = a
 	}
 
 	onDisk := make(map[string]bool)
-	err = filepath.WalkDir(assetsDir, func(p string, d fs.DirEntry, err error) error {
+	walkRoot := assetsDir
+	if prefix != "" {
+		walkRoot = filepath.Join(assetsDir, filepath.FromSlash(strings.TrimSuffix(prefix, "/")))
+	}
+	err = filepath.WalkDir(walkRoot, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -187,6 +205,9 @@ func Verify(assetsDir string) ([]Violation, error) {
 	}
 
 	for _, a := range assets {
+		if prefix != "" && !strings.HasPrefix(a.Path, prefix) {
+			continue
+		}
 		if !onDisk[a.Path] {
 			violations = append(violations, Violation{a.Path, "PROV-MISSING", fmt.Sprintf("MANIFEST entry (line %d) but file does not exist", a.Line)})
 			continue

@@ -35,6 +35,7 @@ import (
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
+	"github.com/g3n/engine/texture"
 	"github.com/g3n/engine/window"
 )
 
@@ -86,6 +87,11 @@ type canvasRegion struct {
 type canvasRegionDump struct {
 	Name   string         `json:"name"`
 	Anchor string         `json:"anchor"`
+	Kind   string         `json:"kind,omitempty"`
+	Parent string         `json:"parent,omitempty"`
+	Atlas  string         `json:"atlas,omitempty"`
+	CellsX int            `json:"cellsX,omitempty"`
+	CellsY int            `json:"cellsY,omitempty"`
 	Ref    lithud.RefRect `json:"ref"`
 	Rect   lithud.Rect    `json:"rect"`
 }
@@ -102,16 +108,21 @@ type canvasDump struct {
 	Mode   string          `json:"mode"`
 	Before *canvasSnapshot `json:"before,omitempty"`
 	After  canvasSnapshot  `json:"after"`
+	HUD    hudRuntimeDump  `json:"hud,omitempty"`
 	OK     bool            `json:"ok"`
 	Errors []string        `json:"errors,omitempty"`
 }
 
-var canvasRegions = []canvasRegion{
-	{name: "top-left", anchor: lithud.AnchorTopLeft, ref: lithud.RefRect{X: 16, Y: 16, W: 220, H: 30}, color: math32.Color4{R: 0.12, G: 0.30, B: 0.52, A: 0.92}},
-	{name: "top-right", anchor: lithud.AnchorTopRight, ref: lithud.RefRect{X: 980, Y: 16, W: 280, H: 30}, color: math32.Color4{R: 0.38, G: 0.23, B: 0.55, A: 0.92}},
-	{name: "bottom-left", anchor: lithud.AnchorBottomLeft, ref: lithud.RefRect{X: 16, Y: 584, W: 160, H: 120}, color: math32.Color4{R: 0.18, G: 0.42, B: 0.27, A: 0.92}},
-	{name: "bottom-center", anchor: lithud.AnchorBottom, ref: lithud.RefRect{X: 560, Y: 594, W: 160, H: 110}, color: math32.Color4{R: 0.42, G: 0.33, B: 0.16, A: 0.92}},
-	{name: "bottom-right", anchor: lithud.AnchorBottomRight, ref: lithud.RefRect{X: 1044, Y: 584, W: 220, H: 120}, color: math32.Color4{R: 0.48, G: 0.16, B: 0.18, A: 0.92}},
+type hudRuntimeDump struct {
+	AtlasPath              string              `json:"atlasPath"`
+	WidgetPanels           int                 `json:"widgetPanels"`
+	Labels                 int                 `json:"labels"`
+	ExpectedGUIDrawCalls   int                 `json:"expectedGuiDrawCalls"`
+	DrawCallBudget         int                 `json:"drawCallBudget"`
+	ActualGUIDrawCalls     int                 `json:"actualGuiDrawCalls"`
+	GUIStateChanges        int                 `json:"guiStateChanges"`
+	WorstUpdateMicrosFrame float64             `json:"worstUpdateMicrosPerFrame"`
+	UpdateScenarios        lithud.FSVScenarios `json:"updateScenarios"`
 }
 
 func main() {
@@ -126,6 +137,9 @@ func main() {
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
 	flag.Parse()
+	if *hudMode && !res.set {
+		res = resolutionFlag{W: 1366, H: 768, set: true}
+	}
 
 	a := app.App(res.W, res.H, "LitD render stats demo")
 	scene := core.NewNode()
@@ -166,6 +180,9 @@ func main() {
 			os.Exit(1)
 		}
 		stats := litrender.ReadFrameStats(rend)
+		if *hudMode {
+			canvasFSV.recordFrameStats(stats)
+		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: screenshot: %v\n", err)
@@ -284,29 +301,53 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	if err != nil {
 		return canvasDump{}, err
 	}
-	after := canvasSnapshotFor(canvas)
-	dump := canvasDump{Mode: "hud-canvas", After: after}
+	hud := lithud.NewDefaultHUD(canvas)
+	after := canvasSnapshotFor(canvas, hud.Widgets())
+	scenarios := hud.RunFSVScenarios()
+	dump := canvasDump{
+		Mode:  "hud-full",
+		After: after,
+		HUD: hudRuntimeDump{
+			AtlasPath:              lithud.DefaultAtlasPath,
+			WidgetPanels:           hud.PanelDrawCalls(),
+			Labels:                 hud.LabelDrawCalls(),
+			ExpectedGUIDrawCalls:   hud.ExpectedGUIDrawCalls(),
+			DrawCallBudget:         lithud.DefaultHUDDrawCallCap,
+			WorstUpdateMicrosFrame: worstUpdateMicrosFrame(scenarios),
+			UpdateScenarios:        scenarios,
+		},
+	}
 	if resizeFrom.set {
 		beforeCanvas, err := lithud.NewCanvas(resizeFrom.W, resizeFrom.H, uiScale)
 		if err != nil {
 			return canvasDump{}, fmt.Errorf("resize-from: %w", err)
 		}
-		before := canvasSnapshotFor(beforeCanvas)
+		beforeHUD := lithud.NewDefaultHUD(beforeCanvas)
+		before := canvasSnapshotFor(beforeCanvas, beforeHUD.Widgets())
 		dump.Before = &before
 	}
 	dump.OK, dump.Errors = validateCanvasSnapshot(after)
-	drawCanvasHUD(scene, after, dump.OK)
+	atlasTex, err := texture.NewTexture2DFromImage(lithud.DefaultAtlasPath)
+	if err != nil {
+		return canvasDump{}, fmt.Errorf("ui atlas: %w", err)
+	}
+	drawCanvasHUD(scene, after, &hud, atlasTex, dump.OK)
 	return dump, nil
 }
 
-func canvasSnapshotFor(canvas lithud.Canvas) canvasSnapshot {
-	rects := make([]canvasRegionDump, 0, len(canvasRegions))
-	for _, region := range canvasRegions {
+func canvasSnapshotFor(canvas lithud.Canvas, widgets []lithud.Widget) canvasSnapshot {
+	rects := make([]canvasRegionDump, 0, len(widgets))
+	for _, widget := range widgets {
 		rects = append(rects, canvasRegionDump{
-			Name:   region.name,
-			Anchor: region.anchor.String(),
-			Ref:    region.ref,
-			Rect:   canvas.Place(region.anchor, region.ref),
+			Name:   widget.Name,
+			Anchor: widget.Anchor.String(),
+			Kind:   widget.Kind.String(),
+			Parent: widget.Parent,
+			Atlas:  widget.AtlasRegion,
+			CellsX: widget.CellsX,
+			CellsY: widget.CellsY,
+			Ref:    widget.Ref,
+			Rect:   widget.Rect,
 		})
 	}
 	return canvasSnapshot{
@@ -324,8 +365,15 @@ func validateCanvasSnapshot(s canvasSnapshot) (bool, []string) {
 		if !r.Rect.Inside(s.Width, s.Height) {
 			errs = append(errs, fmt.Sprintf("%s offscreen %+v", r.Name, r.Rect))
 		}
+		if r.Parent != "" {
+			parent, ok := snapshotRect(s.Rects, r.Parent)
+			if !ok || !r.Rect.InsideRect(parent) {
+				errs = append(errs, fmt.Sprintf("%s outside parent %s %+v", r.Name, r.Parent, r.Rect))
+			}
+			continue
+		}
 		for j := 0; j < i; j++ {
-			if r.Rect.Overlaps(s.Rects[j].Rect) {
+			if s.Rects[j].Parent == "" && r.Rect.Overlaps(s.Rects[j].Rect) {
 				errs = append(errs, fmt.Sprintf("%s overlaps %s", r.Name, s.Rects[j].Name))
 			}
 		}
@@ -333,25 +381,115 @@ func validateCanvasSnapshot(s canvasSnapshot) (bool, []string) {
 	return len(errs) == 0, errs
 }
 
-func drawCanvasHUD(scene *core.Node, snap canvasSnapshot, ok bool) {
-	topBandBottom := 0
-	for i, region := range canvasRegions {
-		rect := snap.Rects[i].Rect
+func snapshotRect(rects []canvasRegionDump, name string) (lithud.Rect, bool) {
+	for _, r := range rects {
+		if r.Name == name {
+			return r.Rect, true
+		}
+	}
+	return lithud.Rect{}, false
+}
+
+func drawCanvasHUD(scene *core.Node, snap canvasSnapshot, hud *lithud.DefaultHUD, atlasTex *texture.Texture2D, ok bool) {
+	for _, region := range snap.Rects {
+		rect := region.Rect
 		panel := gui.NewPanel(float32(rect.W), float32(rect.H))
-		panel.SetColor4(&region.color)
+		color := hudColor(region)
+		panel.SetColor4(&color)
+		panel.Material().AddTexture(atlasTex)
 		panel.SetPosition(float32(rect.X), float32(rect.Y))
 		scene.Add(panel)
-		if rect.Y < snap.Height/2 && rect.Bottom() > topBandBottom {
-			topBandBottom = rect.Bottom()
-		}
+	}
 
-		label := gui.NewLabel(region.name)
-		label.SetPosition(float32(rect.X+6), float32(rect.Y+22))
+	for _, region := range snap.Rects {
+		if region.Parent != "" {
+			continue
+		}
+		rect := region.Rect
+		label := gui.NewLabel(hudLabel(region.Name, hud, ok))
+		y := rect.Y + 22
+		if rect.H < 34 {
+			y = rect.Y + rect.H - 12
+		}
+		label.SetPosition(float32(rect.X+6), float32(y))
 		scene.Add(label)
 	}
-	label := gui.NewLabel(fmt.Sprintf("canvas=%dx%d scale=%.3f ui=%.2f ok=%v", snap.Width, snap.Height, snap.Scale, snap.UIScale, ok))
-	label.SetPosition(14, float32(topBandBottom+12))
-	scene.Add(label)
+}
+
+func hudColor(region canvasRegionDump) math32.Color4 {
+	switch region.Kind {
+	case "icon-grid":
+		return math32.Color4{R: 0.20, G: 0.24, B: 0.34, A: 0.92}
+	case "progress-bar":
+		if region.Name == "mana-bar" {
+			return math32.Color4{R: 0.16, G: 0.30, B: 0.62, A: 0.95}
+		}
+		return math32.Color4{R: 0.18, G: 0.56, B: 0.24, A: 0.95}
+	default:
+		switch region.Name {
+		case "resource-bar":
+			return math32.Color4{R: 0.34, G: 0.23, B: 0.50, A: 0.92}
+		case "minimap":
+			return math32.Color4{R: 0.18, G: 0.42, B: 0.27, A: 0.92}
+		case "portrait":
+			return math32.Color4{R: 0.36, G: 0.29, B: 0.16, A: 0.92}
+		case "info-panel":
+			return math32.Color4{R: 0.17, G: 0.33, B: 0.46, A: 0.92}
+		case "command-card":
+			return math32.Color4{R: 0.42, G: 0.18, B: 0.18, A: 0.92}
+		default:
+			return math32.Color4{R: 0.12, G: 0.30, B: 0.52, A: 0.92}
+		}
+	}
+}
+
+func hudLabel(name string, hud *lithud.DefaultHUD, ok bool) string {
+	switch name {
+	case "resource-bar":
+		return hud.Resource.String()
+	case "portrait":
+		return hud.Vitals.String()
+	case "info-panel":
+		return hud.Selection.String()
+	case "command-card":
+		return hud.Queue.String()
+	case "control-groups":
+		return hud.Groups.String()
+	case "menu-cluster":
+		return fmt.Sprintf("HUD ok=%v", ok)
+	default:
+		return name
+	}
+}
+
+func worstUpdateMicrosFrame(s lithud.FSVScenarios) float64 {
+	worst := perFrameMicros(s.Static100)
+	for _, v := range []float64{perFrameMicros(s.ResourceChurn), perFrameMicros(s.SelectionChurn)} {
+		if v > worst {
+			worst = v
+		}
+	}
+	return worst
+}
+
+func perFrameMicros(s lithud.ScenarioStats) float64 {
+	if s.Frames == 0 {
+		return 0
+	}
+	return float64(s.UpdateMicros) / float64(s.Frames)
+}
+
+func (d *canvasDump) recordFrameStats(stats litrender.FrameStats) {
+	d.HUD.ActualGUIDrawCalls = stats.GUIDrawCalls
+	d.HUD.GUIStateChanges = stats.GUIStates
+	if stats.GUIDrawCalls > d.HUD.DrawCallBudget {
+		d.OK = false
+		d.Errors = append(d.Errors, fmt.Sprintf("gui draw calls %d exceed budget %d", stats.GUIDrawCalls, d.HUD.DrawCallBudget))
+	}
+	if d.HUD.WorstUpdateMicrosFrame > 1000 {
+		d.OK = false
+		d.Errors = append(d.Errors, fmt.Sprintf("hud update %.3fus/frame exceeds 1000us", d.HUD.WorstUpdateMicrosFrame))
+	}
 }
 
 func expectedStats(visible, culled, opaqueDraws, transparentDraws, opaqueStates, transparentStates int) litrender.FrameStats {
