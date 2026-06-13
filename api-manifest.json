@@ -460,6 +460,33 @@
       }
     },
     {
+      "name": "DecUnitAbilityLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Ability.DecLevel",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
       "name": "GetHeroAgi",
       "origin": "common.j",
       "signature": {
@@ -1017,6 +1044,33 @@
           "GetUnitY",
           "GetUnitLoc"
         ]
+      }
+    },
+    {
+      "name": "IncUnitAbilityLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Ability.IncLevel",
+        "package": "litd/api",
+        "goSignature": "() int"
       }
     },
     {

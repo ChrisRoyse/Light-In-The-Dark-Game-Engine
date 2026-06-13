@@ -145,6 +145,67 @@ func TestRemoveAbilityInvalidatesHandleAndClearsOverridesFSV(t *testing.T) {
 	}
 }
 
+// TestAbilityIncDecLevelFSV proves IncLevel/DecLevel against the store
+// SoT (Abilities.Level[ar][slot]): happy +1/-1, saturation at 255,
+// floor at 1, and the invalid-handle zero-value contract.
+func TestAbilityIncDecLevelFSV(t *testing.T) {
+	w, g, u, id := abilityAPITestUnit(t)
+	ref := g.RegisterAbility(AbilityDef{ID: "api-incdec", ManaCost: 1})
+	a := u.AddAbility(ref)
+	if !a.Valid() {
+		t.Fatal("AddAbility returned invalid handle")
+	}
+	ar, slot := abilityAPISlot(t, w, id, ref)
+
+	// Happy: equipped at level 1 -> Inc -> 2.
+	beforeLvl := w.Abilities.Level[ar][slot]
+	got := a.IncLevel()
+	afterLvl := w.Abilities.Level[ar][slot]
+	t.Logf("FSV IncLevel happy BEFORE store=%d AFTER ret=%d store=%d", beforeLvl, got, afterLvl)
+	if beforeLvl != 1 || got != 2 || afterLvl != 2 {
+		t.Fatalf("IncLevel happy: before=%d ret=%d store=%d, want before 1 ret 2 store 2", beforeLvl, got, afterLvl)
+	}
+
+	// Happy: Dec -> back to 1.
+	got = a.DecLevel()
+	if afterLvl = w.Abilities.Level[ar][slot]; got != 1 || afterLvl != 1 {
+		t.Fatalf("DecLevel happy: ret=%d store=%d, want 1/1", got, afterLvl)
+	}
+
+	// Edge — floor at 1: Dec when already at 1 must not drop to 0 (that
+	// would mean "unequipped" inconsistent with a non-zero AbilityID).
+	got = a.DecLevel()
+	afterLvl = w.Abilities.Level[ar][slot]
+	t.Logf("FSV DecLevel floor: ret=%d store=%d (want 1/1, removal is explicit)", got, afterLvl)
+	if got != 1 || afterLvl != 1 {
+		t.Fatalf("DecLevel floor: ret=%d store=%d, want 1/1", got, afterLvl)
+	}
+
+	// Edge — saturation at 255: write 255 directly, Inc must not wrap to 0.
+	w.Abilities.Level[ar][slot] = 255
+	got = a.IncLevel()
+	afterLvl = w.Abilities.Level[ar][slot]
+	t.Logf("FSV IncLevel saturate: ret=%d store=%d (want 255/255, no wrap)", got, afterLvl)
+	if got != 255 || afterLvl != 255 {
+		t.Fatalf("IncLevel saturate: ret=%d store=%d, want 255/255 (no uint8 wrap)", got, afterLvl)
+	}
+
+	// Edge — invalid handle (after removal): zero-value contract, no panic,
+	// no store mutation on a slot that no longer holds the ref.
+	if !u.RemoveAbility(ref) {
+		t.Fatal("RemoveAbility failed")
+	}
+	if inc := a.IncLevel(); inc != 0 {
+		t.Fatalf("IncLevel on removed ability = %d, want 0", inc)
+	}
+	if dec := a.DecLevel(); dec != 0 {
+		t.Fatalf("DecLevel on removed ability = %d, want 0", dec)
+	}
+	if got := w.Abilities.Level[ar][slot]; got != 0 {
+		t.Fatalf("store slot mutated by Inc/Dec on removed ability: got %d, want 0", got)
+	}
+}
+
 func TestRegisterAbilityBadDefZeroRefNoMutationFSV(t *testing.T) {
 	w, g, _, id := abilityAPITestUnit(t)
 	var reports []string

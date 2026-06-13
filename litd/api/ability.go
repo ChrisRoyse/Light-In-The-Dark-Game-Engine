@@ -215,6 +215,44 @@ func (a Ability) SetLevel(level int) {
 	a.g.w.Abilities.Level[ar][slot] = uint8(level)
 }
 
+// IncLevel raises the ability level by one and returns the new level,
+// or 0 on an invalid handle. The level saturates at 255 (the store's
+// uint8 ceiling) — it never wraps. JASS: IncUnitAbilityLevel.
+func (a Ability) IncLevel() int {
+	ar, slot, ok := a.g.abilitySlot(a.owner, a.ref)
+	if !ok {
+		a.g.reportInvalid("Ability.IncLevel")
+		return 0
+	}
+	lvl := a.g.w.Abilities.Level[ar][slot]
+	if lvl < 255 {
+		lvl++
+		a.g.w.Abilities.Level[ar][slot] = lvl
+	}
+	return int(lvl)
+}
+
+// DecLevel lowers the ability level by one and returns the new level,
+// or 0 on an invalid handle. It floors at 1: an equipped ability is
+// always at least level 1, so removal is explicit (RemoveAbility) and
+// never an accidental side effect of decrementing. (WC3's native drops
+// the ability at level 0; this engine keeps removal an explicit verb so
+// the Ability handle stays valid — documented divergence.) JASS:
+// DecUnitAbilityLevel.
+func (a Ability) DecLevel() int {
+	ar, slot, ok := a.g.abilitySlot(a.owner, a.ref)
+	if !ok {
+		a.g.reportInvalid("Ability.DecLevel")
+		return 0
+	}
+	lvl := a.g.w.Abilities.Level[ar][slot]
+	if lvl > 1 {
+		lvl--
+		a.g.w.Abilities.Level[ar][slot] = lvl
+	}
+	return int(lvl)
+}
+
 // Field resolves an ability field override or its definition default,
 // returning zero on invalid handles or unknown fields.
 func (a Ability) Field(field AbilityField) float64 {

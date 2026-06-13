@@ -14,6 +14,8 @@ type Binding struct {
 
 // Bindings is the core API surface (litd/api + litd/api/helpers).
 var Bindings = []Binding{
+	{LuaName: "Ability_DecLevel", Package: "litd/api", Symbol: "Ability.DecLevel", GoSignature: "() int"},
+	{LuaName: "Ability_IncLevel", Package: "litd/api", Symbol: "Ability.IncLevel", GoSignature: "() int"},
 	{LuaName: "Ability_Level", Package: "litd/api", Symbol: "Ability.Level", GoSignature: "() int"},
 	{LuaName: "Ability_SetLevel", Package: "litd/api", Symbol: "Ability.SetLevel", GoSignature: "(level int)"},
 	{LuaName: "Game_CreateUnit", Package: "litd/api", Symbol: "Game.CreateUnit", GoSignature: "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"},

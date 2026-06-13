@@ -337,6 +337,22 @@ package = "litd/api"
 reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
 
 [[override]]
+name = "IncUnitAbilityLevel"
+class = "D3"
+goMapping = "Ability.IncLevel"
+goSignature = "() int"
+package = "litd/api"
+reason = "(unit, abilcode) +1 collapses onto the Ability noun (D3); returns the new level, saturating at 255 (no wrap) (#217)"
+
+[[override]]
+name = "DecUnitAbilityLevel"
+class = "D3"
+goMapping = "Ability.DecLevel"
+goSignature = "() int"
+package = "litd/api"
+reason = "(unit, abilcode) -1 collapses onto the Ability noun (D3); returns the new level, flooring at 1 — removal stays the explicit RemoveAbility verb, documented divergence from WC3's drop-at-0 (#217)"
+
+[[override]]
 name = "GetUnitFoodUsed"
 class = "D1"
 goMapping = "Unit.FoodUsed"
