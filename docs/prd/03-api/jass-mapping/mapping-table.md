@@ -567,7 +567,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetOwningPlayer | common.j | D1 | `litd/api.Unit.Owner` |
 | GetUnitTypeId | common.j | D3 | `litd/api.Unit.Type` |
 | GetUnitRace | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitName | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitName | common.j | D1 | `litd/api.Unit.Name` |
 | GetUnitFoodUsed | common.j | D1 | `litd/api.Unit.FoodUsed` |
 | GetUnitFoodMade | common.j | D1 | `litd/api.Unit.FoodMade` |
 | GetFoodMade | common.j | unclassified | _pending (M2 backlog)_ |

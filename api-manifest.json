@@ -800,6 +800,28 @@
       }
     },
     {
+      "name": "GetUnitName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Name",
+        "package": "litd/api",
+        "goSignature": "() string"
+      }
+    },
+    {
       "name": "GetUnitPointValue",
       "origin": "common.j",
       "signature": {

@@ -357,6 +357,7 @@ collision-size = 8
 pathing = "ground"
 acquisition-range = 500
 point-value = 30
+name = "Scout Trooper"
 `
 	tables, err := Load(mapFS(withPV))
 	if err != nil {
@@ -380,6 +381,13 @@ point-value = 30
 	}
 	if grunt.PointValue != 0 { // testUnitTOML omits point-value -> default 0
 		t.Errorf("grunt.PointValue=%d, want 0 (omitted default)", grunt.PointValue)
+	}
+	// name decodes; omitted name defaults to "".
+	if scout.Name != "Scout Trooper" {
+		t.Errorf("scout.Name=%q, want %q", scout.Name, "Scout Trooper")
+	}
+	if grunt.Name != "" {
+		t.Errorf("grunt.Name=%q, want empty (omitted)", grunt.Name)
 	}
 
 	// EDGE: negative point-value must be rejected (fail-closed), not clamped.

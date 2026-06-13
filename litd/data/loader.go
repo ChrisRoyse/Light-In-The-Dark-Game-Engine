@@ -113,7 +113,8 @@ type Unit struct {
 	SightDay         fixed.F64
 	SightNight       fixed.F64
 	Model            string
-	PointValue       int32 // score/bounty weight (GetUnitPointValue); 0 = none
+	Name             string // display/proper name (GetUnitName); "" = unnamed
+	PointValue       int32  // score/bounty weight (GetUnitPointValue); 0 = none
 	Attacks          []Attack
 	Abilities        []uint16 // indices into Tables.Abilities
 
@@ -176,6 +177,7 @@ type rawUnit struct {
 	SightDay         float64          `toml:"sight-day" json:"sight-day"`
 	SightNight       float64          `toml:"sight-night" json:"sight-night"`
 	Model            string           `toml:"model" json:"model"`
+	Name             string           `toml:"name" json:"name"`
 	PointValue       int64            `toml:"point-value" json:"point-value"`
 	Abilities        []string         `toml:"abilities" json:"abilities"`
 	Attacks          []rawAttack      `toml:"attack" json:"attack"`
@@ -658,6 +660,7 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		SightDay:         sightDay,
 		SightNight:       sightNight,
 		Model:            r.Model,
+		Name:             r.Name,
 		PointValue:       int32(r.PointValue),
 	}
 	if u.FoodCost, u.FoodProvided, u.DepotMask, u.Harvest, err = t.convertEconomy(file, r.ID, r); err != nil {

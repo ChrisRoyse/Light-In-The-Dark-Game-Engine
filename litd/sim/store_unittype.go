@@ -111,6 +111,15 @@ func (w *World) UnitPointValue(id EntityID) int32 {
 	return 0
 }
 
+// UnitName returns the unit type's proper/display name (GetUnitName), or "" when
+// the unit has no type row. Static type property.
+func (w *World) UnitName(id EntityID) string {
+	if d := w.typeDefOf(id); d != nil {
+		return d.Name
+	}
+	return ""
+}
+
 // UnitFoodUsed returns the food the unit's type consumes (GetUnitFoodUsed), 0
 // when untyped. Static type property — the upkeep cost charged to the owner.
 func (w *World) UnitFoodUsed(id EntityID) uint8 {

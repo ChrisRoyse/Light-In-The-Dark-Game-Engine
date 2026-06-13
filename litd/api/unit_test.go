@@ -1165,6 +1165,44 @@ func TestUnitShowHideFSV(t *testing.T) {
 	}
 }
 
+// TestUnitNameFSV: Unit.Name surfaces the unit type's proper name. SoT = the
+// bound data.Unit.Name, via api + sim accessor.
+func TestUnitNameFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hfoo", Life: 100, Name: "Footman"},
+		{ID: "hnon", Life: 100}, // no name
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+
+	foo := g.CreateUnit(owner, g.UnitType("hfoo"), Vec2{X: 64, Y: 64}, Deg(0))
+	non := g.CreateUnit(owner, g.UnitType("hnon"), Vec2{X: 96, Y: 96}, Deg(0))
+	t.Logf("hfoo name api=%q sim=%q ; hnon name api=%q", foo.Name(), w.UnitName(foo.id), non.Name())
+	if foo.Name() != "Footman" || w.UnitName(foo.id) != "Footman" {
+		t.Errorf("hfoo Name=%q, want Footman", foo.Name())
+	}
+	if non.Name() != "" {
+		t.Errorf("hnon Name=%q, want empty", non.Name())
+	}
+
+	// EDGE: untyped unit -> "".
+	bare, _ := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(8), Y: fixed.FromInt(8)}, 0)
+	if w.UnitName(bare) != "" {
+		t.Errorf("untyped Name=%q, want empty", w.UnitName(bare))
+	}
+	// EDGE: zero / removed handle -> "".
+	if (Unit{}).Name() != "" {
+		t.Error("zero Unit Name() != empty")
+	}
+	foo.Remove()
+	if foo.Name() != "" {
+		t.Errorf("removed unit Name=%q, want empty", foo.Name())
+	}
+}
+
 // TestUnitFoodFSV: FoodUsed/FoodMade surface the unit type's economy fields.
 // SoT = the bound data.Unit FoodCost/FoodProvided, verified via api + sim
 // accessor. A consumer (footman: uses 3, makes 0) and a provider (farm: uses 0,

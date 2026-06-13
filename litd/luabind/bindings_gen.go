@@ -41,6 +41,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_MaxMana", Package: "litd/api", Symbol: "Unit.MaxMana", GoSignature: "() float64"},
 	{LuaName: "Unit_ModifySkillPoints", Package: "litd/api", Symbol: "Unit.ModifySkillPoints", GoSignature: "(delta int) bool"},
 	{LuaName: "Unit_MoveSpeed", Package: "litd/api", Symbol: "Unit.MoveSpeed", GoSignature: "() float64"},
+	{LuaName: "Unit_Name", Package: "litd/api", Symbol: "Unit.Name", GoSignature: "() string"},
 	{LuaName: "Unit_Order", Package: "litd/api", Symbol: "Unit.Order", GoSignature: "(ord Order, target OrderTarget) bool"},
 	{LuaName: "Unit_Owner", Package: "litd/api", Symbol: "Unit.Owner", GoSignature: "() Player"},
 	{LuaName: "Unit_Paused", Package: "litd/api", Symbol: "Unit.Paused", GoSignature: "() bool"},

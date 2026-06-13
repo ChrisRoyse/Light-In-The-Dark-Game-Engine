@@ -604,6 +604,17 @@ func (u Unit) InventorySize() int {
 	return int(u.g.w.UnitInventorySize(u.id))
 }
 
+// Name returns the unit's display name. Currently this is the unit type's
+// proper name (per-instance rename via BlzSetUnitName is deferred). Empty string
+// on an invalid handle or an unnamed/untyped unit. JASS: GetUnitName.
+func (u Unit) Name() string {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Name")
+		return ""
+	}
+	return u.g.w.UnitName(u.id)
+}
+
 // FoodUsed returns the food (upkeep) the unit's type consumes from its owner's
 // food total. Zero on an invalid handle or an untyped unit. JASS:
 // GetUnitFoodUsed.
