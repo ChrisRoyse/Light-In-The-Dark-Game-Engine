@@ -28,6 +28,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SetFacing", Package: "litd/api", Symbol: "Unit.SetFacing", GoSignature: "(a Angle)"},
 	{LuaName: "Unit_SetLife", Package: "litd/api", Symbol: "Unit.SetLife", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetMoveSpeed", Package: "litd/api", Symbol: "Unit.SetMoveSpeed", GoSignature: "(v float64)"},
+	{LuaName: "Unit_SetOwner", Package: "litd/api", Symbol: "Unit.SetOwner", GoSignature: "(p Player, changeColor bool)"},
 	{LuaName: "Unit_SetPaused", Package: "litd/api", Symbol: "Unit.SetPaused", GoSignature: "(paused bool)"},
 	{LuaName: "Unit_SetPosition", Package: "litd/api", Symbol: "Unit.SetPosition", GoSignature: "(pos Vec2)"},
 	{LuaName: "Unit_Type", Package: "litd/api", Symbol: "Unit.Type", GoSignature: "() UnitType"},

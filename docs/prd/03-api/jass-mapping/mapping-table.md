@@ -494,7 +494,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitDefaultTurnSpeed | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitDefaultPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitDefaultFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUnitOwner | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitOwner | common.j | D1 | `litd/api.Unit.SetOwner` |
 | SetUnitColor | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitScale | common.j | D1 | **tombstoned** (deferred-v2): render-only model scale; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
 | SetUnitTimeScale | common.j | D1 | **tombstoned** (deferred-v2): render-only animation playback rate; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |

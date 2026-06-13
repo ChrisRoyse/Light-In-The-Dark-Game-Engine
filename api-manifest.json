@@ -656,6 +656,38 @@
       }
     },
     {
+      "name": "SetUnitOwner",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "changeColor",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetOwner",
+        "package": "litd/api",
+        "goSignature": "(p Player, changeColor bool)"
+      }
+    },
+    {
       "name": "SetUnitPosition",
       "origin": "common.j",
       "signature": {

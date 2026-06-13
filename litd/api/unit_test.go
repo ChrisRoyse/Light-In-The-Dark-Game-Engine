@@ -610,3 +610,94 @@ func TestUnitTypeFSV(t *testing.T) {
 		t.Error("removed Unit.Type() is not null")
 	}
 }
+
+// TestUnitSetOwnerFSV verifies Unit.SetOwner migrates ownership AND the derived
+// per-player food ledger and color, not just the Owners store row. SoT = the
+// sim Owners store + World.FoodUsed/FoodCap ledgers (the #362 trap: a raw store
+// poke would leave the ledger desynced).
+func TestUnitSetOwnerFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16, FoodCost: 3, FoodProvided: 2},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	const A, B = uint8(2), uint8(5)
+	pa := Player{idx: int32(A), g: g}
+	pb := Player{idx: int32(B), g: g}
+	typ := g.UnitType("hfoo")
+
+	u := g.CreateUnit(pa, typ, Vec2{X: 100, Y: 100}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit invalid")
+	}
+	or := w.Owners.Row(u.id)
+
+	dump := func(tag string) {
+		t.Logf("%s: owner=%d team=%d color=%d | foodUsed[A]=%d cap[A]=%d foodUsed[B]=%d cap[B]=%d",
+			tag, w.Owners.Player[or], w.Owners.Team[or], w.Owners.Color[or],
+			w.FoodUsed(A), w.FoodCap(A), w.FoodUsed(B), w.FoodCap(B))
+	}
+
+	// BEFORE: unit charged to A (cost 3, provided 2); B is empty; color = A's slot.
+	dump("BEFORE")
+	if w.Owners.Player[or] != A || w.FoodUsed(A) != 3 || w.FoodCap(A) != 2 {
+		t.Fatalf("precondition: owner=%d foodUsed[A]=%d cap[A]=%d, want A=%d,3,2", w.Owners.Player[or], w.FoodUsed(A), w.FoodCap(A), A)
+	}
+	if w.FoodUsed(B) != 0 || w.FoodCap(B) != 0 {
+		t.Fatalf("precondition: B ledger not empty: used=%d cap=%d", w.FoodUsed(B), w.FoodCap(B))
+	}
+	totalUsedBefore := w.FoodUsed(A) + w.FoodUsed(B)
+
+	// ACTION: hand the unit to B, changing color.
+	u.SetOwner(pb, true)
+	dump("AFTER SetOwner(B, changeColor=true)")
+
+	// Owner row migrated.
+	if w.Owners.Player[or] != B || w.Owners.Team[or] != B || w.Owners.Color[or] != B {
+		t.Errorf("owner row = (player %d, team %d, color %d), want all %d", w.Owners.Player[or], w.Owners.Team[or], w.Owners.Color[or], B)
+	}
+	// Food ledger migrated: A shed it, B took it on.
+	if w.FoodUsed(A) != 0 || w.FoodCap(A) != 0 {
+		t.Errorf("A ledger not shed: used=%d cap=%d, want 0,0", w.FoodUsed(A), w.FoodCap(A))
+	}
+	if w.FoodUsed(B) != 3 || w.FoodCap(B) != 2 {
+		t.Errorf("B ledger not charged: used=%d cap=%d, want 3,2", w.FoodUsed(B), w.FoodCap(B))
+	}
+	// Conservation invariant: total food across players unchanged.
+	if got := w.FoodUsed(A) + w.FoodUsed(B); got != totalUsedBefore {
+		t.Errorf("food not conserved: total used %d -> %d", totalUsedBefore, got)
+	}
+	// Public getter agrees.
+	if w.Owners.Player[w.Owners.Row(u.id)] != B || u.Owner().idx != int32(B) {
+		t.Errorf("Owner() = %d, want %d", u.Owner().idx, B)
+	}
+
+	// EDGE 1 — changeColor=false keeps the old color while moving the owner.
+	u2 := g.CreateUnit(pa, typ, Vec2{X: 150, Y: 150}, Deg(0))
+	r2 := w.Owners.Row(u2.id)
+	u2.SetOwner(pb, false)
+	t.Logf("EDGE changeColor=false: owner=%d color=%d (want owner=%d, color=%d kept)", w.Owners.Player[r2], w.Owners.Color[r2], B, A)
+	if w.Owners.Player[r2] != B {
+		t.Errorf("owner not changed: %d, want %d", w.Owners.Player[r2], B)
+	}
+	if w.Owners.Color[r2] != A {
+		t.Errorf("color changed despite changeColor=false: %d, want %d", w.Owners.Color[r2], A)
+	}
+
+	// EDGE 2 — foreign player (different game): no-op, owner unchanged.
+	otherG := newGame(sim.NewWorld(sim.Caps{Units: 4}))
+	foreign := Player{idx: 1, g: otherG}
+	beforeOwner := w.Owners.Player[or]
+	u.SetOwner(foreign, true)
+	if w.Owners.Player[or] != beforeOwner {
+		t.Errorf("foreign-player SetOwner changed owner: %d -> %d", beforeOwner, w.Owners.Player[or])
+	}
+
+	// EDGE 3 — removed unit: no-op, no panic.
+	u.Remove()
+	u.SetOwner(pa, true)
+	// EDGE 4 — zero handle: no panic.
+	(Unit{}).SetOwner(pa, true)
+}

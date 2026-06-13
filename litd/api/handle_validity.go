@@ -170,6 +170,26 @@ func (u Unit) Owner() Player {
 	return Player{idx: int32(u.g.w.Owners.Player[r]), g: u.g}
 }
 
+// SetOwner reassigns the unit to player p. When changeColor is true the unit's
+// team color changes to p's; otherwise it keeps its current color (the WC3
+// SetUnitOwner changeColor flag). No-op on an invalid handle or a foreign
+// player. This is not a raw store write — it migrates the food ledger and
+// refreshes visibility through the sim's ChangeOwner primitive (#362), so the
+// derived per-player state moves with the unit. Team defaults to p's own slot
+// (FFA, #361) until the alliance model lands (#218). JASS: SetUnitOwner.
+func (u Unit) SetOwner(p Player, changeColor bool) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetOwner")
+		return
+	}
+	if p.g != u.g || !p.Valid() {
+		u.g.reportInvalid("Unit.SetOwner (player not from this game)")
+		return
+	}
+	slot := uint8(p.idx)
+	u.g.w.ChangeOwner(u.id, slot, slot, changeColor)
+}
+
 // Name returns the player's display name, or "" on an invalid handle —
 // the tail that lets Unit{}.Owner().Name() degrade to "" rather than
 // panic. With no name assigned, returns the slot-derived default.

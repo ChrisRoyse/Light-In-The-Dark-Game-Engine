@@ -191,6 +191,14 @@ package = "litd/api"
 reason = "owning-player getter maps directly onto the typed Player accessor (dedup §2)"
 
 [[override]]
+name = "SetUnitOwner"
+class = "D1"
+goMapping = "Unit.SetOwner"
+goSignature = "(p Player, changeColor bool)"
+package = "litd/api"
+reason = "owner setter maps directly; the changeColor flag is preserved (dedup §2). Backed by the sim World.ChangeOwner primitive that migrates the food ledger and refreshes visibility (#362), not a raw store write"
+
+[[override]]
 name = "IssuePointOrder"
 class = "D3"
 goMapping = "Unit.Order"
