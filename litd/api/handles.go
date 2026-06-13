@@ -124,7 +124,10 @@ type Ability struct {
 	g     *Game
 }
 
-func (a Ability) Valid() bool  { return a.g.alive(a.owner) && a.ref != 0 }
+func (a Ability) Valid() bool {
+	_, _, ok := a.g.abilitySlot(a.owner, a.ref)
+	return ok
+}
 func (a Ability) IsZero() bool { return a == Ability{} }
 
 // Buff is one buff/aura instance on a unit (public-api-design.md §2

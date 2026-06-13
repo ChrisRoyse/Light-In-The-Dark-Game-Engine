@@ -335,6 +335,12 @@ func (w *World) abilityDefCount() int {
 	return len(w.abilityDefs) + len(w.runtimeAbilityDefs)
 }
 
+// AbilityDefCount returns the number of static plus runtime ability
+// definitions currently addressable by ability refs.
+func (w *World) AbilityDefCount() int {
+	return w.abilityDefCount()
+}
+
 func (w *World) abilityDefByRef(ref uint16) *data.Ability {
 	if ref == 0 {
 		return nil
