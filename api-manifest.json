@@ -1313,6 +1313,33 @@
       }
     },
     {
+      "name": "IsUnitVisible",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.VisibleTo",
+        "package": "litd/api",
+        "goSignature": "(p Player) bool"
+      }
+    },
+    {
       "name": "IssuePointOrder",
       "origin": "common.j",
       "signature": {

@@ -853,6 +853,90 @@ func TestUnitOwnedByFSV(t *testing.T) {
 	}
 }
 
+// TestUnitVisibleToFSV verifies Unit.VisibleTo against the sim visibility
+// system: a player always sees its own units, sees foreign units only
+// when one of its units has them in active sight, and never panics on
+// invalid handles. SoT = w.CanSeeEntity / the fog grid.
+func TestUnitVisibleToFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 64})
+	g := newGame(w)
+	grid := path.NewGrid()
+	for y := int32(0); y < path.GridSize; y++ {
+		for x := int32(0); x < path.GridSize; x++ {
+			grid.SetFlags(x, y, path.Walkable|path.Buildable|path.Flyable)
+		}
+	}
+	w.SetGrid(grid)
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "scout", Life: 100, SightDay: fixed.FromInt(360), SightNight: fixed.FromInt(160), CollisionSize: 16, Pathing: data.PathingGround},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	w.SetTimeOfDay(12 * fixed.One)
+	w.SuspendTimeOfDay(true)
+
+	spawn := func(player, team uint8, cellX, cellY int32) sim.EntityID {
+		id, ok := w.CreateUnit(sim.CellCenter(cellY*path.GridSize+cellX), 0)
+		if !ok || !w.Owners.Add(w.Ents, id, player, team, player) ||
+			!w.UnitTypes.Add(w.Ents, id, 0) ||
+			!w.Collisions.Add(w.Ents, id, 1, sim.PathGround) ||
+			!w.Healths.Add(w.Ents, id, 100*fixed.One, 0, 0, 0) {
+			t.Fatalf("spawn failed id=%d ok=%v", id, ok)
+		}
+		return id
+	}
+
+	p0 := Player{idx: 0, g: g}
+	p1 := Player{idx: 1, g: g}
+	scout := spawn(0, 0, 40, 40)  // player 0
+	target := spawn(1, 1, 42, 40) // player 1, adjacent to scout
+	_ = scout
+	w.RecomputeVisibility()
+
+	tgt := Unit{id: target, g: g}
+	// Owner always sees its own unit.
+	t.Logf("FSV VisibleTo near: ownerSees=%v p0Sees=%v simSoT(p0)=%v",
+		tgt.VisibleTo(p1), tgt.VisibleTo(p0), w.CanSeeEntity(0, target))
+	if !tgt.VisibleTo(p1) {
+		t.Fatal("owner cannot see own unit")
+	}
+	// Player 0's scout has the target in sight -> visible to p0.
+	if !tgt.VisibleTo(p0) {
+		t.Fatalf("adjacent enemy not visible to p0; sim CanSee=%v", w.CanSeeEntity(0, target))
+	}
+
+	// Move the target far out of p0's vision (via the public setter so the
+	// bucket grid reconciles); owner still sees it, p0 does not.
+	far := sim.CellCenter(5*path.GridSize + 5)
+	tgt.SetPosition(Vec2{X: toFloat(far.X), Y: toFloat(far.Y)})
+	w.RecomputeVisibility()
+	t.Logf("FSV VisibleTo far: ownerSees=%v p0Sees=%v simSoT(p0)=%v",
+		tgt.VisibleTo(p1), tgt.VisibleTo(p0), w.CanSeeEntity(0, target))
+	if !tgt.VisibleTo(p1) {
+		t.Fatal("owner lost sight of own unit after move")
+	}
+	if tgt.VisibleTo(p0) {
+		t.Fatalf("distant enemy still visible to p0; sim CanSee=%v", w.CanSeeEntity(0, target))
+	}
+
+	// EDGE: invalid/foreign player -> false.
+	if tgt.VisibleTo(Player{}) {
+		t.Fatal("VisibleTo(zero player) = true")
+	}
+	other := newGame(sim.NewWorld(sim.Caps{Units: 4}))
+	if tgt.VisibleTo(Player{idx: 1, g: other}) {
+		t.Fatal("VisibleTo(foreign-game player) = true")
+	}
+	// EDGE: dead unit / zero handle -> false, no panic.
+	w.DestroyUnit(target)
+	if tgt.VisibleTo(p1) {
+		t.Fatal("dead unit VisibleTo = true")
+	}
+	if (Unit{}).VisibleTo(p1) {
+		t.Fatal("zero-handle VisibleTo = true")
+	}
+}
+
 // TestUnitAliveFSV: Alive tracks the life store (WC3 Life>0), false for corpses
 // and invalid handles. SoT = the sim Health store life value.
 func TestUnitAliveFSV(t *testing.T) {

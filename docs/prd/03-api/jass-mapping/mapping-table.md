@@ -581,7 +581,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitOwnedByPlayer | common.j | D2 | `litd/api.Unit.OwnedBy` |
 | IsUnitAlly | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitEnemy | common.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitVisible | common.j | unclassified | _pending (M2 backlog)_ |
+| IsUnitVisible | common.j | D2 | `litd/api.Unit.VisibleTo` |
 | IsUnitDetected | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInvisible | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitFogged | common.j | unclassified | _pending (M2 backlog)_ |

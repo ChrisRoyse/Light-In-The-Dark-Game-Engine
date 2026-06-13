@@ -337,6 +337,14 @@ package = "litd/api"
 reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
 
 [[override]]
+name = "IsUnitVisible"
+class = "D2"
+goMapping = "Unit.VisibleTo"
+goSignature = "(p Player) bool"
+package = "litd/api"
+reason = "visibility predicate; the (unit, player) pair becomes a typed Unit method over the sim visibility system (CanSeeEntity: owner-shortcut + active fog sight + undetected-invisibility), false on any invalid/foreign combination (D2) (#217)"
+
+[[override]]
 name = "GetUnitLevel"
 class = "D1"
 goMapping = "Unit.Level"

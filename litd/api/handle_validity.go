@@ -230,6 +230,24 @@ func (u Unit) OwnedBy(p Player) bool {
 	return int32(u.g.w.Owners.Player[r]) == p.idx
 }
 
+// VisibleTo reports whether player p can currently see this unit: true
+// for p's own units, and for foreign units standing on a cell p has in
+// active sight (and not hidden by undetected invisibility). Returns
+// false on an invalid unit handle or an invalid/foreign player — never
+// panics. SoT: the sim visibility system (CanSeeEntity / fog state).
+// JASS: IsUnitVisible(whichUnit, whichPlayer).
+func (u Unit) VisibleTo(p Player) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.VisibleTo")
+		return false
+	}
+	if p.g != u.g || !p.Valid() {
+		u.g.reportInvalid("Unit.VisibleTo (player not from this game)")
+		return false
+	}
+	return u.g.w.CanSeeEntity(uint8(p.idx), u.id)
+}
+
 // Name returns the player's display name, or "" on an invalid handle —
 // the tail that lets Unit{}.Owner().Name() degrade to "" rather than
 // panic. With no name assigned, returns the slot-derived default.
