@@ -175,6 +175,14 @@ package = "litd/api"
 reason = "move-speed setter maps directly; per-second value quantized to the per-tick rate (dedup §2)"
 
 [[override]]
+name = "GetUnitTypeId"
+class = "D3"
+goMapping = "Unit.Type"
+goSignature = "() UnitType"
+package = "litd/api"
+reason = "the integer rawcode getter surfaces as the opaque typed UnitType accessor; the FourCC int never enters the public surface (#361; dedup §4 representation collapse), round-tripping with Game.CreateUnit/Game.UnitType"
+
+[[override]]
 name = "GetOwningPlayer"
 class = "D1"
 goMapping = "Unit.Owner"

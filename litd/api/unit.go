@@ -70,6 +70,23 @@ func (g *Game) CreateUnit(owner Player, typ UnitType, pos Vec2, facing Angle) Un
 	return Unit{id: id, g: g}
 }
 
+// Type returns the unit's bound type — the same UnitType passed to CreateUnit —
+// or the null UnitType on an invalid handle or a unit with no type row. The
+// returned value round-trips with Game.CreateUnit and Game.UnitType. JASS:
+// GetUnitTypeId returns the raw integer code; here it surfaces as the opaque
+// UnitType (the integer rawcode never leaks into the public surface, #361).
+func (u Unit) Type() UnitType {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Type")
+		return UnitType{}
+	}
+	r := u.g.w.UnitTypes.Row(u.id)
+	if r < 0 {
+		return UnitType{}
+	}
+	return UnitType{ref: u.g.w.UnitTypes.TypeID[r] + 1}
+}
+
 // Position returns the unit's current world position, or the zero Vec2 on an
 // invalid handle. JASS: GetUnitX/GetUnitY, GetUnitLoc (D3 → one Vec2).
 func (u Unit) Position() Vec2 {

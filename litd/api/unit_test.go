@@ -556,3 +556,57 @@ func TestUnitOrderFSV(t *testing.T) {
 		t.Error("Order on the zero Unit returned true")
 	}
 }
+
+// TestUnitTypeFSV verifies Unit.Type round-trips with the UnitType passed to
+// CreateUnit. SoT = the sim UnitTypeStore.TypeID row.
+func TestUnitTypeFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+		{ID: "hkni", Life: 200, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+
+	typ := g.UnitType("hkni")
+	if typ.IsZero() {
+		t.Fatal(`UnitType("hkni") null`)
+	}
+	u := g.CreateUnit(owner, typ, Vec2{X: 100, Y: 100}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit invalid")
+	}
+
+	// SoT: the sim type row carries the bound type id; Unit.Type wraps it +1.
+	r := w.UnitTypes.Row(u.id)
+	if r < 0 {
+		t.Fatal("created unit has no UnitTypes row")
+	}
+	rawTypeID := w.UnitTypes.TypeID[r]
+	t.Logf("SoT UnitTypes.TypeID[row]=%d; UnitType.ref=%d", rawTypeID, typ.ref)
+
+	got := u.Type()
+	if got != typ {
+		t.Errorf("Unit.Type() = %+v, want round-trip %+v", got, typ)
+	}
+	if got.ref != rawTypeID+1 {
+		t.Errorf("Unit.Type().ref = %d, want sim TypeID+1 = %d", got.ref, rawTypeID+1)
+	}
+	// Distinguishes types: an hfoo unit must not report hkni's type.
+	other := g.CreateUnit(owner, g.UnitType("hfoo"), Vec2{X: 200, Y: 200}, Deg(0))
+	if other.Type() == got {
+		t.Error("distinct unit types compared equal (hfoo == hkni)")
+	}
+
+	// EDGE: invalid/zero handle → null UnitType, no panic.
+	if !(Unit{}).Type().IsZero() {
+		t.Error("zero Unit.Type() is not null")
+	}
+	// EDGE: removed unit → null UnitType.
+	u.Remove()
+	if !u.Type().IsZero() {
+		t.Error("removed Unit.Type() is not null")
+	}
+}
