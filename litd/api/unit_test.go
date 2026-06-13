@@ -1341,6 +1341,18 @@ func TestUnitNameFSV(t *testing.T) {
 		t.Errorf("hnon Name=%q, want empty", non.Name())
 	}
 
+	// Per-instance override (BlzSetUnitName) shadows the type name.
+	foo.SetName("Sir Reginald")
+	t.Logf("after SetName: api=%q sim=%q override-row=%d", foo.Name(), w.UnitName(foo.id), w.UnitNames.Row(foo.id))
+	if foo.Name() != "Sir Reginald" || w.UnitName(foo.id) != "Sir Reginald" {
+		t.Errorf("override Name=%q, want %q", foo.Name(), "Sir Reginald")
+	}
+	// An unnamed type can still be given an instance name.
+	non.SetName("Nameless No More")
+	if non.Name() != "Nameless No More" {
+		t.Errorf("override on unnamed type=%q", non.Name())
+	}
+
 	// EDGE: untyped unit -> "".
 	bare, _ := w.CreateUnit(fixed.Vec2{X: fixed.FromInt(8), Y: fixed.FromInt(8)}, 0)
 	if w.UnitName(bare) != "" {

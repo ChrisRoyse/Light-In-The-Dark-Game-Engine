@@ -87,7 +87,8 @@ func saveWorld(t *testing.T) (*World, *data.Tables, *[]uint32) {
 	// save/load and contribute to the state hash.
 	w.SetUserData(ids[0], 0x7FFFFFFF) // int32 max
 	w.SetUserData(ids[4], -12345)
-	w.ShowUnit(ids[5], false) // hide
+	w.ShowUnit(ids[5], false)                  // hide
+	w.SetUnitName(ids[2], "Synthetic Champion") // per-instance name override (#217)
 	// current order + two queued pooled entries
 	pt := func(x, y int32) fixed.Vec2 { return fixed.Vec2{X: fixed.FromInt(x), Y: fixed.FromInt(y)} }
 	if !w.IssueOrder(ids[0], Order{Kind: OrderMove, Point: pt(1100, 1100)}, false) ||
@@ -124,6 +125,9 @@ func saveWorld(t *testing.T) (*World, *data.Tables, *[]uint32) {
 	}
 	if w.Hiddens.Count() == 0 {
 		t.Fatal("degenerate fixture: no hidden units at the save point")
+	}
+	if w.UnitNames.Count() == 0 {
+		t.Fatal("degenerate fixture: no name overrides at the save point")
 	}
 	return w, tb, fired
 }

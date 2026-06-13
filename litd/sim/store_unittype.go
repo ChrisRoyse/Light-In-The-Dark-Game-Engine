@@ -190,9 +190,13 @@ func (w *World) UnitAttacksFlying(id EntityID) bool {
 	return false
 }
 
-// UnitName returns the unit type's proper/display name (GetUnitName), or "" when
-// the unit has no type row. Static type property.
+// UnitName returns the unit's display name (GetUnitName): a per-instance
+// override (BlzSetUnitName) if one was set, else the unit type's proper name,
+// else "" (untyped/unnamed).
 func (w *World) UnitName(id EntityID) string {
+	if ov, ok := w.unitNameOverride(id); ok {
+		return ov
+	}
 	if d := w.typeDefOf(id); d != nil {
 		return d.Name
 	}

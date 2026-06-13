@@ -60,6 +60,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SetInvulnerable", Package: "litd/api", Symbol: "Unit.SetInvulnerable", GoSignature: "(on bool)"},
 	{LuaName: "Unit_SetLife", Package: "litd/api", Symbol: "Unit.SetLife", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetMoveSpeed", Package: "litd/api", Symbol: "Unit.SetMoveSpeed", GoSignature: "(v float64)"},
+	{LuaName: "Unit_SetName", Package: "litd/api", Symbol: "Unit.SetName", GoSignature: "(name string)"},
 	{LuaName: "Unit_SetOwner", Package: "litd/api", Symbol: "Unit.SetOwner", GoSignature: "(p Player, changeColor bool)"},
 	{LuaName: "Unit_SetPaused", Package: "litd/api", Symbol: "Unit.SetPaused", GoSignature: "(paused bool)"},
 	{LuaName: "Unit_SetPosition", Package: "litd/api", Symbol: "Unit.SetPosition", GoSignature: "(pos Vec2)"},

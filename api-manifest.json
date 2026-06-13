@@ -385,6 +385,33 @@
       }
     },
     {
+      "name": "BlzSetUnitName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "name",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetName",
+        "package": "litd/api",
+        "goSignature": "(name string)"
+      }
+    },
+    {
       "name": "CreateUnit",
       "origin": "common.j",
       "signature": {

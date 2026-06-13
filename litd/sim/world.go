@@ -103,6 +103,7 @@ type World struct {
 	Owners        *OwnerStore
 	UnitTypes     *UnitTypeStore
 	UserDatas     *UserDataStore
+	UnitNames     *UnitNameStore
 	Hiddens       *presenceSet
 	XPSuspends    *presenceSet
 	Combats       *CombatStore
@@ -323,6 +324,7 @@ func NewWorld(requested Caps) *World {
 		Owners:             NewOwnerStore(caps.Units, idxSpace),
 		UnitTypes:          NewUnitTypeStore(caps.Units, idxSpace),
 		UserDatas:          NewUserDataStore(caps.Units, idxSpace),
+		UnitNames:          NewUnitNameStore(caps.Units, idxSpace),
 		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		XPSuspends:         newPresenceSet(caps.Units, idxSpace),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
@@ -460,6 +462,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.UserDatas.Row(id) != -1 {
 		w.UserDatas.Remove(id)
 	}
+	if w.UnitNames.Row(id) != -1 {
+		w.UnitNames.Remove(id)
+	}
 	if w.Hiddens.Row(id) != -1 {
 		w.Hiddens.Remove(id)
 	}
@@ -553,6 +558,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.UnitTypes.rowOf) * rowOfB
 	n += len(w.UserDatas.Value) * (4 + 4)
 	n += len(w.UserDatas.rowOf) * rowOfB
+	n += len(w.UnitNames.Name) * (4 + 32) // 4-byte len + rough name bytes
+	n += len(w.UnitNames.rowOf) * rowOfB
 	n += len(w.Hiddens.Entity) * 4
 	n += len(w.Hiddens.rowOf) * rowOfB
 	n += len(w.XPSuspends.Entity) * 4

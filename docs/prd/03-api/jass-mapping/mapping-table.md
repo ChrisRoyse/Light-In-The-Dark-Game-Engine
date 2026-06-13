@@ -1303,7 +1303,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetItemExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetItemIconPath | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetItemIconPath | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetUnitName | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetUnitName | common.j | D1 | `litd/api.Unit.SetName` |
 | BlzSetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitBaseDamage | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitBaseDamage | common.j | unclassified | _pending (M2 backlog)_ |

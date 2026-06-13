@@ -61,6 +61,9 @@ var HashSystems = []string{
 	// appended by #217: per-hero XP-suspended bit (SuspendHeroXP). Sparse
 	// presence store — only suspended heroes contribute.
 	"xpsuspend",
+	// appended by #217: per-instance name overrides (BlzSetUnitName). Sparse
+	// value store — only renamed units contribute.
+	"unitname",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -524,6 +527,14 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hxs.WriteU32(uint32(xs.count))
 	for i := int32(0); i < xs.count; i++ {
 		hxs.WriteU32(uint32(xs.Entity[i]))
+	}
+
+	hun := h.next() // unitname (#217): per-instance name overrides
+	un := w.UnitNames
+	hun.WriteU32(uint32(un.count))
+	for i := int32(0); i < un.count; i++ {
+		hun.WriteU32(uint32(un.Entity[i]))
+		hashString(hun, un.Name[i])
 	}
 
 	return reg.Sum(dst)

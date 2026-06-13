@@ -281,6 +281,14 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(xs.Entity[i])
 	}
 
+	// unitname (#217): per-instance name overrides
+	un := w.UnitNames
+	s.u32(uint32(un.count))
+	for i := int32(0); i < un.count; i++ {
+		s.ent(un.Entity[i])
+		s.str(un.Name[i])
+	}
+
 	// health
 	hl := w.Healths
 	s.u32(uint32(hl.Count()))
@@ -744,6 +752,10 @@ type decodedSave struct {
 	xsN int32
 	xsE []EntityID
 
+	unN    int32
+	unE    []EntityID
+	unName []string
+
 	hlN     int32
 	hlE     []EntityID
 	hlLife  []fixed.F64
@@ -1156,6 +1168,20 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.xsE = make([]EntityID, n)
 	for i := int32(0); i < n; i++ {
 		d.xsE[i] = r.ent()
+	}
+
+	// unitname (#217)
+	if n, err = r.section("unitname", len(w.UnitNames.Name)); err != nil {
+		return err
+	}
+	d.unN = n
+	d.unE = make([]EntityID, n)
+	d.unName = make([]string, n)
+	for i := int32(0); i < n; i++ {
+		d.unE[i] = r.ent()
+		if d.unName[i], err = r.str(maxUnitNameLen); err != nil {
+			return err
+		}
 	}
 
 	// health
@@ -2327,6 +2353,15 @@ func applySave(d *decodedSave, w *World) {
 	for i := int32(0); i < d.xsN; i++ {
 		xs.Entity[i] = d.xsE[i]
 		xs.rowOf[d.xsE[i].Index()] = i
+	}
+
+	un := w.UnitNames
+	un.count = d.unN
+	resetRowOf(un.rowOf)
+	for i := int32(0); i < d.unN; i++ {
+		un.Entity[i] = d.unE[i]
+		un.Name[i] = d.unName[i]
+		un.rowOf[d.unE[i].Index()] = i
 	}
 
 	hl := w.Healths

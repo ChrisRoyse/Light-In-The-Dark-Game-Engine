@@ -294,7 +294,15 @@ class = "D1"
 goMapping = "Unit.Name"
 goSignature = "() string"
 package = "litd/api"
-reason = "unit name getter maps onto the typed accessor (dedup §2); returns the unit type's proper name. Per-instance rename (BlzSetUnitName) deferred until a name-override store is justified (#217)"
+reason = "unit name getter maps onto the typed accessor (dedup §2); returns the per-instance override if set (BlzSetUnitName) else the unit type's proper name (#217)"
+
+[[override]]
+name = "BlzSetUnitName"
+class = "D1"
+goMapping = "Unit.SetName"
+goSignature = "(name string)"
+package = "litd/api"
+reason = "per-instance unit name override backed by sparse UnitNameStore; BlzSetUnitName is the canonical rename native (the non-Blz SetUnitName does not exist in common.j). GetUnitName reads this override back (#217)"
 
 [[override]]
 name = "GetUnitFoodUsed"

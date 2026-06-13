@@ -714,6 +714,17 @@ func (u Unit) Name() string {
 	return u.g.w.UnitName(u.id)
 }
 
+// SetName sets a per-instance display name override, shadowing the unit type's
+// proper name (subsequent Name calls return it). No-op on an invalid handle.
+// JASS: BlzSetUnitName.
+func (u Unit) SetName(name string) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetName")
+		return
+	}
+	u.g.w.SetUnitName(u.id, name)
+}
+
 // FoodUsed returns the food (upkeep) the unit's type consumes from its owner's
 // food total. Zero on an invalid handle or an untyped unit. JASS:
 // GetUnitFoodUsed.
