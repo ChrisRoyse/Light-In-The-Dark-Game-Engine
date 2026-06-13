@@ -470,8 +470,9 @@ name = "SetUnitFacing"
 class = "D1"
 goMapping = "Unit.SetFacing"
 goSignature = "(a Angle)"
+collapsesWith = ["BlzSetUnitFacingEx"]
 package = "litd/api"
-reason = "instant facing setter maps directly onto the snap setter (dedup §2); the gradual SetUnitFacingTimed is a distinct capability, tombstoned deferred-v2 (turn-to-face order is future work)"
+reason = "instant facing setter maps directly onto the snap setter (dedup §2); BlzSetUnitFacingEx is the same instant set with no animation interpolation, folded here. The gradual SetUnitFacingTimed is a distinct capability, tombstoned deferred-v2 (turn-to-face order is future work)"
 
 [[override]]
 name = "SetUnitFacingTimed"

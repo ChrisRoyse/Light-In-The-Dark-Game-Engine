@@ -1759,7 +1759,10 @@
       "goMapping": {
         "symbol": "Unit.SetFacing",
         "package": "litd/api",
-        "goSignature": "(a Angle)"
+        "goSignature": "(a Angle)",
+        "collapsesWith": [
+          "BlzSetUnitFacingEx"
+        ]
       }
     },
     {

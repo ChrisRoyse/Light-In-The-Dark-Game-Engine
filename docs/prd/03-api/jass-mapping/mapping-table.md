@@ -1461,7 +1461,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetUnitAbilityByIndex | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzDisplayChatMessage | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzPauseUnitEx | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetUnitFacingEx | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetUnitFacingEx | common.j | D1 | `litd/api.Unit.SetFacing` (D3 collapse → SetUnitFacing) |
 | CreateCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateUpgradeCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateLearnCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
