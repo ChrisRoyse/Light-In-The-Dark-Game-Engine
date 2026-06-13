@@ -261,6 +261,89 @@ func TestUnitSetLifeClampAndDeath(t *testing.T) {
 	})
 }
 
+// TestUnitManaFSV: the D5 mana accessors clamp to [0, MaxMana] over the sim
+// AbilityStore. SoT = Abilities.Mana store.
+func TestUnitManaFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	// EDGE: no mana pool (non-caster) -> Mana()=0, SetMana no-op.
+	if u.Mana() != 0 || u.MaxMana() != 0 {
+		t.Fatalf("non-caster mana=%v/%v, want 0/0", u.Mana(), u.MaxMana())
+	}
+	u.SetMana(50) // must not panic, must not write
+	if u.Mana() != 0 {
+		t.Fatalf("SetMana on non-caster wrote mana=%v", u.Mana())
+	}
+
+	// Give it a mana pool (200 max, 50 current) via the sim store.
+	if !w.Abilities.Add(w.Ents, id) {
+		t.Fatal("Abilities.Add failed")
+	}
+	ar := w.Abilities.Row(id)
+	w.Abilities.MaxMana[ar] = fromFloat(200)
+	w.Abilities.Mana[ar] = fromFloat(50)
+
+	if u.Mana() != 50 || u.MaxMana() != 200 {
+		t.Fatalf("mana=%v/%v, want 50/200", u.Mana(), u.MaxMana())
+	}
+	cases := []struct{ set, want float64 }{
+		{150, 150}, // in range
+		{999, 200}, // clamp high
+		{-5, 0},    // clamp low
+	}
+	for _, c := range cases {
+		u.SetMana(c.set)
+		store := toFloat(w.Abilities.Mana[ar])
+		t.Logf("SetMana(%.0f) -> getter=%.0f store=%.0f", c.set, u.Mana(), store)
+		if u.Mana() != c.want || store != c.want {
+			t.Errorf("SetMana(%.0f): getter=%.0f store=%.0f, want %.0f", c.set, u.Mana(), store, c.want)
+		}
+	}
+}
+
+// TestUnitMoveSpeedFSV: MoveSpeed is per-second public, per-tick in the sim
+// (×20). SoT = Movements.Speed store.
+func TestUnitMoveSpeedFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	// EDGE: no movement component -> MoveSpeed()=0, SetMoveSpeed no-op.
+	if u.MoveSpeed() != 0 {
+		t.Fatalf("immobile unit MoveSpeed=%v, want 0", u.MoveSpeed())
+	}
+	u.SetMoveSpeed(300) // no-op, must not panic
+	if u.MoveSpeed() != 0 {
+		t.Fatalf("SetMoveSpeed on immobile unit took effect: %v", u.MoveSpeed())
+	}
+
+	// Add movement at 8 world units/tick = 160 units/second.
+	if !w.Movements.Add(w.Ents, w.Transforms, id, fixed.FromInt(8), 65535) {
+		t.Fatal("Movements.Add failed")
+	}
+	mr := w.Movements.Row(id)
+	t.Logf("8 wu/tick -> MoveSpeed()=%.0f (want 160)", u.MoveSpeed())
+	if u.MoveSpeed() != 160 {
+		t.Fatalf("MoveSpeed=%.0f, want 160 (8/tick × 20)", u.MoveSpeed())
+	}
+
+	// SetMoveSpeed(300 u/s) -> 15 u/tick in the store; round-trips to 300.
+	u.SetMoveSpeed(300)
+	storePerTick := toFloat(w.Movements.Speed[mr])
+	t.Logf("SetMoveSpeed(300) -> store=%.1f u/tick, getter=%.0f u/s", storePerTick, u.MoveSpeed())
+	if storePerTick != 15 || u.MoveSpeed() != 300 {
+		t.Fatalf("SetMoveSpeed(300): store=%.1f getter=%.0f, want 15/300", storePerTick, u.MoveSpeed())
+	}
+
+	// EDGE: negative clamps to 0.
+	u.SetMoveSpeed(-50)
+	if u.MoveSpeed() != 0 {
+		t.Fatalf("SetMoveSpeed(-50) -> %v, want 0", u.MoveSpeed())
+	}
+}
+
 // TestUnitKillFiresDeathThenDestroys: Kill marks the unit; after one Step the
 // death event fires exactly once and the unit is gone from the store.
 func TestUnitKillFiresDeathThenDestroys(t *testing.T) {

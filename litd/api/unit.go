@@ -1,5 +1,7 @@
 package litd
 
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+
 // unit.go is the canonical units-category surface (jass-mapping/units.md):
 // the ~235 common.j unit natives + ~125 blizzard.j BJs collapse onto methods
 // of Unit (and Game.CreateUnit). Life/MaxLife/SetLife/Owner live in
@@ -146,6 +148,89 @@ func (u Unit) SetFacing(a Angle) {
 	}
 	u.g.w.Transforms.Facing[r] = angleToBrad(a)
 	u.g.w.MarkSnap(u.id) // discontinuity: render must not lerp across the snap
+}
+
+// Mana returns the unit's current mana, or 0 on an invalid handle or a unit
+// with no mana pool (non-casters). D5: GetUnitState(UNIT_STATE_MANA).
+func (u Unit) Mana() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Mana")
+		return 0
+	}
+	r := u.g.w.Abilities.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	return toFloat(u.g.w.Abilities.Mana[r])
+}
+
+// MaxMana returns the unit's maximum mana, or 0 on an invalid handle / a unit
+// with no mana pool. D5: GetUnitState(UNIT_STATE_MAX_MANA).
+func (u Unit) MaxMana() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.MaxMana")
+		return 0
+	}
+	r := u.g.w.Abilities.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	return toFloat(u.g.w.Abilities.MaxMana[r])
+}
+
+// SetMana sets the unit's current mana, clamped to [0, MaxMana]. No-op on an
+// invalid handle or a unit with no mana pool. D5: SetUnitState(UNIT_STATE_MANA).
+func (u Unit) SetMana(v float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetMana")
+		return
+	}
+	r := u.g.w.Abilities.Row(u.id)
+	if r < 0 {
+		return
+	}
+	nv := fromFloat(v)
+	if nv < 0 {
+		nv = 0
+	}
+	if max := u.g.w.Abilities.MaxMana[r]; nv > max {
+		nv = max
+	}
+	u.g.w.Abilities.Mana[r] = nv
+}
+
+// MoveSpeed returns the unit's movement speed in world units per second, or 0
+// on an invalid handle / a unit with no movement. The sim stores a per-tick
+// rate; this is the per-second value modders set in the data tables.
+// JASS: GetUnitMoveSpeed.
+func (u Unit) MoveSpeed() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.MoveSpeed")
+		return 0
+	}
+	r := u.g.w.Movements.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	return toFloat(u.g.w.Movements.Speed[r]) * float64(data.TicksPerSecond)
+}
+
+// SetMoveSpeed sets the unit's movement speed in world units per second
+// (quantized to the per-tick rate). Negative values clamp to 0. No-op on an
+// invalid handle or a unit with no movement. JASS: SetUnitMoveSpeed.
+func (u Unit) SetMoveSpeed(v float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetMoveSpeed")
+		return
+	}
+	r := u.g.w.Movements.Row(u.id)
+	if r < 0 {
+		return
+	}
+	if v < 0 {
+		v = 0
+	}
+	u.g.w.Movements.Speed[r] = fromFloat(v / float64(data.TicksPerSecond))
 }
 
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
