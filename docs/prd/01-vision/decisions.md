@@ -31,6 +31,18 @@ and weaken the shape-only IP posture (R5). M2's sample-port exercise remains as 
 if a table-driven port proves genuinely painful, that finding reopens the question with
 evidence — until then this is settled.
 
+**Sample-port evidence (2026-06-13, #17).** A representative GUI-generated BJ trigger
+(`tools/jassgen/sampleport/reinforce.j`, 12 distinct functions) was ported to Go using only
+the mapping table. Outcome: 6 found with a clear canonical symbol, 1 found as a tombstone
+*with working replacement guidance* (`GetLastCreatedUnit` → read the creator's return value),
+0 found-but-unclear, 5 returned an explicit `pending` (the M2 unmapped backlog), and **0 true
+gaps** — every lookup returned a row. All three dedup edge cases (tombstone-with-guidance, a
+D4 BJ→`helpers` rename, a `...Loc`→`Vec2` D3 collapse) produced clean, idiomatic, *compiling*
+Go (`go build ./tools/jassgen/sampleport/...`). **Verdict: the reopening condition did not
+fire — Q2 stays idiomatic-only.** The `pending` misses are M2 exit-criterion-1 incompleteness
+(`unmapped != 0`), not naming pain; the table *mechanism* is sound. Caveat: re-run this port
+once `unmapped == 0` for a full-scale verdict. Findings: `tools/jassgen/sampleport/FINDINGS.md`.
+
 ## D-2026-06-11-3 (Q3) — ~~Terrain: tile meshes for v1~~ SUPERSEDED by D-2026-06-11-7
 
 **Decision.** v1 terrain is square-grid tile meshes in the KayKit visual style, chunk-merged

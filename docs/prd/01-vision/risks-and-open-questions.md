@@ -399,6 +399,15 @@ of it).
 JASS→Go mapping table shipped in the docs as the migration aid. Revisit only if M2's sample
 port shows the table is insufficient in practice.
 
+**Sample-port result (2026-06-13, #17).** Done. A 12-function GUI-generated BJ trigger was
+ported using only the table: 6 clear mappings, 1 tombstone with working replacement guidance,
+0 ambiguous, 5 explicit `pending` (the unmapped backlog), 0 true gaps; the ported Go compiles
+against the M2 stubs. The table-driven port was **not painful** — criterion 2 favours
+idiomatic-only and the reopening condition did not fire. The `pending` misses are coverage
+(exit-criterion 1, `unmapped != 0`), not naming. See
+[decisions.md D-2](./decisions.md#d-2026-06-11-2-q2--naming-idiomatic-go-only-no-jass-aliases)
+and `tools/jassgen/sampleport/FINDINGS.md`.
+
 ### Q3 — Terrain: heightmap mesh vs hex/square tile meshes
 
 **STATUS: SUPERSEDED 2026-06-11 → heightmap + cliffs in v1 (M4). The same-day tile-mesh
