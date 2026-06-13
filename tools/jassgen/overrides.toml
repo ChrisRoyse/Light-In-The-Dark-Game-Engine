@@ -191,6 +191,14 @@ package = "litd/api"
 reason = "current-order-id getter maps onto the typed Order getter; reports the order verb (dedup §2)"
 
 [[override]]
+name = "BlzGetUnitArmor"
+class = "D1"
+goMapping = "Unit.Armor"
+goSignature = "() float64"
+package = "litd/api"
+reason = "effective-armor getter maps onto the typed accessor over the Health store ArmorValue + buff modifiers (dedup §2)"
+
+[[override]]
 name = "BlzGetUnitMaxHP"
 class = "D5"
 goMapping = "Unit.MaxLife"

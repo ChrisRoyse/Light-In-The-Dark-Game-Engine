@@ -87,6 +87,21 @@ func (u Unit) Type() UnitType {
 	return UnitType{ref: u.g.w.UnitTypes.TypeID[r] + 1}
 }
 
+// Armor returns the unit's effective armor — the base armor value plus any
+// active buff/debuff modifiers (the displayed armor), or 0 on an invalid handle
+// or a unit with no health row. JASS: BlzGetUnitArmor.
+func (u Unit) Armor() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Armor")
+		return 0
+	}
+	r := u.g.w.Healths.Row(u.id)
+	if r < 0 {
+		return 0
+	}
+	return float64(u.g.w.BuffedArmor(u.id, int(u.g.w.Healths.ArmorValue[r])))
+}
+
 // Alive reports whether the unit is alive — a valid handle with positive life.
 // A corpse (life 0, awaiting decay) and an invalid/removed handle are both not
 // alive. This is the WC3 life-based definition (UNIT_STATE_LIFE > 0); the

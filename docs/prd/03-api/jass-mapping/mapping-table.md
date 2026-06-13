@@ -1338,7 +1338,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzPlaySpecialEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzPlaySpecialEffectWithTimeScale | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetAnimName | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitArmor | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetUnitArmor | common.j | D1 | `litd/api.Unit.Armor` |
 | BlzSetUnitArmor | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzUnitHideAbility | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzUnitDisableAbility | common.j | unclassified | _pending (M2 backlog)_ |

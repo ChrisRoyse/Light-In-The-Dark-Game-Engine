@@ -765,3 +765,38 @@ func TestUnitCurrentOrderFSV(t *testing.T) {
 		t.Error("removed unit CurrentOrder not zero")
 	}
 }
+
+// TestUnitArmorFSV: Armor reflects the base ArmorValue (plus buffs; none here)
+// from the Health store. SoT = w.Healths.ArmorValue + BuffedArmor.
+func TestUnitArmorFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+	r := w.Healths.Row(id)
+
+	// Set a known base armor; with no buffs, BuffedArmor == base.
+	w.Healths.ArmorValue[r] = 5
+	want := float64(w.BuffedArmor(id, 5))
+	t.Logf("base ArmorValue=5 BuffedArmor=%v Unit.Armor()=%v", want, u.Armor())
+	if u.Armor() != want {
+		t.Errorf("Armor() = %v, want %v", u.Armor(), want)
+	}
+	if u.Armor() != 5 {
+		t.Errorf("unbuffed Armor() = %v, want base 5", u.Armor())
+	}
+
+	// Negative base armor is representable (a debuffed light unit).
+	w.Healths.ArmorValue[r] = -2
+	if got, want := u.Armor(), float64(w.BuffedArmor(id, -2)); got != want {
+		t.Errorf("negative base: Armor() = %v, want %v", got, want)
+	}
+
+	// EDGE: invalid / zero handle → 0.
+	if (Unit{}).Armor() != 0 {
+		t.Error("zero Unit Armor() != 0")
+	}
+	u.Remove()
+	if u.Armor() != 0 {
+		t.Error("removed unit Armor() != 0")
+	}
+}
