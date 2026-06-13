@@ -4,9 +4,76 @@ import (
 	"math"
 	"testing"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/path"
 )
+
+// TestGameCreateUnitFSV: Game.CreateUnit resolves a UnitType from a code, spawns
+// a fully-owned, typed unit at the given pose, and returns its handle. SoT =
+// the sim Transform/Owner/UnitType/Health stores.
+func TestGameCreateUnitFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+
+	typ := g.UnitType("hfoo")
+	if typ.IsZero() {
+		t.Fatal(`UnitType("hfoo") resolved to null`)
+	}
+	owner := Player{idx: 2, g: g} // player slot 2 (constructed directly; Game.Player lands with #218)
+
+	u := g.CreateUnit(owner, typ, Vec2{X: 300, Y: 400}, Deg(90))
+	if !u.Valid() {
+		t.Fatal("CreateUnit returned an invalid unit")
+	}
+	// SoT reads straight from the sim stores.
+	pos, _ := rawPos(w, u.id)
+	tr := w.Transforms.Row(u.id)
+	faceDeg := angleFromBrad(w.Transforms.Facing[tr]).Degrees()
+	or := w.Owners.Row(u.id)
+	ownerSlot := w.Owners.Player[or]
+	ut := w.UnitTypes.Row(u.id)
+	typeID := w.UnitTypes.TypeID[ut]
+	life, _ := rawLife(w, u.id)
+	t.Logf("CreateUnit: pos=%+v facing=%.1f° owner=%d typeID=%d life=%.0f", pos, faceDeg, ownerSlot, typeID, life)
+	if pos != (Vec2{X: 300, Y: 400}) {
+		t.Errorf("pos=%+v, want {300 400}", pos)
+	}
+	if math.Abs(faceDeg-90) > 0.01 {
+		t.Errorf("facing=%.4f°, want 90", faceDeg)
+	}
+	if ownerSlot != 2 {
+		t.Errorf("owner slot=%d, want 2", ownerSlot)
+	}
+	if typeID != 0 {
+		t.Errorf("typeID=%d, want 0 (hfoo is def index 0)", typeID)
+	}
+	if life != 100 {
+		t.Errorf("life=%.0f, want 100", life)
+	}
+
+	// EDGE: unknown code -> null UnitType -> CreateUnit spawns nothing.
+	before := w.UnitCount()
+	if z := g.UnitType("zzzz"); !z.IsZero() {
+		t.Error(`UnitType("zzzz") should be null`)
+	}
+	if bad := g.CreateUnit(owner, g.UnitType("zzzz"), Vec2{X: 1, Y: 1}, Deg(0)); bad.Valid() {
+		t.Error("CreateUnit with a null UnitType returned a valid unit")
+	}
+	// EDGE: foreign/zero owner -> no spawn.
+	if bad := g.CreateUnit(Player{}, typ, Vec2{X: 1, Y: 1}, Deg(0)); bad.Valid() {
+		t.Error("CreateUnit with a foreign owner returned a valid unit")
+	}
+	if after := w.UnitCount(); after != before {
+		t.Errorf("rejected CreateUnit calls changed unit count: %d -> %d", before, after)
+	}
+}
 
 // rawPos reads the unit's position straight out of the sim Transform store —
 // the Source of Truth behind Position().

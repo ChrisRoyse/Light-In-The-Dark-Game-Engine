@@ -11,6 +11,63 @@ package litd
 // getters return the zero value. Reads/writes go straight to the sim component
 // stores — the deterministic Source of Truth — never to render (R-API-6).
 
+// UnitType names a bound unit type — the WC3 unit code ('hfoo') resolved to a
+// stable ref. Obtain one from Game.UnitType; the zero value is the null type
+// (rejected by CreateUnit). Opaque value type (D-2026-06-13 / #361), mirroring
+// AbilityRef.
+type UnitType struct {
+	ref uint16 // typeID + 1; 0 = null
+}
+
+// IsZero reports whether this is the null unit type.
+func (t UnitType) IsZero() bool { return t.ref == 0 }
+
+// UnitType resolves a unit code (e.g. "hfoo") to its bound type, or the null
+// UnitType if the code is unknown or no unit table is bound. JASS: the 'xxxx'
+// rawcodes passed to CreateUnit.
+func (g *Game) UnitType(code string) UnitType {
+	if g == nil || g.w == nil {
+		return UnitType{}
+	}
+	if id, ok := g.w.UnitTypeID(code); ok {
+		return UnitType{ref: id + 1}
+	}
+	return UnitType{}
+}
+
+// CreateUnit spawns a unit of type typ for owner at pos facing the given angle,
+// returning its handle (the zero Unit on failure — null/unknown type, foreign
+// owner, or the unit cap reached). JASS: CreateUnit, CreateUnitAtLoc and the
+// CreateUnitAtLocSaveLast family collapse here (D2); the returned handle
+// replaces the bj_lastCreatedUnit side channel (GetLastCreatedUnit tombstoned).
+//
+// Team currently defaults to the owner's player slot (FFA); alliance/team
+// assignment lands with players-and-forces (#218), per the #361 decision.
+func (g *Game) CreateUnit(owner Player, typ UnitType, pos Vec2, facing Angle) Unit {
+	if g == nil || g.w == nil {
+		return Unit{}
+	}
+	if typ.IsZero() {
+		g.reportInvalid("Game.CreateUnit (null UnitType)")
+		return Unit{}
+	}
+	if owner.g != g {
+		g.reportInvalid("Game.CreateUnit (owner not from this game)")
+		return Unit{}
+	}
+	slot := uint8(owner.idx)
+	id, ok := g.w.SpawnFromTable(typ.ref-1, slot, slot, vec(pos))
+	if !ok {
+		g.reportInvalid("Game.CreateUnit (spawn failed: unit cap or unbound type)")
+		return Unit{}
+	}
+	if r := g.w.Transforms.Row(id); r >= 0 {
+		g.w.Transforms.Facing[r] = angleToBrad(facing)
+		g.w.MarkSnap(id)
+	}
+	return Unit{id: id, g: g}
+}
+
 // Position returns the unit's current world position, or the zero Vec2 on an
 // invalid handle. JASS: GetUnitX/GetUnitY, GetUnitLoc (D3 → one Vec2).
 func (u Unit) Position() Vec2 {

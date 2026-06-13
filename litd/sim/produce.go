@@ -171,7 +171,28 @@ func (w *World) BindUnitDefs(defs []data.Unit) bool {
 		return false
 	}
 	w.unitDefs = defs
+	// Build the code -> typeID index for UnitTypeID (#217). First binding of a
+	// code wins; later duplicates are ignored (the def slice stays canonical).
+	idx := make(map[string]uint16, len(defs))
+	for i := range defs {
+		if defs[i].ID == "" {
+			continue
+		}
+		if _, ok := idx[defs[i].ID]; !ok {
+			idx[defs[i].ID] = uint16(i)
+		}
+	}
+	w.unitDefByCode = idx
 	return true
+}
+
+// UnitTypeID resolves a unit code (data.Unit.ID, e.g. "hfoo") to its bound
+// typeID. Returns ok=false for an unknown code or before BindUnitDefs. A
+// deterministic map lookup, never an iteration; the backing index is built
+// once at bind time.
+func (w *World) UnitTypeID(code string) (uint16, bool) {
+	id, ok := w.unitDefByCode[code]
+	return id, ok
 }
 
 // SetTechGate installs the #303 requirement check. nil = the

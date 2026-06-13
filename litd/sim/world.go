@@ -156,6 +156,9 @@ type World struct {
 	// loaded unit rows (produce.go #302); UnitTypeStore.TypeID indexes
 	// this slice; BindUnitDefs installs, read-only thereafter
 	unitDefs []data.Unit
+	// code (data.Unit.ID, e.g. "hfoo") -> typeID, built by BindUnitDefs.
+	// Lookup only, never iterated (the API UnitType resolver, #217).
+	unitDefByCode map[string]uint16
 	// tech-requirement admission hook (#303); nil = allow (documented
 	// canonical default while no requirement table is bound)
 	techGate func(player uint8, typeID uint16) bool
