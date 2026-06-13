@@ -604,10 +604,11 @@ func (u Unit) InventorySize() int {
 	return int(u.g.w.UnitInventorySize(u.id))
 }
 
-// UnitClass is a structural classification tested by Unit.IsType — the subset
-// of WC3's UNIT_TYPE_* constants the engine can derive today. Status/combat
-// classes (stunned, poisoned, melee/ranged, undead, …) are deferred until their
-// backing state is modeled.
+// UnitClass is a classification tested by Unit.IsType — the subset of WC3's
+// UNIT_TYPE_* constants the engine can derive today (structural + weapon
+// classes). Status classes (stunned, poisoned, polymorphed, ethereal, …) and
+// race/tag classes (undead, mechanical, summoned, …) are deferred until their
+// backing state/tags are modeled.
 type UnitClass uint8
 
 const (
@@ -616,6 +617,10 @@ const (
 	ClassStructure                  // UNIT_TYPE_STRUCTURE (building footprint)
 	ClassFlying                     // UNIT_TYPE_FLYING (air pathing)
 	ClassGround                     // UNIT_TYPE_GROUND (ground pathing)
+	ClassMelee                      // UNIT_TYPE_MELEE_ATTACKER (instant weapon)
+	ClassRanged                     // UNIT_TYPE_RANGED_ATTACKER (projectile weapon)
+	ClassAttacksGround              // UNIT_TYPE_ATTACKS_GROUND
+	ClassAttacksFlying              // UNIT_TYPE_ATTACKS_FLYING
 )
 
 // IsType reports whether the unit belongs to the given structural class.
@@ -637,6 +642,14 @@ func (u Unit) IsType(class UnitClass) bool {
 		return u.g.w.UnitIsFlying(u.id)
 	case ClassGround:
 		return u.g.w.UnitIsGround(u.id)
+	case ClassMelee:
+		return u.g.w.UnitIsMelee(u.id)
+	case ClassRanged:
+		return u.g.w.UnitIsRanged(u.id)
+	case ClassAttacksGround:
+		return u.g.w.UnitAttacksGround(u.id)
+	case ClassAttacksFlying:
+		return u.g.w.UnitAttacksFlying(u.id)
 	default:
 		return false
 	}

@@ -253,7 +253,7 @@ class = "D2"
 goMapping = "Unit.IsType"
 goSignature = "(class UnitClass) bool"
 package = "litd/api"
-reason = "unit classification predicate; the unittype enum arg becomes a typed UnitClass (dedup §3, D2). Supports the structural subset the engine can derive (Hero/Dead/Structure/Flying/Ground); status/combat classes (stunned/poisoned/melee/ranged/undead/…) deferred until their backing state is modeled (#217)"
+reason = "unit classification predicate; the unittype enum arg becomes a typed UnitClass (dedup §3, D2). Supports the structural classes (Hero/Dead/Structure/Flying/Ground) and weapon classes (Melee/Ranged/AttacksGround/AttacksFlying) the engine can derive; status/race classes (stunned/poisoned/undead/mechanical/…) deferred until their backing state/tags are modeled (#217)"
 
 [[override]]
 name = "GetUnitName"

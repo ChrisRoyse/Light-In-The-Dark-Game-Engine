@@ -138,6 +138,58 @@ func (w *World) UnitIsGround(id EntityID) bool {
 	return false
 }
 
+// UnitIsMelee reports whether the unit's type has at least one instant-delivery
+// (melee) weapon. UNIT_TYPE_MELEE_ATTACKER. False when untyped or unarmed.
+func (w *World) UnitIsMelee(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		for i := range d.Attacks {
+			if d.Attacks[i].Delivery == data.DeliveryInstant {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// UnitIsRanged reports whether the unit's type has at least one projectile
+// weapon. UNIT_TYPE_RANGED_ATTACKER. False when untyped or unarmed.
+func (w *World) UnitIsRanged(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		for i := range d.Attacks {
+			if d.Attacks[i].Delivery == data.DeliveryProjectile {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// UnitAttacksGround reports whether any of the type's weapons can hit ground
+// targets. UNIT_TYPE_ATTACKS_GROUND. False when untyped or unarmed.
+func (w *World) UnitAttacksGround(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		for i := range d.Attacks {
+			if d.Attacks[i].TargetsAllowed&data.TargetGround != 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// UnitAttacksFlying reports whether any of the type's weapons can hit air
+// targets. UNIT_TYPE_ATTACKS_FLYING. False when untyped or unarmed.
+func (w *World) UnitAttacksFlying(id EntityID) bool {
+	if d := w.typeDefOf(id); d != nil {
+		for i := range d.Attacks {
+			if d.Attacks[i].TargetsAllowed&data.TargetAir != 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // UnitName returns the unit type's proper/display name (GetUnitName), or "" when
 // the unit has no type row. Static type property.
 func (w *World) UnitName(id EntityID) string {

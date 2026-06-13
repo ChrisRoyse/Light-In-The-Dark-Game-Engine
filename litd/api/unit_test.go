@@ -1218,6 +1218,60 @@ func TestUnitIsTypeFSV(t *testing.T) {
 	}
 }
 
+// TestUnitIsTypeCombatFSV: the weapon-derived classes (melee/ranged/attacks-
+// ground/attacks-flying). SoT = the type's Attacks (delivery + targets-allowed).
+func TestUnitIsTypeCombatFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if err := w.BindDamageMatrix([][]int32{{1000}}); err != nil {
+		t.Fatalf("bind matrix: %v", err) // attacking types need a matrix to spawn
+	}
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hmel", Life: 100, Attacks: []data.Attack{
+			{Delivery: data.DeliveryInstant, TargetsAllowed: data.TargetGround,
+				DamageBase: 10, CooldownTicks: 20}, // CooldownTicks>0 required by SetWeapon
+		}},
+		{ID: "harc", Life: 100, Attacks: []data.Attack{
+			{Delivery: data.DeliveryProjectile, TargetsAllowed: data.TargetGround | data.TargetAir,
+				DamageBase: 8, CooldownTicks: 25, ProjectileSpeedPerTick: fixed.One},
+		}},
+		{ID: "hunarmed", Life: 100}, // no attacks
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+	mel := g.CreateUnit(owner, g.UnitType("hmel"), Vec2{X: 64, Y: 64}, Deg(0))
+	if !mel.Valid() {
+		t.Fatal("mel failed to spawn")
+	}
+	arc := g.CreateUnit(owner, g.UnitType("harc"), Vec2{X: 96, Y: 96}, Deg(0))
+	un := g.CreateUnit(owner, g.UnitType("hunarmed"), Vec2{X: 128, Y: 128}, Deg(0))
+
+	check := func(label string, u Unit, class UnitClass, want bool) {
+		if got := u.IsType(class); got != want {
+			t.Errorf("%s IsType(%d)=%v, want %v", label, class, got, want)
+		}
+	}
+	// Melee, ground-only.
+	check("mel", mel, ClassMelee, true)
+	check("mel", mel, ClassRanged, false)
+	check("mel", mel, ClassAttacksGround, true)
+	check("mel", mel, ClassAttacksFlying, false)
+	// Ranged, hits ground + air.
+	check("arc", arc, ClassRanged, true)
+	check("arc", arc, ClassMelee, false)
+	check("arc", arc, ClassAttacksGround, true)
+	check("arc", arc, ClassAttacksFlying, true)
+	// Unarmed: none.
+	check("unarmed", un, ClassMelee, false)
+	check("unarmed", un, ClassRanged, false)
+	check("unarmed", un, ClassAttacksGround, false)
+	check("unarmed", un, ClassAttacksFlying, false)
+	t.Logf("mel melee=%v atkAir=%v | arc ranged=%v atkAir=%v | unarmed melee=%v",
+		mel.IsType(ClassMelee), mel.IsType(ClassAttacksFlying),
+		arc.IsType(ClassRanged), arc.IsType(ClassAttacksFlying), un.IsType(ClassMelee))
+}
+
 // TestUnitNameFSV: Unit.Name surfaces the unit type's proper name. SoT = the
 // bound data.Unit.Name, via api + sim accessor.
 func TestUnitNameFSV(t *testing.T) {
