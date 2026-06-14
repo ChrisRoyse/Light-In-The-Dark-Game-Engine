@@ -282,7 +282,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetTriggerEventId | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTriggerEvalCount | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTriggerExecCount | common.j | unclassified | _pending (M2 backlog)_ |
-| ExecuteFunc | common.j | unclassified | _pending (M2 backlog)_ |
+| ExecuteFunc | common.j | D1 | **tombstoned** (superseded): call-by-string-name dispatch; superseded by Go closures — the one dynamic JASS feature deliberately not ported (math-strings-conversion.md §5, D-2026-06-11-8). Lua embedding restores call-by-name for runtime worlds (#267) |
 | And | common.j | D1 | **tombstoned** (superseded): boolexpr AND-combinator; Go closures compose with && (triggers-and-events.md, R-API-4) |
 | Or | common.j | D1 | **tombstoned** (superseded): boolexpr OR-combinator; Go closures compose with || (triggers-and-events.md, R-API-4) |
 | Not | common.j | D1 | **tombstoned** (superseded): boolexpr NOT-combinator; Go closures use ! (triggers-and-events.md, R-API-4) |
@@ -1466,9 +1466,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CreateUpgradeCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateLearnCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | DestroyCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzBitOr | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzBitAnd | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzBitXor | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzBitOr | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise OR; Go has the native | operator. No public surface (math-strings-conversion.md) |
+| BlzBitAnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise AND; Go has the native & operator. No public surface (math-strings-conversion.md) |
+| BlzBitXor | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md) |
 | BlzGetAbilityBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetAbilityIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetAbilityRealField | common.j | unclassified | _pending (M2 backlog)_ |

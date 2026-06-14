@@ -1547,3 +1547,28 @@ goMapping = "Event.Player"
 goSignature = "() Player"
 package = "litd/api"
 reason = "the player on a player-scoped event (victory/defeat collapse); getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+
+# --- ExecuteFunc + bit ops: language plumbing ---
+[[override]]
+name = "ExecuteFunc"
+class = "D1"
+tombstone = "superseded"
+reason = "call-by-string-name dispatch; superseded by Go closures — the one dynamic JASS feature deliberately not ported (math-strings-conversion.md §5, D-2026-06-11-8). Lua embedding restores call-by-name for runtime worlds (#267)"
+
+[[override]]
+name = "BlzBitAnd"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "bitwise AND; Go has the native & operator. No public surface (math-strings-conversion.md)"
+
+[[override]]
+name = "BlzBitOr"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "bitwise OR; Go has the native | operator. No public surface (math-strings-conversion.md)"
+
+[[override]]
+name = "BlzBitXor"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md)"

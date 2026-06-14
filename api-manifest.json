@@ -408,6 +408,84 @@
       }
     },
     {
+      "name": "BlzBitAnd",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "bitwise AND; Go has the native \u0026 operator. No public surface (math-strings-conversion.md)"
+      }
+    },
+    {
+      "name": "BlzBitOr",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "bitwise OR; Go has the native | operator. No public surface (math-strings-conversion.md)"
+      }
+    },
+    {
+      "name": "BlzBitXor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md)"
+      }
+    },
+    {
       "name": "BlzGetUnitArmor",
       "origin": "common.j",
       "signature": {
@@ -2519,6 +2597,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "ExecuteFunc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "funcName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "call-by-string-name dispatch; superseded by Go closures — the one dynamic JASS feature deliberately not ported (math-strings-conversion.md §5, D-2026-06-11-8). Lua embedding restores call-by-name for runtime worlds (#267)"
       }
     },
     {
