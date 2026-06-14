@@ -230,19 +230,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ForceEnumAllies | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceEnumEnemies | common.j | unclassified | _pending (M2 backlog)_ |
 | ForForce | common.j | unclassified | _pending (M2 backlog)_ |
-| Rect | common.j | unclassified | _pending (M2 backlog)_ |
+| Rect | common.j | D3 | `litd/api.NewRect` |
 | RectFromLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveRect | common.j | unclassified | _pending (M2 backlog)_ |
-| SetRect | common.j | unclassified | _pending (M2 backlog)_ |
-| SetRectFromLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| MoveRectTo | common.j | D3 | _pending (M2 backlog)_ |
-| MoveRectToLoc | common.j | D3 | _pending (M2 backlog)_ |
-| GetRectCenterX | common.j | D3 | _pending (M2 backlog)_ |
-| GetRectCenterY | common.j | D3 | _pending (M2 backlog)_ |
-| GetRectMinX | common.j | D3 | _pending (M2 backlog)_ |
-| GetRectMinY | common.j | D3 | _pending (M2 backlog)_ |
-| GetRectMaxX | common.j | D3 | _pending (M2 backlog)_ |
-| GetRectMaxY | common.j | D3 | _pending (M2 backlog)_ |
+| RemoveRect | common.j | D1 | **tombstoned** (superseded): rect heap-lifetime cleanup superseded — Rect is a GC'd value (R-API-2) |
+| SetRect | common.j | D2 | **tombstoned** (superseded): in-place rect bounds mutation superseded by constructing a new Rect value (NewRect); no identity to set (hazard 4) |
+| SetRectFromLoc | common.j | D3 | **tombstoned** (superseded): in-place rect-from-locations mutation superseded by NewRect over two Vec2 corners (R-API-2, hazard 4) |
+| MoveRectTo | common.j | D2 | `litd/api.Rect.Offset` |
+| MoveRectToLoc | common.j | D2 | `litd/api.Rect.Offset` (D3 collapse → MoveRectTo) |
+| GetRectCenterX | common.j | D3 | `litd/api.Rect.Center` |
+| GetRectCenterY | common.j | D3 | `litd/api.Rect.Center` (D3 collapse → GetRectCenterX) |
+| GetRectMinX | common.j | D3 | `litd/api.Rect.Min` |
+| GetRectMinY | common.j | D3 | `litd/api.Rect.Min` (D3 collapse → GetRectMinX) |
+| GetRectMaxX | common.j | D3 | `litd/api.Rect.Max` |
+| GetRectMaxY | common.j | D3 | `litd/api.Rect.Max` (D3 collapse → GetRectMaxX) |
 | CreateRegion | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveRegion | common.j | unclassified | _pending (M2 backlog)_ |
 | RegionAddRect | common.j | unclassified | _pending (M2 backlog)_ |
@@ -251,11 +251,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RegionAddCellAtLoc | common.j | unclassified | _pending (M2 backlog)_ |
 | RegionClearCell | common.j | unclassified | _pending (M2 backlog)_ |
 | RegionClearCellAtLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| Location | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveLocation | common.j | unclassified | _pending (M2 backlog)_ |
-| MoveLocation | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLocationX | common.j | D3 | _pending (M2 backlog)_ |
-| GetLocationY | common.j | D3 | _pending (M2 backlog)_ |
+| Location | common.j | D3 | **tombstoned** (superseded): heap location constructor superseded by the Vec2 struct literal Vec2{x,y} (R-API-2); no Remove call exists |
+| RemoveLocation | common.j | D1 | **tombstoned** (superseded): location heap-lifetime cleanup superseded — Vec2 is a GC'd value, the leak hazard is deleted (R-API-2) |
+| MoveLocation | common.j | D3 | **tombstoned** (superseded): in-place location mutation superseded by re-assigning a Vec2 value (R-API-2); no identity to move |
+| GetLocationX | common.j | D3 | **tombstoned** (superseded): location X accessor superseded by the Vec2.X field (R-API-2) |
+| GetLocationY | common.j | D3 | **tombstoned** (superseded): location Y accessor superseded by the Vec2.Y field (R-API-2) |
 | GetLocationZ | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInRegion | common.j | unclassified | _pending (M2 backlog)_ |
 | IsPointInRegion | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1564,13 +1564,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetRandomLocInRect | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ModuloInteger | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ModuloReal | blizzard.j | D4 | _pending (M2 backlog)_ |
-| OffsetLocation | blizzard.j | D2 | _pending (M2 backlog)_ |
+| OffsetLocation | blizzard.j | D2 | `litd/api.Vec2.Add` |
 | OffsetRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RectFromCenterSizeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RectContainsCoords | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| RectContainsLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RectContainsUnit | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RectContainsItem | blizzard.j | D4 | _pending (M2 backlog)_ |
+| RectFromCenterSizeBJ | blizzard.j | D2 | `litd/api.RectAround` |
+| RectContainsCoords | blizzard.j | D2 | `litd/api.Rect.Contains` |
+| RectContainsLoc | blizzard.j | D2 | `litd/api.Rect.Contains` (D3 collapse → RectContainsCoords) |
+| RectContainsUnit | blizzard.j | D1 | **tombstoned** (superseded): superseded by composing Rect.Contains(u.Position()) — no dedicated overload (R-API-2) |
+| RectContainsItem | blizzard.j | D1 | **tombstoned** (superseded): superseded by composing Rect.Contains(i.Position()) — no dedicated overload (R-API-2) |
 | ConditionalTriggerExecute | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TriggerExecuteBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PostTriggerExecuteBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2355,7 +2355,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayerStartLocationX | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetPlayerStartLocationY | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetPlayerStartLocationLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetRectCenter | blizzard.j | D2 | _pending (M2 backlog)_ |
+| GetRectCenter | blizzard.j | D3 | `litd/api.Rect.Center` (D3 collapse → GetRectCenterX) |
 | IsPlayerSlotState | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetFadeFromSeconds | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetFadeFromSecondsAsReal | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2369,8 +2369,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AddResourceAmountBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetConvertedPlayerId | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | ConvertedPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetRectWidthBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetRectHeightBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| GetRectWidthBJ | blizzard.j | D1 | `litd/api.Rect.Width` |
+| GetRectHeightBJ | blizzard.j | D1 | `litd/api.Rect.Height` |
 | BlightGoldMineForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | BlightGoldMineForPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetLastHauntedGoldMine | blizzard.j | unclassified | _pending (M2 backlog)_ |

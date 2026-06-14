@@ -34,7 +34,16 @@ var Bindings = []Binding{
 	{LuaName: "Game_SuspendTimeOfDay", Package: "litd/api", Symbol: "Game.SuspendTimeOfDay", GoSignature: "(suspended bool)"},
 	{LuaName: "Game_TimeOfDay", Package: "litd/api", Symbol: "Game.TimeOfDay", GoSignature: "() float64"},
 	{LuaName: "Game_TimeOfDayScale", Package: "litd/api", Symbol: "Game.TimeOfDayScale", GoSignature: "() float64"},
+	{LuaName: "NewRect", Package: "litd/api", Symbol: "NewRect", GoSignature: "(a, b Vec2) Rect"},
 	{LuaName: "PolledWait", Package: "litd/api/helpers", Symbol: "PolledWait", GoSignature: "(seconds float64)"},
+	{LuaName: "RectAround", Package: "litd/api", Symbol: "RectAround", GoSignature: "(c Vec2, w, h float64) Rect"},
+	{LuaName: "Rect_Center", Package: "litd/api", Symbol: "Rect.Center", GoSignature: "() Vec2"},
+	{LuaName: "Rect_Contains", Package: "litd/api", Symbol: "Rect.Contains", GoSignature: "(p Vec2) bool"},
+	{LuaName: "Rect_Height", Package: "litd/api", Symbol: "Rect.Height", GoSignature: "() float64"},
+	{LuaName: "Rect_Max", Package: "litd/api", Symbol: "Rect.Max", GoSignature: "() Vec2"},
+	{LuaName: "Rect_Min", Package: "litd/api", Symbol: "Rect.Min", GoSignature: "() Vec2"},
+	{LuaName: "Rect_Offset", Package: "litd/api", Symbol: "Rect.Offset", GoSignature: "(d Vec2) Rect"},
+	{LuaName: "Rect_Width", Package: "litd/api", Symbol: "Rect.Width", GoSignature: "() float64"},
 	{LuaName: "StringHash", Package: "litd/api", Symbol: "StringHash", GoSignature: "(s string) int32"},
 	{LuaName: "Timer_Elapsed", Package: "litd/api", Symbol: "Timer.Elapsed", GoSignature: "() time.Duration"},
 	{LuaName: "Timer_Pause", Package: "litd/api", Symbol: "Timer.Pause", GoSignature: "()"},
@@ -114,6 +123,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_Type", Package: "litd/api", Symbol: "Unit.Type", GoSignature: "() UnitType"},
 	{LuaName: "Unit_UserData", Package: "litd/api", Symbol: "Unit.UserData", GoSignature: "() int"},
 	{LuaName: "Unit_VisibleTo", Package: "litd/api", Symbol: "Unit.VisibleTo", GoSignature: "(p Player) bool"},
+	{LuaName: "Vec2_Add", Package: "litd/api", Symbol: "Vec2.Add", GoSignature: "(o Vec2) Vec2"},
 }
 
 // AIBindings is the AI-domain surface (litd/ai, R-EXEC-3 isolated).

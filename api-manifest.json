@@ -85,6 +85,50 @@
       }
     },
     {
+      "name": "GetRectHeightBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Height",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetRectWidthBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Width",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "GetTimeOfDay",
       "origin": "blizzard.j",
       "signature": {
@@ -198,6 +242,38 @@
       }
     },
     {
+      "name": "OffsetLocation",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "dx",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "dy",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Vec2.Add",
+        "package": "litd/api",
+        "goSignature": "(o Vec2) Vec2"
+      }
+    },
+    {
       "name": "PauseTimerBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -273,6 +349,125 @@
         "symbol": "PolledWait",
         "package": "litd/api/helpers",
         "goSignature": "(seconds float64)"
+      }
+    },
+    {
+      "name": "RectContainsCoords",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Contains",
+        "package": "litd/api",
+        "goSignature": "(p Vec2) bool",
+        "collapsesWith": [
+          "RectContainsLoc"
+        ]
+      }
+    },
+    {
+      "name": "RectContainsItem",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "superseded by composing Rect.Contains(i.Position()) — no dedicated overload (R-API-2)"
+      }
+    },
+    {
+      "name": "RectContainsUnit",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "superseded by composing Rect.Contains(u.Position()) — no dedicated overload (R-API-2)"
+      }
+    },
+    {
+      "name": "RectFromCenterSizeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "center",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "width",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "height",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "rect"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "RectAround",
+        "package": "litd/api",
+        "goSignature": "(c Vec2, w, h float64) Rect"
       }
     },
     {
@@ -3027,6 +3222,48 @@
       }
     },
     {
+      "name": "GetLocationX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "location X accessor superseded by the Vec2.X field (R-API-2)"
+      }
+    },
+    {
+      "name": "GetLocationY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "location Y accessor superseded by the Vec2.Y field (R-API-2)"
+      }
+    },
+    {
       "name": "GetOrderTargetUnit",
       "origin": "common.j",
       "signature": {
@@ -3116,6 +3353,82 @@
         "symbol": "Game.RandomFloat",
         "package": "litd/api",
         "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetRectCenterX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Center",
+        "package": "litd/api",
+        "goSignature": "() Vec2",
+        "collapsesWith": [
+          "GetRectCenterY",
+          "GetRectCenter"
+        ]
+      }
+    },
+    {
+      "name": "GetRectMaxX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Max",
+        "package": "litd/api",
+        "goSignature": "() Vec2",
+        "collapsesWith": [
+          "GetRectMaxY"
+        ]
+      }
+    },
+    {
+      "name": "GetRectMinX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Min",
+        "package": "litd/api",
+        "goSignature": "() Vec2",
+        "collapsesWith": [
+          "GetRectMinY"
+        ]
       }
     },
     {
@@ -4122,6 +4435,98 @@
       }
     },
     {
+      "name": "Location",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "heap location constructor superseded by the Vec2 struct literal Vec2{x,y} (R-API-2); no Remove call exists"
+      }
+    },
+    {
+      "name": "MoveLocation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "newX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "newY",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "in-place location mutation superseded by re-assigning a Vec2 value (R-API-2); no identity to move"
+      }
+    },
+    {
+      "name": "MoveRectTo",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "newCenterX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "newCenterY",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Rect.Offset",
+        "package": "litd/api",
+        "goSignature": "(d Vec2) Rect",
+        "collapsesWith": [
+          "MoveRectToLoc"
+        ]
+      }
+    },
+    {
       "name": "NewSoundEnvironment",
       "origin": "common.j",
       "signature": {
@@ -4308,6 +4713,85 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "width/precision real-\u003estring; collapses onto fmt.Sprintf (math-strings-conversion.md D2). No public surface"
+      }
+    },
+    {
+      "name": "Rect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "minx",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "miny",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxx",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxy",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "rect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "NewRect",
+        "package": "litd/api",
+        "goSignature": "(a, b Vec2) Rect"
+      }
+    },
+    {
+      "name": "RemoveLocation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "location heap-lifetime cleanup superseded — Vec2 is a GC'd value, the leak hazard is deleted (R-API-2)"
+      }
+    },
+    {
+      "name": "RemoveRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "rect heap-lifetime cleanup superseded — Rect is a GC'd value (R-API-2)"
       }
     },
     {
@@ -4576,6 +5060,78 @@
         "symbol": "Game.SetRandomSeed",
         "package": "litd/api",
         "goSignature": "(seed int64)"
+      }
+    },
+    {
+      "name": "SetRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "minx",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "miny",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxx",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxy",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "in-place rect bounds mutation superseded by constructing a new Rect value (NewRect); no identity to set (hazard 4)"
+      }
+    },
+    {
+      "name": "SetRectFromLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "min",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "max",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "in-place rect-from-locations mutation superseded by NewRect over two Vec2 corners (R-API-2, hazard 4)"
       }
     },
     {

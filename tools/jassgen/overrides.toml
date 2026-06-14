@@ -1701,3 +1701,156 @@ name = "TriggerRegisterTimerExpireEvent"
 class = "D1"
 tombstone = "superseded"
 reason = "registers a trigger to fire on a timer's expiry; superseded by the canonical timer callback (Game.After/Every), not the OnEvent route (timers.md)"
+
+# --- Regions/Rects/Locations: value-type half (#241, regions-rects-locations.md) -
+# location/rect heap handles evaporate into Vec2/Rect values (R-API-2): the
+# location CRUD and rect lifetime/getter natives tombstone or collapse onto
+# Rect value methods (litd/api/rect.go) and Vec2 (handles.go). The Region
+# trigger-area noun, GetWorldBounds, GetLocationZ (TerrainHeight) and
+# RandomPointIn need new sim subsystems (cell tracking / heightfield) and stay
+# pending — tracked on #241.
+
+[[override]]
+name = "Rect"
+class = "D3"
+goMapping = "NewRect"
+goSignature = "(a, b Vec2) Rect"
+package = "litd/api"
+reason = "(minx,miny,maxx,maxy) rect constructor collapses onto NewRect over two Vec2 corners (R-API-2); GC owns the value, no RemoveRect"
+
+[[override]]
+name = "MoveRectTo"
+class = "D2"
+goMapping = "Rect.Offset"
+goSignature = "(d Vec2) Rect"
+collapsesWith = ["MoveRectToLoc"]
+package = "litd/api"
+reason = "a Rect is a value with no identity to mutate; recentering re-issues a translated value via Rect.Offset (hazard 4); the Loc variant collapses (location->Vec2)"
+
+[[override]]
+name = "GetRectCenterX"
+class = "D3"
+goMapping = "Rect.Center"
+goSignature = "() Vec2"
+collapsesWith = ["GetRectCenterY", "GetRectCenter"]
+package = "litd/api"
+reason = "per-axis center getters and the GetRectCenter location BJ collapse onto one Vec2 getter (R-API-2)"
+
+[[override]]
+name = "GetRectMinX"
+class = "D3"
+goMapping = "Rect.Min"
+goSignature = "() Vec2"
+collapsesWith = ["GetRectMinY"]
+package = "litd/api"
+reason = "per-axis min getters collapse onto one Vec2 corner getter (R-API-2)"
+
+[[override]]
+name = "GetRectMaxX"
+class = "D3"
+goMapping = "Rect.Max"
+goSignature = "() Vec2"
+collapsesWith = ["GetRectMaxY"]
+package = "litd/api"
+reason = "per-axis max getters collapse onto one Vec2 corner getter (R-API-2)"
+
+[[override]]
+name = "GetRectWidthBJ"
+class = "D1"
+goMapping = "Rect.Width"
+goSignature = "() float64"
+package = "litd/api"
+reason = "rect width helper maps directly onto Rect.Width (dedup §2)"
+
+[[override]]
+name = "GetRectHeightBJ"
+class = "D1"
+goMapping = "Rect.Height"
+goSignature = "() float64"
+package = "litd/api"
+reason = "rect height helper maps directly onto Rect.Height (dedup §2)"
+
+[[override]]
+name = "OffsetLocation"
+class = "D2"
+goMapping = "Vec2.Add"
+goSignature = "(o Vec2) Vec2"
+package = "litd/api"
+reason = "location-plus-offset collapses onto value vector addition Vec2.Add (R-API-2)"
+
+[[override]]
+name = "RectFromCenterSizeBJ"
+class = "D2"
+goMapping = "RectAround"
+goSignature = "(c Vec2, w, h float64) Rect"
+package = "litd/api"
+reason = "center+size constructor collapses onto RectAround (dedup §3)"
+
+[[override]]
+name = "RectContainsCoords"
+class = "D2"
+goMapping = "Rect.Contains"
+goSignature = "(p Vec2) bool"
+collapsesWith = ["RectContainsLoc"]
+package = "litd/api"
+reason = "point-in-rect test maps onto Rect.Contains; the Loc variant collapses (location->Vec2)"
+
+[[override]]
+name = "Location"
+class = "D3"
+tombstone = "superseded"
+reason = "heap location constructor superseded by the Vec2 struct literal Vec2{x,y} (R-API-2); no Remove call exists"
+
+[[override]]
+name = "RemoveLocation"
+class = "D1"
+tombstone = "superseded"
+reason = "location heap-lifetime cleanup superseded — Vec2 is a GC'd value, the leak hazard is deleted (R-API-2)"
+
+[[override]]
+name = "MoveLocation"
+class = "D3"
+tombstone = "superseded"
+reason = "in-place location mutation superseded by re-assigning a Vec2 value (R-API-2); no identity to move"
+
+[[override]]
+name = "GetLocationX"
+class = "D3"
+tombstone = "superseded"
+reason = "location X accessor superseded by the Vec2.X field (R-API-2)"
+
+[[override]]
+name = "GetLocationY"
+class = "D3"
+tombstone = "superseded"
+reason = "location Y accessor superseded by the Vec2.Y field (R-API-2)"
+
+[[override]]
+name = "RemoveRect"
+class = "D1"
+tombstone = "superseded"
+reason = "rect heap-lifetime cleanup superseded — Rect is a GC'd value (R-API-2)"
+
+[[override]]
+name = "SetRect"
+class = "D2"
+tombstone = "superseded"
+reason = "in-place rect bounds mutation superseded by constructing a new Rect value (NewRect); no identity to set (hazard 4)"
+
+[[override]]
+name = "SetRectFromLoc"
+class = "D3"
+tombstone = "superseded"
+reason = "in-place rect-from-locations mutation superseded by NewRect over two Vec2 corners (R-API-2, hazard 4)"
+
+[[override]]
+name = "RectContainsUnit"
+class = "D1"
+tombstone = "superseded"
+reason = "superseded by composing Rect.Contains(u.Position()) — no dedicated overload (R-API-2)"
+
+[[override]]
+name = "RectContainsItem"
+class = "D1"
+tombstone = "superseded"
+reason = "superseded by composing Rect.Contains(i.Position()) — no dedicated overload (R-API-2)"
