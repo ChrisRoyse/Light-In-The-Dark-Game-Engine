@@ -77,6 +77,13 @@ type Game struct {
 	// Forces are transient script convenience state — like triggers, they
 	// are not part of the hashed/serialized sim. CreateForce appends.
 	forces []uint32
+
+	// damageHandlers is the writable-damage filter channel (damage_event.go,
+	// #219): synchronous pre-apply modifiers run inside the sim's combat
+	// phase. damageHookInstalled records whether the single sim-side hook
+	// that fans out to them has been wired yet (lazy, once).
+	damageHandlers     []func(*DamageEvent)
+	damageHookInstalled bool
 }
 
 // newGame wraps a simulation world. The public setup path —

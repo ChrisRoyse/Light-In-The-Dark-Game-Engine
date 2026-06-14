@@ -282,6 +282,13 @@ type World struct {
 	// (A→B and B→A independent — alliance is one-directional). All hashed
 	// + serialized; initPlayers seeds defaults in NewWorld.
 	players playerRoster
+	// #219 writable-damage hook: a synchronous pre-apply modifier invoked
+	// in damageApplySystem on the final post-mitigation amount, letting a
+	// script scale damage deterministically. nil = no modification (the
+	// default — byte-identical to the no-hook path, so the golden trace is
+	// unperturbed). Not serialized: script wiring re-installed on load,
+	// like event handlers.
+	damageMod func(src, dst EntityID, amount fixed.F64) fixed.F64
 	// pooled intrusive order-queue entries (orders.go): LIFO free
 	// list threaded through orderEntry.next
 	orderPool      []orderEntry

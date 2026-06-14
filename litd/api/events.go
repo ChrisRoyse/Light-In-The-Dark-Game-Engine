@@ -133,7 +133,7 @@ func (g *Game) dispatch(kl *kindList, e sim.Event) {
 		if s.cancelled {
 			continue
 		}
-		ev := Event{kind: kl.pubKind, src: e.Src, dst: e.Dst, arg: e.Arg, g: g}
+		ev := Event{kind: kl.pubKind, src: e.Src, dst: e.Dst, arg: e.Arg, g: g, sub: s}
 		if s.player >= 0 && g.scopePlayerOf(ev) != s.player {
 			continue
 		}

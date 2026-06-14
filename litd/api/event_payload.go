@@ -59,6 +59,36 @@ const (
 	// EventRegionLeave fires when a unit leaves a region's cells (or dies
 	// inside it). Unit() is the leaving unit; Region() is the region.
 	EventRegionLeave
+	// EventOrderDropped fires when a unit's queued order is discarded
+	// without completing. Unit() is the unit.
+	EventOrderDropped
+	// EventBuffExpired fires when a buff instance times out. Unit() is the
+	// buffed unit.
+	EventBuffExpired
+	// EventResourceDeposited fires when a harvester delivers resources to
+	// a depot. Unit() is the harvester.
+	EventResourceDeposited
+	// EventResourceDepleted fires when a resource node is exhausted.
+	// Unit() is the node entity.
+	EventResourceDepleted
+	// EventTrainRefused fires when a production order is refused (cost,
+	// food, or requirement gate). Unit() is the would-be trainer.
+	EventTrainRefused
+	// EventHeroDied fires when a hero dies (in addition to EventUnitDeath).
+	// Unit() is the hero.
+	EventHeroDied
+	// EventItemUsed fires when a unit uses (activates) a carried item.
+	// Unit() is the user.
+	EventItemUsed
+	// EventItemDropped fires when a unit drops an item. Unit() is the
+	// dropping unit.
+	EventItemDropped
+	// EventConstructStarted fires when a building begins construction.
+	// Unit() is the building.
+	EventConstructStarted
+	// EventConstructCancelled fires when construction is cancelled before
+	// completing. Unit() is the building.
+	EventConstructCancelled
 )
 
 // simKindOf maps each public event kind to its sim event kind. The map
@@ -81,6 +111,16 @@ var simKindOf = map[EventKind]uint16{
 	EventDefeat:            sim.EvDefeat,
 	EventRegionEnter:       sim.EvRegionEnter,
 	EventRegionLeave:       sim.EvRegionLeave,
+	EventOrderDropped:      sim.EvOrderDropped,
+	EventBuffExpired:       sim.EvBuffExpired,
+	EventResourceDeposited: sim.EvResourceDeposited,
+	EventResourceDepleted:  sim.EvResourceDepleted,
+	EventTrainRefused:      sim.EvTrainRefused,
+	EventHeroDied:          sim.EvHeroDied,
+	EventItemUsed:          sim.EvItemUsed,
+	EventItemDropped:       sim.EvItemDropped,
+	EventConstructStarted:  sim.EvConstructStarted,
+	EventConstructCancelled: sim.EvConstructCancelled,
 }
 
 // Event is the payload handed to an OnEvent handler — a plain value
@@ -93,6 +133,7 @@ type Event struct {
 	dst  sim.EntityID
 	arg  int64
 	g    *Game
+	sub  *subscription // the firing subscription (Event.Subscription)
 }
 
 // Kind returns the event kind.
@@ -185,6 +226,12 @@ func (e Event) Region() Region {
 	}
 	return Region{}
 }
+
+// Subscription returns the registration that is currently firing this
+// handler — the capability behind JASS GetTriggeringTrigger, letting a
+// handler cancel itself (e.Subscription().Cancel()) or pass its own
+// registration on. Zero-value Subscription outside a dispatch.
+func (e Event) Subscription() Subscription { return Subscription{s: e.sub} }
 
 // Player returns the player carried by a player-scoped event, else the
 // zero Player on an unrelated kind. JASS: GetTriggerPlayer for the

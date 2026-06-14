@@ -998,6 +998,201 @@
       }
     },
     {
+      "name": "BlzGetTriggerFrame",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "framehandle"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "frame getter — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerFrameEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "frameeventtype"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "frame event id — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerFrameText",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "frame text — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerFrameValue",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "frame value — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerIsKeyDown",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "key-down query — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerKey",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "oskeytype"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "key getter — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerMetaKey",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "meta-key getter — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerMouseButton",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "mousebuttontype"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "mouse-button input — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerMousePosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "location"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "mouse input — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerMouseX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "mouse input — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerPlayerMouseY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "mouse input — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerSyncData",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "sync data — networking (#316)"
+      }
+    },
+    {
+      "name": "BlzGetTriggerSyncPrefix",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "sync prefix — networking (#316)"
+      }
+    },
+    {
       "name": "BlzGetUnitArmor",
       "origin": "common.j",
       "signature": {
@@ -1108,6 +1303,49 @@
       }
     },
     {
+      "name": "BlzSetEventDamage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "damage",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "DamageEvent.SetAmount",
+        "package": "litd/api",
+        "goSignature": "(v float64)"
+      }
+    },
+    {
+      "name": "BlzSetEventDamageType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "damageType",
+            "jassType": "damagetype",
+            "tsType": "damagetype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "damage-type override needs a damage-type field in the OnDamage payload; deferred (#219)"
+      }
+    },
+    {
       "name": "BlzSetUnitMaxHP",
       "origin": "common.j",
       "signature": {
@@ -1186,6 +1424,114 @@
         "symbol": "Unit.SetName",
         "package": "litd/api",
         "goSignature": "(name string)"
+      }
+    },
+    {
+      "name": "BlzTriggerRegisterFrameEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "frame",
+            "jassType": "framehandle",
+            "tsType": "framehandle"
+          },
+          {
+            "name": "eventId",
+            "jassType": "frameeventtype",
+            "tsType": "frameeventtype"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "frame events — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzTriggerRegisterPlayerKeyEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "key",
+            "jassType": "oskeytype",
+            "tsType": "oskeytype"
+          },
+          {
+            "name": "metaKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "keyDown",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "key events — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "BlzTriggerRegisterPlayerSyncEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "prefix",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "fromServer",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "player sync events — networking (#316)"
       }
     },
     {
@@ -2974,6 +3320,21 @@
       }
     },
     {
+      "name": "CreateDefeatCondition",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "defeatcondition"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "defeat conditions belong to the game-state-and-melee surface (#256)"
+      }
+    },
+    {
       "name": "CreateForce",
       "origin": "common.j",
       "signature": {
@@ -3037,6 +3398,21 @@
         "symbol": "Game.NewRegion",
         "package": "litd/api",
         "goSignature": "() Region"
+      }
+    },
+    {
+      "name": "CreateTrigger",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "trigger"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger creation superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
       }
     },
     {
@@ -3157,6 +3533,27 @@
       }
     },
     {
+      "name": "DestroyDefeatCondition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichCondition",
+            "jassType": "defeatcondition",
+            "tsType": "defeatcondition"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "defeat-condition free — game-state-and-melee (#256)"
+      }
+    },
+    {
       "name": "DestroyFilter",
       "origin": "common.j",
       "signature": {
@@ -3221,6 +3618,69 @@
         "collapsesWith": [
           "DestroyTimerBJ"
         ]
+      }
+    },
+    {
+      "name": "DestroyTrigger",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger free (GC) superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "DisableTrigger",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger disable superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "EnableTrigger",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger enable superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
       }
     },
     {
@@ -3489,6 +3949,21 @@
       }
     },
     {
+      "name": "GetChangingUnitPrevOwner",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "player"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetChangingUnitPrevOwner returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
       "name": "GetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -3517,7 +3992,100 @@
       "goMapping": {
         "symbol": "Event.Source",
         "package": "litd/api",
-        "goSignature": "() Unit"
+        "goSignature": "() Unit",
+        "collapsesWith": [
+          "GetAttacker"
+        ]
+      }
+    },
+    {
+      "name": "GetEventDetectingPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "player"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "detecting player needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetEventGameState",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "gamestate"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "game-state event value needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetEventPlayerChatString",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "chat string — networking/chat (#316)"
+      }
+    },
+    {
+      "name": "GetEventPlayerChatStringMatched",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "matched chat string — networking/chat (#316)"
+      }
+    },
+    {
+      "name": "GetEventPlayerState",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "playerstate"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "player-state event value needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetEventUnitState",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unitstate"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "unit-state event value needs an Event payload field not yet carried for that kind; deferred (#219)"
       }
     },
     {
@@ -3683,6 +4251,21 @@
       }
     },
     {
+      "name": "GetIssuedOrderId",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "order id needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
       "name": "GetKillingUnit",
       "origin": "common.j",
       "signature": {
@@ -3696,6 +4279,51 @@
         "symbol": "Event.KillingUnit",
         "package": "litd/api",
         "goSignature": "() Unit"
+      }
+    },
+    {
+      "name": "GetLearnedSkill",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "learned ability id needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetLearnedSkillLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "learned skill level needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetLoadedUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetLoadedUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
       }
     },
     {
@@ -3789,7 +4417,11 @@
       "goMapping": {
         "symbol": "Event.Target",
         "package": "litd/api",
-        "goSignature": "() Unit"
+        "goSignature": "() Unit",
+        "collapsesWith": [
+          "GetEventTargetUnit",
+          "GetSpellTargetUnit"
+        ]
       }
     },
     {
@@ -4567,6 +5199,171 @@
       }
     },
     {
+      "name": "GetResearched",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "researched upgrade id needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSoldItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetSoldItem returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
+      "name": "GetSoldUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetSoldUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
+      "name": "GetSpellAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "ability"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "cast ability handle needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSpellAbilityId",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "cast ability id needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSpellTargetDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetSpellTargetDestructable returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
+      "name": "GetSpellTargetItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetSpellTargetItem returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
+      "name": "GetSpellTargetLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "location"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "spell target location needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSpellTargetX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "spell target x needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSpellTargetY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "spell target y needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSummonedUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "GetSummonedUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
       "name": "GetTimeOfDayScale",
       "origin": "common.j",
       "signature": {
@@ -4583,6 +5380,93 @@
         "collapsesWith": [
           "GetTimeOfDayScalePercentBJ"
         ]
+      }
+    },
+    {
+      "name": "GetTrainedUnitType",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "trained unit type needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetTriggerDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger-destructable getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "GetTriggerEvalCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "eval counter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "GetTriggerEventId",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "eventid"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "fired event id needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetTriggerExecCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "exec counter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
       }
     },
     {
@@ -4617,8 +5501,40 @@
         "goSignature": "() Unit",
         "collapsesWith": [
           "GetEnteringUnit",
-          "GetLeavingUnit"
+          "GetLeavingUnit",
+          "GetOrderedUnit",
+          "GetDyingUnit",
+          "GetLevelingUnit",
+          "GetLearningUnit",
+          "GetResearchingUnit",
+          "GetSummoningUnit",
+          "GetSellingUnit",
+          "GetBuyingUnit",
+          "GetConstructingStructure",
+          "GetConstructedStructure",
+          "GetTrainedUnit",
+          "GetRevivableUnit",
+          "GetTransportUnit",
+          "GetChangingUnit",
+          "GetSpellAbilityUnit",
+          "GetEnumUnit",
+          "GetFilterUnit"
         ]
+      }
+    },
+    {
+      "name": "GetTriggerWidget",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "widget"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger-widget getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
       }
     },
     {
@@ -4635,6 +5551,37 @@
         "symbol": "Event.Region",
         "package": "litd/api",
         "goSignature": "() Region"
+      }
+    },
+    {
+      "name": "GetTriggeringTrackable",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "trackable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "trackable getter — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "GetTriggeringTrigger",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "trigger"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Subscription",
+        "package": "litd/api",
+        "goSignature": "() Subscription"
       }
     },
     {
@@ -5492,6 +6439,48 @@
       }
     },
     {
+      "name": "IsTriggerEnabled",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger-enabled query superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "IsTriggerWaitOnSleeps",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger sleep-wait query superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
       "name": "IsUnitHidden",
       "origin": "common.j",
       "signature": {
@@ -5793,6 +6782,130 @@
         "symbol": "Unit.Kill",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "LoadTriggerActionHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "triggeraction"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no action handles to persist (R-API-4)"
+      }
+    },
+    {
+      "name": "LoadTriggerConditionHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "triggercondition"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no condition handles to persist (R-API-4)"
+      }
+    },
+    {
+      "name": "LoadTriggerEventHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no event handles to persist (R-API-4)"
+      }
+    },
+    {
+      "name": "LoadTriggerHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "trigger"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no trigger handles to persist (R-API-4)"
       }
     },
     {
@@ -6393,6 +7506,27 @@
       }
     },
     {
+      "name": "ResetTrigger",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger reset superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
       "name": "ResumeTimer",
       "origin": "common.j",
       "signature": {
@@ -6454,6 +7588,150 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "string-\u003ereal; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
+      "name": "SaveTriggerActionHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichTriggeraction",
+            "jassType": "triggeraction",
+            "tsType": "triggeraction"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no action handles to persist (R-API-4)"
+      }
+    },
+    {
+      "name": "SaveTriggerConditionHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichTriggercondition",
+            "jassType": "triggercondition",
+            "tsType": "triggercondition"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no condition handles to persist (R-API-4)"
+      }
+    },
+    {
+      "name": "SaveTriggerEventHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichEvent",
+            "jassType": "event",
+            "tsType": "event"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no event handles to persist (R-API-4)"
+      }
+    },
+    {
+      "name": "SaveTriggerHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "no trigger handles to persist in the Go model (R-API-4)"
       }
     },
     {
@@ -8075,6 +9353,272 @@
       }
     },
     {
+      "name": "TriggerAddAction",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "actionFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "triggeraction"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "action add superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerAddCondition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "condition",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "triggercondition"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "condition add superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerClearActions",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "action clear superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerClearConditions",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "condition clear superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerEvaluate",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "manual evaluate superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerExecute",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "manual execute superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerExecuteWait",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "manual execute+wait superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerRegisterCommandEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichAbility",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "command event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterDeathEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "death event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterDialogButtonEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichButton",
+            "jassType": "button",
+            "tsType": "button"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "dialog-button events — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "TriggerRegisterDialogEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichDialog",
+            "jassType": "dialog",
+            "tsType": "dialog"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "dialog events belong to the ui-frames-and-dialogs surface (#245)"
+      }
+    },
+    {
       "name": "TriggerRegisterEnterRegion",
       "origin": "common.j",
       "signature": {
@@ -8106,6 +9650,104 @@
       }
     },
     {
+      "name": "TriggerRegisterFilterUnitEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichEvent",
+            "jassType": "unitevent",
+            "tsType": "unitevent"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "filtered-unit event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterGameEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichGameEvent",
+            "jassType": "gameevent",
+            "tsType": "gameevent"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "game event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterGameStateEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichState",
+            "jassType": "gamestate",
+            "tsType": "gamestate"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "game-state event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
       "name": "TriggerRegisterLeaveRegion",
       "origin": "common.j",
       "signature": {
@@ -8134,6 +9776,181 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "trigger+boolexpr region-leave registration superseded by OnEvent(EventRegionLeave) (public-api-design.md R-API-4, #241)"
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerAllianceChange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichAlliance",
+            "jassType": "alliancetype",
+            "tsType": "alliancetype"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "alliance-change event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerChatEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "chatMessageToDetect",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "exactMatchOnly",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "chat events belong to the networking/chat surface (#316)"
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerEvent",
+            "jassType": "playerevent",
+            "tsType": "playerevent"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "player event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerStateEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichState",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "player-state event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerUnitEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerUnitEvent",
+            "jassType": "playerunitevent",
+            "tsType": "playerunitevent"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "player-unit event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
       }
     },
     {
@@ -8191,6 +10008,383 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "registers a trigger to fire on a timer's expiry; superseded by the canonical timer callback (Game.After/Every), not the OnEvent route (timers.md)"
+      }
+    },
+    {
+      "name": "TriggerRegisterTrackableHitEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "t",
+            "jassType": "trackable",
+            "tsType": "trackable"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "trackable hit events — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "TriggerRegisterTrackableTrackEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "t",
+            "jassType": "trackable",
+            "tsType": "trackable"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "trackable track events — ui-frames (#245)"
+      }
+    },
+    {
+      "name": "TriggerRegisterUnitEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichEvent",
+            "jassType": "unitevent",
+            "tsType": "unitevent"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "unit event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterUnitInRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "range",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "unit-in-range event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterUnitStateEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichState",
+            "jassType": "unitstate",
+            "tsType": "unitstate"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "unit-state event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterUpgradeCommandEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUpgrade",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "upgrade-command event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRegisterVariableEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "varName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "variable-threshold event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219)"
+      }
+    },
+    {
+      "name": "TriggerRemoveAction",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichAction",
+            "jassType": "triggeraction",
+            "tsType": "triggeraction"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "action remove superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerRemoveCondition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichCondition",
+            "jassType": "triggercondition",
+            "tsType": "triggercondition"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "condition remove superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "TriggerSleepAction",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "timeout",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger-thread sleep superseded by helpers.PolledWait on the cooperative scheduler (execution-model.md)"
+      }
+    },
+    {
+      "name": "TriggerSyncReady",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "game-state sync — networking (#316)"
+      }
+    },
+    {
+      "name": "TriggerSyncStart",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "game-state sync — networking (#316)"
+      }
+    },
+    {
+      "name": "TriggerWaitForSound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "offset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "sound-completion wait — sound-and-music surface (#244)"
+      }
+    },
+    {
+      "name": "TriggerWaitOnSleeps",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger sleep-wait toggle superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
       }
     },
     {

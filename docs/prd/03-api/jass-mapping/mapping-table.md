@@ -261,16 +261,16 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsPointInRegion | common.j | D3 | `litd/api.Region.Contains` |
 | IsLocationInRegion | common.j | D3 | `litd/api.Region.Contains` (D3 collapse → IsPointInRegion) |
 | GetWorldBounds | common.j | D1 | `litd/api.Game.WorldBounds` |
-| CreateTrigger | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyTrigger | common.j | unclassified | _pending (M2 backlog)_ |
-| ResetTrigger | common.j | unclassified | _pending (M2 backlog)_ |
-| EnableTrigger | common.j | unclassified | _pending (M2 backlog)_ |
-| DisableTrigger | common.j | unclassified | _pending (M2 backlog)_ |
-| IsTriggerEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerWaitOnSleeps | common.j | unclassified | _pending (M2 backlog)_ |
-| IsTriggerWaitOnSleeps | common.j | unclassified | _pending (M2 backlog)_ |
-| GetFilterUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEnumUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateTrigger | common.j | D1 | **tombstoned** (superseded): trigger creation superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| DestroyTrigger | common.j | D1 | **tombstoned** (superseded): trigger free (GC) superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| ResetTrigger | common.j | D1 | **tombstoned** (superseded): trigger reset superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| EnableTrigger | common.j | D1 | **tombstoned** (superseded): trigger enable superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| DisableTrigger | common.j | D1 | **tombstoned** (superseded): trigger disable superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| IsTriggerEnabled | common.j | D1 | **tombstoned** (superseded): trigger-enabled query superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerWaitOnSleeps | common.j | D1 | **tombstoned** (superseded): trigger sleep-wait toggle superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| IsTriggerWaitOnSleeps | common.j | D1 | **tombstoned** (superseded): trigger sleep-wait query superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| GetFilterUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetEnumUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetFilterDestructable | common.j | unclassified | _pending (M2 backlog)_ |
 | GetEnumDestructable | common.j | unclassified | _pending (M2 backlog)_ |
 | GetFilterItem | common.j | unclassified | _pending (M2 backlog)_ |
@@ -278,10 +278,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ParseTags | common.j | unclassified | _pending (M2 backlog)_ |
 | GetFilterPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
 | GetEnumPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
-| GetTriggeringTrigger | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggerEventId | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggerEvalCount | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggerExecCount | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTriggeringTrigger | common.j | D1 | `litd/api.Event.Subscription` |
+| GetTriggerEventId | common.j | D2 | **tombstoned** (deferred-v2): fired event id needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetTriggerEvalCount | common.j | D1 | **tombstoned** (superseded): eval counter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| GetTriggerExecCount | common.j | D1 | **tombstoned** (superseded): exec counter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
 | ExecuteFunc | common.j | D1 | **tombstoned** (superseded): call-by-string-name dispatch; superseded by Go closures — the one dynamic JASS feature deliberately not ported (math-strings-conversion.md §5, D-2026-06-11-8). Lua embedding restores call-by-name for runtime worlds (#267) |
 | And | common.j | D1 | **tombstoned** (superseded): boolexpr AND-combinator; Go closures compose with && (triggers-and-events.md, R-API-4) |
 | Or | common.j | D1 | **tombstoned** (superseded): boolexpr OR-combinator; Go closures compose with || (triggers-and-events.md, R-API-4) |
@@ -291,25 +291,25 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | Filter | common.j | D1 | **tombstoned** (superseded): wraps a code func into a filterfunc; a Go func(Event) bool IS the filter — WithFilter(fn) (triggers-and-events.md, R-API-4) |
 | DestroyFilter | common.j | D1 | **tombstoned** (superseded): manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
 | DestroyBoolExpr | common.j | D1 | **tombstoned** (superseded): manual boolexpr free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
-| TriggerRegisterVariableEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterVariableEvent | common.j | D1 | **tombstoned** (superseded): variable-threshold event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | TriggerRegisterTimerEvent | common.j | D2 | **tombstoned** (superseded): timer-as-event-bus native (create timer + register trigger) superseded; the canonical path is the timer callback (Game.After/Every), not the OnEvent route (timers.md) |
 | TriggerRegisterTimerExpireEvent | common.j | D1 | **tombstoned** (superseded): registers a trigger to fire on a timer's expiry; superseded by the canonical timer callback (Game.After/Every), not the OnEvent route (timers.md) |
-| TriggerRegisterGameStateEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterDialogEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterDialogButtonEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventGameState | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterGameEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterGameStateEvent | common.j | D1 | **tombstoned** (superseded): game-state event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| TriggerRegisterDialogEvent | common.j | D1 | **tombstoned** (deferred-v2): dialog events belong to the ui-frames-and-dialogs surface (#245) |
+| TriggerRegisterDialogButtonEvent | common.j | D1 | **tombstoned** (deferred-v2): dialog-button events — ui-frames (#245) |
+| GetEventGameState | common.j | D2 | **tombstoned** (deferred-v2): game-state event value needs an Event payload field not yet carried for that kind; deferred (#219) |
+| TriggerRegisterGameEvent | common.j | D1 | **tombstoned** (superseded): game event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | GetWinningPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterEnterRegion | common.j | D1 | **tombstoned** (superseded): trigger+boolexpr region-enter registration superseded by OnEvent(EventRegionEnter) (public-api-design.md R-API-4, #241) |
 | GetTriggeringRegion | common.j | D1 | `litd/api.Event.Region` |
 | GetEnteringUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | TriggerRegisterLeaveRegion | common.j | D1 | **tombstoned** (superseded): trigger+boolexpr region-leave registration superseded by OnEvent(EventRegionLeave) (public-api-design.md R-API-4, #241) |
 | GetLeavingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
-| TriggerRegisterTrackableHitEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterTrackableTrackEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterCommandEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterUpgradeCommandEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggeringTrackable | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterTrackableHitEvent | common.j | D1 | **tombstoned** (deferred-v2): trackable hit events — ui-frames (#245) |
+| TriggerRegisterTrackableTrackEvent | common.j | D1 | **tombstoned** (deferred-v2): trackable track events — ui-frames (#245) |
+| TriggerRegisterCommandEvent | common.j | D1 | **tombstoned** (superseded): command event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| TriggerRegisterUpgradeCommandEvent | common.j | D1 | **tombstoned** (superseded): upgrade-command event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| GetTriggeringTrackable | common.j | D1 | **tombstoned** (deferred-v2): trackable getter — ui-frames (#245) |
 | GetClickedButton | common.j | unclassified | _pending (M2 backlog)_ |
 | GetClickedDialog | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTournamentFinishSoonTimeRemaining | common.j | unclassified | _pending (M2 backlog)_ |
@@ -317,38 +317,38 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetTournamentFinishNowPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTournamentScore | common.j | unclassified | _pending (M2 backlog)_ |
 | GetSaveBasicFilename | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterPlayerEvent | common.j | D1 | **tombstoned** (superseded): player event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | GetTriggerPlayer | common.j | D2 | `litd/api.Event.Player` |
-| TriggerRegisterPlayerUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLevelingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLearningUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLearnedSkill | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLearnedSkillLevel | common.j | unclassified | _pending (M2 backlog)_ |
-| GetRevivableUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterPlayerUnitEvent | common.j | D1 | **tombstoned** (superseded): player-unit event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| GetLevelingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetLearningUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetLearnedSkill | common.j | D2 | **tombstoned** (deferred-v2): learned ability id needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetLearnedSkillLevel | common.j | D2 | **tombstoned** (deferred-v2): learned skill level needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetRevivableUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetRevivingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetAttacker | common.j | unclassified | _pending (M2 backlog)_ |
+| GetAttacker | common.j | D2 | `litd/api.Event.Source` (D3 collapse → GetEventDamageSource) |
 | GetRescuer | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDyingUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetDyingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetKillingUnit | common.j | D2 | `litd/api.Event.KillingUnit` |
 | GetDecayingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetConstructingStructure | common.j | unclassified | _pending (M2 backlog)_ |
+| GetConstructingStructure | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetCancelledStructure | common.j | unclassified | _pending (M2 backlog)_ |
-| GetConstructedStructure | common.j | unclassified | _pending (M2 backlog)_ |
-| GetResearchingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetResearched | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTrainedUnitType | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTrainedUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetConstructedStructure | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetResearchingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetResearched | common.j | D2 | **tombstoned** (deferred-v2): researched upgrade id needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetTrainedUnitType | common.j | D2 | **tombstoned** (deferred-v2): trained unit type needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetTrainedUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetDetectedUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSummoningUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSummonedUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTransportUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLoadedUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSellingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSoldUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetBuyingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSoldItem | common.j | unclassified | _pending (M2 backlog)_ |
-| GetChangingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetChangingUnitPrevOwner | common.j | unclassified | _pending (M2 backlog)_ |
+| GetSummoningUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetSummonedUnit | common.j | D2 | **tombstoned** (deferred-v2): GetSummonedUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
+| GetTransportUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetLoadedUnit | common.j | D2 | **tombstoned** (deferred-v2): GetLoadedUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
+| GetSellingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetSoldUnit | common.j | D2 | **tombstoned** (deferred-v2): GetSoldUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
+| GetBuyingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetSoldItem | common.j | D2 | **tombstoned** (deferred-v2): GetSoldItem returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
+| GetChangingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetChangingUnitPrevOwner | common.j | D2 | **tombstoned** (deferred-v2): GetChangingUnitPrevOwner returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
 | GetManipulatingUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetManipulatedItem | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetAbsorbingItem | common.j | unclassified | _pending (M2 backlog)_ |
@@ -356,8 +356,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetStackingItemSource | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetStackingItemTarget | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetStackingItemTargetPreviousCharges | common.j | unclassified | _pending (M2 backlog)_ |
-| GetOrderedUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetIssuedOrderId | common.j | unclassified | _pending (M2 backlog)_ |
+| GetOrderedUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetIssuedOrderId | common.j | D2 | **tombstoned** (deferred-v2): order id needs an Event payload field not yet carried for that kind; deferred (#219) |
 | GetOrderPointX | common.j | D3 | _pending (M2 backlog)_ |
 | GetOrderPointY | common.j | D3 | _pending (M2 backlog)_ |
 | GetOrderPointLoc | common.j | unclassified | _pending (M2 backlog)_ |
@@ -365,50 +365,50 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetOrderTargetDestructable | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTargetItem | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTargetUnit | common.j | D2 | `litd/api.Event.Target` |
-| GetSpellAbilityUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSpellAbilityId | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSpellAbility | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSpellTargetLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSpellTargetX | common.j | D3 | _pending (M2 backlog)_ |
-| GetSpellTargetY | common.j | D3 | _pending (M2 backlog)_ |
-| GetSpellTargetDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSpellTargetItem | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSpellTargetUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerAllianceChange | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerStateEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventPlayerState | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerChatEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventPlayerChatString | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventPlayerChatStringMatched | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterDeathEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| GetSpellAbilityUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| GetSpellAbilityId | common.j | D2 | **tombstoned** (deferred-v2): cast ability id needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetSpellAbility | common.j | D2 | **tombstoned** (deferred-v2): cast ability handle needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetSpellTargetLoc | common.j | D2 | **tombstoned** (deferred-v2): spell target location needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetSpellTargetX | common.j | D2 | **tombstoned** (deferred-v2): spell target x needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetSpellTargetY | common.j | D2 | **tombstoned** (deferred-v2): spell target y needs an Event payload field not yet carried for that kind; deferred (#219) |
+| GetSpellTargetDestructable | common.j | D2 | **tombstoned** (deferred-v2): GetSpellTargetDestructable returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
+| GetSpellTargetItem | common.j | D2 | **tombstoned** (deferred-v2): GetSpellTargetItem returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
+| GetSpellTargetUnit | common.j | D2 | `litd/api.Event.Target` (D3 collapse → GetOrderTargetUnit) |
+| TriggerRegisterPlayerAllianceChange | common.j | D1 | **tombstoned** (superseded): alliance-change event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| TriggerRegisterPlayerStateEvent | common.j | D1 | **tombstoned** (superseded): player-state event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| GetEventPlayerState | common.j | D2 | **tombstoned** (deferred-v2): player-state event value needs an Event payload field not yet carried for that kind; deferred (#219) |
+| TriggerRegisterPlayerChatEvent | common.j | D1 | **tombstoned** (deferred-v2): chat events belong to the networking/chat surface (#316) |
+| GetEventPlayerChatString | common.j | D1 | **tombstoned** (deferred-v2): chat string — networking/chat (#316) |
+| GetEventPlayerChatStringMatched | common.j | D1 | **tombstoned** (deferred-v2): matched chat string — networking/chat (#316) |
+| TriggerRegisterDeathEvent | common.j | D1 | **tombstoned** (superseded): death event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | GetTriggerUnit | common.j | D2 | `litd/api.Event.Unit` |
-| TriggerRegisterUnitStateEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventUnitState | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterUnitStateEvent | common.j | D1 | **tombstoned** (superseded): unit-state event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| GetEventUnitState | common.j | D2 | **tombstoned** (deferred-v2): unit-state event value needs an Event payload field not yet carried for that kind; deferred (#219) |
+| TriggerRegisterUnitEvent | common.j | D1 | **tombstoned** (superseded): unit event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | GetEventDamage | common.j | D2 | `litd/api.Event.Damage` |
 | GetEventDamageSource | common.j | D2 | `litd/api.Event.Source` |
-| GetEventDetectingPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterFilterUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventTargetUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterUnitInRange | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerAddCondition | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRemoveCondition | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerClearConditions | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerAddAction | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRemoveAction | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerClearActions | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerSleepAction | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerWaitForSound | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerEvaluate | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerExecute | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerExecuteWait | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerSyncStart | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerSyncReady | common.j | unclassified | _pending (M2 backlog)_ |
+| GetEventDetectingPlayer | common.j | D2 | **tombstoned** (deferred-v2): detecting player needs an Event payload field not yet carried for that kind; deferred (#219) |
+| TriggerRegisterFilterUnitEvent | common.j | D1 | **tombstoned** (superseded): filtered-unit event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| GetEventTargetUnit | common.j | D2 | `litd/api.Event.Target` (D3 collapse → GetOrderTargetUnit) |
+| TriggerRegisterUnitInRange | common.j | D1 | **tombstoned** (superseded): unit-in-range event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
+| TriggerAddCondition | common.j | D1 | **tombstoned** (superseded): condition add superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerRemoveCondition | common.j | D1 | **tombstoned** (superseded): condition remove superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerClearConditions | common.j | D1 | **tombstoned** (superseded): condition clear superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerAddAction | common.j | D1 | **tombstoned** (superseded): action add superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerRemoveAction | common.j | D1 | **tombstoned** (superseded): action remove superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerClearActions | common.j | D1 | **tombstoned** (superseded): action clear superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerSleepAction | common.j | D1 | **tombstoned** (superseded): trigger-thread sleep superseded by helpers.PolledWait on the cooperative scheduler (execution-model.md) |
+| TriggerWaitForSound | common.j | D1 | **tombstoned** (deferred-v2): sound-completion wait — sound-and-music surface (#244) |
+| TriggerEvaluate | common.j | D1 | **tombstoned** (superseded): manual evaluate superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerExecute | common.j | D1 | **tombstoned** (superseded): manual execute superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerExecuteWait | common.j | D1 | **tombstoned** (superseded): manual execute+wait superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
+| TriggerSyncStart | common.j | D1 | **tombstoned** (deferred-v2): game-state sync — networking (#316) |
+| TriggerSyncReady | common.j | D1 | **tombstoned** (deferred-v2): game-state sync — networking (#316) |
 | GetWidgetLife | common.j | unclassified | _pending (M2 backlog)_ |
 | SetWidgetLife | common.j | unclassified | _pending (M2 backlog)_ |
 | GetWidgetX | common.j | D3 | _pending (M2 backlog)_ |
 | GetWidgetY | common.j | D3 | _pending (M2 backlog)_ |
-| GetTriggerWidget | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTriggerWidget | common.j | D1 | **tombstoned** (superseded): trigger-widget getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
 | CreateDestructable | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateDestructableZ | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateDeadDestructable | common.j | unclassified | _pending (M2 backlog)_ |
@@ -433,7 +433,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetDestructableOccluderHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetDestructableOccluderHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | GetDestructableName | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggerDestructable | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTriggerDestructable | common.j | D1 | **tombstoned** (superseded): trigger-destructable getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
 | CreateItem | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveItem | common.j | unclassified | _pending (M2 backlog)_ |
 | GetItemPlayer | common.j | unclassified | _pending (M2 backlog)_ |
@@ -804,10 +804,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SaveUnitHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveAbilityHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveTimerHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTriggerHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTriggerConditionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTriggerActionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTriggerEventHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| SaveTriggerHandle | common.j | D1 | **tombstoned** (superseded): no trigger handles to persist in the Go model (R-API-4) |
+| SaveTriggerConditionHandle | common.j | D1 | **tombstoned** (superseded): no condition handles to persist (R-API-4) |
+| SaveTriggerActionHandle | common.j | D1 | **tombstoned** (superseded): no action handles to persist (R-API-4) |
+| SaveTriggerEventHandle | common.j | D1 | **tombstoned** (superseded): no event handles to persist (R-API-4) |
 | SaveForceHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveGroupHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveLocationHandle | common.j | unclassified | _pending (M2 backlog)_ |
@@ -848,10 +848,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | LoadUnitHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadAbilityHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadTimerHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTriggerHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTriggerConditionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTriggerActionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTriggerEventHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| LoadTriggerHandle | common.j | D1 | **tombstoned** (superseded): no trigger handles to persist (R-API-4) |
+| LoadTriggerConditionHandle | common.j | D1 | **tombstoned** (superseded): no condition handles to persist (R-API-4) |
+| LoadTriggerActionHandle | common.j | D1 | **tombstoned** (superseded): no action handles to persist (R-API-4) |
+| LoadTriggerEventHandle | common.j | D1 | **tombstoned** (superseded): no event handles to persist (R-API-4) |
 | LoadForceHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadGroupHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadLocationHandle | common.j | unclassified | _pending (M2 backlog)_ |
@@ -991,8 +991,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | QuestItemSetDescription | common.j | unclassified | _pending (M2 backlog)_ |
 | QuestItemSetCompleted | common.j | unclassified | _pending (M2 backlog)_ |
 | IsQuestItemCompleted | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateDefeatCondition | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyDefeatCondition | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateDefeatCondition | common.j | D1 | **tombstoned** (deferred-v2): defeat conditions belong to the game-state-and-melee surface (#256) |
+| DestroyDefeatCondition | common.j | D1 | **tombstoned** (deferred-v2): defeat-condition free — game-state-and-melee (#256) |
 | DefeatConditionSetDescription | common.j | unclassified | _pending (M2 backlog)_ |
 | FlashQuestDialogButton | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceQuestDialogUpdate | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1262,10 +1262,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AutomationTestStart | common.j | unclassified | _pending (M2 backlog)_ |
 | AutomationTestEnd | common.j | unclassified | _pending (M2 backlog)_ |
 | AutomationTestingFinished | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerMouseX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerMouseY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerMousePosition | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerMouseButton | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetTriggerPlayerMouseX | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
+| BlzGetTriggerPlayerMouseY | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
+| BlzGetTriggerPlayerMousePosition | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
+| BlzGetTriggerPlayerMouseButton | common.j | D1 | **tombstoned** (deferred-v2): mouse-button input — ui-frames (#245) |
 | BlzSetAbilityTooltip | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetAbilityActivatedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetAbilityExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1358,13 +1358,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetUnitAbilityManaCost | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetLocalUnitZ | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzDecPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetEventDamage | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetEventDamage | common.j | D1 | `litd/api.DamageEvent.SetAmount` |
 | BlzGetEventDamageTarget | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetEventAttackType | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetEventDamageType | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetEventWeaponType | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetEventAttackType | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetEventDamageType | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetEventDamageType | common.j | D1 | **tombstoned** (deferred-v2): damage-type override needs a damage-type field in the OnDamage payload; deferred (#219) |
 | BlzSetEventWeaponType | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetEventIsAttack | common.j | unclassified | _pending (M2 backlog)_ |
 | RequestExtraIntegerData | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1433,19 +1433,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzFrameSetTextAlignment | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzFrameGetChildrenCount | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzFrameGetChild | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzTriggerRegisterFrameEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerFrame | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerFrameEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerFrameValue | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerFrameText | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzTriggerRegisterPlayerSyncEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzTriggerRegisterFrameEvent | common.j | D1 | **tombstoned** (deferred-v2): frame events — ui-frames (#245) |
+| BlzGetTriggerFrame | common.j | D1 | **tombstoned** (deferred-v2): frame getter — ui-frames (#245) |
+| BlzGetTriggerFrameEvent | common.j | D1 | **tombstoned** (deferred-v2): frame event id — ui-frames (#245) |
+| BlzGetTriggerFrameValue | common.j | D1 | **tombstoned** (deferred-v2): frame value — ui-frames (#245) |
+| BlzGetTriggerFrameText | common.j | D1 | **tombstoned** (deferred-v2): frame text — ui-frames (#245) |
+| BlzTriggerRegisterPlayerSyncEvent | common.j | D1 | **tombstoned** (deferred-v2): player sync events — networking (#316) |
 | BlzSendSyncData | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerSyncPrefix | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerSyncData | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzTriggerRegisterPlayerKeyEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerKey | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerMetaKey | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetTriggerPlayerIsKeyDown | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetTriggerSyncPrefix | common.j | D1 | **tombstoned** (deferred-v2): sync prefix — networking (#316) |
+| BlzGetTriggerSyncData | common.j | D1 | **tombstoned** (deferred-v2): sync data — networking (#316) |
+| BlzTriggerRegisterPlayerKeyEvent | common.j | D1 | **tombstoned** (deferred-v2): key events — ui-frames (#245) |
+| BlzGetTriggerPlayerKey | common.j | D1 | **tombstoned** (deferred-v2): key getter — ui-frames (#245) |
+| BlzGetTriggerPlayerMetaKey | common.j | D1 | **tombstoned** (deferred-v2): meta-key getter — ui-frames (#245) |
+| BlzGetTriggerPlayerIsKeyDown | common.j | D1 | **tombstoned** (deferred-v2): key-down query — ui-frames (#245) |
 | BlzEnableCursor | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetMousePos | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetLocalClientWidth | common.j | unclassified | _pending (M2 backlog)_ |

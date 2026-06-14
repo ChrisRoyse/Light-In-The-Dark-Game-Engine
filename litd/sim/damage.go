@@ -103,6 +103,16 @@ func (w *World) BindDamageMatrix(coeff [][]int32) error {
 	return nil
 }
 
+// SetDamageModifier installs (or clears, with nil) the synchronous
+// pre-apply damage hook (#219). fn receives the source, target, and the
+// final post-mitigation amount and returns the amount to actually apply.
+// It must be pure and deterministic (no waits, no PRNG of its own) — it
+// runs inside the combat phase. Replacing it is script wiring, not hashed
+// sim state.
+func (w *World) SetDamageModifier(fn func(src, dst EntityID, amount fixed.F64) fixed.F64) {
+	w.damageMod = fn
+}
+
 // QueueDamage appends one packet to the deferred buffer. A full
 // buffer is a counted drop — visible in DamageDropped(), never
 // silent (the buffer is sized generously off World caps; hitting the
@@ -158,6 +168,17 @@ func (w *World) damageApplySystem() {
 		post = post.Mul(armorMult[armor-ArmorLUTMin])
 		if post < 0 {
 			post = 0 // final clamp: damage never heals
+		}
+
+		// #219 writable-damage hook: a script may scale the final
+		// post-mitigation amount. Runs synchronously here (pre-apply) so
+		// the modified value is what EvUnitDamaged carries and what the
+		// victim's life loses. nil hook ⇒ unchanged (golden trace stable).
+		if w.damageMod != nil {
+			post = w.damageMod(p.Source, p.Target, post)
+			if post < 0 {
+				post = 0
+			}
 		}
 
 		if cr := w.Combats.Row(p.Target); cr != -1 {
