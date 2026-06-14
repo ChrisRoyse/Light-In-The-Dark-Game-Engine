@@ -3439,3 +3439,1420 @@ name = "SelectGroupForPlayerBJ"
 class = "D1"
 tombstone = "deferred-v2"
 reason = "per-player group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+
+# ============================================================================
+# Hashtables & gamecache (#242). 80-native type matrix -> generic Table[V]
+# (table.go) + Attachment[V] (attach.go); gamecache -> Game.Storage()
+# (savedata.go). Save/Load/Have/Remove typed variants collapse (D3); the
+# whole-game Save/LoadGame, unit snapshots, and SyncStored* are deferred.
+# ============================================================================
+
+[[override]]
+name = "InitHashtable"
+class = "D1"
+goMapping = "NewTable"
+goSignature = "[V any]() *Table[V]"
+package = "litd/api"
+reason = "hashtable handle becomes the generic Table[V] (D3 type matrix collapse); InitHashtable constructs it"
+
+[[override]]
+name = "SaveInteger"
+class = "D3"
+goMapping = "Table.Set"
+goSignature = "(parent, child int, v V)"
+package = "litd/api"
+reason = "the entire Save{Integer,Real,Boolean,String}/Save*Handle matrix collapses onto Table[V].Set — the type is the type parameter, not a native suffix (dedup §6 type matrix); Table.Set is the representative"
+
+[[override]]
+name = "LoadInteger"
+class = "D3"
+goMapping = "Table.Get"
+goSignature = "(parent, child int) (V, bool)"
+package = "litd/api"
+reason = "the Load* matrix collapses onto Table[V].Get with comma-ok (LoadX + HaveSavedX fold to one return); representative symbol"
+
+[[override]]
+name = "HaveSavedInteger"
+class = "D5"
+goMapping = "Table.Has"
+goSignature = "(parent, child int) bool"
+package = "litd/api"
+reason = "the HaveSaved* family collapses onto Table.Has (also exposed as the ok of Get)"
+
+[[override]]
+name = "RemoveSavedInteger"
+class = "D1"
+goMapping = "Table.Remove"
+goSignature = "(parent, child int)"
+package = "litd/api"
+reason = "the RemoveSaved* family collapses onto Table.Remove"
+
+[[override]]
+name = "FlushChildHashtable"
+class = "D1"
+goMapping = "Table.RemoveParent"
+goSignature = "(parent int)"
+package = "litd/api"
+reason = "flush-one-parent maps onto Table.RemoveParent"
+
+[[override]]
+name = "FlushParentHashtable"
+class = "D1"
+goMapping = "Table.Clear"
+goSignature = "()"
+package = "litd/api"
+reason = "flush-whole-table maps onto Table.Clear"
+
+[[override]]
+name = "GetHandleId"
+class = "D3"
+goMapping = "Unit.ID"
+goSignature = "() uint32"
+package = "litd/api"
+reason = "handle-id arithmetic becomes the opaque, generation-stable Unit.ID (used as a map key directly via Attachment[V])"
+
+[[override]]
+name = "InitGameCache"
+class = "D1"
+goMapping = "Game.Storage"
+goSignature = "() *Storage"
+package = "litd/api"
+reason = "the gamecache singleton becomes Game.Storage() (public-api-design.md §2 row 1)"
+
+[[override]]
+name = "StoreInteger"
+class = "D5"
+goMapping = "Storage.SetInt"
+goSignature = "(category, key string, v int)"
+package = "litd/api"
+reason = "typed gamecache store collapses onto the Storage typed setter family (SetInt/SetReal/SetString/SetBool); SetInt representative"
+
+[[override]]
+name = "GetStoredInteger"
+class = "D5"
+goMapping = "Storage.GetInt"
+goSignature = "(category, key string) (int, bool)"
+package = "litd/api"
+reason = "typed gamecache read collapses onto the Storage comma-ok getter family; GetInt representative"
+
+[[override]]
+name = "FlushGameCache"
+class = "D1"
+goMapping = "Storage.Clear"
+goSignature = "()"
+package = "litd/api"
+reason = "gamecache flush maps onto Storage.Clear"
+
+[[override]]
+name = "FlushChildHashtableBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "FlushGameCacheBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "FlushParentHashtableBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "FlushStoredMission"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "FlushStoredMissionBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetHandleIdBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetLastCreatedGameCacheBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetLastCreatedHashtableBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredBooleanBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredIntegerBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredRealBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredString"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "GetStoredStringBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveSavedBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveSavedHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveSavedReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveSavedString"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveSavedValue"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveStoredBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveStoredInteger"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveStoredReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveStoredString"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "HaveStoredUnit"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "HaveStoredValue"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "InitGameCacheBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "InitHashtableBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadAbilityHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadAbilityHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadBooleanBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadBooleanExprHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadBooleanExprHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadButtonHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadButtonHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadDefeatConditionHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadDefeatConditionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadDestructableHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadDestructableHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadDialogHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadDialogHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadEffectHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadEffectHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadFogModifierHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadFogModifierHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadFogStateHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadFogStateHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadForceHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadForceHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadFrameHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadGame"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "LoadGameBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadHashtableHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadHashtableHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadImageHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadImageHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadIntegerBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadItemHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadItemHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadItemPoolHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadItemPoolHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadLeaderboardHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadLeaderboardHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadLightningHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadLightningHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadLocationHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadLocationHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadMultiboardHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadMultiboardHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadMultiboardItemHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadMultiboardItemHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadPlayerHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadPlayerHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadQuestHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadQuestHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadQuestItemHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadQuestItemHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadRealBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadRectHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadRectHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadRegionHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadRegionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadSoundHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadSoundHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadStr"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadStringBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTextTagHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTextTagHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTimerDialogHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTimerDialogHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTimerHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTimerHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTrackableHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTrackableHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTriggerActionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTriggerConditionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTriggerEventHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadTriggerHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadUbersplatHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadUbersplatHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadUnitHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadUnitHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadUnitPoolHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadUnitPoolHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadWidgetHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "LoadWidgetHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "ReloadGameCachesFromDisk"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "RemoveSavedBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "RemoveSavedHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "RemoveSavedReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "RemoveSavedString"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "RestoreUnit"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "RestoreUnitLocFacingAngleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "RestoreUnitLocFacingPointBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveAbilityHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveAbilityHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveAgentHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveAgentHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveAndChangeLevelBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveAndLoadGameBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveBooleanBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveBooleanExprHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveBooleanExprHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveButtonHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveButtonHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDefeatConditionHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDefeatConditionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDestructableHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDestructableHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDialogHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDialogHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveDyingWidget"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveEffectHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveEffectHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveFogModifierHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveFogModifierHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveFogStateHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveFogStateHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveForceHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveForceHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveFrameHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveGame"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "SaveGameCache"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveGameCacheBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveGameCheckPointBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveGameCheckpoint"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveGameExists"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveHashtableHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveHashtableHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveImageHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveImageHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveIntegerBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveItemHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveItemHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveItemPoolHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveItemPoolHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveLeaderboardHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveLeaderboardHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveLightningHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveLightningHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveLocationHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveLocationHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveMultiboardHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveMultiboardHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveMultiboardItemHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveMultiboardItemHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SavePlayerHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SavePlayerHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveQuestHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveQuestHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveQuestItemHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveQuestItemHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveRealBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveRectHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveRectHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveRegionHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveRegionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveSoundHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveSoundHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveStr"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveStringBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTextTagHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTextTagHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTimerDialogHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTimerDialogHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTimerHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTimerHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTrackableHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTrackableHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTriggerActionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTriggerConditionHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTriggerEventHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveTriggerHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveUbersplatHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveUbersplatHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveUnitHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveUnitHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveUnitPoolHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveUnitPoolHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveWidgetHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SaveWidgetHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreBoolean"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreBooleanBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreIntegerBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreReal"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreRealBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreString"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreStringBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "StoreUnit"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "StoreUnitBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+
+[[override]]
+name = "SyncStoredBoolean"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "SyncStoredInteger"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "SyncStoredReal"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "SyncStoredString"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+[[override]]
+name = "SyncStoredUnit"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"

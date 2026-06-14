@@ -182,6 +182,12 @@ func receiverTypeName(e ast.Expr) string {
 		return t.Name
 	case *ast.StarExpr:
 		return receiverTypeName(t.X)
+	case *ast.IndexExpr:
+		// generic receiver with one type param, e.g. Table[V]
+		return receiverTypeName(t.X)
+	case *ast.IndexListExpr:
+		// generic receiver with multiple type params, e.g. Pair[K,V]
+		return receiverTypeName(t.X)
 	}
 	return ""
 }

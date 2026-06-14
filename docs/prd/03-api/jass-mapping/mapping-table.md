@@ -122,7 +122,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | R2SW | common.j | D2 | **tombstoned** (gameplay-irrelevant): width/precision real->string; collapses onto fmt.Sprintf (math-strings-conversion.md D2). No public surface |
 | S2I | common.j | D1 | **tombstoned** (gameplay-irrelevant): string->int; Go uses strconv.Atoi (math-strings-conversion.md). No public surface |
 | S2R | common.j | D1 | **tombstoned** (gameplay-irrelevant): string->real; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface |
-| GetHandleId | common.j | unclassified | _pending (M2 backlog)_ |
+| GetHandleId | common.j | D3 | `litd/api.Unit.ID` |
 | SubString | common.j | unclassified | _pending (M2 backlog)_ |
 | StringLength | common.j | unclassified | _pending (M2 backlog)_ |
 | StringCase | common.j | unclassified | _pending (M2 backlog)_ |
@@ -732,14 +732,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetCampaignMenuRace | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCampaignMenuRaceEx | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceCampaignSelectScreen | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadGame | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveGame | common.j | unclassified | _pending (M2 backlog)_ |
+| LoadGame | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| SaveGame | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
 | RenameSaveDirectory | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveSaveDirectory | common.j | unclassified | _pending (M2 backlog)_ |
 | CopySaveGame | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveGameExists | common.j | unclassified | _pending (M2 backlog)_ |
+| SaveGameExists | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SetMaxCheckpointSaves | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveGameCheckpoint | common.j | unclassified | _pending (M2 backlog)_ |
+| SaveGameCheckpoint | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SyncSelections | common.j | unclassified | _pending (M2 backlog)_ |
 | SetFloatGameState | common.j | unclassified | _pending (M2 backlog)_ |
 | GetFloatGameState | common.j | unclassified | _pending (M2 backlog)_ |
@@ -762,136 +762,136 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DialogAddButton | common.j | unclassified | _pending (M2 backlog)_ |
 | DialogAddQuitButton | common.j | unclassified | _pending (M2 backlog)_ |
 | DialogDisplay | common.j | unclassified | _pending (M2 backlog)_ |
-| ReloadGameCachesFromDisk | common.j | unclassified | _pending (M2 backlog)_ |
-| InitGameCache | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveGameCache | common.j | unclassified | _pending (M2 backlog)_ |
-| StoreInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| StoreReal | common.j | unclassified | _pending (M2 backlog)_ |
-| StoreBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| StoreUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| StoreString | common.j | unclassified | _pending (M2 backlog)_ |
-| SyncStoredInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| SyncStoredReal | common.j | unclassified | _pending (M2 backlog)_ |
-| SyncStoredBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| SyncStoredUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| SyncStoredString | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveStoredInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveStoredReal | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveStoredBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveStoredUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveStoredString | common.j | unclassified | _pending (M2 backlog)_ |
-| FlushGameCache | common.j | unclassified | _pending (M2 backlog)_ |
-| FlushStoredMission | common.j | unclassified | _pending (M2 backlog)_ |
+| ReloadGameCachesFromDisk | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| InitGameCache | common.j | D1 | `litd/api.Game.Storage` |
+| SaveGameCache | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreInteger | common.j | D5 | `litd/api.Storage.SetInt` |
+| StoreReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreUnit | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| StoreString | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SyncStoredInteger | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| SyncStoredReal | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| SyncStoredBoolean | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| SyncStoredUnit | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| SyncStoredString | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| HaveStoredInteger | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveStoredReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveStoredBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveStoredUnit | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| HaveStoredString | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| FlushGameCache | common.j | D1 | `litd/api.Storage.Clear` |
+| FlushStoredMission | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | FlushStoredInteger | common.j | unclassified | _pending (M2 backlog)_ |
 | FlushStoredReal | common.j | unclassified | _pending (M2 backlog)_ |
 | FlushStoredBoolean | common.j | unclassified | _pending (M2 backlog)_ |
 | FlushStoredUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | FlushStoredString | common.j | unclassified | _pending (M2 backlog)_ |
-| GetStoredInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| GetStoredReal | common.j | unclassified | _pending (M2 backlog)_ |
-| GetStoredBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| GetStoredString | common.j | unclassified | _pending (M2 backlog)_ |
-| RestoreUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| InitHashtable | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveReal | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveStr | common.j | unclassified | _pending (M2 backlog)_ |
-| SavePlayerHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveWidgetHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveDestructableHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveItemHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveUnitHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveAbilityHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTimerHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| GetStoredInteger | common.j | D5 | `litd/api.Storage.GetInt` |
+| GetStoredReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetStoredBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetStoredString | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RestoreUnit | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
+| InitHashtable | common.j | D1 | `litd/api.NewTable` |
+| SaveInteger | common.j | D3 | `litd/api.Table.Set` |
+| SaveReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveStr | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SavePlayerHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveWidgetHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveDestructableHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveItemHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveUnitHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveAbilityHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTimerHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SaveTriggerHandle | common.j | D1 | **tombstoned** (superseded): no trigger handles to persist in the Go model (R-API-4) |
 | SaveTriggerConditionHandle | common.j | D1 | **tombstoned** (superseded): no condition handles to persist (R-API-4) |
 | SaveTriggerActionHandle | common.j | D1 | **tombstoned** (superseded): no action handles to persist (R-API-4) |
 | SaveTriggerEventHandle | common.j | D1 | **tombstoned** (superseded): no event handles to persist (R-API-4) |
-| SaveForceHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| SaveForceHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SaveGroupHandle | common.j | D1 | **tombstoned** (superseded): persist group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| SaveLocationHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveRectHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveBooleanExprHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveSoundHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveEffectHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveUnitPoolHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveItemPoolHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveQuestHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveQuestItemHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveDefeatConditionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTimerDialogHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveLeaderboardHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveMultiboardHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveMultiboardItemHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTrackableHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveDialogHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveButtonHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveTextTagHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveLightningHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveImageHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveUbersplatHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveRegionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveFogStateHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveFogModifierHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveAgentHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveHashtableHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveFrameHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadReal | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadStr | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadPlayerHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadWidgetHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadDestructableHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadItemHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadUnitHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadAbilityHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTimerHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| SaveLocationHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveRectHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveBooleanExprHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveSoundHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveEffectHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveUnitPoolHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveItemPoolHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveQuestHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveQuestItemHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveDefeatConditionHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTimerDialogHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveLeaderboardHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveMultiboardHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveMultiboardItemHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTrackableHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveDialogHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveButtonHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTextTagHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveLightningHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveImageHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveUbersplatHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveRegionHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveFogStateHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveFogModifierHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveAgentHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveHashtableHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveFrameHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadInteger | common.j | D3 | `litd/api.Table.Get` |
+| LoadReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadStr | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadPlayerHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadWidgetHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadDestructableHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadItemHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadUnitHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadAbilityHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTimerHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | LoadTriggerHandle | common.j | D1 | **tombstoned** (superseded): no trigger handles to persist (R-API-4) |
 | LoadTriggerConditionHandle | common.j | D1 | **tombstoned** (superseded): no condition handles to persist (R-API-4) |
 | LoadTriggerActionHandle | common.j | D1 | **tombstoned** (superseded): no action handles to persist (R-API-4) |
 | LoadTriggerEventHandle | common.j | D1 | **tombstoned** (superseded): no event handles to persist (R-API-4) |
-| LoadForceHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| LoadForceHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | LoadGroupHandle | common.j | D1 | **tombstoned** (superseded): reload group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| LoadLocationHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadRectHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadBooleanExprHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadSoundHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadEffectHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadUnitPoolHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadItemPoolHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadQuestHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadQuestItemHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadDefeatConditionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTimerDialogHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadLeaderboardHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadMultiboardHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadMultiboardItemHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTrackableHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadDialogHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadButtonHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadTextTagHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadLightningHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadImageHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadUbersplatHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadRegionHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadFogStateHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadFogModifierHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadHashtableHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadFrameHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveSavedInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveSavedReal | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveSavedBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveSavedString | common.j | unclassified | _pending (M2 backlog)_ |
-| HaveSavedHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveSavedInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveSavedReal | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveSavedBoolean | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveSavedString | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveSavedHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| FlushParentHashtable | common.j | unclassified | _pending (M2 backlog)_ |
-| FlushChildHashtable | common.j | unclassified | _pending (M2 backlog)_ |
+| LoadLocationHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadRectHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadBooleanExprHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadSoundHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadEffectHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadUnitPoolHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadItemPoolHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadQuestHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadQuestItemHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadDefeatConditionHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTimerDialogHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadLeaderboardHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadMultiboardHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadMultiboardItemHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTrackableHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadDialogHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadButtonHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTextTagHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadLightningHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadImageHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadUbersplatHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadRegionHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadFogStateHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadFogModifierHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadHashtableHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadFrameHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveSavedInteger | common.j | D5 | `litd/api.Table.Has` |
+| HaveSavedReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveSavedBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveSavedString | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveSavedHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RemoveSavedInteger | common.j | D1 | `litd/api.Table.Remove` |
+| RemoveSavedReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RemoveSavedBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RemoveSavedString | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RemoveSavedHandle | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| FlushParentHashtable | common.j | D1 | `litd/api.Table.Clear` |
+| FlushChildHashtable | common.j | D1 | `litd/api.Table.RemoveParent` |
 | GetRandomInt | common.j | D2 | `litd/api.Game.RandomInt` |
 | GetRandomReal | common.j | D2 | `litd/api.Game.RandomFloat` |
 | CreateUnitPool | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1647,7 +1647,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DisplayTimedTextToForce | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ClearTextMessagesBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SubStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetHandleIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetHandleIdBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | StringHashBJ | blizzard.j | D1 | `litd/api.StringHash` (D3 collapse → StringHash) |
 | TriggerRegisterTimerEventPeriodic | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.Every), not the OnEvent route (timers.md) |
 | TriggerRegisterTimerEventSingle | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.After), not the OnEvent route (timers.md) |
@@ -2235,120 +2235,120 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetMissionAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetCampaignAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetCinematicAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| InitGameCacheBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveGameCacheBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedGameCacheBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| InitHashtableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedHashtableBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| StoreRealBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| StoreIntegerBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| StoreBooleanBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| StoreStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| StoreUnitBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveRealBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveIntegerBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveBooleanBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SavePlayerHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveWidgetHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveDestructableHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveItemHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveUnitHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveAbilityHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTimerHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTriggerHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTriggerConditionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTriggerActionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTriggerEventHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveForceHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| InitGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetLastCreatedGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| InitHashtableBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetLastCreatedHashtableBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreRealBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreIntegerBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreBooleanBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreStringBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| StoreUnitBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveRealBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveIntegerBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveBooleanBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveStringBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SavePlayerHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveWidgetHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveDestructableHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveItemHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveUnitHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveAbilityHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTimerHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTriggerHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTriggerConditionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTriggerActionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTriggerEventHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveForceHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SaveGroupHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): persist group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| SaveLocationHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveRectHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveBooleanExprHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveSoundHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveEffectHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveUnitPoolHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveItemPoolHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveQuestHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveQuestItemHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveDefeatConditionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTimerDialogHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveLeaderboardHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveMultiboardHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveMultiboardItemHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTrackableHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveDialogHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveButtonHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveTextTagHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveLightningHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveImageHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveUbersplatHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveRegionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveFogStateHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveFogModifierHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveAgentHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveHashtableHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetStoredRealBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetStoredIntegerBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetStoredBooleanBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetStoredStringBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LoadRealBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadIntegerBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadBooleanBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadStringBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LoadPlayerHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadWidgetHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadDestructableHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadItemHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadUnitHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadAbilityHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTimerHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTriggerHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTriggerConditionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTriggerActionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTriggerEventHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadForceHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SaveLocationHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveRectHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveBooleanExprHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveSoundHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveEffectHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveUnitPoolHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveItemPoolHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveQuestHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveQuestItemHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveDefeatConditionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTimerDialogHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveLeaderboardHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveMultiboardHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveMultiboardItemHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTrackableHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveDialogHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveButtonHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveTextTagHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveLightningHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveImageHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveUbersplatHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveRegionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveFogStateHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveFogModifierHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveAgentHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveHashtableHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetStoredRealBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetStoredIntegerBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetStoredBooleanBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| GetStoredStringBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadRealBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadIntegerBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadBooleanBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadStringBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadPlayerHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadWidgetHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadDestructableHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadItemHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadUnitHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadAbilityHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTimerHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTriggerHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTriggerConditionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTriggerActionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTriggerEventHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadForceHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | LoadGroupHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): reload group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| LoadLocationHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadRectHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadBooleanExprHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadSoundHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadEffectHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadUnitPoolHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadItemPoolHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadQuestHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadQuestItemHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadDefeatConditionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTimerDialogHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadLeaderboardHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadMultiboardHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadMultiboardItemHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTrackableHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadDialogHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadButtonHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadTextTagHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadLightningHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadImageHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadUbersplatHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadRegionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadFogStateHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadFogModifierHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadHashtableHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RestoreUnitLocFacingAngleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RestoreUnitLocFacingPointBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| LoadLocationHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadRectHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadBooleanExprHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadSoundHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadEffectHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadUnitPoolHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadItemPoolHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadQuestHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadQuestItemHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadDefeatConditionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTimerDialogHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadLeaderboardHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadMultiboardHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadMultiboardItemHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTrackableHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadDialogHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadButtonHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadTextTagHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadLightningHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadImageHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadUbersplatHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadRegionHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadFogStateHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadFogModifierHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadHashtableHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RestoreUnitLocFacingAngleBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| RestoreUnitLocFacingPointBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | GetLastRestoredUnitBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| FlushGameCacheBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| FlushStoredMissionBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| FlushParentHashtableBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| FlushChildHashtableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| HaveStoredValue | blizzard.j | D4 | _pending (M2 backlog)_ |
-| HaveSavedValue | blizzard.j | D4 | _pending (M2 backlog)_ |
+| FlushGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| FlushStoredMissionBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| FlushParentHashtableBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| FlushChildHashtableBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveStoredValue | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| HaveSavedValue | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | ShowCustomCampaignButton | blizzard.j | D2 | _pending (M2 backlog)_ |
 | IsCustomCampaignButtonVisibile | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveGameCheckPointBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| LoadGameBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SaveAndChangeLevelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SaveAndLoadGameBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SaveGameCheckPointBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| LoadGameBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveAndChangeLevelBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
+| SaveAndLoadGameBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | RenameSaveDirectoryBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | RemoveSaveDirectoryBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | CopySaveGameBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -2394,7 +2394,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitRallyPoint | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitRallyUnit | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitRallyDestructable | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveDyingWidget | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| SaveDyingWidget | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SetBlightRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetBlightRadiusLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetAbilityName | blizzard.j | D1 | _pending (M2 backlog)_ |

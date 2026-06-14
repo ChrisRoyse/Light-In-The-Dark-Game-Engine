@@ -104,6 +104,35 @@ func TestExistingSymbolsExcludesGeneratedStub(t *testing.T) {
 	}
 }
 
+// TestExistingSymbolsDetectsGenericReceiver is the regression guard for the
+// generic-receiver stub-detection bug (#242): existingSymbols must recognize a
+// method on a generic receiver — `func (t *Table[V]) Set(...)` and
+// `func (p *Pair[K,V]) Both(...)` — as already implemented. Before the fix,
+// receiverTypeName fell through *ast.IndexExpr / *ast.IndexListExpr to "" so the
+// generic methods were stubbed again, producing an api_stubs_gen.go with
+// duplicate declarations that would not compile ("method already declared").
+func TestExistingSymbolsDetectsGenericReceiver(t *testing.T) {
+	dir := t.TempDir()
+	src := "package litd\n\n" +
+		"type Table[V any] struct{ m map[int]V }\n" +
+		"func (t *Table[V]) Set(k int, v V) { t.m[k] = v }\n" +
+		"type Pair[K comparable, V any] struct{ k K; v V }\n" +
+		"func (p *Pair[K, V]) Both() (K, V) { return p.k, p.v }\n"
+	if err := os.WriteFile(filepath.Join(dir, "generic.go"), []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	existing, err := existingSymbols(dir)
+	if err != nil {
+		t.Fatalf("scan fixture: %v", err)
+	}
+	if !existing["Table.Set"] {
+		t.Error("single-type-param generic receiver Table[V] not detected (IndexExpr)")
+	}
+	if !existing["Pair.Both"] {
+		t.Error("multi-type-param generic receiver Pair[K,V] not detected (IndexListExpr)")
+	}
+}
+
 // TestGenerateStubsD3CollapseAndSkip drives GenerateStubs over a temp dir-free
 // manifest path that targets only new packages, asserting D3 collapse (one
 // symbol claimed twice => one stub) does not double-emit.

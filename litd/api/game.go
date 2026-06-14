@@ -90,6 +90,11 @@ type Game struct {
 	// project to Unit handles, so the steady-state query path allocates
 	// nothing (R-GC-2).
 	queryScratch []sim.EntityID
+
+	// storage is the campaign cross-map key-value store (savedata.go,
+	// #242) — the gamecache replacement reached via Game.Storage().
+	// Lazily created; persisted explicitly via Storage.Save/Load.
+	storage *Storage
 }
 
 // newGame wraps a simulation world. The public setup path —
