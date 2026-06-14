@@ -33,6 +33,18 @@ func (g *Game) WorldBounds() Rect {
 	return Rect{MinX: toFloat(minx), MinY: toFloat(miny), MaxX: toFloat(maxx), MaxY: toFloat(maxy)}
 }
 
+// RandomPointIn returns a uniformly-distributed point inside rc, drawn
+// from the sim PRNG (so it is deterministic and replay-stable, never
+// math/rand). The rect's own corners are returned as-is on a degenerate
+// axis. JASS: GetRandomLocInRect. Zero Vec2 on a nil game.
+func (g *Game) RandomPointIn(rc Rect) Vec2 {
+	if g == nil || g.w == nil {
+		return Vec2{}
+	}
+	x, y := g.w.RandPointInRect(fromFloat(rc.MinX), fromFloat(rc.MinY), fromFloat(rc.MaxX), fromFloat(rc.MaxY))
+	return Vec2{X: toFloat(x), Y: toFloat(y)}
+}
+
 // Remove destroys the region and frees its slot (RemoveRegion). The
 // handle goes invalid. Idempotent no-op on an already-removed or
 // zero-value region.

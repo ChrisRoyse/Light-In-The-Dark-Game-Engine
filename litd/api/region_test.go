@@ -167,6 +167,52 @@ func TestRegionDeathLeaveFSV(t *testing.T) {
 	}
 }
 
+// TestRandomPointInFSV — RandomPointIn draws a deterministic point from
+// the seeded sim PRNG, always inside the rect, identical across two
+// worlds seeded the same (X+X=Y: same seed -> same point). SoT: the
+// drawn coordinates and the post-draw bounds.
+func TestRandomPointInFSV(t *testing.T) {
+	rc := NewRect(Vec2{100, 200}, Vec2{900, 700})
+	draw := func(seed int64, n int) []Vec2 {
+		w := sim.NewWorld(sim.Caps{})
+		g := newGame(w)
+		g.SetRandomSeed(seed)
+		out := make([]Vec2, n)
+		for i := range out {
+			out[i] = g.RandomPointIn(rc)
+		}
+		return out
+	}
+	a := draw(12345, 5)
+	b := draw(12345, 5)
+	t.Logf("FSV seed=12345 run1=%v run2=%v", a, b)
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("same seed diverged at %d: %v != %v", i, a[i], b[i])
+		}
+	}
+	// Bounds: every point inside the rect.
+	for i, p := range a {
+		if p.X < rc.MinX || p.X >= rc.MaxX || p.Y < rc.MinY || p.Y >= rc.MaxY {
+			t.Fatalf("point %d out of rect: %v not in %+v", i, p, rc)
+		}
+	}
+	// Different seed -> different stream (overwhelmingly likely distinct).
+	c := draw(999, 1)
+	t.Logf("FSV seed=999 first=%v vs seed=12345 first=%v", c[0], a[0])
+	if c[0] == a[0] {
+		t.Fatalf("distinct seeds produced identical first draw: %v", a[0])
+	}
+	// Degenerate axis: a zero-width/height rect returns its own corner and
+	// does not draw on that axis.
+	deg := NewRect(Vec2{500, 500}, Vec2{500, 500})
+	p := (func() Vec2 { w := sim.NewWorld(sim.Caps{}); g := newGame(w); return g.RandomPointIn(deg) })()
+	t.Logf("FSV degenerate rect -> %v (want {500,500})", p)
+	if p != (Vec2{500, 500}) {
+		t.Fatalf("degenerate rect point = %v, want {500,500}", p)
+	}
+}
+
 // TestRegionZeroValueNoOpFSV — the zero-value Region is inert (R-API-5).
 func TestRegionZeroValueNoOpFSV(t *testing.T) {
 	var z Region

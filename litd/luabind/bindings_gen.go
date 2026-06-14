@@ -30,6 +30,7 @@ var Bindings = []Binding{
 	{LuaName: "Game_NewRegion", Package: "litd/api", Symbol: "Game.NewRegion", GoSignature: "() Region"},
 	{LuaName: "Game_RandomFloat", Package: "litd/api", Symbol: "Game.RandomFloat", GoSignature: "() float64"},
 	{LuaName: "Game_RandomInt", Package: "litd/api", Symbol: "Game.RandomInt", GoSignature: "(min, max int) int"},
+	{LuaName: "Game_RandomPointIn", Package: "litd/api", Symbol: "Game.RandomPointIn", GoSignature: "(rc Rect) Vec2"},
 	{LuaName: "Game_SetRandomSeed", Package: "litd/api", Symbol: "Game.SetRandomSeed", GoSignature: "(seed int64)"},
 	{LuaName: "Game_SetTimeOfDay", Package: "litd/api", Symbol: "Game.SetTimeOfDay", GoSignature: "(h float64)"},
 	{LuaName: "Game_SetTimeOfDayScale", Package: "litd/api", Symbol: "Game.SetTimeOfDayScale", GoSignature: "(s float64)"},

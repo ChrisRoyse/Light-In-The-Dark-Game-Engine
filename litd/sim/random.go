@@ -28,3 +28,22 @@ func (w *World) RandUnit() fixed.F64 { return fixed.F64(w.rng.Uint32()) }
 
 // RandAngle returns a uniformly-distributed binary angle.
 func (w *World) RandAngle() fixed.Angle { return fixed.Angle(uint16(w.rng.Uint32())) }
+
+// RandPointInRect returns a uniformly-distributed point inside the
+// rectangle [minx,maxx]×[miny,maxy], drawing X then Y from the sim PRNG.
+// A degenerate axis (max <= min) returns that axis's min without drawing
+// on it — fail-closed and deterministic, mirroring RandRange. JASS:
+// GetRandomLocInRect.
+func (w *World) RandPointInRect(minx, miny, maxx, maxy fixed.F64) (x, y fixed.F64) {
+	if maxx > minx {
+		x = minx + w.RandUnit().Mul(maxx-minx)
+	} else {
+		x = minx
+	}
+	if maxy > miny {
+		y = miny + w.RandUnit().Mul(maxy-miny)
+	} else {
+		y = miny
+	}
+	return x, y
+}

@@ -3,18 +3,18 @@
   "totalCore": 2519,
   "byRule": {
     "D1": 324,
-    "D2": 370,
-    "D3": 138,
+    "D2": 369,
+    "D3": 140,
     "D4": 377,
     "D5": 15
   },
-  "mapped": 121,
-  "tombstoned": 150,
+  "mapped": 122,
+  "tombstoned": 151,
   "collapsed": 54,
-  "unclassified": 1418,
-  "unmapped": 2317,
+  "unclassified": 1417,
+  "unmapped": 2315,
   "tombstonesByReason": {
-    "deferred-v2": 16,
+    "deferred-v2": 17,
     "deprecated": 3,
     "gameplay-irrelevant": 95,
     "superseded": 36
@@ -24,7 +24,7 @@
   "commonaiCapabilityTombstones": 0,
   "featureTags": {},
   "violations": [
-    "unclassified=1418 (M2 gate requires 0)",
-    "unmapped=2317 (M2 gate requires 0; every symbol mapped or tombstoned)"
+    "unclassified=1417 (M2 gate requires 0)",
+    "unmapped=2315 (M2 gate requires 0; every symbol mapped or tombstoned)"
   ]
 }

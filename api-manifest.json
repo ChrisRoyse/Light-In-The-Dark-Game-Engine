@@ -85,6 +85,28 @@
       }
     },
     {
+      "name": "GetRandomLocInRect",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRect",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.RandomPointIn",
+        "package": "litd/api",
+        "goSignature": "(rc Rect) Vec2"
+      }
+    },
+    {
       "name": "GetRectHeightBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3381,6 +3403,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "location Y accessor superseded by the Vec2.Y field (R-API-2)"
+      }
+    },
+    {
+      "name": "GetLocationZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "terrain Z sampling needs a real heightfield; flat-0 would be a fake SoT — deferred to the heightfield work tracked in #371 (location→Vec2 leaves no Z channel in v1)"
       }
     },
     {
