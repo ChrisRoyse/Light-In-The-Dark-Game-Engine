@@ -1016,6 +1016,71 @@
       }
     },
     {
+      "name": "GetUnitRallyDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "destructables are not modeled in the engine yet; the destructable-rally getter is deferred until the destructable subsystem lands (capability preserved, not averaged away) (#217)"
+      }
+    },
+    {
+      "name": "GetUnitRallyPoint",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.RallyPoint",
+        "package": "litd/api",
+        "goSignature": "() Vec2"
+      }
+    },
+    {
+      "name": "GetUnitRallyUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.RallyUnit",
+        "package": "litd/api",
+        "goSignature": "() Unit"
+      }
+    },
+    {
       "name": "GetUnitState",
       "origin": "common.j",
       "signature": {

@@ -206,6 +206,44 @@ func (w *World) AddProducer(id EntityID) bool {
 	return w.Produce.Add(w.Ents, id)
 }
 
+// UnitRally returns a building's rally: the kind (RallyNone/RallyPoint/
+// RallyEntity), the rally point, and the rally entity. For a point rally
+// pt is the set point; for an entity rally pt is the target's current
+// position (resolved live) and ent is the target; RallyNone returns the
+// zero values. A unit with no produce row reports RallyNone.
+// Backs GetUnitRallyPoint / GetUnitRallyUnit.
+func (w *World) UnitRally(id EntityID) (kind uint8, pt fixed.Vec2, ent EntityID) {
+	r := w.Produce.Row(id)
+	if r == -1 {
+		return RallyNone, fixed.Vec2{}, 0
+	}
+	kind = w.Produce.RallyKind[r]
+	switch kind {
+	case RallyPoint:
+		return RallyPoint, w.Produce.RallyPoint[r], 0
+	case RallyEntity:
+		ent = w.Produce.RallyEnt[r]
+		if tr := w.Transforms.Row(ent); tr != -1 && w.Ents.Alive(ent) {
+			pt = w.Transforms.Pos[tr]
+		}
+		return RallyEntity, pt, ent
+	default:
+		return RallyNone, fixed.Vec2{}, 0
+	}
+}
+
+// UnitRallyUnit returns the entity a building is rallied to and true,
+// or (0,false) when the rally is a point, absent, dead, or the unit has
+// no produce row. Backs GetUnitRallyUnit. Keeps the RallyEntity check on
+// the sim side so the api layer needs no sim rally constants.
+func (w *World) UnitRallyUnit(id EntityID) (EntityID, bool) {
+	kind, _, ent := w.UnitRally(id)
+	if kind != RallyEntity || !w.Ents.Alive(ent) {
+		return 0, false
+	}
+	return ent, true
+}
+
 // SetRallyPoint / SetRallyTarget / ClearRally set a building's rally.
 func (w *World) SetRallyPoint(id EntityID, pt fixed.Vec2) bool {
 	r := w.Produce.Row(id)

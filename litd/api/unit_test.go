@@ -897,6 +897,68 @@ func TestUnitOwnedByFSV(t *testing.T) {
 	}
 }
 
+// TestUnitRallyFSV: RallyPoint/RallyUnit read the produce store's rally
+// state. SoT = w.Produce.RallyKind/RallyPoint/RallyEnt.
+func TestUnitRallyFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hall", Life: 500, CollisionSize: 32},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 0, g: g}
+
+	b := g.CreateUnit(owner, g.UnitType("hall"), Vec2{X: 200, Y: 200}, Deg(0))
+	if !b.Valid() {
+		t.Fatal("CreateUnit hall invalid")
+	}
+
+	// EDGE: no produce row -> zero rally point, zero rally unit.
+	t.Logf("FSV rally pre-producer: point=%v unit.valid=%v", b.RallyPoint(), b.RallyUnit().Valid())
+	if !b.RallyPoint().IsZero() || b.RallyUnit().Valid() {
+		t.Fatalf("no-producer rally: point=%v unitValid=%v, want zero/false", b.RallyPoint(), b.RallyUnit().Valid())
+	}
+
+	if !w.AddProducer(b.id) {
+		t.Fatal("AddProducer failed")
+	}
+
+	// Point rally: X+X=Y, set (250+250, 300+300)=(500,600).
+	if !w.SetRallyPoint(b.id, fixed.Vec2{X: fixed.FromInt(500), Y: fixed.FromInt(600)}) {
+		t.Fatal("SetRallyPoint failed")
+	}
+	pt := b.RallyPoint()
+	t.Logf("FSV point rally: api=%v simKind=set (want {500,600}); RallyUnit.valid=%v (want false)", pt, b.RallyUnit().Valid())
+	if pt.X != 500 || pt.Y != 600 {
+		t.Fatalf("RallyPoint = %v, want {500,600}", pt)
+	}
+	if b.RallyUnit().Valid() {
+		t.Fatal("point rally reported a RallyUnit")
+	}
+
+	// Entity rally: rally to another unit -> RallyUnit resolves, RallyPoint
+	// follows that unit's position.
+	target := g.CreateUnit(owner, g.UnitType("hall"), Vec2{X: 700, Y: 800}, Deg(0))
+	if !w.SetRallyTarget(b.id, target.id) {
+		t.Fatal("SetRallyTarget failed")
+	}
+	ru := b.RallyUnit()
+	rp := b.RallyPoint()
+	t.Logf("FSV entity rally: RallyUnit.id match=%v RallyPoint=%v (want target pos {700,800})", ru.id == target.id, rp)
+	if !ru.Valid() || ru.id != target.id {
+		t.Fatalf("RallyUnit = valid:%v, want target %#x", ru.Valid(), uint32(target.id))
+	}
+	if rp.X != 700 || rp.Y != 800 {
+		t.Fatalf("entity-rally RallyPoint = %v, want target pos {700,800}", rp)
+	}
+
+	// EDGE: invalid handle -> zero values, no panic.
+	if !(Unit{}).RallyPoint().IsZero() || (Unit{}).RallyUnit().Valid() {
+		t.Fatal("zero-handle rally not zero")
+	}
+}
+
 // TestUnitVisibleToFSV verifies Unit.VisibleTo against the sim visibility
 // system: a player always sees its own units, sees foreign units only
 // when one of its units has them in active sight, and never panics on

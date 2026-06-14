@@ -61,6 +61,8 @@ var Bindings = []Binding{
 	{LuaName: "Unit_PointValue", Package: "litd/api", Symbol: "Unit.PointValue", GoSignature: "() int"},
 	{LuaName: "Unit_Position", Package: "litd/api", Symbol: "Unit.Position", GoSignature: "() Vec2"},
 	{LuaName: "Unit_Race", Package: "litd/api", Symbol: "Unit.Race", GoSignature: "() Race"},
+	{LuaName: "Unit_RallyPoint", Package: "litd/api", Symbol: "Unit.RallyPoint", GoSignature: "() Vec2"},
+	{LuaName: "Unit_RallyUnit", Package: "litd/api", Symbol: "Unit.RallyUnit", GoSignature: "() Unit"},
 	{LuaName: "Unit_Remove", Package: "litd/api", Symbol: "Unit.Remove", GoSignature: "()"},
 	{LuaName: "Unit_RemoveAbility", Package: "litd/api", Symbol: "Unit.RemoveAbility", GoSignature: "(ref AbilityRef) bool"},
 	{LuaName: "Unit_SetAcquireRange", Package: "litd/api", Symbol: "Unit.SetAcquireRange", GoSignature: "(v float64)"},

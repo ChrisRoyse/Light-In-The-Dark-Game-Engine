@@ -353,6 +353,28 @@ package = "litd/api"
 reason = "unit level getter: a hero's current level for heroes, else the type's configured design level (data.Unit.Level, [0,1000]); 0 when untyped/unset (D1) (#217)"
 
 [[override]]
+name = "GetUnitRallyPoint"
+class = "D3"
+goMapping = "Unit.RallyPoint"
+goSignature = "() Vec2"
+package = "litd/api"
+reason = "rally-point getter; the WC3 location-handle return collapses onto a value Vec2 (D3). Reads the produce store rally: the set point for a point rally, the target's live position for a unit rally, zero otherwise (#217, #302)"
+
+[[override]]
+name = "GetUnitRallyUnit"
+class = "D1"
+goMapping = "Unit.RallyUnit"
+goSignature = "() Unit"
+package = "litd/api"
+reason = "rally-target getter; returns the rallied-to Unit for a unit rally, the zero Unit otherwise (D1) (#217, #302)"
+
+[[override]]
+name = "GetUnitRallyDestructable"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "destructables are not modeled in the engine yet; the destructable-rally getter is deferred until the destructable subsystem lands (capability preserved, not averaged away) (#217)"
+
+[[override]]
 name = "GetUnitRace"
 class = "D1"
 goMapping = "Unit.Race"

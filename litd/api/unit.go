@@ -771,6 +771,34 @@ func (u Unit) InRangeOf(point Vec2, distance float64) bool {
 	return u.g.w.UnitInRangeOfPoint(u.id, vec(point), fromFloat(distance))
 }
 
+// RallyPoint returns the building's rally point — where newly produced units
+// gather. For a point rally it is the set point; for a unit rally it is the
+// rally target's current position. The zero Vec2 when the unit has no rally,
+// no produce capability, or an invalid handle. JASS: GetUnitRallyPoint.
+func (u Unit) RallyPoint() Vec2 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.RallyPoint")
+		return Vec2{}
+	}
+	_, pt, _ := u.g.w.UnitRally(u.id)
+	return Vec2{X: toFloat(pt.X), Y: toFloat(pt.Y)}
+}
+
+// RallyUnit returns the unit this building is rallied to, or the zero Unit
+// when the rally is a point (not a unit), absent, or the handle is invalid.
+// JASS: GetUnitRallyUnit.
+func (u Unit) RallyUnit() Unit {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.RallyUnit")
+		return Unit{}
+	}
+	ent, ok := u.g.w.UnitRallyUnit(u.id)
+	if !ok {
+		return Unit{}
+	}
+	return Unit{id: ent, g: u.g}
+}
+
 // Name returns the unit's display name. Currently this is the unit type's
 // proper name (per-instance rename via BlzSetUnitName is deferred). Empty string
 // on an invalid handle or an unnamed/untyped unit. JASS: GetUnitName.

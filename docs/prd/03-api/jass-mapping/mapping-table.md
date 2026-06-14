@@ -573,9 +573,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetFoodMade | common.j | unclassified | _pending (M2 backlog)_ |
 | GetFoodUsed | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitUseFood | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitRallyPoint | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitRallyUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitRallyDestructable | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitRallyPoint | common.j | D3 | `litd/api.Unit.RallyPoint` |
+| GetUnitRallyUnit | common.j | D1 | `litd/api.Unit.RallyUnit` |
+| GetUnitRallyDestructable | common.j | D1 | **tombstoned** (deferred-v2): destructables are not modeled in the engine yet; the destructable-rally getter is deferred until the destructable subsystem lands (capability preserved, not averaged away) (#217) |
 | IsUnitInGroup | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInForce | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitOwnedByPlayer | common.j | D2 | `litd/api.Unit.OwnedBy` |
