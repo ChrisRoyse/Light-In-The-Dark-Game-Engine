@@ -143,13 +143,21 @@ func (b Buff) IsZero() bool { return b == Buff{} }
 
 // Timer is a game-time timer (public-api-design.md §2 row 11), backed
 // by the deterministic scheduler. Durations quantize to sim ticks on
-// entry.
+// entry. The handle is a (slot, generation) pair into the Game's timer
+// table: a slot is reused after Stop, but always under a fresh
+// generation, so a stale handle to a stopped timer is detectably
+// invalid rather than silently aliased onto whatever now occupies the
+// slot (R-API-5; timers.md porting hazard 5 — identities never recycle).
 type Timer struct {
-	id uint32
-	g  *Game
+	slot uint32
+	gen  uint32
+	g    *Game
 }
 
-func (t Timer) Valid() bool  { return t.g != nil && t.id != 0 }
+// Valid reports whether the timer still exists (created, not yet
+// Stopped, not auto-retired after a one-shot fire). A zero-value
+// Timer{} and a handle to a retired slot both report false.
+func (t Timer) Valid() bool  { return t.entry() != nil }
 func (t Timer) IsZero() bool { return t == Timer{} }
 
 // Region is a cell-based area with enter/leave events

@@ -1585,3 +1585,119 @@ name = "NewSoundEnvironment"
 class = "D1"
 tombstone = "deprecated"
 reason = "EAX environment reverb is a dead audio extension; not part of the OpenAL/.ogg pipeline (R-AUD-1, sound-and-music.md). No public surface"
+
+# --- Timers (#221, timers.md) ---------------------------------------------
+# The CreateTimer/TimerStart zoo collapses onto two constructors
+# (Game.After one-shot, Game.Every periodic) plus the Timer handle's
+# Pause/Resume/Stop and the three typed getters. Creation and start are one
+# act (D2); the periodic boolean splits into the two named constructors; the
+# bj_lastStartedTimer/GetLastCreatedTimerBJ side channel and the
+# GetExpiredTimer thread-local are deleted (the periodic callback receives
+# its Timer). Timer-dialog natives live in ui-frames-and-dialogs; PolledWait
+# stays the scheduler helper (above). Implemented in litd/api/timer.go.
+
+[[override]]
+name = "TimerStart"
+class = "D2"
+goMapping = "Game.After"
+goSignature = "(d time.Duration, f func()) Timer"
+collapsesWith = ["CreateTimer", "CreateTimerBJ", "StartTimerBJ"]
+package = "litd/api"
+reason = "create+start are one act (dedup §3 ex.6); the periodic boolean splits into Game.After (one-shot) and Game.Every (periodic, callback receives its Timer); the constructor returns the timer so the bj_lastStartedTimer side channel is deleted"
+
+[[override]]
+name = "DestroyTimer"
+class = "D1"
+goMapping = "Timer.Stop"
+goSignature = "()"
+collapsesWith = ["DestroyTimerBJ"]
+package = "litd/api"
+reason = "lifecycle destroy maps directly onto Timer.Stop (dedup §2); GC owns the handle, identities never recycle (timers.md hazard 5)"
+
+[[override]]
+name = "PauseTimer"
+class = "D1"
+goMapping = "Timer.Pause"
+goSignature = "()"
+package = "litd/api"
+reason = "pause maps directly onto Timer.Pause (dedup §2); freezes the exact remaining time"
+
+[[override]]
+name = "ResumeTimer"
+class = "D1"
+goMapping = "Timer.Resume"
+goSignature = "()"
+package = "litd/api"
+reason = "resume maps directly onto Timer.Resume (dedup §2); continues from the frozen remainder with no drift"
+
+[[override]]
+name = "TimerGetElapsed"
+class = "D1"
+goMapping = "Timer.Elapsed"
+goSignature = "() time.Duration"
+package = "litd/api"
+reason = "elapsed getter maps directly onto Timer.Elapsed (dedup §2); = Timeout - Remaining for the current cycle"
+
+[[override]]
+name = "TimerGetRemaining"
+class = "D1"
+goMapping = "Timer.Remaining"
+goSignature = "() time.Duration"
+package = "litd/api"
+reason = "remaining getter maps directly onto Timer.Remaining (dedup §2)"
+
+[[override]]
+name = "TimerGetTimeout"
+class = "D1"
+goMapping = "Timer.Timeout"
+goSignature = "() time.Duration"
+package = "litd/api"
+reason = "timeout getter maps directly onto Timer.Timeout (dedup §2); the configured period"
+
+[[override]]
+name = "GetExpiredTimer"
+class = "D1"
+tombstone = "superseded"
+reason = "thread-local current-timer accessor; superseded by the periodic callback receiving its Timer parameter (R-EXEC-4 eliminates implicit current-element state), timers.md"
+
+[[override]]
+name = "GetLastCreatedTimerBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "bj_lastStartedTimer side channel; superseded — Game.After/Every return the Timer directly (dedup §3 ex.6), timers.md"
+
+[[override]]
+name = "PauseTimerBJ"
+class = "D2"
+tombstone = "superseded"
+reason = "boolean-flag pause/resume wrapper superseded by the explicit Timer.Pause()/Resume() verbs (dedup §3), timers.md"
+
+[[override]]
+name = "TriggerRegisterTimerEventPeriodic"
+class = "D2"
+tombstone = "superseded"
+reason = "timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.Every), not the OnEvent route (timers.md)"
+
+[[override]]
+name = "TriggerRegisterTimerEventSingle"
+class = "D2"
+tombstone = "superseded"
+reason = "timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.After), not the OnEvent route (timers.md)"
+
+[[override]]
+name = "TriggerRegisterTimerExpireEventBJ"
+class = "D2"
+tombstone = "superseded"
+reason = "timer-expire event registration superseded; the periodic/one-shot callback is the canonical path, not the OnEvent route (timers.md)"
+
+[[override]]
+name = "TriggerRegisterTimerEvent"
+class = "D2"
+tombstone = "superseded"
+reason = "timer-as-event-bus native (create timer + register trigger) superseded; the canonical path is the timer callback (Game.After/Every), not the OnEvent route (timers.md)"
+
+[[override]]
+name = "TriggerRegisterTimerExpireEvent"
+class = "D1"
+tombstone = "superseded"
+reason = "registers a trigger to fire on a timer's expiry; superseded by the canonical timer callback (Game.After/Every), not the OnEvent route (timers.md)"

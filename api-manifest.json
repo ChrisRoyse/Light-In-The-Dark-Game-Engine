@@ -55,6 +55,21 @@
       }
     },
     {
+      "name": "GetLastCreatedTimerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "timer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "bj_lastStartedTimer side channel; superseded — Game.After/Every return the Timer directly (dedup §3 ex.6), timers.md"
+      }
+    },
+    {
       "name": "GetLastCreatedUnit",
       "origin": "blizzard.j",
       "signature": {
@@ -180,6 +195,32 @@
         "collapsesWith": [
           "IsUnitPaused"
         ]
+      }
+    },
+    {
+      "name": "PauseTimerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "pause",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "boolean-flag pause/resume wrapper superseded by the explicit Timer.Pause()/Resume() verbs (dedup §3), timers.md"
       }
     },
     {
@@ -316,6 +357,84 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points"
+      }
+    },
+    {
+      "name": "TriggerRegisterTimerEventPeriodic",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "timeout",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.Every), not the OnEvent route (timers.md)"
+      }
+    },
+    {
+      "name": "TriggerRegisterTimerEventSingle",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "timeout",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.After), not the OnEvent route (timers.md)"
+      }
+    },
+    {
+      "name": "TriggerRegisterTimerExpireEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "t",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "timer-expire event registration superseded; the periodic/one-shot callback is the canonical path, not the OnEvent route (timers.md)"
       }
     },
     {
@@ -2631,6 +2750,31 @@
       }
     },
     {
+      "name": "DestroyTimer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Timer.Stop",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "DestroyTimerBJ"
+        ]
+      }
+    },
+    {
       "name": "ExecuteFunc",
       "origin": "common.j",
       "signature": {
@@ -2702,6 +2846,21 @@
         "symbol": "Event.Source",
         "package": "litd/api",
         "goSignature": "() Unit"
+      }
+    },
+    {
+      "name": "GetExpiredTimer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "timer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "thread-local current-timer accessor; superseded by the periodic callback receiving its Timer parameter (R-EXEC-4 eliminates implicit current-element state), timers.md"
       }
     },
     {
@@ -4031,6 +4190,28 @@
       }
     },
     {
+      "name": "PauseTimer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Timer.Pause",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
       "name": "QueueUnitAnimation",
       "origin": "common.j",
       "signature": {
@@ -4147,6 +4328,28 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "Unit.Remove",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "ResumeTimer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Timer.Resume",
         "package": "litd/api",
         "goSignature": "()"
       }
@@ -5078,6 +5281,171 @@
         "symbol": "Game.SuspendTimeOfDay",
         "package": "litd/api",
         "goSignature": "(suspended bool)"
+      }
+    },
+    {
+      "name": "TimerGetElapsed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Timer.Elapsed",
+        "package": "litd/api",
+        "goSignature": "() time.Duration"
+      }
+    },
+    {
+      "name": "TimerGetRemaining",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Timer.Remaining",
+        "package": "litd/api",
+        "goSignature": "() time.Duration"
+      }
+    },
+    {
+      "name": "TimerGetTimeout",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Timer.Timeout",
+        "package": "litd/api",
+        "goSignature": "() time.Duration"
+      }
+    },
+    {
+      "name": "TimerStart",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTimer",
+            "jassType": "timer",
+            "tsType": "timer"
+          },
+          {
+            "name": "timeout",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "periodic",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "handlerFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.After",
+        "package": "litd/api",
+        "goSignature": "(d time.Duration, f func()) Timer",
+        "collapsesWith": [
+          "CreateTimer",
+          "CreateTimerBJ",
+          "StartTimerBJ"
+        ]
+      }
+    },
+    {
+      "name": "TriggerRegisterTimerEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "timeout",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "periodic",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "timer-as-event-bus native (create timer + register trigger) superseded; the canonical path is the timer callback (Game.After/Every), not the OnEvent route (timers.md)"
+      }
+    },
+    {
+      "name": "TriggerRegisterTimerExpireEvent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "t",
+            "jassType": "timer",
+            "tsType": "timer"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "registers a trigger to fire on a timer's expiry; superseded by the canonical timer callback (Game.After/Every), not the OnEvent route (timers.md)"
       }
     },
     {

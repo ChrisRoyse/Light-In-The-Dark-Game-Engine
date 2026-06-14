@@ -62,6 +62,15 @@ type Game struct {
 	// trampolines from a high base that cannot collide with
 	// script-registered handlers.
 	nextHandlerID sim.HandlerID
+
+	// timers is the Go-closure timer table (timer.go): one entry per
+	// live or retired-and-recyclable slot, indexed by Timer.slot.
+	// timerFree holds retired slots for reuse; timerContReg records
+	// whether the shared scheduler continuation that fires these timers
+	// has been registered on this game's scheduler yet (lazy, once).
+	timers       []timerEntry
+	timerFree    []uint32
+	timerContReg bool
 }
 
 // newGame wraps a simulation world. The public setup path —

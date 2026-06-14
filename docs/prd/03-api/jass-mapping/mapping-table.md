@@ -181,15 +181,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayerTaxRate | common.j | unclassified | _pending (M2 backlog)_ |
 | IsPlayerRacePrefSet | common.j | unclassified | _pending (M2 backlog)_ |
 | GetPlayerName | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateTimer | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyTimer | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerStart | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerGetElapsed | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerGetRemaining | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerGetTimeout | common.j | unclassified | _pending (M2 backlog)_ |
-| PauseTimer | common.j | unclassified | _pending (M2 backlog)_ |
-| ResumeTimer | common.j | unclassified | _pending (M2 backlog)_ |
-| GetExpiredTimer | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateTimer | common.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
+| DestroyTimer | common.j | D1 | `litd/api.Timer.Stop` |
+| TimerStart | common.j | D2 | `litd/api.Game.After` |
+| TimerGetElapsed | common.j | D1 | `litd/api.Timer.Elapsed` |
+| TimerGetRemaining | common.j | D1 | `litd/api.Timer.Remaining` |
+| TimerGetTimeout | common.j | D1 | `litd/api.Timer.Timeout` |
+| PauseTimer | common.j | D1 | `litd/api.Timer.Pause` |
+| ResumeTimer | common.j | D1 | `litd/api.Timer.Resume` |
+| GetExpiredTimer | common.j | D1 | **tombstoned** (superseded): thread-local current-timer accessor; superseded by the periodic callback receiving its Timer parameter (R-EXEC-4 eliminates implicit current-element state), timers.md |
 | CreateGroup | common.j | unclassified | _pending (M2 backlog)_ |
 | DestroyGroup | common.j | unclassified | _pending (M2 backlog)_ |
 | GroupAddUnit | common.j | unclassified | _pending (M2 backlog)_ |
@@ -292,8 +292,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DestroyFilter | common.j | D1 | **tombstoned** (superseded): manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
 | DestroyBoolExpr | common.j | D1 | **tombstoned** (superseded): manual boolexpr free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
 | TriggerRegisterVariableEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterTimerEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterTimerExpireEvent | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterTimerEvent | common.j | D2 | **tombstoned** (superseded): timer-as-event-bus native (create timer + register trigger) superseded; the canonical path is the timer callback (Game.After/Every), not the OnEvent route (timers.md) |
+| TriggerRegisterTimerExpireEvent | common.j | D1 | **tombstoned** (superseded): registers a trigger to fire on a timer's expiry; superseded by the canonical timer callback (Game.After/Every), not the OnEvent route (timers.md) |
 | TriggerRegisterGameStateEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterDialogEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterDialogButtonEvent | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1649,9 +1649,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SubStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetHandleIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | StringHashBJ | blizzard.j | D1 | `litd/api.StringHash` (D3 collapse → StringHash) |
-| TriggerRegisterTimerEventPeriodic | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterTimerEventSingle | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterTimerExpireEventBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| TriggerRegisterTimerEventPeriodic | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.Every), not the OnEvent route (timers.md) |
+| TriggerRegisterTimerEventSingle | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.After), not the OnEvent route (timers.md) |
+| TriggerRegisterTimerExpireEventBJ | blizzard.j | D2 | **tombstoned** (superseded): timer-expire event registration superseded; the periodic/one-shot callback is the canonical path, not the OnEvent route (timers.md) |
 | TriggerRegisterPlayerUnitEventSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterAnyUnitEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TriggerRegisterPlayerSelectionEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2112,11 +2112,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedDefeatConditionBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | FlashQuestDialogButtonBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | QuestMessageBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| StartTimerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CreateTimerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyTimerBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| PauseTimerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetLastCreatedTimerBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| StartTimerBJ | blizzard.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
+| CreateTimerBJ | blizzard.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
+| DestroyTimerBJ | blizzard.j | D1 | `litd/api.Timer.Stop` (D3 collapse → DestroyTimer) |
+| PauseTimerBJ | blizzard.j | D2 | **tombstoned** (superseded): boolean-flag pause/resume wrapper superseded by the explicit Timer.Pause()/Resume() verbs (dedup §3), timers.md |
+| GetLastCreatedTimerBJ | blizzard.j | D1 | **tombstoned** (superseded): bj_lastStartedTimer side channel; superseded — Game.After/Every return the Timer directly (dedup §3 ex.6), timers.md |
 | CreateTimerDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DestroyTimerDialogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | TimerDialogSetTitleBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
