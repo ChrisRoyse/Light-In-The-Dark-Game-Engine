@@ -481,19 +481,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitFacing | common.j | D1 | `litd/api.Unit.SetFacing` |
 | SetUnitFacingTimed | common.j | D2 | **tombstoned** (deferred-v2): gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed) |
 | SetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.SetMoveSpeed` |
-| SetUnitFlyHeight | common.j | D1 | **tombstoned** (deferred-v2): animates z toward a target at a rate/sec; needs current+target+climb-rate state integrated each movement tick. Deferred to the z/climb movement subsystem (#367) |
+| SetUnitFlyHeight | common.j | D5 | `litd/api.Unit.SetFlyHeight` |
 | SetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.SetTurnSpeed` |
-| SetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): sets the prop window; gates translation on facing-vs-move angle in golden-trace-sensitive movement.go. Deferred to the z/climb movement subsystem (#367) |
+| SetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): sets the prop window; gates translation on facing-vs-move angle in golden-trace-sensitive movement.go. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done) |
 | SetUnitAcquireRange | common.j | D1 | `litd/api.Unit.SetAcquireRange` |
 | SetUnitCreepGuard | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitAcquireRange | common.j | D1 | `litd/api.Unit.AcquireRange` |
 | GetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.TurnSpeed` |
-| GetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): prop window (translation gate angle); a behavioral movement change with no backing state. Deferred to the z/climb movement subsystem (#367) |
-| GetUnitFlyHeight | common.j | D1 | **tombstoned** (deferred-v2): unit z (fly height); needs a per-unit climb-integrated z column the 2D sim lacks. Deferred to the z/climb movement subsystem (#367) |
+| GetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): prop window (translation gate angle); a behavioral movement change with no backing state. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done) |
+| GetUnitFlyHeight | common.j | D5 | `litd/api.Unit.FlyHeight` |
 | GetUnitDefaultAcquireRange | common.j | D1 | `litd/api.Unit.DefaultAcquireRange` |
 | GetUnitDefaultTurnSpeed | common.j | D1 | `litd/api.Unit.DefaultTurnSpeed` |
-| GetUnitDefaultPropWindow | common.j | D1 | **tombstoned** (deferred-v2): type's base prop window; static counterpart to the deferred dynamic prop-window. Deferred with the family (#367) |
-| GetUnitDefaultFlyHeight | common.j | D1 | **tombstoned** (deferred-v2): type's base fly height; static counterpart to the deferred dynamic fly-height — mapping it alone is a capability-free half-feature. Deferred with the family (#367) |
+| GetUnitDefaultPropWindow | common.j | D1 | **tombstoned** (deferred-v2): type's base prop window; static counterpart to the deferred dynamic prop-window. Deferred to the prop-window subsystem (#376) |
+| GetUnitDefaultFlyHeight | common.j | D5 | `litd/api.Unit.DefaultFlyHeight` |
 | SetUnitOwner | common.j | D1 | `litd/api.Unit.SetOwner` |
 | SetUnitColor | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitScale | common.j | D1 | **tombstoned** (deferred-v2): render-only model scale; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
@@ -1914,7 +1914,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GroupTrainOrderByIdBJ | blizzard.j | D1 | **tombstoned** (superseded): group train order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | IssueUpgradeOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetAttackedUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetUnitFlyHeightBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| SetUnitFlyHeightBJ | blizzard.j | D5 | `litd/api.Unit.SetFlyHeight` (D3 collapse → SetUnitFlyHeight) |
 | SetUnitTurnSpeedBJ | blizzard.j | D1 | `litd/api.Unit.SetTurnSpeed` (D3 collapse → SetUnitTurnSpeed) |
 | SetUnitPropWindowBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitPropWindowBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |

@@ -107,6 +107,7 @@ type World struct {
 	Hiddens       *presenceSet
 	XPSuspends    *presenceSet
 	Pauses        *presenceSet
+	Flys          *FlyStore
 	Regions       *RegionStore
 	Combats       *CombatStore
 	Abilities     *AbilityStore
@@ -347,6 +348,7 @@ func NewWorld(requested Caps) *World {
 		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		XPSuspends:         newPresenceSet(caps.Units, idxSpace),
 		Pauses:             newPresenceSet(caps.Units, idxSpace),
+		Flys:               NewFlyStore(caps.Units, idxSpace),
 		Regions:            NewRegionStore(caps.Units, idxSpace),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
@@ -495,6 +497,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	}
 	if w.Pauses.Row(id) != -1 {
 		w.Pauses.Remove(id)
+	}
+	if w.Flys.Row(id) != -1 {
+		w.Flys.Remove(id)
 	}
 	if w.Combats.Row(id) != -1 {
 		w.Combats.Remove(id)

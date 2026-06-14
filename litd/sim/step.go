@@ -114,6 +114,7 @@ func (w *World) phaseOrders() {
 func (w *World) phaseMovement() {
 	w.pathingSystem()
 	w.movementSystem()
+	w.flySystem()     // fly-height climb integration (#367)
 	w.missileSystem() // flight at the movement-phase tail (#158)
 	w.bucketReconcile()
 	w.visibilitySystem()

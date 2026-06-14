@@ -125,6 +125,7 @@ type Unit struct {
 	AcquisitionRange fixed.F64
 	SightDay         fixed.F64
 	SightNight       fixed.F64
+	FlyHeight        fixed.F64 // default flight height in world units (#367)
 	Model            string
 	Name             string // display/proper name (GetUnitName); "" = unnamed
 	PointValue       int32  // score/bounty weight (GetUnitPointValue); 0 = none
@@ -191,6 +192,7 @@ type rawUnit struct {
 	AcquisitionRange float64          `toml:"acquisition-range" json:"acquisition-range"`
 	SightDay         float64          `toml:"sight-day" json:"sight-day"`
 	SightNight       float64          `toml:"sight-night" json:"sight-night"`
+	FlyHeight        float64          `toml:"fly-height" json:"fly-height"`
 	Model            string           `toml:"model" json:"model"`
 	Name             string           `toml:"name" json:"name"`
 	PointValue       int64            `toml:"point-value" json:"point-value"`
@@ -659,6 +661,10 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 	if err != nil {
 		return fail("sight-night", err)
 	}
+	flyHeight, err := worldUnits(r.FlyHeight)
+	if err != nil {
+		return fail("fly-height", err)
+	}
 	if r.PointValue < 0 || r.PointValue > 1_000_000 {
 		return fail("point-value", fmt.Errorf("%d out of range [0, 1000000]", r.PointValue))
 	}
@@ -698,6 +704,7 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		AcquisitionRange: acq,
 		SightDay:         sightDay,
 		SightNight:       sightNight,
+		FlyHeight:        flyHeight,
 		Model:            r.Model,
 		Name:             r.Name,
 		PointValue:       int32(r.PointValue),

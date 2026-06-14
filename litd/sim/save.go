@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v23: per-unit flight-height animation rows (current/target/climb-rate)
+// as a sparse section after unitname (#367).
 // v22: terrain heightfield (grid dims/origin/cell + row-major samples)
 // appended after the player section (#371).
 // v21: four per-player difficulty handicaps (handicap / handicapDamage /
@@ -88,7 +90,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 22
+const SaveFormatVersion uint32 = 23
 
 // ---- little-endian writer / reader ----
 
@@ -308,6 +310,16 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	for i := int32(0); i < un.count; i++ {
 		s.ent(un.Entity[i])
 		s.str(un.Name[i])
+	}
+
+	// flyheight (#367): current/target/climb-rate per set unit
+	fly := w.Flys
+	s.u32(uint32(fly.count))
+	for i := int32(0); i < fly.count; i++ {
+		s.ent(fly.Entity[i])
+		s.f64(fly.Height[i])
+		s.f64(fly.Target[i])
+		s.f64(fly.Rate[i])
 	}
 
 	// health
@@ -843,6 +855,13 @@ type decodedSave struct {
 	unE    []EntityID
 	unName []string
 
+	// flyheight (#367)
+	flyN int32
+	flyE []EntityID
+	flyH []fixed.F64
+	flyT []fixed.F64
+	flyR []fixed.F64
+
 	hlN     int32
 	hlE     []EntityID
 	hlLife  []fixed.F64
@@ -1308,6 +1327,22 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		if d.unName[i], err = r.str(maxUnitNameLen); err != nil {
 			return err
 		}
+	}
+
+	// flyheight (#367)
+	if n, err = r.section("flyheight", len(w.Flys.Height)); err != nil {
+		return err
+	}
+	d.flyN = n
+	d.flyE = make([]EntityID, n)
+	d.flyH = make([]fixed.F64, n)
+	d.flyT = make([]fixed.F64, n)
+	d.flyR = make([]fixed.F64, n)
+	for i := int32(0); i < n; i++ {
+		d.flyE[i] = r.ent()
+		d.flyH[i] = r.f64()
+		d.flyT[i] = r.f64()
+		d.flyR[i] = r.f64()
 	}
 
 	// health
@@ -2619,6 +2654,17 @@ func applySave(d *decodedSave, w *World) {
 		un.Entity[i] = d.unE[i]
 		un.Name[i] = d.unName[i]
 		un.rowOf[d.unE[i].Index()] = i
+	}
+
+	fly := w.Flys
+	fly.count = d.flyN
+	resetRowOf(fly.rowOf)
+	for i := int32(0); i < d.flyN; i++ {
+		fly.Entity[i] = d.flyE[i]
+		fly.Height[i] = d.flyH[i]
+		fly.Target[i] = d.flyT[i]
+		fly.Rate[i] = d.flyR[i]
+		fly.rowOf[d.flyE[i].Index()] = i
 	}
 
 	hl := w.Healths

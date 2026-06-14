@@ -79,6 +79,10 @@ var HashSystems = []string{
 	// in row-major order). Deterministic sim read behind TerrainHeight;
 	// unbound contributes only the zero dims.
 	"heightfield",
+	// appended by #367: per-unit flight-height animation (current/target/
+	// climb-rate). Sparse — only units with an explicitly set height
+	// contribute, in row order.
+	"flyheight",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -620,6 +624,16 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hhf.WriteI64(int64(hf.cellSize))
 	for _, s := range hf.samples {
 		hhf.WriteI64(int64(s))
+	}
+
+	hfl := h.next() // flyheight (#367): current/target/rate per set unit
+	fs := w.Flys
+	hfl.WriteU32(uint32(fs.count))
+	for i := int32(0); i < fs.count; i++ {
+		hfl.WriteU32(uint32(fs.Entity[i]))
+		hfl.WriteI64(int64(fs.Height[i]))
+		hfl.WriteI64(int64(fs.Target[i]))
+		hfl.WriteI64(int64(fs.Rate[i]))
 	}
 
 	return reg.Sum(dst)

@@ -1,6 +1,9 @@
 package litd
 
-import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+)
 
 // unit.go is the canonical units-category surface (jass-mapping/units.md):
 // the ~235 common.j unit natives + ~125 blizzard.j BJs collapse onto methods
@@ -431,6 +434,47 @@ func (u Unit) SetTurnSpeed(radPerSec float64) {
 		radPerSec = 0
 	}
 	u.g.w.Movements.TurnRate[r] = angleToBrad(Rad(radPerSec / float64(data.TicksPerSecond)))
+}
+
+// FlyHeight returns the unit's current flight height (its z) in world
+// units — the animated value once SetFlyHeight has run, otherwise the
+// unit type's default. 0 on an invalid handle. JASS: GetUnitFlyHeight.
+func (u Unit) FlyHeight() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.FlyHeight")
+		return 0
+	}
+	return toFloat(u.g.w.FlyHeight(u.id))
+}
+
+// SetFlyHeight retargets the unit's flight height to newHeight (world
+// units), climbing/descending at ratePerSec world units per second; a
+// rate <= 0 snaps instantly. Negative heights clamp to 0. No-op on an
+// invalid handle or a unit without a position. JASS: SetUnitFlyHeight.
+func (u Unit) SetFlyHeight(newHeight, ratePerSec float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetFlyHeight")
+		return
+	}
+	if newHeight < 0 {
+		newHeight = 0
+	}
+	rate := fixed.F64(0)
+	if ratePerSec > 0 {
+		rate = fromFloat(ratePerSec / float64(data.TicksPerSecond))
+	}
+	u.g.w.SetFlyHeight(u.id, fromFloat(newHeight), rate)
+}
+
+// DefaultFlyHeight returns the unit type's base flight height in world
+// units (the data-table value), 0 on an invalid handle / an untyped unit.
+// JASS: GetUnitDefaultFlyHeight.
+func (u Unit) DefaultFlyHeight() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.DefaultFlyHeight")
+		return 0
+	}
+	return toFloat(u.g.w.DefaultFlyHeight(u.id))
 }
 
 // AcquireRange returns the unit's auto-acquisition range in world units (the
