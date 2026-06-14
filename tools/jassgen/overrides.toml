@@ -1372,3 +1372,73 @@ name = "S2R"
 class = "D1"
 tombstone = "gameplay-irrelevant"
 reason = "string->real; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface"
+
+# --- random + time-of-day: implemented-but-unmapped desyncs ---
+# These Game.* methods are implemented (random.go, clock.go) but were missing
+# from overrides, so the manifest reported them pending (same desync class as
+# StringHash/Paused). Map them to their canonical symbols.
+[[override]]
+name = "GetRandomInt"
+class = "D2"
+goMapping = "Game.RandomInt"
+goSignature = "(min, max int) int"
+package = "litd/api"
+reason = "ranged int RNG over the sim PRNG (R-SIM-2); JASS lowBound/highBound -> min/max (random.go)"
+
+[[override]]
+name = "GetRandomReal"
+class = "D2"
+goMapping = "Game.RandomFloat"
+goSignature = "() float64"
+package = "litd/api"
+reason = "the [0,1) unit-range primitive over the sim PRNG; the JASS ranged GetRandomReal(lo,hi) reduces to lo + RandomFloat()*(hi-lo) — caller scales, per random.go's documented convention (dedup §2 defaulted args)"
+
+[[override]]
+name = "SetRandomSeed"
+class = "D1"
+goMapping = "Game.SetRandomSeed"
+goSignature = "(seed int64)"
+package = "litd/api"
+reason = "reseeds the sim PRNG; reseed is hashed sim state (random.go). integer->int64 (dedup §6 representation)"
+
+[[override]]
+name = "GetTimeOfDayScale"
+class = "D1"
+goMapping = "Game.TimeOfDayScale"
+goSignature = "() float64"
+collapsesWith = ["GetTimeOfDayScalePercentBJ"]
+package = "litd/api"
+reason = "day/night clock-rate getter (clock.go, #339); the PercentBJ form is the percent-representation passthrough (D2)"
+
+[[override]]
+name = "SetTimeOfDayScale"
+class = "D1"
+goMapping = "Game.SetTimeOfDayScale"
+goSignature = "(s float64)"
+collapsesWith = ["SetTimeOfDayScalePercentBJ"]
+package = "litd/api"
+reason = "day/night clock-rate setter (clock.go, #339); the PercentBJ form is the percent-representation passthrough (D2)"
+
+[[override]]
+name = "SuspendTimeOfDay"
+class = "D1"
+goMapping = "Game.SuspendTimeOfDay"
+goSignature = "(suspended bool)"
+package = "litd/api"
+reason = "freezes/resumes the day/night clock (clock.go, #339)"
+
+[[override]]
+name = "GetTimeOfDay"
+class = "D1"
+goMapping = "Game.TimeOfDay"
+goSignature = "() float64"
+package = "litd/api"
+reason = "current time-of-day getter; BJ passthrough to the canonical Game.TimeOfDay (clock.go, #339, dedup §2)"
+
+[[override]]
+name = "SetTimeOfDay"
+class = "D1"
+goMapping = "Game.SetTimeOfDay"
+goSignature = "(h float64)"
+package = "litd/api"
+reason = "sets the time-of-day; BJ passthrough to the canonical Game.SetTimeOfDay (clock.go, #339, dedup §2)"

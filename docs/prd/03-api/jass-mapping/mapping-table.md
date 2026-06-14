@@ -892,8 +892,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RemoveSavedHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | FlushParentHashtable | common.j | unclassified | _pending (M2 backlog)_ |
 | FlushChildHashtable | common.j | unclassified | _pending (M2 backlog)_ |
-| GetRandomInt | common.j | unclassified | _pending (M2 backlog)_ |
-| GetRandomReal | common.j | unclassified | _pending (M2 backlog)_ |
+| GetRandomInt | common.j | D2 | `litd/api.Game.RandomInt` |
+| GetRandomReal | common.j | D2 | `litd/api.Game.RandomFloat` |
 | CreateUnitPool | common.j | unclassified | _pending (M2 backlog)_ |
 | DestroyUnitPool | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitPoolAddUnitType | common.j | unclassified | _pending (M2 backlog)_ |
@@ -908,7 +908,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ChooseRandomNPBuilding | common.j | unclassified | _pending (M2 backlog)_ |
 | ChooseRandomItem | common.j | unclassified | _pending (M2 backlog)_ |
 | ChooseRandomItemEx | common.j | unclassified | _pending (M2 backlog)_ |
-| SetRandomSeed | common.j | unclassified | _pending (M2 backlog)_ |
+| SetRandomSeed | common.j | D1 | `litd/api.Game.SetRandomSeed` |
 | SetTerrainFog | common.j | unclassified | _pending (M2 backlog)_ |
 | ResetTerrainFog | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitFog | common.j | unclassified | _pending (M2 backlog)_ |
@@ -922,9 +922,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetSkyModel | common.j | unclassified | _pending (M2 backlog)_ |
 | EnableUserControl | common.j | unclassified | _pending (M2 backlog)_ |
 | EnableUserUI | common.j | unclassified | _pending (M2 backlog)_ |
-| SuspendTimeOfDay | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTimeOfDayScale | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTimeOfDayScale | common.j | unclassified | _pending (M2 backlog)_ |
+| SuspendTimeOfDay | common.j | D1 | `litd/api.Game.SuspendTimeOfDay` |
+| SetTimeOfDayScale | common.j | D1 | `litd/api.Game.SetTimeOfDayScale` |
+| GetTimeOfDayScale | common.j | D1 | `litd/api.Game.TimeOfDayScale` |
 | ShowInterface | common.j | unclassified | _pending (M2 backlog)_ |
 | PauseGame | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitAddIndicator | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1599,10 +1599,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetBooleanOr | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | PercentToInt | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PercentTo255 | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetTimeOfDay | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTimeOfDay | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTimeOfDayScalePercentBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetTimeOfDayScalePercentBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| GetTimeOfDay | blizzard.j | D1 | `litd/api.Game.TimeOfDay` |
+| SetTimeOfDay | blizzard.j | D1 | `litd/api.Game.SetTimeOfDay` |
+| SetTimeOfDayScalePercentBJ | blizzard.j | D1 | `litd/api.Game.SetTimeOfDayScale` (D3 collapse → SetTimeOfDayScale) |
+| GetTimeOfDayScalePercentBJ | blizzard.j | D1 | `litd/api.Game.TimeOfDayScale` (D3 collapse → GetTimeOfDayScale) |
 | PlaySound | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CompareLocationsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CompareRectsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |

@@ -70,6 +70,22 @@
       }
     },
     {
+      "name": "GetTimeOfDay",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.TimeOfDay",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "GetUnitLifePercent",
       "origin": "blizzard.j",
       "signature": {
@@ -216,6 +232,28 @@
         "symbol": "PolledWait",
         "package": "litd/api/helpers",
         "goSignature": "(seconds float64)"
+      }
+    },
+    {
+      "name": "SetTimeOfDay",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whatTime",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetTimeOfDay",
+        "package": "litd/api",
+        "goSignature": "(h float64)"
       }
     },
     {
@@ -2543,6 +2581,79 @@
       }
     },
     {
+      "name": "GetRandomInt",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "lowBound",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "highBound",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.RandomInt",
+        "package": "litd/api",
+        "goSignature": "(min, max int) int"
+      }
+    },
+    {
+      "name": "GetRandomReal",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "lowBound",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "highBound",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.RandomFloat",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetTimeOfDayScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.TimeOfDayScale",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetTimeOfDayScalePercentBJ"
+        ]
+      }
+    },
+    {
       "name": "GetUnitAbilityLevel",
       "origin": "common.j",
       "signature": {
@@ -3818,6 +3929,53 @@
       }
     },
     {
+      "name": "SetRandomSeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "seed",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetRandomSeed",
+        "package": "litd/api",
+        "goSignature": "(seed int64)"
+      }
+    },
+    {
+      "name": "SetTimeOfDayScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetTimeOfDayScale",
+        "package": "litd/api",
+        "goSignature": "(s float64)",
+        "collapsesWith": [
+          "SetTimeOfDayScalePercentBJ"
+        ]
+      }
+    },
+    {
       "name": "SetUnitAbilityLevel",
       "origin": "common.j",
       "signature": {
@@ -4473,6 +4631,28 @@
         "symbol": "Unit.SuspendExperience",
         "package": "litd/api",
         "goSignature": "(suspend bool)"
+      }
+    },
+    {
+      "name": "SuspendTimeOfDay",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "b",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SuspendTimeOfDay",
+        "package": "litd/api",
+        "goSignature": "(suspended bool)"
       }
     },
     {
