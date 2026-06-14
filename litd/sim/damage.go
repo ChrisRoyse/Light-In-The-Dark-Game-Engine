@@ -170,6 +170,20 @@ func (w *World) damageApplySystem() {
 			post = 0 // final clamp: damage never heals
 		}
 
+		// #373 player handicaps: the source's units deal scaled damage,
+		// the target's units take scaled damage. Both default to 1.0, so an
+		// unconfigured match is byte-identical (golden trace stable). Player
+		// slots are stored in the owner row, always < MaxPlayers.
+		if sor := w.Owners.Row(p.Source); sor != -1 {
+			post = post.Mul(w.players.handicapDamage[w.Owners.Player[sor]])
+		}
+		if tor := w.Owners.Row(p.Target); tor != -1 {
+			post = post.Mul(w.players.handicap[w.Owners.Player[tor]])
+		}
+		if post < 0 {
+			post = 0
+		}
+
 		// #219 writable-damage hook: a script may scale the final
 		// post-mitigation amount. Runs synchronously here (pre-apply) so
 		// the modified value is what EvUnitDamaged carries and what the

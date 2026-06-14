@@ -341,3 +341,76 @@ func (p Player) IsEnemy(other Player) bool {
 	}
 	return p.g.w.IsEnemy(uint8(p.idx), uint8(other.idx))
 }
+
+// ---- difficulty handicaps (#373) ----
+//
+// Each handicap is a fraction where 1.0 = no effect (the JASS native form;
+// the *BJ percent variants pass 60.0 for 0.60 and collapse onto these).
+// They read and write the real applied multipliers — a handicapped
+// player's units deal/take scaled damage, its heroes earn scaled XP, and
+// its hero revives take scaled time. Negative inputs clamp to 0.
+
+// Handicap / SetHandicap is the damage-TAKEN multiplier for this player's
+// units. JASS: GetPlayerHandicap / SetPlayerHandicap.
+func (p Player) Handicap() float64 {
+	if !p.Valid() {
+		return 1
+	}
+	return toFloat(p.g.w.Handicap(uint8(p.idx)))
+}
+func (p Player) SetHandicap(v float64) {
+	if !p.Valid() {
+		p.g.reportInvalid("Player.SetHandicap")
+		return
+	}
+	p.g.w.SetHandicap(uint8(p.idx), fromFloat(v))
+}
+
+// HandicapDamage / SetHandicapDamage is the damage-DEALT multiplier for
+// this player's units. JASS: GetPlayerHandicapDamage / SetPlayerHandicapDamage.
+func (p Player) HandicapDamage() float64 {
+	if !p.Valid() {
+		return 1
+	}
+	return toFloat(p.g.w.HandicapDamage(uint8(p.idx)))
+}
+func (p Player) SetHandicapDamage(v float64) {
+	if !p.Valid() {
+		p.g.reportInvalid("Player.SetHandicapDamage")
+		return
+	}
+	p.g.w.SetHandicapDamage(uint8(p.idx), fromFloat(v))
+}
+
+// HandicapXP / SetHandicapXP is the kill-XP multiplier for this player's
+// heroes. JASS: GetPlayerHandicapXP / SetPlayerHandicapXP.
+func (p Player) HandicapXP() float64 {
+	if !p.Valid() {
+		return 1
+	}
+	return toFloat(p.g.w.HandicapXP(uint8(p.idx)))
+}
+func (p Player) SetHandicapXP(v float64) {
+	if !p.Valid() {
+		p.g.reportInvalid("Player.SetHandicapXP")
+		return
+	}
+	p.g.w.SetHandicapXP(uint8(p.idx), fromFloat(v))
+}
+
+// HandicapReviveTime / SetHandicapReviveTime is the hero-revive-time
+// multiplier for this player. JASS: GetPlayerHandicapReviveTime /
+// SetPlayerHandicapReviveTime.
+func (p Player) HandicapReviveTime() float64 {
+	if !p.Valid() {
+		return 1
+	}
+	return toFloat(p.g.w.HandicapReviveTime(uint8(p.idx)))
+}
+func (p Player) SetHandicapReviveTime(v float64) {
+	if !p.Valid() {
+		p.g.reportInvalid("Player.SetHandicapReviveTime")
+		return
+	}
+	p.g.w.SetHandicapReviveTime(uint8(p.idx), fromFloat(v))
+}

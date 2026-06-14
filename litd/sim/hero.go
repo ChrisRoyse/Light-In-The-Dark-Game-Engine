@@ -523,7 +523,17 @@ func (w *World) grantKillXP(killer, victim EntityID) {
 	}
 	for hr := int32(0); hr < w.Heroes.count; hr++ {
 		if w.heroInShare(hr, team, pos) {
-			w.AddXP(w.Heroes.Entity[hr], share)
+			recv := w.Heroes.Entity[hr]
+			// #373 XP handicap: scale this hero's share by its owner's
+			// handicapXP (default 1.0 → unchanged). A handicap < 1 may round
+			// a small share to 0 (no XP) — deterministic and intended.
+			gain := share
+			if or := w.Owners.Row(recv); or != -1 {
+				gain = scaleI64(share, w.players.handicapXP[w.Owners.Player[or]])
+			}
+			if gain > 0 {
+				w.AddXP(recv, gain)
+			}
 		}
 	}
 }
@@ -628,9 +638,17 @@ func (w *World) reviveCostAt(level uint8, res int) int64 {
 	return c
 }
 
-func (w *World) reviveTicksAt(level uint8) uint16 {
+func (w *World) reviveTicksAt(level uint8, player uint8) uint16 {
 	rv := &w.heroTables.Revive
-	return rv.BaseTicks + rv.TicksPerLevel*uint16(level-1)
+	base := rv.BaseTicks + rv.TicksPerLevel*uint16(level-1)
+	// #373 revive-time handicap (default 1.0 → unchanged). Scaled at this
+	// single chokepoint so both the queue-head and the immediate-admit paths
+	// honor it. Clamp to the uint16 tick range.
+	t := scaleI64(int64(base), w.players.handicapReviveTime[player])
+	if t > 0xFFFF {
+		t = 0xFFFF
+	}
+	return uint16(t)
 }
 
 // ReviveHero admits a revive of dead-pool slot `slot` on an
@@ -679,7 +697,7 @@ func (w *World) ReviveHero(altar EntityID, slot int) uint8 {
 	w.Produce.QFlags[r][q] = TrainFlagHeroRevive
 	w.Produce.QCount[r] = q + 1
 	if q == 0 {
-		w.Produce.Done[r] = w.tick + uint32(w.reviveTicksAt(rec.Level))
+		w.Produce.Done[r] = w.tick + uint32(w.reviveTicksAt(rec.Level, p))
 	}
 	return TrainOK
 }

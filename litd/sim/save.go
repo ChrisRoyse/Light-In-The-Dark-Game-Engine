@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v21: four per-player difficulty handicaps (handicap / handicapDamage /
+// handicapXP / handicapReviveTime) interleaved into each roster slot (#373).
 // v20: player section appended after regions: per-player roster
 // (controller/race/color/team/start/name/allied-victory) + the
 // asymmetric alliance bitset (#218). Resources/food stay in the economy
@@ -84,7 +86,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 20
+const SaveFormatVersion uint32 = 21
 
 // ---- little-endian writer / reader ----
 
@@ -744,6 +746,11 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.f64(pr.startX[p])
 		s.f64(pr.startY[p])
 		s.boolean(pr.alliedVictory[p])
+		// handicaps (#373, v21)
+		s.f64(pr.handicap[p])
+		s.f64(pr.handicapDamage[p])
+		s.f64(pr.handicapXP[p])
+		s.f64(pr.handicapReviveTime[p])
 	}
 	for a := 0; a < MaxPlayers; a++ {
 		for b := 0; b < MaxPlayers; b++ {
@@ -1031,6 +1038,11 @@ type decodedSave struct {
 	plStartY        [MaxPlayers]fixed.F64
 	plAlliedVictory [MaxPlayers]bool
 	plAlliance      [MaxPlayers][MaxPlayers]uint16
+	// handicaps (#373, v21)
+	plHandicap           [MaxPlayers]fixed.F64
+	plHandicapDamage     [MaxPlayers]fixed.F64
+	plHandicapXP         [MaxPlayers]fixed.F64
+	plHandicapReviveTime [MaxPlayers]fixed.F64
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2022,6 +2034,10 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.plStartX[p] = r.f64()
 		d.plStartY[p] = r.f64()
 		d.plAlliedVictory[p] = r.boolean()
+		d.plHandicap[p] = r.f64()
+		d.plHandicapDamage[p] = r.f64()
+		d.plHandicapXP[p] = r.f64()
+		d.plHandicapReviveTime[p] = r.f64()
 	}
 	for a := 0; a < MaxPlayers; a++ {
 		for b := 0; b < MaxPlayers; b++ {
@@ -2945,6 +2961,10 @@ func applySave(d *decodedSave, w *World) {
 		pr.startX[p] = d.plStartX[p]
 		pr.startY[p] = d.plStartY[p]
 		pr.alliedVictory[p] = d.plAlliedVictory[p]
+		pr.handicap[p] = d.plHandicap[p]
+		pr.handicapDamage[p] = d.plHandicapDamage[p]
+		pr.handicapXP[p] = d.plHandicapXP[p]
+		pr.handicapReviveTime[p] = d.plHandicapReviveTime[p]
 	}
 	pr.alliance = d.plAlliance
 

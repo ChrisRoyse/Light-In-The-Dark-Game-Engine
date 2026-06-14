@@ -166,7 +166,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ForcePlayerStartLocation | common.j | unclassified | _pending (M2 backlog)_ |
 | SetPlayerColor | common.j | D5 | `litd/api.Player.SetColor` |
 | SetPlayerAlliance | common.j | D1 | `litd/api.Player.SetAllianceFlag` |
-| SetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): tax-rate setter deferred with GetPlayerTaxRate |
+| SetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): tax-rate setter deferred with GetPlayerTaxRate (upkeep economy not in v1; see #375) |
 | SetPlayerRacePreference | common.j | D2 | `litd/api.Player.SetRace` |
 | SetPlayerRaceSelectable | common.j | D2 | `litd/api.Player.SetRace` (D3 collapse → SetPlayerRacePreference) |
 | SetPlayerController | common.j | D5 | `litd/api.Player.SetController` |
@@ -178,7 +178,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayerSelectable | common.j | D1 | **tombstoned** (gameplay-irrelevant): lobby selectability flag; no sim effect |
 | GetPlayerController | common.j | D5 | `litd/api.Player.Controller` |
 | GetPlayerSlotState | common.j | D1 | **tombstoned** (deferred-v2): player slot lifecycle (empty/playing/left) needs the leave/disconnect model not built in v1; deferred |
-| GetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): upkeep tax-rate needs the gold/lumber upkeep economy not built in v1; deferred |
+| GetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): upkeep tax-rate needs the gold/lumber upkeep economy (PLAYER_STATE_*_UPKEEP_RATE) not built in v1; tracked in #375 (split from #373, handicap portion done) |
 | IsPlayerRacePrefSet | common.j | D1 | **tombstoned** (gameplay-irrelevant): lobby race-preference query; no sim effect |
 | GetPlayerName | common.j | D1 | `litd/api.Player.Name` |
 | CreateTimer | common.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
@@ -689,14 +689,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayerState | common.j | D5 | `litd/api.Player.Gold` |
 | GetPlayerScore | common.j | D1 | **tombstoned** (gameplay-irrelevant): end-game score-screen metric; presentation, not sim state |
 | GetPlayerAlliance | common.j | D5 | `litd/api.Player.AllianceWith` |
-| GetPlayerHandicap | common.j | D5 | **tombstoned** (deferred-v2): handicap damage multiplier needs wiring into the combat damage pipeline; deferred to a follow-up so the accessor reflects real applied state, not a stored-but-ignored value (no fake SoT) |
-| GetPlayerHandicapXP | common.j | D5 | **tombstoned** (deferred-v2): XP handicap needs hero-XP pipeline wiring; deferred |
-| GetPlayerHandicapReviveTime | common.j | D5 | **tombstoned** (deferred-v2): revive-time handicap needs hero-revive wiring; deferred |
-| GetPlayerHandicapDamage | common.j | D5 | **tombstoned** (deferred-v2): damage handicap needs combat-pipeline wiring; deferred |
-| SetPlayerHandicap | common.j | D5 | **tombstoned** (deferred-v2): handicap setter deferred with GetPlayerHandicap (combat-multiplier wiring) |
-| SetPlayerHandicapXP | common.j | D5 | **tombstoned** (deferred-v2): XP handicap setter deferred |
-| SetPlayerHandicapReviveTime | common.j | D5 | **tombstoned** (deferred-v2): revive-time handicap setter deferred |
-| SetPlayerHandicapDamage | common.j | D5 | **tombstoned** (deferred-v2): damage handicap setter deferred |
+| GetPlayerHandicap | common.j | D5 | `litd/api.Player.Handicap` |
+| GetPlayerHandicapXP | common.j | D5 | `litd/api.Player.HandicapXP` |
+| GetPlayerHandicapReviveTime | common.j | D5 | `litd/api.Player.HandicapReviveTime` |
+| GetPlayerHandicapDamage | common.j | D5 | `litd/api.Player.HandicapDamage` |
+| SetPlayerHandicap | common.j | D5 | `litd/api.Player.SetHandicap` |
+| SetPlayerHandicapXP | common.j | D5 | `litd/api.Player.SetHandicapXP` |
+| SetPlayerHandicapReviveTime | common.j | D5 | `litd/api.Player.SetHandicapReviveTime` |
+| SetPlayerHandicapDamage | common.j | D5 | `litd/api.Player.SetHandicapDamage` |
 | SetPlayerTechMaxAllowed | common.j | D1 | **tombstoned** (deferred-v2): tech max-allowed belongs to the tech-tree surface (#303/#234); deferred |
 | GetPlayerTechMaxAllowed | common.j | D1 | **tombstoned** (deferred-v2): tech max-allowed query — tech-tree surface (#303); deferred |
 | AddPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1817,14 +1817,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetItemPositionLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetLearnedSkillBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SuspendHeroXPBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerHandicapDamageBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerHandicapDamageBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicapReviveTimeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerHandicapReviveTimeBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicapXPBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerHandicapXPBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicapBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerHandicapBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| SetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapDamage` (D3 collapse → SetPlayerHandicapDamage) |
+| GetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.HandicapDamage` (D3 collapse → GetPlayerHandicapDamage) |
+| SetPlayerHandicapReviveTimeBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapReviveTime` (D3 collapse → SetPlayerHandicapReviveTime) |
+| GetPlayerHandicapReviveTimeBJ | blizzard.j | D5 | `litd/api.Player.HandicapReviveTime` (D3 collapse → GetPlayerHandicapReviveTime) |
+| SetPlayerHandicapXPBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapXP` (D3 collapse → SetPlayerHandicapXP) |
+| GetPlayerHandicapXPBJ | blizzard.j | D5 | `litd/api.Player.HandicapXP` (D3 collapse → GetPlayerHandicapXP) |
+| SetPlayerHandicapBJ | blizzard.j | D5 | `litd/api.Player.SetHandicap` (D3 collapse → SetPlayerHandicap) |
+| GetPlayerHandicapBJ | blizzard.j | D5 | `litd/api.Player.Handicap` (D3 collapse → GetPlayerHandicap) |
 | GetHeroStatBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetHeroStat | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ModifyHeroStat | blizzard.j | D4 | _pending (M2 backlog)_ |

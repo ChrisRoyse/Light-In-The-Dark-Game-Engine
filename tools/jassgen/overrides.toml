@@ -2383,62 +2383,86 @@ reason = "leaderboard UI query; presentation"
 [[override]]
 name = "GetPlayerHandicap"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "handicap damage multiplier needs wiring into the combat damage pipeline; deferred to a follow-up so the accessor reflects real applied state, not a stored-but-ignored value (no fake SoT)"
+goMapping = "Player.Handicap"
+goSignature = "() float64"
+package = "litd/api"
+collapsesWith = ["GetPlayerHandicapBJ"]
+reason = "#373: damage-taken handicap, wired at the combat chokepoint; the *BJ percent reader (×100) collapses onto the fraction accessor"
 
 [[override]]
 name = "SetPlayerHandicap"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "handicap setter deferred with GetPlayerHandicap (combat-multiplier wiring)"
+goMapping = "Player.SetHandicap"
+goSignature = "(v float64)"
+package = "litd/api"
+collapsesWith = ["SetPlayerHandicapBJ"]
+reason = "#373: damage-taken handicap setter; the *BJ percent setter (×0.01) collapses onto the fraction accessor"
 
 [[override]]
 name = "GetPlayerHandicapXP"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "XP handicap needs hero-XP pipeline wiring; deferred"
+goMapping = "Player.HandicapXP"
+goSignature = "() float64"
+package = "litd/api"
+collapsesWith = ["GetPlayerHandicapXPBJ"]
+reason = "#373: kill-XP handicap, wired into grantKillXP; *BJ percent reader collapses on"
 
 [[override]]
 name = "SetPlayerHandicapXP"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "XP handicap setter deferred"
+goMapping = "Player.SetHandicapXP"
+goSignature = "(v float64)"
+package = "litd/api"
+collapsesWith = ["SetPlayerHandicapXPBJ"]
+reason = "#373: kill-XP handicap setter; *BJ percent setter collapses on"
 
 [[override]]
 name = "GetPlayerHandicapReviveTime"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "revive-time handicap needs hero-revive wiring; deferred"
+goMapping = "Player.HandicapReviveTime"
+goSignature = "() float64"
+package = "litd/api"
+collapsesWith = ["GetPlayerHandicapReviveTimeBJ"]
+reason = "#373: hero-revive-time handicap, wired into reviveTicksAt; *BJ percent reader collapses on"
 
 [[override]]
 name = "SetPlayerHandicapReviveTime"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "revive-time handicap setter deferred"
+goMapping = "Player.SetHandicapReviveTime"
+goSignature = "(v float64)"
+package = "litd/api"
+collapsesWith = ["SetPlayerHandicapReviveTimeBJ"]
+reason = "#373: hero-revive-time handicap setter; *BJ percent setter collapses on"
 
 [[override]]
 name = "GetPlayerHandicapDamage"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "damage handicap needs combat-pipeline wiring; deferred"
+goMapping = "Player.HandicapDamage"
+goSignature = "() float64"
+package = "litd/api"
+collapsesWith = ["GetPlayerHandicapDamageBJ"]
+reason = "#373: damage-dealt handicap, wired at the combat chokepoint; *BJ percent reader collapses on"
 
 [[override]]
 name = "SetPlayerHandicapDamage"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "damage handicap setter deferred"
+goMapping = "Player.SetHandicapDamage"
+goSignature = "(v float64)"
+package = "litd/api"
+collapsesWith = ["SetPlayerHandicapDamageBJ"]
+reason = "#373: damage-dealt handicap setter; *BJ percent setter collapses on"
 
 [[override]]
 name = "GetPlayerTaxRate"
 class = "D5"
 tombstone = "deferred-v2"
-reason = "upkeep tax-rate needs the gold/lumber upkeep economy not built in v1; deferred"
+reason = "upkeep tax-rate needs the gold/lumber upkeep economy (PLAYER_STATE_*_UPKEEP_RATE) not built in v1; tracked in #375 (split from #373, handicap portion done)"
 
 [[override]]
 name = "SetPlayerTaxRate"
 class = "D5"
 tombstone = "deferred-v2"
-reason = "tax-rate setter deferred with GetPlayerTaxRate"
+reason = "tax-rate setter deferred with GetPlayerTaxRate (upkeep economy not in v1; see #375)"
 
 [[override]]
 name = "SetPlayerUnitsOwner"

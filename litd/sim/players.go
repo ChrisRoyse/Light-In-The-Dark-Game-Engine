@@ -14,7 +14,11 @@ package sim
 // (decision recorded on #218) so the golden determinism trace is not
 // perturbed.
 
-import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+import (
+	"math/bits"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+)
 
 // Alliance flag bits — one per JASS alliancetype. Stored per ordered
 // (source, other) pair so the relation stays asymmetric.
@@ -59,6 +63,23 @@ type playerRoster struct {
 	alliedVictory [MaxPlayers]bool
 	// alliance[a][b]: a's flags toward b. Asymmetric by construction.
 	alliance [MaxPlayers][MaxPlayers]uint16
+
+	// Difficulty handicaps (#373). Each is a fixed-point multiplier, 1.0
+	// (fixed.One) = unchanged. They are real applied state — wired into the
+	// single chokepoint of their pipeline so the value is never a
+	// stored-but-ignored fake SoT:
+	//   handicap           — damage TAKEN by this player's units (combat)
+	//   handicapDamage     — damage DEALT by this player's units (combat)
+	//   handicapXP         — kill XP gained by this player's heroes
+	//   handicapReviveTime — hero revive ticks for this player
+	// WC3's PlayerHandicap is a unit max-life %; the player-strength
+	// handicap is modeled here as a damage-taken multiplier (economically
+	// equivalent weaker units) to keep a single combat chokepoint and avoid
+	// retroactive life-rescale interactions — recorded as a decision on #373.
+	handicap           [MaxPlayers]fixed.F64
+	handicapDamage     [MaxPlayers]fixed.F64
+	handicapXP         [MaxPlayers]fixed.F64
+	handicapReviveTime [MaxPlayers]fixed.F64
 }
 
 // initPlayers seeds the FFA default: each player on its own team, default
@@ -69,6 +90,12 @@ func (w *World) initPlayers() {
 		w.players.team[p] = uint8(p)
 		w.players.color[p] = uint8(p)
 		w.players.controller[p] = ControllerNone
+		// handicaps default to 1.0 (no effect) so an unconfigured map plays
+		// at full strength and the golden trace is undisturbed.
+		w.players.handicap[p] = fixed.One
+		w.players.handicapDamage[p] = fixed.One
+		w.players.handicapXP[p] = fixed.One
+		w.players.handicapReviveTime[p] = fixed.One
 	}
 	// alliance defaults to all-zero (enemy); IsAlly/IsEnemy guard self.
 }
@@ -265,4 +292,86 @@ func (w *World) IsEnemy(source, other uint8) bool {
 		return false
 	}
 	return !w.HasAllianceFlag(source, other, AlliancePassive)
+}
+
+// ---- difficulty handicaps (#373) ----
+//
+// Setters clamp to non-negative (a negative multiplier is meaningless and
+// would let damage heal / XP go backward). Getters return 1.0 for an
+// out-of-range slot so an unconfigured caller sees the no-op default.
+
+func clampHandicap(v fixed.F64) fixed.F64 {
+	if v < 0 {
+		return 0
+	}
+	return v
+}
+
+// Handicap / SetHandicap is the damage-TAKEN multiplier for a player's
+// units (GetPlayerHandicap / SetPlayerHandicap).
+func (w *World) Handicap(p uint8) fixed.F64 {
+	if p >= MaxPlayers {
+		return fixed.One
+	}
+	return w.players.handicap[p]
+}
+func (w *World) SetHandicap(p uint8, v fixed.F64) {
+	if p < MaxPlayers {
+		w.players.handicap[p] = clampHandicap(v)
+	}
+}
+
+// HandicapDamage / SetHandicapDamage is the damage-DEALT multiplier for a
+// player's units (GetPlayerHandicapDamage / SetPlayerHandicapDamage).
+func (w *World) HandicapDamage(p uint8) fixed.F64 {
+	if p >= MaxPlayers {
+		return fixed.One
+	}
+	return w.players.handicapDamage[p]
+}
+func (w *World) SetHandicapDamage(p uint8, v fixed.F64) {
+	if p < MaxPlayers {
+		w.players.handicapDamage[p] = clampHandicap(v)
+	}
+}
+
+// HandicapXP / SetHandicapXP is the kill-XP multiplier for a player's
+// heroes (GetPlayerHandicapXP / SetPlayerHandicapXP).
+func (w *World) HandicapXP(p uint8) fixed.F64 {
+	if p >= MaxPlayers {
+		return fixed.One
+	}
+	return w.players.handicapXP[p]
+}
+func (w *World) SetHandicapXP(p uint8, v fixed.F64) {
+	if p < MaxPlayers {
+		w.players.handicapXP[p] = clampHandicap(v)
+	}
+}
+
+// HandicapReviveTime / SetHandicapReviveTime is the hero-revive-ticks
+// multiplier for a player (GetPlayerHandicapReviveTime /
+// SetPlayerHandicapReviveTime).
+func (w *World) HandicapReviveTime(p uint8) fixed.F64 {
+	if p >= MaxPlayers {
+		return fixed.One
+	}
+	return w.players.handicapReviveTime[p]
+}
+func (w *World) SetHandicapReviveTime(p uint8, v fixed.F64) {
+	if p < MaxPlayers {
+		w.players.handicapReviveTime[p] = clampHandicap(v)
+	}
+}
+
+// scaleI64 multiplies a non-negative integer by a non-negative fixed-point
+// factor, truncating toward zero — the exact integer image of the Q32.32
+// product without intermediate overflow (full 128-bit mul, then >>32).
+// Used to scale XP shares and tick counts by a handicap.
+func scaleI64(v int64, f fixed.F64) int64 {
+	if v <= 0 || f <= 0 {
+		return 0
+	}
+	hi, lo := bits.Mul64(uint64(v), uint64(f))
+	return int64(hi<<32 | lo>>32)
 }

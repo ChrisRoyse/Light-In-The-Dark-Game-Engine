@@ -595,6 +595,11 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hpl.WriteI64(int64(pr.startX[p]))
 		hpl.WriteI64(int64(pr.startY[p]))
 		hpl.WriteBool(pr.alliedVictory[p])
+		// handicaps (#373): real state, affects damage/XP/revive outcomes.
+		hpl.WriteI64(int64(pr.handicap[p]))
+		hpl.WriteI64(int64(pr.handicapDamage[p]))
+		hpl.WriteI64(int64(pr.handicapXP[p]))
+		hpl.WriteI64(int64(pr.handicapReviveTime[p]))
 	}
 	for a := 0; a < MaxPlayers; a++ {
 		for b := 0; b < MaxPlayers; b++ {

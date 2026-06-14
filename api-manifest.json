@@ -9048,10 +9048,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "handicap damage multiplier needs wiring into the combat damage pipeline; deferred to a follow-up so the accessor reflects real applied state, not a stored-but-ignored value (no fake SoT)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Handicap",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetPlayerHandicapBJ"
+        ]
       }
     },
     {
@@ -9069,10 +9073,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "damage handicap needs combat-pipeline wiring; deferred"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.HandicapDamage",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetPlayerHandicapDamageBJ"
+        ]
       }
     },
     {
@@ -9090,10 +9098,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "revive-time handicap needs hero-revive wiring; deferred"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.HandicapReviveTime",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetPlayerHandicapReviveTimeBJ"
+        ]
       }
     },
     {
@@ -9111,10 +9123,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "XP handicap needs hero-XP pipeline wiring; deferred"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.HandicapXP",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetPlayerHandicapXPBJ"
+        ]
       }
     },
     {
@@ -9389,7 +9405,7 @@
       "disposition": "tombstoned",
       "tombstone": {
         "reason": "deferred-v2",
-        "detail": "upkeep tax-rate needs the gold/lumber upkeep economy not built in v1; deferred"
+        "detail": "upkeep tax-rate needs the gold/lumber upkeep economy (PLAYER_STATE_*_UPKEEP_RATE) not built in v1; tracked in #375 (split from #373, handicap portion done)"
       }
     },
     {
@@ -16523,10 +16539,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "handicap setter deferred with GetPlayerHandicap (combat-multiplier wiring)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetHandicap",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetPlayerHandicapBJ"
+        ]
       }
     },
     {
@@ -16549,10 +16569,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "damage handicap setter deferred"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetHandicapDamage",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetPlayerHandicapDamageBJ"
+        ]
       }
     },
     {
@@ -16575,10 +16599,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "revive-time handicap setter deferred"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetHandicapReviveTime",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetPlayerHandicapReviveTimeBJ"
+        ]
       }
     },
     {
@@ -16601,10 +16629,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "XP handicap setter deferred"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetHandicapXP",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetPlayerHandicapXPBJ"
+        ]
       }
     },
     {
@@ -16785,7 +16817,7 @@
       "disposition": "tombstoned",
       "tombstone": {
         "reason": "deferred-v2",
-        "detail": "tax-rate setter deferred with GetPlayerTaxRate"
+        "detail": "tax-rate setter deferred with GetPlayerTaxRate (upkeep economy not in v1; see #375)"
       }
     },
     {

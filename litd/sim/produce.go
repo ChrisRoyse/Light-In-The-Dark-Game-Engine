@@ -436,7 +436,7 @@ func (w *World) headTicks(r int32) uint16 {
 		if lvl == 0 {
 			lvl = 1
 		}
-		return w.reviveTicksAt(lvl)
+		return w.reviveTicksAt(lvl, w.Owners.Player[or])
 	}
 	if s.QFlags[r][0]&TrainFlagResearch == 0 {
 		return w.unitDefs[v].TrainTicks
