@@ -67,6 +67,10 @@ var HashSystems = []string{
 	// appended by #217: per-instance name overrides (BlzSetUnitName). Sparse
 	// value store — only renamed units contribute.
 	"unitname",
+	// appended by #241: script-created region cell sets. Gameplay state —
+	// scripts branch on containment — so it must be hashed. Sparse: only
+	// live regions with cells contribute (id order, ascending set cells).
+	"regions",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -545,6 +549,26 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := int32(0); i < un.count; i++ {
 		hun.WriteU32(uint32(un.Entity[i]))
 		hashString(hun, un.Name[i])
+	}
+
+	hrg := h.next() // regions (#241): live region cell sets in id order
+	rs := w.Regions
+	hrg.WriteU32(uint32(len(rs.entries)))
+	for id := range rs.entries {
+		e := &rs.entries[id]
+		hrg.WriteU32(uint32(id))
+		hrg.WriteU32(e.gen)
+		hrg.WriteBool(e.alive)
+		if !e.alive {
+			continue
+		}
+		hrg.WriteU32(uint32(e.popcount()))
+		e.eachSetCell(func(cell int32) { hrg.WriteU32(uint32(cell)) })
+	}
+	// free-list order steers future region-slot reuse (mirror #334 discipline)
+	hrg.WriteU32(uint32(len(rs.free)))
+	for _, f := range rs.free {
+		hrg.WriteU32(f)
 	}
 
 	return reg.Sum(dst)

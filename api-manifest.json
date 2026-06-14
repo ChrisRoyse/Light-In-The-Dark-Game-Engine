@@ -2807,6 +2807,22 @@
       }
     },
     {
+      "name": "CreateRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "region"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.NewRegion",
+        "package": "litd/api",
+        "goSignature": "() Region"
+      }
+    },
+    {
       "name": "CreateUnit",
       "origin": "common.j",
       "signature": {
@@ -4067,6 +4083,22 @@
       }
     },
     {
+      "name": "GetWorldBounds",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "rect"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.WorldBounds",
+        "package": "litd/api",
+        "goSignature": "() Rect"
+      }
+    },
+    {
       "name": "I2R",
       "origin": "common.j",
       "signature": {
@@ -4133,6 +4165,41 @@
         "symbol": "Ability.IncLevel",
         "package": "litd/api",
         "goSignature": "() int"
+      }
+    },
+    {
+      "name": "IsPointInRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.Contains",
+        "package": "litd/api",
+        "goSignature": "(p Vec2) bool",
+        "collapsesWith": [
+          "IsLocationInRegion"
+        ]
       }
     },
     {
@@ -4249,6 +4316,33 @@
         "collapsesWith": [
           "IsUnitInRangeLoc"
         ]
+      }
+    },
+    {
+      "name": "IsUnitInRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.ContainsUnit",
+        "package": "litd/api",
+        "goSignature": "(u Unit) bool"
       }
     },
     {
@@ -4753,6 +4847,130 @@
       }
     },
     {
+      "name": "RegionAddCell",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.AddCell",
+        "package": "litd/api",
+        "goSignature": "(p Vec2)",
+        "collapsesWith": [
+          "RegionAddCellAtLoc"
+        ]
+      }
+    },
+    {
+      "name": "RegionAddRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.AddRect",
+        "package": "litd/api",
+        "goSignature": "(rc Rect)"
+      }
+    },
+    {
+      "name": "RegionClearCell",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.RemoveCell",
+        "package": "litd/api",
+        "goSignature": "(p Vec2)",
+        "collapsesWith": [
+          "RegionClearCellAtLoc"
+        ]
+      }
+    },
+    {
+      "name": "RegionClearRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.RemoveRect",
+        "package": "litd/api",
+        "goSignature": "(rc Rect)"
+      }
+    },
+    {
       "name": "RemoveLocation",
       "origin": "common.j",
       "signature": {
@@ -4792,6 +5010,28 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "rect heap-lifetime cleanup superseded — Rect is a GC'd value (R-API-2)"
+      }
+    },
+    {
+      "name": "RemoveRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Region.Remove",
+        "package": "litd/api",
+        "goSignature": "()"
       }
     },
     {

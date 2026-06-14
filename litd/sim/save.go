@@ -43,6 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v18: region section appended after the subscription table: per region
+// (id order) gen/alive + ascending set-cell indices, then the free-list
+// order (#241).
 // v17: visibility section appended after runtime ability definitions:
 // fog state/cycle bytes, entity detectability flags, last-seen buildings (#299).
 // v16: missile rows grow Accel, HitMask, GuidanceID, ImpactID after
@@ -74,7 +77,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 17
+const SaveFormatVersion uint32 = 18
 
 // ---- little-endian writer / reader ----
 
@@ -694,6 +697,25 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
+	// regions (#241): all slots in id order — gen/alive, then the live
+	// region's set cells in ascending index order, then the free list.
+	rs := w.Regions
+	s.u32(uint32(len(rs.entries)))
+	for id := range rs.entries {
+		e := &rs.entries[id]
+		s.u32(e.gen)
+		s.boolean(e.alive)
+		if !e.alive {
+			continue
+		}
+		s.u32(uint32(e.popcount()))
+		e.eachSetCell(func(cell int32) { s.u32(uint32(cell)) })
+	}
+	s.u32(uint32(len(rs.free)))
+	for _, f := range rs.free {
+		s.u32(f)
+	}
+
 	return s.err
 }
 
@@ -955,6 +977,10 @@ type decodedSave struct {
 	schedBlob []byte
 
 	subs []kindSubs
+
+	// regions (#241): decoded region slots in id order + free list.
+	regEntries []regionEntry
+	regFree    []uint32
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -1859,6 +1885,64 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 			d.subs[i].list[j] = HandlerID(r.u32())
 		}
 	}
+
+	// regions (#241): id-ordered slots, then the free list.
+	r.what = "regions"
+	nReg := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	const maxRegions = 1 << 20
+	if nReg > maxRegions {
+		return fmt.Errorf("sim: save: region count %d exceeds limit", nReg)
+	}
+	d.regEntries = make([]regionEntry, nReg)
+	for i := range d.regEntries {
+		e := &d.regEntries[i]
+		e.gen = r.u32()
+		e.alive = r.boolean()
+		if r.err != nil {
+			return r.err
+		}
+		if !e.alive {
+			continue
+		}
+		nCells := r.u32()
+		if nCells > regionCellCount {
+			return fmt.Errorf("sim: save: region %d cell count %d exceeds %d", i, nCells, regionCellCount)
+		}
+		if nCells == 0 {
+			continue
+		}
+		b := make([]uint64, regionBitsetWords)
+		prev := int64(-1)
+		for c := uint32(0); c < nCells; c++ {
+			cell := int32(r.u32())
+			if r.err != nil {
+				return r.err
+			}
+			if cell < 0 || cell >= regionCellCount {
+				return fmt.Errorf("sim: save: region %d cell index %d out of range", i, cell)
+			}
+			if int64(cell) <= prev {
+				return fmt.Errorf("sim: save: region %d cells not strictly ascending at %d", i, cell)
+			}
+			prev = int64(cell)
+			setBit(b, cell)
+		}
+		e.cells = b
+	}
+	nFree = r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if nFree > nReg {
+		return fmt.Errorf("sim: save: region free count %d exceeds region count %d", nFree, nReg)
+	}
+	d.regFree = make([]uint32, nFree)
+	for i := range d.regFree {
+		d.regFree[i] = r.u32()
+	}
 	return r.err
 }
 
@@ -2745,6 +2829,10 @@ func applySave(d *decodedSave, w *World) {
 
 	// subscriptions
 	w.subs = d.subs
+
+	// regions (#241): replace the store wholesale with the decoded slots.
+	w.Regions.entries = d.regEntries
+	w.Regions.free = d.regFree
 
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0

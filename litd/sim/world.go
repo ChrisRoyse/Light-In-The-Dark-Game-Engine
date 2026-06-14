@@ -107,6 +107,7 @@ type World struct {
 	Hiddens       *presenceSet
 	XPSuspends    *presenceSet
 	Pauses        *presenceSet
+	Regions       *RegionStore
 	Combats       *CombatStore
 	Abilities     *AbilityStore
 	AbilityFields *AbilityFieldStore
@@ -329,6 +330,7 @@ func NewWorld(requested Caps) *World {
 		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		XPSuspends:         newPresenceSet(caps.Units, idxSpace),
 		Pauses:             newPresenceSet(caps.Units, idxSpace),
+		Regions:            NewRegionStore(),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
 		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),

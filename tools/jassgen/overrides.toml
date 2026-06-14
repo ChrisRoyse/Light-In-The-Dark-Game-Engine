@@ -1854,3 +1854,84 @@ name = "RectContainsItem"
 class = "D1"
 tombstone = "superseded"
 reason = "superseded by composing Rect.Contains(i.Position()) — no dedicated overload (R-API-2)"
+
+# --- Regions: trigger-area containment (#241 part 2 / #371) -----------------
+# The Region noun (litd/api/region.go) over the sim cell store: create, add
+# rects/cells, test point/unit containment. Enter/leave events (EvRegionEnter/
+# Leave), GetLocationZ (TerrainHeight) and GetRandomLocInRect (RandomPointIn)
+# still need movement-phase / heightfield work and stay pending on #371.
+
+[[override]]
+name = "CreateRegion"
+class = "D1"
+goMapping = "Game.NewRegion"
+goSignature = "() Region"
+package = "litd/api"
+reason = "region constructor maps directly onto Game.NewRegion (dedup §2)"
+
+[[override]]
+name = "RemoveRegion"
+class = "D1"
+goMapping = "Region.Remove"
+goSignature = "()"
+package = "litd/api"
+reason = "region destroy maps directly onto Region.Remove (dedup §2); slot recycles under a fresh generation"
+
+[[override]]
+name = "RegionAddRect"
+class = "D1"
+goMapping = "Region.AddRect"
+goSignature = "(rc Rect)"
+package = "litd/api"
+reason = "rect-to-region maps directly onto Region.AddRect (dedup §2)"
+
+[[override]]
+name = "RegionClearRect"
+class = "D1"
+goMapping = "Region.RemoveRect"
+goSignature = "(rc Rect)"
+package = "litd/api"
+reason = "rect-from-region maps directly onto Region.RemoveRect (dedup §2)"
+
+[[override]]
+name = "RegionAddCell"
+class = "D3"
+goMapping = "Region.AddCell"
+goSignature = "(p Vec2)"
+collapsesWith = ["RegionAddCellAtLoc"]
+package = "litd/api"
+reason = "cell add over a Vec2 point; the AtLoc location variant collapses (location->Vec2, R-API-2)"
+
+[[override]]
+name = "RegionClearCell"
+class = "D3"
+goMapping = "Region.RemoveCell"
+goSignature = "(p Vec2)"
+collapsesWith = ["RegionClearCellAtLoc"]
+package = "litd/api"
+reason = "cell clear over a Vec2 point; the AtLoc location variant collapses (location->Vec2, R-API-2)"
+
+[[override]]
+name = "IsPointInRegion"
+class = "D3"
+goMapping = "Region.Contains"
+goSignature = "(p Vec2) bool"
+collapsesWith = ["IsLocationInRegion"]
+package = "litd/api"
+reason = "point-in-region test over a Vec2; the location variant collapses (location->Vec2, R-API-2)"
+
+[[override]]
+name = "IsUnitInRegion"
+class = "D1"
+goMapping = "Region.ContainsUnit"
+goSignature = "(u Unit) bool"
+package = "litd/api"
+reason = "unit-in-region test maps directly onto Region.ContainsUnit (dedup §2)"
+
+[[override]]
+name = "GetWorldBounds"
+class = "D1"
+goMapping = "Game.WorldBounds"
+goSignature = "() Rect"
+package = "litd/api"
+reason = "world playable-area bounds map onto Game.WorldBounds (dedup §2); deterministic grid-derived rect"

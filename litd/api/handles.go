@@ -160,14 +160,19 @@ type Timer struct {
 func (t Timer) Valid() bool  { return t.entry() != nil }
 func (t Timer) IsZero() bool { return t == Timer{} }
 
-// Region is a cell-based area with enter/leave events
-// (public-api-design.md §2 row 13).
+// Region is a cell-based area (public-api-design.md §2 row 13): a
+// script-created set of 32-wu grid cells with point/unit containment.
+// The handle is a (id, generation) pair into the sim region store, so a
+// stale handle to a removed region is detectably invalid, never aliased
+// (R-API-5). Enter/leave events arrive separately (tracked on #371).
 type Region struct {
-	id uint32
-	g  *Game
+	id  uint32
+	gen uint32
+	g   *Game
 }
 
-func (r Region) Valid() bool  { return r.g != nil && r.id != 0 }
+// Valid reports whether the region still exists (created, not Removed).
+func (r Region) Valid() bool  { return r.g != nil && r.g.w != nil && r.g.w.Regions.Alive(r.id, r.gen) }
 func (r Region) IsZero() bool { return r == Region{} }
 
 // Sound is a playable sound handle (public-api-design.md §2 row 17). In

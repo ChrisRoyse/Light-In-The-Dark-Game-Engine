@@ -243,24 +243,24 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetRectMinY | common.j | D3 | `litd/api.Rect.Min` (D3 collapse → GetRectMinX) |
 | GetRectMaxX | common.j | D3 | `litd/api.Rect.Max` |
 | GetRectMaxY | common.j | D3 | `litd/api.Rect.Max` (D3 collapse → GetRectMaxX) |
-| CreateRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| RegionAddRect | common.j | unclassified | _pending (M2 backlog)_ |
-| RegionClearRect | common.j | unclassified | _pending (M2 backlog)_ |
-| RegionAddCell | common.j | unclassified | _pending (M2 backlog)_ |
-| RegionAddCellAtLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| RegionClearCell | common.j | unclassified | _pending (M2 backlog)_ |
-| RegionClearCellAtLoc | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateRegion | common.j | D1 | `litd/api.Game.NewRegion` |
+| RemoveRegion | common.j | D1 | `litd/api.Region.Remove` |
+| RegionAddRect | common.j | D1 | `litd/api.Region.AddRect` |
+| RegionClearRect | common.j | D1 | `litd/api.Region.RemoveRect` |
+| RegionAddCell | common.j | D3 | `litd/api.Region.AddCell` |
+| RegionAddCellAtLoc | common.j | D3 | `litd/api.Region.AddCell` (D3 collapse → RegionAddCell) |
+| RegionClearCell | common.j | D3 | `litd/api.Region.RemoveCell` |
+| RegionClearCellAtLoc | common.j | D3 | `litd/api.Region.RemoveCell` (D3 collapse → RegionClearCell) |
 | Location | common.j | D3 | **tombstoned** (superseded): heap location constructor superseded by the Vec2 struct literal Vec2{x,y} (R-API-2); no Remove call exists |
 | RemoveLocation | common.j | D1 | **tombstoned** (superseded): location heap-lifetime cleanup superseded — Vec2 is a GC'd value, the leak hazard is deleted (R-API-2) |
 | MoveLocation | common.j | D3 | **tombstoned** (superseded): in-place location mutation superseded by re-assigning a Vec2 value (R-API-2); no identity to move |
 | GetLocationX | common.j | D3 | **tombstoned** (superseded): location X accessor superseded by the Vec2.X field (R-API-2) |
 | GetLocationY | common.j | D3 | **tombstoned** (superseded): location Y accessor superseded by the Vec2.Y field (R-API-2) |
 | GetLocationZ | common.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitInRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPointInRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| IsLocationInRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| GetWorldBounds | common.j | unclassified | _pending (M2 backlog)_ |
+| IsUnitInRegion | common.j | D1 | `litd/api.Region.ContainsUnit` |
+| IsPointInRegion | common.j | D3 | `litd/api.Region.Contains` |
+| IsLocationInRegion | common.j | D3 | `litd/api.Region.Contains` (D3 collapse → IsPointInRegion) |
+| GetWorldBounds | common.j | D1 | `litd/api.Game.WorldBounds` |
 | CreateTrigger | common.j | unclassified | _pending (M2 backlog)_ |
 | DestroyTrigger | common.j | unclassified | _pending (M2 backlog)_ |
 | ResetTrigger | common.j | unclassified | _pending (M2 backlog)_ |
