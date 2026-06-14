@@ -3087,3 +3087,355 @@ name = "LoadTriggerEventHandle"
 class = "D1"
 tombstone = "superseded"
 reason = "no event handles to persist (R-API-4)"
+
+# ============================================================================
+# Groups & enumeration (#239; groups-and-enumeration.md). Callback enum
+# machinery -> slice queries (Game.UnitsIn/UnitsInRange/AllUnits) + the
+# persistent UnitSet (R-EXEC-4, D3 ex.5). Sound VolumeGroup natives are a
+# different 'group' and belong to #244.
+# ============================================================================
+
+[[override]]
+name = "GroupEnumUnitsInRange"
+class = "D3"
+goMapping = "Game.UnitsInRange"
+goSignature = "(pos Vec2, r float64, filter UnitFilter) []Unit"
+collapsesWith = ["GroupEnumUnitsInRangeCounted", "GroupEnumUnitsInRangeOfLoc", "GroupEnumUnitsInRangeOfLocCounted"]
+package = "litd/api"
+reason = "range enumeration collapses to the slice query Game.UnitsInRange (R-EXEC-4, D3 ex.5); counted/loc variants fold in (the count is len(slice), location is Vec2)"
+
+[[override]]
+name = "GroupEnumUnitsInRect"
+class = "D3"
+goMapping = "Game.UnitsIn"
+goSignature = "(rect Rect, filter UnitFilter) []Unit"
+collapsesWith = ["GroupEnumUnitsInRectCounted"]
+package = "litd/api"
+reason = "rect enumeration collapses to Game.UnitsIn (R-EXEC-4); the counted variant folds in"
+
+[[override]]
+name = "GroupEnumUnitsOfPlayer"
+class = "D3"
+goMapping = "Game.AllUnits"
+goSignature = "(filter UnitFilter) []Unit"
+collapsesWith = ["GroupEnumUnitsOfType", "GroupEnumUnitsOfTypeCounted"]
+package = "litd/api"
+reason = "whole-population enumeration collapses to Game.AllUnits(filter) (R-EXEC-4); of-player/of-type are filter predicates over the same slice"
+
+[[override]]
+name = "CreateGroup"
+class = "D1"
+goMapping = "Game.NewUnitSet"
+goSignature = "() *UnitSet"
+package = "litd/api"
+reason = "persistent group handle becomes the insertion-ordered UnitSet (never a Go map, R-SIM-2)"
+
+[[override]]
+name = "GroupAddUnit"
+class = "D1"
+goMapping = "UnitSet.Add"
+goSignature = "(u Unit)"
+collapsesWith = ["GroupAddUnitSimple"]
+package = "litd/api"
+reason = "group membership add maps onto UnitSet.Add (dedup-preserving); simple wrapper folds in"
+
+[[override]]
+name = "GroupRemoveUnit"
+class = "D1"
+goMapping = "UnitSet.Remove"
+goSignature = "(u Unit)"
+collapsesWith = ["GroupRemoveUnitSimple"]
+package = "litd/api"
+reason = "group membership remove maps onto UnitSet.Remove (order-preserving); simple wrapper folds in"
+
+[[override]]
+name = "GroupClear"
+class = "D1"
+goMapping = "UnitSet.Clear"
+goSignature = "()"
+package = "litd/api"
+reason = "group reset maps onto UnitSet.Clear"
+
+[[override]]
+name = "IsUnitInGroup"
+class = "D1"
+goMapping = "UnitSet.Contains"
+goSignature = "(u Unit) bool"
+package = "litd/api"
+reason = "group membership predicate maps onto UnitSet.Contains"
+
+[[override]]
+name = "CountUnitsInGroup"
+class = "D1"
+goMapping = "UnitSet.Count"
+goSignature = "() int"
+collapsesWith = ["CountUnitsInGroupEnum", "BlzGroupGetSize"]
+package = "litd/api"
+reason = "group size maps onto UnitSet.Count; the enum-count and Blz fast-size variants fold in"
+
+[[override]]
+name = "ForGroup"
+class = "D3"
+goMapping = "UnitSet.Units"
+goSignature = "() []Unit"
+collapsesWith = ["ForGroupBJ", "FirstOfGroup"]
+package = "litd/api"
+reason = "group callback iteration collapses to the UnitSet.Units slice (R-EXEC-4); the BJ wrapper and the FirstOfGroup pop-loop fold in (range the slice)"
+
+[[override]]
+name = "DestroyGroup"
+class = "D1"
+tombstone = "superseded"
+reason = "group handle free (GC) superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GetLastCreatedGroup"
+class = "D1"
+tombstone = "superseded"
+reason = "last-created-group global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GetLastCreatedGroupEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "last-created-group enum global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GetRandomSubGroup"
+class = "D1"
+tombstone = "superseded"
+reason = "random sub-group superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GetRandomSubGroupEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "random sub-group enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPickRandomUnit"
+class = "D1"
+tombstone = "superseded"
+reason = "random member pick superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPickRandomUnitEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "random member pick enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "BlzGroupUnitAt"
+class = "D1"
+tombstone = "superseded"
+reason = "index access superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupAddGroup"
+class = "D1"
+tombstone = "superseded"
+reason = "set union superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupAddGroupEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "set union enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupRemoveGroup"
+class = "D1"
+tombstone = "superseded"
+reason = "set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupRemoveGroupEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "set difference enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "BlzGroupAddGroupFast"
+class = "D1"
+tombstone = "superseded"
+reason = "fast set union superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "BlzGroupRemoveGroupFast"
+class = "D1"
+tombstone = "superseded"
+reason = "fast set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "SaveGroupHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "persist group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "SaveGroupHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "persist group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "LoadGroupHandle"
+class = "D1"
+tombstone = "superseded"
+reason = "reload group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "LoadGroupHandleBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "reload group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupImmediateOrder"
+class = "D1"
+tombstone = "superseded"
+reason = "immediate group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupImmediateOrderBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "immediate group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupImmediateOrderById"
+class = "D1"
+tombstone = "superseded"
+reason = "immediate group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPointOrder"
+class = "D1"
+tombstone = "superseded"
+reason = "point group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPointOrderById"
+class = "D1"
+tombstone = "superseded"
+reason = "point group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPointOrderByIdLoc"
+class = "D1"
+tombstone = "superseded"
+reason = "point group order by id+loc superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPointOrderLoc"
+class = "D1"
+tombstone = "superseded"
+reason = "point group order loc superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupPointOrderLocBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "point group order loc BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupTargetOrder"
+class = "D1"
+tombstone = "superseded"
+reason = "target group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupTargetOrderBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "target group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupTargetOrderById"
+class = "D1"
+tombstone = "superseded"
+reason = "target group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupTargetDestructableOrder"
+class = "D1"
+tombstone = "superseded"
+reason = "target-destructable group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupTargetItemOrder"
+class = "D1"
+tombstone = "superseded"
+reason = "target-item group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "GroupTrainOrderByIdBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "group train order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "IsUnitGroupDeadBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "all-dead predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "IsUnitGroupDeadBJEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "all-dead enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "IsUnitGroupEmptyBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "empty predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "IsUnitGroupEmptyBJEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "empty enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "IsUnitGroupInRectBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "all-in-rect predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "IsUnitGroupInRectBJEnum"
+class = "D1"
+tombstone = "superseded"
+reason = "all-in-rect enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+
+[[override]]
+name = "EnumUnitsSelected"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+
+[[override]]
+name = "GroupEnumUnitsSelected"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "group selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+
+[[override]]
+name = "SelectGroupBJ"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+
+[[override]]
+name = "SelectGroupBJEnum"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "group selection enum — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+
+[[override]]
+name = "SelectGroupForPlayerBJ"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "per-player group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"

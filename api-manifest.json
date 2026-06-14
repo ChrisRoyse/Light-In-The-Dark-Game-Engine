@@ -40,6 +40,32 @@
       }
     },
     {
+      "name": "CountUnitsInGroup",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitSet.Count",
+        "package": "litd/api",
+        "goSignature": "() int",
+        "collapsesWith": [
+          "CountUnitsInGroupEnum",
+          "BlzGroupGetSize"
+        ]
+      }
+    },
+    {
       "name": "DoNothing",
       "origin": "blizzard.j",
       "signature": {
@@ -52,6 +78,67 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+      }
+    },
+    {
+      "name": "EnumUnitsSelected",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "enumFilter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          },
+          {
+            "name": "enumAction",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+      }
+    },
+    {
+      "name": "GetLastCreatedGroup",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "group"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "last-created-group global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GetLastCreatedGroupEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "last-created-group enum global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
       }
     },
     {
@@ -179,6 +266,47 @@
       }
     },
     {
+      "name": "GetRandomSubGroup",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "count",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "sourceGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "group"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "random sub-group superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GetRandomSubGroupEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "random sub-group enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
       "name": "GetRectHeightBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -286,6 +414,300 @@
       }
     },
     {
+      "name": "GroupAddGroup",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "destGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "set union superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupAddGroupEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "set union enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupImmediateOrderBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "immediate group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPickRandomUnit",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "random member pick superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPickRandomUnitEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "random member pick enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPointOrderLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "point group order loc BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupRemoveGroup",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "destGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupRemoveGroupEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "set difference enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupTargetDestructableOrder",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "target-destructable group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupTargetItemOrder",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "target-item group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupTargetOrderBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "target group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupTrainOrderByIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "group train order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
       "name": "IsUnitAliveBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -311,6 +733,119 @@
       }
     },
     {
+      "name": "IsUnitGroupDeadBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "all-dead predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "IsUnitGroupDeadBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "all-dead enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "IsUnitGroupEmptyBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "empty predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "IsUnitGroupEmptyBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "empty enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "IsUnitGroupInRectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "all-in-rect predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "IsUnitGroupInRectBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "all-in-rect enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
       "name": "IsUnitPausedBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -333,6 +868,37 @@
         "collapsesWith": [
           "IsUnitPaused"
         ]
+      }
+    },
+    {
+      "name": "LoadGroupHandleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "key",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          }
+        ],
+        "returns": "group"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "reload group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
       }
     },
     {
@@ -562,6 +1128,104 @@
         "symbol": "RectAround",
         "package": "litd/api",
         "goSignature": "(c Vec2, w, h float64) Rect"
+      }
+    },
+    {
+      "name": "SaveGroupHandleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "key",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "persist group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "SelectGroupBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+      }
+    },
+    {
+      "name": "SelectGroupBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "group selection enum — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+      }
+    },
+    {
+      "name": "SelectGroupForPlayerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "per-player group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
       }
     },
     {
@@ -1278,6 +1942,84 @@
         "symbol": "Unit.MaxMana",
         "package": "litd/api",
         "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "BlzGroupAddGroupFast",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "addGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "fast set union superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "BlzGroupRemoveGroupFast",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "removeGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "fast set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "BlzGroupUnitAt",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "index access superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
       }
     },
     {
@@ -3354,6 +4096,22 @@
       }
     },
     {
+      "name": "CreateGroup",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "group"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.NewUnitSet",
+        "package": "litd/api",
+        "goSignature": "() *UnitSet"
+      }
+    },
+    {
       "name": "CreateMIDISound",
       "origin": "common.j",
       "signature": {
@@ -3596,6 +4354,27 @@
       }
     },
     {
+      "name": "DestroyGroup",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "group handle free (GC) superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
       "name": "DestroyTimer",
       "origin": "common.j",
       "signature": {
@@ -3753,6 +4532,37 @@
         "collapsesWith": [
           "GetEnumPlayer",
           "GetFilterPlayer"
+        ]
+      }
+    },
+    {
+      "name": "ForGroup",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "callback",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitSet.Units",
+        "package": "litd/api",
+        "goSignature": "() []Unit",
+        "collapsesWith": [
+          "ForGroupBJ",
+          "FirstOfGroup"
         ]
       }
     },
@@ -6185,6 +6995,485 @@
       }
     },
     {
+      "name": "GroupAddUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitSet.Add",
+        "package": "litd/api",
+        "goSignature": "(u Unit)",
+        "collapsesWith": [
+          "GroupAddUnitSimple"
+        ]
+      }
+    },
+    {
+      "name": "GroupClear",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitSet.Clear",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "GroupEnumUnitsInRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.UnitsInRange",
+        "package": "litd/api",
+        "goSignature": "(pos Vec2, r float64, filter UnitFilter) []Unit",
+        "collapsesWith": [
+          "GroupEnumUnitsInRangeCounted",
+          "GroupEnumUnitsInRangeOfLoc",
+          "GroupEnumUnitsInRangeOfLocCounted"
+        ]
+      }
+    },
+    {
+      "name": "GroupEnumUnitsInRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.UnitsIn",
+        "package": "litd/api",
+        "goSignature": "(rect Rect, filter UnitFilter) []Unit",
+        "collapsesWith": [
+          "GroupEnumUnitsInRectCounted"
+        ]
+      }
+    },
+    {
+      "name": "GroupEnumUnitsOfPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.AllUnits",
+        "package": "litd/api",
+        "goSignature": "(filter UnitFilter) []Unit",
+        "collapsesWith": [
+          "GroupEnumUnitsOfType",
+          "GroupEnumUnitsOfTypeCounted"
+        ]
+      }
+    },
+    {
+      "name": "GroupEnumUnitsSelected",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "group selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+      }
+    },
+    {
+      "name": "GroupImmediateOrder",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "immediate group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupImmediateOrderById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "immediate group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPointOrder",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "point group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPointOrderById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "point group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPointOrderByIdLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "point group order by id+loc superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupPointOrderLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "point group order loc superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupRemoveUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitSet.Remove",
+        "package": "litd/api",
+        "goSignature": "(u Unit)",
+        "collapsesWith": [
+          "GroupRemoveUnitSimple"
+        ]
+      }
+    },
+    {
+      "name": "GroupTargetOrder",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "target group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "GroupTargetOrderById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          },
+          {
+            "name": "order",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "target group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
       "name": "I2R",
       "origin": "common.j",
       "signature": {
@@ -6503,6 +7792,33 @@
       }
     },
     {
+      "name": "IsUnitInGroup",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "UnitSet.Contains",
+        "package": "litd/api",
+        "goSignature": "(u Unit) bool"
+      }
+    },
+    {
       "name": "IsUnitInRange",
       "origin": "common.j",
       "signature": {
@@ -6782,6 +8098,37 @@
         "symbol": "Unit.Kill",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "LoadGroupHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "group"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "reload group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
       }
     },
     {
@@ -7588,6 +8935,42 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "string-\u003ereal; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
+      "name": "SaveGroupHandle",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "table",
+            "jassType": "hashtable",
+            "tsType": "hashtable"
+          },
+          {
+            "name": "parentKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "childKey",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichGroup",
+            "jassType": "group",
+            "tsType": "group"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "persist group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
       }
     },
     {

@@ -190,35 +190,35 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | PauseTimer | common.j | D1 | `litd/api.Timer.Pause` |
 | ResumeTimer | common.j | D1 | `litd/api.Timer.Resume` |
 | GetExpiredTimer | common.j | D1 | **tombstoned** (superseded): thread-local current-timer accessor; superseded by the periodic callback receiving its Timer parameter (R-EXEC-4 eliminates implicit current-element state), timers.md |
-| CreateGroup | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyGroup | common.j | unclassified | _pending (M2 backlog)_ |
-| GroupAddUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GroupRemoveUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGroupAddGroupFast | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGroupRemoveGroupFast | common.j | unclassified | _pending (M2 backlog)_ |
-| GroupClear | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGroupGetSize | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGroupUnitAt | common.j | unclassified | _pending (M2 backlog)_ |
-| GroupEnumUnitsOfType | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsOfPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| GroupEnumUnitsOfTypeCounted | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsInRect | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsInRectCounted | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsInRange | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsInRangeOfLoc | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsInRangeCounted | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsInRangeOfLocCounted | common.j | D3 | _pending (M2 backlog)_ |
-| GroupEnumUnitsSelected | common.j | unclassified | _pending (M2 backlog)_ |
-| GroupImmediateOrder | common.j | D3 | _pending (M2 backlog)_ |
-| GroupImmediateOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| GroupPointOrder | common.j | D3 | _pending (M2 backlog)_ |
-| GroupPointOrderLoc | common.j | D3 | _pending (M2 backlog)_ |
-| GroupPointOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| GroupPointOrderByIdLoc | common.j | D3 | _pending (M2 backlog)_ |
-| GroupTargetOrder | common.j | D3 | _pending (M2 backlog)_ |
-| GroupTargetOrderById | common.j | D3 | _pending (M2 backlog)_ |
-| ForGroup | common.j | unclassified | _pending (M2 backlog)_ |
-| FirstOfGroup | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateGroup | common.j | D1 | `litd/api.Game.NewUnitSet` |
+| DestroyGroup | common.j | D1 | **tombstoned** (superseded): group handle free (GC) superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupAddUnit | common.j | D1 | `litd/api.UnitSet.Add` |
+| GroupRemoveUnit | common.j | D1 | `litd/api.UnitSet.Remove` |
+| BlzGroupAddGroupFast | common.j | D1 | **tombstoned** (superseded): fast set union superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| BlzGroupRemoveGroupFast | common.j | D1 | **tombstoned** (superseded): fast set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupClear | common.j | D1 | `litd/api.UnitSet.Clear` |
+| BlzGroupGetSize | common.j | D1 | `litd/api.UnitSet.Count` (D3 collapse → CountUnitsInGroup) |
+| BlzGroupUnitAt | common.j | D1 | **tombstoned** (superseded): index access superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupEnumUnitsOfType | common.j | D3 | `litd/api.Game.AllUnits` (D3 collapse → GroupEnumUnitsOfPlayer) |
+| GroupEnumUnitsOfPlayer | common.j | D3 | `litd/api.Game.AllUnits` |
+| GroupEnumUnitsOfTypeCounted | common.j | D3 | `litd/api.Game.AllUnits` (D3 collapse → GroupEnumUnitsOfPlayer) |
+| GroupEnumUnitsInRect | common.j | D3 | `litd/api.Game.UnitsIn` |
+| GroupEnumUnitsInRectCounted | common.j | D3 | `litd/api.Game.UnitsIn` (D3 collapse → GroupEnumUnitsInRect) |
+| GroupEnumUnitsInRange | common.j | D3 | `litd/api.Game.UnitsInRange` |
+| GroupEnumUnitsInRangeOfLoc | common.j | D3 | `litd/api.Game.UnitsInRange` (D3 collapse → GroupEnumUnitsInRange) |
+| GroupEnumUnitsInRangeCounted | common.j | D3 | `litd/api.Game.UnitsInRange` (D3 collapse → GroupEnumUnitsInRange) |
+| GroupEnumUnitsInRangeOfLocCounted | common.j | D3 | `litd/api.Game.UnitsInRange` (D3 collapse → GroupEnumUnitsInRange) |
+| GroupEnumUnitsSelected | common.j | D1 | **tombstoned** (deferred-v2): group selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
+| GroupImmediateOrder | common.j | D1 | **tombstoned** (superseded): immediate group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupImmediateOrderById | common.j | D1 | **tombstoned** (superseded): immediate group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupPointOrder | common.j | D1 | **tombstoned** (superseded): point group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupPointOrderLoc | common.j | D1 | **tombstoned** (superseded): point group order loc superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupPointOrderById | common.j | D1 | **tombstoned** (superseded): point group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupPointOrderByIdLoc | common.j | D1 | **tombstoned** (superseded): point group order by id+loc superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupTargetOrder | common.j | D1 | **tombstoned** (superseded): target group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupTargetOrderById | common.j | D1 | **tombstoned** (superseded): target group order by id superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| ForGroup | common.j | D3 | `litd/api.UnitSet.Units` |
+| FirstOfGroup | common.j | D3 | `litd/api.UnitSet.Units` (D3 collapse → ForGroup) |
 | CreateForce | common.j | D1 | `litd/api.Game.CreateForce` |
 | DestroyForce | common.j | D1 | **tombstoned** (gameplay-irrelevant): explicit handle free — Go forces are GC-managed script-side registry entries; no manual destroy |
 | ForceAddPlayer | common.j | D1 | `litd/api.Force.AddPlayer` |
@@ -576,7 +576,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitRallyPoint | common.j | D3 | `litd/api.Unit.RallyPoint` |
 | GetUnitRallyUnit | common.j | D1 | `litd/api.Unit.RallyUnit` |
 | GetUnitRallyDestructable | common.j | D1 | **tombstoned** (deferred-v2): destructables are not modeled in the engine yet; the destructable-rally getter is deferred until the destructable subsystem lands (capability preserved, not averaged away) (#217) |
-| IsUnitInGroup | common.j | unclassified | _pending (M2 backlog)_ |
+| IsUnitInGroup | common.j | D1 | `litd/api.UnitSet.Contains` |
 | IsUnitInForce | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitOwnedByPlayer | common.j | D2 | `litd/api.Unit.OwnedBy` |
 | IsUnitAlly | common.j | unclassified | _pending (M2 backlog)_ |
@@ -809,7 +809,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SaveTriggerActionHandle | common.j | D1 | **tombstoned** (superseded): no action handles to persist (R-API-4) |
 | SaveTriggerEventHandle | common.j | D1 | **tombstoned** (superseded): no event handles to persist (R-API-4) |
 | SaveForceHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| SaveGroupHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| SaveGroupHandle | common.j | D1 | **tombstoned** (superseded): persist group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | SaveLocationHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveRectHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveBooleanExprHandle | common.j | unclassified | _pending (M2 backlog)_ |
@@ -853,7 +853,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | LoadTriggerActionHandle | common.j | D1 | **tombstoned** (superseded): no action handles to persist (R-API-4) |
 | LoadTriggerEventHandle | common.j | D1 | **tombstoned** (superseded): no event handles to persist (R-API-4) |
 | LoadForceHandle | common.j | unclassified | _pending (M2 backlog)_ |
-| LoadGroupHandle | common.j | unclassified | _pending (M2 backlog)_ |
+| LoadGroupHandle | common.j | D1 | **tombstoned** (superseded): reload group handle superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | LoadLocationHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadRectHandle | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadBooleanExprHandle | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1868,8 +1868,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedUnit | blizzard.j | D2 | **tombstoned** (superseded): Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel |
 | CreateNUnitsAtLoc | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CreateNUnitsAtLocFacingLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedGroupEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetLastCreatedGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): last-created-group enum global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GetLastCreatedGroup | blizzard.j | D1 | **tombstoned** (superseded): last-created-group global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | CreateCorpseLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitSuspendDecayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | DelayedSuspendDecayStopAnimEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1883,13 +1883,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitLifePercent | blizzard.j | D4 | `litd/api.Unit.LifePercent` |
 | GetUnitManaPercent | blizzard.j | D4 | `litd/api.Unit.ManaPercent` |
 | SelectUnitSingle | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SelectGroupBJEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SelectGroupBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SelectGroupBJEnum | blizzard.j | D1 | **tombstoned** (deferred-v2): group selection enum — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
+| SelectGroupBJ | blizzard.j | D1 | **tombstoned** (deferred-v2): group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
 | SelectUnitAdd | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SelectUnitRemove | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ClearSelectionForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SelectUnitForPlayerSingle | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SelectGroupForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SelectGroupForPlayerBJ | blizzard.j | D1 | **tombstoned** (deferred-v2): per-player group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
 | SelectUnitAddForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SelectUnitRemoveForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetUnitLifeBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
@@ -1898,12 +1898,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitManaPercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
 | IsUnitDeadBJ | blizzard.j | D3 | `litd/api.Unit.Alive` (D3 collapse → IsUnitAliveBJ) |
 | IsUnitAliveBJ | blizzard.j | D3 | `litd/api.Unit.Alive` |
-| IsUnitGroupDeadBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IsUnitGroupDeadBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IsUnitGroupEmptyBJEnum | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| IsUnitGroupEmptyBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IsUnitGroupInRectBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IsUnitGroupInRectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| IsUnitGroupDeadBJEnum | blizzard.j | D1 | **tombstoned** (superseded): all-dead enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| IsUnitGroupDeadBJ | blizzard.j | D1 | **tombstoned** (superseded): all-dead predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| IsUnitGroupEmptyBJEnum | blizzard.j | D1 | **tombstoned** (superseded): empty enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| IsUnitGroupEmptyBJ | blizzard.j | D1 | **tombstoned** (superseded): empty predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| IsUnitGroupInRectBJEnum | blizzard.j | D1 | **tombstoned** (superseded): all-in-rect enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| IsUnitGroupInRectBJ | blizzard.j | D1 | **tombstoned** (superseded): all-in-rect predicate superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | IsUnitHiddenBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | ShowUnitHide | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ShowUnitShow | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1911,7 +1911,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueHauntOrderAtLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | IssueBuildOrderByIdLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | IssueTrainOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GroupTrainOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GroupTrainOrderByIdBJ | blizzard.j | D1 | **tombstoned** (superseded): group train order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | IssueUpgradeOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetAttackedUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitFlyHeightBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -1998,20 +1998,20 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitSetUsesAltIconBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ForceUIKeyBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ForceUICancelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ForGroupBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GroupAddUnitSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GroupRemoveUnitSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GroupAddGroupEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GroupAddGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GroupRemoveGroupEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GroupRemoveGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ForGroupBJ | blizzard.j | D3 | `litd/api.UnitSet.Units` (D3 collapse → ForGroup) |
+| GroupAddUnitSimple | blizzard.j | D1 | `litd/api.UnitSet.Add` (D3 collapse → GroupAddUnit) |
+| GroupRemoveUnitSimple | blizzard.j | D1 | `litd/api.UnitSet.Remove` (D3 collapse → GroupRemoveUnit) |
+| GroupAddGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): set union enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupAddGroup | blizzard.j | D1 | **tombstoned** (superseded): set union superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupRemoveGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): set difference enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupRemoveGroup | blizzard.j | D1 | **tombstoned** (superseded): set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | ForceAddPlayerSimple | blizzard.j | D1 | `litd/api.Force.AddPlayer` (D3 collapse → ForceAddPlayer) |
 | ForceRemovePlayerSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GroupPickRandomUnitEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GroupPickRandomUnit | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GroupPickRandomUnitEnum | blizzard.j | D1 | **tombstoned** (superseded): random member pick enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupPickRandomUnit | blizzard.j | D1 | **tombstoned** (superseded): random member pick superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | ForcePickRandomPlayerEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ForcePickRandomPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| EnumUnitsSelected | blizzard.j | D4 | _pending (M2 backlog)_ |
+| EnumUnitsSelected | blizzard.j | D1 | **tombstoned** (deferred-v2): selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
 | GetUnitsInRectMatching | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitsInRectAll | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetUnitsInRectOfPlayerFilter | blizzard.j | unclassified | _pending (M2 backlog)_ |
@@ -2031,12 +2031,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayersAllies | blizzard.j | D4 | `litd/api.Game.Allies` |
 | GetPlayersEnemies | blizzard.j | D4 | `litd/api.Game.Enemies` |
 | GetPlayersMatching | blizzard.j | D4 | `litd/api.Game.Players` |
-| CountUnitsInGroupEnum | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CountUnitsInGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CountUnitsInGroupEnum | blizzard.j | D1 | `litd/api.UnitSet.Count` (D3 collapse → CountUnitsInGroup) |
+| CountUnitsInGroup | blizzard.j | D1 | `litd/api.UnitSet.Count` |
 | CountPlayersInForceEnum | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
 | CountPlayersInForceBJ | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
-| GetRandomSubGroupEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetRandomSubGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetRandomSubGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): random sub-group enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GetRandomSubGroup | blizzard.j | D1 | **tombstoned** (superseded): random sub-group superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | LivingPlayerUnitsOfTypeIdFilter | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CountLivingPlayerUnitsOfTypeId | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ResetUnitAnimation | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2261,7 +2261,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SaveTriggerActionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SaveTriggerEventHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SaveForceHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SaveGroupHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SaveGroupHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): persist group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | SaveLocationHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SaveRectHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SaveBooleanExprHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2308,7 +2308,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | LoadTriggerActionHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | LoadTriggerEventHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | LoadForceHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LoadGroupHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| LoadGroupHandleBJ | blizzard.j | D1 | **tombstoned** (superseded): reload group handle BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | LoadLocationHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | LoadRectHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | LoadBooleanExprHandleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2385,11 +2385,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueTargetDestructableOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
 | IssueTargetItemOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
 | IssueImmediateOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
-| GroupTargetOrderBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GroupPointOrderLocBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GroupImmediateOrderBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GroupTargetDestructableOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GroupTargetItemOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GroupTargetOrderBJ | blizzard.j | D1 | **tombstoned** (superseded): target group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupPointOrderLocBJ | blizzard.j | D1 | **tombstoned** (superseded): point group order loc BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupImmediateOrderBJ | blizzard.j | D1 | **tombstoned** (superseded): immediate group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupTargetDestructableOrder | blizzard.j | D1 | **tombstoned** (superseded): target-destructable group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
+| GroupTargetItemOrder | blizzard.j | D1 | **tombstoned** (superseded): target-item group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GetDyingDestructable | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitRallyPoint | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitRallyUnit | blizzard.j | D2 | _pending (M2 backlog)_ |

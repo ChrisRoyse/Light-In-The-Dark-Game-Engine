@@ -84,6 +84,12 @@ type Game struct {
 	// that fans out to them has been wired yet (lazy, once).
 	damageHandlers     []func(*DamageEvent)
 	damageHookInstalled bool
+
+	// queryScratch is the reusable id buffer behind the spatial query
+	// verbs (queries.go, #239): AppendUnitsIn* fill it from the sim then
+	// project to Unit handles, so the steady-state query path allocates
+	// nothing (R-GC-2).
+	queryScratch []sim.EntityID
 }
 
 // newGame wraps a simulation world. The public setup path —
