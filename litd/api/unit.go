@@ -477,6 +477,44 @@ func (u Unit) DefaultFlyHeight() float64 {
 	return toFloat(u.g.w.DefaultFlyHeight(u.id))
 }
 
+// PropWindow returns the unit's propulsion window in radians — the
+// facing-vs-move-direction tolerance within which it may translate; wider
+// (toward pi) means it turns less before moving. 0 on an invalid handle.
+// JASS: GetUnitPropWindow.
+func (u Unit) PropWindow() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.PropWindow")
+		return 0
+	}
+	return angleFromBrad(u.g.w.PropWindow(u.id)).Radians()
+}
+
+// SetPropWindow sets the unit's propulsion window in radians (clamped to
+// [0, pi]). A narrow window makes the unit turn in place before
+// translating; pi disables the gate. No-op on an invalid handle or a unit
+// without a position. JASS: SetUnitPropWindow.
+func (u Unit) SetPropWindow(radians float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetPropWindow")
+		return
+	}
+	if radians < 0 {
+		radians = 0
+	}
+	u.g.w.SetPropWindow(u.id, angleToBrad(Rad(radians)))
+}
+
+// DefaultPropWindow returns the unit type's base propulsion window in
+// radians (the data-table value), 0 on an invalid handle / an untyped
+// unit. JASS: GetUnitDefaultPropWindow.
+func (u Unit) DefaultPropWindow() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.DefaultPropWindow")
+		return 0
+	}
+	return angleFromBrad(u.g.w.DefaultPropWindow(u.id)).Radians()
+}
+
 // AcquireRange returns the unit's auto-acquisition range in world units (the
 // radius within which it auto-targets hostiles), or 0 on an invalid handle / a
 // unit with no combat row. JASS: GetUnitAcquireRange.

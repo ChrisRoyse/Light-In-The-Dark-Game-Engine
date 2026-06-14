@@ -760,21 +760,30 @@ reason = "#367: type's base fly height from the unit data table (data.Unit.FlyHe
 
 [[override]]
 name = "GetUnitPropWindow"
-class = "D1"
-tombstone = "deferred-v2"
-reason = "prop window (translation gate angle); a behavioral movement change with no backing state. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done)"
+class = "D5"
+goMapping = "Unit.PropWindow"
+goSignature = "() float64"
+package = "litd/api"
+collapsesWith = ["GetUnitPropWindowBJ"]
+reason = "#376: propulsion window now real per-unit state gating translation in movementSystem; *BJ passthrough collapses on"
 
 [[override]]
 name = "SetUnitPropWindow"
-class = "D1"
-tombstone = "deferred-v2"
-reason = "sets the prop window; gates translation on facing-vs-move angle in golden-trace-sensitive movement.go. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done)"
+class = "D5"
+goMapping = "Unit.SetPropWindow"
+goSignature = "(radians float64)"
+package = "litd/api"
+collapsesWith = ["SetUnitPropWindowBJ"]
+reason = "#376: sets the propulsion window that gates translation on facing-vs-move angle in movementSystem; *BJ passthrough collapses on"
 
 [[override]]
 name = "GetUnitDefaultPropWindow"
-class = "D1"
-tombstone = "deferred-v2"
-reason = "type's base prop window; static counterpart to the deferred dynamic prop-window. Deferred to the prop-window subsystem (#376)"
+class = "D5"
+goMapping = "Unit.DefaultPropWindow"
+goSignature = "() float64"
+package = "litd/api"
+collapsesWith = ["GetUnitDefaultPropWindowBJ"]
+reason = "#376: type's base propulsion window from the unit data table; *BJ passthrough collapses on"
 
 [[override]]
 name = "SetUnitAnimation"

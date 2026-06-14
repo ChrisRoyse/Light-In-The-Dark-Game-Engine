@@ -148,6 +148,13 @@ func (w *World) movementSystem() {
 		if dir.X != 0 || dir.Y != 0 {
 			want := fixed.Atan2(dir.Y, dir.X)
 			w.Transforms.Facing[tr] = fixed.TurnToward(w.Transforms.Facing[tr], want, m.TurnRate[r])
+			// #376 prop-window gate: if the new facing is still outside the
+			// unit's propulsion window, turn in place this tick — no
+			// translation. A no-gate (default) window never blocks, so this is
+			// a no-op for unauthored units (golden trace stable).
+			if w.propWindowBlocks(id, w.Transforms.Facing[tr], want) {
+				continue
+			}
 		}
 
 		speed := w.BuffedMoveSpeed(m.Entity[r], m.Speed[r]) // #162 derived-stat cache

@@ -483,16 +483,16 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.SetMoveSpeed` |
 | SetUnitFlyHeight | common.j | D5 | `litd/api.Unit.SetFlyHeight` |
 | SetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.SetTurnSpeed` |
-| SetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): sets the prop window; gates translation on facing-vs-move angle in golden-trace-sensitive movement.go. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done) |
+| SetUnitPropWindow | common.j | D5 | `litd/api.Unit.SetPropWindow` |
 | SetUnitAcquireRange | common.j | D1 | `litd/api.Unit.SetAcquireRange` |
 | SetUnitCreepGuard | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitAcquireRange | common.j | D1 | `litd/api.Unit.AcquireRange` |
 | GetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.TurnSpeed` |
-| GetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): prop window (translation gate angle); a behavioral movement change with no backing state. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done) |
+| GetUnitPropWindow | common.j | D5 | `litd/api.Unit.PropWindow` |
 | GetUnitFlyHeight | common.j | D5 | `litd/api.Unit.FlyHeight` |
 | GetUnitDefaultAcquireRange | common.j | D1 | `litd/api.Unit.DefaultAcquireRange` |
 | GetUnitDefaultTurnSpeed | common.j | D1 | `litd/api.Unit.DefaultTurnSpeed` |
-| GetUnitDefaultPropWindow | common.j | D1 | **tombstoned** (deferred-v2): type's base prop window; static counterpart to the deferred dynamic prop-window. Deferred to the prop-window subsystem (#376) |
+| GetUnitDefaultPropWindow | common.j | D5 | `litd/api.Unit.DefaultPropWindow` |
 | GetUnitDefaultFlyHeight | common.j | D5 | `litd/api.Unit.DefaultFlyHeight` |
 | SetUnitOwner | common.j | D1 | `litd/api.Unit.SetOwner` |
 | SetUnitColor | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1916,9 +1916,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetAttackedUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitFlyHeightBJ | blizzard.j | D5 | `litd/api.Unit.SetFlyHeight` (D3 collapse → SetUnitFlyHeight) |
 | SetUnitTurnSpeedBJ | blizzard.j | D1 | `litd/api.Unit.SetTurnSpeed` (D3 collapse → SetUnitTurnSpeed) |
-| SetUnitPropWindowBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetUnitPropWindowBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitDefaultPropWindowBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| SetUnitPropWindowBJ | blizzard.j | D5 | `litd/api.Unit.SetPropWindow` (D3 collapse → SetUnitPropWindow) |
+| GetUnitPropWindowBJ | blizzard.j | D5 | `litd/api.Unit.PropWindow` (D3 collapse → GetUnitPropWindow) |
+| GetUnitDefaultPropWindowBJ | blizzard.j | D5 | `litd/api.Unit.DefaultPropWindow` (D3 collapse → GetUnitDefaultPropWindow) |
 | SetUnitBlendTimeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitAcquireRangeBJ | blizzard.j | D1 | `litd/api.Unit.SetAcquireRange` (D3 collapse → SetUnitAcquireRange) |
 | UnitSetCanSleepBJ | blizzard.j | D1 | _pending (M2 backlog)_ |

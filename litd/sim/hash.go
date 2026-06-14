@@ -83,6 +83,9 @@ var HashSystems = []string{
 	// climb-rate). Sparse — only units with an explicitly set height
 	// contribute, in row order.
 	"flyheight",
+	// appended by #376: per-unit propulsion-window overrides. Sparse — only
+	// units with an explicitly set window contribute, in row order.
+	"propwindow",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -634,6 +637,14 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hfl.WriteI64(int64(fs.Height[i]))
 		hfl.WriteI64(int64(fs.Target[i]))
 		hfl.WriteI64(int64(fs.Rate[i]))
+	}
+
+	hpw := h.next() // propwindow (#376): window override per set unit
+	pw := w.PropWindows
+	hpw.WriteU32(uint32(pw.count))
+	for i := int32(0); i < pw.count; i++ {
+		hpw.WriteU32(uint32(pw.Entity[i]))
+		hpw.WriteU16(uint16(pw.Value[i]))
 	}
 
 	return reg.Sum(dst)

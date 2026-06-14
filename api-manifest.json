@@ -10387,12 +10387,16 @@
         ],
         "returns": "real"
       },
-      "classification": "D1",
+      "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "type's base prop window; static counterpart to the deferred dynamic prop-window. Deferred to the prop-window subsystem (#376)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.DefaultPropWindow",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetUnitDefaultPropWindowBJ"
+        ]
       }
     },
     {
@@ -10606,12 +10610,16 @@
         ],
         "returns": "real"
       },
-      "classification": "D1",
+      "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "prop window (translation gate angle); a behavioral movement change with no backing state. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.PropWindow",
+        "package": "litd/api",
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetUnitPropWindowBJ"
+        ]
       }
     },
     {
@@ -17455,12 +17463,16 @@
         ],
         "returns": "nothing"
       },
-      "classification": "D1",
+      "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "sets the prop window; gates translation on facing-vs-move angle in golden-trace-sensitive movement.go. Deferred to the prop-window subsystem (#376; fly-height half of #367 is done)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetPropWindow",
+        "package": "litd/api",
+        "goSignature": "(radians float64)",
+        "collapsesWith": [
+          "SetUnitPropWindowBJ"
+        ]
       }
     },
     {

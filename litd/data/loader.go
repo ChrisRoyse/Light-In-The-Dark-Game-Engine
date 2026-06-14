@@ -125,7 +125,8 @@ type Unit struct {
 	AcquisitionRange fixed.F64
 	SightDay         fixed.F64
 	SightNight       fixed.F64
-	FlyHeight        fixed.F64 // default flight height in world units (#367)
+	FlyHeight        fixed.F64   // default flight height in world units (#367)
+	PropWindow       fixed.Angle // default propulsion window; halfTurn = no gate (#376)
 	Model            string
 	Name             string // display/proper name (GetUnitName); "" = unnamed
 	PointValue       int32  // score/bounty weight (GetUnitPointValue); 0 = none
@@ -193,6 +194,7 @@ type rawUnit struct {
 	SightDay         float64          `toml:"sight-day" json:"sight-day"`
 	SightNight       float64          `toml:"sight-night" json:"sight-night"`
 	FlyHeight        float64          `toml:"fly-height" json:"fly-height"`
+	PropWindow       float64          `toml:"prop-window" json:"prop-window"`
 	Model            string           `toml:"model" json:"model"`
 	Name             string           `toml:"name" json:"name"`
 	PointValue       int64            `toml:"point-value" json:"point-value"`
@@ -325,6 +327,26 @@ func turnRateToBAM(v float64) (fixed.Angle, error) {
 		return 0, fmt.Errorf("turn-rate %v out of range [0, 10]", v)
 	}
 	return fixed.Angle(uint16(math.Round(v * 65536 / TicksPerSecond))), nil
+}
+
+// propWindowToBAM converts a propulsion window in radians to a BAM angle.
+// 0 (omitted) means "no gate" — a full half-turn tolerance — so a unit
+// without an authored prop window moves freely (preserves existing
+// movement behavior; #376). A value >= pi also clamps to the half-turn
+// no-gate sentinel. Negative / NaN is rejected.
+func propWindowToBAM(v float64) (fixed.Angle, error) {
+	const halfTurn = 0x8000
+	if v < 0 || math.IsNaN(v) {
+		return 0, fmt.Errorf("prop-window %v out of range [0, pi]", v)
+	}
+	if v == 0 {
+		return halfTurn, nil // omitted → no gate
+	}
+	bam := int64(math.Round(v / (2 * math.Pi) * 65536))
+	if bam >= halfTurn {
+		return halfTurn, nil
+	}
+	return fixed.Angle(uint16(bam)), nil
 }
 
 // worldUnits converts a distance to fixed-point world units.
@@ -665,6 +687,10 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 	if err != nil {
 		return fail("fly-height", err)
 	}
+	propWindow, err := propWindowToBAM(r.PropWindow)
+	if err != nil {
+		return fail("prop-window", err)
+	}
 	if r.PointValue < 0 || r.PointValue > 1_000_000 {
 		return fail("point-value", fmt.Errorf("%d out of range [0, 1000000]", r.PointValue))
 	}
@@ -705,6 +731,7 @@ func (t *Tables) convertUnit(file string, r *rawUnit) (Unit, error) {
 		SightDay:         sightDay,
 		SightNight:       sightNight,
 		FlyHeight:        flyHeight,
+		PropWindow:       propWindow,
 		Model:            r.Model,
 		Name:             r.Name,
 		PointValue:       int32(r.PointValue),

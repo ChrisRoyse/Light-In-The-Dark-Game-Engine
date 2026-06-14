@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v24: per-unit propulsion-window override rows as a sparse section after
+// flyheight (#376).
 // v23: per-unit flight-height animation rows (current/target/climb-rate)
 // as a sparse section after unitname (#367).
 // v22: terrain heightfield (grid dims/origin/cell + row-major samples)
@@ -90,7 +92,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 23
+const SaveFormatVersion uint32 = 24
 
 // ---- little-endian writer / reader ----
 
@@ -320,6 +322,14 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.f64(fly.Height[i])
 		s.f64(fly.Target[i])
 		s.f64(fly.Rate[i])
+	}
+
+	// propwindow (#376): window override per set unit
+	pw := w.PropWindows
+	s.u32(uint32(pw.count))
+	for i := int32(0); i < pw.count; i++ {
+		s.ent(pw.Entity[i])
+		s.u16(uint16(pw.Value[i]))
 	}
 
 	// health
@@ -862,6 +872,11 @@ type decodedSave struct {
 	flyT []fixed.F64
 	flyR []fixed.F64
 
+	// propwindow (#376)
+	pwN int32
+	pwE []EntityID
+	pwV []fixed.Angle
+
 	hlN     int32
 	hlE     []EntityID
 	hlLife  []fixed.F64
@@ -1343,6 +1358,18 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.flyH[i] = r.f64()
 		d.flyT[i] = r.f64()
 		d.flyR[i] = r.f64()
+	}
+
+	// propwindow (#376)
+	if n, err = r.section("propwindow", len(w.PropWindows.Value)); err != nil {
+		return err
+	}
+	d.pwN = n
+	d.pwE = make([]EntityID, n)
+	d.pwV = make([]fixed.Angle, n)
+	for i := int32(0); i < n; i++ {
+		d.pwE[i] = r.ent()
+		d.pwV[i] = fixed.Angle(r.u16())
 	}
 
 	// health
@@ -2665,6 +2692,15 @@ func applySave(d *decodedSave, w *World) {
 		fly.Target[i] = d.flyT[i]
 		fly.Rate[i] = d.flyR[i]
 		fly.rowOf[d.flyE[i].Index()] = i
+	}
+
+	pw := w.PropWindows
+	pw.count = d.pwN
+	resetRowOf(pw.rowOf)
+	for i := int32(0); i < d.pwN; i++ {
+		pw.Entity[i] = d.pwE[i]
+		pw.Value[i] = d.pwV[i]
+		pw.rowOf[d.pwE[i].Index()] = i
 	}
 
 	hl := w.Healths
