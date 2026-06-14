@@ -715,6 +715,39 @@ func TestUnitOrderFSV(t *testing.T) {
 	}
 }
 
+// TestUnitCollisionSizeFSV: Unit.CollisionSize reads the bound unit-type's
+// collision radius. SoT = the data.Unit row resolved through the sim type store.
+func TestUnitCollisionSizeFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	if !w.BindUnitDefs([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 24},
+	}) {
+		t.Fatal("BindUnitDefs failed")
+	}
+	g := newGame(w)
+	owner := Player{idx: 1, g: g}
+	u := g.CreateUnit(owner, g.UnitType("hfoo"), Vec2{X: 100, Y: 100}, Deg(0))
+	if !u.Valid() {
+		t.Fatal("CreateUnit invalid")
+	}
+
+	// SoT: the value bound into the type table (X+X=Y: bound 24 -> getter 24).
+	t.Logf("bound CollisionSize=24; Unit.CollisionSize()=%v sim.UnitCollisionSize=%d", u.CollisionSize(), w.UnitCollisionSize(u.id))
+	if u.CollisionSize() != 24 {
+		t.Errorf("Unit.CollisionSize() = %v, want 24", u.CollisionSize())
+	}
+
+	// EDGE: untyped unit (no UnitTypes row) -> 0.
+	bare, _ := liveUnit(t, w, g, 0, 50)
+	if bare.CollisionSize() != 0 {
+		t.Errorf("untyped unit CollisionSize() = %v, want 0", bare.CollisionSize())
+	}
+	// EDGE: zero-value handle -> 0, no panic.
+	if (Unit{}).CollisionSize() != 0 {
+		t.Errorf("zero Unit CollisionSize() = %v, want 0", (Unit{}).CollisionSize())
+	}
+}
+
 // TestUnitTypeFSV verifies Unit.Type round-trips with the UnitType passed to
 // CreateUnit. SoT = the sim UnitTypeStore.TypeID row.
 func TestUnitTypeFSV(t *testing.T) {

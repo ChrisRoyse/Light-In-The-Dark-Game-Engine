@@ -488,6 +488,14 @@ package = "litd/api"
 reason = "type's base turn rate getter maps onto the typed accessor (dedup §2); distinct from the instance GetUnitTurnSpeed (#217)"
 
 [[override]]
+name = "BlzGetUnitCollisionSize"
+class = "D1"
+goMapping = "Unit.CollisionSize"
+goSignature = "() float64"
+package = "litd/api"
+reason = "collision-radius getter maps onto the typed accessor (dedup §2); reads immutable unit-type data — the sim CollisionStore keeps only the derived size class (#217)"
+
+[[override]]
 name = "GetUnitUserData"
 class = "D1"
 goMapping = "Unit.UserData"

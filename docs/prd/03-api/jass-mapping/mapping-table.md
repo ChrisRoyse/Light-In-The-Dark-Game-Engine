@@ -1346,7 +1346,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzIsUnitSelectable | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsUnitInvulnerable | common.j | D1 | `litd/api.Unit.Invulnerable` |
 | BlzUnitInterruptAttack | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitCollisionSize | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetUnitCollisionSize | common.j | D1 | `litd/api.Unit.CollisionSize` |
 | BlzGetAbilityManaCost | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |

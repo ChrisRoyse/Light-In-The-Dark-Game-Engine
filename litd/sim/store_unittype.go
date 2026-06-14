@@ -270,6 +270,16 @@ func (w *World) UnitDefaultTurnSpeed(id EntityID) fixed.Angle {
 	return 0
 }
 
+// UnitCollisionSize returns the type's collision radius in world units, 0 when
+// untyped. BlzGetUnitCollisionSize — immutable unit-type data (the sim's per
+// instance CollisionStore keeps only the derived size class).
+func (w *World) UnitCollisionSize(id EntityID) int32 {
+	if d := w.typeDefOf(id); d != nil {
+		return d.CollisionSize
+	}
+	return 0
+}
+
 func (s *UnitTypeStore) assert(msg string, id EntityID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)

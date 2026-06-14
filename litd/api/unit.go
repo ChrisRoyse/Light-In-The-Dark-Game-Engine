@@ -498,6 +498,18 @@ func (u Unit) DefaultTurnSpeed() float64 {
 	return angleFromBrad(u.g.w.UnitDefaultTurnSpeed(u.id)).Radians() * float64(data.TicksPerSecond)
 }
 
+// CollisionSize returns the unit type's collision radius in world units, 0 on
+// an invalid handle or an untyped unit. This is immutable unit-type data (the
+// spawn footprint), distinct from any per-instance state. JASS:
+// BlzGetUnitCollisionSize.
+func (u Unit) CollisionSize() float64 {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.CollisionSize")
+		return 0
+	}
+	return float64(u.g.w.UnitCollisionSize(u.id))
+}
+
 // IsHero reports whether the unit is a hero (carries a hero record with level,
 // experience, and attributes). False on an invalid handle. JASS: no direct
 // native; the engine's hero test behind GetHero* / IsUnitType(HERO).

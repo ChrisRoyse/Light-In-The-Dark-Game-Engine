@@ -366,6 +366,28 @@
       }
     },
     {
+      "name": "BlzGetUnitCollisionSize",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.CollisionSize",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
       "name": "BlzGetUnitMaxHP",
       "origin": "common.j",
       "signature": {

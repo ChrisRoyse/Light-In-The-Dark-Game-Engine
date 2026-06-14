@@ -26,6 +26,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_Agility", Package: "litd/api", Symbol: "Unit.Agility", GoSignature: "() int"},
 	{LuaName: "Unit_Alive", Package: "litd/api", Symbol: "Unit.Alive", GoSignature: "() bool"},
 	{LuaName: "Unit_Armor", Package: "litd/api", Symbol: "Unit.Armor", GoSignature: "() float64"},
+	{LuaName: "Unit_CollisionSize", Package: "litd/api", Symbol: "Unit.CollisionSize", GoSignature: "() float64"},
 	{LuaName: "Unit_CurrentOrder", Package: "litd/api", Symbol: "Unit.CurrentOrder", GoSignature: "() Order"},
 	{LuaName: "Unit_DefaultAcquireRange", Package: "litd/api", Symbol: "Unit.DefaultAcquireRange", GoSignature: "() float64"},
 	{LuaName: "Unit_DefaultMoveSpeed", Package: "litd/api", Symbol: "Unit.DefaultMoveSpeed", GoSignature: "() float64"},
