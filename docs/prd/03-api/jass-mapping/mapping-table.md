@@ -1122,11 +1122,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetCameraEyePositionY | common.j | D3 | _pending (M2 backlog)_ |
 | GetCameraEyePositionZ | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCameraEyePositionLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| NewSoundEnvironment | common.j | unclassified | _pending (M2 backlog)_ |
+| NewSoundEnvironment | common.j | D1 | **tombstoned** (deprecated): EAX environment reverb is a dead audio extension; not part of the OpenAL/.ogg pipeline (R-AUD-1, sound-and-music.md). No public surface |
 | CreateSound | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateSoundFilenameWithLabel | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateSoundFromLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateMIDISound | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateMIDISound | common.j | D1 | **tombstoned** (deprecated): MIDI is a dead format; LitD audio is .ogg via OpenAL (R-AUD-1, sound-and-music.md). No public surface |
 | SetSoundParamsFromLabel | common.j | unclassified | _pending (M2 backlog)_ |
 | SetSoundDistanceCutoff | common.j | unclassified | _pending (M2 backlog)_ |
 | SetSoundChannel | common.j | unclassified | _pending (M2 backlog)_ |

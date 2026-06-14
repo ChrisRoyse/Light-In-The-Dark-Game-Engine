@@ -2462,6 +2462,37 @@
       }
     },
     {
+      "name": "CreateMIDISound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundLabel",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "fadeInRate",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "fadeOutRate",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "sound"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deprecated",
+        "detail": "MIDI is a dead format; LitD audio is .ogg via OpenAL (R-AUD-1, sound-and-music.md). No public surface"
+      }
+    },
+    {
       "name": "CreateUnit",
       "origin": "common.j",
       "signature": {
@@ -3929,6 +3960,27 @@
         "symbol": "Unit.Kill",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "NewSoundEnvironment",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "environmentName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deprecated",
+        "detail": "EAX environment reverb is a dead audio extension; not part of the OpenAL/.ogg pipeline (R-AUD-1, sound-and-music.md). No public surface"
       }
     },
     {

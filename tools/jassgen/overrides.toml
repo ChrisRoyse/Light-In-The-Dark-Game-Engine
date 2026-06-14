@@ -1572,3 +1572,16 @@ name = "BlzBitXor"
 class = "D1"
 tombstone = "gameplay-irrelevant"
 reason = "bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md)"
+
+# --- dead audio formats (sound-and-music.md §"Tombstoned: MIDI, EAX") ---
+[[override]]
+name = "CreateMIDISound"
+class = "D1"
+tombstone = "deprecated"
+reason = "MIDI is a dead format; LitD audio is .ogg via OpenAL (R-AUD-1, sound-and-music.md). No public surface"
+
+[[override]]
+name = "NewSoundEnvironment"
+class = "D1"
+tombstone = "deprecated"
+reason = "EAX environment reverb is a dead audio extension; not part of the OpenAL/.ogg pipeline (R-AUD-1, sound-and-music.md). No public surface"
