@@ -304,6 +304,73 @@ func TestUnitManaFSV(t *testing.T) {
 	}
 }
 
+// TestUnitSetMaxLifeMaxManaFSV completes the D5 typed-accessor family: setting
+// max life/mana. SoT = the Healths and Abilities stores read directly. WC3
+// clamp semantics: lowering the max clamps the current value down; max life
+// floors at 1, max mana floors at 0.
+func TestUnitSetMaxLifeMaxManaFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100) // Life=100 MaxLife=100
+	hr := w.Healths.Row(id)
+
+	u.SetLife(80)
+	t.Logf("start: Life=%.0f MaxLife=%.0f", toFloat(w.Healths.Life[hr]), toFloat(w.Healths.MaxLife[hr]))
+
+	// Raise max: MaxLife up, current Life unchanged.
+	u.SetMaxLife(200)
+	if toFloat(w.Healths.MaxLife[hr]) != 200 || toFloat(w.Healths.Life[hr]) != 80 {
+		t.Fatalf("raise max: MaxLife=%.0f Life=%.0f, want 200/80", toFloat(w.Healths.MaxLife[hr]), toFloat(w.Healths.Life[hr]))
+	}
+	// Lower max below current: current Life clamps down.
+	u.SetMaxLife(50)
+	t.Logf("after SetMaxLife(50): MaxLife=%.0f Life=%.0f", toFloat(w.Healths.MaxLife[hr]), toFloat(w.Healths.Life[hr]))
+	if toFloat(w.Healths.MaxLife[hr]) != 50 || toFloat(w.Healths.Life[hr]) != 50 {
+		t.Fatalf("lower max: MaxLife=%.0f Life=%.0f, want 50/50", toFloat(w.Healths.MaxLife[hr]), toFloat(w.Healths.Life[hr]))
+	}
+	// EDGE: max life floors at 1 (cannot be <=0).
+	u.SetMaxLife(-10)
+	t.Logf("after SetMaxLife(-10): MaxLife=%.0f Life=%.0f", toFloat(w.Healths.MaxLife[hr]), toFloat(w.Healths.Life[hr]))
+	if toFloat(w.Healths.MaxLife[hr]) != 1 || toFloat(w.Healths.Life[hr]) != 1 {
+		t.Fatalf("floor max life: MaxLife=%.0f Life=%.0f, want 1/1", toFloat(w.Healths.MaxLife[hr]), toFloat(w.Healths.Life[hr]))
+	}
+
+	// EDGE: SetMaxMana on a non-caster (no Ability component) is a no-op.
+	u.SetMaxMana(300)
+	if u.MaxMana() != 0 {
+		t.Fatalf("SetMaxMana on non-caster wrote MaxMana=%v", u.MaxMana())
+	}
+
+	// Give a mana pool: 200 max / 150 current.
+	if !w.Abilities.Add(w.Ents, id) {
+		t.Fatal("Abilities.Add failed")
+	}
+	ar := w.Abilities.Row(id)
+	w.Abilities.MaxMana[ar] = fromFloat(200)
+	w.Abilities.Mana[ar] = fromFloat(150)
+
+	// Raise: MaxMana up, current Mana unchanged.
+	u.SetMaxMana(300)
+	if toFloat(w.Abilities.MaxMana[ar]) != 300 || toFloat(w.Abilities.Mana[ar]) != 150 {
+		t.Fatalf("raise max mana: MaxMana=%.0f Mana=%.0f, want 300/150", toFloat(w.Abilities.MaxMana[ar]), toFloat(w.Abilities.Mana[ar]))
+	}
+	// Lower below current: Mana clamps down.
+	u.SetMaxMana(100)
+	t.Logf("after SetMaxMana(100): MaxMana=%.0f Mana=%.0f", toFloat(w.Abilities.MaxMana[ar]), toFloat(w.Abilities.Mana[ar]))
+	if toFloat(w.Abilities.MaxMana[ar]) != 100 || toFloat(w.Abilities.Mana[ar]) != 100 {
+		t.Fatalf("lower max mana: MaxMana=%.0f Mana=%.0f, want 100/100", toFloat(w.Abilities.MaxMana[ar]), toFloat(w.Abilities.Mana[ar]))
+	}
+	// EDGE: max mana floors at 0 (non-caster pool is legal).
+	u.SetMaxMana(-5)
+	if toFloat(w.Abilities.MaxMana[ar]) != 0 || toFloat(w.Abilities.Mana[ar]) != 0 {
+		t.Fatalf("floor max mana: MaxMana=%.0f Mana=%.0f, want 0/0", toFloat(w.Abilities.MaxMana[ar]), toFloat(w.Abilities.Mana[ar]))
+	}
+
+	// EDGE: zero-value handle is a safe no-op (no panic).
+	(Unit{}).SetMaxLife(500)
+	(Unit{}).SetMaxMana(500)
+}
+
 // TestUnitLifeManaPercentFSV: the D4 percent getters compute 100*cur/max
 // off the sim stores, guarding divide-by-zero. SoT = Healths/Abilities stores.
 func TestUnitLifeManaPercentFSV(t *testing.T) {

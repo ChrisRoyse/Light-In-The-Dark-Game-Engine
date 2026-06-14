@@ -122,6 +122,30 @@ func (u Unit) MaxLife() float64 {
 	return toFloat(u.g.w.Healths.MaxLife[r])
 }
 
+// SetMaxLife sets the unit's maximum life (D5 typed accessor over the unitstate
+// table; JASS SetUnitState with UNIT_STATE_MAX_LIFE). The new max floors at 1 —
+// a unit always has at least one max HP (WC3 semantics). Current life is left
+// where it is, except it is clamped down when the new max drops below it.
+// No-op on an invalid handle or a unit without a Health component.
+func (u Unit) SetMaxLife(v float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetMaxLife")
+		return
+	}
+	r := u.g.w.Healths.Row(u.id)
+	if r < 0 {
+		return
+	}
+	nv := fromFloat(v)
+	if min := fromFloat(1); nv < min {
+		nv = min
+	}
+	u.g.w.Healths.MaxLife[r] = nv
+	if u.g.w.Healths.Life[r] > nv {
+		u.g.w.Healths.Life[r] = nv
+	}
+}
+
 // LifePercent returns the unit's current life as a percentage of its
 // maximum, in [0,100]. Returns 0 on an invalid handle or a unit with no
 // max life (mirrors the BJ's divide-by-zero guard). D4: GetUnitLifePercent,

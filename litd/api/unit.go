@@ -300,6 +300,30 @@ func (u Unit) MaxMana() float64 {
 	return toFloat(u.g.w.Abilities.MaxMana[r])
 }
 
+// SetMaxMana sets the unit's maximum mana (D5 typed accessor over the unitstate
+// table; JASS SetUnitState with UNIT_STATE_MAX_MANA). The new max floors at 0 —
+// a non-caster legitimately has zero max mana. Current mana is left where it is,
+// except it is clamped down when the new max drops below it. No-op on an invalid
+// handle or a unit without an Ability (mana) component.
+func (u Unit) SetMaxMana(v float64) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetMaxMana")
+		return
+	}
+	r := u.g.w.Abilities.Row(u.id)
+	if r < 0 {
+		return
+	}
+	nv := fromFloat(v)
+	if nv < 0 {
+		nv = 0
+	}
+	u.g.w.Abilities.MaxMana[r] = nv
+	if u.g.w.Abilities.Mana[r] > nv {
+		u.g.w.Abilities.Mana[r] = nv
+	}
+}
+
 // ManaPercent returns the unit's current mana as a percentage of its
 // maximum, in [0,100]. Returns 0 on an invalid handle or a unit with no
 // mana pool (non-casters: MaxMana==0). D4: GetUnitManaPercent,
