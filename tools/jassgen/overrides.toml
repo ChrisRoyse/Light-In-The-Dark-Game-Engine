@@ -805,3 +805,513 @@ name = "SetUnitPositionLocFacingLocBJ"
 class = "D4"
 tombstone = "superseded"
 reason = "position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points"
+
+# --- JASS int->enum converter family (84 natives) ---
+# Tombstoned gameplay-irrelevant: these only exist so JASS can declare typed
+# constants (constant race RACE_HUMAN = ConvertRace(1)). Go uses real typed
+# enum constants, so none of them has a public Go symbol. Decision: see the
+# linked type:decision issue. Class D1 (trivial, no dup).
+[[override]]
+name = "ConvertRace"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAllianceType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertRacePref"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertIGameState"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertFGameState"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerState"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerScore"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerGameResult"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitState"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAIDifficulty"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertGameEvent"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerEvent"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerUnitEvent"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertWidgetEvent"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertDialogEvent"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitEvent"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertLimitOp"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertGameSpeed"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlacement"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertStartLocPrio"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertGameDifficulty"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertGameType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMapFlag"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMapVisibility"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMapSetting"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMapDensity"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMapControl"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerColor"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPlayerSlotState"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertVolumeGroup"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertCameraField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertBlendMode"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertRarityControl"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertTexMapFlags"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertFogState"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertEffectType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertVersion"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertItemType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAttackType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertDamageType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertWeaponType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertSoundType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPathingType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMouseButtonType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAnimType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertSubAnimType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertOriginFrameType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertFramePointType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertTextAlignType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertFrameEventType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertOsKeyType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityIntegerField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityRealField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityBooleanField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityStringField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityIntegerLevelField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityRealLevelField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityBooleanLevelField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityStringLevelField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityIntegerLevelArrayField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityRealLevelArrayField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityBooleanLevelArrayField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertAbilityStringLevelArrayField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitIntegerField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitRealField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitBooleanField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitStringField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitWeaponIntegerField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitWeaponRealField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitWeaponBooleanField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitWeaponStringField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertItemIntegerField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertItemRealField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertItemBooleanField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertItemStringField"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertMoveType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertTargetFlag"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertArmorType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertHeroAttribute"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertDefenseType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertRegenType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertUnitCategory"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+
+[[override]]
+name = "ConvertPathingFlag"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
+

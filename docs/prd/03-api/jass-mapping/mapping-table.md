@@ -6,90 +6,90 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 
 | JASS name | origin | rule | canonical / disposition |
 |---|---|---|---|
-| ConvertRace | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAllianceType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertRacePref | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertIGameState | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertFGameState | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerState | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerScore | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerGameResult | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitState | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAIDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertGameEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertWidgetEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertDialogEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertLimitOp | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertGameSpeed | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlacement | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertGameDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertGameType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMapFlag | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMapVisibility | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMapSetting | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMapDensity | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMapControl | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerColor | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPlayerSlotState | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertVolumeGroup | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertCameraField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertBlendMode | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertRarityControl | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertTexMapFlags | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertFogState | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertEffectType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertVersion | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertItemType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAttackType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertDamageType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertWeaponType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertSoundType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPathingType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMouseButtonType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAnimType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertSubAnimType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertOriginFrameType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertFramePointType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertTextAlignType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertFrameEventType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertOsKeyType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityIntegerLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityRealLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityBooleanLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityStringLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityIntegerLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityRealLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityBooleanLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertAbilityStringLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitWeaponIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitWeaponRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitWeaponBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitWeaponStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertItemIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertItemRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertItemBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertItemStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertMoveType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertTargetFlag | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertArmorType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertHeroAttribute | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertDefenseType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertRegenType | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertUnitCategory | common.j | unclassified | _pending (M2 backlog)_ |
-| ConvertPathingFlag | common.j | unclassified | _pending (M2 backlog)_ |
+| ConvertRace | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAllianceType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertRacePref | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertIGameState | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertFGameState | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerState | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerScore | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerGameResult | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitState | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAIDifficulty | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertGameEvent | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerEvent | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerUnitEvent | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertWidgetEvent | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertDialogEvent | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitEvent | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertLimitOp | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertGameSpeed | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlacement | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertStartLocPrio | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertGameDifficulty | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertGameType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMapFlag | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMapVisibility | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMapSetting | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMapDensity | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMapControl | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerColor | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPlayerSlotState | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertVolumeGroup | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertCameraField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertBlendMode | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertRarityControl | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertTexMapFlags | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertFogState | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertEffectType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertVersion | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertItemType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAttackType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertDamageType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertWeaponType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertSoundType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPathingType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMouseButtonType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAnimType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertSubAnimType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertOriginFrameType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertFramePointType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertTextAlignType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertFrameEventType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertOsKeyType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityIntegerField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityRealField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityBooleanField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityStringField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityIntegerLevelField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityRealLevelField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityBooleanLevelField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityStringLevelField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityIntegerLevelArrayField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityRealLevelArrayField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityBooleanLevelArrayField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertAbilityStringLevelArrayField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitIntegerField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitRealField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitBooleanField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitStringField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitWeaponIntegerField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitWeaponRealField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitWeaponBooleanField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitWeaponStringField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertItemIntegerField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertItemRealField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertItemBooleanField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertItemStringField | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertMoveType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertTargetFlag | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertArmorType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertHeroAttribute | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertDefenseType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertRegenType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertUnitCategory | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
+| ConvertPathingFlag | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
 | OrderId | common.j | unclassified | _pending (M2 backlog)_ |
 | OrderId2String | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitId | common.j | unclassified | _pending (M2 backlog)_ |
