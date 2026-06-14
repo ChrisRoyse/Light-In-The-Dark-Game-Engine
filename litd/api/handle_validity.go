@@ -281,5 +281,8 @@ func (p Player) Name() string {
 		p.g.reportInvalid("Player.Name")
 		return ""
 	}
+	if n := p.g.w.PlayerName(uint8(p.idx)); n != "" {
+		return n
+	}
 	return fmt.Sprintf("Player %d", p.idx)
 }

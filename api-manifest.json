@@ -85,6 +85,78 @@
       }
     },
     {
+      "name": "GetPlayersAllies",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "force"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Allies",
+        "package": "litd/api",
+        "goSignature": "(p Player) []Player"
+      }
+    },
+    {
+      "name": "GetPlayersEnemies",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "force"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Enemies",
+        "package": "litd/api",
+        "goSignature": "(p Player) []Player"
+      }
+    },
+    {
+      "name": "GetPlayersMatching",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "force"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Players",
+        "package": "litd/api",
+        "goSignature": "(filter PlayerFilter) []Player",
+        "collapsesWith": [
+          "GetPlayersAll",
+          "GetPlayersAllMatching",
+          "CountPlayersInForceBJ",
+          "CountPlayersInForceEnum"
+        ]
+      }
+    },
+    {
       "name": "GetRandomLocInRect",
       "origin": "blizzard.j",
       "signature": {
@@ -2902,6 +2974,25 @@
       }
     },
     {
+      "name": "CreateForce",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "force"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.CreateForce",
+        "package": "litd/api",
+        "goSignature": "() Force",
+        "collapsesWith": [
+          "CreateForceBJ"
+        ]
+      }
+    },
+    {
       "name": "CreateMIDISound",
       "origin": "common.j",
       "signature": {
@@ -3087,6 +3178,27 @@
       }
     },
     {
+      "name": "DestroyForce",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "explicit handle free — Go forces are GC-managed script-side registry entries; no manual destroy"
+      }
+    },
+    {
       "name": "DestroyTimer",
       "origin": "common.j",
       "signature": {
@@ -3151,6 +3263,229 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "wraps a code func into a filterfunc; a Go func(Event) bool IS the filter — WithFilter(fn) (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "ForForce",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "callback",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Force.Players",
+        "package": "litd/api",
+        "goSignature": "() []Player",
+        "collapsesWith": [
+          "GetEnumPlayer",
+          "GetFilterPlayer"
+        ]
+      }
+    },
+    {
+      "name": "ForceAddPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Force.AddPlayer",
+        "package": "litd/api",
+        "goSignature": "(p Player)",
+        "collapsesWith": [
+          "ForceAddPlayerSimple"
+        ]
+      }
+    },
+    {
+      "name": "ForceCinematicSubtitles",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "cinematic subtitle presentation toggle; no sim effect"
+      }
+    },
+    {
+      "name": "ForceClear",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Force.Clear",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "ForceEnumAllies",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "enumerate-allies-into-force superseded by Game.Allies(p) []Player (slice model, R-EXEC-4)"
+      }
+    },
+    {
+      "name": "ForceEnumEnemies",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "enumerate-enemies-into-force superseded by Game.Enemies(p) []Player"
+      }
+    },
+    {
+      "name": "ForceEnumPlayers",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Force.AddAllPlayers",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "ForceEnumPlayersCounted"
+        ]
+      }
+    },
+    {
+      "name": "ForceRemovePlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Force.RemovePlayer",
+        "package": "litd/api",
+        "goSignature": "(p Player)"
       }
     },
     {
@@ -3364,6 +3699,21 @@
       }
     },
     {
+      "name": "GetLocalPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "player"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "GetLocalPlayer is the classic per-client desync footgun (hazard 1); structurally eliminated — per-player presentation takes the player as a parameter on render/UI receivers, never a global fork inside sim logic"
+      }
+    },
+    {
       "name": "GetLocationX",
       "origin": "common.j",
       "signature": {
@@ -3462,6 +3812,628 @@
         "symbol": "Unit.Owner",
         "package": "litd/api",
         "goSignature": "() Player"
+      }
+    },
+    {
+      "name": "GetPlayerAlliance",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourcePlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "otherPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichAllianceSetting",
+            "jassType": "alliancetype",
+            "tsType": "alliancetype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.AllianceWith",
+        "package": "litd/api",
+        "goSignature": "(other Player) AllianceFlags"
+      }
+    },
+    {
+      "name": "GetPlayerColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "playercolor"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Color",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetPlayerController",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "mapcontrol"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Controller",
+        "package": "litd/api",
+        "goSignature": "() Controller"
+      }
+    },
+    {
+      "name": "GetPlayerHandicap",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "handicap damage multiplier needs wiring into the combat damage pipeline; deferred to a follow-up so the accessor reflects real applied state, not a stored-but-ignored value (no fake SoT)"
+      }
+    },
+    {
+      "name": "GetPlayerHandicapDamage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "damage handicap needs combat-pipeline wiring; deferred"
+      }
+    },
+    {
+      "name": "GetPlayerHandicapReviveTime",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "revive-time handicap needs hero-revive wiring; deferred"
+      }
+    },
+    {
+      "name": "GetPlayerHandicapXP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "XP handicap needs hero-XP pipeline wiring; deferred"
+      }
+    },
+    {
+      "name": "GetPlayerId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Slot",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetPlayerName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Name",
+        "package": "litd/api",
+        "goSignature": "() string"
+      }
+    },
+    {
+      "name": "GetPlayerNeutralAggressive",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.NeutralHostile",
+        "package": "litd/api",
+        "goSignature": "() Player"
+      }
+    },
+    {
+      "name": "GetPlayerNeutralPassive",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.NeutralPassive",
+        "package": "litd/api",
+        "goSignature": "() Player"
+      }
+    },
+    {
+      "name": "GetPlayerRace",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "race"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Race",
+        "package": "litd/api",
+        "goSignature": "() Race"
+      }
+    },
+    {
+      "name": "GetPlayerScore",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerScore",
+            "jassType": "playerscore",
+            "tsType": "playerscore"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "end-game score-screen metric; presentation, not sim state"
+      }
+    },
+    {
+      "name": "GetPlayerSelectable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "lobby selectability flag; no sim effect"
+      }
+    },
+    {
+      "name": "GetPlayerSlotState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "playerslotstate"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "player slot lifecycle (empty/playing/left) needs the leave/disconnect model not built in v1; deferred"
+      }
+    },
+    {
+      "name": "GetPlayerStartLocation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.StartLocation",
+        "package": "litd/api",
+        "goSignature": "() Vec2"
+      }
+    },
+    {
+      "name": "GetPlayerState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerState",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Gold",
+        "package": "litd/api",
+        "goSignature": "() int",
+        "collapsesWith": [
+          "GetPlayerStateBJ"
+        ]
+      }
+    },
+    {
+      "name": "GetPlayerStructureCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "includeIncomplete",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "per-player structure tally — AIView count family (#274); deferred"
+      }
+    },
+    {
+      "name": "GetPlayerTaxRate",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourcePlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "otherPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichResource",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "upkeep tax-rate needs the gold/lumber upkeep economy not built in v1; deferred"
+      }
+    },
+    {
+      "name": "GetPlayerTeam",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.Team",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetPlayerTechCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "specificonly",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "tech-count query — tech-tree surface (#303); deferred"
+      }
+    },
+    {
+      "name": "GetPlayerTechMaxAllowed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "tech max-allowed query — tech-tree surface (#303); deferred"
+      }
+    },
+    {
+      "name": "GetPlayerTechResearched",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "specificonly",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "tech-researched query — tech-tree surface (#303); deferred"
+      }
+    },
+    {
+      "name": "GetPlayerTypedUnitCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "unitName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "includeIncomplete",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "includeUpgrades",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "typed per-player unit tally — AIView count family (#274); deferred"
+      }
+    },
+    {
+      "name": "GetPlayerUnitCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "includeIncomplete",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "per-player unit tally belongs to the AIView count family (#274); deferred to the groups/AI surface"
+      }
+    },
+    {
+      "name": "GetPlayers",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "active player-count query; deferred with SetPlayers"
       }
     },
     {
@@ -4335,6 +5307,134 @@
       }
     },
     {
+      "name": "IsPlayerAlly",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "otherPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.IsAlly",
+        "package": "litd/api",
+        "goSignature": "(other Player) bool"
+      }
+    },
+    {
+      "name": "IsPlayerEnemy",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "otherPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.IsEnemy",
+        "package": "litd/api",
+        "goSignature": "(other Player) bool"
+      }
+    },
+    {
+      "name": "IsPlayerInForce",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Force.Contains",
+        "package": "litd/api",
+        "goSignature": "(p Player) bool"
+      }
+    },
+    {
+      "name": "IsPlayerObserver",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "observer presentation state; no sim effect in v1"
+      }
+    },
+    {
+      "name": "IsPlayerRacePrefSet",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "pref",
+            "jassType": "racepreference",
+            "tsType": "racepreference"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "lobby race-preference query; no sim effect"
+      }
+    },
+    {
       "name": "IsPointInRegion",
       "origin": "common.j",
       "signature": {
@@ -4875,6 +5975,75 @@
         "symbol": "Timer.Pause",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "Player",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "number",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "player"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Player",
+        "package": "litd/api",
+        "goSignature": "(slot int) Player"
+      }
+    },
+    {
+      "name": "PlayerGetLeaderboard",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "toPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "leaderboard"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "leaderboard UI query; presentation"
+      }
+    },
+    {
+      "name": "PlayerSetLeaderboard",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "toPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "lb",
+            "jassType": "leaderboard",
+            "tsType": "leaderboard"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "leaderboard UI binding; presentation"
       }
     },
     {
@@ -5445,6 +6614,557 @@
         "symbol": "Unit.SetHeroXP",
         "package": "litd/api",
         "goSignature": "(xp int)"
+      }
+    },
+    {
+      "name": "SetPlayerAbilityAvailable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "abilid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "avail",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "per-player ability availability belongs to the abilities surface (#234); deferred"
+      }
+    },
+    {
+      "name": "SetPlayerAlliance",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourcePlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "otherPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichAllianceSetting",
+            "jassType": "alliancetype",
+            "tsType": "alliancetype"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetAllianceFlag",
+        "package": "litd/api",
+        "goSignature": "(other Player, flag AllianceFlags, on bool)",
+        "collapsesWith": [
+          "SetPlayerAllianceBJ",
+          "SetPlayerAllianceStateBJ",
+          "SetPlayerAllianceStateAllyBJ",
+          "SetPlayerAllianceStateVisionBJ",
+          "SetPlayerAllianceStateControlBJ",
+          "SetPlayerAllianceStateFullControlBJ"
+        ]
+      }
+    },
+    {
+      "name": "SetPlayerColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "color",
+            "jassType": "playercolor",
+            "tsType": "playercolor"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetColor",
+        "package": "litd/api",
+        "goSignature": "(c int)"
+      }
+    },
+    {
+      "name": "SetPlayerController",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "controlType",
+            "jassType": "mapcontrol",
+            "tsType": "mapcontrol"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetController",
+        "package": "litd/api",
+        "goSignature": "(c Controller)"
+      }
+    },
+    {
+      "name": "SetPlayerHandicap",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "handicap",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "handicap setter deferred with GetPlayerHandicap (combat-multiplier wiring)"
+      }
+    },
+    {
+      "name": "SetPlayerHandicapDamage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "handicap",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "damage handicap setter deferred"
+      }
+    },
+    {
+      "name": "SetPlayerHandicapReviveTime",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "handicap",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "revive-time handicap setter deferred"
+      }
+    },
+    {
+      "name": "SetPlayerHandicapXP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "handicap",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "XP handicap setter deferred"
+      }
+    },
+    {
+      "name": "SetPlayerName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "name",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetName",
+        "package": "litd/api",
+        "goSignature": "(s string)"
+      }
+    },
+    {
+      "name": "SetPlayerOnScoreScreen",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "score-screen presentation flag; no sim effect"
+      }
+    },
+    {
+      "name": "SetPlayerRacePreference",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichRacePreference",
+            "jassType": "racepreference",
+            "tsType": "racepreference"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetRace",
+        "package": "litd/api",
+        "goSignature": "(r Race)",
+        "collapsesWith": [
+          "SetPlayerRaceSelectable"
+        ]
+      }
+    },
+    {
+      "name": "SetPlayerStartLocation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "startLocIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetStartLocation",
+        "package": "litd/api",
+        "goSignature": "(loc Vec2)"
+      }
+    },
+    {
+      "name": "SetPlayerState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerState",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetGold",
+        "package": "litd/api",
+        "goSignature": "(v int)",
+        "collapsesWith": [
+          "SetPlayerStateBJ"
+        ]
+      }
+    },
+    {
+      "name": "SetPlayerTaxRate",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourcePlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "otherPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichResource",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          },
+          {
+            "name": "rate",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "tax-rate setter deferred with GetPlayerTaxRate"
+      }
+    },
+    {
+      "name": "SetPlayerTeam",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichTeam",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetTeam",
+        "package": "litd/api",
+        "goSignature": "(t int)"
+      }
+    },
+    {
+      "name": "SetPlayerTechMaxAllowed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "maximum",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "tech max-allowed belongs to the tech-tree surface (#303/#234); deferred"
+      }
+    },
+    {
+      "name": "SetPlayerTechResearched",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "setToLevel",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "tech-researched setter — tech-tree surface (#303); deferred"
+      }
+    },
+    {
+      "name": "SetPlayerUnitsOwner",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "newOwner",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "bulk ownership change superseded by iterating Game.Players / a group then Unit.SetOwner (#217)"
+      }
+    },
+    {
+      "name": "SetPlayers",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "playercount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "active player-count config; the fixed MaxPlayers roster covers v1 — dynamic count deferred"
       }
     },
     {

@@ -71,6 +71,12 @@ type Game struct {
 	timers       []timerEntry
 	timerFree    []uint32
 	timerContReg bool
+
+	// forces is the script-side player-group registry (force.go, #218).
+	// A force is a set of player slots (a bitset); Force.id is index+1.
+	// Forces are transient script convenience state — like triggers, they
+	// are not part of the hashed/serialized sim. CreateForce appends.
+	forces []uint32
 }
 
 // newGame wraps a simulation world. The public setup path —

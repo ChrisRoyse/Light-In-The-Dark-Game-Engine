@@ -2002,3 +2002,486 @@ name = "GetLocationZ"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "terrain Z sampling needs a real heightfield; flat-0 would be a fake SoT — deferred to the heightfield work tracked in #371 (location→Vec2 leaves no Z channel in v1)"
+
+# ============================================================================
+# Players & forces (#218; jass-mapping/players-and-forces.md)
+# Player value type (D5 state accessors, D1/D2 alliance, D3 force→slice).
+# GetLocalPlayer structurally eliminated (desync footgun, hazard 1).
+# ============================================================================
+
+[[override]]
+name = "Player"
+class = "D1"
+goMapping = "Game.Player"
+goSignature = "(slot int) Player"
+package = "litd/api"
+reason = "player-handle-by-slot constructor maps onto Game.Player; zero-value Player on an out-of-range slot (R-API-5)"
+
+[[override]]
+name = "GetLocalPlayer"
+class = "D1"
+tombstone = "superseded"
+reason = "GetLocalPlayer is the classic per-client desync footgun (hazard 1); structurally eliminated — per-player presentation takes the player as a parameter on render/UI receivers, never a global fork inside sim logic"
+
+[[override]]
+name = "GetPlayerId"
+class = "D1"
+goMapping = "Player.Slot"
+goSignature = "() int"
+package = "litd/api"
+reason = "player slot index maps onto Player.Slot (-1 on invalid)"
+
+[[override]]
+name = "GetPlayerName"
+class = "D1"
+goMapping = "Player.Name"
+goSignature = "() string"
+package = "litd/api"
+reason = "player display name maps onto Player.Name; slot-derived default when unset"
+
+[[override]]
+name = "SetPlayerName"
+class = "D1"
+goMapping = "Player.SetName"
+goSignature = "(s string)"
+package = "litd/api"
+reason = "player name setter maps onto Player.SetName"
+
+[[override]]
+name = "GetPlayerRace"
+class = "D5"
+goMapping = "Player.Race"
+goSignature = "() Race"
+package = "litd/api"
+reason = "player race maps onto the typed Player.Race accessor (shares the Race enum with Unit.Race, #217)"
+
+[[override]]
+name = "SetPlayerRacePreference"
+class = "D2"
+goMapping = "Player.SetRace"
+goSignature = "(r Race)"
+collapsesWith = ["SetPlayerRaceSelectable"]
+package = "litd/api"
+reason = "race-preference setter collapses onto Player.SetRace; the selectable-toggle is a lobby presentation flag with no sim effect, folded here"
+
+[[override]]
+name = "GetPlayerColor"
+class = "D5"
+goMapping = "Player.Color"
+goSignature = "() int"
+package = "litd/api"
+reason = "player color slot maps onto the typed Player.Color accessor"
+
+[[override]]
+name = "SetPlayerColor"
+class = "D5"
+goMapping = "Player.SetColor"
+goSignature = "(c int)"
+package = "litd/api"
+reason = "player color setter maps onto Player.SetColor"
+
+[[override]]
+name = "GetPlayerTeam"
+class = "D5"
+goMapping = "Player.Team"
+goSignature = "() int"
+package = "litd/api"
+reason = "player roster team maps onto Player.Team (FFA/scoring metadata)"
+
+[[override]]
+name = "SetPlayerTeam"
+class = "D5"
+goMapping = "Player.SetTeam"
+goSignature = "(t int)"
+package = "litd/api"
+reason = "player team setter maps onto Player.SetTeam"
+
+[[override]]
+name = "GetPlayerController"
+class = "D5"
+goMapping = "Player.Controller"
+goSignature = "() Controller"
+package = "litd/api"
+reason = "player controller (mapcontrol) maps onto the typed Player.Controller accessor"
+
+[[override]]
+name = "SetPlayerController"
+class = "D5"
+goMapping = "Player.SetController"
+goSignature = "(c Controller)"
+package = "litd/api"
+reason = "player controller setter maps onto Player.SetController"
+
+[[override]]
+name = "GetPlayerStartLocation"
+class = "D3"
+goMapping = "Player.StartLocation"
+goSignature = "() Vec2"
+package = "litd/api"
+reason = "start-location index collapses to the start point Vec2 (D3 location→Vec2); Player.StartLocation"
+
+[[override]]
+name = "SetPlayerStartLocation"
+class = "D3"
+goMapping = "Player.SetStartLocation"
+goSignature = "(loc Vec2)"
+package = "litd/api"
+reason = "start-location setter collapses onto Player.SetStartLocation (Vec2)"
+
+[[override]]
+name = "GetPlayerAlliance"
+class = "D5"
+goMapping = "Player.AllianceWith"
+goSignature = "(other Player) AllianceFlags"
+package = "litd/api"
+reason = "per-pair alliance flag readback maps onto Player.AllianceWith (one-directional bitset)"
+
+[[override]]
+name = "SetPlayerAlliance"
+class = "D1"
+goMapping = "Player.SetAllianceFlag"
+goSignature = "(other Player, flag AllianceFlags, on bool)"
+collapsesWith = ["SetPlayerAllianceBJ", "SetPlayerAllianceStateBJ", "SetPlayerAllianceStateAllyBJ", "SetPlayerAllianceStateVisionBJ", "SetPlayerAllianceStateControlBJ", "SetPlayerAllianceStateFullControlBJ"]
+package = "litd/api"
+reason = "single-flag alliance setter maps onto Player.SetAllianceFlag; the preset-combination BJ zoo (ally/vision/control/full-control/state) collapses here (D2) — Player.SetAlliance(other, flags) sets the whole bitset at once"
+
+[[override]]
+name = "IsPlayerAlly"
+class = "D1"
+goMapping = "Player.IsAlly"
+goSignature = "(other Player) bool"
+package = "litd/api"
+reason = "passive-alliance predicate maps onto Player.IsAlly"
+
+[[override]]
+name = "IsPlayerEnemy"
+class = "D1"
+goMapping = "Player.IsEnemy"
+goSignature = "(other Player) bool"
+package = "litd/api"
+reason = "at-war predicate maps onto Player.IsEnemy"
+
+[[override]]
+name = "GetPlayerState"
+class = "D5"
+goMapping = "Player.Gold"
+goSignature = "() int"
+collapsesWith = ["GetPlayerStateBJ"]
+package = "litd/api"
+reason = "enum-keyed player-state getter collapses onto the typed accessor family (Gold/Lumber/FoodUsed/FoodCap) over the economy ledger (dedup §6 ex.4); Player.Gold is the representative canonical symbol, mirroring SetPlayerState → Player.SetGold"
+
+[[override]]
+name = "SetPlayerState"
+class = "D5"
+goMapping = "Player.SetGold"
+goSignature = "(v int)"
+collapsesWith = ["SetPlayerStateBJ"]
+package = "litd/api"
+reason = "enum-keyed player-state setter collapses onto the typed setter family (SetGold/SetLumber/SetFoodCap); Player.SetGold is the representative canonical symbol"
+
+[[override]]
+name = "GetPlayerNeutralPassive"
+class = "D1"
+goMapping = "Game.NeutralPassive"
+goSignature = "() Player"
+package = "litd/api"
+reason = "fixed neutral-passive slot accessor maps onto Game.NeutralPassive (hazard 3 named accessor)"
+
+[[override]]
+name = "GetPlayerNeutralAggressive"
+class = "D1"
+goMapping = "Game.NeutralHostile"
+goSignature = "() Player"
+package = "litd/api"
+reason = "fixed neutral-aggressive slot accessor maps onto Game.NeutralHostile (hazard 3 named accessor)"
+
+[[override]]
+name = "CreateForce"
+class = "D1"
+goMapping = "Game.CreateForce"
+goSignature = "() Force"
+collapsesWith = ["CreateForceBJ"]
+package = "litd/api"
+reason = "force constructor maps onto Game.CreateForce; the BJ wrapper folds in (D1)"
+
+[[override]]
+name = "ForceAddPlayer"
+class = "D1"
+goMapping = "Force.AddPlayer"
+goSignature = "(p Player)"
+collapsesWith = ["ForceAddPlayerSimple"]
+package = "litd/api"
+reason = "force membership add maps onto Force.AddPlayer; the team-keyed simple wrapper folds in"
+
+[[override]]
+name = "ForceRemovePlayer"
+class = "D1"
+goMapping = "Force.RemovePlayer"
+goSignature = "(p Player)"
+package = "litd/api"
+reason = "force membership remove maps onto Force.RemovePlayer"
+
+[[override]]
+name = "ForceClear"
+class = "D1"
+goMapping = "Force.Clear"
+goSignature = "()"
+package = "litd/api"
+reason = "force reset maps onto Force.Clear"
+
+[[override]]
+name = "ForceEnumPlayers"
+class = "D2"
+goMapping = "Force.AddAllPlayers"
+goSignature = "()"
+collapsesWith = ["ForceEnumPlayersCounted"]
+package = "litd/api"
+reason = "null-filter enum-all maps onto Force.AddAllPlayers; the counted variant folds in (filter+count collapse, D3 enumeration→slice via Force.Players)"
+
+[[override]]
+name = "IsPlayerInForce"
+class = "D1"
+goMapping = "Force.Contains"
+goSignature = "(p Player) bool"
+package = "litd/api"
+reason = "force membership predicate maps onto Force.Contains"
+
+[[override]]
+name = "ForForce"
+class = "D3"
+goMapping = "Force.Players"
+goSignature = "() []Player"
+collapsesWith = ["GetEnumPlayer", "GetFilterPlayer"]
+package = "litd/api"
+reason = "callback enumeration collapses to a []Player slice (R-EXEC-4); Force.Players returns members in slot order. The enum/filter thread-local getters fold in (no callback context to expose)"
+
+[[override]]
+name = "GetPlayersAllies"
+class = "D4"
+goMapping = "Game.Allies"
+goSignature = "(p Player) []Player"
+package = "litd/api"
+reason = "allies-of-player helper kept once as Game.Allies, returning a slice (D4 real-logic helper, force→slice)"
+
+[[override]]
+name = "GetPlayersEnemies"
+class = "D4"
+goMapping = "Game.Enemies"
+goSignature = "(p Player) []Player"
+package = "litd/api"
+reason = "enemies-of-player helper kept once as Game.Enemies (D4), returning a slice"
+
+[[override]]
+name = "GetPlayersMatching"
+class = "D4"
+goMapping = "Game.Players"
+goSignature = "(filter PlayerFilter) []Player"
+collapsesWith = ["GetPlayersAll", "GetPlayersAllMatching", "CountPlayersInForceBJ", "CountPlayersInForceEnum"]
+package = "litd/api"
+reason = "filtered player enumeration maps onto Game.Players(filter) []Player (R-EXEC-4); all-players and force-count BJs collapse here (len(slice))"
+
+# --- tombstones: superseded / gameplay-irrelevant / deferred-v2 -----
+
+[[override]]
+name = "DestroyForce"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "explicit handle free — Go forces are GC-managed script-side registry entries; no manual destroy"
+
+[[override]]
+name = "ForceEnumAllies"
+class = "D1"
+tombstone = "superseded"
+reason = "enumerate-allies-into-force superseded by Game.Allies(p) []Player (slice model, R-EXEC-4)"
+
+[[override]]
+name = "ForceEnumEnemies"
+class = "D1"
+tombstone = "superseded"
+reason = "enumerate-enemies-into-force superseded by Game.Enemies(p) []Player"
+
+[[override]]
+name = "IsPlayerObserver"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "observer presentation state; no sim effect in v1"
+
+[[override]]
+name = "GetPlayerSlotState"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "player slot lifecycle (empty/playing/left) needs the leave/disconnect model not built in v1; deferred"
+
+[[override]]
+name = "GetPlayerSelectable"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "lobby selectability flag; no sim effect"
+
+[[override]]
+name = "IsPlayerRacePrefSet"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "lobby race-preference query; no sim effect"
+
+[[override]]
+name = "SetPlayerOnScoreScreen"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "score-screen presentation flag; no sim effect"
+
+[[override]]
+name = "SetPlayers"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "active player-count config; the fixed MaxPlayers roster covers v1 — dynamic count deferred"
+
+[[override]]
+name = "GetPlayers"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "active player-count query; deferred with SetPlayers"
+
+[[override]]
+name = "GetPlayerUnitCount"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "per-player unit tally belongs to the AIView count family (#274); deferred to the groups/AI surface"
+
+[[override]]
+name = "GetPlayerTypedUnitCount"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "typed per-player unit tally — AIView count family (#274); deferred"
+
+[[override]]
+name = "GetPlayerStructureCount"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "per-player structure tally — AIView count family (#274); deferred"
+
+[[override]]
+name = "GetPlayerScore"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "end-game score-screen metric; presentation, not sim state"
+
+[[override]]
+name = "PlayerSetLeaderboard"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "leaderboard UI binding; presentation"
+
+[[override]]
+name = "PlayerGetLeaderboard"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "leaderboard UI query; presentation"
+
+[[override]]
+name = "GetPlayerHandicap"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "handicap damage multiplier needs wiring into the combat damage pipeline; deferred to a follow-up so the accessor reflects real applied state, not a stored-but-ignored value (no fake SoT)"
+
+[[override]]
+name = "SetPlayerHandicap"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "handicap setter deferred with GetPlayerHandicap (combat-multiplier wiring)"
+
+[[override]]
+name = "GetPlayerHandicapXP"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "XP handicap needs hero-XP pipeline wiring; deferred"
+
+[[override]]
+name = "SetPlayerHandicapXP"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "XP handicap setter deferred"
+
+[[override]]
+name = "GetPlayerHandicapReviveTime"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "revive-time handicap needs hero-revive wiring; deferred"
+
+[[override]]
+name = "SetPlayerHandicapReviveTime"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "revive-time handicap setter deferred"
+
+[[override]]
+name = "GetPlayerHandicapDamage"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "damage handicap needs combat-pipeline wiring; deferred"
+
+[[override]]
+name = "SetPlayerHandicapDamage"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "damage handicap setter deferred"
+
+[[override]]
+name = "GetPlayerTaxRate"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "upkeep tax-rate needs the gold/lumber upkeep economy not built in v1; deferred"
+
+[[override]]
+name = "SetPlayerTaxRate"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "tax-rate setter deferred with GetPlayerTaxRate"
+
+[[override]]
+name = "SetPlayerUnitsOwner"
+class = "D1"
+tombstone = "superseded"
+reason = "bulk ownership change superseded by iterating Game.Players / a group then Unit.SetOwner (#217)"
+
+[[override]]
+name = "SetPlayerAbilityAvailable"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "per-player ability availability belongs to the abilities surface (#234); deferred"
+
+[[override]]
+name = "SetPlayerTechMaxAllowed"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "tech max-allowed belongs to the tech-tree surface (#303/#234); deferred"
+
+[[override]]
+name = "GetPlayerTechMaxAllowed"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "tech max-allowed query — tech-tree surface (#303); deferred"
+
+[[override]]
+name = "SetPlayerTechResearched"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "tech-researched setter — tech-tree surface (#303); deferred"
+
+[[override]]
+name = "GetPlayerTechResearched"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "tech-researched query — tech-tree surface (#303); deferred"
+
+[[override]]
+name = "GetPlayerTechCount"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "tech-count query — tech-tree surface (#303); deferred"
+
+[[override]]
+name = "ForceCinematicSubtitles"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "cinematic subtitle presentation toggle; no sim effect"

@@ -276,6 +276,12 @@ type World struct {
 	resourceCount int
 	foodUsed      [MaxPlayers]int32
 	foodCap       [MaxPlayers]int32
+	// #218 player roster: per-player metadata + the asymmetric alliance
+	// relation. Resources/food (above) carry the rest of the player-state
+	// matrix. alliance[a][b] is a flags bitset for a's stance toward b
+	// (A→B and B→A independent — alliance is one-directional). All hashed
+	// + serialized; initPlayers seeds defaults in NewWorld.
+	players playerRoster
 	// pooled intrusive order-queue entries (orders.go): LIFO free
 	// list threaded through orderEntry.next
 	orderPool      []orderEntry
@@ -386,6 +392,7 @@ func NewWorld(requested Caps) *World {
 	for i := range w.bucketCell {
 		w.bucketCell[i] = -1
 	}
+	w.initPlayers()
 	return w
 }
 

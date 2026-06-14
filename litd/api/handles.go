@@ -111,7 +111,7 @@ type Force struct {
 	g  *Game
 }
 
-func (f Force) Valid() bool  { return f.g != nil && f.id != 0 }
+func (f Force) Valid() bool  { return f.g != nil && f.id != 0 && int(f.id) <= len(f.g.forces) }
 func (f Force) IsZero() bool { return f == Force{} }
 
 // Ability is one ability instance on a unit (public-api-design.md §2

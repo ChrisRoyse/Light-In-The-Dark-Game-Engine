@@ -101,8 +101,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetBJPlayerNeutralVictim | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJPlayerNeutralExtra | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJMaxPlayerSlots | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerNeutralPassive | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerNeutralAggressive | common.j | unclassified | _pending (M2 backlog)_ |
+| GetPlayerNeutralPassive | common.j | D1 | `litd/api.Game.NeutralPassive` |
+| GetPlayerNeutralAggressive | common.j | D1 | `litd/api.Game.NeutralHostile` |
 | Deg2Rad | common.j | unclassified | _pending (M2 backlog)_ |
 | Rad2Deg | common.j | unclassified | _pending (M2 backlog)_ |
 | Sin | common.j | unclassified | _pending (M2 backlog)_ |
@@ -132,7 +132,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetMapName | common.j | unclassified | _pending (M2 backlog)_ |
 | SetMapDescription | common.j | unclassified | _pending (M2 backlog)_ |
 | SetTeams | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayers | common.j | unclassified | _pending (M2 backlog)_ |
+| SetPlayers | common.j | D1 | **tombstoned** (deferred-v2): active player-count config; the fixed MaxPlayers roster covers v1 — dynamic count deferred |
 | DefineStartLocation | common.j | D3 | _pending (M2 backlog)_ |
 | DefineStartLocationLoc | common.j | D3 | _pending (M2 backlog)_ |
 | SetStartLocPrioCount | common.j | unclassified | _pending (M2 backlog)_ |
@@ -149,7 +149,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetResourceDensity | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCreatureDensity | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTeams | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayers | common.j | unclassified | _pending (M2 backlog)_ |
+| GetPlayers | common.j | D1 | **tombstoned** (deferred-v2): active player-count query; deferred with SetPlayers |
 | IsGameTypeSupported | common.j | unclassified | _pending (M2 backlog)_ |
 | GetGameTypeSelected | common.j | unclassified | _pending (M2 backlog)_ |
 | IsMapFlagSet | common.j | unclassified | _pending (M2 backlog)_ |
@@ -161,26 +161,26 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetStartLocationX | common.j | D3 | _pending (M2 backlog)_ |
 | GetStartLocationY | common.j | D3 | _pending (M2 backlog)_ |
 | GetStartLocationLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerTeam | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerStartLocation | common.j | unclassified | _pending (M2 backlog)_ |
+| SetPlayerTeam | common.j | D5 | `litd/api.Player.SetTeam` |
+| SetPlayerStartLocation | common.j | D3 | `litd/api.Player.SetStartLocation` |
 | ForcePlayerStartLocation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerColor | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerAlliance | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerTaxRate | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerRacePreference | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerRaceSelectable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerController | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerName | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerOnScoreScreen | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerTeam | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerStartLocation | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerColor | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerSelectable | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerController | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerSlotState | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerTaxRate | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPlayerRacePrefSet | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerName | common.j | unclassified | _pending (M2 backlog)_ |
+| SetPlayerColor | common.j | D5 | `litd/api.Player.SetColor` |
+| SetPlayerAlliance | common.j | D1 | `litd/api.Player.SetAllianceFlag` |
+| SetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): tax-rate setter deferred with GetPlayerTaxRate |
+| SetPlayerRacePreference | common.j | D2 | `litd/api.Player.SetRace` |
+| SetPlayerRaceSelectable | common.j | D2 | `litd/api.Player.SetRace` (D3 collapse → SetPlayerRacePreference) |
+| SetPlayerController | common.j | D5 | `litd/api.Player.SetController` |
+| SetPlayerName | common.j | D1 | `litd/api.Player.SetName` |
+| SetPlayerOnScoreScreen | common.j | D1 | **tombstoned** (gameplay-irrelevant): score-screen presentation flag; no sim effect |
+| GetPlayerTeam | common.j | D5 | `litd/api.Player.Team` |
+| GetPlayerStartLocation | common.j | D3 | `litd/api.Player.StartLocation` |
+| GetPlayerColor | common.j | D5 | `litd/api.Player.Color` |
+| GetPlayerSelectable | common.j | D1 | **tombstoned** (gameplay-irrelevant): lobby selectability flag; no sim effect |
+| GetPlayerController | common.j | D5 | `litd/api.Player.Controller` |
+| GetPlayerSlotState | common.j | D1 | **tombstoned** (deferred-v2): player slot lifecycle (empty/playing/left) needs the leave/disconnect model not built in v1; deferred |
+| GetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): upkeep tax-rate needs the gold/lumber upkeep economy not built in v1; deferred |
+| IsPlayerRacePrefSet | common.j | D1 | **tombstoned** (gameplay-irrelevant): lobby race-preference query; no sim effect |
+| GetPlayerName | common.j | D1 | `litd/api.Player.Name` |
 | CreateTimer | common.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
 | DestroyTimer | common.j | D1 | `litd/api.Timer.Stop` |
 | TimerStart | common.j | D2 | `litd/api.Game.After` |
@@ -219,17 +219,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GroupTargetOrderById | common.j | D3 | _pending (M2 backlog)_ |
 | ForGroup | common.j | unclassified | _pending (M2 backlog)_ |
 | FirstOfGroup | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateForce | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyForce | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceAddPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceRemovePlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateForce | common.j | D1 | `litd/api.Game.CreateForce` |
+| DestroyForce | common.j | D1 | **tombstoned** (gameplay-irrelevant): explicit handle free — Go forces are GC-managed script-side registry entries; no manual destroy |
+| ForceAddPlayer | common.j | D1 | `litd/api.Force.AddPlayer` |
+| ForceRemovePlayer | common.j | D1 | `litd/api.Force.RemovePlayer` |
 | BlzForceHasPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceClear | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceEnumPlayers | common.j | D3 | _pending (M2 backlog)_ |
-| ForceEnumPlayersCounted | common.j | D3 | _pending (M2 backlog)_ |
-| ForceEnumAllies | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceEnumEnemies | common.j | unclassified | _pending (M2 backlog)_ |
-| ForForce | common.j | unclassified | _pending (M2 backlog)_ |
+| ForceClear | common.j | D1 | `litd/api.Force.Clear` |
+| ForceEnumPlayers | common.j | D2 | `litd/api.Force.AddAllPlayers` |
+| ForceEnumPlayersCounted | common.j | D2 | `litd/api.Force.AddAllPlayers` (D3 collapse → ForceEnumPlayers) |
+| ForceEnumAllies | common.j | D1 | **tombstoned** (superseded): enumerate-allies-into-force superseded by Game.Allies(p) []Player (slice model, R-EXEC-4) |
+| ForceEnumEnemies | common.j | D1 | **tombstoned** (superseded): enumerate-enemies-into-force superseded by Game.Enemies(p) []Player |
+| ForForce | common.j | D3 | `litd/api.Force.Players` |
 | Rect | common.j | D3 | `litd/api.NewRect` |
 | RectFromLoc | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveRect | common.j | D1 | **tombstoned** (superseded): rect heap-lifetime cleanup superseded — Rect is a GC'd value (R-API-2) |
@@ -276,8 +276,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetFilterItem | common.j | unclassified | _pending (M2 backlog)_ |
 | GetEnumItem | common.j | unclassified | _pending (M2 backlog)_ |
 | ParseTags | common.j | unclassified | _pending (M2 backlog)_ |
-| GetFilterPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEnumPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| GetFilterPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
+| GetEnumPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
 | GetTriggeringTrigger | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTriggerEventId | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTriggerEvalCount | common.j | unclassified | _pending (M2 backlog)_ |
@@ -669,44 +669,44 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitUserData | common.j | D1 | `litd/api.Unit.UserData` |
 | SetUnitUserData | common.j | D1 | `litd/api.Unit.SetUserData` |
-| Player | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLocalPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPlayerAlly | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPlayerEnemy | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPlayerInForce | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPlayerObserver | common.j | unclassified | _pending (M2 backlog)_ |
+| Player | common.j | D1 | `litd/api.Game.Player` |
+| GetLocalPlayer | common.j | D1 | **tombstoned** (superseded): GetLocalPlayer is the classic per-client desync footgun (hazard 1); structurally eliminated — per-player presentation takes the player as a parameter on render/UI receivers, never a global fork inside sim logic |
+| IsPlayerAlly | common.j | D1 | `litd/api.Player.IsAlly` |
+| IsPlayerEnemy | common.j | D1 | `litd/api.Player.IsEnemy` |
+| IsPlayerInForce | common.j | D1 | `litd/api.Force.Contains` |
+| IsPlayerObserver | common.j | D1 | **tombstoned** (gameplay-irrelevant): observer presentation state; no sim effect in v1 |
 | IsVisibleToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | IsLocationVisibleToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | IsFoggedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | IsLocationFoggedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | IsMaskedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | IsLocationMaskedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerRace | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerId | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerUnitCount | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerTypedUnitCount | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerStructureCount | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerState | common.j | D5 | _pending (M2 backlog)_ |
-| GetPlayerScore | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerAlliance | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerHandicap | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerHandicapXP | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerHandicapReviveTime | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerHandicapDamage | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicap | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicapXP | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicapReviveTime | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerHandicapDamage | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerTechMaxAllowed | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerTechMaxAllowed | common.j | unclassified | _pending (M2 backlog)_ |
+| GetPlayerRace | common.j | D5 | `litd/api.Player.Race` |
+| GetPlayerId | common.j | D1 | `litd/api.Player.Slot` |
+| GetPlayerUnitCount | common.j | D1 | **tombstoned** (deferred-v2): per-player unit tally belongs to the AIView count family (#274); deferred to the groups/AI surface |
+| GetPlayerTypedUnitCount | common.j | D1 | **tombstoned** (deferred-v2): typed per-player unit tally — AIView count family (#274); deferred |
+| GetPlayerStructureCount | common.j | D1 | **tombstoned** (deferred-v2): per-player structure tally — AIView count family (#274); deferred |
+| GetPlayerState | common.j | D5 | `litd/api.Player.Gold` |
+| GetPlayerScore | common.j | D1 | **tombstoned** (gameplay-irrelevant): end-game score-screen metric; presentation, not sim state |
+| GetPlayerAlliance | common.j | D5 | `litd/api.Player.AllianceWith` |
+| GetPlayerHandicap | common.j | D5 | **tombstoned** (deferred-v2): handicap damage multiplier needs wiring into the combat damage pipeline; deferred to a follow-up so the accessor reflects real applied state, not a stored-but-ignored value (no fake SoT) |
+| GetPlayerHandicapXP | common.j | D5 | **tombstoned** (deferred-v2): XP handicap needs hero-XP pipeline wiring; deferred |
+| GetPlayerHandicapReviveTime | common.j | D5 | **tombstoned** (deferred-v2): revive-time handicap needs hero-revive wiring; deferred |
+| GetPlayerHandicapDamage | common.j | D5 | **tombstoned** (deferred-v2): damage handicap needs combat-pipeline wiring; deferred |
+| SetPlayerHandicap | common.j | D5 | **tombstoned** (deferred-v2): handicap setter deferred with GetPlayerHandicap (combat-multiplier wiring) |
+| SetPlayerHandicapXP | common.j | D5 | **tombstoned** (deferred-v2): XP handicap setter deferred |
+| SetPlayerHandicapReviveTime | common.j | D5 | **tombstoned** (deferred-v2): revive-time handicap setter deferred |
+| SetPlayerHandicapDamage | common.j | D5 | **tombstoned** (deferred-v2): damage handicap setter deferred |
+| SetPlayerTechMaxAllowed | common.j | D1 | **tombstoned** (deferred-v2): tech max-allowed belongs to the tech-tree surface (#303/#234); deferred |
+| GetPlayerTechMaxAllowed | common.j | D1 | **tombstoned** (deferred-v2): tech max-allowed query — tech-tree surface (#303); deferred |
 | AddPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
-| GetPlayerTechCount | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerUnitsOwner | common.j | unclassified | _pending (M2 backlog)_ |
+| SetPlayerTechResearched | common.j | D1 | **tombstoned** (deferred-v2): tech-researched setter — tech-tree surface (#303); deferred |
+| GetPlayerTechResearched | common.j | D1 | **tombstoned** (deferred-v2): tech-researched query — tech-tree surface (#303); deferred |
+| GetPlayerTechCount | common.j | D1 | **tombstoned** (deferred-v2): tech-count query — tech-tree surface (#303); deferred |
+| SetPlayerUnitsOwner | common.j | D1 | **tombstoned** (superseded): bulk ownership change superseded by iterating Game.Players / a group then Unit.SetOwner (#217) |
 | CripplePlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerAbilityAvailable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetPlayerState | common.j | D5 | _pending (M2 backlog)_ |
+| SetPlayerAbilityAvailable | common.j | D1 | **tombstoned** (deferred-v2): per-player ability availability belongs to the abilities surface (#234); deferred |
+| SetPlayerState | common.j | D5 | `litd/api.Player.SetGold` |
 | RemovePlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | CachePlayerHeroData | common.j | unclassified | _pending (M2 backlog)_ |
 | SetFogStateRect | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1022,8 +1022,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | LeaderboardGetPlayerIndex | common.j | unclassified | _pending (M2 backlog)_ |
 | LeaderboardSetLabel | common.j | unclassified | _pending (M2 backlog)_ |
 | LeaderboardGetLabelText | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayerSetLeaderboard | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayerGetLeaderboard | common.j | unclassified | _pending (M2 backlog)_ |
+| PlayerSetLeaderboard | common.j | D1 | **tombstoned** (gameplay-irrelevant): leaderboard UI binding; presentation |
+| PlayerGetLeaderboard | common.j | D1 | **tombstoned** (gameplay-irrelevant): leaderboard UI query; presentation |
 | LeaderboardSetLabelColor | common.j | unclassified | _pending (M2 backlog)_ |
 | LeaderboardSetValueColor | common.j | unclassified | _pending (M2 backlog)_ |
 | LeaderboardSetStyle | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1106,7 +1106,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsCineFilterDisplayed | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
 | EndCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceCinematicSubtitles | common.j | unclassified | _pending (M2 backlog)_ |
+| ForceCinematicSubtitles | common.j | D1 | **tombstoned** (gameplay-irrelevant): cinematic subtitle presentation toggle; no sim effect |
 | SetCinematicAudio | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCameraMargin | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCameraBoundMinX | common.j | D3 | _pending (M2 backlog)_ |
@@ -2005,7 +2005,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GroupAddGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GroupRemoveGroupEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GroupRemoveGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ForceAddPlayerSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
+| ForceAddPlayerSimple | blizzard.j | D1 | `litd/api.Force.AddPlayer` (D3 collapse → ForceAddPlayer) |
 | ForceRemovePlayerSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GroupPickRandomUnitEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GroupPickRandomUnit | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2026,15 +2026,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitsOfPlayerAndTypeId | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitsSelectedAll | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetForceOfPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetPlayersAll | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| GetPlayersAll | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
 | GetPlayersByMapControl | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetPlayersAllies | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetPlayersEnemies | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetPlayersMatching | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetPlayersAllies | blizzard.j | D4 | `litd/api.Game.Allies` |
+| GetPlayersEnemies | blizzard.j | D4 | `litd/api.Game.Enemies` |
+| GetPlayersMatching | blizzard.j | D4 | `litd/api.Game.Players` |
 | CountUnitsInGroupEnum | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CountUnitsInGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CountPlayersInForceEnum | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CountPlayersInForceBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CountPlayersInForceEnum | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
+| CountPlayersInForceBJ | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
 | GetRandomSubGroupEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetRandomSubGroup | blizzard.j | D4 | _pending (M2 backlog)_ |
 | LivingPlayerUnitsOfTypeIdFilter | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2060,12 +2060,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedButtonBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetClickedButtonBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetClickedDialogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetPlayerAllianceBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerAllianceStateAllyBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerAllianceStateVisionBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerAllianceStateControlBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerAllianceStateFullControlBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerAllianceStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetPlayerAllianceBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
+| SetPlayerAllianceStateAllyBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
+| SetPlayerAllianceStateVisionBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
+| SetPlayerAllianceStateControlBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
+| SetPlayerAllianceStateFullControlBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
+| SetPlayerAllianceStateBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
 | SetForceAllianceStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PlayersAreCoAllied | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ShareEverythingWithTeamAI | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2361,7 +2361,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetFadeFromSecondsAsReal | blizzard.j | D4 | _pending (M2 backlog)_ |
 | AdjustPlayerStateSimpleBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
 | AdjustPlayerStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetPlayerStateBJ | blizzard.j | D5 | `litd/api.Player.SetGold` (D3 collapse → SetPlayerState) |
 | SetPlayerFlagBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
 | SetPlayerTaxRateBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetPlayerTaxRateBJ | blizzard.j | D2 | _pending (M2 backlog)_ |

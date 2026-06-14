@@ -43,6 +43,10 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v20: player section appended after regions: per-player roster
+// (controller/race/color/team/start/name/allied-victory) + the
+// asymmetric alliance bitset (#218). Resources/food stay in the economy
+// section.
 // v19: region section grows per-region membership (units currently inside,
 // in presence-row order) after the cell list — needed so enter/leave edge
 // triggers match the no-save path across a load (#241).
@@ -80,7 +84,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 19
+const SaveFormatVersion uint32 = 20
 
 // ---- little-endian writer / reader ----
 
@@ -728,6 +732,25 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u32(f)
 	}
 
+	// players (#218): per-player roster in slot order, then the alliance
+	// bitset. Resources/food are already in the economy section.
+	pr := &w.players
+	for p := 0; p < MaxPlayers; p++ {
+		s.str(pr.name[p])
+		s.u8(pr.controller[p])
+		s.u8(pr.race[p])
+		s.u8(pr.color[p])
+		s.u8(pr.team[p])
+		s.f64(pr.startX[p])
+		s.f64(pr.startY[p])
+		s.boolean(pr.alliedVictory[p])
+	}
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			s.u16(pr.alliance[a][b])
+		}
+	}
+
 	return s.err
 }
 
@@ -996,6 +1019,18 @@ type decodedSave struct {
 	regEntries []regionEntry
 	regMembers [][]EntityID
 	regFree    []uint32
+
+	// players (#218): roster table + alliance bitset, staged then applied
+	// wholesale. Fixed-size, so plain arrays (no count prefix).
+	plName          [MaxPlayers]string
+	plController    [MaxPlayers]uint8
+	plRace          [MaxPlayers]uint8
+	plColor         [MaxPlayers]uint8
+	plTeam          [MaxPlayers]uint8
+	plStartX        [MaxPlayers]fixed.F64
+	plStartY        [MaxPlayers]fixed.F64
+	plAlliedVictory [MaxPlayers]bool
+	plAlliance      [MaxPlayers][MaxPlayers]uint16
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -1970,6 +2005,29 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	for i := range d.regFree {
 		d.regFree[i] = r.u32()
 	}
+
+	// players (#218): per-player roster + alliance bitset, slot order.
+	r.what = "players"
+	const maxPlayerNameLen = 256
+	for p := 0; p < MaxPlayers; p++ {
+		name, err := r.str(maxPlayerNameLen)
+		if err != nil {
+			return err
+		}
+		d.plName[p] = name
+		d.plController[p] = r.u8()
+		d.plRace[p] = r.u8()
+		d.plColor[p] = r.u8()
+		d.plTeam[p] = r.u8()
+		d.plStartX[p] = r.f64()
+		d.plStartY[p] = r.f64()
+		d.plAlliedVictory[p] = r.boolean()
+	}
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			d.plAlliance[a][b] = r.u16()
+		}
+	}
 	return r.err
 }
 
@@ -2873,6 +2931,22 @@ func applySave(d *decodedSave, w *World) {
 			m.set(u)
 		}
 	}
+
+	// players (#218): roster + alliance restored wholesale (slot order
+	// preserved → hash matches). Resources/food already applied via the
+	// economy section.
+	pr := &w.players
+	for p := 0; p < MaxPlayers; p++ {
+		pr.name[p] = d.plName[p]
+		pr.controller[p] = d.plController[p]
+		pr.race[p] = d.plRace[p]
+		pr.color[p] = d.plColor[p]
+		pr.team[p] = d.plTeam[p]
+		pr.startX[p] = d.plStartX[p]
+		pr.startY[p] = d.plStartY[p]
+		pr.alliedVictory[p] = d.plAlliedVictory[p]
+	}
+	pr.alliance = d.plAlliance
 
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0

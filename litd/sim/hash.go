@@ -71,6 +71,10 @@ var HashSystems = []string{
 	// scripts branch on containment — so it must be hashed. Sparse: only
 	// live regions with cells contribute (id order, ascending set cells).
 	"regions",
+	// appended by #218: per-player roster (controller/race/color/team/
+	// start/name/allied-victory) + the asymmetric alliance bitset. Slot
+	// order, append discipline keeps prior sub indices stable.
+	"players",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -578,6 +582,24 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hrg.WriteU32(uint32(len(rs.free)))
 	for _, f := range rs.free {
 		hrg.WriteU32(f)
+	}
+
+	hpl := h.next() // players (#218): roster table + alliance bitset, slot order
+	pr := &w.players
+	for p := 0; p < MaxPlayers; p++ {
+		hashString(hpl, pr.name[p])
+		hpl.WriteU8(pr.controller[p])
+		hpl.WriteU8(pr.race[p])
+		hpl.WriteU8(pr.color[p])
+		hpl.WriteU8(pr.team[p])
+		hpl.WriteI64(int64(pr.startX[p]))
+		hpl.WriteI64(int64(pr.startY[p]))
+		hpl.WriteBool(pr.alliedVictory[p])
+	}
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			hpl.WriteU16(pr.alliance[a][b])
+		}
 	}
 
 	return reg.Sum(dst)
