@@ -74,6 +74,8 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SetIntelligence", Package: "litd/api", Symbol: "Unit.SetIntelligence", GoSignature: "(v int)"},
 	{LuaName: "Unit_SetInvulnerable", Package: "litd/api", Symbol: "Unit.SetInvulnerable", GoSignature: "(on bool)"},
 	{LuaName: "Unit_SetLife", Package: "litd/api", Symbol: "Unit.SetLife", GoSignature: "(v float64)"},
+	{LuaName: "Unit_SetMaxLife", Package: "litd/api", Symbol: "Unit.SetMaxLife", GoSignature: "(v float64)"},
+	{LuaName: "Unit_SetMaxMana", Package: "litd/api", Symbol: "Unit.SetMaxMana", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetMoveSpeed", Package: "litd/api", Symbol: "Unit.SetMoveSpeed", GoSignature: "(v float64)"},
 	{LuaName: "Unit_SetName", Package: "litd/api", Symbol: "Unit.SetName", GoSignature: "(name string)"},
 	{LuaName: "Unit_SetOwner", Package: "litd/api", Symbol: "Unit.SetOwner", GoSignature: "(p Player, changeColor bool)"},

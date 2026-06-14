@@ -1291,9 +1291,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetAbilityActivatedPosX | common.j | D3 | _pending (M2 backlog)_ |
 | BlzSetAbilityActivatedPosY | common.j | D3 | _pending (M2 backlog)_ |
 | BlzGetUnitMaxHP | common.j | D5 | `litd/api.Unit.MaxLife` |
-| BlzSetUnitMaxHP | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetUnitMaxHP | common.j | D5 | `litd/api.Unit.SetMaxLife` |
 | BlzGetUnitMaxMana | common.j | D5 | `litd/api.Unit.MaxMana` |
-| BlzSetUnitMaxMana | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetUnitMaxMana | common.j | D5 | `litd/api.Unit.SetMaxMana` |
 | BlzSetItemName | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetItemDescription | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetItemDescription | common.j | unclassified | _pending (M2 backlog)_ |

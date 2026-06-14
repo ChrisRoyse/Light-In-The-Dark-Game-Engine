@@ -650,6 +650,22 @@ package = "litd/api"
 reason = "direct max-mana accessor maps onto the typed Unit.MaxMana state accessor; integer rawcode surfaces as float64 (dedup §6, representation)"
 
 [[override]]
+name = "BlzSetUnitMaxHP"
+class = "D5"
+goMapping = "Unit.SetMaxLife"
+goSignature = "(v float64)"
+package = "litd/api"
+reason = "direct max-HP setter maps onto the typed Unit.SetMaxLife state accessor (mirrors BlzGetUnitMaxHP->MaxLife); integer arg surfaces as float64 (dedup §6, representation); clamps current life down and floors at 1 (#217)"
+
+[[override]]
+name = "BlzSetUnitMaxMana"
+class = "D5"
+goMapping = "Unit.SetMaxMana"
+goSignature = "(v float64)"
+package = "litd/api"
+reason = "direct max-mana setter maps onto the typed Unit.SetMaxMana state accessor (mirrors BlzGetUnitMaxMana->MaxMana); integer arg surfaces as float64 (dedup §6, representation); clamps current mana down and floors at 0 (#217)"
+
+[[override]]
 name = "GetOwningPlayer"
 class = "D1"
 goMapping = "Unit.Owner"

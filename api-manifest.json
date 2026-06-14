@@ -454,6 +454,60 @@
       }
     },
     {
+      "name": "BlzSetUnitMaxHP",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "hp",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetMaxLife",
+        "package": "litd/api",
+        "goSignature": "(v float64)"
+      }
+    },
+    {
+      "name": "BlzSetUnitMaxMana",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "mana",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetMaxMana",
+        "package": "litd/api",
+        "goSignature": "(v float64)"
+      }
+    },
+    {
       "name": "BlzSetUnitName",
       "origin": "common.j",
       "signature": {
