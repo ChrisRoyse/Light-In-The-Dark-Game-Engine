@@ -20,6 +20,7 @@ var Bindings = []Binding{
 	{LuaName: "Ability_SetLevel", Package: "litd/api", Symbol: "Ability.SetLevel", GoSignature: "(level int)"},
 	{LuaName: "Game_CreateUnit", Package: "litd/api", Symbol: "Game.CreateUnit", GoSignature: "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"},
 	{LuaName: "PolledWait", Package: "litd/api/helpers", Symbol: "PolledWait", GoSignature: "(seconds float64)"},
+	{LuaName: "StringHash", Package: "litd/api", Symbol: "StringHash", GoSignature: "(s string) int32"},
 	{LuaName: "Unit_AcquireRange", Package: "litd/api", Symbol: "Unit.AcquireRange", GoSignature: "() float64"},
 	{LuaName: "Unit_AddAbility", Package: "litd/api", Symbol: "Unit.AddAbility", GoSignature: "(ref AbilityRef) Ability"},
 	{LuaName: "Unit_AddExperience", Package: "litd/api", Symbol: "Unit.AddExperience", GoSignature: "(xp int)"},

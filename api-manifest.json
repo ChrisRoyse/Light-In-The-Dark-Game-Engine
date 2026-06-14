@@ -3127,6 +3127,48 @@
       }
     },
     {
+      "name": "I2R",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "int-\u003ereal cast; Go uses float64(i) natively (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
+      "name": "I2S",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "int-\u003estring; Go uses strconv.Itoa/fmt (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
       "name": "IncUnitAbilityLevel",
       "origin": "common.j",
       "signature": {
@@ -3479,6 +3521,79 @@
       }
     },
     {
+      "name": "R2I",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "real-\u003eint cast; Go uses int(r) natively (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
+      "name": "R2S",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "real-\u003estring; Go uses strconv.FormatFloat/fmt (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
+      "name": "R2SW",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "width",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "precision",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "width/precision real-\u003estring; collapses onto fmt.Sprintf (math-strings-conversion.md D2). No public surface"
+      }
+    },
+    {
       "name": "RemoveUnit",
       "origin": "common.j",
       "signature": {
@@ -3498,6 +3613,48 @@
         "symbol": "Unit.Remove",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "S2I",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "string-\u003eint; Go uses strconv.Atoi (math-strings-conversion.md). No public surface"
+      }
+    },
+    {
+      "name": "S2R",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "string-\u003ereal; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface"
       }
     },
     {
@@ -4264,6 +4421,31 @@
         "symbol": "Unit.Show",
         "package": "litd/api",
         "goSignature": "(show bool)"
+      }
+    },
+    {
+      "name": "StringHash",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "StringHash",
+        "package": "litd/api",
+        "goSignature": "(s string) int32",
+        "collapsesWith": [
+          "StringHashBJ"
+        ]
       }
     },
     {

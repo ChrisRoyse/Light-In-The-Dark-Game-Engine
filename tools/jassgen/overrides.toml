@@ -1315,3 +1315,60 @@ class = "D1"
 tombstone = "gameplay-irrelevant"
 reason = "JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant)"
 
+
+# --- math-strings-conversion: typecasts + StringHash ---
+# Typecasts are pure JASS language plumbing: Go has native int/float conversions
+# and strconv/fmt. No public Go symbol (math-strings-conversion.md §"most heavily
+# tombstoned"; spec line "I2S/R2S/R2SW/I2SW -> strconv/fmt; S2I/S2R -> strconv").
+# Tombstoned gameplay-irrelevant. StringHash, by contrast, was decided to survive
+# (FNV-1a; stringhash.go ADR) and maps to the implemented free function.
+[[override]]
+name = "StringHash"
+class = "D1"
+goMapping = "StringHash"
+goSignature = "(s string) int32"
+collapsesWith = ["StringHashBJ"]
+package = "litd/api"
+reason = "the deterministic survivor of WC3 StringHash — implemented as FNV-1a/32 (stringhash.go ADR); StringHashBJ is the D1 passthrough"
+
+[[override]]
+name = "I2R"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "int->real cast; Go uses float64(i) natively (math-strings-conversion.md). No public surface"
+
+[[override]]
+name = "R2I"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "real->int cast; Go uses int(r) natively (math-strings-conversion.md). No public surface"
+
+[[override]]
+name = "I2S"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "int->string; Go uses strconv.Itoa/fmt (math-strings-conversion.md). No public surface"
+
+[[override]]
+name = "R2S"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "real->string; Go uses strconv.FormatFloat/fmt (math-strings-conversion.md). No public surface"
+
+[[override]]
+name = "R2SW"
+class = "D2"
+tombstone = "gameplay-irrelevant"
+reason = "width/precision real->string; collapses onto fmt.Sprintf (math-strings-conversion.md D2). No public surface"
+
+[[override]]
+name = "S2I"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "string->int; Go uses strconv.Atoi (math-strings-conversion.md). No public surface"
+
+[[override]]
+name = "S2R"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "string->real; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface"

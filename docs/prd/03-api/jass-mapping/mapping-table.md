@@ -115,18 +115,18 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SquareRoot | common.j | unclassified | _pending (M2 backlog)_ |
 | Pow | common.j | unclassified | _pending (M2 backlog)_ |
 | MathRound | common.j | unclassified | _pending (M2 backlog)_ |
-| I2R | common.j | unclassified | _pending (M2 backlog)_ |
-| R2I | common.j | unclassified | _pending (M2 backlog)_ |
-| I2S | common.j | unclassified | _pending (M2 backlog)_ |
-| R2S | common.j | unclassified | _pending (M2 backlog)_ |
-| R2SW | common.j | unclassified | _pending (M2 backlog)_ |
-| S2I | common.j | unclassified | _pending (M2 backlog)_ |
-| S2R | common.j | unclassified | _pending (M2 backlog)_ |
+| I2R | common.j | D1 | **tombstoned** (gameplay-irrelevant): int->real cast; Go uses float64(i) natively (math-strings-conversion.md). No public surface |
+| R2I | common.j | D1 | **tombstoned** (gameplay-irrelevant): real->int cast; Go uses int(r) natively (math-strings-conversion.md). No public surface |
+| I2S | common.j | D1 | **tombstoned** (gameplay-irrelevant): int->string; Go uses strconv.Itoa/fmt (math-strings-conversion.md). No public surface |
+| R2S | common.j | D1 | **tombstoned** (gameplay-irrelevant): real->string; Go uses strconv.FormatFloat/fmt (math-strings-conversion.md). No public surface |
+| R2SW | common.j | D2 | **tombstoned** (gameplay-irrelevant): width/precision real->string; collapses onto fmt.Sprintf (math-strings-conversion.md D2). No public surface |
+| S2I | common.j | D1 | **tombstoned** (gameplay-irrelevant): string->int; Go uses strconv.Atoi (math-strings-conversion.md). No public surface |
+| S2R | common.j | D1 | **tombstoned** (gameplay-irrelevant): string->real; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface |
 | GetHandleId | common.j | unclassified | _pending (M2 backlog)_ |
 | SubString | common.j | unclassified | _pending (M2 backlog)_ |
 | StringLength | common.j | unclassified | _pending (M2 backlog)_ |
 | StringCase | common.j | unclassified | _pending (M2 backlog)_ |
-| StringHash | common.j | unclassified | _pending (M2 backlog)_ |
+| StringHash | common.j | D1 | `litd/api.StringHash` |
 | GetLocalizedString | common.j | unclassified | _pending (M2 backlog)_ |
 | GetLocalizedHotkey | common.j | unclassified | _pending (M2 backlog)_ |
 | SetMapName | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1648,7 +1648,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ClearTextMessagesBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SubStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetHandleIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| StringHashBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| StringHashBJ | blizzard.j | D1 | `litd/api.StringHash` (D3 collapse → StringHash) |
 | TriggerRegisterTimerEventPeriodic | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterTimerEventSingle | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterTimerExpireEventBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
