@@ -7,9 +7,9 @@ package sim
 // unit containment. Containment is gameplay state — a script can branch
 // on it — so the store serializes and feeds the determinism hash.
 //
-// This file is the containment core. Enter/leave events
-// (EvRegionEnter/Leave during the movement phase) are a separate
-// capability tracked on #371; nothing here tracks per-unit membership.
+// Beyond containment, regionSystem (run in tick phase 6) maintains
+// per-region membership and fires EvRegionEnter/EvRegionLeave on cell
+// transitions, including a leave when a member dies inside the region.
 //
 // Cells: a region owns a bitset over GridSize*GridSize cells. The bitset
 // is lazily allocated, so an empty region (and the common no-region map)
@@ -40,22 +40,33 @@ const (
 // regionBitsetWords is the uint64 count to cover every cell.
 const regionBitsetWords = (regionCellCount + 63) / 64
 
-// regionEntry is one region slot. cells is nil until the first add.
+// regionEntry is one region slot. cells is nil until the first add;
+// members is the set of units currently inside (maintained by
+// regionSystem for edge-triggered enter/leave), lazily allocated.
 type regionEntry struct {
-	cells []uint64 // bitset over regionCellCount cells; nil = empty
-	gen   uint32
-	alive bool
+	cells   []uint64 // bitset over regionCellCount cells; nil = empty
+	members *presenceSet
+	gen     uint32
+	alive   bool
 }
 
 // RegionStore owns all regions. Slots recycle through a free list under
-// bumped generations.
+// bumped generations. rowCap/entityCap size each region's membership set.
 type RegionStore struct {
-	entries []regionEntry
-	free    []uint32
+	entries   []regionEntry
+	free      []uint32
+	rowCap    int
+	entityCap int
 }
 
-// NewRegionStore returns an empty store.
-func NewRegionStore() *RegionStore { return &RegionStore{} }
+// NewRegionStore returns an empty store. rowCap/entityCap match the unit
+// store dimensions and size the per-region membership sets.
+func NewRegionStore(rowCap, entityCap int) *RegionStore {
+	if rowCap <= 0 || entityCap <= 0 || rowCap > entityCap {
+		panic("sim: region store caps must satisfy 0 < rowCap <= entityCap")
+	}
+	return &RegionStore{rowCap: rowCap, entityCap: entityCap}
+}
 
 // regionCellAxis maps one world coordinate to its clamped cell axis
 // index. Off-grid coordinates clamp to the border cell — they stay
@@ -83,7 +94,8 @@ func (s *RegionStore) NewRegion() (uint32, uint32) {
 		s.free = s.free[:n-1]
 		e := &s.entries[id]
 		e.alive = true
-		e.cells = nil // generation was already bumped at remove
+		e.cells = nil   // generation was already bumped at remove
+		e.members = nil // fresh region has no members
 		return id, e.gen
 	}
 	s.entries = append(s.entries, regionEntry{gen: 1, alive: true})
@@ -99,6 +111,7 @@ func (s *RegionStore) Remove(id, gen uint32) bool {
 	}
 	e.alive = false
 	e.cells = nil
+	e.members = nil
 	e.gen++
 	if e.gen == 0 {
 		e.gen = 1
@@ -133,7 +146,7 @@ func (e *regionEntry) cellsForWrite() []uint64 {
 func setBit(b []uint64, cell int32)   { b[cell>>6] |= 1 << uint(cell&63) }
 func clearBit(b []uint64, cell int32) { b[cell>>6] &^= 1 << uint(cell&63) }
 func hasBit(b []uint64, cell int32) bool {
-	return b != nil && b[cell>>6]&(1<<uint(cell&63)) != 0
+	return b != nil && cell >= 0 && b[cell>>6]&(1<<uint(cell&63)) != 0
 }
 
 // rectCellBounds returns the inclusive cell index ranges a world rect
@@ -261,4 +274,110 @@ func (e *regionEntry) popcount() int {
 		n += bits.OnesCount64(w)
 	}
 	return n
+}
+
+// Region enter/leave events (#241). Src = the unit; Arg packs the region
+// handle as id|gen<<32 so a handler can rebuild a valid Region.
+const (
+	EvRegionEnter uint16 = 26
+	EvRegionLeave uint16 = 27
+)
+
+// regionArg packs a region handle into an event Arg.
+func regionArg(id, gen uint32) int64 { return int64(id) | int64(gen)<<32 }
+
+// membersForWrite lazily allocates the region's membership set.
+func (s *RegionStore) membersForWrite(e *regionEntry) *presenceSet {
+	if e.members == nil {
+		e.members = newPresenceSet(s.rowCap, s.entityCap)
+	}
+	return e.members
+}
+
+// regionSystem maintains region membership and fires enter/leave events,
+// run in phase 6 after positions are final for the tick. Two passes in a
+// fixed order keep it deterministic:
+//
+//	move pass — per region (id order) × per alive unit (transform row
+//	order): a cell-membership change since last tick fires enter or leave.
+//	death pass — units killed this tick that are still members get a leave
+//	(the death-inside-region case) and are dropped, which also prevents a
+//	recycled entity slot from inheriting stale membership.
+//
+// Allocation-free at steady state: presenceSet ops and Emit touch only
+// preallocated storage.
+func (w *World) regionSystem() {
+	rs := w.Regions
+	for id := range rs.entries {
+		e := &rs.entries[id]
+		if !e.alive || e.cells == nil {
+			// No cells → nobody can be inside; drop any stale members.
+			if e != nil && e.members != nil && e.members.count > 0 {
+				w.regionDrainMembers(uint32(id), e)
+			}
+			continue
+		}
+		gen := e.gen
+		// leave pass: walk current members, emit leave for any no longer
+		// inside (iterate from the tail so swap-down removal is stable).
+		if e.members != nil {
+			for i := e.members.count - 1; i >= 0; i-- {
+				unit := e.members.Entity[i]
+				if w.Ents.Alive(unit) && hasBit(e.cells, w.unitCellOrNeg(unit)) {
+					continue
+				}
+				e.members.Remove(unit)
+				w.Emit(Event{Kind: EvRegionLeave, Src: unit, Arg: regionArg(uint32(id), gen)})
+			}
+		}
+		// enter pass: every alive unit inside but not yet a member enters.
+		t := w.Transforms
+		for r := int32(0); r < t.Count(); r++ {
+			unit := t.Entity[r]
+			if !w.Ents.Alive(unit) {
+				continue
+			}
+			if !hasBit(e.cells, regionCellOf(t.Pos[r])) {
+				continue
+			}
+			m := rs.membersForWrite(e)
+			if m.Has(unit) {
+				continue
+			}
+			m.set(unit)
+			w.Emit(Event{Kind: EvRegionEnter, Src: unit, Arg: regionArg(uint32(id), gen)})
+		}
+	}
+	// death pass: a unit killed this tick that is still a member leaves now.
+	for _, dead := range w.killed {
+		for id := range rs.entries {
+			e := &rs.entries[id]
+			if !e.alive || e.members == nil {
+				continue
+			}
+			if e.members.Remove(dead) {
+				w.Emit(Event{Kind: EvRegionLeave, Src: dead, Arg: regionArg(uint32(id), e.gen)})
+			}
+		}
+	}
+}
+
+// regionDrainMembers emits a leave for every current member and clears the
+// set (used when a region's cells are gone but members linger).
+func (w *World) regionDrainMembers(id uint32, e *regionEntry) {
+	for i := e.members.count - 1; i >= 0; i-- {
+		unit := e.members.Entity[i]
+		e.members.Remove(unit)
+		w.Emit(Event{Kind: EvRegionLeave, Src: unit, Arg: regionArg(id, e.gen)})
+	}
+}
+
+// unitCellOrNeg returns the unit's region cell, or -1 when it has no
+// transform (so a hasBit test fails safely).
+func (w *World) unitCellOrNeg(id EntityID) int32 {
+	r := w.Transforms.Row(id)
+	if r < 0 {
+		return -1
+	}
+	return regionCellOf(w.Transforms.Pos[r])
 }

@@ -1505,8 +1505,9 @@ name = "GetTriggerUnit"
 class = "D2"
 goMapping = "Event.Unit"
 goSignature = "() Unit"
+collapsesWith = ["GetEnteringUnit", "GetLeavingUnit"]
 package = "litd/api"
-reason = "the event's primary unit; thread-local getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+reason = "the event's primary unit; thread-local getter becomes the Event snapshot accessor (event_payload.go, R-API-4). Region enter/leave getters (GetEnteringUnit/GetLeavingUnit) are the same primary-unit accessor and collapse here (#241)"
 
 [[override]]
 name = "GetKillingUnit"
@@ -1935,3 +1936,53 @@ goMapping = "Game.WorldBounds"
 goSignature = "() Rect"
 package = "litd/api"
 reason = "world playable-area bounds map onto Game.WorldBounds (dedup §2); deterministic grid-derived rect"
+
+# --- Region enter/leave events (#241) ---------------------------------------
+# Enter/leave fire through OnEvent(EventRegionEnter/Leave); the trigger-
+# register zoo is superseded, the triggering-region getter becomes an Event
+# accessor, and the entering/leaving-unit getters collapse onto Event.Unit
+# (see GetTriggerUnit above).
+
+[[override]]
+name = "GetTriggeringRegion"
+class = "D1"
+goMapping = "Event.Region"
+goSignature = "() Region"
+package = "litd/api"
+reason = "thread-local current-region getter becomes the Event snapshot accessor Event.Region (event_payload.go, R-API-4)"
+
+[[override]]
+name = "TriggerRegisterEnterRegion"
+class = "D1"
+tombstone = "superseded"
+reason = "trigger+boolexpr region-enter registration superseded by OnEvent(EventRegionEnter) (public-api-design.md R-API-4, #241)"
+
+[[override]]
+name = "TriggerRegisterLeaveRegion"
+class = "D1"
+tombstone = "superseded"
+reason = "trigger+boolexpr region-leave registration superseded by OnEvent(EventRegionLeave) (public-api-design.md R-API-4, #241)"
+
+[[override]]
+name = "TriggerRegisterEnterRegionSimple"
+class = "D1"
+tombstone = "superseded"
+reason = "null-filter region-enter wrapper superseded by OnEvent(EventRegionEnter) (#241)"
+
+[[override]]
+name = "TriggerRegisterLeaveRegionSimple"
+class = "D1"
+tombstone = "superseded"
+reason = "null-filter region-leave wrapper superseded by OnEvent(EventRegionLeave) (#241)"
+
+[[override]]
+name = "TriggerRegisterEnterRectSimple"
+class = "D1"
+tombstone = "superseded"
+reason = "rect-as-region enter wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionEnter) (#241)"
+
+[[override]]
+name = "TriggerRegisterLeaveRectSimple"
+class = "D1"
+tombstone = "superseded"
+reason = "rect-as-region leave wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionLeave) (#241)"

@@ -300,11 +300,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetEventGameState | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterGameEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | GetWinningPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterEnterRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggeringRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEnteringUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| TriggerRegisterLeaveRegion | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLeavingUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| TriggerRegisterEnterRegion | common.j | D1 | **tombstoned** (superseded): trigger+boolexpr region-enter registration superseded by OnEvent(EventRegionEnter) (public-api-design.md R-API-4, #241) |
+| GetTriggeringRegion | common.j | D1 | `litd/api.Event.Region` |
+| GetEnteringUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
+| TriggerRegisterLeaveRegion | common.j | D1 | **tombstoned** (superseded): trigger+boolexpr region-leave registration superseded by OnEvent(EventRegionLeave) (public-api-design.md R-API-4, #241) |
+| GetLeavingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | TriggerRegisterTrackableHitEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterTrackableTrackEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterCommandEvent | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1663,10 +1663,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterPlayerEventAllianceChanged | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterPlayerEventEndCinematic | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterGameStateEventTimeOfDay | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterEnterRegionSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterLeaveRegionSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterEnterRectSimple | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterLeaveRectSimple | blizzard.j | D4 | _pending (M2 backlog)_ |
+| TriggerRegisterEnterRegionSimple | blizzard.j | D1 | **tombstoned** (superseded): null-filter region-enter wrapper superseded by OnEvent(EventRegionEnter) (#241) |
+| TriggerRegisterLeaveRegionSimple | blizzard.j | D1 | **tombstoned** (superseded): null-filter region-leave wrapper superseded by OnEvent(EventRegionLeave) (#241) |
+| TriggerRegisterEnterRectSimple | blizzard.j | D1 | **tombstoned** (superseded): rect-as-region enter wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionEnter) (#241) |
+| TriggerRegisterLeaveRectSimple | blizzard.j | D1 | **tombstoned** (superseded): rect-as-region leave wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionLeave) (#241) |
 | TriggerRegisterDistanceBetweenUnits | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterUnitInRangeSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterUnitLifeEvent | blizzard.j | D2 | _pending (M2 backlog)_ |

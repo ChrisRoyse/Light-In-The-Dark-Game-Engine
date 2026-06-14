@@ -16,7 +16,7 @@ func ff(v float64) fixed.F64 { return fixed.F64(int64(v) << 32) }
 // TestRegionContainmentFSV — happy path + edge audit on the cell store.
 // SoT: ContainsPoint after known adds, plus the popcount of set cells.
 func TestRegionContainmentFSV(t *testing.T) {
-	rs := NewRegionStore()
+	rs := NewRegionStore(64, 256)
 	id, gen := rs.NewRegion()
 	t.Logf("FSV region created id=%d gen=%d alive=%v popcount(before)=%d",
 		id, gen, rs.Alive(id, gen), rs.live(id, gen).popcount())
@@ -74,7 +74,7 @@ func TestRegionContainmentFSV(t *testing.T) {
 // generation; a stale handle is invalid and its ops are no-ops, never
 // aliasing the live region that reuses the slot. SoT: Alive + Contains.
 func TestRegionStaleHandleFSV(t *testing.T) {
-	rs := NewRegionStore()
+	rs := NewRegionStore(64, 256)
 	id1, gen1 := rs.NewRegion()
 	rs.AddRect(id1, gen1, ff(0), ff(0), ff(32), ff(32))
 	rs.Remove(id1, gen1)

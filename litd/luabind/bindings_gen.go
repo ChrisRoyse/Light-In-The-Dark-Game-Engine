@@ -21,6 +21,7 @@ var Bindings = []Binding{
 	{LuaName: "Event_Damage", Package: "litd/api", Symbol: "Event.Damage", GoSignature: "() float64"},
 	{LuaName: "Event_KillingUnit", Package: "litd/api", Symbol: "Event.KillingUnit", GoSignature: "() Unit"},
 	{LuaName: "Event_Player", Package: "litd/api", Symbol: "Event.Player", GoSignature: "() Player"},
+	{LuaName: "Event_Region", Package: "litd/api", Symbol: "Event.Region", GoSignature: "() Region"},
 	{LuaName: "Event_Source", Package: "litd/api", Symbol: "Event.Source", GoSignature: "() Unit"},
 	{LuaName: "Event_Target", Package: "litd/api", Symbol: "Event.Target", GoSignature: "() Unit"},
 	{LuaName: "Event_Unit", Package: "litd/api", Symbol: "Event.Unit", GoSignature: "() Unit"},

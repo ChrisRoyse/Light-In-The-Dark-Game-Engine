@@ -555,6 +555,110 @@
       }
     },
     {
+      "name": "TriggerRegisterEnterRectSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "rect-as-region enter wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionEnter) (#241)"
+      }
+    },
+    {
+      "name": "TriggerRegisterEnterRegionSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "null-filter region-enter wrapper superseded by OnEvent(EventRegionEnter) (#241)"
+      }
+    },
+    {
+      "name": "TriggerRegisterLeaveRectSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "rect-as-region leave wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionLeave) (#241)"
+      }
+    },
+    {
+      "name": "TriggerRegisterLeaveRegionSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "null-filter region-leave wrapper superseded by OnEvent(EventRegionLeave) (#241)"
+      }
+    },
+    {
       "name": "TriggerRegisterTimerEventPeriodic",
       "origin": "blizzard.j",
       "signature": {
@@ -3495,7 +3599,27 @@
       "goMapping": {
         "symbol": "Event.Unit",
         "package": "litd/api",
-        "goSignature": "() Unit"
+        "goSignature": "() Unit",
+        "collapsesWith": [
+          "GetEnteringUnit",
+          "GetLeavingUnit"
+        ]
+      }
+    },
+    {
+      "name": "GetTriggeringRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "region"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Region",
+        "package": "litd/api",
+        "goSignature": "() Region"
       }
     },
     {
@@ -6185,6 +6309,68 @@
           "CreateTimerBJ",
           "StartTimerBJ"
         ]
+      }
+    },
+    {
+      "name": "TriggerRegisterEnterRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger+boolexpr region-enter registration superseded by OnEvent(EventRegionEnter) (public-api-design.md R-API-4, #241)"
+      }
+    },
+    {
+      "name": "TriggerRegisterLeaveRegion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichTrigger",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichRegion",
+            "jassType": "region",
+            "tsType": "region"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "trigger+boolexpr region-leave registration superseded by OnEvent(EventRegionLeave) (public-api-design.md R-API-4, #241)"
       }
     },
     {

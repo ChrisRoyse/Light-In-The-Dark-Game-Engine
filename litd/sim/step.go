@@ -145,6 +145,7 @@ func (w *World) phaseEvents() {
 		}
 		w.Emit(Event{Kind: EvUnitDeath, Src: w.killed[i]})
 	}
+	w.regionSystem() // region enter/leave (incl. death-inside leaves) before flush (#241)
 	w.resolveMatchResults()
 	w.flushEvents()
 }

@@ -53,6 +53,12 @@ const (
 	// EventDefeat fires when a player first reaches ResultLost or
 	// ResultLeft. Player() is the defeated/left player.
 	EventDefeat
+	// EventRegionEnter fires when a unit enters a region's cells. Unit()
+	// is the entering unit; Region() is the region.
+	EventRegionEnter
+	// EventRegionLeave fires when a unit leaves a region's cells (or dies
+	// inside it). Unit() is the leaving unit; Region() is the region.
+	EventRegionLeave
 )
 
 // simKindOf maps each public event kind to its sim event kind. The map
@@ -73,6 +79,8 @@ var simKindOf = map[EventKind]uint16{
 	EventMissileExpired:    23, // sim.EvMissileExpired
 	EventVictory:           sim.EvVictory,
 	EventDefeat:            sim.EvDefeat,
+	EventRegionEnter:       sim.EvRegionEnter,
+	EventRegionLeave:       sim.EvRegionLeave,
 }
 
 // Event is the payload handed to an OnEvent handler — a plain value
@@ -164,6 +172,18 @@ func (e Event) Damage() float64 {
 		return 0
 	}
 	return toFloat(fixed.F64(e.arg))
+}
+
+// Region returns the region on a region enter/leave event, else the zero
+// Region. The handle is rebuilt from the packed (id, generation) arg, so
+// it is Valid only while the region still exists. JASS:
+// GetTriggeringRegion.
+func (e Event) Region() Region {
+	switch e.kind {
+	case EventRegionEnter, EventRegionLeave:
+		return Region{id: uint32(e.arg), gen: uint32(e.arg >> 32), g: e.g}
+	}
+	return Region{}
 }
 
 // Player returns the player carried by a player-scoped event, else the

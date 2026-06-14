@@ -564,6 +564,15 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		}
 		hrg.WriteU32(uint32(e.popcount()))
 		e.eachSetCell(func(cell int32) { hrg.WriteU32(uint32(cell)) })
+		// membership (#241): units currently inside, in presence-row order
+		if e.members == nil {
+			hrg.WriteU32(0)
+		} else {
+			hrg.WriteU32(uint32(e.members.count))
+			for i := int32(0); i < e.members.count; i++ {
+				hrg.WriteU32(uint32(e.members.Entity[i]))
+			}
+		}
 	}
 	// free-list order steers future region-slot reuse (mirror #334 discipline)
 	hrg.WriteU32(uint32(len(rs.free)))

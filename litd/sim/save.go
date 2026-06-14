@@ -43,6 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v19: region section grows per-region membership (units currently inside,
+// in presence-row order) after the cell list — needed so enter/leave edge
+// triggers match the no-save path across a load (#241).
 // v18: region section appended after the subscription table: per region
 // (id order) gen/alive + ascending set-cell indices, then the free-list
 // order (#241).
@@ -77,7 +80,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 18
+const SaveFormatVersion uint32 = 19
 
 // ---- little-endian writer / reader ----
 
@@ -710,6 +713,15 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 		s.u32(uint32(e.popcount()))
 		e.eachSetCell(func(cell int32) { s.u32(uint32(cell)) })
+		// membership (#241): units currently inside, presence-row order
+		if e.members == nil {
+			s.u32(0)
+		} else {
+			s.u32(uint32(e.members.count))
+			for i := int32(0); i < e.members.count; i++ {
+				s.ent(e.members.Entity[i])
+			}
+		}
 	}
 	s.u32(uint32(len(rs.free)))
 	for _, f := range rs.free {
@@ -978,8 +990,11 @@ type decodedSave struct {
 
 	subs []kindSubs
 
-	// regions (#241): decoded region slots in id order + free list.
+	// regions (#241): decoded region slots in id order + free list, plus
+	// per-region membership (units inside) rebuilt into presence sets at
+	// apply time (the store caps are needed to size them).
 	regEntries []regionEntry
+	regMembers [][]EntityID
 	regFree    []uint32
 }
 
@@ -1897,6 +1912,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return fmt.Errorf("sim: save: region count %d exceeds limit", nReg)
 	}
 	d.regEntries = make([]regionEntry, nReg)
+	d.regMembers = make([][]EntityID, nReg)
 	for i := range d.regEntries {
 		e := &d.regEntries[i]
 		e.gen = r.u32()
@@ -1911,26 +1927,37 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		if nCells > regionCellCount {
 			return fmt.Errorf("sim: save: region %d cell count %d exceeds %d", i, nCells, regionCellCount)
 		}
-		if nCells == 0 {
-			continue
+		if nCells > 0 {
+			b := make([]uint64, regionBitsetWords)
+			prev := int64(-1)
+			for c := uint32(0); c < nCells; c++ {
+				cell := int32(r.u32())
+				if r.err != nil {
+					return r.err
+				}
+				if cell < 0 || cell >= regionCellCount {
+					return fmt.Errorf("sim: save: region %d cell index %d out of range", i, cell)
+				}
+				if int64(cell) <= prev {
+					return fmt.Errorf("sim: save: region %d cells not strictly ascending at %d", i, cell)
+				}
+				prev = int64(cell)
+				setBit(b, cell)
+			}
+			e.cells = b
 		}
-		b := make([]uint64, regionBitsetWords)
-		prev := int64(-1)
-		for c := uint32(0); c < nCells; c++ {
-			cell := int32(r.u32())
-			if r.err != nil {
-				return r.err
-			}
-			if cell < 0 || cell >= regionCellCount {
-				return fmt.Errorf("sim: save: region %d cell index %d out of range", i, cell)
-			}
-			if int64(cell) <= prev {
-				return fmt.Errorf("sim: save: region %d cells not strictly ascending at %d", i, cell)
-			}
-			prev = int64(cell)
-			setBit(b, cell)
+		// membership (#241): units currently inside, presence-row order
+		nMem := r.u32()
+		if nMem > uint32(w.Regions.rowCap) {
+			return fmt.Errorf("sim: save: region %d member count %d exceeds cap %d", i, nMem, w.Regions.rowCap)
 		}
-		e.cells = b
+		if nMem > 0 {
+			mem := make([]EntityID, nMem)
+			for m := range mem {
+				mem[m] = r.ent()
+			}
+			d.regMembers[i] = mem
+		}
 	}
 	nFree = r.u32()
 	if r.err != nil {
@@ -2830,9 +2857,22 @@ func applySave(d *decodedSave, w *World) {
 	// subscriptions
 	w.subs = d.subs
 
-	// regions (#241): replace the store wholesale with the decoded slots.
+	// regions (#241): replace the store wholesale with the decoded slots,
+	// then rebuild each region's membership presence set from the saved
+	// in-order unit list (presence-row order preserved → hash matches).
 	w.Regions.entries = d.regEntries
 	w.Regions.free = d.regFree
+	for i := range d.regMembers {
+		mem := d.regMembers[i]
+		if len(mem) == 0 {
+			continue
+		}
+		e := &w.Regions.entries[i]
+		m := w.Regions.membersForWrite(e)
+		for _, u := range mem {
+			m.set(u)
+		}
+	}
 
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0

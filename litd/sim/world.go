@@ -330,7 +330,7 @@ func NewWorld(requested Caps) *World {
 		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		XPSuspends:         newPresenceSet(caps.Units, idxSpace),
 		Pauses:             newPresenceSet(caps.Units, idxSpace),
-		Regions:            NewRegionStore(),
+		Regions:            NewRegionStore(caps.Units, idxSpace),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
 		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),

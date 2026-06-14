@@ -91,6 +91,82 @@ func TestRegionWorldBoundsFSV(t *testing.T) {
 	}
 }
 
+// TestRegionEnterLeaveFSV — a unit walking (teleporting) into and out of
+// a region fires exactly one Enter then one Leave, each carrying the
+// right unit and a valid region. SoT: the dispatch trace.
+func TestRegionEnterLeaveFSV(t *testing.T) {
+	type ev struct {
+		kind string
+		in   bool // unit==subject
+		rgOK bool
+	}
+	scenario := func() []ev {
+		w := sim.NewWorld(sim.Caps{Units: 8})
+		g := newGame(w)
+		rg := g.NewRegion()
+		rg.AddRect(NewRect(Vec2{1000, 1000}, Vec2{2000, 2000}))
+		u, _ := unitAt(t, w, g, 0, 100, 100) // start outside
+
+		var trace []ev
+		g.OnEvent(EventRegionEnter, func(e Event) {
+			trace = append(trace, ev{"enter", e.Unit() == u, e.Region().Valid()})
+		})
+		g.OnEvent(EventRegionLeave, func(e Event) {
+			trace = append(trace, ev{"leave", e.Unit() == u, e.Region().Valid()})
+		})
+
+		stepN(w, 1) // outside: nothing
+		u.SetPosition(Vec2{1500, 1500})
+		stepN(w, 1) // inside: enter
+		u.SetPosition(Vec2{100, 100})
+		stepN(w, 1) // outside: leave
+		stepN(w, 2) // settle: nothing more
+		return trace
+	}
+	r1 := scenario()
+	r2 := scenario()
+	t.Logf("FSV enter/leave trace run1=%+v run2=%+v", r1, r2)
+	if len(r1) != 2 || r1[0].kind != "enter" || r1[1].kind != "leave" {
+		t.Fatalf("trace = %+v, want [enter leave]", r1)
+	}
+	if !r1[0].in || !r1[1].in || !r1[0].rgOK || !r1[1].rgOK {
+		t.Fatalf("trace payloads wrong (unit/region): %+v", r1)
+	}
+	if len(r2) != len(r1) || r1[0] != r2[0] || r1[1] != r2[1] {
+		t.Fatalf("enter/leave nondeterministic: %+v vs %+v", r1, r2)
+	}
+}
+
+// TestRegionDeathLeaveFSV — a unit that dies inside a region fires a
+// Leave (the death-inside-region case). SoT: the dispatch trace.
+func TestRegionDeathLeaveFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 8})
+	g := newGame(w)
+	rg := g.NewRegion()
+	rg.AddRect(NewRect(Vec2{0, 0}, Vec2{500, 500}))
+	u, _ := unitAt(t, w, g, 0, 200, 200) // inside
+
+	leaves := 0
+	enters := 0
+	g.OnEvent(EventRegionEnter, func(Event) { enters++ })
+	g.OnEvent(EventRegionLeave, func(e Event) {
+		if e.Unit() == u {
+			leaves++
+		}
+	})
+	stepN(w, 1) // enter fires (inside)
+	t.Logf("FSV after entering: enters=%d leaves=%d", enters, leaves)
+	u.Kill()
+	stepN(w, 1) // dies inside -> leave
+	t.Logf("FSV after death: enters=%d leaves=%d unit.valid=%v", enters, leaves, u.Valid())
+	if enters != 1 {
+		t.Fatalf("enters=%d, want 1", enters)
+	}
+	if leaves != 1 {
+		t.Fatalf("death-inside-region leave count=%d, want 1", leaves)
+	}
+}
+
 // TestRegionZeroValueNoOpFSV — the zero-value Region is inert (R-API-5).
 func TestRegionZeroValueNoOpFSV(t *testing.T) {
 	var z Region
