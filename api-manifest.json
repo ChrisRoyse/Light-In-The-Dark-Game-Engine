@@ -8909,10 +8909,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "terrain Z sampling needs a real heightfield; flat-0 would be a fake SoT — deferred to the heightfield work tracked in #371 (location→Vec2 leaves no Z channel in v1)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.TerrainHeight",
+        "package": "litd/api",
+        "goSignature": "(p Vec2) float64"
       }
     },
     {

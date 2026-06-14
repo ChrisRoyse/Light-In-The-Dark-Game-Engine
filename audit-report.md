@@ -10,8 +10,8 @@ Source functions ......... 2642  (common.j+blizzard.j = 2519, +commonai = 2642)
   Classified (D5) .......   36
   Unclassified ..........   1124
 Disposition
-  Mapped ................   186
-  Tombstoned ............   536  (superseded 330, gameplay-irrelevant 104, deprecated 3, deferred-v2 99)
+  Mapped ................   187
+  Tombstoned ............   535  (superseded 330, gameplay-irrelevant 104, deprecated 3, deferred-v2 98)
   Collapsed (D3 members) .   109
   Unmapped ..............   1811
 commonai capability tombstones: 0 (must be 0)

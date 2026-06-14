@@ -75,6 +75,10 @@ var HashSystems = []string{
 	// start/name/allied-victory) + the asymmetric alliance bitset. Slot
 	// order, append discipline keeps prior sub indices stable.
 	"players",
+	// appended by #371: terrain heightfield (grid dims/origin/cell + samples
+	// in row-major order). Deterministic sim read behind TerrainHeight;
+	// unbound contributes only the zero dims.
+	"heightfield",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -605,6 +609,17 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		for b := 0; b < MaxPlayers; b++ {
 			hpl.WriteU16(pr.alliance[a][b])
 		}
+	}
+
+	hhf := h.next() // heightfield (#371): dims/origin/cell, then samples
+	hf := &w.height
+	hhf.WriteU32(uint32(hf.cols))
+	hhf.WriteU32(uint32(hf.rows))
+	hhf.WriteI64(int64(hf.originX))
+	hhf.WriteI64(int64(hf.originY))
+	hhf.WriteI64(int64(hf.cellSize))
+	for _, s := range hf.samples {
+		hhf.WriteI64(int64(s))
 	}
 
 	return reg.Sum(dst)

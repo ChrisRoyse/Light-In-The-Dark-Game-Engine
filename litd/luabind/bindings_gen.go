@@ -53,6 +53,7 @@ var Bindings = []Binding{
 	{LuaName: "Game_SetTimeOfDayScale", Package: "litd/api", Symbol: "Game.SetTimeOfDayScale", GoSignature: "(s float64)"},
 	{LuaName: "Game_Storage", Package: "litd/api", Symbol: "Game.Storage", GoSignature: "() *Storage"},
 	{LuaName: "Game_SuspendTimeOfDay", Package: "litd/api", Symbol: "Game.SuspendTimeOfDay", GoSignature: "(suspended bool)"},
+	{LuaName: "Game_TerrainHeight", Package: "litd/api", Symbol: "Game.TerrainHeight", GoSignature: "(p Vec2) float64"},
 	{LuaName: "Game_TimeOfDay", Package: "litd/api", Symbol: "Game.TimeOfDay", GoSignature: "() float64"},
 	{LuaName: "Game_TimeOfDayScale", Package: "litd/api", Symbol: "Game.TimeOfDayScale", GoSignature: "() float64"},
 	{LuaName: "Game_UnitsIn", Package: "litd/api", Symbol: "Game.UnitsIn", GoSignature: "(rect Rect, filter UnitFilter) []Unit"},

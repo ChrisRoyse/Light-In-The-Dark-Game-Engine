@@ -2002,8 +2002,10 @@ reason = "random-point-in-rect collapses location→Vec2 (D3); draws X then Y fr
 [[override]]
 name = "GetLocationZ"
 class = "D3"
-tombstone = "deferred-v2"
-reason = "terrain Z sampling needs a real heightfield; flat-0 would be a fake SoT — deferred to the heightfield work tracked in #371 (location→Vec2 leaves no Z channel in v1)"
+goMapping = "Game.TerrainHeight"
+goSignature = "(p Vec2) float64"
+package = "litd/api"
+reason = "#371: terrain Z now sampled from a real deterministic heightfield (World.TerrainHeight, bilinear); location→Vec2 so the (x,y) reals fold into one point arg"
 
 # ============================================================================
 # Players & forces (#218; jass-mapping/players-and-forces.md)

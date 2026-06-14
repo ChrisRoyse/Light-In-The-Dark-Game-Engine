@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v22: terrain heightfield (grid dims/origin/cell + row-major samples)
+// appended after the player section (#371).
 // v21: four per-player difficulty handicaps (handicap / handicapDamage /
 // handicapXP / handicapReviveTime) interleaved into each roster slot (#373).
 // v20: player section appended after regions: per-player roster
@@ -86,7 +88,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 21
+const SaveFormatVersion uint32 = 22
 
 // ---- little-endian writer / reader ----
 
@@ -758,6 +760,17 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
+	// heightfield (#371, v22): dims/origin/cell then row-major samples.
+	hf := &w.height
+	s.u32(uint32(hf.cols))
+	s.u32(uint32(hf.rows))
+	s.f64(hf.originX)
+	s.f64(hf.originY)
+	s.f64(hf.cellSize)
+	for _, v := range hf.samples {
+		s.f64(v)
+	}
+
 	return s.err
 }
 
@@ -1043,6 +1056,11 @@ type decodedSave struct {
 	plHandicapDamage     [MaxPlayers]fixed.F64
 	plHandicapXP         [MaxPlayers]fixed.F64
 	plHandicapReviveTime [MaxPlayers]fixed.F64
+
+	// heightfield (#371, v22): staged then applied wholesale.
+	hfCols, hfRows                int32
+	hfOriginX, hfOriginY, hfCell fixed.F64
+	hfSamples                    []fixed.F64
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2044,6 +2062,32 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 			d.plAlliance[a][b] = r.u16()
 		}
 	}
+
+	// heightfield (#371, v22): dims/origin/cell then row-major samples.
+	r.what = "heightfield"
+	d.hfCols = int32(r.u32())
+	d.hfRows = int32(r.u32())
+	d.hfOriginX = r.f64()
+	d.hfOriginY = r.f64()
+	d.hfCell = r.f64()
+	if r.err != nil {
+		return r.err
+	}
+	// fail-closed on a corrupt/oversized grid before allocating.
+	const maxHeightSamples = 1 << 24
+	if d.hfCols < 0 || d.hfRows < 0 {
+		return fmt.Errorf("sim: save: negative heightfield dims %dx%d", d.hfCols, d.hfRows)
+	}
+	nh := int64(d.hfCols) * int64(d.hfRows)
+	if nh > maxHeightSamples {
+		return fmt.Errorf("sim: save: heightfield %dx%d exceeds cap %d", d.hfCols, d.hfRows, maxHeightSamples)
+	}
+	if nh > 0 {
+		d.hfSamples = make([]fixed.F64, nh)
+		for i := range d.hfSamples {
+			d.hfSamples[i] = r.f64()
+		}
+	}
 	return r.err
 }
 
@@ -2967,6 +3011,14 @@ func applySave(d *decodedSave, w *World) {
 		pr.handicapReviveTime[p] = d.plHandicapReviveTime[p]
 	}
 	pr.alliance = d.plAlliance
+
+	// heightfield (#371): restored wholesale (row-major sample order
+	// preserved → hash matches).
+	w.height = heightfield{
+		cols: d.hfCols, rows: d.hfRows,
+		originX: d.hfOriginX, originY: d.hfOriginY, cellSize: d.hfCell,
+		samples: d.hfSamples,
+	}
 
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0

@@ -45,6 +45,19 @@ func (g *Game) RandomPointIn(rc Rect) Vec2 {
 	return Vec2{X: toFloat(x), Y: toFloat(y)}
 }
 
+// TerrainHeight returns the interpolated terrain height (the Z axis) at a
+// world point, sampled from the deterministic sim heightfield. 0 when no
+// heightfield is loaded (a flat world) — the genuine height of flat
+// terrain, not a placeholder. JASS: GetLocationZ (which in WC3 reads the
+// render mesh; this is the headless, replay-stable equivalent — see #371).
+// 0 on a nil game.
+func (g *Game) TerrainHeight(p Vec2) float64 {
+	if g == nil || g.w == nil {
+		return 0
+	}
+	return toFloat(g.w.TerrainHeight(fromFloat(p.X), fromFloat(p.Y)))
+}
+
 // Remove destroys the region and frees its slot (RemoveRegion). The
 // handle goes invalid. Idempotent no-op on an already-removed or
 // zero-value region.

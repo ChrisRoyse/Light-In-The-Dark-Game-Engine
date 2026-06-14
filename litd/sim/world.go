@@ -282,6 +282,10 @@ type World struct {
 	// (A→B and B→A independent — alliance is one-directional). All hashed
 	// + serialized; initPlayers seeds defaults in NewWorld.
 	players playerRoster
+	// #371 terrain heightfield: a grid of fixed-point height samples that
+	// TerrainHeight bilinearly interpolates (GetLocationZ). Zero value =
+	// unbound = flat world at height 0. Hashed + serialized.
+	height heightfield
 	// #219 writable-damage hook: a synchronous pre-apply modifier invoked
 	// in damageApplySystem on the final post-mitigation amount, letting a
 	// script scale damage deterministically. nil = no modification (the

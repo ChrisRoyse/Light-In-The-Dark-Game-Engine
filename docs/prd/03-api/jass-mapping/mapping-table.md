@@ -256,7 +256,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MoveLocation | common.j | D3 | **tombstoned** (superseded): in-place location mutation superseded by re-assigning a Vec2 value (R-API-2); no identity to move |
 | GetLocationX | common.j | D3 | **tombstoned** (superseded): location X accessor superseded by the Vec2.X field (R-API-2) |
 | GetLocationY | common.j | D3 | **tombstoned** (superseded): location Y accessor superseded by the Vec2.Y field (R-API-2) |
-| GetLocationZ | common.j | D3 | **tombstoned** (deferred-v2): terrain Z sampling needs a real heightfield; flat-0 would be a fake SoT — deferred to the heightfield work tracked in #371 (location→Vec2 leaves no Z channel in v1) |
+| GetLocationZ | common.j | D3 | `litd/api.Game.TerrainHeight` |
 | IsUnitInRegion | common.j | D1 | `litd/api.Region.ContainsUnit` |
 | IsPointInRegion | common.j | D3 | `litd/api.Region.Contains` |
 | IsLocationInRegion | common.j | D3 | `litd/api.Region.Contains` (D3 collapse → IsPointInRegion) |
