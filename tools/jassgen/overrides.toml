@@ -1442,3 +1442,56 @@ goMapping = "Game.SetTimeOfDay"
 goSignature = "(h float64)"
 package = "litd/api"
 reason = "sets the time-of-day; BJ passthrough to the canonical Game.SetTimeOfDay (clock.go, #339, dedup §2)"
+
+# --- boolexpr/condition/filter zoo: superseded by the closure+subscription model ---
+# triggers-and-events.md §"boolexpr combinators (And/Or/Not) and DestroyBoolExpr
+# are tombstoned: Go closures compose with &&/|| and are GC-managed". The whole
+# object zoo collapses into OnEvent + Go func(Event) predicates (R-API-4), so
+# these constructor/destructor natives have no public Go symbol.
+[[override]]
+name = "And"
+class = "D1"
+tombstone = "superseded"
+reason = "boolexpr AND-combinator; Go closures compose with && (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "Or"
+class = "D1"
+tombstone = "superseded"
+reason = "boolexpr OR-combinator; Go closures compose with || (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "Not"
+class = "D1"
+tombstone = "superseded"
+reason = "boolexpr NOT-combinator; Go closures use ! (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "Condition"
+class = "D1"
+tombstone = "superseded"
+reason = "wraps a code func into a conditionfunc; a Go func(Event) bool IS the condition (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "Filter"
+class = "D1"
+tombstone = "superseded"
+reason = "wraps a code func into a filterfunc; a Go func(Event) bool IS the filter — WithFilter(fn) (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "DestroyBoolExpr"
+class = "D1"
+tombstone = "superseded"
+reason = "manual boolexpr free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "DestroyCondition"
+class = "D1"
+tombstone = "superseded"
+reason = "manual conditionfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+
+[[override]]
+name = "DestroyFilter"
+class = "D1"
+tombstone = "superseded"
+reason = "manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"

@@ -382,6 +382,32 @@
       }
     },
     {
+      "name": "And",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "operandA",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          },
+          {
+            "name": "operandB",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "boolexpr"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "boolexpr AND-combinator; Go closures compose with \u0026\u0026 (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
       "name": "BlzGetUnitArmor",
       "origin": "common.j",
       "signature": {
@@ -570,6 +596,27 @@
         "symbol": "Unit.SetName",
         "package": "litd/api",
         "goSignature": "(name string)"
+      }
+    },
+    {
+      "name": "Condition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "func",
+            "jassType": "code",
+            "tsType": "() =\u003e boolean"
+          }
+        ],
+        "returns": "conditionfunc"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "wraps a code func into a conditionfunc; a Go func(Event) bool IS the condition (triggers-and-events.md, R-API-4)"
       }
     },
     {
@@ -2412,6 +2459,90 @@
       }
     },
     {
+      "name": "DestroyBoolExpr",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "e",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "manual boolexpr free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "DestroyCondition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "c",
+            "jassType": "conditionfunc",
+            "tsType": "conditionfunc"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "manual conditionfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "DestroyFilter",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "f",
+            "jassType": "filterfunc",
+            "tsType": "filterfunc"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "Filter",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "func",
+            "jassType": "code",
+            "tsType": "() =\u003e boolean"
+          }
+        ],
+        "returns": "filterfunc"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "wraps a code func into a filterfunc; a Go func(Event) bool IS the filter — WithFilter(fn) (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
       "name": "GetHeroAgi",
       "origin": "common.j",
       "signature": {
@@ -3603,6 +3734,53 @@
         "symbol": "Unit.Kill",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "Not",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "operand",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "boolexpr"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "boolexpr NOT-combinator; Go closures use ! (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "Or",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "operandA",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          },
+          {
+            "name": "operandB",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "boolexpr"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "boolexpr OR-combinator; Go closures compose with || (triggers-and-events.md, R-API-4)"
       }
     },
     {

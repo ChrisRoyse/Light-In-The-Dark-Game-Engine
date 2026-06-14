@@ -283,14 +283,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetTriggerEvalCount | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTriggerExecCount | common.j | unclassified | _pending (M2 backlog)_ |
 | ExecuteFunc | common.j | unclassified | _pending (M2 backlog)_ |
-| And | common.j | unclassified | _pending (M2 backlog)_ |
-| Or | common.j | unclassified | _pending (M2 backlog)_ |
-| Not | common.j | unclassified | _pending (M2 backlog)_ |
-| Condition | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyCondition | common.j | unclassified | _pending (M2 backlog)_ |
-| Filter | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyFilter | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyBoolExpr | common.j | unclassified | _pending (M2 backlog)_ |
+| And | common.j | D1 | **tombstoned** (superseded): boolexpr AND-combinator; Go closures compose with && (triggers-and-events.md, R-API-4) |
+| Or | common.j | D1 | **tombstoned** (superseded): boolexpr OR-combinator; Go closures compose with || (triggers-and-events.md, R-API-4) |
+| Not | common.j | D1 | **tombstoned** (superseded): boolexpr NOT-combinator; Go closures use ! (triggers-and-events.md, R-API-4) |
+| Condition | common.j | D1 | **tombstoned** (superseded): wraps a code func into a conditionfunc; a Go func(Event) bool IS the condition (triggers-and-events.md, R-API-4) |
+| DestroyCondition | common.j | D1 | **tombstoned** (superseded): manual conditionfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
+| Filter | common.j | D1 | **tombstoned** (superseded): wraps a code func into a filterfunc; a Go func(Event) bool IS the filter — WithFilter(fn) (triggers-and-events.md, R-API-4) |
+| DestroyFilter | common.j | D1 | **tombstoned** (superseded): manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
+| DestroyBoolExpr | common.j | D1 | **tombstoned** (superseded): manual boolexpr free; Go closures are GC-managed (triggers-and-events.md, R-API-4) |
 | TriggerRegisterVariableEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterTimerEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterTimerExpireEvent | common.j | unclassified | _pending (M2 backlog)_ |
