@@ -72,6 +72,9 @@ func (w *World) attackSystem() {
 	c := w.Combats
 	for cr := int32(0); cr < c.count; cr++ {
 		id := c.Entity[cr]
+		if w.Pauses.Has(id) {
+			continue // paused units freeze: no attack cycle progress (#217)
+		}
 
 		// explicit attack orders adopt their target every tick (the
 		// order is the authority while it is the head)

@@ -57,6 +57,9 @@ func (w *World) acquisitionSystem() {
 	c := w.Combats
 	for cr := int32(0); cr < c.count; cr++ {
 		id := c.Entity[cr]
+		if w.Pauses.Has(id) {
+			continue // paused units freeze: no target acquisition (#217)
+		}
 		idx := id.Index()
 		if (w.tick+idx)%interval != 0 {
 			continue // not this unit's scan tick (phase offset = f(index))

@@ -86,7 +86,15 @@ func GenerateStubs(m Manifest) (emitted map[string][]string, skipped map[string]
 			return toEmit[i].recv+"."+toEmit[i].name < toEmit[j].recv+"."+toEmit[j].name
 		})
 
+		// Retirement hole (sibling of #360): when the last stub in a package is
+		// hand-implemented, toEmit drops to 0. Skipping the write here would
+		// leave the stale generated file on disk — and its now-obsolete panic
+		// stubs collide with the real methods as duplicate declarations. Prune
+		// the orphaned file instead of leaving it.
 		if len(toEmit) == 0 {
+			if err := removeStubFile(tgt); err != nil {
+				return nil, nil, err
+			}
 			continue
 		}
 		if err := writeStubFile(tgt, toEmit); err != nil {
@@ -202,4 +210,16 @@ func writeStubFile(tgt pkgTarget, syms []stubSym) error {
 	}
 	out := filepath.Join(tgt.dir, "api_stubs_gen.go")
 	return os.WriteFile(out, []byte(b.String()), 0o644)
+}
+
+// removeStubFile deletes a package's generated stub file when no stubs remain.
+// A missing file is not an error (nothing to retire). Only the generated stub
+// file is removed — it is identified solely by its fixed name and is always
+// jassgen's own output.
+func removeStubFile(tgt pkgTarget) error {
+	out := filepath.Join(tgt.dir, "api_stubs_gen.go")
+	if err := os.Remove(out); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }

@@ -129,6 +129,9 @@ func (w *World) movementSystem() {
 			continue
 		}
 		id := m.Entity[r]
+		if w.Pauses.Has(id) {
+			continue // paused units freeze: no integration this tick (#217)
+		}
 		tr := w.Transforms.Row(id) // ecs §7 join probe
 		if tr == -1 {
 			m.State[r] = MoveIdle // transform vanished: fail closed

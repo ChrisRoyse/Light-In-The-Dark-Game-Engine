@@ -865,6 +865,31 @@ func (u Unit) Show(show bool) {
 	u.g.w.ShowUnit(u.id, show)
 }
 
+// Paused reports whether the unit is frozen by SetPaused. A paused unit still
+// exists (life/position/owner persist) but does not advance orders, move,
+// acquire targets, or attack. False on an invalid handle. JASS: IsUnitPaused
+// (collapses IsUnitPausedBJ, D1).
+func (u Unit) Paused() bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Paused")
+		return false
+	}
+	return u.g.w.IsUnitPaused(u.id)
+}
+
+// SetPaused freezes (paused=true) or resumes (paused=false) the unit. While
+// paused the orders, movement, acquisition and attack systems skip it, so it
+// holds its current state until resumed. No-op on an invalid handle. The bit is
+// deterministic state and persists across save/load. JASS: PauseUnit
+// (collapses PauseUnitBJ, D1).
+func (u Unit) SetPaused(paused bool) {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.SetPaused")
+		return
+	}
+	u.g.w.PauseUnit(u.id, paused)
+}
+
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
 // death event). A unit already dead or invalid is a no-op. JASS: KillUnit,
 // KillUnitBJ (D1 passthrough collapses here).

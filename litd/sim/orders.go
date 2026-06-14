@@ -220,6 +220,9 @@ func (w *World) ordersSystem() {
 	s := w.Orders
 	for r := int32(0); r < s.count; r++ {
 		id := s.Entity[r]
+		if w.Pauses.Has(id) {
+			continue // paused units freeze: orders do not advance (#217)
+		}
 		switch s.Kind[r] {
 		case OrderStop, OrderHold:
 			// terminal stances — nothing to drive (acquisition joins

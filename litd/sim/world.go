@@ -106,6 +106,7 @@ type World struct {
 	UnitNames     *UnitNameStore
 	Hiddens       *presenceSet
 	XPSuspends    *presenceSet
+	Pauses        *presenceSet
 	Combats       *CombatStore
 	Abilities     *AbilityStore
 	AbilityFields *AbilityFieldStore
@@ -327,6 +328,7 @@ func NewWorld(requested Caps) *World {
 		UnitNames:          NewUnitNameStore(caps.Units, idxSpace),
 		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		XPSuspends:         newPresenceSet(caps.Units, idxSpace),
+		Pauses:             newPresenceSet(caps.Units, idxSpace),
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
 		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
@@ -471,6 +473,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.XPSuspends.Row(id) != -1 {
 		w.XPSuspends.Remove(id)
 	}
+	if w.Pauses.Row(id) != -1 {
+		w.Pauses.Remove(id)
+	}
 	if w.Combats.Row(id) != -1 {
 		w.Combats.Remove(id)
 	}
@@ -564,6 +569,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Hiddens.rowOf) * rowOfB
 	n += len(w.XPSuspends.Entity) * 4
 	n += len(w.XPSuspends.rowOf) * rowOfB
+	n += len(w.Pauses.Entity) * 4
+	n += len(w.Pauses.rowOf) * rowOfB
 	n += len(w.Combats.DmgBase) * combatRowB
 	n += len(w.Combats.rowOf) * rowOfB
 	n += len(w.Abilities.AbilityID) * abilityRowB

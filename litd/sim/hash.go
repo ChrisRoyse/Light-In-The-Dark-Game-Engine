@@ -61,6 +61,9 @@ var HashSystems = []string{
 	// appended by #217: per-hero XP-suspended bit (SuspendHeroXP). Sparse
 	// presence store — only suspended heroes contribute.
 	"xpsuspend",
+	// appended by #217: per-unit paused bit (PauseUnit/IsUnitPaused). Sparse
+	// presence store — only paused (frozen) units contribute.
+	"pause",
 	// appended by #217: per-instance name overrides (BlzSetUnitName). Sparse
 	// value store — only renamed units contribute.
 	"unitname",
@@ -527,6 +530,13 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hxs.WriteU32(uint32(xs.count))
 	for i := int32(0); i < xs.count; i++ {
 		hxs.WriteU32(uint32(xs.Entity[i]))
+	}
+
+	hpau := h.next() // pause (#217): presence = paused (frozen)
+	pau := w.Pauses
+	hpau.WriteU32(uint32(pau.count))
+	for i := int32(0); i < pau.count; i++ {
+		hpau.WriteU32(uint32(pau.Entity[i]))
 	}
 
 	hun := h.next() // unitname (#217): per-instance name overrides

@@ -281,6 +281,13 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(xs.Entity[i])
 	}
 
+	// pause (#217): presence = paused (frozen)
+	pau := w.Pauses
+	s.u32(uint32(pau.count))
+	for i := int32(0); i < pau.count; i++ {
+		s.ent(pau.Entity[i])
+	}
+
 	// unitname (#217): per-instance name overrides
 	un := w.UnitNames
 	s.u32(uint32(un.count))
@@ -752,6 +759,9 @@ type decodedSave struct {
 	xsN int32
 	xsE []EntityID
 
+	psN int32
+	psE []EntityID
+
 	unN    int32
 	unE    []EntityID
 	unName []string
@@ -1168,6 +1178,16 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.xsE = make([]EntityID, n)
 	for i := int32(0); i < n; i++ {
 		d.xsE[i] = r.ent()
+	}
+
+	// pause (#217)
+	if n, err = r.section("pause", len(w.Pauses.Entity)); err != nil {
+		return err
+	}
+	d.psN = n
+	d.psE = make([]EntityID, n)
+	for i := int32(0); i < n; i++ {
+		d.psE[i] = r.ent()
 	}
 
 	// unitname (#217)
@@ -2353,6 +2373,14 @@ func applySave(d *decodedSave, w *World) {
 	for i := int32(0); i < d.xsN; i++ {
 		xs.Entity[i] = d.xsE[i]
 		xs.rowOf[d.xsE[i].Index()] = i
+	}
+
+	pau := w.Pauses
+	pau.count = d.psN
+	resetRowOf(pau.rowOf)
+	for i := int32(0); i < d.psN; i++ {
+		pau.Entity[i] = d.psE[i]
+		pau.rowOf[d.psE[i].Index()] = i
 	}
 
 	un := w.UnitNames

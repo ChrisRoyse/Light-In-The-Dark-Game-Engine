@@ -477,6 +477,40 @@ func TestUnitRemoveIsSilentAndImmediate(t *testing.T) {
 	(Unit{}).Remove()
 }
 
+// TestUnitPausedFSV checks the api surface for PauseUnit/IsUnitPaused
+// (Unit.SetPaused/Paused). SoT = the sim Pauses presence set read directly.
+// Replaces the former panic-bodied M5 stubs (manifest claimed mapped; code
+// panicked — #217/#368-class contradiction).
+func TestUnitPausedFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	g := newGame(w)
+	u, id := liveUnit(t, w, g, 0, 100)
+
+	if u.Paused() || w.IsUnitPaused(id) {
+		t.Fatalf("fresh unit reports paused: api=%v sim=%v", u.Paused(), w.IsUnitPaused(id))
+	}
+
+	// Pause: api setter -> sim SoT flips, getter agrees.
+	u.SetPaused(true)
+	t.Logf("after SetPaused(true): api.Paused=%v sim.IsUnitPaused=%v count=%d", u.Paused(), w.IsUnitPaused(id), w.Pauses.Count())
+	if !u.Paused() || !w.IsUnitPaused(id) || w.Pauses.Count() != 1 {
+		t.Fatalf("SetPaused(true) not reflected: api=%v sim=%v count=%d", u.Paused(), w.IsUnitPaused(id), w.Pauses.Count())
+	}
+
+	// Resume: clears the row.
+	u.SetPaused(false)
+	t.Logf("after SetPaused(false): api.Paused=%v sim.IsUnitPaused=%v count=%d", u.Paused(), w.IsUnitPaused(id), w.Pauses.Count())
+	if u.Paused() || w.IsUnitPaused(id) || w.Pauses.Count() != 0 {
+		t.Fatalf("SetPaused(false) not reflected: api=%v sim=%v count=%d", u.Paused(), w.IsUnitPaused(id), w.Pauses.Count())
+	}
+
+	// EDGE: zero-value handle — getter returns false, setter is a no-op, no panic.
+	if (Unit{}).Paused() {
+		t.Error("zero Unit Paused() = true, want false")
+	}
+	(Unit{}).SetPaused(true) // must not panic
+}
+
 // orderDump renders the sim OrderStore head for a unit — the Source of Truth
 // for Unit.Order. Reads Kind/Target/Point straight from the dense order row.
 func orderDump(w *sim.World, id sim.EntityID) string {
