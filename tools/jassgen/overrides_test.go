@@ -26,7 +26,7 @@ func TestApplyOverrideTombstoneFlipAndRevert(t *testing.T) {
 		t.Fatalf("precondition wrong: %+v", before)
 	}
 
-	ovs := []Override{{Name: "DoNothing", Tombstone: "gameplay-irrelevant", Reason: "no-op stub"}}
+	ovs := []Override{{Name: "DoNothing", Class: "D1", Tombstone: "gameplay-irrelevant", Reason: "no-op stub"}}
 	after, err := ApplyOverrides(cs, ovs)
 	if err != nil {
 		t.Fatalf("apply: %v", err)
@@ -60,6 +60,10 @@ func TestApplyOverrideRejections(t *testing.T) {
 			`tombstone reason "because" outside enum`},
 		{"missing reason", Override{Name: "IsUnitPausedBJ", Class: "D1"},
 			`override for "IsUnitPausedBJ" missing required reason`},
+		// #368 regression: a tombstone with a valid reason but no class must error
+		// (fail-closed) rather than silently no-op into the unmapped universe.
+		{"classless tombstone", Override{Name: "DoNothing", Tombstone: "gameplay-irrelevant", Reason: "no-op"},
+			`tombstones without a class`},
 	}
 	for _, tc := range cases {
 		_, err := ApplyOverrides(cs, []Override{tc.ov})
@@ -74,8 +78,8 @@ func TestApplyOverrideRejections(t *testing.T) {
 
 	// Duplicate override for one name.
 	_, err := ApplyOverrides(cs, []Override{
-		{Name: "DoNothing", Tombstone: "deprecated", Reason: "a"},
-		{Name: "DoNothing", Tombstone: "superseded", Reason: "b"},
+		{Name: "DoNothing", Class: "D1", Tombstone: "deprecated", Reason: "a"},
+		{Name: "DoNothing", Class: "D1", Tombstone: "superseded", Reason: "b"},
 	})
 	if err == nil || !strings.Contains(err.Error(), `duplicate override for "DoNothing"`) {
 		t.Errorf("duplicate: error = %v", err)

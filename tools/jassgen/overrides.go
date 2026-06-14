@@ -19,7 +19,7 @@ import (
 // Override is one reviewed classification/mapping decision.
 type Override struct {
 	Name        string `toml:"name"`
-	Class       string `toml:"class"`       // D1-D5 (optional when tombstoning)
+	Class       string `toml:"class"`       // D1-D5 (required, incl. tombstones — see #368: a classless tombstone is silently miscounted as unmapped)
 	GoMapping     string   `toml:"goMapping"`     // canonical symbol, optional
 	GoSignature   string   `toml:"goSignature"`   // Go signature text e.g. "() bool", optional
 	CollapsesWith []string `toml:"collapsesWith"` // D3: source names that collapse into this symbol
@@ -91,6 +91,13 @@ func ApplyOverrides(cs []Classification, ovs []Override) ([]Classification, erro
 		}
 		if o.Tombstone != "" && !tombstoneReasons[o.Tombstone] {
 			return nil, fmt.Errorf("override for %q has tombstone reason %q outside enum [deprecated gameplay-irrelevant superseded deferred-v2]", o.Name, o.Tombstone)
+		}
+		// Fail-closed (#368): a tombstone must carry the D1-D5 class it would have
+		// had. toFunctionEntry drops classless entries from the manifest, so a
+		// classless tombstone would be silently miscounted as unmapped and the
+		// mapping-table/audit artifacts would disagree. Reject it here.
+		if o.Tombstone != "" && o.Class == "" {
+			return nil, fmt.Errorf("override for %q tombstones without a class — every tombstone must carry the D1-D5 class it would have had, else the audit silently miscounts it as unmapped", o.Name)
 		}
 		if !validPackages[o.Package] {
 			return nil, fmt.Errorf("override for %q has package %q outside [litd/api litd/api/helpers litd/ai]", o.Name, o.Package)
