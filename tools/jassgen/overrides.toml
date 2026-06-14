@@ -1495,3 +1495,55 @@ name = "DestroyFilter"
 class = "D1"
 tombstone = "superseded"
 reason = "manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+
+# --- event-response getters -> Event value-snapshot accessors ---
+# R-API-4: WC3's thread-local "current event" getters become methods on the
+# Event value snapshot passed to the handler closure (event_payload.go). These
+# six are implemented but were missing overrides (implemented-but-unmapped, #370).
+[[override]]
+name = "GetTriggerUnit"
+class = "D2"
+goMapping = "Event.Unit"
+goSignature = "() Unit"
+package = "litd/api"
+reason = "the event's primary unit; thread-local getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+
+[[override]]
+name = "GetKillingUnit"
+class = "D2"
+goMapping = "Event.KillingUnit"
+goSignature = "() Unit"
+package = "litd/api"
+reason = "the killer on a death event; getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+
+[[override]]
+name = "GetEventDamageSource"
+class = "D2"
+goMapping = "Event.Source"
+goSignature = "() Unit"
+package = "litd/api"
+reason = "the attacker on a damage event; getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+
+[[override]]
+name = "GetOrderTargetUnit"
+class = "D2"
+goMapping = "Event.Target"
+goSignature = "() Unit"
+package = "litd/api"
+reason = "the order target on an order event; getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+
+[[override]]
+name = "GetEventDamage"
+class = "D2"
+goMapping = "Event.Damage"
+goSignature = "() float64"
+package = "litd/api"
+reason = "the damage amount on a damage event; getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"
+
+[[override]]
+name = "GetTriggerPlayer"
+class = "D2"
+goMapping = "Event.Player"
+goSignature = "() Player"
+package = "litd/api"
+reason = "the player on a player-scoped event (victory/defeat collapse); getter becomes the Event snapshot accessor (event_payload.go, R-API-4)"

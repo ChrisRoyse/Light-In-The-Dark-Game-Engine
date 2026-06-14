@@ -2543,6 +2543,38 @@
       }
     },
     {
+      "name": "GetEventDamage",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Damage",
+        "package": "litd/api",
+        "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetEventDamageSource",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Source",
+        "package": "litd/api",
+        "goSignature": "() Unit"
+      }
+    },
+    {
       "name": "GetHeroAgi",
       "origin": "common.j",
       "signature": {
@@ -2690,6 +2722,38 @@
       }
     },
     {
+      "name": "GetKillingUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.KillingUnit",
+        "package": "litd/api",
+        "goSignature": "() Unit"
+      }
+    },
+    {
+      "name": "GetOrderTargetUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Target",
+        "package": "litd/api",
+        "goSignature": "() Unit"
+      }
+    },
+    {
       "name": "GetOwningPlayer",
       "origin": "common.j",
       "signature": {
@@ -2782,6 +2846,38 @@
         "collapsesWith": [
           "GetTimeOfDayScalePercentBJ"
         ]
+      }
+    },
+    {
+      "name": "GetTriggerPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "player"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Player",
+        "package": "litd/api",
+        "goSignature": "() Player"
+      }
+    },
+    {
+      "name": "GetTriggerUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Event.Unit",
+        "package": "litd/api",
+        "goSignature": "() Unit"
       }
     },
     {

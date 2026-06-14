@@ -318,7 +318,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetTournamentScore | common.j | unclassified | _pending (M2 backlog)_ |
 | GetSaveBasicFilename | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterPlayerEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggerPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTriggerPlayer | common.j | D2 | `litd/api.Event.Player` |
 | TriggerRegisterPlayerUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | GetLevelingUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetLearningUnit | common.j | unclassified | _pending (M2 backlog)_ |
@@ -329,7 +329,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetAttacker | common.j | unclassified | _pending (M2 backlog)_ |
 | GetRescuer | common.j | unclassified | _pending (M2 backlog)_ |
 | GetDyingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetKillingUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetKillingUnit | common.j | D2 | `litd/api.Event.KillingUnit` |
 | GetDecayingUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetConstructingStructure | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCancelledStructure | common.j | unclassified | _pending (M2 backlog)_ |
@@ -364,7 +364,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetOrderTarget | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTargetDestructable | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTargetItem | common.j | unclassified | _pending (M2 backlog)_ |
-| GetOrderTargetUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetOrderTargetUnit | common.j | D2 | `litd/api.Event.Target` |
 | GetSpellAbilityUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetSpellAbilityId | common.j | unclassified | _pending (M2 backlog)_ |
 | GetSpellAbility | common.j | unclassified | _pending (M2 backlog)_ |
@@ -381,12 +381,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetEventPlayerChatString | common.j | unclassified | _pending (M2 backlog)_ |
 | GetEventPlayerChatStringMatched | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterDeathEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTriggerUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTriggerUnit | common.j | D2 | `litd/api.Event.Unit` |
 | TriggerRegisterUnitStateEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | GetEventUnitState | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventDamage | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEventDamageSource | common.j | unclassified | _pending (M2 backlog)_ |
+| GetEventDamage | common.j | D2 | `litd/api.Event.Damage` |
+| GetEventDamageSource | common.j | D2 | `litd/api.Event.Source` |
 | GetEventDetectingPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterFilterUnitEvent | common.j | unclassified | _pending (M2 backlog)_ |
 | GetEventTargetUnit | common.j | unclassified | _pending (M2 backlog)_ |
