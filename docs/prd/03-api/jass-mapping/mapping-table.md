@@ -481,19 +481,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitFacing | common.j | D1 | `litd/api.Unit.SetFacing` |
 | SetUnitFacingTimed | common.j | D2 | **tombstoned** (deferred-v2): gradual timed turn-to-face is a real capability not yet modeled; the instant endpoint is Unit.SetFacing, but the animation-over-duration is deferred to the turn-rate order work rather than averaged away (units.md hazard: capability preserved, not collapsed) |
 | SetUnitMoveSpeed | common.j | D1 | `litd/api.Unit.SetMoveSpeed` |
-| SetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitFlyHeight | common.j | D1 | **tombstoned** (deferred-v2): animates z toward a target at a rate/sec; needs current+target+climb-rate state integrated each movement tick. Deferred to the z/climb movement subsystem (#367) |
 | SetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.SetTurnSpeed` |
-| SetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): sets the prop window; gates translation on facing-vs-move angle in golden-trace-sensitive movement.go. Deferred to the z/climb movement subsystem (#367) |
 | SetUnitAcquireRange | common.j | D1 | `litd/api.Unit.SetAcquireRange` |
 | SetUnitCreepGuard | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitAcquireRange | common.j | D1 | `litd/api.Unit.AcquireRange` |
 | GetUnitTurnSpeed | common.j | D1 | `litd/api.Unit.TurnSpeed` |
-| GetUnitPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitPropWindow | common.j | D1 | **tombstoned** (deferred-v2): prop window (translation gate angle); a behavioral movement change with no backing state. Deferred to the z/climb movement subsystem (#367) |
+| GetUnitFlyHeight | common.j | D1 | **tombstoned** (deferred-v2): unit z (fly height); needs a per-unit climb-integrated z column the 2D sim lacks. Deferred to the z/climb movement subsystem (#367) |
 | GetUnitDefaultAcquireRange | common.j | D1 | `litd/api.Unit.DefaultAcquireRange` |
 | GetUnitDefaultTurnSpeed | common.j | D1 | `litd/api.Unit.DefaultTurnSpeed` |
-| GetUnitDefaultPropWindow | common.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitDefaultFlyHeight | common.j | unclassified | _pending (M2 backlog)_ |
+| GetUnitDefaultPropWindow | common.j | D1 | **tombstoned** (deferred-v2): type's base prop window; static counterpart to the deferred dynamic prop-window. Deferred with the family (#367) |
+| GetUnitDefaultFlyHeight | common.j | D1 | **tombstoned** (deferred-v2): type's base fly height; static counterpart to the deferred dynamic fly-height — mapping it alone is a capability-free half-feature. Deferred with the family (#367) |
 | SetUnitOwner | common.j | D1 | `litd/api.Unit.SetOwner` |
 | SetUnitColor | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitScale | common.j | D1 | **tombstoned** (deferred-v2): render-only model scale; no sim effect (R-API-6). Deferred to a render/cinematic API (#364) |
