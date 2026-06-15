@@ -66,6 +66,88 @@
       }
     },
     {
+      "name": "CreateDeadDestructableLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "facing",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#229: location-arg pre-destroyed create; superseded by CreateDestructable(...).Kill()"
+      }
+    },
+    {
+      "name": "DestructableAddIndicatorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichDestructable",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: draws a UI selection/ping indicator on a destructable; render/UI only"
+      }
+    },
+    {
       "name": "DoNothing",
       "origin": "blizzard.j",
       "signature": {
@@ -78,6 +160,78 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+      }
+    },
+    {
+      "name": "EnumDestructablesInCircleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "actionFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: spatial enumeration (circle) deferred to the v2 group/query API"
+      }
+    },
+    {
+      "name": "EnumDestructablesInCircleBJFilter",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: circle-enum filter helper deferred with the v2 group/query API"
+      }
+    },
+    {
+      "name": "EnumDestructablesInRectAll",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "actionFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: spatial enumeration (whole rect) deferred to the v2 group/query API"
       }
     },
     {
@@ -206,6 +360,42 @@
       }
     },
     {
+      "name": "GetDestructableLoc",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichDestructable",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: location-form position accessor deferred to v2; destructables are static in v1"
+      }
+    },
+    {
+      "name": "GetDyingDestructable",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: event-context accessor (destructable death event) deferred to the v2 event/trigger API"
+      }
+    },
+    {
       "name": "GetHandleIdBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -224,6 +414,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "GetLastCreatedDestructable",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#229: Go return value from Game.CreateDestructable replaces the bj_lastCreatedDestructable side channel"
       }
     },
     {
@@ -1103,6 +1308,31 @@
       }
     },
     {
+      "name": "IsDestructableDeadBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.Dead",
+        "package": "litd/api",
+        "goSignature": "() bool",
+        "collapsesWith": [
+          "IsDestructableAliveBJ"
+        ]
+      }
+    },
+    {
       "name": "IsUnitAliveBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1263,6 +1493,37 @@
         "collapsesWith": [
           "IsUnitPaused"
         ]
+      }
+    },
+    {
+      "name": "IssueTargetDestructableOrder",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: issuing a destructable-targeted order deferred to the v2 order API"
       }
     },
     {
@@ -2701,6 +2962,68 @@
         "symbol": "PolledWait",
         "package": "litd/api/helpers",
         "goSignature": "(seconds float64)"
+      }
+    },
+    {
+      "name": "RandomDestructableInRectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: random pick over a spatial enumeration deferred to the v2 group/query API (sim PRNG)"
+      }
+    },
+    {
+      "name": "RandomDestructableInRectBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: enum callback for the random-pick helper; deferred with the v2 group/query API"
+      }
+    },
+    {
+      "name": "RandomDestructableInRectSimpleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: simple-form random pick over a rect; deferred with the v2 group/query API"
       }
     },
     {
@@ -4649,6 +4972,58 @@
       }
     },
     {
+      "name": "SetDestructableLifePercentBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "percent",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#229: percent-life setter; callers write d.SetLife(int(float64(d.MaxLife()) * pct)) over the typed accessors"
+      }
+    },
+    {
+      "name": "SetDestructableMaxLifeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "max",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: BJ max-life mutation; deferred with SetDestructableMaxLife"
+      }
+    },
+    {
       "name": "SetTimeOfDay",
       "origin": "blizzard.j",
       "signature": {
@@ -4733,6 +5108,32 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points"
+      }
+    },
+    {
+      "name": "ShowDestructableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: BJ wrapper of ShowDestructable; render visibility only"
       }
     },
     {
@@ -5098,6 +5499,37 @@
       }
     },
     {
+      "name": "UnitUseItemDestructable",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "target",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: unit-uses-item-on-destructable order deferred to the v2 order/item API"
+      }
+    },
+    {
       "name": "AddHeroXP",
       "origin": "common.j",
       "signature": {
@@ -5334,6 +5766,220 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md)"
+      }
+    },
+    {
+      "name": "BlzCreateDeadDestructableWithSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: pre-dead create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only"
+      }
+    },
+    {
+      "name": "BlzCreateDeadDestructableZWithSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: pre-dead z-create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only"
+      }
+    },
+    {
+      "name": "BlzCreateDestructableWithSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: skin is a render alt-model id; create folds onto CreateDestructable, the skin arg has no sim meaning"
+      }
+    },
+    {
+      "name": "BlzCreateDestructableZWithSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: z-coord + render skin; no sim meaning beyond CreateDestructable"
       }
     },
     {
@@ -7816,6 +8462,103 @@
       }
     },
     {
+      "name": "CreateDeadDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#229: creates a pre-destroyed destructable; superseded by CreateDestructable(...).Kill()"
+      }
+    },
+    {
+      "name": "CreateDeadDestructableZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#229: z-coord pre-destroyed create; superseded by CreateDestructable(...).Kill() (z ignored in 2D sim)"
+      }
+    },
+    {
       "name": "CreateDefeatCondition",
       "origin": "common.j",
       "signature": {
@@ -7828,6 +8571,57 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "defeat conditions belong to the game-state-and-melee surface (#256)"
+      }
+    },
+    {
+      "name": "CreateDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "destructable"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.CreateDestructable",
+        "package": "litd/api",
+        "goSignature": "(o DestructableOptions) Destructable",
+        "collapsesWith": [
+          "CreateDestructableZ",
+          "CreateDestructableLoc"
+        ]
       }
     },
     {
@@ -8304,6 +9098,38 @@
       }
     },
     {
+      "name": "DestructableRestoreLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "life",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "birth",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.Resurrect",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
       "name": "DisableTrigger",
       "origin": "common.j",
       "signature": {
@@ -8401,6 +9227,37 @@
         "symbol": "Game.EndMatch",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "EnumDestructablesInRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          },
+          {
+            "name": "actionFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: spatial enumeration deferred to the v2 group/query API"
       }
     },
     {
@@ -8945,6 +9802,170 @@
       }
     },
     {
+      "name": "GetDestructableLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.Life",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetDestructableMaxLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.MaxLife",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetDestructableName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: display-name accessor deferred to v2 with the typed destructable data tables"
+      }
+    },
+    {
+      "name": "GetDestructableOccluderHeight",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: render occlusion height getter; no sim state"
+      }
+    },
+    {
+      "name": "GetDestructableTypeId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: content type-id accessor deferred to v2 with the typed destructable data tables"
+      }
+    },
+    {
+      "name": "GetDestructableX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: position accessor deferred to v2; destructables are static (fixed at create) in v1"
+      }
+    },
+    {
+      "name": "GetDestructableY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: position accessor deferred to v2; destructables are static (fixed at create) in v1"
+      }
+    },
+    {
+      "name": "GetEnumDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: enumeration-context accessor deferred to the v2 group/query API"
+      }
+    },
+    {
       "name": "GetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -9082,6 +10103,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "thread-local current-timer accessor; superseded by the periodic callback receiving its Timer parameter (R-EXEC-4 eliminates implicit current-element state), timers.md"
+      }
+    },
+    {
+      "name": "GetFilterDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: boolexpr filter-context accessor deferred to the v2 group/query API"
       }
     },
     {
@@ -9472,6 +10508,21 @@
         "symbol": "Game.TerrainHeight",
         "package": "litd/api",
         "goSignature": "(p Vec2) float64"
+      }
+    },
+    {
+      "name": "GetOrderTargetDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "destructable"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: order-target-context accessor deferred to the v2 order/event API"
       }
     },
     {
@@ -12415,6 +13466,31 @@
       }
     },
     {
+      "name": "IsDestructableInvulnerable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.Invulnerable",
+        "package": "litd/api",
+        "goSignature": "() bool",
+        "collapsesWith": [
+          "IsDestructableInvulnerableBJ"
+        ]
+      }
+    },
+    {
       "name": "IsFogEnabled",
       "origin": "common.j",
       "signature": {
@@ -13103,6 +14179,31 @@
           "IssuePointOrderLocBJ",
           "IssueTargetOrderBJ",
           "IssueImmediateOrderBJ"
+        ]
+      }
+    },
+    {
+      "name": "KillDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.Kill",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "RemoveDestructable"
         ]
       }
     },
@@ -14945,6 +16046,38 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: runs a generated preload script file; no LitD analogue (declarative manifest pipeline) — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "QueueDestructableAnimation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "whichAnimation",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.PlayAnimation",
+        "package": "litd/api",
+        "goSignature": "(name string)",
+        "collapsesWith": [
+          "SetDestructableAnimation",
+          "QueueDestructableAnimationBJ",
+          "SetDestructableAnimationBJ"
+        ]
       }
     },
     {
@@ -17384,6 +18517,198 @@
       }
     },
     {
+      "name": "SetDestructableAnimationSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "speedFactor",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: render animation playback speed; no sim state"
+      }
+    },
+    {
+      "name": "SetDestructableInvulnerable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.SetInvulnerable",
+        "package": "litd/api",
+        "goSignature": "(b bool)",
+        "collapsesWith": [
+          "SetDestructableInvulnerableBJ"
+        ]
+      }
+    },
+    {
+      "name": "SetDestructableLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "life",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Destructable.SetLife",
+        "package": "litd/api",
+        "goSignature": "(v int)"
+      }
+    },
+    {
+      "name": "SetDestructableMaxLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "max",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#229: max-life mutation deferred to v2; in v1 max life is seeded immutably at CreateDestructable"
+      }
+    },
+    {
+      "name": "SetDestructableOccluderHeight",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "height",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: render occlusion height setter; no sim state"
+      }
+    },
+    {
+      "name": "SetDoodadAnimation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "doodadID",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "nearestOnly",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "animName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "animRandom",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Doodad.SetAnimation",
+        "package": "litd/api",
+        "goSignature": "(anim int)",
+        "collapsesWith": [
+          "SetDoodadAnimationRect",
+          "SetDoodadAnimationBJ",
+          "SetDoodadAnimationRectBJ"
+        ]
+      }
+    },
+    {
       "name": "SetFogStateRect",
       "origin": "common.j",
       "signature": {
@@ -19046,6 +20371,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "render-only vertex tint; no deterministic-sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "ShowDestructable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#229: toggles render visibility only; destructables are always present in the deterministic sim regardless of draw state"
       }
     },
     {

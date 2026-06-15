@@ -271,8 +271,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsTriggerWaitOnSleeps | common.j | D1 | **tombstoned** (superseded): trigger sleep-wait query superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
 | GetFilterUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetEnumUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
-| GetFilterDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEnumDestructable | common.j | unclassified | _pending (M2 backlog)_ |
+| GetFilterDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: boolexpr filter-context accessor deferred to the v2 group/query API |
+| GetEnumDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: enumeration-context accessor deferred to the v2 group/query API |
 | GetFilterItem | common.j | unclassified | _pending (M2 backlog)_ |
 | GetEnumItem | common.j | unclassified | _pending (M2 backlog)_ |
 | ParseTags | common.j | unclassified | _pending (M2 backlog)_ |
@@ -362,7 +362,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetOrderPointY | common.j | D3 | _pending (M2 backlog)_ |
 | GetOrderPointLoc | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTarget | common.j | unclassified | _pending (M2 backlog)_ |
-| GetOrderTargetDestructable | common.j | unclassified | _pending (M2 backlog)_ |
+| GetOrderTargetDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: order-target-context accessor deferred to the v2 order/event API |
 | GetOrderTargetItem | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTargetUnit | common.j | D2 | `litd/api.Event.Target` |
 | GetSpellAbilityUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
@@ -409,30 +409,30 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetWidgetX | common.j | D3 | _pending (M2 backlog)_ |
 | GetWidgetY | common.j | D3 | _pending (M2 backlog)_ |
 | GetTriggerWidget | common.j | D1 | **tombstoned** (superseded): trigger-widget getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
-| CreateDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateDestructableZ | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateDeadDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateDeadDestructableZ | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| KillDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDestructableInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsDestructableInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
-| EnumDestructablesInRect | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDestructableTypeId | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDestructableX | common.j | D3 | _pending (M2 backlog)_ |
-| GetDestructableY | common.j | D3 | _pending (M2 backlog)_ |
-| SetDestructableLife | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDestructableLife | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDestructableMaxLife | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDestructableMaxLife | common.j | unclassified | _pending (M2 backlog)_ |
-| DestructableRestoreLife | common.j | unclassified | _pending (M2 backlog)_ |
-| QueueDestructableAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDestructableAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDestructableAnimationSpeed | common.j | unclassified | _pending (M2 backlog)_ |
-| ShowDestructable | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDestructableOccluderHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDestructableOccluderHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDestructableName | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateDestructable | common.j | D1 | `litd/api.Game.CreateDestructable` |
+| CreateDestructableZ | common.j | D1 | `litd/api.Game.CreateDestructable` (D3 collapse → CreateDestructable) |
+| CreateDeadDestructable | common.j | D1 | **tombstoned** (superseded): #229: creates a pre-destroyed destructable; superseded by CreateDestructable(...).Kill() |
+| CreateDeadDestructableZ | common.j | D1 | **tombstoned** (superseded): #229: z-coord pre-destroyed create; superseded by CreateDestructable(...).Kill() (z ignored in 2D sim) |
+| RemoveDestructable | common.j | D1 | `litd/api.Destructable.Kill` (D3 collapse → KillDestructable) |
+| KillDestructable | common.j | D1 | `litd/api.Destructable.Kill` |
+| SetDestructableInvulnerable | common.j | D1 | `litd/api.Destructable.SetInvulnerable` |
+| IsDestructableInvulnerable | common.j | D1 | `litd/api.Destructable.Invulnerable` |
+| EnumDestructablesInRect | common.j | D2 | **tombstoned** (deferred-v2): #229: spatial enumeration deferred to the v2 group/query API |
+| GetDestructableTypeId | common.j | D2 | **tombstoned** (deferred-v2): #229: content type-id accessor deferred to v2 with the typed destructable data tables |
+| GetDestructableX | common.j | D2 | **tombstoned** (deferred-v2): #229: position accessor deferred to v2; destructables are static (fixed at create) in v1 |
+| GetDestructableY | common.j | D2 | **tombstoned** (deferred-v2): #229: position accessor deferred to v2; destructables are static (fixed at create) in v1 |
+| SetDestructableLife | common.j | D1 | `litd/api.Destructable.SetLife` |
+| GetDestructableLife | common.j | D1 | `litd/api.Destructable.Life` |
+| SetDestructableMaxLife | common.j | D2 | **tombstoned** (deferred-v2): #229: max-life mutation deferred to v2; in v1 max life is seeded immutably at CreateDestructable |
+| GetDestructableMaxLife | common.j | D1 | `litd/api.Destructable.MaxLife` |
+| DestructableRestoreLife | common.j | D1 | `litd/api.Destructable.Resurrect` |
+| QueueDestructableAnimation | common.j | D1 | `litd/api.Destructable.PlayAnimation` |
+| SetDestructableAnimation | common.j | D1 | `litd/api.Destructable.PlayAnimation` (D3 collapse → QueueDestructableAnimation) |
+| SetDestructableAnimationSpeed | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: render animation playback speed; no sim state |
+| ShowDestructable | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: toggles render visibility only; destructables are always present in the deterministic sim regardless of draw state |
+| GetDestructableOccluderHeight | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: render occlusion height getter; no sim state |
+| SetDestructableOccluderHeight | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: render occlusion height setter; no sim state |
+| GetDestructableName | common.j | D2 | **tombstoned** (deferred-v2): #229: display-name accessor deferred to v2 with the typed destructable data tables |
 | GetTriggerDestructable | common.j | D1 | **tombstoned** (superseded): trigger-destructable getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
 | CreateItem | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveItem | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1235,8 +1235,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetBlightLoc | common.j | D3 | _pending (M2 backlog)_ |
 | CreateBlightedGoldmine | common.j | unclassified | _pending (M2 backlog)_ |
 | IsPointBlighted | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDoodadAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDoodadAnimationRect | common.j | unclassified | _pending (M2 backlog)_ |
+| SetDoodadAnimation | common.j | D1 | `litd/api.Doodad.SetAnimation` |
+| SetDoodadAnimationRect | common.j | D1 | `litd/api.Doodad.SetAnimation` (D3 collapse → SetDoodadAnimation) |
 | StartMeleeAI | common.j | D3 | `litd/api.Game.AttachAI` |
 | StartCampaignAI | common.j | D3 | `litd/api.Game.AttachAI` (D3 collapse → StartMeleeAI) |
 | CommandAI | common.j | D1 | `litd/api.Game.CommandAI` |
@@ -1535,10 +1535,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetItemSkin | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzCreateItemWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzCreateUnitWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateDestructableWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateDestructableZWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateDeadDestructableWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateDeadDestructableZWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzCreateDestructableWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: skin is a render alt-model id; create folds onto CreateDestructable, the skin arg has no sim meaning |
+| BlzCreateDestructableZWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: z-coord + render skin; no sim meaning beyond CreateDestructable |
+| BlzCreateDeadDestructableWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: pre-dead create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only |
+| BlzCreateDeadDestructableZWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: pre-dead z-create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only |
 | BlzGetPlayerTownHallCount | common.j | unclassified | _pending (M2 backlog)_ |
 | BJDebugMsg | blizzard.j | D4 | _pending (M2 backlog)_ |
 | RMinBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1721,8 +1721,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UseTimeOfDayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetTerrainFogExBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ResetTerrainFogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetDoodadAnimationBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetDoodadAnimationRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetDoodadAnimationBJ | blizzard.j | D1 | `litd/api.Doodad.SetAnimation` (D3 collapse → SetDoodadAnimation) |
+| SetDoodadAnimationRectBJ | blizzard.j | D1 | `litd/api.Doodad.SetAnimation` (D3 collapse → SetDoodadAnimation) |
 | AddUnitAnimationPropertiesBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateImageBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ShowImageBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1833,7 +1833,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitDropItemPointLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitDropItemSlotBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitDropItemTargetBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| UnitUseItemDestructable | blizzard.j | D1 | _pending (M2 backlog)_ |
+| UnitUseItemDestructable | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: unit-uses-item-on-destructable order deferred to the v2 order/item API |
 | UnitUseItemPointLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitItemInSlotBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetInventoryIndexOfItemTypeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1963,23 +1963,23 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitUseFoodBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitDamagePointLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitDamageTargetBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateDestructableLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateDeadDestructableLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedDestructable | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| ShowDestructableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetDestructableInvulnerableBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| IsDestructableInvulnerableBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetDestructableLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| EnumDestructablesInRectAll | blizzard.j | D2 | _pending (M2 backlog)_ |
-| EnumDestructablesInCircleBJFilter | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IsDestructableDeadBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| IsDestructableAliveBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| RandomDestructableInRectBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RandomDestructableInRectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RandomDestructableInRectSimpleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| EnumDestructablesInCircleBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetDestructableLifePercentBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetDestructableMaxLifeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| CreateDestructableLoc | blizzard.j | D1 | `litd/api.Game.CreateDestructable` (D3 collapse → CreateDestructable) |
+| CreateDeadDestructableLocBJ | blizzard.j | D1 | **tombstoned** (superseded): #229: location-arg pre-destroyed create; superseded by CreateDestructable(...).Kill() |
+| GetLastCreatedDestructable | blizzard.j | D2 | **tombstoned** (superseded): #229: Go return value from Game.CreateDestructable replaces the bj_lastCreatedDestructable side channel |
+| ShowDestructableBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #229: BJ wrapper of ShowDestructable; render visibility only |
+| SetDestructableInvulnerableBJ | blizzard.j | D1 | `litd/api.Destructable.SetInvulnerable` (D3 collapse → SetDestructableInvulnerable) |
+| IsDestructableInvulnerableBJ | blizzard.j | D1 | `litd/api.Destructable.Invulnerable` (D3 collapse → IsDestructableInvulnerable) |
+| GetDestructableLoc | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: location-form position accessor deferred to v2; destructables are static in v1 |
+| EnumDestructablesInRectAll | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: spatial enumeration (whole rect) deferred to the v2 group/query API |
+| EnumDestructablesInCircleBJFilter | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: circle-enum filter helper deferred with the v2 group/query API |
+| IsDestructableDeadBJ | blizzard.j | D1 | `litd/api.Destructable.Dead` |
+| IsDestructableAliveBJ | blizzard.j | D1 | `litd/api.Destructable.Dead` (D3 collapse → IsDestructableDeadBJ) |
+| RandomDestructableInRectBJEnum | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: enum callback for the random-pick helper; deferred with the v2 group/query API |
+| RandomDestructableInRectBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: random pick over a spatial enumeration deferred to the v2 group/query API (sim PRNG) |
+| RandomDestructableInRectSimpleBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: simple-form random pick over a rect; deferred with the v2 group/query API |
+| EnumDestructablesInCircleBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: spatial enumeration (circle) deferred to the v2 group/query API |
+| SetDestructableLifePercentBJ | blizzard.j | D1 | **tombstoned** (superseded): #229: percent-life setter; callers write d.SetLife(int(float64(d.MaxLife()) * pct)) over the typed accessors |
+| SetDestructableMaxLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: BJ max-life mutation; deferred with SetDestructableMaxLife |
 | ModifyGateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetElevatorHeight | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ChangeElevatorHeight | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2044,13 +2044,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitScalePercent | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitVertexColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitAddIndicatorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| DestructableAddIndicatorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| DestructableAddIndicatorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #229: draws a UI selection/ping indicator on a destructable; render/UI only |
 | ItemAddIndicatorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitFacingToFaceLocTimed | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetUnitFacingToFaceUnitTimed | blizzard.j | D4 | _pending (M2 backlog)_ |
 | QueueUnitAnimationBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetDestructableAnimationBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QueueDestructableAnimationBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| SetDestructableAnimationBJ | blizzard.j | D1 | `litd/api.Destructable.PlayAnimation` (D3 collapse → QueueDestructableAnimation) |
+| QueueDestructableAnimationBJ | blizzard.j | D1 | `litd/api.Destructable.PlayAnimation` (D3 collapse → QueueDestructableAnimation) |
 | SetDestAnimationSpeedPercent | blizzard.j | D2 | _pending (M2 backlog)_ |
 | DialogDisplayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | DialogSetMessageBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -2382,7 +2382,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnlockGameSpeedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | IssueTargetOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssuePointOrderLocBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
-| IssueTargetDestructableOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
+| IssueTargetDestructableOrder | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: issuing a destructable-targeted order deferred to the v2 order API |
 | IssueTargetItemOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
 | IssueImmediateOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | GroupTargetOrderBJ | blizzard.j | D1 | **tombstoned** (superseded): target group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
@@ -2390,7 +2390,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GroupImmediateOrderBJ | blizzard.j | D1 | **tombstoned** (superseded): immediate group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GroupTargetDestructableOrder | blizzard.j | D1 | **tombstoned** (superseded): target-destructable group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GroupTargetItemOrder | blizzard.j | D1 | **tombstoned** (superseded): target-item group order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| GetDyingDestructable | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetDyingDestructable | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: event-context accessor (destructable death event) deferred to the v2 event/trigger API |
 | SetUnitRallyPoint | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitRallyUnit | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitRallyDestructable | blizzard.j | D2 | _pending (M2 backlog)_ |

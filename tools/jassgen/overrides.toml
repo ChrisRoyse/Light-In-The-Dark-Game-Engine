@@ -5377,3 +5377,326 @@ name = "SetMapName"
 class = "D1"
 tombstone = "deferred-v2"
 reason = "#256: sets the displayed map name; map metadata is authored and loaded from the world archive (world format #205), not script-set at runtime in v1 — deferred"
+
+# ---------------------------------------------------------------------------
+# #229 destructables-and-doodads — destructable/doodad native + BJ family.
+# Canonical Go surface: litd/api/destructable.go (Destructable handle) and
+# litd/api/doodad.go (Doodad handle, render-decoration promoted on first touch).
+# Life is the deterministic sim SoT; Kill frees the pathing footprint same tick.
+# Render-only knobs (skin/occluder/anim-speed/visibility) are gameplay-irrelevant;
+# query/enum/event-context accessors and max-life mutation defer to v2.
+# ---------------------------------------------------------------------------
+
+[[override]]
+name = "CreateDestructable"
+class = "D1"
+goMapping = "Game.CreateDestructable"
+goSignature = "(o DestructableOptions) Destructable"
+collapsesWith = ["CreateDestructableZ", "CreateDestructableLoc"]
+package = "litd/api"
+reason = "#229: canonical destructable ctor over DestructableOptions; the Z (z-coord, ignored in the 2D sim) and Loc (location arg-shape) variants fold onto the same options ctor (dedup §4)"
+
+[[override]]
+name = "KillDestructable"
+class = "D1"
+goMapping = "Destructable.Kill"
+goSignature = "()"
+collapsesWith = ["RemoveDestructable"]
+package = "litd/api"
+reason = "#229: Kill drops life to 0 and frees the pathing footprint same tick; RemoveDestructable folds here — v1 draws no corpse/slot-free distinction, both take the widget out of play"
+
+[[override]]
+name = "SetDestructableLife"
+class = "D1"
+goMapping = "Destructable.SetLife"
+goSignature = "(v int)"
+package = "litd/api"
+reason = "#229: sets current life clamped to [0,MaxLife]; setting 0 does not auto-kill (death is the explicit Kill verb)"
+
+[[override]]
+name = "GetDestructableLife"
+class = "D1"
+goMapping = "Destructable.Life"
+goSignature = "() int"
+package = "litd/api"
+reason = "#229: current-life getter; sim SoT readback"
+
+[[override]]
+name = "GetDestructableMaxLife"
+class = "D1"
+goMapping = "Destructable.MaxLife"
+goSignature = "() int"
+package = "litd/api"
+reason = "#229: max-life getter; seeded at create"
+
+[[override]]
+name = "SetDestructableInvulnerable"
+class = "D1"
+goMapping = "Destructable.SetInvulnerable"
+goSignature = "(b bool)"
+collapsesWith = ["SetDestructableInvulnerableBJ"]
+package = "litd/api"
+reason = "#229: invulnerable-flag setter; the BJ wrapper folds onto the same setter"
+
+[[override]]
+name = "IsDestructableInvulnerable"
+class = "D1"
+goMapping = "Destructable.Invulnerable"
+goSignature = "() bool"
+collapsesWith = ["IsDestructableInvulnerableBJ"]
+package = "litd/api"
+reason = "#229: invulnerable-flag getter; the BJ wrapper folds onto the same getter"
+
+[[override]]
+name = "IsDestructableDeadBJ"
+class = "D1"
+goMapping = "Destructable.Dead"
+goSignature = "() bool"
+collapsesWith = ["IsDestructableAliveBJ"]
+package = "litd/api"
+reason = "#229: dead-state getter over the one life/dead sim field; the alive BJ form is the negation of the same state and folds here (dedup §6)"
+
+[[override]]
+name = "DestructableRestoreLife"
+class = "D1"
+goMapping = "Destructable.Resurrect"
+goSignature = "()"
+package = "litd/api"
+reason = "#229: revives a dead destructable to full life and re-stamps its pathing footprint; the native's arbitrary-life/birth-anim args fold (v1 revives to MaxLife; birth animation is render-only)"
+
+[[override]]
+name = "QueueDestructableAnimation"
+class = "D1"
+goMapping = "Destructable.PlayAnimation"
+goSignature = "(name string)"
+collapsesWith = ["SetDestructableAnimation", "QueueDestructableAnimationBJ", "SetDestructableAnimationBJ"]
+package = "litd/api"
+reason = "#229: render-side animation request (no deterministic sim state); the set/queue native + BJ forms all fold onto the one animation verb"
+
+[[override]]
+name = "SetDoodadAnimation"
+class = "D1"
+goMapping = "Doodad.SetAnimation"
+goSignature = "(anim int)"
+collapsesWith = ["SetDoodadAnimationRect", "SetDoodadAnimationBJ", "SetDoodadAnimationRectBJ"]
+package = "litd/api"
+reason = "#229: promotes the addressed doodad (first touch) and installs an animation override; the rect (area) and BJ forms fold onto the same per-doodad verb"
+
+# --- tombstones: render-only knobs (gameplay-irrelevant) --------------------
+
+[[override]]
+name = "ShowDestructable"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: toggles render visibility only; destructables are always present in the deterministic sim regardless of draw state"
+
+[[override]]
+name = "ShowDestructableBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: BJ wrapper of ShowDestructable; render visibility only"
+
+[[override]]
+name = "SetDestructableAnimationSpeed"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: render animation playback speed; no sim state"
+
+[[override]]
+name = "GetDestructableOccluderHeight"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: render occlusion height getter; no sim state"
+
+[[override]]
+name = "SetDestructableOccluderHeight"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: render occlusion height setter; no sim state"
+
+[[override]]
+name = "DestructableAddIndicatorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: draws a UI selection/ping indicator on a destructable; render/UI only"
+
+[[override]]
+name = "BlzCreateDestructableWithSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: skin is a render alt-model id; create folds onto CreateDestructable, the skin arg has no sim meaning"
+
+[[override]]
+name = "BlzCreateDestructableZWithSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: z-coord + render skin; no sim meaning beyond CreateDestructable"
+
+[[override]]
+name = "BlzCreateDeadDestructableWithSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: pre-dead create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only"
+
+[[override]]
+name = "BlzCreateDeadDestructableZWithSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#229: pre-dead z-create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only"
+
+
+
+# --- tombstones: superseded by the Go ctor / typed accessors ----------------
+
+[[override]]
+name = "CreateDeadDestructable"
+class = "D1"
+tombstone = "superseded"
+reason = "#229: creates a pre-destroyed destructable; superseded by CreateDestructable(...).Kill()"
+
+[[override]]
+name = "CreateDeadDestructableZ"
+class = "D1"
+tombstone = "superseded"
+reason = "#229: z-coord pre-destroyed create; superseded by CreateDestructable(...).Kill() (z ignored in 2D sim)"
+
+[[override]]
+name = "CreateDeadDestructableLocBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "#229: location-arg pre-destroyed create; superseded by CreateDestructable(...).Kill()"
+
+[[override]]
+name = "GetLastCreatedDestructable"
+class = "D2"
+tombstone = "superseded"
+reason = "#229: Go return value from Game.CreateDestructable replaces the bj_lastCreatedDestructable side channel"
+
+[[override]]
+name = "SetDestructableLifePercentBJ"
+class = "D1"
+tombstone = "superseded"
+reason = "#229: percent-life setter; callers write d.SetLife(int(float64(d.MaxLife()) * pct)) over the typed accessors"
+
+# --- tombstones: deferred to v2 (query/enum/event-context/max-life) ---------
+
+[[override]]
+name = "SetDestructableMaxLife"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: max-life mutation deferred to v2; in v1 max life is seeded immutably at CreateDestructable"
+
+[[override]]
+name = "SetDestructableMaxLifeBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: BJ max-life mutation; deferred with SetDestructableMaxLife"
+
+[[override]]
+name = "GetDestructableTypeId"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: content type-id accessor deferred to v2 with the typed destructable data tables"
+
+[[override]]
+name = "GetDestructableName"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: display-name accessor deferred to v2 with the typed destructable data tables"
+
+[[override]]
+name = "GetDestructableX"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: position accessor deferred to v2; destructables are static (fixed at create) in v1"
+
+[[override]]
+name = "GetDestructableY"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: position accessor deferred to v2; destructables are static (fixed at create) in v1"
+
+[[override]]
+name = "GetDestructableLoc"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: location-form position accessor deferred to v2; destructables are static in v1"
+
+[[override]]
+name = "EnumDestructablesInRect"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: spatial enumeration deferred to the v2 group/query API"
+
+[[override]]
+name = "EnumDestructablesInRectAll"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: spatial enumeration (whole rect) deferred to the v2 group/query API"
+
+[[override]]
+name = "EnumDestructablesInCircleBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: spatial enumeration (circle) deferred to the v2 group/query API"
+
+[[override]]
+name = "EnumDestructablesInCircleBJFilter"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: circle-enum filter helper deferred with the v2 group/query API"
+
+[[override]]
+name = "RandomDestructableInRectBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: random pick over a spatial enumeration deferred to the v2 group/query API (sim PRNG)"
+
+[[override]]
+name = "RandomDestructableInRectBJEnum"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: enum callback for the random-pick helper; deferred with the v2 group/query API"
+
+[[override]]
+name = "RandomDestructableInRectSimpleBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: simple-form random pick over a rect; deferred with the v2 group/query API"
+
+[[override]]
+name = "GetDyingDestructable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: event-context accessor (destructable death event) deferred to the v2 event/trigger API"
+
+[[override]]
+name = "GetEnumDestructable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: enumeration-context accessor deferred to the v2 group/query API"
+
+[[override]]
+name = "GetFilterDestructable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: boolexpr filter-context accessor deferred to the v2 group/query API"
+
+[[override]]
+name = "GetOrderTargetDestructable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: order-target-context accessor deferred to the v2 order/event API"
+
+[[override]]
+name = "IssueTargetDestructableOrder"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: issuing a destructable-targeted order deferred to the v2 order API"
+
+[[override]]
+name = "UnitUseItemDestructable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#229: unit-uses-item-on-destructable order deferred to the v2 order/item API"
+

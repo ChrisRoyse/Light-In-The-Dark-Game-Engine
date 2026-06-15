@@ -98,7 +98,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 27
+const SaveFormatVersion uint32 = 28
 
 // ---- little-endian writer / reader ----
 
@@ -223,6 +223,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(uint32(w.caps.PendingEvents))
 	s.u32(uint32(w.caps.PathRequests))
 	s.u32(uint32(w.caps.ScriptedDoodads))
+	s.u32(uint32(w.caps.Destructables))
 	s.u32(uint32(w.caps.RuntimeAbilityDefs))
 	s.u32(w.tick)
 	s.u32(uint32(w.unitCount))
@@ -877,6 +878,24 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
+	// destructables (#229, v28): killable/pathing-blocking widget rows in
+	// creation order. The static pathing stamp is derived — rebuilt from
+	// blocks+footprint+dead at load, like doodad byPlacement.
+	de := w.Destructables
+	s.u32(uint32(de.count))
+	for i := int32(0); i < de.count; i++ {
+		s.u16(de.Type[i])
+		s.vec2(de.Pos[i])
+		s.u16(uint16(de.Facing[i]))
+		s.i32(de.Life[i])
+		s.i32(de.MaxLife[i])
+		s.boolean(de.Dead[i])
+		s.boolean(de.Invuln[i])
+		s.boolean(de.Blocks[i])
+		s.u8(de.Footprint[i])
+		s.ent(de.Entity[i])
+	}
+
 	return s.err
 }
 
@@ -1176,7 +1195,7 @@ type decodedSave struct {
 	plHandicapReviveTime [MaxPlayers]fixed.F64
 
 	// heightfield (#371, v22): staged then applied wholesale.
-	hfCols, hfRows                int32
+	hfCols, hfRows               int32
 	hfOriginX, hfOriginY, hfCell fixed.F64
 	hfSamples                    []fixed.F64
 
@@ -1203,6 +1222,19 @@ type decodedSave struct {
 	aiPaused     [MaxPlayers]bool
 	aiAttached   [MaxPlayers]bool
 	aiInbox      [MaxPlayers][]aiCommand
+
+	// destructables (#229, v28): killable/pathing-blocking widget rows.
+	deN     int32
+	deType  []uint16
+	dePos   []fixed.Vec2
+	deFace  []fixed.Angle
+	deLife  []int32
+	deMax   []int32
+	deDead  []bool
+	deInvul []bool
+	deBlock []bool
+	deFoot  []uint8
+	deE     []EntityID
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -1261,6 +1293,7 @@ func (w *World) LoadState(in io.Reader, fingerprint uint64) error {
 		PendingEvents:      int(r.u32()),
 		PathRequests:       int(r.u32()),
 		ScriptedDoodads:    int(r.u32()),
+		Destructables:      int(r.u32()),
 		RuntimeAbilityDefs: int(r.u32()),
 	}
 	if r.err == nil && got != w.caps {
@@ -2384,6 +2417,35 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 			}
 		}
 	}
+
+	// destructables (#229, v28).
+	deN, err := r.section("destructables", w.Destructables.Cap())
+	if err != nil {
+		return err
+	}
+	d.deN = deN
+	d.deType = make([]uint16, deN)
+	d.dePos = make([]fixed.Vec2, deN)
+	d.deFace = make([]fixed.Angle, deN)
+	d.deLife = make([]int32, deN)
+	d.deMax = make([]int32, deN)
+	d.deDead = make([]bool, deN)
+	d.deInvul = make([]bool, deN)
+	d.deBlock = make([]bool, deN)
+	d.deFoot = make([]uint8, deN)
+	d.deE = make([]EntityID, deN)
+	for i := int32(0); i < deN; i++ {
+		d.deType[i] = r.u16()
+		d.dePos[i] = r.vec2()
+		d.deFace[i] = fixed.Angle(r.u16())
+		d.deLife[i] = r.i32()
+		d.deMax[i] = r.i32()
+		d.deDead[i] = r.boolean()
+		d.deInvul[i] = r.boolean()
+		d.deBlock[i] = r.boolean()
+		d.deFoot[i] = r.u8()
+		d.deE[i] = r.ent()
+	}
 	return r.err
 }
 
@@ -3382,6 +3444,36 @@ func applySave(d *decodedSave, w *World) {
 		w.ai.inbox[p] = append(w.ai.inbox[p], d.aiInbox[p]...)
 	}
 
+	// destructables (#229): restore rows in creation order; the pathing stamp
+	// is re-derived in the grid rebuild below from blocks+footprint+dead.
+	de := w.Destructables
+	de.Type = de.Type[:0]
+	de.Pos = de.Pos[:0]
+	de.Facing = de.Facing[:0]
+	de.Life = de.Life[:0]
+	de.MaxLife = de.MaxLife[:0]
+	de.Dead = de.Dead[:0]
+	de.Invuln = de.Invuln[:0]
+	de.Blocks = de.Blocks[:0]
+	de.Footprint = de.Footprint[:0]
+	de.Entity = de.Entity[:0]
+	resetRowOf(de.rowOf)
+	de.count = 0
+	for i := int32(0); i < d.deN; i++ {
+		de.Type = append(de.Type, d.deType[i])
+		de.Pos = append(de.Pos, d.dePos[i])
+		de.Facing = append(de.Facing, d.deFace[i])
+		de.Life = append(de.Life, d.deLife[i])
+		de.MaxLife = append(de.MaxLife, d.deMax[i])
+		de.Dead = append(de.Dead, d.deDead[i])
+		de.Invuln = append(de.Invuln, d.deInvul[i])
+		de.Blocks = append(de.Blocks, d.deBlock[i])
+		de.Footprint = append(de.Footprint, d.deFoot[i])
+		de.Entity = append(de.Entity, d.deE[i])
+		de.rowOf[d.deE[i].Index()] = i
+		de.count++
+	}
+
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0
 	w.killed = w.killed[:0]
@@ -3422,6 +3514,13 @@ func applySave(d *decodedSave, w *World) {
 		// so placement queries see the same occupancy (#301).
 		for i := int32(0); i < bds.count; i++ {
 			w.Grid.StampStatic(path.Rect{X: bds.FX[i], Y: bds.FY[i], W: bds.FW[i], H: bds.FW[i]})
+		}
+		// destructable footprints: live (not-dead) blocking widgets re-stamp
+		// the same static occupancy they held at save time (#229).
+		for i := int32(0); i < de.count; i++ {
+			if de.Blocks[i] && de.Footprint[i] > 0 && !de.Dead[i] {
+				w.Grid.StampStatic(w.destructableRect(i))
+			}
 		}
 	}
 

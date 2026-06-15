@@ -96,6 +96,10 @@ var HashSystems = []string{
 	// flags, and the integer-pair command inbox (stack). Empty by default so an
 	// AI-free match leaves this sub-hash at its zero contribution.
 	"ai",
+	// appended by #229: destructable rows (type/pos/facing/life/max/dead/
+	// invuln/blocks/footprint). Creation order; empty default leaves the zero
+	// contribution. Dead+blocking transitions also move the grid sub-hash.
+	"destructables",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -735,6 +739,9 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 			hai.WriteI64(int64(c.Data))
 		}
 	}
+
+	hde := h.next() // destructables (#229): killable/pathing-blocking widget rows
+	w.Destructables.HashInto(hde)
 
 	return reg.Sum(dst)
 }

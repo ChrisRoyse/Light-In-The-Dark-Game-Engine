@@ -21,6 +21,7 @@ type Caps struct {
 	PendingEvents      int // per-tick ring
 	PathRequests       int // in flight
 	ScriptedDoodads    int
+	Destructables      int // killable, pathing-blocking widgets (trees/gates) (#229)
 	RuntimeAbilityDefs int // dynamic ability rows appended after bound data
 }
 
@@ -34,6 +35,7 @@ var EngineCaps = Caps{
 	PendingEvents:      4096,
 	PathRequests:       512,
 	ScriptedDoodads:    1024,
+	Destructables:      2048,
 	RuntimeAbilityDefs: 1024,
 }
 
@@ -55,6 +57,7 @@ func (c Caps) resolve() Caps {
 		PendingEvents:      clampCap(c.PendingEvents, EngineCaps.PendingEvents),
 		PathRequests:       clampCap(c.PathRequests, EngineCaps.PathRequests),
 		ScriptedDoodads:    clampCap(c.ScriptedDoodads, EngineCaps.ScriptedDoodads),
+		Destructables:      clampCap(c.Destructables, EngineCaps.Destructables),
 		RuntimeAbilityDefs: clampCap(c.RuntimeAbilityDefs, EngineCaps.RuntimeAbilityDefs),
 	}
 }
@@ -130,6 +133,7 @@ type World struct {
 	Harvests      *HarvestStore
 	Produce       *ProduceStore
 	Doodads       *DoodadStore
+	Destructables *DestructableStore
 	Paths         *path.PathStore // pooled per-unit waypoint buffers (§7)
 	Grid          *path.Grid      // pathing grid; nil until SetGrid (map load)
 	pathDilated   *path.DilatedSet
@@ -340,7 +344,7 @@ type World struct {
 // projectiles, persistent effects, and promoted doodads.
 func NewWorld(requested Caps) *World {
 	caps := requested.resolve()
-	entityCap := caps.Units + caps.Projectiles + caps.Effects + caps.ScriptedDoodads
+	entityCap := caps.Units + caps.Projectiles + caps.Effects + caps.ScriptedDoodads + caps.Destructables
 	// entity indices run 1..entityCap (slot 0 reserved, entity.go) —
 	// every array indexed by EntityID.Index() needs entityCap+1 room
 	idxSpace := entityCap + 1
@@ -399,6 +403,7 @@ func NewWorld(requested Caps) *World {
 		handlers:           make(map[HandlerID]EventHandler),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
+		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),
 		Paths:              path.NewPathStore(caps.PathRequests, 1024),
 		runtimeAbilityDefs: make([]data.Ability, 0, caps.RuntimeAbilityDefs),
 		bucketHead:         make([]int32, bucketCount),
@@ -653,5 +658,8 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.events) * 24
 	n += len(w.pathReqs) * 24
 	n += int(0) + len(w.Doodads.Placement)*32
+	// destructables (#229): 11 SoA columns (~36 B/row) + the entity->row map.
+	n += cap(w.Destructables.Type) * 36
+	n += len(w.Destructables.rowOf) * rowOfB
 	return n
 }
