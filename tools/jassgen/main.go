@@ -24,6 +24,7 @@ func main() {
 	emitLua := flag.Bool("emit-lua", false, "generate Lua binding descriptors from the manifest")
 	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
 	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
+	revClosure := flag.Bool("revclosure", false, "reverse-closure gate: fail if any exported litd/api verb traces to neither a manifest goMapping nor new-capabilities.txt")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
 	flag.Parse()
 	overridesFilePath = *overridesPath
@@ -49,8 +50,10 @@ func main() {
 		runAudit()
 	case *check:
 		runCheck()
+	case *revClosure:
+		runRevClosure()
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check | -revclosure")
 		os.Exit(2)
 	}
 }

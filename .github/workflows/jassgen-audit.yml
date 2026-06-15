@@ -33,6 +33,8 @@ jobs:
         run: go run ./tools/jassgen -check
       - name: Generate audit report
         run: go run ./tools/jassgen -audit
+      - name: Reverse-closure gate (every exported litd/api verb is accounted)
+        run: go run ./tools/jassgen -revclosure
       - name: Unit tests
         run: go test ./tools/jassgen/
       - uses: actions/upload-artifact@v4

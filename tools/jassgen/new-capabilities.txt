@@ -1,0 +1,171 @@
+# new-capabilities.txt — reverse-closure whitelist for jassgen -revclosure (#260).
+#
+# Reverse closure: every EXPORTED func/method in litd/api must trace to either
+#   (a) a goMapping symbol in api-manifest.json (a deduplicated JASS port), or
+#   (b) a rule in this file (a LitD-original capability or structural plumbing).
+# Anything in neither set is unaccounted scope and FAILS the gate. Exported
+# types/vars (data structures, options/event structs, enums) are out of scope —
+# this gate governs the BEHAVIORAL surface (callable verbs), not data shapes.
+#
+# Rule forms (first match wins; '#' starts a comment; blank lines ignored):
+#   suffix  <.Method>     any "<Type>.<Method>" method with this name
+#   prefix  func <Pfx>    any package func whose name starts with <Pfx>
+#   exact   <Symbol>      one exact "Type.Method" or bare "Func"
+#
+# Grandfathered surface as of #260: the entries below are the known new-API verbs
+# at M2. A NEW export not covered here (or by a new manifest mapping) trips CI —
+# which is the point: it forces every added verb to be either a JASS port or a
+# consciously-declared new capability.
+
+# --- mechanical handle hygiene (R-API-5/6: every noun handle carries these) ---
+suffix  .Valid
+suffix  .IsZero
+
+# --- functional options (R-API-3): With* option constructors, New* builders ---
+prefix  func With
+prefix  func New
+
+# new-noun: Missile (R-SIM-7 deterministic projectile; no JASS equivalent)
+exact   Event.Missile
+exact   Game.SpawnMissile
+exact   Missile.Detonate
+exact   Missile.Expire
+exact   Missile.Owner
+exact   Missile.Position
+exact   Missile.SetTarget
+exact   Missile.Source
+exact   Missile.Target
+
+# new-noun: Storage (typed deterministic save/load; supersedes JASS gamecache)
+exact   Storage.GetBool
+exact   Storage.GetReal
+exact   Storage.GetString
+exact   Storage.Load
+exact   Storage.Save
+exact   Storage.SetBool
+exact   Storage.SetReal
+exact   Storage.SetString
+
+# new-noun: Buff (typed buff/status accessors)
+exact   Buff.Present
+exact   Buff.RemainingSeconds
+exact   Buff.Remove
+exact   Buff.Stacks
+exact   Buff.Type
+exact   Game.BuffType
+exact   Unit.ApplyBuff
+
+# new-noun: Attachment (per-handle attachment table)
+exact   Attachment.Get
+exact   Attachment.Has
+exact   Attachment.Remove
+exact   Attachment.Set
+
+# event surface: payload accessors + sink installers (presentation/event pattern)
+exact   DamageEvent.Amount
+exact   DamageEvent.Source
+exact   DamageEvent.Unit
+exact   Event.Kind
+exact   EventView.Damage
+exact   EventView.Kind
+exact   EventView.OwnerPlayer
+exact   Game.OnAudio
+exact   Game.OnCamera
+exact   Game.OnDamage
+exact   Game.OnDefeat
+exact   Game.OnEvent
+exact   Game.OnInvalidHandle
+exact   Game.OnUI
+exact   Game.OnVictory
+exact   Subscription.Cancel
+exact   UnitView.OwnerPlayer
+exact   UnitView.Position
+
+# value-math (R-API-2 value types; no JASS native)
+exact   Angle.Normalized
+exact   Angle.Radians
+exact   Rad
+exact   Vec2.Sub
+
+# functional options / helper verbs (R-API-3 option constructors)
+exact   AfterUnits
+exact   At
+exact   For
+exact   ForPlayer
+exact   FromSource
+exact   PanHeight
+exact   PanOver
+exact   PolledWait
+exact   SharedVision
+exact   Started
+exact   TargetNone
+exact   TargetPoint
+exact   TargetUnit
+exact   Teleport
+exact   UseAt
+exact   UseOn
+exact   Where
+
+# camera cinematic control (new-capability beyond JASS camera natives)
+exact   Camera.BeginCinematic
+exact   Camera.EndCinematic
+exact   Camera.Following
+exact   Camera.InCinematic
+exact   Camera.SetZoom
+
+# engine control (new-capability: registry/scheduler/debug surface)
+exact   Game.ElapsedTime
+exact   Game.Every
+exact   Game.IsAIPlayer
+exact   Game.IsReplay
+exact   Game.Localize
+exact   Game.RegisterAbility
+exact   Game.RegisterEffectModel
+exact   Game.Resume
+exact   Game.SetDebug
+exact   Game.SetLocalPlayer
+
+# typed state accessors (fine-grained split of mapped Get/SetXxxState families)
+exact   Ability.Cooldown
+exact   Ability.ManaCost
+exact   Doodad.Hide
+exact   Doodad.Promoted
+exact   Doodad.Show
+exact   Force.Count
+exact   Game.AllPlayers
+exact   Game.AppendUnitsIn
+exact   Game.AppendUnitsInRange
+exact   Game.Camera
+exact   Game.Doodad
+exact   Game.ItemType
+exact   Game.NeutralExtra
+exact   Game.NeutralVictim
+exact   Game.SetUpkeep
+exact   Game.TimeOfDaySuspended
+exact   Game.TransferResource
+exact   Game.UnitType
+exact   Item.Carried
+exact   Item.Carrier
+exact   Player.AlliedVictory
+exact   Player.FoodCap
+exact   Player.FoodUsed
+exact   Player.GoldLostToUpkeep
+exact   Player.GoldUpkeepRate
+exact   Player.LostToUpkeep
+exact   Player.Lumber
+exact   Player.LumberLostToUpkeep
+exact   Player.LumberUpkeepRate
+exact   Player.Result
+exact   Player.SetAlliance
+exact   Player.SetAlliedVictory
+exact   Player.SetFoodCap
+exact   Player.SetLumber
+exact   Player.UpkeepRate
+exact   Table.Len
+exact   Unit.EnableInventory
+exact   Unit.IsHero
+exact   Unit.Mana
+exact   Unit.SetMana
+exact   Unit.SwapItems
+exact   UnitSet.AppendUnits
+exact   UnitSet.Compact
