@@ -7648,3 +7648,327 @@ name = "WaitForSoundBJ"
 class = "D3"
 tombstone = "gameplay-irrelevant"
 reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+# === #248 camera surface (camera.md) — Camera-named JASS family. Cutscene
+# Cinematic* natives (no "Camera") belong to #245 and are left for that issue.
+
+[[override]]
+name = "CameraSetSourceNoise"
+class = "D3"
+goMapping = "Camera.Shake"
+goSignature = "(magnitude float64)"
+collapsesWith = ["CameraSetSourceNoiseEx", "CameraSetSourceNoiseForPlayer", "CameraSetTargetNoise", "CameraSetTargetNoiseEx", "CameraSetTargetNoiseForPlayer", "CameraSetEQNoiseForPlayer", "CameraClearNoiseForPlayer"]
+package = "litd/api"
+reason = "#248: the source/target/EQ noise + clear family collapses onto Camera.Shake(magnitude) (0 stops)."
+
+[[override]]
+name = "GetCameraField"
+class = "D5"
+goMapping = "Camera.Field"
+goSignature = "(f CameraField) float64"
+collapsesWith = ["CameraSetupGetField", "CameraSetupGetFieldSwap"]
+package = "litd/api"
+reason = "#248 D6 enum-keyed: field getter; the setup/swap forms fold onto typed Camera.Field."
+
+[[override]]
+name = "PanCameraTo"
+class = "D3"
+goMapping = "Camera.Pan"
+goSignature = "(pos Vec2, opts ...PanOption)"
+collapsesWith = ["PanCameraToForPlayer", "PanCameraToLocForPlayer", "PanCameraToTimed", "PanCameraToTimedForPlayer", "PanCameraToTimedLocForPlayer", "PanCameraToTimedLocWithZForPlayer", "PanCameraToTimedWithZ", "PanCameraToWithZ", "SmartCameraPanBJ", "SetCameraPosition", "SetCameraPositionForPlayer", "SetCameraPositionLocForPlayer", "SetCameraQuickPosition", "SetCameraQuickPositionForPlayer", "SetCameraQuickPositionLoc", "SetCameraQuickPositionLocForPlayer"]
+package = "litd/api"
+reason = "#248: the XY/Loc/timed/Z/quick/per-player pan+position family collapses onto one Camera.Pan(pos, opts); the per-player guard is the g.Camera(p) receiver (dedup §4/§3)."
+
+[[override]]
+name = "SetCameraBounds"
+class = "D3"
+goMapping = "Camera.SetBounds"
+goSignature = "(r Rect)"
+collapsesWith = ["SetCameraBoundsToRect", "SetCameraBoundsToRectForPlayerBJ", "AdjustCameraBoundsBJ", "AdjustCameraBoundsForPlayerBJ"]
+package = "litd/api"
+reason = "#248: axis-aligned bounds; the rect/adjust/per-player forms fold (non-axis-aligned quad bounds tombstoned)."
+
+[[override]]
+name = "SetCameraField"
+class = "D5"
+goMapping = "Camera.SetField"
+goSignature = "(f CameraField, v float64)"
+collapsesWith = ["SetCameraFieldForPlayer", "AdjustCameraField", "CameraSetupSetField"]
+package = "litd/api"
+reason = "#248 D6 enum-keyed: the per-field/per-player/adjust setters collapse onto typed Camera.SetField (gameplay-clamped per R-RND-1)."
+
+[[override]]
+name = "SetCameraTargetController"
+class = "D3"
+goMapping = "Camera.Follow"
+goSignature = "(u Unit)"
+collapsesWith = ["SetCameraTargetControllerNoZForPlayer"]
+package = "litd/api"
+reason = "#248: lock camera onto a unit; the no-Z/per-player form folds onto Camera.Follow (dead target releases cleanly)."
+
+[[override]]
+name = "StopCamera"
+class = "D2"
+goMapping = "Camera.StopFollow"
+goSignature = "()"
+collapsesWith = ["StopCameraForPlayerBJ"]
+package = "litd/api"
+reason = "#248: stop camera follow/movement; the per-player form folds onto Camera.StopFollow."
+
+[[override]]
+name = "BlzCameraSetupApplyForceDurationSmooth"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "BlzCameraSetupGetLabel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "BlzCameraSetupSetLabel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraResetSmoothingFactorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "CameraSetDepthOfFieldScale"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "CameraSetFocalDistance"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "CameraSetSmoothingFactor"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "CameraSetSmoothingFactorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "CameraSetupApply"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupApplyForPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupApplyForPlayerSmooth"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupApplyForceDuration"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupApplyForceDurationWithZ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupApplyWithZ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupGetDestPositionLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupGetDestPositionX"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupGetDestPositionY"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CameraSetupSetDestPosition"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "CreateCameraSetup"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "GetCameraBoundMaxX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraBoundMaxY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraBoundMinX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraBoundMinY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraBoundsMapRect"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraEyePositionLoc"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraEyePositionX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraEyePositionY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraEyePositionZ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraMargin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraTargetPositionLoc"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraTargetPositionX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraTargetPositionY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCameraTargetPositionZ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCurrentCameraBoundsMapRectBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "GetCurrentCameraSetup"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+
+[[override]]
+name = "ResetToGameCamera"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "ResetToGameCameraForPlayer"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "RotateCameraAroundLocBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "SetCameraOrientController"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "SetCameraOrientControllerForPlayerBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "SetCameraRotateMode"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+
+[[override]]
+name = "SetCinematicCamera"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+[[override]]
+name = "SetCinematicCameraForPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."

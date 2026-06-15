@@ -1059,41 +1059,41 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MultiboardSetItemWidth | common.j | unclassified | _pending (M2 backlog)_ |
 | MultiboardSetItemIcon | common.j | unclassified | _pending (M2 backlog)_ |
 | MultiboardSuppressDisplay | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraQuickPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraBounds | common.j | unclassified | _pending (M2 backlog)_ |
-| StopCamera | common.j | unclassified | _pending (M2 backlog)_ |
-| ResetToGameCamera | common.j | unclassified | _pending (M2 backlog)_ |
-| PanCameraTo | common.j | unclassified | _pending (M2 backlog)_ |
-| PanCameraToTimed | common.j | unclassified | _pending (M2 backlog)_ |
-| PanCameraToWithZ | common.j | unclassified | _pending (M2 backlog)_ |
-| PanCameraToTimedWithZ | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCinematicCamera | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraRotateMode | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraField | common.j | unclassified | _pending (M2 backlog)_ |
-| AdjustCameraField | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraTargetController | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCameraOrientController | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateCameraSetup | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupSetField | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupGetField | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupSetDestPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupGetDestPositionLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupGetDestPositionX | common.j | D3 | _pending (M2 backlog)_ |
-| CameraSetupGetDestPositionY | common.j | D3 | _pending (M2 backlog)_ |
-| CameraSetupApply | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupApplyWithZ | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupApplyForceDuration | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetupApplyForceDurationWithZ | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCameraSetupSetLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCameraSetupGetLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetTargetNoise | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetSourceNoise | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetTargetNoiseEx | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetSourceNoiseEx | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetSmoothingFactor | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetFocalDistance | common.j | unclassified | _pending (M2 backlog)_ |
-| CameraSetDepthOfFieldScale | common.j | unclassified | _pending (M2 backlog)_ |
+| SetCameraPosition | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCameraQuickPosition | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCameraBounds | common.j | D3 | `litd/api.Camera.SetBounds` |
+| StopCamera | common.j | D2 | `litd/api.Camera.StopFollow` |
+| ResetToGameCamera | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| PanCameraTo | common.j | D3 | `litd/api.Camera.Pan` |
+| PanCameraToTimed | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| PanCameraToWithZ | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| PanCameraToTimedWithZ | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCinematicCamera | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| SetCameraRotateMode | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| SetCameraField | common.j | D5 | `litd/api.Camera.SetField` |
+| AdjustCameraField | common.j | D5 | `litd/api.Camera.SetField` (D3 collapse → SetCameraField) |
+| SetCameraTargetController | common.j | D3 | `litd/api.Camera.Follow` |
+| SetCameraOrientController | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| CreateCameraSetup | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupSetField | common.j | D5 | `litd/api.Camera.SetField` (D3 collapse → SetCameraField) |
+| CameraSetupGetField | common.j | D5 | `litd/api.Camera.Field` (D3 collapse → GetCameraField) |
+| CameraSetupSetDestPosition | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupGetDestPositionLoc | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupGetDestPositionX | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupGetDestPositionY | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupApply | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupApplyWithZ | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupApplyForceDuration | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupApplyForceDurationWithZ | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| BlzCameraSetupSetLabel | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| BlzCameraSetupGetLabel | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetTargetNoise | common.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| CameraSetSourceNoise | common.j | D3 | `litd/api.Camera.Shake` |
+| CameraSetTargetNoiseEx | common.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| CameraSetSourceNoiseEx | common.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| CameraSetSmoothingFactor | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| CameraSetFocalDistance | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| CameraSetDepthOfFieldScale | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
 | SetCineFilterTexture | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCineFilterBlendMode | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCineFilterTexMapFlags | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1108,20 +1108,20 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | EndCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceCinematicSubtitles | common.j | D1 | **tombstoned** (gameplay-irrelevant): cinematic subtitle presentation toggle; no sim effect |
 | SetCinematicAudio | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
-| GetCameraMargin | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCameraBoundMinX | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraBoundMinY | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraBoundMaxX | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraBoundMaxY | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraField | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCameraTargetPositionX | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraTargetPositionY | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraTargetPositionZ | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCameraTargetPositionLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCameraEyePositionX | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraEyePositionY | common.j | D3 | _pending (M2 backlog)_ |
-| GetCameraEyePositionZ | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCameraEyePositionLoc | common.j | unclassified | _pending (M2 backlog)_ |
+| GetCameraMargin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraBoundMinX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraBoundMinY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraBoundMaxX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraBoundMaxY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraField | common.j | D5 | `litd/api.Camera.Field` |
+| GetCameraTargetPositionX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraTargetPositionY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraTargetPositionZ | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraTargetPositionLoc | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraEyePositionX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraEyePositionY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraEyePositionZ | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraEyePositionLoc | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
 | NewSoundEnvironment | common.j | D1 | **tombstoned** (deprecated): EAX environment reverb is a dead audio extension; not part of the OpenAL/.ogg pipeline (R-AUD-1, sound-and-music.md). No public surface |
 | CreateSound | common.j | D3 | `litd/api.Game.CreateSound` |
 | CreateSoundFilenameWithLabel | common.j | D3 | `litd/api.Game.CreateSound` (D3 collapse → CreateSound) |
@@ -1375,7 +1375,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzEnableSelections | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsSelectionEnabled | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsSelectionCircleEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCameraSetupApplyForceDurationSmooth | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzCameraSetupApplyForceDurationSmooth | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
 | BlzEnableTargetIndicator | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsTargetIndicatorEnabled | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzShowTerrain | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1607,42 +1607,42 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CompareLocationsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CompareRectsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetRectFromCircleBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetCurrentCameraSetup | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetupApplyForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetupApplyForPlayerSmooth | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetupGetFieldSwap | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetCameraFieldForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraTargetControllerNoZForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraPositionForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraPositionLocForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RotateCameraAroundLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PanCameraToForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PanCameraToLocForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PanCameraToTimedForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PanCameraToTimedLocForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PanCameraToTimedLocWithZForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SmartCameraPanBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCinematicCameraForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ResetToGameCameraForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetSourceNoiseForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetTargetNoiseForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetEQNoiseForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraClearNoiseForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetCurrentCameraBoundsMapRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetCameraBoundsMapRect | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| GetCurrentCameraSetup | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| CameraSetupApplyForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupApplyForPlayerSmooth | blizzard.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| CameraSetupGetFieldSwap | blizzard.j | D5 | `litd/api.Camera.Field` (D3 collapse → GetCameraField) |
+| SetCameraFieldForPlayer | blizzard.j | D5 | `litd/api.Camera.SetField` (D3 collapse → SetCameraField) |
+| SetCameraTargetControllerNoZForPlayer | blizzard.j | D3 | `litd/api.Camera.Follow` (D3 collapse → SetCameraTargetController) |
+| SetCameraPositionForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCameraPositionLocForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| RotateCameraAroundLocBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| PanCameraToForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| PanCameraToLocForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| PanCameraToTimedForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| PanCameraToTimedLocForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| PanCameraToTimedLocWithZForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SmartCameraPanBJ | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCinematicCameraForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
+| ResetToGameCameraForPlayer | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| CameraSetSourceNoiseForPlayer | blizzard.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| CameraSetTargetNoiseForPlayer | blizzard.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| CameraSetEQNoiseForPlayer | blizzard.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| CameraClearNoiseForPlayer | blizzard.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
+| GetCurrentCameraBoundsMapRectBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
+| GetCameraBoundsMapRect | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
 | GetPlayableMapRect | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetEntireMapRect | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetCameraBoundsToRect | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraBoundsToRectForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| AdjustCameraBoundsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| AdjustCameraBoundsForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraQuickPositionForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraQuickPositionLocForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraQuickPositionLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| StopCameraForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCameraOrientControllerForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CameraSetSmoothingFactorBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| CameraResetSmoothingFactorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetCameraBoundsToRect | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
+| SetCameraBoundsToRectForPlayerBJ | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
+| AdjustCameraBoundsBJ | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
+| AdjustCameraBoundsForPlayerBJ | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
+| SetCameraQuickPositionForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCameraQuickPositionLocForPlayer | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| SetCameraQuickPositionLoc | blizzard.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
+| StopCameraForPlayerBJ | blizzard.j | D2 | `litd/api.Camera.StopFollow` (D3 collapse → StopCamera) |
+| SetCameraOrientControllerForPlayerBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| CameraSetSmoothingFactorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
+| CameraResetSmoothingFactorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
 | DisplayTextToForce | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DisplayTimedTextToForce | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ClearTextMessagesBJ | blizzard.j | D4 | _pending (M2 backlog)_ |

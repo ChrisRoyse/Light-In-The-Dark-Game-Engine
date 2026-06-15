@@ -827,6 +827,129 @@
       }
     },
     {
+      "name": "CameraResetSmoothingFactorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "CameraSetSmoothingFactorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "factor",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "CameraSetupApplyForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "doPan",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupApplyForPlayerSmooth",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "doPan",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "forcedDuration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "easeInDuration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "easeOutDuration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "smoothFactor",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
       "name": "CheckItemStatus",
       "origin": "blizzard.j",
       "signature": {
@@ -1404,6 +1527,51 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "GetCameraBoundsMapRect",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "rect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCurrentCameraBoundsMapRectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "rect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCurrentCameraSetup",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "camerasetup"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
       }
     },
     {
@@ -4925,6 +5093,32 @@
       }
     },
     {
+      "name": "ResetToGameCameraForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
       "name": "RestoreUnitLocFacingAngleBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -5014,6 +5208,42 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "RotateCameraAroundLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
       }
     },
     {
@@ -6793,6 +7023,42 @@
       }
     },
     {
+      "name": "SetCameraOrientControllerForPlayerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "xoffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "yoffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
       "name": "SetCineModeVolumeGroupsBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -6820,6 +7086,32 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "SetCinematicCameraForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "cameraModelFile",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
       }
     },
     {
@@ -8752,6 +9044,99 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md)"
+      }
+    },
+    {
+      "name": "BlzCameraSetupApplyForceDurationSmooth",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "doPan",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "forcedDuration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "easeInDuration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "easeOutDuration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "smoothFactor",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "BlzCameraSetupGetLabel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "BlzCameraSetupSetLabel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "label",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
       }
     },
     {
@@ -12036,6 +12421,323 @@
       }
     },
     {
+      "name": "CameraSetDepthOfFieldScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "CameraSetFocalDistance",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "distance",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "CameraSetSmoothingFactor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "factor",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "CameraSetSourceNoise",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "mag",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "velocity",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.Shake",
+        "package": "litd/api",
+        "goSignature": "(magnitude float64)",
+        "collapsesWith": [
+          "CameraSetSourceNoiseEx",
+          "CameraSetSourceNoiseForPlayer",
+          "CameraSetTargetNoise",
+          "CameraSetTargetNoiseEx",
+          "CameraSetTargetNoiseForPlayer",
+          "CameraSetEQNoiseForPlayer",
+          "CameraClearNoiseForPlayer"
+        ]
+      }
+    },
+    {
+      "name": "CameraSetupApply",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "doPan",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "panTimed",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupApplyForceDuration",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "doPan",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "forceDuration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupApplyForceDurationWithZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "zDestOffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "forceDuration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupApplyWithZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "zDestOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupGetDestPositionLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupGetDestPositionX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupGetDestPositionY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "CameraSetupSetDestPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSetup",
+            "jassType": "camerasetup",
+            "tsType": "camerasetup"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
       "name": "Cheat",
       "origin": "common.j",
       "signature": {
@@ -13962,6 +14664,21 @@
       }
     },
     {
+      "name": "CreateCameraSetup",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "camerasetup"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
       "name": "CreateDeadDestructable",
       "origin": "common.j",
       "signature": {
@@ -15562,6 +16279,233 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "GetCameraBoundMaxX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraBoundMaxY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraBoundMinX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraBoundMinY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraEyePositionLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraEyePositionX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraEyePositionY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraEyePositionZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichField",
+            "jassType": "camerafield",
+            "tsType": "camerafield"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.Field",
+        "package": "litd/api",
+        "goSignature": "(f CameraField) float64",
+        "collapsesWith": [
+          "CameraSetupGetField",
+          "CameraSetupGetFieldSwap"
+        ]
+      }
+    },
+    {
+      "name": "GetCameraMargin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichMargin",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraTargetPositionLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraTargetPositionX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraTargetPositionY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
+      }
+    },
+    {
+      "name": "GetCameraTargetPositionZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface."
       }
     },
     {
@@ -22207,6 +23151,51 @@
       }
     },
     {
+      "name": "PanCameraTo",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.Pan",
+        "package": "litd/api",
+        "goSignature": "(pos Vec2, opts ...PanOption)",
+        "collapsesWith": [
+          "PanCameraToForPlayer",
+          "PanCameraToLocForPlayer",
+          "PanCameraToTimed",
+          "PanCameraToTimedForPlayer",
+          "PanCameraToTimedLocForPlayer",
+          "PanCameraToTimedLocWithZForPlayer",
+          "PanCameraToTimedWithZ",
+          "PanCameraToWithZ",
+          "SmartCameraPanBJ",
+          "SetCameraPosition",
+          "SetCameraPositionForPlayer",
+          "SetCameraPositionLocForPlayer",
+          "SetCameraQuickPosition",
+          "SetCameraQuickPositionForPlayer",
+          "SetCameraQuickPositionLoc",
+          "SetCameraQuickPositionLocForPlayer"
+        ]
+      }
+    },
+    {
       "name": "PauseCompAI",
       "origin": "common.j",
       "signature": {
@@ -23309,6 +24298,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#256: save-directory management; whole-game mid-match save/load is deferred (#204), and directory-level file management rides that pipeline — deferred"
+      }
+    },
+    {
+      "name": "ResetToGameCamera",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
       }
     },
     {
@@ -25237,6 +26247,213 @@
       }
     },
     {
+      "name": "SetCameraBounds",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x3",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y3",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x4",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y4",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.SetBounds",
+        "package": "litd/api",
+        "goSignature": "(r Rect)",
+        "collapsesWith": [
+          "SetCameraBoundsToRect",
+          "SetCameraBoundsToRectForPlayerBJ",
+          "AdjustCameraBoundsBJ",
+          "AdjustCameraBoundsForPlayerBJ"
+        ]
+      }
+    },
+    {
+      "name": "SetCameraField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichField",
+            "jassType": "camerafield",
+            "tsType": "camerafield"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.SetField",
+        "package": "litd/api",
+        "goSignature": "(f CameraField, v float64)",
+        "collapsesWith": [
+          "SetCameraFieldForPlayer",
+          "AdjustCameraField",
+          "CameraSetupSetField"
+        ]
+      }
+    },
+    {
+      "name": "SetCameraOrientController",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "xoffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "yoffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "SetCameraRotateMode",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radiansToSweep",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "SetCameraTargetController",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "xoffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "yoffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "inheritOrientation",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.Follow",
+        "package": "litd/api",
+        "goSignature": "(u Unit)",
+        "collapsesWith": [
+          "SetCameraTargetControllerNoZForPlayer"
+        ]
+      }
+    },
+    {
       "name": "SetCinematicAudio",
       "origin": "common.j",
       "signature": {
@@ -25255,6 +26472,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "SetCinematicCamera",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cameraModelFile",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
       }
     },
     {
@@ -28077,6 +29315,25 @@
         "collapsesWith": [
           "PlaySound",
           "PlaySoundBJ"
+        ]
+      }
+    },
+    {
+      "name": "StopCamera",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Camera.StopFollow",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "StopCameraForPlayerBJ"
         ]
       }
     },

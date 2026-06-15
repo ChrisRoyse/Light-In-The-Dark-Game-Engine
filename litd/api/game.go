@@ -67,6 +67,16 @@ type Game struct {
 	// deterministic no-op. The render driver and tests install a sink.
 	onAudio func(AudioEvent)
 
+	// camera surface (#248): per-player render-only view state, zero sim
+	// coupling. localPlayer is the local viewer slot (-1 = none/headless);
+	// camera verbs for any other player are recorded no-ops so a script
+	// can never branch the sim on the local view (R-RND-1 / desync guard).
+	// cam holds each player's applied field values + cinematic/follow
+	// state (the SoT for the clamp tests); onCamera is the render/test sink.
+	localPlayer int32
+	cam         [sim.MaxPlayers]cameraState
+	onCamera    func(CameraEvent)
+
 	// eventKinds maps a sim event kind to its public dispatch list,
 	// consulted only at OnEvent registration time (never on the
 	// dispatch hot path — each list is reached through a closure). nil
@@ -121,6 +131,7 @@ func newGame(w *sim.World) *Game {
 		w:             w,
 		eventKinds:    make(map[uint16]*kindList),
 		nextHandlerID: apiHandlerBase,
+		localPlayer:   -1, // no local viewer until set (headless default)
 	}
 }
 
