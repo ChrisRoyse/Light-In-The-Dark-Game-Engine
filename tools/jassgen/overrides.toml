@@ -8894,3 +8894,1730 @@ name = "UnitAddIndicatorBJ"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+# === #245 ui-frames-and-dialogs surface (ui-frames-and-dialogs.md). The text-
+# message primitive ships now (Game.Print/ClearMessages over the OnUI sink);
+# the frame/dialog/board/quest/cinematic-overlay render UI is deferred-v2 (no
+# v1 G3N GUI backend) per the render UI milestone.
+
+[[override]]
+name = "ClearTextMessages"
+class = "D2"
+goMapping = "Game.ClearMessages"
+goSignature = "(to []Player)"
+collapsesWith = ["ClearTextMessagesBJ"]
+package = "litd/api"
+reason = "#245: the clear-text-area verbs collapse onto Game.ClearMessages(to []Player)."
+
+[[override]]
+name = "DisplayTextToPlayer"
+class = "D2"
+goMapping = "Game.Print"
+goSignature = "(to []Player, msg string, opts ...PrintOption)"
+collapsesWith = ["DisplayTextToForce", "DisplayTimedTextToPlayer", "DisplayTimedTextToForce", "DisplayTimedTextFromPlayer", "BlzDisplayChatMessage"]
+package = "litd/api"
+reason = "#245: the player/force/timed/positioned text-message + chat family collapses onto Game.Print(to []Player, msg, At/For opts); force/player/all targets -> []Player (dedup D2/D3)."
+
+[[override]]
+name = "AbortCinematicFadeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "BlzCreateFrame"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzCreateFrameByType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzCreateSimpleFrame"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzDestroyFrame"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzEnableCursor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameAddText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameCageMouse"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameClearAllPoints"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameClick"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetAlpha"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetChild"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetChildrenCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetEnable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetHeight"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetName"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetParent"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetTextSizeLimit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameGetWidth"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameIsVisible"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetAbsPoint"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetAllPoints"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetAlpha"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetEnable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetFocus"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetFont"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetLevel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetMinMaxValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetModel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetParent"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetPoint"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetScale"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetSize"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetSpriteAnimate"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetStepSize"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetTextAlignment"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetTextColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetTextSizeLimit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetTexture"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetTooltip"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetVertexColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzFrameSetVisible"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzGetFrameByName"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzGetMouseFocusUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzGetOriginFrame"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzHideCinematicPanels"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "BlzHideOriginFrames"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "BlzLoadTOCFile"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "CampaignMinimapIconLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CampaignMinimapIconUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CinematicFadeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "CinematicFadeCommonBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "CinematicFilterGenericBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "CinematicModeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "CinematicModeExBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "ContinueCinematicFadeAfterBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "ContinueCinematicFadeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "CreateBuildCommandButtonEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateCommandButtonEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateCommandButtonEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateCommonCommandButtonEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateLeaderboard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "CreateLeaderboardBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "CreateLearnCommandButtonEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateLearnCommandButtonEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateMinimapIcon"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CreateMinimapIconAtLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CreateMinimapIconAtLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CreateMinimapIconBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CreateMinimapIconOnUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CreateMinimapIconOnUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "CreateMultiboard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "CreateMultiboardBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "CreateQuest"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "CreateQuestBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "CreateQuestItemBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "CreateTimerDialog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateTimerDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CreateTrackable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: trackable (invisible mouse-region) render UI; deferred-v2 until the G3N GUI input facade lands."
+
+[[override]]
+name = "CreateTrainCommandButtonEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CustomDefeatDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "CustomVictoryDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DestroyCommandButtonEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DestroyLeaderboard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "DestroyLeaderboardBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "DestroyMinimapIcon"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "DestroyMultiboard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "DestroyMultiboardBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "DestroyQuest"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "DestroyQuestBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "DestroyTimerDialog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DestroyTimerDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogAddButton"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogAddButtonBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogAddButtonWithHotkeyBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogAddQuitButton"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogClear"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogClearBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogCreate"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogDestroy"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogDisplay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogDisplayBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogSetMessage"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DialogSetMessageBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "DisplayLoadDialog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "EnableMinimapFilterButtons"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "EnableUserUI"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "EndCinematicScene"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "FinishCinematicFadeAfterBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "FinishCinematicFadeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "FlashQuestDialogButton"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "FlashQuestDialogButtonBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "ForceCinematicSubtitlesBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "ForceQuestDialogUpdate"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "ForceSetLeaderboardBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "ForceUIKey"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "ForceUIKeyBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+
+[[override]]
+name = "GameOverDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetClickedButton"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetClickedButtonBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetClickedDialog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetClickedDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetCustomCampaignButtonVisible"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetDialogueSpeakerNameKey"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetDialogueTextKey"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetLastCreatedButtonBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetLastCreatedCommandButtonEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "GetLastCreatedLeaderboard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "GetLastCreatedMinimapIcon"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "GetLastCreatedMultiboard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "GetLastCreatedQuestBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "GetLastCreatedQuestItemBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "GetLastCreatedTimerDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "IsCustomCampaignButtonVisibile"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "IsLeaderboardDisplayed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "IsMultiboardDisplayed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "IsMultiboardMinimized"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "IsQuestCompleted"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "IsQuestDiscovered"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "IsQuestEnabled"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "IsQuestFailed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "IsQuestItemCompleted"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "IsQuestRequired"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "IsTimerDialogDisplayed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "LeaderboardAddItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardAddItemBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardClear"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardDisplay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardDisplayBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardGetIndexedPlayerBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardGetItemCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardGetItemCountBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardGetLabelText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardGetPlayerIndex"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardGetPlayerIndexBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardHasPlayerItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardHasPlayerItemBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardRemoveItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardRemovePlayerItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardRemovePlayerItemBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardResizeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetItemLabel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetItemLabelColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetItemStyle"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetItemValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetItemValueColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetLabel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetLabelBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetLabelColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetLabelColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetPlayerItemLabelBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetPlayerItemLabelColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetPlayerItemStyleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetPlayerItemValueBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetPlayerItemValueColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetSizeByItemCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetStyle"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetStyleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetValueColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSetValueColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSortItemsBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSortItemsByLabel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSortItemsByLabelBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSortItemsByPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSortItemsByPlayerBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "LeaderboardSortItemsByValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MeleeDefeatDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "MeleeVictoryDialogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "MultiboardAllowDisplayBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardClear"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardDisplay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardDisplayBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardGetColumnCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardGetItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardGetRowCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardGetTitleText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardMinimize"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardMinimizeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardReleaseItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetColumnCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemIcon"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemIconBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemStyle"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemStyleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemValueBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemValueColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemWidth"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemWidthBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemsIcon"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemsStyle"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemsValue"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemsValueColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetItemsWidth"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetRowCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetTitleText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetTitleTextColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSetTitleTextColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "MultiboardSuppressDisplay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "PingMinimap"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapForForce"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapForForceEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapForPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapLocForForce"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapLocForForceEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PingMinimapLocForPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "PlayCinematic"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "PlayDialogueFromSpeakerEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "PlayDialogueFromSpeakerTypeEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "PlayModelCinematic"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "PlayerGetLeaderboardBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+
+[[override]]
+name = "QuestCreateItem"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestItemSetCompleted"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestItemSetCompletedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestItemSetDescription"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestItemSetDescriptionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestMessageBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetCompleted"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetCompletedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetDescription"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetDescriptionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetDiscovered"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetDiscoveredBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetEnabled"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetEnabledBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetFailed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetFailedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetIconPath"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetRequired"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetTitle"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "QuestSetTitleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands."
+
+[[override]]
+name = "SetAltMinimapIcon"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "SetCinematicAvailableBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "SetCinematicScene"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "SetCinematicSceneBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "SetCustomCampaignButtonVisible"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "SetDialogueSpeakerNameKey"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "SetDialogueTextKey"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "SetEdCinematicAvailable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "SetMinimapIconOrphanDestroy"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "SetMinimapIconVisible"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+
+[[override]]
+name = "SetOpCinematicAvailable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "ShowCustomCampaignButton"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogDisplay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogDisplayBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogDisplayForPlayerBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetRealTimeRemaining"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetSpeed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetSpeedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetTimeColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetTimeColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetTitle"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetTitleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetTitleColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TimerDialogSetTitleColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TriggerRegisterDialogEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+
+[[override]]
+name = "TriggerRegisterPlayerEventEndCinematic"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "TryInitCinematicBehaviorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."

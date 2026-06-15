@@ -310,8 +310,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterCommandEvent | common.j | D1 | **tombstoned** (superseded): command event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | TriggerRegisterUpgradeCommandEvent | common.j | D1 | **tombstoned** (superseded): upgrade-command event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | GetTriggeringTrackable | common.j | D1 | **tombstoned** (deferred-v2): trackable getter — ui-frames (#245) |
-| GetClickedButton | common.j | unclassified | _pending (M2 backlog)_ |
-| GetClickedDialog | common.j | unclassified | _pending (M2 backlog)_ |
+| GetClickedButton | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetClickedDialog | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | GetTournamentFinishSoonTimeRemaining | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (finish-soon timer); no LitD tournament hosting — gameplay-irrelevant |
 | GetTournamentFinishNowRule | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (finish-now rule); no LitD tournament hosting — gameplay-irrelevant |
 | GetTournamentFinishNowPlayer | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (finish-now player); no LitD tournament hosting — gameplay-irrelevant |
@@ -748,20 +748,20 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetTutorialCleared | common.j | unclassified | _pending (M2 backlog)_ |
 | SetMissionAvailable | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCampaignAvailable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetOpCinematicAvailable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetEdCinematicAvailable | common.j | unclassified | _pending (M2 backlog)_ |
+| SetOpCinematicAvailable | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| SetEdCinematicAvailable | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | GetDefaultDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: default campaign-difficulty getter; campaign difficulty deferred with SetGameDifficulty — deferred |
 | SetDefaultDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: default campaign-difficulty setter; campaign difficulty deferred with SetGameDifficulty — deferred |
-| SetCustomCampaignButtonVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCustomCampaignButtonVisible | common.j | unclassified | _pending (M2 backlog)_ |
+| SetCustomCampaignButtonVisible | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetCustomCampaignButtonVisible | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | DoNotSaveReplay | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: suppresses automatic Battle.net replay capture; LitD replays are an explicit command-stream mechanism (net #83), not an auto-captured artifact to suppress — gameplay-irrelevant |
-| DialogCreate | common.j | unclassified | _pending (M2 backlog)_ |
-| DialogDestroy | common.j | unclassified | _pending (M2 backlog)_ |
-| DialogClear | common.j | unclassified | _pending (M2 backlog)_ |
-| DialogSetMessage | common.j | unclassified | _pending (M2 backlog)_ |
-| DialogAddButton | common.j | unclassified | _pending (M2 backlog)_ |
-| DialogAddQuitButton | common.j | unclassified | _pending (M2 backlog)_ |
-| DialogDisplay | common.j | unclassified | _pending (M2 backlog)_ |
+| DialogCreate | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogDestroy | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogClear | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogSetMessage | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogAddButton | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogAddQuitButton | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogDisplay | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | ReloadGameCachesFromDisk | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
 | InitGameCache | common.j | D1 | `litd/api.Game.Storage` |
 | SaveGameCache | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
@@ -913,15 +913,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ResetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | SetUnitFog | common.j | unclassified | _pending (M2 backlog)_ |
 | SetTerrainFogEx | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
-| DisplayTextToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| DisplayTimedTextToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| DisplayTimedTextFromPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| ClearTextMessages | common.j | unclassified | _pending (M2 backlog)_ |
+| DisplayTextToPlayer | common.j | D2 | `litd/api.Game.Print` |
+| DisplayTimedTextToPlayer | common.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
+| DisplayTimedTextFromPlayer | common.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
+| ClearTextMessages | common.j | D2 | `litd/api.Game.ClearMessages` |
 | SetDayNightModels | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | SetPortraitLight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetSkyModel | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | EnableUserControl | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: cinematic input lock (disables player input during cutscenes); a UI/cinematic-mode control, not deterministic sim state — gameplay-irrelevant (cinematic surface) |
-| EnableUserUI | common.j | unclassified | _pending (M2 backlog)_ |
+| EnableUserUI | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | SuspendTimeOfDay | common.j | D1 | `litd/api.Game.SuspendTimeOfDay` |
 | SetTimeOfDayScale | common.j | D1 | `litd/api.Game.SetTimeOfDayScale` |
 | GetTimeOfDayScale | common.j | D1 | `litd/api.Game.TimeOfDayScale` |
@@ -929,25 +929,25 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | PauseGame | common.j | D1 | `litd/api.Game.Pause` |
 | UnitAddIndicator | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | AddIndicator | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
-| PingMinimap | common.j | unclassified | _pending (M2 backlog)_ |
-| PingMinimapEx | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateMinimapIconOnUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateMinimapIconAtLoc | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateMinimapIcon | common.j | unclassified | _pending (M2 backlog)_ |
+| PingMinimap | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| PingMinimapEx | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CreateMinimapIconOnUnit | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CreateMinimapIconAtLoc | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CreateMinimapIcon | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | SkinManagerGetLocalPath | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyMinimapIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMinimapIconVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMinimapIconOrphanDestroy | common.j | unclassified | _pending (M2 backlog)_ |
+| DestroyMinimapIcon | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| SetMinimapIconVisible | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| SetMinimapIconOrphanDestroy | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | EnableOcclusion | common.j | unclassified | _pending (M2 backlog)_ |
 | SetIntroShotText | common.j | unclassified | _pending (M2 backlog)_ |
 | SetIntroShotModel | common.j | unclassified | _pending (M2 backlog)_ |
 | EnableWorldFogBoundary | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
-| PlayModelCinematic | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayCinematic | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceUIKey | common.j | unclassified | _pending (M2 backlog)_ |
+| PlayModelCinematic | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| PlayCinematic | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| ForceUIKey | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | ForceUICancel | common.j | unclassified | _pending (M2 backlog)_ |
-| DisplayLoadDialog | common.j | unclassified | _pending (M2 backlog)_ |
-| SetAltMinimapIcon | common.j | unclassified | _pending (M2 backlog)_ |
+| DisplayLoadDialog | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| SetAltMinimapIcon | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | DisableRestartMission | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateTextTag | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | DestroyTextTag | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
@@ -967,98 +967,98 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCreepCampFilterState | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCreepCampFilterState | common.j | unclassified | _pending (M2 backlog)_ |
-| EnableMinimapFilterButtons | common.j | unclassified | _pending (M2 backlog)_ |
+| EnableMinimapFilterButtons | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | EnableDragSelect | common.j | unclassified | _pending (M2 backlog)_ |
 | EnablePreSelect | common.j | unclassified | _pending (M2 backlog)_ |
 | EnableSelect | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateTrackable | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateQuest | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyQuest | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetTitle | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetDescription | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetIconPath | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetRequired | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetCompleted | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetDiscovered | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetFailed | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestSetEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| IsQuestRequired | common.j | unclassified | _pending (M2 backlog)_ |
-| IsQuestCompleted | common.j | unclassified | _pending (M2 backlog)_ |
-| IsQuestDiscovered | common.j | unclassified | _pending (M2 backlog)_ |
-| IsQuestFailed | common.j | unclassified | _pending (M2 backlog)_ |
-| IsQuestEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestCreateItem | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestItemSetDescription | common.j | unclassified | _pending (M2 backlog)_ |
-| QuestItemSetCompleted | common.j | unclassified | _pending (M2 backlog)_ |
-| IsQuestItemCompleted | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateTrackable | common.j | D3 | **tombstoned** (deferred-v2): #245: trackable (invisible mouse-region) render UI; deferred-v2 until the G3N GUI input facade lands. |
+| CreateQuest | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| DestroyQuest | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetTitle | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetDescription | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetIconPath | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetRequired | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetCompleted | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetDiscovered | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetFailed | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetEnabled | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| IsQuestRequired | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| IsQuestCompleted | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| IsQuestDiscovered | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| IsQuestFailed | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| IsQuestEnabled | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestCreateItem | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestItemSetDescription | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestItemSetCompleted | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| IsQuestItemCompleted | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | CreateDefeatCondition | common.j | D1 | **tombstoned** (deferred-v2): defeat conditions belong to the game-state-and-melee surface (#256) |
 | DestroyDefeatCondition | common.j | D1 | **tombstoned** (deferred-v2): defeat-condition free — game-state-and-melee (#256) |
 | DefeatConditionSetDescription | common.j | unclassified | _pending (M2 backlog)_ |
-| FlashQuestDialogButton | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceQuestDialogUpdate | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateTimerDialog | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyTimerDialog | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerDialogSetTitle | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerDialogSetTitleColor | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerDialogSetTimeColor | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerDialogSetSpeed | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerDialogDisplay | common.j | unclassified | _pending (M2 backlog)_ |
-| IsTimerDialogDisplayed | common.j | unclassified | _pending (M2 backlog)_ |
-| TimerDialogSetRealTimeRemaining | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateLeaderboard | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyLeaderboard | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardDisplay | common.j | unclassified | _pending (M2 backlog)_ |
-| IsLeaderboardDisplayed | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardGetItemCount | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetSizeByItemCount | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardAddItem | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardRemoveItem | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardRemovePlayerItem | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardClear | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSortItemsByValue | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSortItemsByPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSortItemsByLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardHasPlayerItem | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardGetPlayerIndex | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardGetLabelText | common.j | unclassified | _pending (M2 backlog)_ |
+| FlashQuestDialogButton | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| ForceQuestDialogUpdate | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| CreateTimerDialog | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DestroyTimerDialog | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetTitle | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetTitleColor | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetTimeColor | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetSpeed | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogDisplay | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| IsTimerDialogDisplayed | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetRealTimeRemaining | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| CreateLeaderboard | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| DestroyLeaderboard | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardDisplay | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| IsLeaderboardDisplayed | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardGetItemCount | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetSizeByItemCount | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardAddItem | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardRemoveItem | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardRemovePlayerItem | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardClear | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSortItemsByValue | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSortItemsByPlayer | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSortItemsByLabel | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardHasPlayerItem | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardGetPlayerIndex | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetLabel | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardGetLabelText | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
 | PlayerSetLeaderboard | common.j | D1 | **tombstoned** (gameplay-irrelevant): leaderboard UI binding; presentation |
 | PlayerGetLeaderboard | common.j | D1 | **tombstoned** (gameplay-irrelevant): leaderboard UI query; presentation |
-| LeaderboardSetLabelColor | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetValueColor | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetStyle | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetItemValue | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetItemLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetItemStyle | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetItemLabelColor | common.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardSetItemValueColor | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateMultiboard | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyMultiboard | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardDisplay | common.j | unclassified | _pending (M2 backlog)_ |
-| IsMultiboardDisplayed | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardMinimize | common.j | unclassified | _pending (M2 backlog)_ |
-| IsMultiboardMinimized | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardClear | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetTitleText | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardGetTitleText | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetTitleTextColor | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardGetRowCount | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardGetColumnCount | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetColumnCount | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetRowCount | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemsStyle | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemsValue | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemsValueColor | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemsWidth | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemsIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardGetItem | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardReleaseItem | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemStyle | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemValue | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemValueColor | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemWidth | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSetItemIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardSuppressDisplay | common.j | unclassified | _pending (M2 backlog)_ |
+| LeaderboardSetLabelColor | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetValueColor | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetStyle | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetItemValue | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetItemLabel | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetItemStyle | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetItemLabelColor | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetItemValueColor | common.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| CreateMultiboard | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| DestroyMultiboard | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardDisplay | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| IsMultiboardDisplayed | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardMinimize | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| IsMultiboardMinimized | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardClear | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetTitleText | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardGetTitleText | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetTitleTextColor | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardGetRowCount | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardGetColumnCount | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetColumnCount | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetRowCount | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemsStyle | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemsValue | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemsValueColor | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemsWidth | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemsIcon | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardGetItem | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardReleaseItem | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemStyle | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemValue | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemValueColor | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemWidth | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemIcon | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSuppressDisplay | common.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
 | SetCameraPosition | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
 | SetCameraQuickPosition | common.j | D3 | `litd/api.Camera.Pan` (D3 collapse → PanCameraTo) |
 | SetCameraBounds | common.j | D3 | `litd/api.Camera.SetBounds` |
@@ -1104,8 +1104,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetCineFilterDuration | common.j | unclassified | _pending (M2 backlog)_ |
 | DisplayCineFilter | common.j | unclassified | _pending (M2 backlog)_ |
 | IsCineFilterDisplayed | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
-| EndCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
+| SetCinematicScene | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| EndCinematicScene | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | ForceCinematicSubtitles | common.j | D1 | **tombstoned** (gameplay-irrelevant): cinematic subtitle presentation toggle; no sim effect |
 | SetCinematicAudio | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
 | GetCameraMargin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
@@ -1167,10 +1167,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetSoundFacialAnimationLabel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: lip-sync / facial-animation binding for a sound; render domain. |
 | SetSoundFacialAnimationGroupLabel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: lip-sync / facial-animation binding for a sound; render domain. |
 | SetSoundFacialAnimationSetFilepath | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: lip-sync / facial-animation binding for a sound; render domain. |
-| SetDialogueSpeakerNameKey | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDialogueSpeakerNameKey | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDialogueTextKey | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDialogueTextKey | common.j | unclassified | _pending (M2 backlog)_ |
+| SetDialogueSpeakerNameKey | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetDialogueSpeakerNameKey | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| SetDialogueTextKey | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetDialogueTextKey | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | AddWeatherEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | RemoveWeatherEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | EnableWeatherEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
@@ -1257,7 +1257,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | PreloadGenStart | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant |
 | PreloadGenEnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant |
 | Preloader | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: runs a generated preload script file; no LitD analogue (declarative manifest pipeline) — gameplay-irrelevant |
-| BlzHideCinematicPanels | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzHideCinematicPanels | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | AutomationSetTestType | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard internal automation-test harness hook; LitD uses Go's testing harness instead — gameplay-irrelevant |
 | AutomationTestStart | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant |
 | AutomationTestEnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant |
@@ -1383,56 +1383,56 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzStartRecording | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzEndRecording | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzShowUnitTeamGlow | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetOriginFrame | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetOriginFrame | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | BlzEnableUIAutoPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzHideOriginFrames | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzHideOriginFrames | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | BlzConvertColor | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzLoadTOCFile | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateFrame | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateSimpleFrame | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateFrameByType | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzDestroyFrame | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetPoint | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetAbsPoint | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameClearAllPoints | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetAllPoints | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameIsVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetFrameByName | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetName | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameClick | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetText | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetText | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameAddText | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetTextSizeLimit | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetTextSizeLimit | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetTextColor | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetFocus | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetModel | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetEnable | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetEnable | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetAlpha | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetAlpha | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetSpriteAnimate | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetTexture | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetScale | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameCageMouse | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetValue | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetValue | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetMinMaxValue | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetStepSize | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetSize | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetVertexColor | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetLevel | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetParent | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetParent | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetWidth | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetFont | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameSetTextAlignment | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetChildrenCount | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzFrameGetChild | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzLoadTOCFile | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzCreateFrame | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzCreateSimpleFrame | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzCreateFrameByType | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzDestroyFrame | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetPoint | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetAbsPoint | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameClearAllPoints | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetAllPoints | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetVisible | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameIsVisible | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzGetFrameByName | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetName | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameClick | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetText | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetText | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameAddText | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetTextSizeLimit | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetTextSizeLimit | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetTextColor | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetFocus | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetModel | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetEnable | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetEnable | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetAlpha | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetAlpha | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetSpriteAnimate | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetTexture | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetScale | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetTooltip | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameCageMouse | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetValue | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetValue | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetMinMaxValue | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetStepSize | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetSize | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetVertexColor | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetLevel | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetParent | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetParent | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetHeight | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetWidth | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetFont | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameSetTextAlignment | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetChildrenCount | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
+| BlzFrameGetChild | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | BlzTriggerRegisterFrameEvent | common.j | D1 | **tombstoned** (deferred-v2): frame events — ui-frames (#245) |
 | BlzGetTriggerFrame | common.j | D1 | **tombstoned** (deferred-v2): frame getter — ui-frames (#245) |
 | BlzGetTriggerFrameEvent | common.j | D1 | **tombstoned** (deferred-v2): frame event id — ui-frames (#245) |
@@ -1446,12 +1446,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetTriggerPlayerKey | common.j | D1 | **tombstoned** (deferred-v2): key getter — ui-frames (#245) |
 | BlzGetTriggerPlayerMetaKey | common.j | D1 | **tombstoned** (deferred-v2): meta-key getter — ui-frames (#245) |
 | BlzGetTriggerPlayerIsKeyDown | common.j | D1 | **tombstoned** (deferred-v2): key-down query — ui-frames (#245) |
-| BlzEnableCursor | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzEnableCursor | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | BlzSetMousePos | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetLocalClientWidth | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetLocalClientHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsLocalClientActive | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetMouseFocusUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetMouseFocusUnit | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | BlzChangeMinimapTerrainTex | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | BlzGetLocale | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetSpecialEffectScale | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
@@ -1459,13 +1459,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzResetSpecialEffectMatrix | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | BlzGetUnitAbility | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | BlzGetUnitAbilityByIndex | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
-| BlzDisplayChatMessage | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzDisplayChatMessage | common.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
 | BlzPauseUnitEx | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitFacingEx | common.j | D1 | `litd/api.Unit.SetFacing` (D3 collapse → SetUnitFacing) |
-| CreateCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateCommandButtonEffect | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | CreateUpgradeCommandButtonEffect | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| CreateLearnCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateLearnCommandButtonEffect | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DestroyCommandButtonEffect | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | BlzBitOr | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise OR; Go has the native | operator. No public surface (math-strings-conversion.md) |
 | BlzBitAnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise AND; Go has the native & operator. No public surface (math-strings-conversion.md) |
 | BlzBitXor | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md) |
@@ -1643,9 +1643,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetCameraOrientControllerForPlayerBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
 | CameraSetSmoothingFactorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
 | CameraResetSmoothingFactorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
-| DisplayTextToForce | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DisplayTimedTextToForce | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ClearTextMessagesBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| DisplayTextToForce | blizzard.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
+| DisplayTimedTextToForce | blizzard.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
+| ClearTextMessagesBJ | blizzard.j | D2 | `litd/api.Game.ClearMessages` (D3 collapse → ClearTextMessages) |
 | SubStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetHandleIdBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | StringHashBJ | blizzard.j | D1 | `litd/api.StringHash` (D3 collapse → StringHash) |
@@ -1661,7 +1661,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterPlayerEventDefeat | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterPlayerEventLeave | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterPlayerEventAllianceChanged | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerEventEndCinematic | blizzard.j | D2 | _pending (M2 backlog)_ |
+| TriggerRegisterPlayerEventEndCinematic | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | TriggerRegisterGameStateEventTimeOfDay | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterEnterRegionSimple | blizzard.j | D1 | **tombstoned** (superseded): null-filter region-enter wrapper superseded by OnEvent(EventRegionEnter) (#241) |
 | TriggerRegisterLeaveRegionSimple | blizzard.j | D1 | **tombstoned** (superseded): null-filter region-leave wrapper superseded by OnEvent(EventRegionLeave) (#241) |
@@ -1671,7 +1671,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterUnitInRangeSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterUnitLifeEvent | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterUnitManaEvent | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterDialogEventBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| TriggerRegisterDialogEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | TriggerRegisterShowSkillEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterBuildSubmenuEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterBuildCommandEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1732,12 +1732,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CreateUbersplatBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | ShowUbersplatBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | GetLastCreatedUbersplat | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
-| GetLastCreatedMinimapIcon | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CreateMinimapIconOnUnitBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateMinimapIconAtLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateMinimapIconBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CampaignMinimapIconUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CampaignMinimapIconLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetLastCreatedMinimapIcon | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CreateMinimapIconOnUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CreateMinimapIconAtLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CreateMinimapIconBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CampaignMinimapIconUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| CampaignMinimapIconLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | PlaySoundBJ | blizzard.j | D3 | `litd/api.Sound.Play` (D3 collapse → StartSound) |
 | StopSoundBJ | blizzard.j | D3 | `litd/api.Sound.Stop` (D3 collapse → StopSound) |
 | SetSoundVolumeBJ | blizzard.j | D3 | `litd/api.Sound.SetVolume` (D3 collapse → SetSoundVolume) |
@@ -1789,13 +1789,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AddSpecialEffectTargetUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | DestroyEffectBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetLastCreatedEffectBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CreateCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateTrainCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| CreateCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| CreateTrainCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | CreateUpgradeCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| CreateCommonCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateLearnCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateBuildCommandButtonEffectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetLastCreatedCommandButtonEffectBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| CreateCommonCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| CreateLearnCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| CreateBuildCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetLastCreatedCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | GetItemLoc | blizzard.j | D1 | `litd/api.Item.Position` (D3 collapse → GetItemX) |
 | GetItemLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
 | SetItemLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
@@ -1996,7 +1996,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | WaygateSetDestinationLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | WaygateGetDestinationLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitSetUsesAltIconBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| ForceUIKeyBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ForceUIKeyBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
 | ForceUICancelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ForGroupBJ | blizzard.j | D3 | `litd/api.UnitSet.Units` (D3 collapse → ForGroup) |
 | GroupAddUnitSimple | blizzard.j | D1 | `litd/api.UnitSet.Add` (D3 collapse → GroupAddUnit) |
@@ -2052,14 +2052,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetDestructableAnimationBJ | blizzard.j | D1 | `litd/api.Destructable.PlayAnimation` (D3 collapse → QueueDestructableAnimation) |
 | QueueDestructableAnimationBJ | blizzard.j | D1 | `litd/api.Destructable.PlayAnimation` (D3 collapse → QueueDestructableAnimation) |
 | SetDestAnimationSpeedPercent | blizzard.j | D2 | _pending (M2 backlog)_ |
-| DialogDisplayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| DialogSetMessageBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| DialogAddButtonBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| DialogAddButtonWithHotkeyBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| DialogClearBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedButtonBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetClickedButtonBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetClickedDialogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| DialogDisplayBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogSetMessageBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogAddButtonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogAddButtonWithHotkeyBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DialogClearBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetLastCreatedButtonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetClickedButtonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetClickedDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | SetPlayerAllianceBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
 | SetPlayerAllianceStateAllyBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
 | SetPlayerAllianceStateVisionBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
@@ -2076,93 +2076,93 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MakeUnitsPassiveForTeam | blizzard.j | D4 | _pending (M2 backlog)_ |
 | AllowVictoryDefeat | blizzard.j | D4 | _pending (M2 backlog)_ |
 | EndGameBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeVictoryDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeDefeatDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GameOverDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| MeleeVictoryDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| MeleeDefeatDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GameOverDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | RemovePlayerPreserveUnitsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomVictoryOkBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomVictoryQuitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomVictoryDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CustomVictoryDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | CustomVictorySkipBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomVictoryBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomDefeatRestartBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomDefeatReduceDifficultyBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomDefeatLoadBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CustomDefeatQuitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomDefeatDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CustomDefeatDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | CustomDefeatBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetNextLevelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetPlayerOnScoreScreenBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateQuestBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyQuestBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestSetEnabledBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| QuestSetTitleBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestSetDescriptionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestSetCompletedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestSetFailedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestSetDiscoveredBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedQuestBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CreateQuestItemBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QuestItemSetDescriptionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestItemSetCompletedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedQuestItemBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| CreateQuestBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| DestroyQuestBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetEnabledBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetTitleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetDescriptionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetCompletedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetFailedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestSetDiscoveredBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| GetLastCreatedQuestBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| CreateQuestItemBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestItemSetDescriptionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| QuestItemSetCompletedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
+| GetLastCreatedQuestItemBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | CreateDefeatConditionBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DestroyDefeatConditionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | DefeatConditionSetDescriptionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetLastCreatedDefeatConditionBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| FlashQuestDialogButtonBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| QuestMessageBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| FlashQuestDialogButtonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| QuestMessageBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | StartTimerBJ | blizzard.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
 | CreateTimerBJ | blizzard.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
 | DestroyTimerBJ | blizzard.j | D1 | `litd/api.Timer.Stop` (D3 collapse → DestroyTimer) |
 | PauseTimerBJ | blizzard.j | D2 | **tombstoned** (superseded): boolean-flag pause/resume wrapper superseded by the explicit Timer.Pause()/Resume() verbs (dedup §3), timers.md |
 | GetLastCreatedTimerBJ | blizzard.j | D1 | **tombstoned** (superseded): bj_lastStartedTimer side channel; superseded — Game.After/Every return the Timer directly (dedup §3 ex.6), timers.md |
-| CreateTimerDialogBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyTimerDialogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| TimerDialogSetTitleBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| TimerDialogSetTitleColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TimerDialogSetTimeColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TimerDialogSetSpeedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| TimerDialogDisplayForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TimerDialogDisplayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedTimerDialogBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardResizeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LeaderboardSetPlayerItemValueBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetPlayerItemLabelBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetPlayerItemStyleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetPlayerItemLabelColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetPlayerItemValueColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetLabelColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetValueColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardSetLabelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LeaderboardSetStyleBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| LeaderboardGetItemCountBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| LeaderboardHasPlayerItemBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| ForceSetLeaderboardBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CreateLeaderboardBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyLeaderboardBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| LeaderboardDisplayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| LeaderboardAddItemBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LeaderboardRemovePlayerItemBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LeaderboardSortItemsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| LeaderboardSortItemsByPlayerBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| LeaderboardSortItemsByLabelBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| LeaderboardGetPlayerIndexBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| LeaderboardGetIndexedPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlayerGetLeaderboardBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedLeaderboard | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CreateMultiboardBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyMultiboardBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedMultiboard | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| MultiboardDisplayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MultiboardMinimizeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MultiboardSetTitleTextColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MultiboardAllowDisplayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MultiboardSetItemStyleBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MultiboardSetItemValueBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MultiboardSetItemColorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MultiboardSetItemWidthBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MultiboardSetItemIconBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CreateTimerDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| DestroyTimerDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetTitleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetTitleColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetTimeColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogSetSpeedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogDisplayForPlayerBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| TimerDialogDisplayBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| GetLastCreatedTimerDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| LeaderboardResizeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetPlayerItemValueBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetPlayerItemLabelBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetPlayerItemStyleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetPlayerItemLabelColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetPlayerItemValueColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetLabelColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetValueColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetLabelBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSetStyleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardGetItemCountBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardHasPlayerItemBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| ForceSetLeaderboardBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| CreateLeaderboardBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| DestroyLeaderboardBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardDisplayBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardAddItemBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardRemovePlayerItemBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSortItemsBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSortItemsByPlayerBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardSortItemsByLabelBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardGetPlayerIndexBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| LeaderboardGetIndexedPlayerBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| PlayerGetLeaderboardBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| GetLastCreatedLeaderboard | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands. |
+| CreateMultiboardBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| DestroyMultiboardBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| GetLastCreatedMultiboard | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardDisplayBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardMinimizeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetTitleTextColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardAllowDisplayBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemStyleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemValueBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemWidthBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
+| MultiboardSetItemIconBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands. |
 | TextTagSize2Height | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | TextTagSpeed2Velocity | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | SetTextTagColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
@@ -2186,37 +2186,37 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUserControlForceOff | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ShowInterfaceForceOn | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ShowInterfaceForceOff | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PingMinimapForForce | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PingMinimapLocForForce | blizzard.j | D2 | _pending (M2 backlog)_ |
-| PingMinimapForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PingMinimapLocForPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
-| PingMinimapForForceEx | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PingMinimapLocForForceEx | blizzard.j | D2 | _pending (M2 backlog)_ |
+| PingMinimapForForce | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| PingMinimapLocForForce | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| PingMinimapForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| PingMinimapLocForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| PingMinimapForForceEx | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
+| PingMinimapLocForForceEx | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | EnableWorldFogBoundaryBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | EnableOcclusionBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CancelCineSceneBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TryInitCinematicBehaviorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCinematicSceneBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| TryInitCinematicBehaviorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| SetCinematicSceneBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | GetTransmissionDuration | blizzard.j | D4 | _pending (M2 backlog)_ |
 | WaitTransmissionDuration | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DoTransmissionBasicsXYBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TransmissionFromUnitWithNameBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlayDialogueFromSpeakerEx | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlayDialogueFromSpeakerTypeEx | blizzard.j | D4 | _pending (M2 backlog)_ |
+| PlayDialogueFromSpeakerEx | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| PlayDialogueFromSpeakerTypeEx | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | TransmissionFromUnitTypeWithNameBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetLastTransmissionDurationBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| ForceCinematicSubtitlesBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| CinematicModeExBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CinematicModeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| ForceCinematicSubtitlesBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| CinematicModeExBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| CinematicModeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | DisplayCineFilterBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| CinematicFadeCommonBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| FinishCinematicFadeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| FinishCinematicFadeAfterBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ContinueCinematicFadeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ContinueCinematicFadeAfterBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| AbortCinematicFadeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CinematicFadeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CinematicFilterGenericBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CinematicFadeCommonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| FinishCinematicFadeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| FinishCinematicFadeAfterBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| ContinueCinematicFadeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| ContinueCinematicFadeAfterBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| AbortCinematicFadeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| CinematicFadeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
+| CinematicFilterGenericBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | RescueUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TriggerActionUnitRescuedBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TryInitRescuableTriggersBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2234,7 +2234,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetCampaignMenuRaceBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetMissionAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetCampaignAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCinematicAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetCinematicAvailableBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | InitGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SaveGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | GetLastCreatedGameCacheBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
@@ -2343,8 +2343,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | FlushChildHashtableBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | HaveStoredValue | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | HaveSavedValue | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
-| ShowCustomCampaignButton | blizzard.j | D2 | _pending (M2 backlog)_ |
-| IsCustomCampaignButtonVisibile | blizzard.j | D2 | _pending (M2 backlog)_ |
+| ShowCustomCampaignButton | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
+| IsCustomCampaignButtonVisibile | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | SaveGameCheckPointBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | LoadGameBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SaveAndChangeLevelBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |

@@ -77,6 +77,14 @@ type Game struct {
 	cam         [sim.MaxPlayers]cameraState
 	onCamera    func(CameraEvent)
 
+	// onUI is the optional presentation sink for the UI text-message
+	// surface (#245). The UI frame/dialog/board/quest system is render-
+	// only with no v1 G3N backend (deferred-v2); the one sim-inert
+	// primitive that ships now is Game.Print/ClearMessages, whose
+	// resolved per-recipient events forward here. nil (headless default)
+	// makes Print a deterministic no-op.
+	onUI func(UIMessageEvent)
+
 	// eventKinds maps a sim event kind to its public dispatch list,
 	// consulted only at OnEvent registration time (never on the
 	// dispatch hot path — each list is reached through a closure). nil
