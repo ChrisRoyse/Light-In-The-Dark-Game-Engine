@@ -24,6 +24,7 @@
   "commonaiCapabilityTombstones": 0,
   "exportedVerbs": 452,
   "unaccountedExports": [],
+  "unimplementedCanonicals": [],
   "featureTags": {},
   "violations": null
 }

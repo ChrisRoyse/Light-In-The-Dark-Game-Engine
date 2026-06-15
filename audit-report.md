@@ -21,6 +21,7 @@ duplicate canonical targets:    0 (M5 gate)
 
 Exported verbs ........... 452
 Unaccounted exports ...... 0 (gate requires 0)
+Unimplemented canonicals . 0 (mapped symbols on a panic stub; gate requires 0)
 
 ## VIOLATIONS
 

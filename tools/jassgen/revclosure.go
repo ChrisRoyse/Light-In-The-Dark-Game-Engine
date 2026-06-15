@@ -102,6 +102,62 @@ func ParseAPIExports(dir string) ([]string, error) {
 // receiverTypeName (shared with emit_stubs.go) unwraps a method receiver to its
 // base type name.
 
+// ParsePanicStubs walks a Go package dir and returns the exported funcs/methods
+// whose body is a single bare panic(...) call — i.e. unimplemented canonical
+// symbols (the shape jassgen -emit-stubs generates). Names use the same
+// "<Type>.<Method>" / "<Func>" convention as ParseAPIExports. A mapped manifest
+// symbol that is still a panic stub is an M5 hard-fail (deduplication-policy.md
+// §8: unimplemented canonical symbol > 0).
+func ParsePanicStubs(dir string) ([]string, error) {
+	fset := gotoken.NewFileSet()
+	var stubs []string
+	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(p, ".go") || strings.HasSuffix(p, "_test.go") {
+			return nil
+		}
+		f, perr := goparser.ParseFile(fset, p, nil, 0)
+		if perr != nil {
+			return fmt.Errorf("parse %s: %w", p, perr)
+		}
+		for _, decl := range f.Decls {
+			fd, ok := decl.(*ast.FuncDecl)
+			if !ok || !fd.Name.IsExported() || fd.Body == nil || len(fd.Body.List) != 1 {
+				continue
+			}
+			es, ok := fd.Body.List[0].(*ast.ExprStmt)
+			if !ok {
+				continue
+			}
+			call, ok := es.X.(*ast.CallExpr)
+			if !ok {
+				continue
+			}
+			id, ok := call.Fun.(*ast.Ident)
+			if !ok || id.Name != "panic" {
+				continue
+			}
+			name := fd.Name.Name
+			if fd.Recv != nil && len(fd.Recv.List) > 0 {
+				recv := receiverTypeName(fd.Recv.List[0].Type)
+				if !ast.IsExported(recv) {
+					continue
+				}
+				name = recv + "." + name
+			}
+			stubs = append(stubs, name)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(stubs)
+	return stubs, nil
+}
+
 // LoadClosureRules parses new-capabilities.txt. A missing file is an error: the
 // gate must not silently pass for want of its whitelist.
 func LoadClosureRules(path string) ([]ClosureRule, error) {
@@ -190,7 +246,7 @@ const (
 // unaccounted set). Fatal on any I/O error — the gate must never pass for want
 // of its inputs. Shared by -audit (folds the result into audit-report.md) and
 // -revclosure (the standalone gate).
-func computeReverseClosure(m Manifest) (int, []string) {
+func computeReverseClosure(m Manifest) (verbs int, unaccounted, unimplemented []string) {
 	syms := manifestGoMappingSet(m, "litd/api")
 	exports, err := ParseAPIExports(apiPackageDir)
 	if err != nil {
@@ -200,7 +256,18 @@ func computeReverseClosure(m Manifest) (int, []string) {
 	if err != nil {
 		fatal(err)
 	}
-	return len(exports), ReverseClosure(exports, syms, rules)
+	stubs, err := ParsePanicStubs(apiPackageDir)
+	if err != nil {
+		fatal(err)
+	}
+	// A panic stub is an "unimplemented canonical" only if it is a mapped symbol;
+	// any other panic-bodied export is governed by reverse-closure instead.
+	for _, s := range stubs {
+		if syms[s] {
+			unimplemented = append(unimplemented, s)
+		}
+	}
+	return len(exports), ReverseClosure(exports, syms, rules), unimplemented
 }
 
 // runRevClosure executes the reverse-closure gate end to end and exits nonzero
@@ -208,17 +275,28 @@ func computeReverseClosure(m Manifest) (int, []string) {
 func runRevClosure() {
 	cs, sigs, sources := buildClassifiedUniverse()
 	m, _ := BuildManifest(cs, sigs, sources)
-	verbs, unaccounted := computeReverseClosure(m)
+	verbs, unaccounted, unimplemented := computeReverseClosure(m)
 
 	fmt.Fprintf(os.Stderr, "reverse-closure: %d exported verbs, %d manifest mappings\n",
 		verbs, len(manifestGoMappingSet(m, "litd/api")))
+	fail := false
 	if len(unaccounted) > 0 {
+		fail = true
 		fmt.Fprintf(os.Stderr, "REVERSE-CLOSURE FAIL — %d export(s) trace to neither a manifest goMapping nor new-capabilities.txt:\n", len(unaccounted))
 		for _, u := range unaccounted {
 			fmt.Fprintln(os.Stderr, "  -", u)
 		}
 		fmt.Fprintln(os.Stderr, "add a JASS mapping (overrides.toml) or a whitelist rule (new-capabilities.txt).")
+	}
+	if len(unimplemented) > 0 {
+		fail = true
+		fmt.Fprintf(os.Stderr, "UNIMPLEMENTED CANONICALS — %d mapped symbol(s) still on a panic stub body:\n", len(unimplemented))
+		for _, u := range unimplemented {
+			fmt.Fprintln(os.Stderr, "  -", u)
+		}
+	}
+	if fail {
 		os.Exit(1)
 	}
-	fmt.Fprintln(os.Stderr, "reverse-closure: GREEN (every exported verb traces to a mapping or declared capability)")
+	fmt.Fprintln(os.Stderr, "reverse-closure: GREEN (every exported verb traces to a mapping or declared capability; no panic stubs)")
 }

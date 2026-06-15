@@ -35,6 +35,7 @@ type AuditReport struct {
 	CommonaiCapabilityTombstones int            `json:"commonaiCapabilityTombstones"` // must be 0 (D-2026-06-11-6)
 	ExportedVerbs                int            `json:"exportedVerbs"`                // litd/api exported funcs+methods (reverse-closure universe)
 	UnaccountedExports           []string       `json:"unaccountedExports"`           // reverse-closure gate: must be empty
+	UnimplementedCanonicals      []string       `json:"unimplementedCanonicals"`      // mapped symbols still on a panic stub body: must be empty
 	FeatureTags                  map[string]int `json:"featureTags"`                  // R4 census rollup
 	Violations                   []string       `json:"violations"`                   // M2 gate breaches
 }
@@ -43,12 +44,13 @@ type AuditReport struct {
 // (all source symbols) and the emitted manifest (resolved entries only).
 func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 	r := AuditReport{
-		ByRule:             map[string]int{},
-		TombstonesByReason: map[string]int{},
-		FeatureTags:        map[string]int{},
-		DuplicateTargets:   []string{},
-		HelperShadowsCore:  []string{},
-		UnaccountedExports: []string{},
+		ByRule:                  map[string]int{},
+		TombstonesByReason:      map[string]int{},
+		FeatureTags:             map[string]int{},
+		DuplicateTargets:        []string{},
+		HelperShadowsCore:       []string{},
+		UnaccountedExports:      []string{},
+		UnimplementedCanonicals: []string{},
 	}
 	r.Total = len(cs)
 	for _, c := range cs {
@@ -137,16 +139,25 @@ func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 // ComputeAudit so that function stays a pure (cs, manifest) -> counters mapping;
 // the export universe needs filesystem access (the litd/api Go sources), which
 // the caller provides.
-func ApplyReverseClosure(r *AuditReport, exportedVerbs int, unaccounted []string) {
+func ApplyReverseClosure(r *AuditReport, exportedVerbs int, unaccounted, unimplemented []string) {
 	r.ExportedVerbs = exportedVerbs
 	if unaccounted == nil {
 		unaccounted = []string{}
 	}
+	if unimplemented == nil {
+		unimplemented = []string{}
+	}
 	r.UnaccountedExports = unaccounted
+	r.UnimplementedCanonicals = unimplemented
 	if len(unaccounted) > 0 {
 		r.Violations = append(r.Violations, fmt.Sprintf(
 			"unaccountedExports=%d: %s (each exported litd/api verb must trace to a manifest goMapping or new-capabilities.txt)",
 			len(unaccounted), strings.Join(unaccounted, ", ")))
+	}
+	if len(unimplemented) > 0 {
+		r.Violations = append(r.Violations, fmt.Sprintf(
+			"unimplementedCanonicals=%d: %s (mapped symbol still on a panic stub body)",
+			len(unimplemented), strings.Join(unimplemented, ", ")))
 	}
 }
 
@@ -224,6 +235,10 @@ func RenderAuditMarkdown(r AuditReport) string {
 	fmt.Fprintf(&b, "Exported verbs ........... %d\n", r.ExportedVerbs)
 	fmt.Fprintf(&b, "Unaccounted exports ...... %d (gate requires 0)\n", len(r.UnaccountedExports))
 	for _, u := range r.UnaccountedExports {
+		fmt.Fprintf(&b, "  - %s\n", u)
+	}
+	fmt.Fprintf(&b, "Unimplemented canonicals . %d (mapped symbols on a panic stub; gate requires 0)\n", len(r.UnimplementedCanonicals))
+	for _, u := range r.UnimplementedCanonicals {
 		fmt.Fprintf(&b, "  - %s\n", u)
 	}
 	b.WriteString("\n")

@@ -105,6 +105,34 @@ func TestLoadClosureRulesParsing(t *testing.T) {
 	}
 }
 
+// TestParsePanicStubs verifies the unimplemented-canonical detector: only an
+// exported func/method whose body is a single bare panic(...) is reported; real
+// bodies, multi-statement bodies, unexported names, and non-panic single calls
+// are not.
+func TestParsePanicStubs(t *testing.T) {
+	dir := t.TempDir()
+	src := `package p
+type T struct{}
+func (T) Stub() bool { panic("todo") }       // stub -> reported
+func (T) Real() bool { return true }          // real -> not reported
+func FreeStub() {}                            // empty body -> not a panic
+func PanicStubFree() int { panic("nope") }    // stub -> reported
+func multi() { panic("x"); _ = 1 }            // unexported -> skipped
+func Logged() { println("x"); panic("y") }    // two stmts -> not reported
+func NotPanic() { recover() }                 // single non-panic call -> not reported
+`
+	os.WriteFile(filepath.Join(dir, "p.go"), []byte(src), 0o644)
+	os.WriteFile(filepath.Join(dir, "p_test.go"), []byte("package p\nfunc TestStub() { panic(\"x\") }\n"), 0o644)
+	got, err := ParsePanicStubs(dir)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	want := "PanicStubFree,T.Stub"
+	if strings.Join(got, ",") != want {
+		t.Fatalf("panic stubs = %v, want [%s]", got, want)
+	}
+}
+
 // TestReverseClosureRealTreeGreen is the live gate: it parses the actual
 // litd/api exports against the committed manifest + whitelist and asserts zero
 // unaccounted verbs. This fires from `go test ./tools/jassgen/` even when the

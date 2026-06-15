@@ -70,8 +70,8 @@ func generateOutputs() (manifestBytes, auditJSON, auditMD []byte, report AuditRe
 		fatal(err)
 	}
 	report = ComputeAudit(cs, m)
-	verbs, unaccounted := computeReverseClosure(m)
-	ApplyReverseClosure(&report, verbs, unaccounted)
+	verbs, unaccounted, unimplemented := computeReverseClosure(m)
+	ApplyReverseClosure(&report, verbs, unaccounted, unimplemented)
 	aj, err := MarshalAuditJSON(report)
 	if err != nil {
 		fatal(err)
