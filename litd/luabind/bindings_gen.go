@@ -203,6 +203,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_BuffCount", Package: "litd/api", Symbol: "Unit.BuffCount", GoSignature: "() int"},
 	{LuaName: "Unit_CollisionSize", Package: "litd/api", Symbol: "Unit.CollisionSize", GoSignature: "() float64"},
 	{LuaName: "Unit_CurrentOrder", Package: "litd/api", Symbol: "Unit.CurrentOrder", GoSignature: "() Order"},
+	{LuaName: "Unit_Damage", Package: "litd/api", Symbol: "Unit.Damage", GoSignature: "(target Widget, amount float64, opts ...DamageOption) bool"},
 	{LuaName: "Unit_DefaultAcquireRange", Package: "litd/api", Symbol: "Unit.DefaultAcquireRange", GoSignature: "() float64"},
 	{LuaName: "Unit_DefaultFlyHeight", Package: "litd/api", Symbol: "Unit.DefaultFlyHeight", GoSignature: "() float64"},
 	{LuaName: "Unit_DefaultMoveSpeed", Package: "litd/api", Symbol: "Unit.DefaultMoveSpeed", GoSignature: "() float64"},

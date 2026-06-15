@@ -101,6 +101,32 @@
       }
     },
     {
+      "name": "AddResourceAmountBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "delta",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+      }
+    },
+    {
       "name": "AddSpecialEffectTargetUnitBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -129,6 +155,73 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "AddUnitAnimationPropertiesBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "add",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "animProperties",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "AddUnitToStockBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "currentStock",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "stockMax",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -982,6 +1075,274 @@
       }
     },
     {
+      "name": "BlzSetUnitBooleanFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitbooleanfield",
+            "tsType": "unitbooleanfield"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitIntegerFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitintegerfield",
+            "tsType": "unitintegerfield"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitRealFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitrealfield",
+            "tsType": "unitrealfield"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitStringFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitstringfield",
+            "tsType": "unitstringfield"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponBooleanFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponbooleanfield",
+            "tsType": "unitweaponbooleanfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponIntegerFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponintegerfield",
+            "tsType": "unitweaponintegerfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponRealFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponrealfield",
+            "tsType": "unitweaponrealfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponStringFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponstringfield",
+            "tsType": "unitweaponstringfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
       "name": "CameraResetSmoothingFactorBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1677,6 +2038,37 @@
       }
     },
     {
+      "name": "CreateCorpseLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: spawn a decorative corpse; render/decoration with no gameplay sim component, deferred to v2."
+      }
+    },
+    {
       "name": "CreateDeadDestructableLocBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1977,6 +2369,88 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: multiboard render UI (per-cell item families collapse onto the future MultiboardCell object); deferred-v2 until the G3N GUI board facade lands."
+      }
+    },
+    {
+      "name": "CreateNUnitsAtLoc",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "count",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "group"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
+      }
+    },
+    {
+      "name": "CreateNUnitsAtLocFacingLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "count",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "lookAt",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "group"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
       }
     },
     {
@@ -2642,6 +3116,27 @@
       }
     },
     {
+      "name": "DoesUnitGenerateAlarms",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+      }
+    },
+    {
       "name": "EnableWorldFogBoundaryBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -2794,6 +3289,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245)"
+      }
+    },
+    {
+      "name": "ExplodeUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -4927,7 +5443,8 @@
         "package": "litd/api",
         "goSignature": "() bool",
         "collapsesWith": [
-          "IsUnitDeadBJ"
+          "IsUnitDeadBJ",
+          "UnitAlive"
         ]
       }
     },
@@ -5042,6 +5559,74 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "all-in-rect enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239)"
+      }
+    },
+    {
+      "name": "IsUnitIllusionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: illusion (mirror-image) predicate; no v1 illusion sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitInTransportBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichTransport",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitLoadedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
       }
     },
     {
@@ -7183,6 +7768,73 @@
       }
     },
     {
+      "name": "LockGuardPosition",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "targ",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "MakeUnitRescuableToForceBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "isRescuable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "MakeUnitRescuableToForceBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
       "name": "MeleeDefeatDialogBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -7693,7 +8345,8 @@
         "package": "litd/api",
         "goSignature": "(paused bool)",
         "collapsesWith": [
-          "PauseUnit"
+          "PauseUnit",
+          "BlzPauseUnitEx"
         ]
       }
     },
@@ -8436,6 +9089,32 @@
       }
     },
     {
+      "name": "QueueUnitAnimationBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichAnimation",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
       "name": "RandomDestructableInRectBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -8777,6 +9456,32 @@
       }
     },
     {
+      "name": "RemoveUnitFromStockBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
       "name": "RemoveWeatherEffectBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -8795,6 +9500,68 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ReplaceUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newUnitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "unitStateMethod",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
+      }
+    },
+    {
+      "name": "RescueUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "rescuer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "changeColor",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -8836,6 +9603,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state."
+      }
+    },
+    {
+      "name": "ResetUnitAnimation",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -10701,6 +11489,147 @@
       }
     },
     {
+      "name": "SelectUnitAdd",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+      }
+    },
+    {
+      "name": "SelectUnitAddForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+      }
+    },
+    {
+      "name": "SelectUnitForPlayerSingle",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+      }
+    },
+    {
+      "name": "SelectUnitRemove",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+      }
+    },
+    {
+      "name": "SelectUnitRemoveForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+      }
+    },
+    {
+      "name": "SelectUnitSingle",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+      }
+    },
+    {
       "name": "SetAmbientDaySound",
       "origin": "blizzard.j",
       "signature": {
@@ -11578,6 +12507,27 @@
       }
     },
     {
+      "name": "SetRescueUnitColorChangeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "changeColor",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
       "name": "SetSoundConeAnglesBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -12191,6 +13141,120 @@
       }
     },
     {
+      "name": "SetUnitBlendTimeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "blendTime",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "SetUnitExplodedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "exploded",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "SetUnitFacingToFaceLocTimed",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "target",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "SetUnitFacingToFaceUnitTimed",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "target",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
       "name": "SetUnitPositionLocFacingBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -12250,6 +13314,213 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points"
+      }
+    },
+    {
+      "name": "SetUnitRallyDestructable",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "targDest",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: rally-point setters; the rally getters (Unit.RallyPoint/RallyUnit) ship, but no v1 runtime rally-set surface exists yet. Deferred to v2."
+      }
+    },
+    {
+      "name": "SetUnitRallyPoint",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "targPos",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: rally-point setters; the rally getters (Unit.RallyPoint/RallyUnit) ship, but no v1 runtime rally-set surface exists yet. Deferred to v2."
+      }
+    },
+    {
+      "name": "SetUnitRallyUnit",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "targUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: rally-point setters; the rally getters (Unit.RallyPoint/RallyUnit) ship, but no v1 runtime rally-set surface exists yet. Deferred to v2."
+      }
+    },
+    {
+      "name": "SetUnitScalePercent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "percentScaleX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "percentScaleY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "percentScaleZ",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "SetUnitTimeScalePercent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "percentScale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "SetUnitUseFoodBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: toggle a unit's food consumption at runtime; no v1 runtime food-flag mutation surface, deferred to v2."
+      }
+    },
+    {
+      "name": "SetUnitVertexColorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -13358,6 +14629,110 @@
       }
     },
     {
+      "name": "UnitAddTypeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichType",
+            "jassType": "unittype",
+            "tsType": "unittype"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitApplyTimedLifeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "buffId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+      }
+    },
+    {
+      "name": "UnitCanSleepBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "UnitGenerateAlarms",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "generate",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+      }
+    },
+    {
       "name": "UnitHasBuffBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -13436,6 +14811,27 @@
       }
     },
     {
+      "name": "UnitIsSleepingBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
       "name": "UnitMakeAbilityPermanentBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -13467,6 +14863,32 @@
       }
     },
     {
+      "name": "UnitPauseTimedLifeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+      }
+    },
+    {
       "name": "UnitRemoveBuffBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -13491,6 +14913,110 @@
         "symbol": "Unit.RemoveBuff",
         "package": "litd/api",
         "goSignature": "(typ BuffType) bool"
+      }
+    },
+    {
+      "name": "UnitRemoveTypeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichType",
+            "jassType": "unittype",
+            "tsType": "unittype"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitSetCanSleepBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "canSleep",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "UnitSetUsesAltIconBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "UnitSuspendDecayBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "suspend",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: suppress corpse decay; no v1 corpse-decay timer surface, deferred to v2."
       }
     },
     {
@@ -13522,6 +15048,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: unit-uses-item-on-destructable order deferred to the v2 order/item API"
+      }
+    },
+    {
+      "name": "UnitWakeUpBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -13578,6 +15125,100 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "WaygateActivateBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "activate",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateGetDestinationLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateIsActiveBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateSetDestinationLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -13899,6 +15540,32 @@
       }
     },
     {
+      "name": "AddResourceAmount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "amount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+      }
+    },
+    {
       "name": "AddSpecialEffect",
       "origin": "common.j",
       "signature": {
@@ -13994,6 +15661,73 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "render-only animation-tag toggle; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "AddUnitToAllStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "currentStock",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "stockMax",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "AddUnitToStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "currentStock",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "stockMax",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -14812,6 +16546,52 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+      }
+    },
+    {
+      "name": "BlzCreateUnitWithSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: per-unit skin override (render asset swap); deferred until the v2 skin/asset-override system lands."
       }
     },
     {
@@ -16916,6 +18696,27 @@
       }
     },
     {
+      "name": "BlzGetLocalUnitZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
       "name": "BlzGetManipulatedItemWasAbsorbed",
       "origin": "common.j",
       "signature": {
@@ -17307,6 +19108,84 @@
       }
     },
     {
+      "name": "BlzGetUnitAttackCooldown",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzGetUnitBaseDamage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzGetUnitBooleanField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitbooleanfield",
+            "tsType": "unitbooleanfield"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
       "name": "BlzGetUnitCollisionSize",
       "origin": "common.j",
       "signature": {
@@ -17326,6 +19205,84 @@
         "symbol": "Unit.CollisionSize",
         "package": "litd/api",
         "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "BlzGetUnitDiceNumber",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzGetUnitDiceSides",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzGetUnitIntegerField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitintegerfield",
+            "tsType": "unitintegerfield"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
       }
     },
     {
@@ -17370,6 +19327,224 @@
         "symbol": "Unit.MaxMana",
         "package": "litd/api",
         "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "BlzGetUnitRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitrealfield",
+            "tsType": "unitrealfield"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzGetUnitSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: per-unit skin override (render asset swap); deferred until the v2 skin/asset-override system lands."
+      }
+    },
+    {
+      "name": "BlzGetUnitStringField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitstringfield",
+            "tsType": "unitstringfield"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzGetUnitWeaponBooleanField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponbooleanfield",
+            "tsType": "unitweaponbooleanfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzGetUnitWeaponIntegerField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponintegerfield",
+            "tsType": "unitweaponintegerfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzGetUnitWeaponRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponrealfield",
+            "tsType": "unitweaponrealfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzGetUnitWeaponStringField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponstringfield",
+            "tsType": "unitweaponstringfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzGetUnitZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -17512,6 +19687,27 @@
         "symbol": "Unit.Invulnerable",
         "package": "litd/api",
         "goSignature": "() bool"
+      }
+    },
+    {
+      "name": "BlzIsUnitSelectable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -19203,6 +21399,218 @@
       }
     },
     {
+      "name": "BlzSetUnitArmor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "armorAmount",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzSetUnitAttackCooldown",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "cooldown",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzSetUnitBaseDamage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "baseDamage",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzSetUnitBooleanField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitbooleanfield",
+            "tsType": "unitbooleanfield"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitDiceNumber",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "diceNumber",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzSetUnitDiceSides",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "diceSides",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "weaponIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+      }
+    },
+    {
+      "name": "BlzSetUnitIntegerField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitintegerfield",
+            "tsType": "unitintegerfield"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
       "name": "BlzSetUnitMaxHP",
       "origin": "common.j",
       "signature": {
@@ -19284,6 +21692,238 @@
       }
     },
     {
+      "name": "BlzSetUnitRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitrealfield",
+            "tsType": "unitrealfield"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: per-unit skin override (render asset swap); deferred until the v2 skin/asset-override system lands."
+      }
+    },
+    {
+      "name": "BlzSetUnitStringField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitstringfield",
+            "tsType": "unitstringfield"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponBooleanField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponbooleanfield",
+            "tsType": "unitweaponbooleanfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponIntegerField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponintegerfield",
+            "tsType": "unitweaponintegerfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponrealfield",
+            "tsType": "unitweaponrealfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
+      "name": "BlzSetUnitWeaponStringField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichField",
+            "jassType": "unitweaponstringfield",
+            "tsType": "unitweaponstringfield"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+      }
+    },
+    {
       "name": "BlzShowTerrain",
       "origin": "common.j",
       "signature": {
@@ -19302,6 +21942,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
+      "name": "BlzShowUnitTeamGlow",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -19517,6 +22183,27 @@
       }
     },
     {
+      "name": "BlzUnitCancelTimedLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+      }
+    },
+    {
       "name": "BlzUnitDisableAbility",
       "origin": "common.j",
       "signature": {
@@ -19581,6 +22268,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "BlzUnitInterruptAttack",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: interrupt the current attack windup; no v1 attack-interrupt surface, deferred to v2."
       }
     },
     {
@@ -21944,6 +24652,47 @@
       }
     },
     {
+      "name": "CreateCorpse",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: spawn a decorative corpse; render/decoration with no gameplay sim component, deferred to v2."
+      }
+    },
+    {
       "name": "CreateDeadDestructable",
       "origin": "common.j",
       "signature": {
@@ -22821,6 +25570,21 @@
       }
     },
     {
+      "name": "CreateUnitPool",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unitpool"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
+      }
+    },
+    {
       "name": "CreateUpgradeCommandButtonEffect",
       "origin": "common.j",
       "signature": {
@@ -23348,6 +26112,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "DestroyUnitPool",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPool",
+            "jassType": "unitpool",
+            "tsType": "unitpool"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
       }
     },
     {
@@ -24066,6 +26851,37 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "FlushStoredUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cache",
+            "jassType": "gamecache",
+            "tsType": "gamecache"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "key",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -26849,6 +29665,27 @@
       }
     },
     {
+      "name": "GetResourceAmount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+      }
+    },
+    {
       "name": "GetSoldItem",
       "origin": "common.j",
       "signature": {
@@ -27990,6 +30827,27 @@
         "symbol": "Unit.PointValue",
         "package": "litd/api",
         "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetUnitPointValueByType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitType",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
       }
     },
     {
@@ -29993,6 +32851,58 @@
       }
     },
     {
+      "name": "IsUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichSpecifiedUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: IsUnit(a,b) is JASS handle identity equality; Go compares Unit handles with == directly, so the native has no API surface."
+      }
+    },
+    {
+      "name": "IsUnitDetected",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+      }
+    },
+    {
       "name": "IsUnitHidden",
       "origin": "common.j",
       "signature": {
@@ -30011,7 +32921,57 @@
       "goMapping": {
         "symbol": "Unit.IsHidden",
         "package": "litd/api",
-        "goSignature": "() bool"
+        "goSignature": "() bool",
+        "collapsesWith": [
+          "IsUnitHiddenBJ"
+        ]
+      }
+    },
+    {
+      "name": "IsUnitIdType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnitType",
+            "jassType": "unittype",
+            "tsType": "unittype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: classification predicate by unit-type id (UNIT_TYPE_* over a type id); deferred with the v2 type-flag API."
+      }
+    },
+    {
+      "name": "IsUnitIllusion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: illusion (mirror-image) predicate; no v1 illusion sim component, deferred to v2."
       }
     },
     {
@@ -30141,6 +33101,105 @@
       }
     },
     {
+      "name": "IsUnitInTransport",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichTransport",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitInvisible",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitLoaded",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitMasked",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+      }
+    },
+    {
       "name": "IsUnitOwnedByPlayer",
       "origin": "common.j",
       "signature": {
@@ -30192,6 +33251,32 @@
         "symbol": "Unit.IsRace",
         "package": "litd/api",
         "goSignature": "(r Race) bool"
+      }
+    },
+    {
+      "name": "IsUnitSelected",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
       }
     },
     {
@@ -30332,7 +33417,19 @@
           "IssuePointOrderByIdLoc",
           "IssuePointOrderLocBJ",
           "IssueTargetOrderBJ",
-          "IssueImmediateOrderBJ"
+          "IssueImmediateOrderBJ",
+          "IssueBuildOrder",
+          "IssueBuildOrderById",
+          "IssueBuildOrderByIdLocBJ",
+          "IssueHauntOrderAtLocBJ",
+          "IssueHauntOrderAtLocBJFilter",
+          "IssueNeutralImmediateOrder",
+          "IssueNeutralImmediateOrderById",
+          "IssueNeutralPointOrder",
+          "IssueNeutralPointOrderById",
+          "IssueNeutralTargetOrder",
+          "IssueNeutralTargetOrderById",
+          "IssueTrainOrderByIdBJ"
         ]
       }
     },
@@ -34370,6 +37467,27 @@
       }
     },
     {
+      "name": "RecycleGuardPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "hUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
       "name": "RegionAddCell",
       "origin": "common.j",
       "signature": {
@@ -34557,6 +37675,48 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+      }
+    },
+    {
+      "name": "RemoveAllGuardPositions",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "num",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "RemoveGuardPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "hUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
       }
     },
     {
@@ -34918,6 +38078,53 @@
       }
     },
     {
+      "name": "RemoveUnitFromAllStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "RemoveUnitFromStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
       "name": "RemoveWeatherEffect",
       "origin": "common.j",
       "signature": {
@@ -35040,6 +38247,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ResetUnitLookAt",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -36923,6 +40151,32 @@
         "symbol": "Unit.LearnSkill",
         "package": "litd/api",
         "goSignature": "(skill int) bool"
+      }
+    },
+    {
+      "name": "SelectUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
       }
     },
     {
@@ -39522,6 +42776,32 @@
       }
     },
     {
+      "name": "SetResourceAmount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "amount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+      }
+    },
+    {
       "name": "SetSkyModel",
       "origin": "common.j",
       "signature": {
@@ -40687,6 +43967,37 @@
       }
     },
     {
+      "name": "SetUnitAnimationWithRarity",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichAnimation",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "rarity",
+            "jassType": "raritycontrol",
+            "tsType": "raritycontrol"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
       "name": "SetUnitBlendTime",
       "origin": "common.j",
       "signature": {
@@ -40710,6 +44021,84 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "render-only animation blend duration; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "SetUnitColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichColor",
+            "jassType": "playercolor",
+            "tsType": "playercolor"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "SetUnitCreepGuard",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "creepGuard",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SetUnitExploded",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "exploded",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -40836,6 +44225,52 @@
       }
     },
     {
+      "name": "SetUnitLookAt",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichBone",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "lookAtTarget",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "offsetX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "offsetY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "offsetZ",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
       "name": "SetUnitMoveSpeed",
       "origin": "common.j",
       "signature": {
@@ -40892,6 +44327,32 @@
         "symbol": "Unit.SetOwner",
         "package": "litd/api",
         "goSignature": "(p Player, changeColor bool)"
+      }
+    },
+    {
+      "name": "SetUnitPathing",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: per-unit collision/pathing toggle; no v1 runtime collision-flag mutation surface, deferred to v2."
       }
     },
     {
@@ -40959,6 +44420,63 @@
         "collapsesWith": [
           "SetUnitPropWindowBJ"
         ]
+      }
+    },
+    {
+      "name": "SetUnitRescuable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "byWhichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "SetUnitRescueRange",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "range",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -41089,6 +44607,32 @@
         "collapsesWith": [
           "SetUnitTurnSpeedBJ"
         ]
+      }
+    },
+    {
+      "name": "SetUnitUseFood",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "useFood",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: toggle a unit's food consumption at runtime; no v1 runtime food-flag mutation surface, deferred to v2."
       }
     },
     {
@@ -41261,7 +44805,11 @@
       "goMapping": {
         "symbol": "Unit.Show",
         "package": "litd/api",
-        "goSignature": "(show bool)"
+        "goSignature": "(show bool)",
+        "collapsesWith": [
+          "ShowUnitHide",
+          "ShowUnitShow"
+        ]
       }
     },
     {
@@ -43546,6 +47094,157 @@
       }
     },
     {
+      "name": "UnitAddSleep",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "add",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "UnitAddSleepPerm",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "add",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "UnitAddType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichUnitType",
+            "jassType": "unittype",
+            "tsType": "unittype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitApplyTimedLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "buffId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+      }
+    },
+    {
+      "name": "UnitCanSleep",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "UnitCanSleepPerm",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+      }
+    },
+    {
       "name": "UnitCountBuffsEx",
       "origin": "common.j",
       "signature": {
@@ -43602,6 +47301,68 @@
         "goSignature": "() int",
         "collapsesWith": [
           "UnitCountBuffsExBJ"
+        ]
+      }
+    },
+    {
+      "name": "UnitDamageTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "target",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "amount",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "attack",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "ranged",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "attackType",
+            "jassType": "attacktype",
+            "tsType": "attacktype"
+          },
+          {
+            "name": "damageType",
+            "jassType": "damagetype",
+            "tsType": "damagetype"
+          },
+          {
+            "name": "weaponType",
+            "jassType": "weapontype",
+            "tsType": "weapontype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Damage",
+        "package": "litd/api",
+        "goSignature": "(target Widget, amount float64, opts ...DamageOption) bool",
+        "collapsesWith": [
+          "UnitDamageTargetBJ",
+          "UnitDamagePoint",
+          "UnitDamagePointLoc"
         ]
       }
     },
@@ -43711,6 +47472,53 @@
       }
     },
     {
+      "name": "UnitIgnoreAlarm",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitIgnoreAlarmToggled",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+      }
+    },
+    {
       "name": "UnitInventorySize",
       "origin": "common.j",
       "signature": {
@@ -43733,6 +47541,27 @@
         "collapsesWith": [
           "UnitInventorySizeBJ"
         ]
+      }
+    },
+    {
+      "name": "UnitIsSleeping",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -43824,6 +47653,89 @@
         "collapsesWith": [
           "ModifyHeroSkillPoints"
         ]
+      }
+    },
+    {
+      "name": "UnitPauseTimedLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+      }
+    },
+    {
+      "name": "UnitPoolAddUnitType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPool",
+            "jassType": "unitpool",
+            "tsType": "unitpool"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "weight",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
+      }
+    },
+    {
+      "name": "UnitPoolRemoveUnitType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPool",
+            "jassType": "unitpool",
+            "tsType": "unitpool"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
       }
     },
     {
@@ -43919,6 +47831,79 @@
       }
     },
     {
+      "name": "UnitRemoveType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichUnitType",
+            "jassType": "unittype",
+            "tsType": "unittype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitResetCooldown",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: ability cooldown reset; no v1 runtime cooldown-clear surface, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitSetConstructionProgress",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "constructionPercentage",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: set building construction progress; no v1 runtime construction-progress setter, deferred to v2."
+      }
+    },
+    {
       "name": "UnitSetUpgradeProgress",
       "origin": "common.j",
       "signature": {
@@ -43942,6 +47927,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "UnitSetUsesAltIcon",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
       }
     },
     {
@@ -44006,6 +48017,32 @@
       }
     },
     {
+      "name": "UnitSuspendDecay",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "suspend",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: suppress corpse decay; no v1 corpse-decay timer surface, deferred to v2."
+      }
+    },
+    {
       "name": "UnitUseItem",
       "origin": "common.j",
       "signature": {
@@ -44035,6 +48072,27 @@
           "UnitUseItemPoint",
           "UnitUseItemPointLoc"
         ]
+      }
+    },
+    {
+      "name": "UnitWakeUp",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
       }
     },
     {
@@ -44177,6 +48235,193 @@
       }
     },
     {
+      "name": "WaygateActivate",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "activate",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateGetDestinationX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateGetDestinationY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateIsActive",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "WaygateSetDestination",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "waygate",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+      }
+    },
+    {
+      "name": "AddGuardPost",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "FillGuardPosts",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "GetUnitBuildTime",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      }
+    },
+    {
       "name": "GetUnitCount",
       "origin": "commonai",
       "signature": {
@@ -44196,6 +48441,198 @@
         "symbol": "UnitCount",
         "package": "litd/ai",
         "goSignature": "(unitTypeID int) int"
+      }
+    },
+    {
+      "name": "GetUnitCountDone",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      }
+    },
+    {
+      "name": "GetUnitGoldCost",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      }
+    },
+    {
+      "name": "GetUnitWoodCost",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      }
+    },
+    {
+      "name": "MergeUnits",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "qty",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "a",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "make",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
+      }
+    },
+    {
+      "name": "ReturnGuardPosts",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SuicideUnit",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "count",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SuicideUnitEx",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "ct",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "uid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "pid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "UnitInvis",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#217: AI invisibility flag; no v1 sim component, deferred to v2."
       }
     }
   ]

@@ -30,7 +30,7 @@ name = "PauseUnitBJ"
 class = "D2"
 goMapping = "Unit.SetPaused"
 goSignature = "(paused bool)"
-collapsesWith = ["PauseUnit"]
+collapsesWith = ["PauseUnit", "BlzPauseUnitEx"]
 package = "litd/api"
 reason = "reorders args over native PauseUnit; canonical keeps full set (dedup §3 ex.1); the native folds onto the same setter"
 
@@ -463,6 +463,7 @@ name = "ShowUnit"
 class = "D1"
 goMapping = "Unit.Show"
 goSignature = "(show bool)"
+collapsesWith = ["ShowUnitHide", "ShowUnitShow"]
 package = "litd/api"
 reason = "show/hide toggle maps directly onto the typed setter (dedup §2); hides the unit from render/selection while it persists in the sim, backed by the sparse HiddenStore (#217)"
 
@@ -471,6 +472,7 @@ name = "IsUnitHidden"
 class = "D1"
 goMapping = "Unit.IsHidden"
 goSignature = "() bool"
+collapsesWith = ["IsUnitHiddenBJ"]
 package = "litd/api"
 reason = "hidden-state getter maps directly onto the typed accessor (dedup §2); see ShowUnit (#217)"
 
@@ -689,7 +691,7 @@ name = "IsUnitAliveBJ"
 class = "D3"
 goMapping = "Unit.Alive"
 goSignature = "() bool"
-collapsesWith = ["IsUnitDeadBJ"]
+collapsesWith = ["IsUnitDeadBJ", "UnitAlive"]
 package = "litd/api"
 reason = "the alive/dead BJ twins collapse onto one life-based predicate (dedup §4); the dead-check is the complement (!Alive) expressed at the call site"
 
@@ -706,7 +708,7 @@ name = "IssuePointOrder"
 class = "D3"
 goMapping = "Unit.Order"
 goSignature = "(ord Order, target OrderTarget) bool"
-collapsesWith = ["IssueImmediateOrder", "IssueTargetOrder", "IssuePointOrderById", "IssueImmediateOrderById", "IssueTargetOrderById", "IssuePointOrderLoc", "IssueInstantPointOrder", "IssueInstantTargetOrder", "IssueInstantPointOrderById", "IssueInstantTargetOrderById", "IssuePointOrderByIdLoc", "IssuePointOrderLocBJ", "IssueTargetOrderBJ", "IssueImmediateOrderBJ"]
+collapsesWith = ["IssueImmediateOrder", "IssueTargetOrder", "IssuePointOrderById", "IssueImmediateOrderById", "IssueTargetOrderById", "IssuePointOrderLoc", "IssueInstantPointOrder", "IssueInstantTargetOrder", "IssueInstantPointOrderById", "IssueInstantTargetOrderById", "IssuePointOrderByIdLoc", "IssuePointOrderLocBJ", "IssueTargetOrderBJ", "IssueImmediateOrderBJ", "IssueBuildOrder", "IssueBuildOrderById", "IssueBuildOrderByIdLocBJ", "IssueHauntOrderAtLocBJ", "IssueHauntOrderAtLocBJFilter", "IssueNeutralImmediateOrder", "IssueNeutralImmediateOrderById", "IssueNeutralPointOrder", "IssueNeutralPointOrderById", "IssueNeutralTargetOrder", "IssueNeutralTargetOrderById", "IssueTrainOrderByIdBJ"]
 package = "litd/api"
 reason = "the order matrix — immediate/point/target × string/ById × instant, plus the Loc and BJ variants — collapses onto one typed Order(ord, target) verb where OrderTarget is the none|point|unit sum (dedup §4 ex.3)"
 
@@ -10621,3 +10623,990 @@ name = "TryInitCinematicBehaviorBJ"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+
+[[override]]
+name = "SetUnitColor"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitVertexColorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitScalePercent"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitTimeScalePercent"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitBlendTimeBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "BlzShowUnitTeamGlow"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitAnimationWithRarity"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "AddUnitAnimationPropertiesBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "QueueUnitAnimationBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "ResetUnitAnimation"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitLookAt"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "ResetUnitLookAt"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitFacingToFaceLocTimed"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitFacingToFaceUnitTimed"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "BlzGetUnitZ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "BlzGetLocalUnitZ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "BlzIsUnitSelectable"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "UnitSetUsesAltIcon"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "UnitSetUsesAltIconBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "ExplodeUnitBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitExploded"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SetUnitExplodedBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+
+[[override]]
+name = "SelectUnit"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "SelectUnitAdd"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "SelectUnitAddForPlayer"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "SelectUnitForPlayerSingle"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "SelectUnitRemove"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "SelectUnitRemoveForPlayer"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "SelectUnitSingle"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "IsUnitSelected"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface."
+
+[[override]]
+name = "IsUnit"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#217: IsUnit(a,b) is JASS handle identity equality; Go compares Unit handles with == directly, so the native has no API surface."
+
+[[override]]
+name = "BlzGetUnitBooleanField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitIntegerField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitRealField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitStringField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitWeaponBooleanField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitWeaponIntegerField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitWeaponRealField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitWeaponStringField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitBooleanField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitBooleanFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitIntegerField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitIntegerFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitRealField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitRealFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitStringField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitStringFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponBooleanField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponBooleanFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponIntegerField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponIntegerFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponRealField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponRealFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponStringField"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzSetUnitWeaponStringFieldBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API."
+
+[[override]]
+name = "BlzGetUnitSkin"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: per-unit skin override (render asset swap); deferred until the v2 skin/asset-override system lands."
+
+[[override]]
+name = "BlzSetUnitSkin"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: per-unit skin override (render asset swap); deferred until the v2 skin/asset-override system lands."
+
+[[override]]
+name = "BlzCreateUnitWithSkin"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: per-unit skin override (render asset swap); deferred until the v2 skin/asset-override system lands."
+
+[[override]]
+name = "BlzSetUnitArmor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzGetUnitBaseDamage"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzSetUnitBaseDamage"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzGetUnitAttackCooldown"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzSetUnitAttackCooldown"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzGetUnitDiceNumber"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzSetUnitDiceNumber"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzGetUnitDiceSides"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "BlzSetUnitDiceSides"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime read/write of base damage / dice / attack-cooldown / armor on the combat stat row; the v1 combat stores are load-time fixed (no runtime stat-edit surface). Deferred to v2."
+
+[[override]]
+name = "UnitApplyTimedLife"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+
+[[override]]
+name = "UnitApplyTimedLifeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+
+[[override]]
+name = "UnitPauseTimedLife"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+
+[[override]]
+name = "UnitPauseTimedLifeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+
+[[override]]
+name = "BlzUnitCancelTimedLife"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: timed-life (auto-expiry countdown) has no v1 sim component; deferred to v2 when the timed-life store lands."
+
+[[override]]
+name = "UnitAddSleep"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitAddSleepPerm"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitCanSleep"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitCanSleepBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitCanSleepPerm"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitIsSleeping"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitIsSleepingBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitWakeUp"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitWakeUpBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "UnitSetCanSleepBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "DoesUnitGenerateAlarms"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "UnitGenerateAlarms"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "UnitIgnoreAlarm"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "UnitIgnoreAlarmToggled"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "UnitAddType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "UnitAddTypeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "UnitRemoveType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "UnitRemoveTypeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: runtime classification add/remove (UNIT_TYPE_*) edits the unit type-flag set; no v1 runtime type-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "SetUnitPathing"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: per-unit collision/pathing toggle; no v1 runtime collision-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "UnitResetCooldown"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: ability cooldown reset; no v1 runtime cooldown-clear surface, deferred to v2."
+
+[[override]]
+name = "BlzUnitInterruptAttack"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: interrupt the current attack windup; no v1 attack-interrupt surface, deferred to v2."
+
+[[override]]
+name = "UnitSetConstructionProgress"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: set building construction progress; no v1 runtime construction-progress setter, deferred to v2."
+
+[[override]]
+name = "UnitInvis"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: AI invisibility flag; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "WaygateActivate"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateActivateBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateGetDestinationLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateGetDestinationX"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateGetDestinationY"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateIsActive"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateIsActiveBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateSetDestination"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "WaygateSetDestinationLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "SetUnitRallyPoint"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: rally-point setters; the rally getters (Unit.RallyPoint/RallyUnit) ship, but no v1 runtime rally-set surface exists yet. Deferred to v2."
+
+[[override]]
+name = "SetUnitRallyUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: rally-point setters; the rally getters (Unit.RallyPoint/RallyUnit) ship, but no v1 runtime rally-set surface exists yet. Deferred to v2."
+
+[[override]]
+name = "SetUnitRallyDestructable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: rally-point setters; the rally getters (Unit.RallyPoint/RallyUnit) ship, but no v1 runtime rally-set surface exists yet. Deferred to v2."
+
+[[override]]
+name = "RemoveGuardPosition"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "RecycleGuardPosition"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "RemoveAllGuardPositions"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "AddGuardPost"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "FillGuardPosts"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "ReturnGuardPosts"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "LockGuardPosition"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "SetUnitCreepGuard"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+
+[[override]]
+name = "AddUnitToStock"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "AddUnitToStockBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "AddUnitToAllStock"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "RemoveUnitFromStock"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "RemoveUnitFromStockBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "RemoveUnitFromAllStock"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "FlushStoredUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "CreateUnitPool"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
+
+[[override]]
+name = "DestroyUnitPool"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
+
+[[override]]
+name = "UnitPoolAddUnitType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
+
+[[override]]
+name = "UnitPoolRemoveUnitType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the UnitPool random-type weighted picker is a script utility over RNG + type tables; deferred to v2 (or a helpers utility)."
+
+[[override]]
+name = "CreateCorpse"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: spawn a decorative corpse; render/decoration with no gameplay sim component, deferred to v2."
+
+[[override]]
+name = "CreateCorpseLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: spawn a decorative corpse; render/decoration with no gameplay sim component, deferred to v2."
+
+[[override]]
+name = "ReplaceUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
+
+[[override]]
+name = "MergeUnits"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
+
+[[override]]
+name = "SuicideUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "SuicideUnitEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "SetUnitUseFood"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: toggle a unit's food consumption at runtime; no v1 runtime food-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "SetUnitUseFoodBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: toggle a unit's food consumption at runtime; no v1 runtime food-flag mutation surface, deferred to v2."
+
+[[override]]
+name = "CreateNUnitsAtLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
+
+[[override]]
+name = "CreateNUnitsAtLocFacingLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
+
+[[override]]
+name = "MakeUnitRescuableToForceBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "MakeUnitRescuableToForceBJEnum"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "RescueUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "SetUnitRescuable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "SetUnitRescueRange"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "SetRescueUnitColorChangeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2."
+
+[[override]]
+name = "GetResourceAmount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+
+[[override]]
+name = "SetResourceAmount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+
+[[override]]
+name = "AddResourceAmount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+
+[[override]]
+name = "AddResourceAmountBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+
+[[override]]
+name = "GetUnitBuildTime"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+
+[[override]]
+name = "GetUnitCountDone"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+
+[[override]]
+name = "GetUnitGoldCost"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+
+[[override]]
+name = "GetUnitWoodCost"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+
+[[override]]
+name = "GetUnitPointValueByType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+
+[[override]]
+name = "IsUnitIllusion"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: illusion (mirror-image) predicate; no v1 illusion sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitIllusionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: illusion (mirror-image) predicate; no v1 illusion sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitInTransport"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitInTransportBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitLoaded"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitLoadedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: transport/cargo predicates; no v1 transport sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitInvisible"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitMasked"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+
+[[override]]
+name = "IsUnitDetected"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+
+[[override]]
+name = "UnitSuspendDecay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: suppress corpse decay; no v1 corpse-decay timer surface, deferred to v2."
+
+[[override]]
+name = "UnitSuspendDecayBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: suppress corpse decay; no v1 corpse-decay timer surface, deferred to v2."
+
+[[override]]
+name = "IsUnitIdType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#217: classification predicate by unit-type id (UNIT_TYPE_* over a type id); deferred with the v2 type-flag API."
+
+[[override]]
+name = "UnitDamageTarget"
+class = "D3"
+goMapping = "Unit.Damage"
+goSignature = "(target Widget, amount float64, opts ...DamageOption) bool"
+collapsesWith = ["UnitDamageTargetBJ", "UnitDamagePoint", "UnitDamagePointLoc"]
+package = "litd/api"
+reason = "#217: the deal-damage family (target/point/Loc/BJ) collapses onto Unit.Damage over the sim combat chokepoint (QueueDamage -> armor matrix -> combat phase); attack-type row preserved via WithAttackType, render/sound cue args dropped (dedup D3)."
