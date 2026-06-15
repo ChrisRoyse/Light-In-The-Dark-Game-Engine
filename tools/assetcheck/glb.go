@@ -70,12 +70,17 @@ const (
 	glbChunkBIN  = 0x004E4942 // "BIN\0"
 )
 
-// parseGLB reads the GLB container header and the JSON chunk.
+// parseGLB reads a GLB file from disk and parses it.
 func parseGLB(path string) (*glbInfo, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
+	return parseGLBBytes(data)
+}
+
+// parseGLBBytes parses an in-memory GLB container (header + JSON chunk + BIN).
+func parseGLBBytes(data []byte) (*glbInfo, error) {
 	if len(data) < 20 {
 		return nil, fmt.Errorf("file too short for GLB header (%d bytes)", len(data))
 	}

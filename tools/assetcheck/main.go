@@ -61,12 +61,20 @@ var (
 )
 
 func main() {
+	// `assetcheck archive [--json] <file>` is a subcommand with its own flags,
+	// dispatched before the default-dir flag set (#37).
+	if len(os.Args) >= 2 && os.Args[1] == "archive" {
+		runArchiveCmd(os.Args[2:])
+		return
+	}
+
 	jsonMode := flag.Bool("json", false, "emit findings as JSON for CI annotation")
 	ingest := flag.Bool("ingest", false, "emit extension/clip census (R1 detection) instead of gating")
 	waiversPath := flag.String("waivers", "", "path to triangle-budget waivers.toml (default: <assets-root>/waivers.toml if present)")
 	flag.Parse()
+
 	if flag.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: assetcheck [--json] [--ingest] <assets-dir>")
+		fmt.Fprintln(os.Stderr, "usage: assetcheck [--json] [--ingest] <assets-dir>\n       assetcheck archive [--json] <archive.litdworld>")
 		os.Exit(2)
 	}
 	dir := flag.Arg(0)
@@ -124,7 +132,15 @@ func main() {
 	for _, n := range notes {
 		fmt.Fprintln(os.Stderr, "assetcheck:", n)
 	}
-	if *jsonMode {
+	emitFindings(findings, *jsonMode, len(files))
+	if len(findings) > 0 {
+		os.Exit(1)
+	}
+}
+
+// emitFindings prints findings as JSON or as the human gate report.
+func emitFindings(findings []finding, jsonMode bool, fileCount int) {
+	if jsonMode {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		if findings == nil {
@@ -134,26 +150,23 @@ func main() {
 			fmt.Fprintln(os.Stderr, "assetcheck:", err)
 			os.Exit(2)
 		}
-	} else {
-		for _, f := range findings {
-			fmt.Println(f)
-		}
-		byRule := map[string]int{}
-		for _, f := range findings {
-			byRule[f.Rule]++
-		}
-		rules := make([]string, 0, len(byRule))
-		for r := range byRule {
-			rules = append(rules, r)
-		}
-		sort.Strings(rules)
-		fmt.Printf("\nassetcheck: %d files, %d findings\n", len(files), len(findings))
-		for _, r := range rules {
-			fmt.Printf("  %-14s %d\n", r, byRule[r])
-		}
+		return
 	}
-	if len(findings) > 0 {
-		os.Exit(1)
+	for _, f := range findings {
+		fmt.Println(f)
+	}
+	byRule := map[string]int{}
+	for _, f := range findings {
+		byRule[f.Rule]++
+	}
+	rules := make([]string, 0, len(byRule))
+	for r := range byRule {
+		rules = append(rules, r)
+	}
+	sort.Strings(rules)
+	fmt.Printf("\nassetcheck: %d files, %d findings\n", fileCount, len(findings))
+	for _, r := range rules {
+		fmt.Printf("  %-14s %d\n", r, byRule[r])
 	}
 }
 
