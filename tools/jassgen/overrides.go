@@ -127,6 +127,28 @@ func ApplyOverrides(cs []Classification, ovs []Override) ([]Classification, erro
 		c.CollapsesWith = o.CollapsesWith
 		c.Package = o.Package
 	}
+
+	// Propagate each canonical's dedup class to its collapse members. A member
+	// listed in collapsesWith is resolved by the collapse decision, not by its
+	// own override — but its dedup class IS decided: it belongs to the same
+	// family as the canonical it folds into (deduplication-policy.md §4). Without
+	// this, members keep their (often "unclassified") heuristic class and the M2
+	// unclassified gate can never reach 0 for any collapsed family. The
+	// disposition (collapsed) is unchanged; only the Class label is corrected.
+	for _, o := range ovs {
+		if o.Class == "" {
+			continue
+		}
+		for _, member := range o.CollapsesWith {
+			j, ok := index[member]
+			if !ok {
+				continue
+			}
+			m := &out[j]
+			m.Class = Class(o.Class)
+			m.ClassifiedBy = "override"
+		}
+	}
 	return out, nil
 }
 

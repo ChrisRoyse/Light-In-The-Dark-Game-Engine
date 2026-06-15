@@ -2525,32 +2525,32 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetUnitWeaponIntegerFieldBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API. |
 | BlzSetUnitWeaponRealFieldBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API. |
 | BlzSetUnitWeaponStringFieldBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API. |
-| DebugS | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DebugFI | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DebugUnitID | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DisplayText | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DisplayTextI | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DisplayTextII | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DisplayTextIII | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
-| DoAiScriptDebug | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DebugS | commonai | D3 | `litd/api.AIThread.DebugS` |
+| DebugFI | commonai | D3 | `litd/api.AIThread.DebugFI` |
+| DebugUnitID | commonai | D3 | `litd/api.AIThread.DebugUnitID` |
+| DisplayText | commonai | D3 | `litd/api.AIThread.DisplayText` |
+| DisplayTextI | commonai | D3 | `litd/api.AIThread.DisplayTextI` |
+| DisplayTextII | commonai | D3 | `litd/api.AIThread.DisplayTextII` |
+| DisplayTextIII | commonai | D3 | `litd/api.AIThread.DisplayTextIII` |
+| DoAiScriptDebug | commonai | D3 | `litd/api.AIThread.DoAiScriptDebug` |
 | GetAiPlayer | commonai | D3 | `litd/api.AIView.AiPlayer` |
 | GetHeroId | commonai | D3 | `litd/api.AIView.HeroId` |
 | GetHeroLevelAI | commonai | D3 | `litd/api.AIView.HeroLevelAI` |
 | GetUnitCount | commonai | D2 | `litd/ai.UnitCount` |
-| GetPlayerUnitTypeCount | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
-| GetUnitCountDone | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
+| GetPlayerUnitTypeCount | commonai | D3 | `litd/api.AIView.PlayerUnitTypeCount` |
+| GetUnitCountDone | commonai | D3 | `litd/api.AIView.UnitCountDone` |
 | GetTownUnitCount | commonai | D3 | `litd/api.AIView.TownUnitCount` |
-| GetUnitGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
-| GetUnitWoodCost | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
-| GetUnitBuildTime | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
+| GetUnitGoldCost | commonai | D3 | `litd/api.AIView.UnitGoldCost` |
+| GetUnitWoodCost | commonai | D3 | `litd/api.AIView.UnitWoodCost` |
+| GetUnitBuildTime | commonai | D3 | `litd/api.AIView.UnitBuildTime` |
 | GetMinesOwned | commonai | D3 | `litd/api.AIView.MinesOwned` |
-| GetGoldOwned | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
+| GetGoldOwned | commonai | D3 | `litd/api.AIView.GoldOwned` |
 | TownWithMine | commonai | D3 | `litd/api.AIView.TownWithMine` |
 | TownHasMine | commonai | D3 | `litd/api.AIView.TownHasMine` |
 | TownHasHall | commonai | D3 | `litd/api.AIView.TownHasHall` |
-| GetUpgradeLevel | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
-| GetUpgradeGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
-| GetUpgradeWoodCost | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
+| GetUpgradeLevel | commonai | D3 | `litd/api.AIView.UpgradeLevel` |
+| GetUpgradeGoldCost | commonai | D3 | `litd/api.AIView.UpgradeGoldCost` |
+| GetUpgradeWoodCost | commonai | D3 | `litd/api.AIView.UpgradeWoodCost` |
 | GetNextExpansion | commonai | D3 | `litd/api.AIView.NextExpansion` |
 | GetMegaTarget | commonai | D3 | `litd/api.AIView.MegaTarget` |
 | GetBuilding | commonai | D3 | `litd/api.AIView.Building` |
@@ -2560,11 +2560,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetProduce | commonai | D3 | `litd/api.AICommander.SetProduce` |
 | Unsummon | commonai | D3 | `litd/api.AICommander.Unsummon` |
 | SetExpansion | commonai | D3 | `litd/api.AICommander.SetExpansion` |
-| SetUpgrade | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
+| SetUpgrade | commonai | D3 | `litd/api.AICommander.SetUpgrade` |
 | SetHeroLevels | commonai | D3 | `litd/api.AICommander.SetHeroLevels` |
 | SetNewHeroes | commonai | D3 | `litd/api.AICommander.SetNewHeroes` |
 | PurchaseZeppelin | commonai | D3 | `litd/api.AICommander.PurchaseZeppelin` |
-| MergeUnits | commonai | D3 | **tombstoned** (deferred-v2): #217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2. |
+| MergeUnits | commonai | D3 | `litd/api.AICommander.MergeUnits` |
 | ConvertUnits | commonai | D3 | `litd/api.AIView.ConvertUnits` |
 | SetCampaignAI | commonai | D3 | `litd/api.Game.AttachAI` (D3 collapse → StartMeleeAI) |
 | SetMeleeAI | commonai | D3 | `litd/api.Game.AttachAI` (D3 collapse → StartMeleeAI) |
@@ -2578,12 +2578,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetIgnoreInjured | commonai | D3 | `litd/api.AICommander.SetIgnoreInjured` |
 | SetHeroesTakeItems | commonai | D3 | `litd/api.AICommander.SetHeroesTakeItems` |
 | SetUnitsFlee | commonai | D3 | `litd/api.AICommander.SetUnitsFlee` |
-| SetGroupsFlee | commonai | D3 | **tombstoned** (deferred-v2): #ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain. |
+| SetGroupsFlee | commonai | D3 | `litd/api.AICommander.SetGroupsFlee` |
 | SetSlowChopping | commonai | D3 | `litd/api.AICommander.SetSlowChopping` |
 | SetCaptainChanges | commonai | D3 | `litd/api.AICommander.SetCaptainChanges` |
 | SetSmartArtillery | commonai | D3 | `litd/api.AICommander.SetSmartArtillery` |
 | SetReplacementCount | commonai | D3 | `litd/api.AICommander.SetReplacementCount` |
-| GroupTimedLife | commonai | D3 | **tombstoned** (deferred-v2): #groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store. |
+| GroupTimedLife | commonai | D3 | `litd/api.AICommander.GroupTimedLife` |
 | RemoveInjuries | commonai | D3 | `litd/api.AICommander.RemoveInjuries` |
 | RemoveSiege | commonai | D3 | `litd/api.AICommander.RemoveSiege` |
 | InitAssault | commonai | D3 | `litd/api.AICommander.InitAssault` |
@@ -2600,9 +2600,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetStagePoint | commonai | D3 | `litd/api.AICommander.SetStagePoint` |
 | AttackMoveKill | commonai | D3 | `litd/api.AICommander.AttackMoveKill` |
 | AttackMoveXY | commonai | D3 | `litd/api.AICommander.AttackMoveXY` |
-| LoadZepWave | commonai | D3 | **tombstoned** (deferred-v2): #assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline. |
+| LoadZepWave | commonai | D3 | `litd/api.AICommander.LoadZepWave` |
 | SuicidePlayer | commonai | D3 | `litd/api.AICommander.SuicidePlayer` |
-| SuicidePlayerUnits | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
+| SuicidePlayerUnits | commonai | D3 | `litd/api.AICommander.SuicidePlayerUnits` |
 | CaptainInCombat | commonai | D3 | `litd/api.AIView.CaptainInCombat` |
 | IsTowered | commonai | D3 | `litd/api.AIView.Towered` |
 | ClearHarvestAI | commonai | D3 | `litd/api.AICommander.ClearHarvestAI` |
@@ -2610,9 +2610,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | HarvestWood | commonai | D3 | `litd/api.AICommander.HarvestWood` |
 | GetExpansionPeon | commonai | D3 | `litd/api.AIView.ExpansionPeon` |
 | StopGathering | commonai | D3 | `litd/api.AICommander.StopGathering` |
-| AddGuardPost | commonai | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
-| FillGuardPosts | commonai | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
-| ReturnGuardPosts | commonai | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
+| AddGuardPost | commonai | D3 | `litd/api.AICommander.AddGuardPost` |
+| FillGuardPosts | commonai | D3 | `litd/api.AICommander.FillGuardPosts` |
+| ReturnGuardPosts | commonai | D3 | `litd/api.AICommander.ReturnGuardPosts` |
 | CreateCaptains | commonai | D3 | `litd/api.AICommander.CreateCaptains` |
 | SetCaptainHome | commonai | D3 | `litd/api.AICommander.SetCaptainHome` |
 | ResetCaptainLocs | commonai | D3 | `litd/api.AICommander.ResetCaptainLocs` |
@@ -2626,19 +2626,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CaptainIsHome | commonai | D3 | `litd/api.AIView.CaptainIsHome` |
 | CaptainIsFull | commonai | D3 | `litd/api.AIView.CaptainIsFull` |
 | CaptainIsEmpty | commonai | D3 | `litd/api.AIView.CaptainIsEmpty` |
-| CaptainGroupSize | commonai | D3 | **tombstoned** (deferred-v2): #ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain. |
+| CaptainGroupSize | commonai | D3 | `litd/api.AIView.CaptainGroupSize` |
 | CaptainReadiness | commonai | D3 | `litd/api.AIView.CaptainReadiness` |
 | CaptainRetreating | commonai | D3 | `litd/api.AIView.CaptainRetreating` |
 | CaptainReadinessHP | commonai | D3 | `litd/api.AIView.CaptainReadinessHP` |
 | CaptainReadinessMa | commonai | D3 | `litd/api.AIView.CaptainReadinessMa` |
 | CaptainAtGoal | commonai | D3 | `litd/api.AIView.CaptainAtGoal` |
 | CreepsOnMap | commonai | D3 | `litd/api.AIView.CreepsOnMap` |
-| SuicideUnit | commonai | D3 | **tombstoned** (deferred-v2): #217: AI self-destruct timer; no v1 sim component, deferred to v2. |
-| SuicideUnitEx | commonai | D3 | **tombstoned** (deferred-v2): #217: AI self-destruct timer; no v1 sim component, deferred to v2. |
+| SuicideUnit | commonai | D3 | `litd/api.AICommander.SuicideUnit` |
+| SuicideUnitEx | commonai | D3 | `litd/api.AICommander.SuicideUnitEx` |
 | StartThread | commonai | D2 | `litd/api.AIThread.Start` |
 | Sleep | commonai | D2 | `litd/api.AIThread.Sleep` |
 | UnitAlive | commonai | D3 | `litd/api.Unit.Alive` (D3 collapse → IsUnitAliveBJ) |
-| UnitInvis | commonai | D3 | **tombstoned** (deferred-v2): #217: AI invisibility flag; no v1 sim component, deferred to v2. |
+| UnitInvis | commonai | D3 | `litd/api.AICommander.UnitInvis` |
 | IgnoredUnits | commonai | D3 | `litd/api.AIView.IgnoredUnits` |
 | TownThreatened | commonai | D3 | `litd/api.AIView.TownThreatened` |
 | DisablePathing | commonai | D3 | `litd/api.AICommander.DisablePathing` |

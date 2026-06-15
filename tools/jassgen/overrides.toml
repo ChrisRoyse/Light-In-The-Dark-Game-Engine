@@ -11199,12 +11199,6 @@ tombstone = "deferred-v2"
 reason = "#217: set building construction progress; no v1 runtime construction-progress setter, deferred to v2."
 
 [[override]]
-name = "UnitInvis"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: AI invisibility flag; no v1 sim component, deferred to v2."
-
-[[override]]
 name = "WaygateActivate"
 class = "D3"
 tombstone = "deferred-v2"
@@ -11290,24 +11284,6 @@ reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as un
 
 [[override]]
 name = "RemoveAllGuardPositions"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
-
-[[override]]
-name = "AddGuardPost"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
-
-[[override]]
-name = "FillGuardPosts"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
-
-[[override]]
-name = "ReturnGuardPosts"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
@@ -11409,24 +11385,6 @@ tombstone = "deferred-v2"
 reason = "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
 
 [[override]]
-name = "MergeUnits"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
-
-[[override]]
-name = "SuicideUnit"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
-
-[[override]]
-name = "SuicideUnitEx"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
-
-[[override]]
 name = "SetUnitUseFood"
 class = "D3"
 tombstone = "deferred-v2"
@@ -11509,30 +11467,6 @@ name = "AddResourceAmountBJ"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
-
-[[override]]
-name = "GetUnitBuildTime"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
-
-[[override]]
-name = "GetUnitCountDone"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
-
-[[override]]
-name = "GetUnitGoldCost"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
-
-[[override]]
-name = "GetUnitWoodCost"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
 
 [[override]]
 name = "GetUnitPointValueByType"
@@ -12236,18 +12170,6 @@ tombstone = "deferred-v2"
 reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
 
 [[override]]
-name = "GetGoldOwned"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
-
-[[override]]
-name = "GetPlayerUnitTypeCount"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
-
-[[override]]
 name = "SetAllUnitTypeSlots"
 class = "D3"
 tombstone = "deferred-v2"
@@ -12261,18 +12183,6 @@ reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit count
 
 [[override]]
 name = "GetStartLocPrioSlot"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
-
-[[override]]
-name = "GetUpgradeGoldCost"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
-
-[[override]]
-name = "SuicidePlayerUnits"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
@@ -12758,12 +12668,6 @@ tombstone = "deferred-v2"
 reason = "#net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface."
 
 [[override]]
-name = "LoadZepWave"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline."
-
-[[override]]
 name = "DelayedSuspendDecayBoneEnum"
 class = "D3"
 tombstone = "gameplay-irrelevant"
@@ -12822,24 +12726,6 @@ name = "UpdateEachStockBuildingEnum"
 class = "D3"
 tombstone = "gameplay-irrelevant"
 reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
-
-[[override]]
-name = "GroupTimedLife"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store."
-
-[[override]]
-name = "CaptainGroupSize"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
-
-[[override]]
-name = "SetGroupsFlee"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
 
 [[override]]
 name = "DoTransmissionBasicsXYBJ"
@@ -12912,24 +12798,6 @@ name = "AddSpellEffectTargetById"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
-
-[[override]]
-name = "GetUpgradeLevel"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
-
-[[override]]
-name = "GetUpgradeWoodCost"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
-
-[[override]]
-name = "SetUpgrade"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
 
 [[override]]
 name = "ChangeElevatorHeight"
@@ -13832,54 +13700,6 @@ package = "litd/api"
 reason = "#effects: destroy a special effect maps onto Effect.Destroy (plays death anim then frees); BJ passthrough folds in."
 
 [[override]]
-name = "DebugFI"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DebugS"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DebugUnitID"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DisplayText"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DisplayTextI"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DisplayTextII"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DisplayTextIII"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
-name = "DoAiScriptDebug"
-class = "D3"
-tombstone = "gameplay-irrelevant"
-reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
-
-[[override]]
 name = "AddAssault"
 class = "D3"
 goMapping = "AICommander.AddAssault"
@@ -14590,3 +14410,243 @@ goMapping = "AIThread.WaitGetEnemyBase"
 goSignature = "(...)"
 package = "litd/api"
 reason = "#ai (M5.5): AI sleep/spawn/get-enemy-base wait verbs run on the AI domain scheduler (same deterministic scheduler, isolated job space; R-EXEC-3/5)."
+
+[[override]]
+name = "AddGuardPost"
+class = "D3"
+goMapping = "AICommander.AddGuardPost"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "CaptainGroupSize"
+class = "D3"
+goMapping = "AIView.CaptainGroupSize"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "DebugFI"
+class = "D3"
+goMapping = "AIThread.DebugFI"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DebugS"
+class = "D3"
+goMapping = "AIThread.DebugS"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DebugUnitID"
+class = "D3"
+goMapping = "AIThread.DebugUnitID"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DisplayText"
+class = "D3"
+goMapping = "AIThread.DisplayText"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DisplayTextI"
+class = "D3"
+goMapping = "AIThread.DisplayTextI"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DisplayTextII"
+class = "D3"
+goMapping = "AIThread.DisplayTextII"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DisplayTextIII"
+class = "D3"
+goMapping = "AIThread.DisplayTextIII"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "DoAiScriptDebug"
+class = "D3"
+goMapping = "AIThread.DoAiScriptDebug"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI-script debug print routed to the AI domain debug log (mapped per D-2026-06-11-6 — common.ai carries canonical M5.5 mappings, never capability tombstones)."
+
+[[override]]
+name = "FillGuardPosts"
+class = "D3"
+goMapping = "AICommander.FillGuardPosts"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetGoldOwned"
+class = "D3"
+goMapping = "AIView.GoldOwned"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetPlayerUnitTypeCount"
+class = "D3"
+goMapping = "AIView.PlayerUnitTypeCount"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUnitBuildTime"
+class = "D3"
+goMapping = "AIView.UnitBuildTime"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUnitCountDone"
+class = "D3"
+goMapping = "AIView.UnitCountDone"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUnitGoldCost"
+class = "D3"
+goMapping = "AIView.UnitGoldCost"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUnitWoodCost"
+class = "D3"
+goMapping = "AIView.UnitWoodCost"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUpgradeGoldCost"
+class = "D3"
+goMapping = "AIView.UpgradeGoldCost"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUpgradeLevel"
+class = "D3"
+goMapping = "AIView.UpgradeLevel"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GetUpgradeWoodCost"
+class = "D3"
+goMapping = "AIView.UpgradeWoodCost"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query (resource/unit-type/build-time/cost/upgrade state) on the read-only AIView (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "GroupTimedLife"
+class = "D3"
+goMapping = "AICommander.GroupTimedLife"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "LoadZepWave"
+class = "D3"
+goMapping = "AICommander.LoadZepWave"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "MergeUnits"
+class = "D3"
+goMapping = "AICommander.MergeUnits"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "ReturnGuardPosts"
+class = "D3"
+goMapping = "AICommander.ReturnGuardPosts"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "SetGroupsFlee"
+class = "D3"
+goMapping = "AICommander.SetGroupsFlee"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "SetUpgrade"
+class = "D3"
+goMapping = "AICommander.SetUpgrade"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "SuicidePlayerUnits"
+class = "D3"
+goMapping = "AICommander.SuicidePlayerUnits"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "SuicideUnit"
+class = "D3"
+goMapping = "AICommander.SuicideUnit"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "SuicideUnitEx"
+class = "D3"
+goMapping = "AICommander.SuicideUnitEx"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."
+
+[[override]]
+name = "UnitInvis"
+class = "D3"
+goMapping = "AICommander.UnitInvis"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI command/intent (guard posts, group flee/timed-life, upgrades, merge/suicide/invis unit control) issued through AICommander into the AI domain (R-EXEC-3; mapped per D-2026-06-11-6)."

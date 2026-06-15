@@ -56531,10 +56531,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.AddGuardPost",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -56654,10 +56655,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainGroupSize",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -56965,10 +56967,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DebugFI",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -56986,10 +56989,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DebugS",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57012,10 +57016,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DebugUnitID",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57054,10 +57059,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DisplayText",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57085,10 +57091,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DisplayTextI",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57121,10 +57128,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DisplayTextII",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57162,10 +57170,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DisplayTextIII",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57177,10 +57186,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "gameplay-irrelevant",
-        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.DoAiScriptDebug",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57192,10 +57202,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.FillGuardPosts",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57405,10 +57416,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.GoldOwned",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57543,10 +57555,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.PlayerUnitTypeCount",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57596,10 +57609,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UnitBuildTime",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57639,10 +57653,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UnitCountDone",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57660,10 +57675,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UnitGoldCost",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57681,10 +57697,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships)."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UnitWoodCost",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57702,10 +57719,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UpgradeGoldCost",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57723,10 +57741,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UpgradeLevel",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57744,10 +57763,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.UpgradeWoodCost",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -57765,10 +57785,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.GroupTimedLife",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57905,10 +57926,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.LoadZepWave",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -57941,10 +57963,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.MergeUnits",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58036,10 +58059,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.ReturnGuardPosts",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58198,10 +58222,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetGroupsFlee",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58564,10 +58589,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetUpgrade",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58742,10 +58768,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SuicidePlayerUnits",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58768,10 +58795,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SuicideUnit",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58799,10 +58827,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: AI self-destruct timer; no v1 sim component, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SuicideUnitEx",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -58923,10 +58952,11 @@
       },
       "classification": "D3",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: AI invisibility flag; no v1 sim component, deferred to v2."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.UnitInvis",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
