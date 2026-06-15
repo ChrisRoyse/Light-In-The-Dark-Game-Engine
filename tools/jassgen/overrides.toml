@@ -1453,6 +1453,7 @@ name = "SuspendTimeOfDay"
 class = "D1"
 goMapping = "Game.SuspendTimeOfDay"
 goSignature = "(suspended bool)"
+collapsesWith = ["UseTimeOfDayBJ"]
 package = "litd/api"
 reason = "freezes/resumes the day/night clock (clock.go, #339)"
 
@@ -3172,7 +3173,7 @@ name = "GroupEnumUnitsInRange"
 class = "D3"
 goMapping = "Game.UnitsInRange"
 goSignature = "(pos Vec2, r float64, filter UnitFilter) []Unit"
-collapsesWith = ["GroupEnumUnitsInRangeCounted", "GroupEnumUnitsInRangeOfLoc", "GroupEnumUnitsInRangeOfLocCounted"]
+collapsesWith = ["GroupEnumUnitsInRangeCounted", "GroupEnumUnitsInRangeOfLoc", "GroupEnumUnitsInRangeOfLocCounted", "GetUnitsInRangeOfLocAll", "GetUnitsInRangeOfLocMatching"]
 package = "litd/api"
 reason = "range enumeration collapses to the slice query Game.UnitsInRange (R-EXEC-4, D3 ex.5); counted/loc variants fold in (the count is len(slice), location is Vec2)"
 
@@ -3190,7 +3191,7 @@ name = "GroupEnumUnitsOfPlayer"
 class = "D3"
 goMapping = "Game.AllUnits"
 goSignature = "(filter UnitFilter) []Unit"
-collapsesWith = ["GroupEnumUnitsOfType", "GroupEnumUnitsOfTypeCounted"]
+collapsesWith = ["GroupEnumUnitsOfType", "GroupEnumUnitsOfTypeCounted", "GetUnitsOfPlayerAll", "GetUnitsOfPlayerMatching", "GetUnitsOfPlayerAndTypeId", "GetUnitsOfPlayerAndTypeIdFilter", "GetUnitsOfTypeIdAll", "GetUnitsOfTypeIdAllFilter"]
 package = "litd/api"
 reason = "whole-population enumeration collapses to Game.AllUnits(filter) (R-EXEC-4); of-player/of-type are filter predicates over the same slice"
 
@@ -5099,6 +5100,7 @@ name = "PauseGame"
 class = "D1"
 goMapping = "Game.Pause"
 goSignature = "()"
+collapsesWith = ["PauseGameOn", "PauseGameOff"]
 package = "litd/api"
 reason = "#256: pause toggle; PauseGame(true) is the canonical Game.Pause and PauseGame(false) is its Game.Resume counterpart (gamestate.go). Pause halts the driver's tick feed; render continues. Game.Pause is the representative canonical symbol for the toggle"
 
@@ -13035,3 +13037,796 @@ goSignature = "(g *litd.Game)"
 collapsesWith = ["MeleeCheckLostUnit", "MeleeClearExcessUnit", "MeleeClearExcessUnits", "MeleeClearNearbyUnits", "MeleeDifficulty", "MeleeEnumFindNearestMine", "MeleeFindNearestMine", "MeleeGetAllyCount", "MeleeGetAllyKeyStructureCount", "MeleeGetAllyStructureCount", "MeleeGetLocWithinRect", "MeleeGetNearestValueWithin", "MeleeGetProjectedLoc", "MeleeGrantHeroItems", "MeleeGrantItemsToHero", "MeleeGrantItemsToHiredHero", "MeleeGrantItemsToTrainedHero", "MeleeInitPlayerSlots", "MeleePlayerIsOpponent", "MeleeRandomHeroLoc", "MeleeStartingAI", "MeleeStartingVisibility", "MeleeTrainedUnitIsHeroBJFilter", "MeleeTriggerActionConstructCancel", "MeleeTriggerActionUnitConstructionStart", "MeleeTriggerActionUnitDeath"]
 package = "litd/api"
 reason = "#258 D4: the standard melee mode composition (visibility, AI attach, starting setup, nearest-mine/projection/hero-item helpers, unit add/lost tracking) collapses onto melee.Standard built only on public litd/api exports. Spec #258 / D-2026-06-11-6 (AI via g.AttachAI at M5.5)."
+
+[[override]]
+name = "MathRound"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+
+[[override]]
+name = "PercentTo255"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+
+[[override]]
+name = "PercentToInt"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+
+[[override]]
+name = "GetFadeFromSeconds"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+
+[[override]]
+name = "GetFadeFromSecondsAsReal"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+
+[[override]]
+name = "BlzConvertColor"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+
+[[override]]
+name = "GetBooleanAnd"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: JASS boolean-AND/OR and integer-ternary helper functions superseded by native Go && / || / if-expression."
+
+[[override]]
+name = "GetBooleanOr"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: JASS boolean-AND/OR and integer-ternary helper functions superseded by native Go && / || / if-expression."
+
+[[override]]
+name = "IntegerTertiaryOp"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: JASS boolean-AND/OR and integer-ternary helper functions superseded by native Go && / || / if-expression."
+
+[[override]]
+name = "GetForLoopIndexA"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
+
+[[override]]
+name = "GetForLoopIndexB"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
+
+[[override]]
+name = "SetForLoopIndexA"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
+
+[[override]]
+name = "SetForLoopIndexB"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
+
+[[override]]
+name = "BlzEnableSelections"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BlzEnableTargetIndicator"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BlzEnableUIAutoPosition"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BlzIsSelectionCircleEnabled"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BlzIsSelectionEnabled"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BlzIsTargetIndicatorEnabled"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "EnableDragSelect"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "EnablePreSelect"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "EnableSelect"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "ClearSelection"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "GetUnitsSelectedAll"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BJDebugMsg"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+
+[[override]]
+name = "BlzGetLocalClientHeight"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+
+[[override]]
+name = "BlzGetLocalClientWidth"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+
+[[override]]
+name = "BlzGetLocale"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+
+[[override]]
+name = "BlzIsLocalClientActive"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+
+[[override]]
+name = "BlzSetMousePos"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+
+[[override]]
+name = "SkinManagerGetLocalPath"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+
+[[override]]
+name = "BlzShowSkyBox"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "EnableDawnDusk"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "IsDawnDuskEnabled"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "EnableOcclusion"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "EnableOcclusionBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetWaterBaseColor"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetWaterBaseColorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetWaterDeforms"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetPortraitLight"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetIntroShotModel"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetIntroShotText"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "SetDestAnimationSpeedPercent"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "BlzGetAnimName"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+
+[[override]]
+name = "BlzStartRecording"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#net: client replay recording control; deferred to the v2 replay pipeline (litd/net)."
+
+[[override]]
+name = "BlzEndRecording"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#net: client replay recording control; deferred to the v2 replay pipeline (litd/net)."
+
+[[override]]
+name = "CancelCineSceneBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: cinematic-scene cancel + permanent corpse decoration; deferred to the v2 cutscene/decoration pipeline."
+
+[[override]]
+name = "CreatePermanentCorpseLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: cinematic-scene cancel + permanent corpse decoration; deferred to the v2 cutscene/decoration pipeline."
+
+[[override]]
+name = "InitBlizzard"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "InitBlizzardGlobals"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "InitNeutralBuildings"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "InitSummonableCaps"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "InitRescuableBehaviorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "MarkGameStarted"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "ConfigureNeutralVictim"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "DelayedSuspendDecayCreate"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+
+[[override]]
+name = "BlzIsLastInstanceObjectFunctionSuccessful"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#units: object-data field-edit success flag; deferred with the v2 object-data API."
+
+[[override]]
+name = "RequestExtraBooleanData"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+
+[[override]]
+name = "RequestExtraIntegerData"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+
+[[override]]
+name = "RequestExtraRealData"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+
+[[override]]
+name = "RequestExtraStringData"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+
+[[override]]
+name = "RandomDistChoose"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "RandomDistReset"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "ChooseRandomCreep"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "ChooseRandomCreepBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "ChooseRandomNPBuilding"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "ChooseRandomNPBuildingBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "PlaceRandomUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+
+[[override]]
+name = "ChangeLevel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "RestartGame"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "EndGameBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "DisableRestartMission"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetNextLevelBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetCampaignAvailable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetCampaignAvailableBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetCampaignMenuRace"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetCampaignMenuRaceBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetCampaignMenuRaceEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetMissionAvailable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetMissionAvailableBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetTutorialCleared"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetMaxCheckpointSaves"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "GetSaveBasicFilename"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "CopySaveGameBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "RemoveSaveDirectoryBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "RenameSaveDirectoryBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "SetMapDescription"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+
+[[override]]
+name = "LockGameSpeedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-speed lock toggle (Game.SetSpeed ships); the lock/unlock flag is deferred to v2."
+
+[[override]]
+name = "UnlockGameSpeedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-speed lock toggle (Game.SetSpeed ships); the lock/unlock flag is deferred to v2."
+
+[[override]]
+name = "GetGameTypeSelected"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "IsGameTypeSupported"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "GetCreatureDensity"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "SetCreatureDensity"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "GetStartLocPrio"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "SetStartLocPrio"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "SetStartLocPrioCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "SetEnemyStartLocPrio"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "SetEnemyStartLocPrioCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+
+[[override]]
+name = "EnableCreepSleepBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#units: global creep-sleep enable + delayed decay-suppression; deferred with the v2 creep-sleep / decay model."
+
+[[override]]
+name = "DelayedSuspendDecay"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#units: global creep-sleep enable + delayed decay-suppression; deferred with the v2 creep-sleep / decay model."
+
+[[override]]
+name = "GetWidgetLife"
+class = "D3"
+tombstone = "superseded"
+reason = "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+
+[[override]]
+name = "SetWidgetLife"
+class = "D3"
+tombstone = "superseded"
+reason = "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+
+[[override]]
+name = "GetWidgetX"
+class = "D3"
+tombstone = "superseded"
+reason = "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+
+[[override]]
+name = "GetWidgetY"
+class = "D3"
+tombstone = "superseded"
+reason = "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+
+[[override]]
+name = "GetFoodMade"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: per-player food made/used totals; deferred to the v2 economy API (per-unit Unit.FoodMade/FoodUsed ship)."
+
+[[override]]
+name = "GetFoodUsed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: per-player food made/used totals; deferred to the v2 economy API (per-unit Unit.FoodMade/FoodUsed ship)."
+
+[[override]]
+name = "GetOrderTarget"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetOrderPointX"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetOrderPointY"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetOrderPointLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetAttackedUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetDecayingUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetKillingUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetLastReplacedUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetLastRestoredUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetRevivingUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetLastCreatedEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "IsUnitAlly"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: unit-vs-player alliance predicates; deferred to v2 with the alliance query surface (Player.IsAlly ships for player-vs-player)."
+
+[[override]]
+name = "IsUnitEnemy"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: unit-vs-player alliance predicates; deferred to v2 with the alliance query surface (Player.IsAlly ships for player-vs-player)."
+
+[[override]]
+name = "IsUnitInForce"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: unit-in-force membership is superseded by Force.Contains over the unit owner (Force is a player set)."
+
+[[override]]
+name = "IsUnitFogged"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#visibility: per-unit fogged predicate; deferred to v2 with the per-unit fog model."
+
+[[override]]
+name = "PauseAllUnitsBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "CripplePlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "PerformStockUpdates"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "PickMeleeAI"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "StartStockUpdates"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "UpdateEachStockBuilding"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "UpdateStockAvailability"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+
+[[override]]
+name = "AngleBetweenPoints"
+class = "D4"
+goMapping = "Vec2.AngleTo"
+goSignature = "(o Vec2) Angle"
+package = "litd/api"
+reason = "#math: angle-between-points kept as Vec2.AngleTo(o) (D4 real capability)."
+
+[[override]]
+name = "DistanceBetweenPoints"
+class = "D4"
+goMapping = "Vec2.DistanceTo"
+goSignature = "(o Vec2) float64"
+package = "litd/api"
+reason = "#math: distance-between-points kept as Vec2.DistanceTo(o) (D4 real capability)."
+
+[[override]]
+name = "DestroyEffect"
+class = "D1"
+goMapping = "Effect.Destroy"
+goSignature = "()"
+collapsesWith = ["DestroyEffectBJ"]
+package = "litd/api"
+reason = "#effects: destroy a special effect maps onto Effect.Destroy (plays death anim then frees); BJ passthrough folds in."

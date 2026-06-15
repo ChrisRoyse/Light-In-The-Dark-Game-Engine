@@ -355,6 +355,33 @@
       }
     },
     {
+      "name": "AngleBetweenPoints",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "locA",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "locB",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Vec2.AngleTo",
+        "package": "litd/api",
+        "goSignature": "(o Vec2) Angle"
+      }
+    },
+    {
       "name": "AsinBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -420,6 +447,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "BJDebugMsg",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "msg",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
       }
     },
     {
@@ -616,6 +664,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzIsLastInstanceObjectFunctionSuccessful",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#units: object-data field-edit success flag; deferred with the v2 object-data API."
       }
     },
     {
@@ -1690,6 +1753,21 @@
       }
     },
     {
+      "name": "CancelCineSceneBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: cinematic-scene cancel + permanent corpse decoration; deferred to the v2 cutscene/decoration pipeline."
+      }
+    },
+    {
       "name": "ChangeElevatorHeight",
       "origin": "blizzard.j",
       "signature": {
@@ -1850,6 +1928,27 @@
       }
     },
     {
+      "name": "ChooseRandomCreepBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+      }
+    },
+    {
       "name": "ChooseRandomItemBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1894,6 +1993,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "ChooseRandomNPBuildingBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
       }
     },
     {
@@ -2257,6 +2371,21 @@
       }
     },
     {
+      "name": "ConfigureNeutralVictim",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+      }
+    },
+    {
       "name": "ContinueCinematicFadeAfterBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -2336,6 +2465,32 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+      }
+    },
+    {
+      "name": "CopySaveGameBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceSaveName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "destSaveName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -2917,6 +3072,47 @@
       }
     },
     {
+      "name": "CreatePermanentCorpseLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "style",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "facing",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: cinematic-scene cancel + permanent corpse decoration; deferred to the v2 cutscene/decoration pipeline."
+      }
+    },
+    {
       "name": "CreateQuestBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3358,6 +3554,21 @@
       }
     },
     {
+      "name": "DelayedSuspendDecay",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#units: global creep-sleep enable + delayed decay-suppression; deferred with the v2 creep-sleep / decay model."
+      }
+    },
+    {
       "name": "DelayedSuspendDecayBoneEnum",
       "origin": "blizzard.j",
       "signature": {
@@ -3370,6 +3581,21 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
+      "name": "DelayedSuspendDecayCreate",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
       }
     },
     {
@@ -3762,6 +3988,33 @@
       }
     },
     {
+      "name": "DistanceBetweenPoints",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "locA",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "locB",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Vec2.DistanceTo",
+        "package": "litd/api",
+        "goSignature": "(o Vec2) float64"
+      }
+    },
+    {
       "name": "DoNothing",
       "origin": "blizzard.j",
       "signature": {
@@ -3854,6 +4107,74 @@
       }
     },
     {
+      "name": "EnableCreepSleepBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#units: global creep-sleep enable + delayed decay-suppression; deferred with the v2 creep-sleep / decay model."
+      }
+    },
+    {
+      "name": "EnableDawnDusk",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
+      "name": "EnableOcclusionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "f",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "EnableWorldFogBoundaryBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3877,6 +4198,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
+      "name": "EndGameBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -4439,6 +4775,73 @@
       }
     },
     {
+      "name": "GetAttackedUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "GetBooleanAnd",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "valueA",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "valueB",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: JASS boolean-AND/OR and integer-ternary helper functions superseded by native Go \u0026\u0026 / || / if-expression."
+      }
+    },
+    {
+      "name": "GetBooleanOr",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "valueA",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "valueB",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: JASS boolean-AND/OR and integer-ternary helper functions superseded by native Go \u0026\u0026 / || / if-expression."
+      }
+    },
+    {
       "name": "GetCameraBoundsMapRect",
       "origin": "blizzard.j",
       "signature": {
@@ -4589,6 +4992,78 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "GetFadeFromSeconds",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "seconds",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+      }
+    },
+    {
+      "name": "GetFadeFromSecondsAsReal",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "seconds",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+      }
+    },
+    {
+      "name": "GetForLoopIndexA",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
+      }
+    },
+    {
+      "name": "GetForLoopIndexB",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
       }
     },
     {
@@ -4753,6 +5228,21 @@
       }
     },
     {
+      "name": "GetKillingUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
       "name": "GetLastCreatedButtonBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -4810,6 +5300,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#229: Go return value from Game.CreateDestructable replaces the bj_lastCreatedDestructable side channel"
+      }
+    },
+    {
+      "name": "GetLastCreatedEffectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -5170,6 +5675,36 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "GetLastReplacedUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "GetLastRestoredUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -5947,6 +6482,27 @@
       }
     },
     {
+      "name": "GetUnitsSelectedAll",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "group"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
       "name": "GroupAddGroup",
       "origin": "blizzard.j",
       "signature": {
@@ -6407,6 +6963,36 @@
       }
     },
     {
+      "name": "InitBlizzard",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+      }
+    },
+    {
+      "name": "InitBlizzardGlobals",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+      }
+    },
+    {
       "name": "InitDNCSounds",
       "origin": "blizzard.j",
       "signature": {
@@ -6488,6 +7074,21 @@
       }
     },
     {
+      "name": "InitNeutralBuildings",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+      }
+    },
+    {
       "name": "InitQueuedTriggers",
       "origin": "blizzard.j",
       "signature": {
@@ -6500,6 +7101,67 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "InitRescuableBehaviorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+      }
+    },
+    {
+      "name": "InitSummonableCaps",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
+      }
+    },
+    {
+      "name": "IntegerTertiaryOp",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "valueA",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "valueB",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: JASS boolean-AND/OR and integer-ternary helper functions superseded by native Go \u0026\u0026 / || / if-expression."
       }
     },
     {
@@ -6521,6 +7183,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "IsDawnDuskEnabled",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
       }
     },
     {
@@ -9065,6 +9742,21 @@
       }
     },
     {
+      "name": "LockGameSpeedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-speed lock toggle (Game.SetSpeed ships); the lock/unlock flag is deferred to v2."
+      }
+    },
+    {
       "name": "LockGuardPosition",
       "origin": "blizzard.j",
       "signature": {
@@ -9186,6 +9878,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
+      "name": "MarkGameStarted",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface."
       }
     },
     {
@@ -9970,6 +10677,27 @@
       }
     },
     {
+      "name": "PauseAllUnitsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "pause",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+      }
+    },
+    {
       "name": "PauseAllUnitsBJEnum",
       "origin": "blizzard.j",
       "signature": {
@@ -10039,6 +10767,104 @@
           "PauseUnit",
           "BlzPauseUnitEx"
         ]
+      }
+    },
+    {
+      "name": "PercentTo255",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "percentage",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+      }
+    },
+    {
+      "name": "PercentToInt",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "percentage",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "max",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+      }
+    },
+    {
+      "name": "PerformStockUpdates",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+      }
+    },
+    {
+      "name": "PickMeleeAI",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "num",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "s1",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "s2",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "s3",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
       }
     },
     {
@@ -11225,6 +12051,36 @@
       }
     },
     {
+      "name": "RandomDistChoose",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+      }
+    },
+    {
+      "name": "RandomDistReset",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+      }
+    },
+    {
       "name": "RandomItemInRectBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -11527,6 +12383,27 @@
       }
     },
     {
+      "name": "RemoveSaveDirectoryBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceDirName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "RemoveUnitFromStockBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -11571,6 +12448,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "RenameSaveDirectoryBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceDirName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "destDirName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -13846,6 +14749,53 @@
       }
     },
     {
+      "name": "SetCampaignAvailableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "available",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "campaignNumber",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
+      "name": "SetCampaignMenuRaceBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "campaignNumber",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "SetCineModeVolumeGroupsBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -14039,6 +14989,32 @@
       }
     },
     {
+      "name": "SetDestAnimationSpeedPercent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "percentScale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "SetDestructableLifePercentBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -14088,6 +15064,48 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: BJ max-life mutation; deferred with SetDestructableMaxLife"
+      }
+    },
+    {
+      "name": "SetForLoopIndexA",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "newIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
+      }
+    },
+    {
+      "name": "SetForLoopIndexB",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "newIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#math: bj_forLoopA/B loop-index globals are a JASS control-flow compiler artifact; Go has real for-loops."
       }
     },
     {
@@ -14438,6 +15456,32 @@
       }
     },
     {
+      "name": "SetMissionAvailableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "available",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "missionIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "SetMusicOffsetBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -14456,6 +15500,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
+      "name": "SetNextLevelBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "nextLevel",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -15766,6 +16831,42 @@
       }
     },
     {
+      "name": "SetWaterBaseColorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "ShareEverythingWithTeam",
       "origin": "blizzard.j",
       "signature": {
@@ -16039,6 +17140,21 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "StartStockUpdates",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
       }
     },
     {
@@ -18402,6 +19518,47 @@
       }
     },
     {
+      "name": "UnlockGameSpeedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-speed lock toggle (Game.SetSpeed ships); the lock/unlock flag is deferred to v2."
+      }
+    },
+    {
+      "name": "UpdateEachStockBuilding",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "iType",
+            "jassType": "itemtype",
+            "tsType": "itemtype"
+          },
+          {
+            "name": "iLevel",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+      }
+    },
+    {
       "name": "UpdateEachStockBuildingEnum",
       "origin": "blizzard.j",
       "signature": {
@@ -18414,6 +19571,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
+      "name": "UpdateStockAvailability",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
       }
     },
     {
@@ -19898,6 +21076,42 @@
       }
     },
     {
+      "name": "BlzConvertColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "r",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "g",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+      }
+    },
+    {
       "name": "BlzCreateDeadDestructableWithSkin",
       "origin": "common.j",
       "signature": {
@@ -20372,6 +21586,89 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+      }
+    },
+    {
+      "name": "BlzEnableSelections",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enableSelection",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "enableSelectionCircle",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "BlzEnableTargetIndicator",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "BlzEnableUIAutoPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "BlzEndRecording",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#net: client replay recording control; deferred to the v2 replay pipeline (litd/net)."
       }
     },
     {
@@ -22053,6 +23350,27 @@
       }
     },
     {
+      "name": "BlzGetAnimName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAnim",
+            "jassType": "animtype",
+            "tsType": "animtype"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "BlzGetEventAttackType",
       "origin": "common.j",
       "signature": {
@@ -22415,6 +23733,36 @@
       }
     },
     {
+      "name": "BlzGetLocalClientHeight",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+      }
+    },
+    {
+      "name": "BlzGetLocalClientWidth",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+      }
+    },
+    {
       "name": "BlzGetLocalSpecialEffectX",
       "origin": "common.j",
       "signature": {
@@ -22496,6 +23844,21 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "BlzGetLocale",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
       }
     },
     {
@@ -23468,6 +24831,66 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+      }
+    },
+    {
+      "name": "BlzIsLocalClientActive",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+      }
+    },
+    {
+      "name": "BlzIsSelectionCircleEnabled",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "BlzIsSelectionEnabled",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "BlzIsTargetIndicatorEnabled",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
       }
     },
     {
@@ -24917,6 +26340,32 @@
       }
     },
     {
+      "name": "BlzSetMousePos",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
+      }
+    },
+    {
       "name": "BlzSetSpecialEffectColor",
       "origin": "common.j",
       "signature": {
@@ -25795,6 +27244,27 @@
       }
     },
     {
+      "name": "BlzShowSkyBox",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "BlzShowTerrain",
       "origin": "common.j",
       "signature": {
@@ -25912,6 +27382,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzStartRecording",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "fps",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#net: client replay recording control; deferred to the v2 replay pipeline (litd/net)."
       }
     },
     {
@@ -26501,6 +27992,32 @@
       }
     },
     {
+      "name": "ChangeLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "newLevel",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "doScoreScreen",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "Cheat",
       "origin": "common.j",
       "signature": {
@@ -26519,6 +28036,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: single-player cheat-code entry; replaced by an out-of-band debug console (#252), never a shipped gameplay verb — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "ChooseRandomCreep",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
       }
     },
     {
@@ -26569,6 +28107,21 @@
       }
     },
     {
+      "name": "ChooseRandomNPBuilding",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+      }
+    },
+    {
       "name": "ClearMapMusic",
       "origin": "common.j",
       "signature": {
@@ -26581,6 +28134,21 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
+      "name": "ClearSelection",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
       }
     },
     {
@@ -29498,6 +31066,37 @@
       }
     },
     {
+      "name": "CripplePlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "toWhichPlayers",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain)."
+      }
+    },
+    {
       "name": "DecUnitAbilityLevel",
       "origin": "common.j",
       "signature": {
@@ -29711,6 +31310,31 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "defeat-condition free — game-state-and-melee (#256)"
+      }
+    },
+    {
+      "name": "DestroyEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Effect.Destroy",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "DestroyEffectBJ"
+        ]
       }
     },
     {
@@ -30289,6 +31913,27 @@
       }
     },
     {
+      "name": "DisableRestartMission",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "DisableTrigger",
       "origin": "common.j",
       "signature": {
@@ -30405,6 +32050,32 @@
       }
     },
     {
+      "name": "EnableDragSelect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "ui",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
       "name": "EnableMinimapFilterButtons",
       "origin": "common.j",
       "signature": {
@@ -30428,6 +32099,79 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "EnableOcclusion",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
+      "name": "EnablePreSelect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "ui",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "EnableSelect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "ui",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: selection/target-indicator/auto-position toggles + debug message print are per-client UI/render state the deterministic sim never reads."
       }
     },
     {
@@ -31887,6 +33631,21 @@
       }
     },
     {
+      "name": "GetCreatureDensity",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "mapdensity"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+      }
+    },
+    {
       "name": "GetCreepCampFilterState",
       "origin": "common.j",
       "signature": {
@@ -31920,6 +33679,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "GetDecayingUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -32344,6 +34118,48 @@
       }
     },
     {
+      "name": "GetFoodMade",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: per-player food made/used totals; deferred to the v2 economy API (per-unit Unit.FoodMade/FoodUsed ship)."
+      }
+    },
+    {
+      "name": "GetFoodUsed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: per-player food made/used totals; deferred to the v2 economy API (per-unit Unit.FoodMade/FoodUsed ship)."
+      }
+    },
+    {
       "name": "GetGameDifficulty",
       "origin": "common.j",
       "signature": {
@@ -32386,6 +34202,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#256: game-speed getter; speed is driver-owned real-time state with no v1 public readback (Game.SetSpeed is write-only on the driver hook) — deferred"
+      }
+    },
+    {
+      "name": "GetGameTypeSelected",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "gametype"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
       }
     },
     {
@@ -33104,6 +34935,66 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#strings: GetObjectName resolves a design-time object-editor display name; deferred to the v2 object-data API (no v1 runtime object-data name table)."
+      }
+    },
+    {
+      "name": "GetOrderPointLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "location"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "GetOrderPointX",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "GetOrderPointY",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "GetOrderTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "widget"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -34037,6 +35928,36 @@
       }
     },
     {
+      "name": "GetRevivingUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "GetSaveBasicFilename",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "GetSoldItem",
       "origin": "common.j",
       "signature": {
@@ -34268,6 +36189,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "spell target y needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetStartLocPrio",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "prioSlotIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "startlocprio"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
       }
     },
     {
@@ -35462,6 +37409,69 @@
       }
     },
     {
+      "name": "GetWidgetLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+      }
+    },
+    {
+      "name": "GetWidgetX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+      }
+    },
+    {
+      "name": "GetWidgetY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+      }
+    },
+    {
       "name": "GetWinningPlayer",
       "origin": "common.j",
       "signature": {
@@ -35591,7 +37601,9 @@
         "collapsesWith": [
           "GroupEnumUnitsInRangeCounted",
           "GroupEnumUnitsInRangeOfLoc",
-          "GroupEnumUnitsInRangeOfLocCounted"
+          "GroupEnumUnitsInRangeOfLocCounted",
+          "GetUnitsInRangeOfLocAll",
+          "GetUnitsInRangeOfLocMatching"
         ]
       }
     },
@@ -35666,7 +37678,13 @@
         "goSignature": "(filter UnitFilter) []Unit",
         "collapsesWith": [
           "GroupEnumUnitsOfType",
-          "GroupEnumUnitsOfTypeCounted"
+          "GroupEnumUnitsOfTypeCounted",
+          "GetUnitsOfPlayerAll",
+          "GetUnitsOfPlayerMatching",
+          "GetUnitsOfPlayerAndTypeId",
+          "GetUnitsOfPlayerAndTypeIdFilter",
+          "GetUnitsOfTypeIdAll",
+          "GetUnitsOfTypeIdAllFilter"
         ]
       }
     },
@@ -36510,6 +38528,27 @@
       }
     },
     {
+      "name": "IsGameTypeSupported",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGameType",
+            "jassType": "gametype",
+            "tsType": "gametype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+      }
+    },
+    {
       "name": "IsHeroUnitId",
       "origin": "common.j",
       "signature": {
@@ -37298,6 +39337,32 @@
       }
     },
     {
+      "name": "IsUnitAlly",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: unit-vs-player alliance predicates; deferred to v2 with the alliance query surface (Player.IsAlly ships for player-vs-player)."
+      }
+    },
+    {
       "name": "IsUnitDetected",
       "origin": "common.j",
       "signature": {
@@ -37321,6 +39386,58 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: invisibility/mask/detection predicates; no v1 invis/detection sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitEnemy",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: unit-vs-player alliance predicates; deferred to v2 with the alliance query surface (Player.IsAlly ships for player-vs-player)."
+      }
+    },
+    {
+      "name": "IsUnitFogged",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#visibility: per-unit fogged predicate; deferred to v2 with the per-unit fog model."
       }
     },
     {
@@ -37393,6 +39510,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: illusion (mirror-image) predicate; no v1 illusion sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "IsUnitInForce",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: unit-in-force membership is superseded by Force.Contains over the unit owner (Force is a player set)."
       }
     },
     {
@@ -40043,6 +42186,27 @@
       }
     },
     {
+      "name": "MathRound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: rounding / percent / fade-seconds / color int conversion superseded by Go stdlib + the typed Color/Angle values."
+      }
+    },
+    {
       "name": "MoveLightning",
       "origin": "common.j",
       "signature": {
@@ -41061,7 +43225,11 @@
       "goMapping": {
         "symbol": "Game.Pause",
         "package": "litd/api",
-        "goSignature": "()"
+        "goSignature": "()",
+        "collapsesWith": [
+          "PauseGameOn",
+          "PauseGameOff"
+        ]
       }
     },
     {
@@ -41197,6 +43365,47 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "PlaceRandomUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPool",
+            "jassType": "unitpool",
+            "tsType": "unitpool"
+          },
+          {
+            "name": "forWhichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "facing",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
       }
     },
     {
@@ -42708,6 +44917,230 @@
       }
     },
     {
+      "name": "RequestExtraBooleanData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "dataType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "param1",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param2",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param3",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "param4",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param5",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param6",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+      }
+    },
+    {
+      "name": "RequestExtraIntegerData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "dataType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "param1",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param2",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param3",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "param4",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param5",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param6",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+      }
+    },
+    {
+      "name": "RequestExtraRealData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "dataType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "param1",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param2",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param3",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "param4",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param5",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param6",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+      }
+    },
+    {
+      "name": "RequestExtraStringData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "dataType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "param1",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param2",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "param3",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "param4",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param5",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "param6",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map-config extra-data request hooks (custom map metadata channel); deferred to the v2 map-config API."
+      }
+    },
+    {
       "name": "ResetTerrainFog",
       "origin": "common.j",
       "signature": {
@@ -42804,6 +45237,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "RestartGame",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "doScoreScreen",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -45151,6 +47605,74 @@
       }
     },
     {
+      "name": "SetCampaignAvailable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "campaignNumber",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "available",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
+      "name": "SetCampaignMenuRace",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "race",
+            "tsType": "race"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
+      "name": "SetCampaignMenuRaceEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "campaignIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "SetCineFilterBlendMode",
       "origin": "common.j",
       "signature": {
@@ -45464,6 +47986,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+      }
+    },
+    {
+      "name": "SetCreatureDensity",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichdensity",
+            "jassType": "mapdensity",
+            "tsType": "mapdensity"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
       }
     },
     {
@@ -45828,6 +48371,68 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+      }
+    },
+    {
+      "name": "SetEnemyStartLocPrio",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "prioSlotIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "otherStartLocIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "priority",
+            "jassType": "startlocprio",
+            "tsType": "startlocprio"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+      }
+    },
+    {
+      "name": "SetEnemyStartLocPrioCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "prioSlotCount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
       }
     },
     {
@@ -46372,6 +48977,48 @@
       }
     },
     {
+      "name": "SetIntroShotModel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "introModelPath",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
+      "name": "SetIntroShotText",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "introText",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "SetItemCharges",
       "origin": "common.j",
       "signature": {
@@ -46710,6 +49357,27 @@
       }
     },
     {
+      "name": "SetMapDescription",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "description",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "SetMapFlag",
       "origin": "common.j",
       "signature": {
@@ -46788,6 +49456,27 @@
       }
     },
     {
+      "name": "SetMaxCheckpointSaves",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "maxCheckpointSaves",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
+      }
+    },
+    {
       "name": "SetMinimapIconOrphanDestroy",
       "origin": "common.j",
       "signature": {
@@ -46837,6 +49526,37 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands."
+      }
+    },
+    {
+      "name": "SetMissionAvailable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "campaignNumber",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "missionNumber",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "available",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -47492,6 +50212,27 @@
       }
     },
     {
+      "name": "SetPortraitLight",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "portraitDNCFile",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
       "name": "SetRandomSeed",
       "origin": "common.j",
       "signature": {
@@ -48082,6 +50823,68 @@
       }
     },
     {
+      "name": "SetStartLocPrio",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "prioSlotIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "otherStartLocIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "priority",
+            "jassType": "startlocprio",
+            "tsType": "startlocprio"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+      }
+    },
+    {
+      "name": "SetStartLocPrioCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "prioSlotCount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: game-type / creature-density / start-location-priority map-config; deferred to the v2 map-config + match-setup API."
+      }
+    },
+    {
       "name": "SetTeams",
       "origin": "common.j",
       "signature": {
@@ -48646,6 +51449,27 @@
         "collapsesWith": [
           "SetTimeOfDayScalePercentBJ"
         ]
+      }
+    },
+    {
+      "name": "SetTutorialCleared",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cleared",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: campaign/mission flow, level change, restart, and save-directory management belong to the v2 campaign + savedata layer (#242)."
       }
     },
     {
@@ -49623,6 +52447,89 @@
       }
     },
     {
+      "name": "SetWaterBaseColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
+      "name": "SetWaterDeforms",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "val",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#effects: render environment (skybox/dawn-dusk/occlusion/water color+deform/portrait light/intro-shot/animation name) is presentation with no deterministic-sim effect (R-API-6)."
+      }
+    },
+    {
+      "name": "SetWidgetLife",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "newLife",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#units: generic widget life/position accessors are superseded by the typed per-noun accessors (Unit.Life/SetLife/Position, Destructable.Life) over the Widget supertype."
+      }
+    },
+    {
       "name": "ShowDestructable",
       "origin": "common.j",
       "signature": {
@@ -49776,6 +52683,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "SkinManagerGetLocalPath",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "key",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ui: local-client viewport/locale/mouse/skin-path queries are per-client render state with no deterministic-sim surface."
       }
     },
     {
@@ -50269,7 +53197,10 @@
       "goMapping": {
         "symbol": "Game.SuspendTimeOfDay",
         "package": "litd/api",
-        "goSignature": "(suspended bool)"
+        "goSignature": "(suspended bool)",
+        "collapsesWith": [
+          "UseTimeOfDayBJ"
+        ]
       }
     },
     {
