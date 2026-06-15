@@ -1107,7 +1107,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
 | EndCinematicScene | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceCinematicSubtitles | common.j | D1 | **tombstoned** (gameplay-irrelevant): cinematic subtitle presentation toggle; no sim effect |
-| SetCinematicAudio | common.j | unclassified | _pending (M2 backlog)_ |
+| SetCinematicAudio | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
 | GetCameraMargin | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCameraBoundMinX | common.j | D3 | _pending (M2 backlog)_ |
 | GetCameraBoundMinY | common.j | D3 | _pending (M2 backlog)_ |
@@ -1123,50 +1123,50 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetCameraEyePositionZ | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCameraEyePositionLoc | common.j | unclassified | _pending (M2 backlog)_ |
 | NewSoundEnvironment | common.j | D1 | **tombstoned** (deprecated): EAX environment reverb is a dead audio extension; not part of the OpenAL/.ogg pipeline (R-AUD-1, sound-and-music.md). No public surface |
-| CreateSound | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateSoundFilenameWithLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateSoundFromLabel | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateSound | common.j | D3 | `litd/api.Game.CreateSound` |
+| CreateSoundFilenameWithLabel | common.j | D3 | `litd/api.Game.CreateSound` (D3 collapse → CreateSound) |
+| CreateSoundFromLabel | common.j | D3 | `litd/api.Game.CreateSound` (D3 collapse → CreateSound) |
 | CreateMIDISound | common.j | D1 | **tombstoned** (deprecated): MIDI is a dead format; LitD audio is .ogg via OpenAL (R-AUD-1, sound-and-music.md). No public surface |
-| SetSoundParamsFromLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundDistanceCutoff | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundChannel | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundVolume | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundPitch | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundPlayPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundDistances | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundConeAngles | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundConeOrientation | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundVelocity | common.j | unclassified | _pending (M2 backlog)_ |
-| AttachSoundToUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| StartSound | common.j | unclassified | _pending (M2 backlog)_ |
-| StopSound | common.j | unclassified | _pending (M2 backlog)_ |
-| KillSoundWhenDone | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMapMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| ClearMapMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayMusicEx | common.j | unclassified | _pending (M2 backlog)_ |
-| StopMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| ResumeMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayThematicMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| PlayThematicMusicEx | common.j | unclassified | _pending (M2 backlog)_ |
-| EndThematicMusic | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMusicVolume | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMusicPlayPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetThematicMusicVolume | common.j | unclassified | _pending (M2 backlog)_ |
-| SetThematicMusicPlayPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundDuration | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSoundDuration | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSoundFileDuration | common.j | unclassified | _pending (M2 backlog)_ |
-| VolumeGroupSetVolume | common.j | unclassified | _pending (M2 backlog)_ |
-| VolumeGroupReset | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSoundIsPlaying | common.j | unclassified | _pending (M2 backlog)_ |
-| GetSoundIsLoading | common.j | unclassified | _pending (M2 backlog)_ |
-| RegisterStackedSound | common.j | unclassified | _pending (M2 backlog)_ |
-| UnregisterStackedSound | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundFacialAnimationLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundFacialAnimationGroupLabel | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSoundFacialAnimationSetFilepath | common.j | unclassified | _pending (M2 backlog)_ |
+| SetSoundParamsFromLabel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundDistanceCutoff | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundChannel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundVolume | common.j | D3 | `litd/api.Sound.SetVolume` |
+| SetSoundPitch | common.j | D3 | `litd/api.Sound.SetPitch` |
+| SetSoundPlayPosition | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundDistances | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundConeAngles | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundConeOrientation | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundPosition | common.j | D3 | `litd/api.Sound.PlayAt` (D3 collapse → PlaySoundAtPointBJ) |
+| SetSoundVelocity | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| AttachSoundToUnit | common.j | D3 | `litd/api.Sound.PlayOn` (D3 collapse → PlaySoundOnUnitBJ) |
+| StartSound | common.j | D3 | `litd/api.Sound.Play` |
+| StopSound | common.j | D3 | `litd/api.Sound.Stop` |
+| KillSoundWhenDone | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| SetMapMusic | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| ClearMapMusic | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| PlayMusic | common.j | D3 | `litd/api.Game.PlayMusic` |
+| PlayMusicEx | common.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| StopMusic | common.j | D3 | `litd/api.Game.StopMusic` |
+| ResumeMusic | common.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| PlayThematicMusic | common.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| PlayThematicMusicEx | common.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| EndThematicMusic | common.j | D3 | `litd/api.Game.StopMusic` (D3 collapse → StopMusic) |
+| SetMusicVolume | common.j | D3 | `litd/api.Game.SetMusicVolume` |
+| SetMusicPlayPosition | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| SetThematicMusicVolume | common.j | D3 | `litd/api.Game.SetMusicVolume` (D3 collapse → SetMusicVolume) |
+| SetThematicMusicPlayPosition | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| SetSoundDuration | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| GetSoundDuration | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| GetSoundFileDuration | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| VolumeGroupSetVolume | common.j | D3 | `litd/api.Game.SetChannelVolume` |
+| VolumeGroupReset | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| GetSoundIsPlaying | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1). |
+| GetSoundIsLoading | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1). |
+| RegisterStackedSound | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: terrain stacked-sound (doodad ambient) registry; render domain. |
+| UnregisterStackedSound | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: terrain stacked-sound (doodad ambient) registry; render domain. |
+| SetSoundFacialAnimationLabel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: lip-sync / facial-animation binding for a sound; render domain. |
+| SetSoundFacialAnimationGroupLabel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: lip-sync / facial-animation binding for a sound; render domain. |
+| SetSoundFacialAnimationSetFilepath | common.j | D3 | **tombstoned** (gameplay-irrelevant): #244: lip-sync / facial-animation binding for a sound; render domain. |
 | SetDialogueSpeakerNameKey | common.j | unclassified | _pending (M2 backlog)_ |
 | GetDialogueSpeakerNameKey | common.j | unclassified | _pending (M2 backlog)_ |
 | SetDialogueTextKey | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1603,7 +1603,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetTimeOfDay | blizzard.j | D1 | `litd/api.Game.SetTimeOfDay` |
 | SetTimeOfDayScalePercentBJ | blizzard.j | D1 | `litd/api.Game.SetTimeOfDayScale` (D3 collapse → SetTimeOfDayScale) |
 | GetTimeOfDayScalePercentBJ | blizzard.j | D1 | `litd/api.Game.TimeOfDayScale` (D3 collapse → GetTimeOfDayScale) |
-| PlaySound | blizzard.j | D4 | _pending (M2 backlog)_ |
+| PlaySound | blizzard.j | D3 | `litd/api.Sound.Play` (D3 collapse → StartSound) |
 | CompareLocationsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CompareRectsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetRectFromCircleBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1738,53 +1738,53 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CreateMinimapIconBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CampaignMinimapIconUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CampaignMinimapIconLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlaySoundBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| StopSoundBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetSoundVolumeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetSoundOffsetBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetSoundDistanceCutoffBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetSoundPitchBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetSoundPositionLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| AttachSoundToUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetSoundConeAnglesBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| KillSoundWhenDoneBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| PlaySoundAtPointBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlaySoundOnUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlaySoundFromOffsetBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlayMusicBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlayMusicExBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetMusicOffsetBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| PlayThematicMusicBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| PlayThematicMusicExBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetThematicMusicOffsetBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| EndThematicMusicBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| StopMusicBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| ResumeMusicBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetMusicVolumeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetThematicMusicVolumeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetSoundDurationBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetSoundFileDurationBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetLastPlayedSound | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetLastPlayedMusic | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| VolumeGroupSetVolumeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetCineModeVolumeGroupsImmediateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetCineModeVolumeGroupsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetSpeechVolumeGroupsImmediateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetSpeechVolumeGroupsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| VolumeGroupResetImmediateBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| VolumeGroupResetBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetSoundIsPlayingBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| WaitForSoundBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetMapMusicIndexedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetMapMusicRandomBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| ClearMapMusicBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetStackedSoundBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| StartSoundForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| VolumeGroupSetVolumeForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| PlaySoundBJ | blizzard.j | D3 | `litd/api.Sound.Play` (D3 collapse → StartSound) |
+| StopSoundBJ | blizzard.j | D3 | `litd/api.Sound.Stop` (D3 collapse → StopSound) |
+| SetSoundVolumeBJ | blizzard.j | D3 | `litd/api.Sound.SetVolume` (D3 collapse → SetSoundVolume) |
+| SetSoundOffsetBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundDistanceCutoffBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| SetSoundPitchBJ | blizzard.j | D3 | `litd/api.Sound.SetPitch` (D3 collapse → SetSoundPitch) |
+| SetSoundPositionLocBJ | blizzard.j | D3 | `litd/api.Sound.PlayAt` (D3 collapse → PlaySoundAtPointBJ) |
+| AttachSoundToUnitBJ | blizzard.j | D3 | `litd/api.Sound.PlayOn` (D3 collapse → PlaySoundOnUnitBJ) |
+| SetSoundConeAnglesBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| KillSoundWhenDoneBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| PlaySoundAtPointBJ | blizzard.j | D3 | `litd/api.Sound.PlayAt` |
+| PlaySoundOnUnitBJ | blizzard.j | D3 | `litd/api.Sound.PlayOn` |
+| PlaySoundFromOffsetBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| PlayMusicBJ | blizzard.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| PlayMusicExBJ | blizzard.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| SetMusicOffsetBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| PlayThematicMusicBJ | blizzard.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| PlayThematicMusicExBJ | blizzard.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| SetThematicMusicOffsetBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| EndThematicMusicBJ | blizzard.j | D3 | `litd/api.Game.StopMusic` (D3 collapse → StopMusic) |
+| StopMusicBJ | blizzard.j | D3 | `litd/api.Game.StopMusic` (D3 collapse → StopMusic) |
+| ResumeMusicBJ | blizzard.j | D3 | `litd/api.Game.PlayMusic` (D3 collapse → PlayMusic) |
+| SetMusicVolumeBJ | blizzard.j | D3 | `litd/api.Game.SetMusicVolume` (D3 collapse → SetMusicVolume) |
+| SetThematicMusicVolumeBJ | blizzard.j | D3 | `litd/api.Game.SetMusicVolume` (D3 collapse → SetMusicVolume) |
+| GetSoundDurationBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| GetSoundFileDurationBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| GetLastPlayedSound | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| GetLastPlayedMusic | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| VolumeGroupSetVolumeBJ | blizzard.j | D3 | `litd/api.Game.SetChannelVolume` (D3 collapse → VolumeGroupSetVolume) |
+| SetCineModeVolumeGroupsImmediateBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| SetCineModeVolumeGroupsBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| SetSpeechVolumeGroupsImmediateBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| SetSpeechVolumeGroupsBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| VolumeGroupResetImmediateBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| VolumeGroupResetBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: cinematic/speech mix presets and volume-group reset; render domain. |
+| GetSoundIsPlayingBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1). |
+| WaitForSoundBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state. |
+| SetMapMusicIndexedBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| SetMapMusicRandomBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| ClearMapMusicBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: map music playlist + stream play-position; render domain. |
+| SetStackedSoundBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: terrain stacked-sound (doodad ambient) registry; render domain. |
+| StartSoundForPlayerBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state. |
+| VolumeGroupSetVolumeForPlayerBJ | blizzard.j | D3 | `litd/api.Game.SetChannelVolume` (D3 collapse → VolumeGroupSetVolume) |
 | EnableDawnDusk | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | IsDawnDuskEnabled | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetAmbientDaySound | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetAmbientNightSound | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetAmbientDaySound | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
+| SetAmbientNightSound | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | AddSpecialEffectLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | AddSpecialEffectTargetUnitBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | DestroyEffectBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -2466,11 +2466,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | FFAInitPlayerSlots | blizzard.j | D2 | _pending (M2 backlog)_ |
 | OneOnOneInitPlayerSlots | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitGenericPlayerSlots | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetDNCSoundsDawn | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetDNCSoundsDusk | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetDNCSoundsDay | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetDNCSoundsNight | blizzard.j | D4 | _pending (M2 backlog)_ |
-| InitDNCSounds | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetDNCSoundsDawn | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
+| SetDNCSoundsDusk | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
+| SetDNCSoundsDay | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
+| SetDNCSoundsNight | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
+| InitDNCSounds | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | InitBlizzardGlobals | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitQueuedTriggers | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitMapRects | blizzard.j | D4 | _pending (M2 backlog)_ |

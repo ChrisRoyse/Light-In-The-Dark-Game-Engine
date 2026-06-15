@@ -60,6 +60,13 @@ type Game struct {
 	// reports; nil routes them to the standard logger.
 	onInvalid func(report string)
 
+	// onAudio is the optional presentation sink for the sound/music
+	// surface (#244). Audio is render-only and sim-inert (R-AUD-1): the
+	// verbs validate + clamp their args and forward the resolved event
+	// here. nil (the headless default) makes every audio verb a
+	// deterministic no-op. The render driver and tests install a sink.
+	onAudio func(AudioEvent)
+
 	// eventKinds maps a sim event kind to its public dispatch list,
 	// consulted only at OnEvent registration time (never on the
 	// dispatch hot path — each list is reached through a closure). nil
@@ -89,7 +96,7 @@ type Game struct {
 	// #219): synchronous pre-apply modifiers run inside the sim's combat
 	// phase. damageHookInstalled records whether the single sim-side hook
 	// that fans out to them has been wired yet (lazy, once).
-	damageHandlers     []func(*DamageEvent)
+	damageHandlers      []func(*DamageEvent)
 	damageHookInstalled bool
 
 	// queryScratch is the reusable id buffer behind the spatial query

@@ -7204,3 +7204,447 @@ name = "UnitStripHeroLevel"
 class = "D2"
 tombstone = "deferred-v2"
 reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+# -------------------------------------------------------------------------
+# #244 sound + music category — presentation-only, sim-inert (R-AUD-1).
+# Canonical Go: litd/api/sound.go (Sound noun), music.go (Game music +
+# channel mix). Headless verbs validate+clamp then no-op; the render driver
+# hears them via Game.OnAudio. The whole category never touches the sim, so
+# nearly everything beyond the core play/stop/volume verbs is render-domain
+# (3D source params, duration, ambient/DNC, map playlists, cinematic mix).
+# -------------------------------------------------------------------------
+
+[[override]]
+name = "CreateSound"
+class = "D3"
+goMapping = "Game.CreateSound"
+goSignature = "(cue string) Sound"
+collapsesWith = ["CreateSoundFromLabel", "CreateSoundFilenameWithLabel"]
+package = "litd/api"
+reason = "#244: cue->Sound handle; the label/filename ctor variants fold (render resolves the .ogg)."
+
+[[override]]
+name = "PlayMusic"
+class = "D3"
+goMapping = "Game.PlayMusic"
+goSignature = "(cue string)"
+collapsesWith = ["PlayMusicBJ", "PlayMusicEx", "PlayMusicExBJ", "PlayThematicMusic", "PlayThematicMusicBJ", "PlayThematicMusicEx", "PlayThematicMusicExBJ", "ResumeMusic", "ResumeMusicBJ"]
+package = "litd/api"
+reason = "#244: start a music cue; the Ex (offset/fade), thematic, and resume variants are render-layer concerns that fold onto the one music verb (dedup §3)."
+
+[[override]]
+name = "PlaySoundAtPointBJ"
+class = "D3"
+goMapping = "Sound.PlayAt"
+goSignature = "(pos Vec2, z float64)"
+collapsesWith = ["SetSoundPosition", "SetSoundPositionLocBJ"]
+package = "litd/api"
+reason = "#244: 3D positional play; the XY/Loc position setters fold onto PlayAt (the fog gate is render-side, R-AUD-1)."
+
+[[override]]
+name = "PlaySoundOnUnitBJ"
+class = "D3"
+goMapping = "Sound.PlayOn"
+goSignature = "(u Unit)"
+collapsesWith = ["AttachSoundToUnit", "AttachSoundToUnitBJ"]
+package = "litd/api"
+reason = "#244: unit-attached play; the attach natives fold onto PlayOn."
+
+[[override]]
+name = "SetMusicVolume"
+class = "D3"
+goMapping = "Game.SetMusicVolume"
+goSignature = "(v float64)"
+collapsesWith = ["SetMusicVolumeBJ", "SetThematicMusicVolume", "SetThematicMusicVolumeBJ"]
+package = "litd/api"
+reason = "#244: music stream volume on a 0..1 float; percent/thematic forms fold."
+
+[[override]]
+name = "SetSoundPitch"
+class = "D3"
+goMapping = "Sound.SetPitch"
+goSignature = "(p float64)"
+collapsesWith = ["SetSoundPitchBJ"]
+package = "litd/api"
+reason = "#244: per-sound pitch multiplier; the BJ wrapper folds."
+
+[[override]]
+name = "SetSoundVolume"
+class = "D3"
+goMapping = "Sound.SetVolume"
+goSignature = "(v float64)"
+collapsesWith = ["SetSoundVolumeBJ"]
+package = "litd/api"
+reason = "#244: per-sound volume on a 0..1 float (0..127/percent forms fold)."
+
+[[override]]
+name = "StartSound"
+class = "D3"
+goMapping = "Sound.Play"
+goSignature = "()"
+collapsesWith = ["PlaySound", "PlaySoundBJ"]
+package = "litd/api"
+reason = "#244: non-positional play; the BJ play wrappers fold onto Sound.Play."
+
+[[override]]
+name = "StopMusic"
+class = "D3"
+goMapping = "Game.StopMusic"
+goSignature = "()"
+collapsesWith = ["StopMusicBJ", "EndThematicMusic", "EndThematicMusicBJ"]
+package = "litd/api"
+reason = "#244: stop the music stream; the BJ and thematic stop forms fold."
+
+[[override]]
+name = "StopSound"
+class = "D3"
+goMapping = "Sound.Stop"
+goSignature = "()"
+collapsesWith = ["StopSoundBJ"]
+package = "litd/api"
+reason = "#244: stop; the BJ wrapper folds."
+
+[[override]]
+name = "VolumeGroupSetVolume"
+class = "D3"
+goMapping = "Game.SetChannelVolume"
+goSignature = "(ch SoundChannel, v float64)"
+collapsesWith = ["VolumeGroupSetVolumeBJ", "VolumeGroupSetVolumeForPlayerBJ"]
+package = "litd/api"
+reason = "#244: mix-channel master volume keyed by the SoundChannel enum; the BJ and per-player forms fold (audio is local, not sim, so per-player == local)."
+
+[[override]]
+name = "ClearMapMusic"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "ClearMapMusicBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "GetLastPlayedMusic"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "GetLastPlayedSound"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "GetSoundDuration"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "GetSoundDurationBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "GetSoundFileDuration"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "GetSoundFileDurationBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "GetSoundIsLoading"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1)."
+
+[[override]]
+name = "GetSoundIsPlaying"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1)."
+
+[[override]]
+name = "GetSoundIsPlayingBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1)."
+
+[[override]]
+name = "InitDNCSounds"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "KillSoundWhenDone"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "KillSoundWhenDoneBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "PlaySoundFromOffsetBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "RegisterStackedSound"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: terrain stacked-sound (doodad ambient) registry; render domain."
+
+[[override]]
+name = "SetAmbientDaySound"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "SetAmbientNightSound"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "SetCineModeVolumeGroupsBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "SetCineModeVolumeGroupsImmediateBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "SetCinematicAudio"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "SetDNCSoundsDawn"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "SetDNCSoundsDay"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "SetDNCSoundsDusk"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "SetDNCSoundsNight"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: day/night ambient soundscape; render domain."
+
+[[override]]
+name = "SetMapMusic"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "SetMapMusicIndexedBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "SetMapMusicRandomBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "SetMusicOffsetBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "SetMusicPlayPosition"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "SetSoundChannel"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundConeAngles"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundConeAnglesBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundConeOrientation"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundDistanceCutoff"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundDistanceCutoffBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundDistances"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundDuration"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+
+[[override]]
+name = "SetSoundFacialAnimationGroupLabel"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: lip-sync / facial-animation binding for a sound; render domain."
+
+[[override]]
+name = "SetSoundFacialAnimationLabel"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: lip-sync / facial-animation binding for a sound; render domain."
+
+[[override]]
+name = "SetSoundFacialAnimationSetFilepath"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: lip-sync / facial-animation binding for a sound; render domain."
+
+[[override]]
+name = "SetSoundOffsetBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundParamsFromLabel"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundPlayPosition"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSoundVelocity"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "SetSpeechVolumeGroupsBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "SetSpeechVolumeGroupsImmediateBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "SetStackedSoundBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: terrain stacked-sound (doodad ambient) registry; render domain."
+
+[[override]]
+name = "SetThematicMusicOffsetBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "SetThematicMusicPlayPosition"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: map music playlist + stream play-position; render domain."
+
+[[override]]
+name = "StartSoundForPlayerBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+
+[[override]]
+name = "UnregisterStackedSound"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: terrain stacked-sound (doodad ambient) registry; render domain."
+
+[[override]]
+name = "VolumeGroupReset"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "VolumeGroupResetBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "VolumeGroupResetImmediateBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: cinematic/speech mix presets and volume-group reset; render domain."
+
+[[override]]
+name = "WaitForSoundBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."

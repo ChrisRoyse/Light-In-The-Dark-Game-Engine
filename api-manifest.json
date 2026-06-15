@@ -926,6 +926,21 @@
       }
     },
     {
+      "name": "ClearMapMusicBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
       "name": "CommentString",
       "origin": "blizzard.j",
       "signature": {
@@ -1688,6 +1703,36 @@
       }
     },
     {
+      "name": "GetLastPlayedMusic",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "GetLastPlayedSound",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "sound"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
       "name": "GetLastRemovedItem",
       "origin": "blizzard.j",
       "signature": {
@@ -1931,6 +1976,69 @@
         "symbol": "Rect.Width",
         "package": "litd/api",
         "goSignature": "() float64"
+      }
+    },
+    {
+      "name": "GetSoundDurationBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "GetSoundFileDurationBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "musicFileName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "GetSoundIsPlayingBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1)."
       }
     },
     {
@@ -2490,6 +2598,21 @@
       }
     },
     {
+      "name": "InitDNCSounds",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
       "name": "InitGameCacheBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -2861,6 +2984,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "KillSoundWhenDoneBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
       }
     },
     {
@@ -4306,6 +4450,114 @@
         "goSignature": "(paused bool)",
         "collapsesWith": [
           "PauseUnit"
+        ]
+      }
+    },
+    {
+      "name": "PlaySoundAtPointBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "volumePercent",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Sound.PlayAt",
+        "package": "litd/api",
+        "goSignature": "(pos Vec2, z float64)",
+        "collapsesWith": [
+          "SetSoundPosition",
+          "SetSoundPositionLocBJ"
+        ]
+      }
+    },
+    {
+      "name": "PlaySoundFromOffsetBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "volumePercent",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "startingOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "PlaySoundOnUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "volumePercent",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Sound.PlayOn",
+        "package": "litd/api",
+        "goSignature": "(u Unit)",
+        "collapsesWith": [
+          "AttachSoundToUnit",
+          "AttachSoundToUnitBJ"
         ]
       }
     },
@@ -6499,6 +6751,138 @@
       }
     },
     {
+      "name": "SetAmbientDaySound",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "inLabel",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
+      "name": "SetAmbientNightSound",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "inLabel",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
+      "name": "SetCineModeVolumeGroupsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "SetCineModeVolumeGroupsImmediateBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "SetDNCSoundsDawn",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
+      "name": "SetDNCSoundsDay",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
+      "name": "SetDNCSoundsDusk",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
+      "name": "SetDNCSoundsNight",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: day/night ambient soundscape; render domain."
+      }
+    },
+    {
       "name": "SetDestructableLifePercentBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -6738,6 +7122,74 @@
       }
     },
     {
+      "name": "SetMapMusicIndexedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "musicName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
+      "name": "SetMapMusicRandomBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "musicName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
+      "name": "SetMusicOffsetBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "newOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
       "name": "SetPlayerAbilityAvailableBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -6857,6 +7309,176 @@
       }
     },
     {
+      "name": "SetSoundConeAnglesBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "inside",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "outside",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "outsideVolumePercent",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundDistanceCutoffBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "cutoff",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundOffsetBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "newOffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSpeechVolumeGroupsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "SetSpeechVolumeGroupsImmediateBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "SetStackedSoundBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "add",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: terrain stacked-sound (doodad ambient) registry; render domain."
+      }
+    },
+    {
+      "name": "SetThematicMusicOffsetBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "newOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
       "name": "SetTimeOfDay",
       "origin": "blizzard.j",
       "signature": {
@@ -6967,6 +7589,32 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#229: BJ wrapper of ShowDestructable; render visibility only"
+      }
+    },
+    {
+      "name": "StartSoundForPlayerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
       }
     },
     {
@@ -7522,6 +8170,62 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: unit-uses-item-on-destructable order deferred to the v2 order/item API"
+      }
+    },
+    {
+      "name": "VolumeGroupResetBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "VolumeGroupResetImmediateBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "WaitForSoundBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "offset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
       }
     },
     {
@@ -11400,6 +12104,21 @@
       }
     },
     {
+      "name": "ClearMapMusic",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
       "name": "CommandAI",
       "origin": "common.j",
       "signature": {
@@ -13585,6 +14304,62 @@
         "symbol": "Game.NewRegion",
         "package": "litd/api",
         "goSignature": "() Region"
+      }
+    },
+    {
+      "name": "CreateSound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "fileName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "looping",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "is3D",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "stopwhenoutofrange",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "fadeInRate",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "fadeOutRate",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "eaxSetting",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "sound"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.CreateSound",
+        "package": "litd/api",
+        "goSignature": "(cue string) Sound",
+        "collapsesWith": [
+          "CreateSoundFromLabel",
+          "CreateSoundFilenameWithLabel"
+        ]
       }
     },
     {
@@ -16671,6 +17446,90 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "GetSoldUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219)"
+      }
+    },
+    {
+      "name": "GetSoundDuration",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "GetSoundFileDuration",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "musicFileName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "GetSoundIsLoading",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1)."
+      }
+    },
+    {
+      "name": "GetSoundIsPlaying",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render-context playback state; calling it from sim would leak non-determinism (R-AUD-1)."
       }
     },
     {
@@ -19785,6 +20644,27 @@
       }
     },
     {
+      "name": "KillSoundWhenDone",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
       "name": "KillUnit",
       "origin": "common.j",
       "signature": {
@@ -21429,6 +22309,39 @@
       }
     },
     {
+      "name": "PlayMusic",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "musicName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.PlayMusic",
+        "package": "litd/api",
+        "goSignature": "(cue string)",
+        "collapsesWith": [
+          "PlayMusicBJ",
+          "PlayMusicEx",
+          "PlayMusicExBJ",
+          "PlayThematicMusic",
+          "PlayThematicMusicBJ",
+          "PlayThematicMusicEx",
+          "PlayThematicMusicExBJ",
+          "ResumeMusic",
+          "ResumeMusicBJ"
+        ]
+      }
+    },
+    {
       "name": "Player",
       "origin": "common.j",
       "signature": {
@@ -21946,6 +22859,42 @@
         "symbol": "Region.RemoveRect",
         "package": "litd/api",
         "goSignature": "(rc Rect)"
+      }
+    },
+    {
+      "name": "RegisterStackedSound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "byPosition",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "rectwidth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "rectheight",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: terrain stacked-sound (doodad ambient) registry; render domain."
       }
     },
     {
@@ -24288,6 +25237,27 @@
       }
     },
     {
+      "name": "SetCinematicAudio",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cinematicAudio",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
       "name": "SetDefaultDifficulty",
       "origin": "common.j",
       "signature": {
@@ -25148,6 +26118,37 @@
       }
     },
     {
+      "name": "SetMapMusic",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "musicName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "random",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
       "name": "SetMapName",
       "origin": "common.j",
       "signature": {
@@ -25166,6 +26167,54 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#256: sets the displayed map name; map metadata is authored and loaded from the world archive (world format #205), not script-set at runtime in v1 — deferred"
+      }
+    },
+    {
+      "name": "SetMusicPlayPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "millisecs",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
+      }
+    },
+    {
+      "name": "SetMusicVolume",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "volume",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetMusicVolume",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetMusicVolumeBJ",
+          "SetThematicMusicVolume",
+          "SetThematicMusicVolumeBJ"
+        ]
       }
     },
     {
@@ -25858,6 +26907,413 @@
       }
     },
     {
+      "name": "SetSoundChannel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "channel",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundConeAngles",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "inside",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "outside",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "outsideVolume",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundConeOrientation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundDistanceCutoff",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "cutoff",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundDistances",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "minDist",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxDist",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundDuration",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "duration",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "SetSoundFacialAnimationGroupLabel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "groupLabel",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: lip-sync / facial-animation binding for a sound; render domain."
+      }
+    },
+    {
+      "name": "SetSoundFacialAnimationLabel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "animationLabel",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: lip-sync / facial-animation binding for a sound; render domain."
+      }
+    },
+    {
+      "name": "SetSoundFacialAnimationSetFilepath",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "animationSetFilepath",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: lip-sync / facial-animation binding for a sound; render domain."
+      }
+    },
+    {
+      "name": "SetSoundParamsFromLabel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "soundLabel",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundPitch",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "pitch",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Sound.SetPitch",
+        "package": "litd/api",
+        "goSignature": "(p float64)",
+        "collapsesWith": [
+          "SetSoundPitchBJ"
+        ]
+      }
+    },
+    {
+      "name": "SetSoundPlayPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "millisecs",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundVelocity",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: 3D source params (cones/distances/velocity), mix routing, playback offset, per-player local playback — render/OpenAL domain, no sim state."
+      }
+    },
+    {
+      "name": "SetSoundVolume",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "volume",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Sound.SetVolume",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetSoundVolumeBJ"
+        ]
+      }
+    },
+    {
       "name": "SetTeams",
       "origin": "common.j",
       "signature": {
@@ -25876,6 +27332,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#256: team-count setter; team count is static match config set at map load (Game.Teams reads it), per the same immutable-config decision as SetPlayers — deferred"
+      }
+    },
+    {
+      "name": "SetThematicMusicPlayPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "millisecs",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: map music playlist + stream play-position; render domain."
       }
     },
     {
@@ -26574,6 +28051,94 @@
         "goSignature": "(p Player, ai AIController, d Difficulty)",
         "collapsesWith": [
           "StartCampaignAI"
+        ]
+      }
+    },
+    {
+      "name": "StartSound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Sound.Play",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "PlaySound",
+          "PlaySoundBJ"
+        ]
+      }
+    },
+    {
+      "name": "StopMusic",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "fadeOut",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.StopMusic",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "StopMusicBJ",
+          "EndThematicMusic",
+          "EndThematicMusicBJ"
+        ]
+      }
+    },
+    {
+      "name": "StopSound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "killWhenDone",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "fadeOut",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Sound.Stop",
+        "package": "litd/api",
+        "goSignature": "()",
+        "collapsesWith": [
+          "StopSoundBJ"
         ]
       }
     },
@@ -28717,6 +30282,42 @@
       }
     },
     {
+      "name": "UnregisterStackedSound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "byPosition",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "rectwidth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "rectheight",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: terrain stacked-sound (doodad ambient) registry; render domain."
+      }
+    },
+    {
       "name": "VersionCompatible",
       "origin": "common.j",
       "signature": {
@@ -28771,6 +30372,52 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: WC3 version-support check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "VolumeGroupReset",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#244: cinematic/speech mix presets and volume-group reset; render domain."
+      }
+    },
+    {
+      "name": "VolumeGroupSetVolume",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "vgroup",
+            "jassType": "volumegroup",
+            "tsType": "volumegroup"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetChannelVolume",
+        "package": "litd/api",
+        "goSignature": "(ch SoundChannel, v float64)",
+        "collapsesWith": [
+          "VolumeGroupSetVolumeBJ",
+          "VolumeGroupSetVolumeForPlayerBJ"
+        ]
       }
     },
     {
