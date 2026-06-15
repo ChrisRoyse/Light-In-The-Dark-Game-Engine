@@ -123,6 +123,8 @@ type World struct {
 	Patrol        *PatrolStore // patrol endpoints (#306)
 	Build         *BuildStore  // building footprints + construction progress (#301)
 	Visibility    *VisibilityGrid
+	FogMods       *FogModifierStore // fog-of-war area overrides (#243)
+	ShareVisions  *ShareVisionStore // per-unit shared-vision bitmasks (#243)
 	Nodes         *ResourceNodeStore
 	Econs         *EconStore
 	Harvests      *HarvestStore
@@ -290,6 +292,10 @@ type World struct {
 	upkeepRate  [maxUpkeepTiers][data.MaxResourceTypes]fixed.F64
 	upkeepLost  [MaxPlayers][data.MaxResourceTypes]int64
 	taxRate     [MaxPlayers][MaxPlayers][data.MaxResourceTypes]fixed.F64
+	// #243 global fog toggles. Inverted so the zero value = fog on / mask on
+	// (the default, golden-safe); FogStateAt applies them at query time.
+	fogDisabled     bool
+	fogMaskDisabled bool
 	// #218 player roster: per-player metadata + the asymmetric alliance
 	// relation. Resources/food (above) carry the rest of the player-state
 	// matrix. alliance[a][b] is a flags bitset for a's stance toward b
@@ -381,6 +387,8 @@ func NewWorld(requested Caps) *World {
 		Patrol:             NewPatrolStore(caps.Units, idxSpace),
 		Build:              NewBuildStore(caps.Units, idxSpace),
 		Visibility:         newVisibilityGrid(idxSpace, caps.Units),
+		FogMods:            NewFogModifierStore(maxFogModifiers),
+		ShareVisions:       NewShareVisionStore(caps.Units, idxSpace),
 		orderPool:          make([]orderEntry, caps.OrderQueueEntries),
 		events:             make([]Event, caps.PendingEvents),
 		handlers:           make(map[HandlerID]EventHandler),
@@ -517,6 +525,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	}
 	if w.PropWindows.Row(id) != -1 {
 		w.PropWindows.Remove(id)
+	}
+	if w.ShareVisions.Row(id) != -1 {
+		w.ShareVisions.Remove(id)
 	}
 	if w.Combats.Row(id) != -1 {
 		w.Combats.Remove(id)

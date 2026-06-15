@@ -227,6 +227,21 @@
       }
     },
     {
+      "name": "GetLastCreatedFogModifier",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "fogmodifier"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#243: last-created global superseded — NewFogModifier returns the handle directly"
+      }
+    },
+    {
       "name": "GetLastCreatedGameCacheBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -7659,6 +7674,56 @@
       }
     },
     {
+      "name": "CreateFogModifierRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "forWhichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichState",
+            "jassType": "fogstate",
+            "tsType": "fogstate"
+          },
+          {
+            "name": "where",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "useSharedVision",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "afterUnits",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "fogmodifier"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.NewFogModifier",
+        "package": "litd/api",
+        "goSignature": "(p Player, state FogState, area Area, opts ...FogOption) FogModifier",
+        "collapsesWith": [
+          "CreateFogModifierRadius",
+          "CreateFogModifierRadiusLoc",
+          "CreateFogModifierRectSimple",
+          "CreateFogModifierRadiusLocSimple",
+          "CreateFogModifierRectBJ",
+          "CreateFogModifierRadiusLocBJ"
+        ]
+      }
+    },
+    {
       "name": "CreateForce",
       "origin": "common.j",
       "signature": {
@@ -7912,6 +7977,28 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "manual filterfunc free; Go closures are GC-managed (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "DestroyFogModifier",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichFogModifier",
+            "jassType": "fogmodifier",
+            "tsType": "fogmodifier"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "FogModifier.Destroy",
+        "package": "litd/api",
+        "goSignature": "()"
       }
     },
     {
@@ -8181,6 +8268,102 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "FogEnable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetFogEnabled",
+        "package": "litd/api",
+        "goSignature": "(on bool)",
+        "collapsesWith": [
+          "FogEnableOn",
+          "FogEnableOff"
+        ]
+      }
+    },
+    {
+      "name": "FogMaskEnable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetFogMaskEnabled",
+        "package": "litd/api",
+        "goSignature": "(on bool)",
+        "collapsesWith": [
+          "FogMaskEnableOn",
+          "FogMaskEnableOff"
+        ]
+      }
+    },
+    {
+      "name": "FogModifierStart",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichFogModifier",
+            "jassType": "fogmodifier",
+            "tsType": "fogmodifier"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "FogModifier.Start",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "FogModifierStop",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichFogModifier",
+            "jassType": "fogmodifier",
+            "tsType": "fogmodifier"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "FogModifier.Stop",
+        "package": "litd/api",
+        "goSignature": "()"
       }
     },
     {
@@ -11749,6 +11932,75 @@
       }
     },
     {
+      "name": "IsFogEnabled",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.FogEnabled",
+        "package": "litd/api",
+        "goSignature": "() bool"
+      }
+    },
+    {
+      "name": "IsFogMaskEnabled",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.FogMaskEnabled",
+        "package": "litd/api",
+        "goSignature": "() bool"
+      }
+    },
+    {
+      "name": "IsFoggedToPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.FogStateAt",
+        "package": "litd/api",
+        "goSignature": "(p Player, pos Vec2) FogState",
+        "collapsesWith": [
+          "IsLocationFoggedToPlayer",
+          "IsMaskedToPlayer",
+          "IsLocationMaskedToPlayer"
+        ]
+      }
+    },
+    {
       "name": "IsPlayerAlly",
       "origin": "common.j",
       "signature": {
@@ -12229,6 +12481,41 @@
         "symbol": "Unit.VisibleTo",
         "package": "litd/api",
         "goSignature": "(p Player) bool"
+      }
+    },
+    {
+      "name": "IsVisibleToPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.IsVisibleTo",
+        "package": "litd/api",
+        "goSignature": "(p Player, pos Vec2) bool",
+        "collapsesWith": [
+          "IsLocationVisibleToPlayer"
+        ]
       }
     },
     {
@@ -16245,6 +16532,47 @@
       }
     },
     {
+      "name": "SetFogStateRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "forWhichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichState",
+            "jassType": "fogstate",
+            "tsType": "fogstate"
+          },
+          {
+            "name": "where",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "useSharedVision",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetFogState",
+        "package": "litd/api",
+        "goSignature": "(p Player, state FogState, area Area, sharedVision bool)",
+        "collapsesWith": [
+          "SetFogStateRadius",
+          "SetFogStateRadiusLoc"
+        ]
+      }
+    },
+    {
       "name": "SetHeroAgi",
       "origin": "common.j",
       "signature": {
@@ -19362,6 +19690,41 @@
         "symbol": "Unit.RemoveAbility",
         "package": "litd/api",
         "goSignature": "(ref AbilityRef) bool"
+      }
+    },
+    {
+      "name": "UnitShareVision",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "share",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.ShareVision",
+        "package": "litd/api",
+        "goSignature": "(p Player, share bool)",
+        "collapsesWith": [
+          "UnitShareVisionBJ"
+        ]
       }
     },
     {

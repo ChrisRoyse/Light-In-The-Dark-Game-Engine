@@ -4904,3 +4904,114 @@ name = "SyncStoredUnit"
 class = "D1"
 tombstone = "deferred-v2"
 reason = "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+
+# ---- visibility & fog of war (#243) ----
+
+[[override]]
+name = "CreateFogModifierRect"
+class = "D3"
+goMapping = "Game.NewFogModifier"
+goSignature = "(p Player, state FogState, area Area, opts ...FogOption) FogModifier"
+package = "litd/api"
+collapsesWith = ["CreateFogModifierRadius", "CreateFogModifierRadiusLoc", "CreateFogModifierRectSimple", "CreateFogModifierRadiusLocSimple", "CreateFogModifierRectBJ", "CreateFogModifierRadiusLocBJ"]
+reason = "#243: rect/radius/Loc fog-modifier ctors collapse onto one Area-sum ctor (D3); enabled-by-default *BJ/Simple variants collapse via the Started() option (D2)"
+
+[[override]]
+name = "FogModifierStart"
+class = "D1"
+goMapping = "FogModifier.Start"
+goSignature = "()"
+package = "litd/api"
+reason = "#243: activate a fog modifier"
+
+[[override]]
+name = "FogModifierStop"
+class = "D1"
+goMapping = "FogModifier.Stop"
+goSignature = "()"
+package = "litd/api"
+reason = "#243: deactivate a fog modifier"
+
+[[override]]
+name = "DestroyFogModifier"
+class = "D1"
+goMapping = "FogModifier.Destroy"
+goSignature = "()"
+package = "litd/api"
+reason = "#243: free a fog modifier (handle invalidated, generation bumped)"
+
+[[override]]
+name = "SetFogStateRect"
+class = "D3"
+goMapping = "Game.SetFogState"
+goSignature = "(p Player, state FogState, area Area, sharedVision bool)"
+package = "litd/api"
+collapsesWith = ["SetFogStateRadius", "SetFogStateRadiusLoc"]
+reason = "#243: instant fog stamp; rect/radius/Loc variants collapse onto one Area-sum write (D3)"
+
+[[override]]
+name = "IsVisibleToPlayer"
+class = "D3"
+goMapping = "Game.IsVisibleTo"
+goSignature = "(p Player, pos Vec2) bool"
+package = "litd/api"
+collapsesWith = ["IsLocationVisibleToPlayer"]
+reason = "#243: point-visibility query; XY/Loc variants collapse onto Vec2 (D3)"
+
+[[override]]
+name = "IsFoggedToPlayer"
+class = "D5"
+goMapping = "Game.FogStateAt"
+goSignature = "(p Player, pos Vec2) FogState"
+package = "litd/api"
+collapsesWith = ["IsLocationFoggedToPlayer", "IsMaskedToPlayer", "IsLocationMaskedToPlayer"]
+reason = "#243: the visible/fogged/masked boolean triple was one FogState enum all along (D5); FogStateAt is the representative, IsVisibleTo the convenience"
+
+[[override]]
+name = "FogEnable"
+class = "D1"
+goMapping = "Game.SetFogEnabled"
+goSignature = "(on bool)"
+package = "litd/api"
+collapsesWith = ["FogEnableOn", "FogEnableOff"]
+reason = "#243: global fog toggle; the On/Off passthrough BJs collapse onto the bool form (D1)"
+
+[[override]]
+name = "IsFogEnabled"
+class = "D1"
+goMapping = "Game.FogEnabled"
+goSignature = "() bool"
+package = "litd/api"
+reason = "#243: read the global fog toggle"
+
+[[override]]
+name = "FogMaskEnable"
+class = "D1"
+goMapping = "Game.SetFogMaskEnabled"
+goSignature = "(on bool)"
+package = "litd/api"
+collapsesWith = ["FogMaskEnableOn", "FogMaskEnableOff"]
+reason = "#243: global black-mask toggle; On/Off passthrough BJs collapse onto the bool form (D1)"
+
+[[override]]
+name = "IsFogMaskEnabled"
+class = "D1"
+goMapping = "Game.FogMaskEnabled"
+goSignature = "() bool"
+package = "litd/api"
+reason = "#243: read the global black-mask toggle"
+
+[[override]]
+name = "UnitShareVision"
+class = "D1"
+goMapping = "Unit.ShareVision"
+goSignature = "(p Player, share bool)"
+package = "litd/api"
+collapsesWith = ["UnitShareVisionBJ"]
+reason = "#243: per-unit shared vision; arg-reorder *BJ collapses on"
+
+[[override]]
+name = "GetLastCreatedFogModifier"
+class = "D1"
+tombstone = "superseded"
+reason = "#243: last-created global superseded — NewFogModifier returns the handle directly"

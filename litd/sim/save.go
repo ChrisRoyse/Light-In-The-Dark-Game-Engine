@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v26: fog-of-war overrides appended after upkeep: the global fog/mask
+// toggles, the modifier pool + free list, and per-unit shared vision (#243).
 // v25: upkeep economy appended after the heightfield: tax brackets,
 // per-player upkeep-lost counters, and the sparse inter-player tax matrix (#375).
 // v24: per-unit propulsion-window override rows as a sparse section after
@@ -94,7 +96,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 25
+const SaveFormatVersion uint32 = 26
 
 // ---- little-endian writer / reader ----
 
@@ -832,6 +834,35 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		}
 	}
 
+	// fog overrides (#243, v26): toggles, modifier pool + free list, shares.
+	s.boolean(w.fogDisabled)
+	s.boolean(w.fogMaskDisabled)
+	fm := w.FogMods
+	s.u32(uint32(fm.count))
+	for i := int32(0); i < fm.count; i++ {
+		s.boolean(fm.alive[i])
+		s.u16(fm.gen[i])
+		s.u8(fm.player[i])
+		s.u8(fm.state[i])
+		s.u8(fm.kind[i])
+		s.boolean(fm.shared[i])
+		s.boolean(fm.active[i])
+		s.f64(fm.ax[i])
+		s.f64(fm.ay[i])
+		s.f64(fm.bx[i])
+		s.f64(fm.by[i])
+	}
+	s.u32(uint32(len(fm.free)))
+	for _, slot := range fm.free {
+		s.u32(uint32(slot))
+	}
+	sv := w.ShareVisions
+	s.u32(uint32(sv.count))
+	for i := int32(0); i < sv.count; i++ {
+		s.ent(sv.Entity[i])
+		s.u16(sv.Mask[i])
+	}
+
 	return s.err
 }
 
@@ -1141,6 +1172,17 @@ type decodedSave struct {
 	upRate  [maxUpkeepTiers][data.MaxResourceTypes]fixed.F64
 	upLost  [MaxPlayers][data.MaxResourceTypes]int64
 	upTax   [MaxPlayers][MaxPlayers][data.MaxResourceTypes]fixed.F64
+
+	// fog overrides (#243, v26): toggles, modifier pool, free list, shares.
+	fogDisabled, fogMaskDisabled bool
+	fmCount                      int32
+	fmAlive, fmShared, fmActive  []bool
+	fmGen                        []uint16
+	fmPlayer, fmState, fmKind    []uint8
+	fmAX, fmAY, fmBX, fmBY       []fixed.F64
+	fmFree                       []int32
+	svEntity                     []EntityID
+	svMask                       []uint16
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2236,6 +2278,71 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		}
 		d.upTax[a][b][res] = v
 	}
+
+	// fog overrides (#243, v26).
+	r.what = "fog overrides"
+	d.fogDisabled = r.boolean()
+	d.fogMaskDisabled = r.boolean()
+	fmN := int32(r.u32())
+	if r.err != nil {
+		return r.err
+	}
+	if fmN < 0 || int(fmN) > w.FogMods.capacity() {
+		return fmt.Errorf("sim: save: fog modifier count %d exceeds cap %d", fmN, w.FogMods.capacity())
+	}
+	d.fmCount = fmN
+	d.fmAlive = make([]bool, fmN)
+	d.fmShared = make([]bool, fmN)
+	d.fmActive = make([]bool, fmN)
+	d.fmGen = make([]uint16, fmN)
+	d.fmPlayer = make([]uint8, fmN)
+	d.fmState = make([]uint8, fmN)
+	d.fmKind = make([]uint8, fmN)
+	d.fmAX = make([]fixed.F64, fmN)
+	d.fmAY = make([]fixed.F64, fmN)
+	d.fmBX = make([]fixed.F64, fmN)
+	d.fmBY = make([]fixed.F64, fmN)
+	for i := int32(0); i < fmN; i++ {
+		d.fmAlive[i] = r.boolean()
+		d.fmGen[i] = r.u16()
+		d.fmPlayer[i] = r.u8()
+		d.fmState[i] = r.u8()
+		d.fmKind[i] = r.u8()
+		d.fmShared[i] = r.boolean()
+		d.fmActive[i] = r.boolean()
+		d.fmAX[i] = r.f64()
+		d.fmAY[i] = r.f64()
+		d.fmBX[i] = r.f64()
+		d.fmBY[i] = r.f64()
+	}
+	freeN := int32(r.u32())
+	if r.err != nil {
+		return r.err
+	}
+	if freeN < 0 || freeN > fmN {
+		return fmt.Errorf("sim: save: fog free-list count %d exceeds modifier count %d", freeN, fmN)
+	}
+	d.fmFree = make([]int32, freeN)
+	for i := int32(0); i < freeN; i++ {
+		slot := int32(r.u32())
+		if slot < 0 || slot >= fmN {
+			return fmt.Errorf("sim: save: fog free-list slot %d out of range", slot)
+		}
+		d.fmFree[i] = slot
+	}
+	svN := int32(r.u32())
+	if r.err != nil {
+		return r.err
+	}
+	if svN < 0 || int(svN) > len(w.ShareVisions.Mask) {
+		return fmt.Errorf("sim: save: shared-vision count %d exceeds cap %d", svN, len(w.ShareVisions.Mask))
+	}
+	d.svEntity = make([]EntityID, svN)
+	d.svMask = make([]uint16, svN)
+	for i := int32(0); i < svN; i++ {
+		d.svEntity[i] = r.ent()
+		d.svMask[i] = r.u16()
+	}
 	return r.err
 }
 
@@ -3194,6 +3301,36 @@ func applySave(d *decodedSave, w *World) {
 	w.upkeepRate = d.upRate
 	w.upkeepLost = d.upLost
 	w.taxRate = d.upTax
+
+	// fog overrides (#243): toggles, modifier pool, free list, shares.
+	w.fogDisabled = d.fogDisabled
+	w.fogMaskDisabled = d.fogMaskDisabled
+	fm := w.FogMods
+	fm.count = d.fmCount
+	fm.free = fm.free[:0]
+	for i := int32(0); i < d.fmCount; i++ {
+		fm.alive[i] = d.fmAlive[i]
+		fm.gen[i] = d.fmGen[i]
+		fm.player[i] = d.fmPlayer[i]
+		fm.state[i] = d.fmState[i]
+		fm.kind[i] = d.fmKind[i]
+		fm.shared[i] = d.fmShared[i]
+		fm.active[i] = d.fmActive[i]
+		fm.ax[i], fm.ay[i], fm.bx[i], fm.by[i] = d.fmAX[i], d.fmAY[i], d.fmBX[i], d.fmBY[i]
+	}
+	fm.free = append(fm.free, d.fmFree...)
+	sv := w.ShareVisions
+	for i := range sv.rowOf {
+		sv.rowOf[i] = -1
+	}
+	sv.count = 0
+	for i := int32(0); i < int32(len(d.svEntity)); i++ {
+		id := d.svEntity[i]
+		sv.Mask[sv.count] = d.svMask[i]
+		sv.Entity[sv.count] = id
+		sv.rowOf[id.Index()] = sv.count
+		sv.count++
+	}
 
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0

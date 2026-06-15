@@ -599,7 +599,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitLoaded | common.j | unclassified | _pending (M2 backlog)_ |
 | IsHeroUnitId | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitIdType | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitShareVision | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitShareVision | common.j | D1 | `litd/api.Unit.ShareVision` |
 | UnitSuspendDecay | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitAddType | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitRemoveType | common.j | unclassified | _pending (M2 backlog)_ |
@@ -675,12 +675,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsPlayerEnemy | common.j | D1 | `litd/api.Player.IsEnemy` |
 | IsPlayerInForce | common.j | D1 | `litd/api.Force.Contains` |
 | IsPlayerObserver | common.j | D1 | **tombstoned** (gameplay-irrelevant): observer presentation state; no sim effect in v1 |
-| IsVisibleToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| IsLocationVisibleToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| IsFoggedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| IsLocationFoggedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| IsMaskedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| IsLocationMaskedToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| IsVisibleToPlayer | common.j | D3 | `litd/api.Game.IsVisibleTo` |
+| IsLocationVisibleToPlayer | common.j | D3 | `litd/api.Game.IsVisibleTo` (D3 collapse → IsVisibleToPlayer) |
+| IsFoggedToPlayer | common.j | D5 | `litd/api.Game.FogStateAt` |
+| IsLocationFoggedToPlayer | common.j | D5 | `litd/api.Game.FogStateAt` (D3 collapse → IsFoggedToPlayer) |
+| IsMaskedToPlayer | common.j | D5 | `litd/api.Game.FogStateAt` (D3 collapse → IsFoggedToPlayer) |
+| IsLocationMaskedToPlayer | common.j | D5 | `litd/api.Game.FogStateAt` (D3 collapse → IsFoggedToPlayer) |
 | GetPlayerRace | common.j | D5 | `litd/api.Player.Race` |
 | GetPlayerId | common.j | D1 | `litd/api.Player.Slot` |
 | GetPlayerUnitCount | common.j | D1 | **tombstoned** (deferred-v2): per-player unit tally belongs to the AIView count family (#274); deferred to the groups/AI surface |
@@ -709,19 +709,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetPlayerState | common.j | D5 | `litd/api.Player.SetGold` |
 | RemovePlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | CachePlayerHeroData | common.j | unclassified | _pending (M2 backlog)_ |
-| SetFogStateRect | common.j | unclassified | _pending (M2 backlog)_ |
-| SetFogStateRadius | common.j | D3 | _pending (M2 backlog)_ |
-| SetFogStateRadiusLoc | common.j | D3 | _pending (M2 backlog)_ |
-| FogMaskEnable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsFogMaskEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| FogEnable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsFogEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateFogModifierRect | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateFogModifierRadius | common.j | D3 | _pending (M2 backlog)_ |
-| CreateFogModifierRadiusLoc | common.j | D3 | _pending (M2 backlog)_ |
-| DestroyFogModifier | common.j | unclassified | _pending (M2 backlog)_ |
-| FogModifierStart | common.j | unclassified | _pending (M2 backlog)_ |
-| FogModifierStop | common.j | unclassified | _pending (M2 backlog)_ |
+| SetFogStateRect | common.j | D3 | `litd/api.Game.SetFogState` |
+| SetFogStateRadius | common.j | D3 | `litd/api.Game.SetFogState` (D3 collapse → SetFogStateRect) |
+| SetFogStateRadiusLoc | common.j | D3 | `litd/api.Game.SetFogState` (D3 collapse → SetFogStateRect) |
+| FogMaskEnable | common.j | D1 | `litd/api.Game.SetFogMaskEnabled` |
+| IsFogMaskEnabled | common.j | D1 | `litd/api.Game.FogMaskEnabled` |
+| FogEnable | common.j | D1 | `litd/api.Game.SetFogEnabled` |
+| IsFogEnabled | common.j | D1 | `litd/api.Game.FogEnabled` |
+| CreateFogModifierRect | common.j | D3 | `litd/api.Game.NewFogModifier` |
+| CreateFogModifierRadius | common.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
+| CreateFogModifierRadiusLoc | common.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
+| DestroyFogModifier | common.j | D1 | `litd/api.FogModifier.Destroy` |
+| FogModifierStart | common.j | D1 | `litd/api.FogModifier.Start` |
+| FogModifierStop | common.j | D1 | `litd/api.FogModifier.Stop` |
 | VersionGet | common.j | unclassified | _pending (M2 backlog)_ |
 | VersionCompatible | common.j | unclassified | _pending (M2 backlog)_ |
 | VersionSupported | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1709,15 +1709,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsTerrainPathableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetTerrainPathableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetWaterBaseColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateFogModifierRectSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateFogModifierRadiusLocSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateFogModifierRectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CreateFogModifierRadiusLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetLastCreatedFogModifier | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| FogEnableOn | blizzard.j | D2 | _pending (M2 backlog)_ |
-| FogEnableOff | blizzard.j | D2 | _pending (M2 backlog)_ |
-| FogMaskEnableOn | blizzard.j | D2 | _pending (M2 backlog)_ |
-| FogMaskEnableOff | blizzard.j | D2 | _pending (M2 backlog)_ |
+| CreateFogModifierRectSimple | blizzard.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
+| CreateFogModifierRadiusLocSimple | blizzard.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
+| CreateFogModifierRectBJ | blizzard.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
+| CreateFogModifierRadiusLocBJ | blizzard.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
+| GetLastCreatedFogModifier | blizzard.j | D1 | **tombstoned** (superseded): #243: last-created global superseded — NewFogModifier returns the handle directly |
+| FogEnableOn | blizzard.j | D1 | `litd/api.Game.SetFogEnabled` (D3 collapse → FogEnable) |
+| FogEnableOff | blizzard.j | D1 | `litd/api.Game.SetFogEnabled` (D3 collapse → FogEnable) |
+| FogMaskEnableOn | blizzard.j | D1 | `litd/api.Game.SetFogMaskEnabled` (D3 collapse → FogMaskEnable) |
+| FogMaskEnableOff | blizzard.j | D1 | `litd/api.Game.SetFogMaskEnabled` (D3 collapse → FogMaskEnable) |
 | UseTimeOfDayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetTerrainFogExBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | ResetTerrainFogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -1936,7 +1936,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitPausedBJ | blizzard.j | D1 | `litd/api.Unit.Paused` |
 | UnitPauseTimedLifeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitApplyTimedLifeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitShareVisionBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| UnitShareVisionBJ | blizzard.j | D1 | `litd/api.Unit.ShareVision` (D3 collapse → UnitShareVision) |
 | UnitRemoveBuffsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | UnitRemoveBuffsExBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | UnitCountBuffsExBJ | blizzard.j | D4 | _pending (M2 backlog)_ |

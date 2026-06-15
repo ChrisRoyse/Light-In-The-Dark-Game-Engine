@@ -209,6 +209,7 @@ func (w *World) visibilitySystem() {
 	w.visibilityStampDue(every)
 	if w.tick%every == 0 {
 		v.finalizeCycle()
+		w.applyFogModifiers() // #243: overlay active area overrides
 		w.updateLastSeenBuildings()
 	}
 }
@@ -237,6 +238,7 @@ func (w *World) RecomputeVisibility() {
 		w.stampEntityVision(t.Entity[r], t.Pos[r])
 	}
 	w.Visibility.finalizeCycle()
+	w.applyFogModifiers() // #243: overlay active area overrides
 	w.updateLastSeenBuildings()
 }
 
@@ -259,6 +261,17 @@ func (w *World) stampEntityVision(id EntityID, pos fixed.Vec2) {
 		return
 	}
 	w.stampVision(player, id, pos, radius)
+	// #243: a unit may share its sight with other players (UnitShareVision).
+	if w.ShareVisions != nil {
+		if sr := w.ShareVisions.Row(id); sr != -1 {
+			mask := w.ShareVisions.Mask[sr]
+			for q := uint8(0); q < MaxPlayers; q++ {
+				if q != player && mask&(1<<q) != 0 {
+					w.stampVision(q, id, pos, radius)
+				}
+			}
+		}
+	}
 }
 
 func (w *World) stampVision(player uint8, source EntityID, pos fixed.Vec2, radius fixed.F64) {
@@ -299,19 +312,35 @@ func (w *World) stampVision(player uint8, source EntityID, pos fixed.Vec2, radiu
 	}
 }
 
+// fogQueryOverride applies the global fog toggles (#243) to a raw grid
+// state: fog off → everything visible; mask off → hidden reads as explored.
+// With both on (the default) the raw state is returned unchanged.
+func (w *World) fogQueryOverride(raw uint8) uint8 {
+	if w.fogDisabled {
+		return FogVisible
+	}
+	if w.fogMaskDisabled && raw == FogHidden {
+		return FogExplored
+	}
+	return raw
+}
+
 func (w *World) FogStateAt(player uint8, x, y int32) uint8 {
 	if w.Visibility == nil {
-		return FogHidden
+		return w.fogQueryOverride(FogHidden)
 	}
-	return w.Visibility.StateCell(player, x, y)
+	return w.fogQueryOverride(w.Visibility.StateCell(player, x, y))
 }
 
 func (w *World) FogStateAtWorld(player uint8, pos fixed.Vec2) uint8 {
-	x, y, ok := worldToFogCell(pos)
-	if !ok || w.Visibility == nil {
-		return FogHidden
+	if w.Visibility == nil {
+		return w.fogQueryOverride(FogHidden)
 	}
-	return w.Visibility.StateCell(player, x, y)
+	x, y, ok := worldToFogCell(pos)
+	if !ok {
+		return w.fogQueryOverride(FogHidden)
+	}
+	return w.fogQueryOverride(w.Visibility.StateCell(player, x, y))
 }
 
 func (w *World) IsVisibleToPlayer(player uint8, pos fixed.Vec2) bool {

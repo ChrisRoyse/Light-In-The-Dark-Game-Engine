@@ -89,6 +89,9 @@ var HashSystems = []string{
 	// appended by #375: upkeep brackets + per-player upkeep-lost counters +
 	// the inter-player transfer-tax matrix (sparse, non-zero entries only).
 	"upkeep",
+	// appended by #243: fog-of-war area modifiers (pool + free list), the two
+	// global fog toggles, and per-unit shared-vision bitmasks.
+	"fogmod",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -686,6 +689,35 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 				}
 			}
 		}
+	}
+
+	hfm := h.next() // fogmod (#243): modifier pool, toggles, shared vision
+	hfm.WriteBool(w.fogDisabled)
+	hfm.WriteBool(w.fogMaskDisabled)
+	fm := w.FogMods
+	hfm.WriteU32(uint32(fm.count))
+	for i := int32(0); i < fm.count; i++ {
+		hfm.WriteBool(fm.alive[i])
+		hfm.WriteU16(fm.gen[i])
+		hfm.WriteU8(fm.player[i])
+		hfm.WriteU8(fm.state[i])
+		hfm.WriteU8(fm.kind[i])
+		hfm.WriteBool(fm.shared[i])
+		hfm.WriteBool(fm.active[i])
+		hfm.WriteI64(int64(fm.ax[i]))
+		hfm.WriteI64(int64(fm.ay[i]))
+		hfm.WriteI64(int64(fm.bx[i]))
+		hfm.WriteI64(int64(fm.by[i]))
+	}
+	hfm.WriteU32(uint32(len(fm.free)))
+	for _, slot := range fm.free {
+		hfm.WriteU32(uint32(slot))
+	}
+	sv := w.ShareVisions
+	hfm.WriteU32(uint32(sv.count))
+	for i := int32(0); i < sv.count; i++ {
+		hfm.WriteU32(uint32(sv.Entity[i]))
+		hfm.WriteU16(sv.Mask[i])
 	}
 
 	return reg.Sum(dst)
