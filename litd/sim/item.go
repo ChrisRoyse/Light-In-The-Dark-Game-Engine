@@ -156,7 +156,78 @@ func (w *World) BindItemDefs(defs []data.Item) bool {
 		}
 	}
 	w.itemDefs = defs
+	idx := make(map[string]uint16, len(defs))
+	for i := range defs {
+		if defs[i].ID != "" {
+			idx[defs[i].ID] = uint16(i)
+		}
+	}
+	w.itemDefByCode = idx
 	return true
+}
+
+// ItemTypeID resolves an item code (data.Item.ID) to its bound typeID.
+// ok=false for an unknown code or before BindItemDefs. Deterministic map
+// lookup built once at bind, never iterated in gameplay.
+func (w *World) ItemTypeID(code string) (uint16, bool) {
+	id, ok := w.itemDefByCode[code]
+	return id, ok
+}
+
+// ItemTypeCount returns the number of bound item types.
+func (w *World) ItemTypeCount() int { return len(w.itemDefs) }
+
+// ItemTypeOf returns the item entity's type id. ok=false for a non-item.
+func (w *World) ItemTypeOf(item EntityID) (uint16, bool) {
+	r := w.Items.Row(item)
+	if r == -1 {
+		return 0, false
+	}
+	return w.Items.TypeID[r], true
+}
+
+// ItemCharges returns the item entity's current charges. ok=false for a
+// non-item.
+func (w *World) ItemCharges(item EntityID) (uint16, bool) {
+	r := w.Items.Row(item)
+	if r == -1 {
+		return 0, false
+	}
+	return w.Items.Charges[r], true
+}
+
+// SetItemCharges sets the item's charges. No-op (false) for a non-item.
+// Does not auto-destroy at 0 — consumable removal happens through UseItem.
+func (w *World) SetItemCharges(item EntityID, charges uint16) bool {
+	r := w.Items.Row(item)
+	if r == -1 {
+		return false
+	}
+	w.Items.Charges[r] = charges
+	return true
+}
+
+// ItemCarrier returns the unit carrying the item, or 0 if the item is on
+// the ground (or not an item).
+func (w *World) ItemCarrier(item EntityID) EntityID {
+	r := w.Items.Row(item)
+	if r == -1 {
+		return 0
+	}
+	return w.Items.Carrier[r]
+}
+
+// ItemGroundPos returns a ground item's world position. ok=false if the
+// item is carried (no Transform) or not an item.
+func (w *World) ItemGroundPos(item EntityID) (fixed.Vec2, bool) {
+	if w.Items.Row(item) == -1 {
+		return fixed.Vec2{}, false
+	}
+	tr := w.Transforms.Row(item)
+	if tr == -1 {
+		return fixed.Vec2{}, false
+	}
+	return w.Transforms.Pos[tr], true
 }
 
 // AddInventory attaches an empty 6-slot inventory to a unit.
@@ -198,9 +269,33 @@ func (w *World) ItemAt(unit EntityID, slot int) (ItemRecord, bool) {
 	return ItemRecord{TypeID: w.Items.TypeID[r], Charges: w.Items.Charges[r]}, true
 }
 
+// ItemInSlot returns the item entity in a unit's inventory slot, or 0 if
+// the slot is empty, out of range, or the unit has no inventory.
+func (w *World) ItemInSlot(unit EntityID, slot int) EntityID {
+	ir := w.Invents.Row(unit)
+	if ir == -1 || slot < 0 || slot >= InventorySlots {
+		return 0
+	}
+	return w.Invents.Slots[ir][slot]
+}
+
 // PickupItem moves a ground item into the unit's first free slot.
 // Instant when within itemReach; OrderPickup drives the approach.
 func (w *World) PickupItem(unit, item EntityID) uint8 {
+	return w.takeItem(unit, item, true)
+}
+
+// AddItemToInventory force-grants a ground item into the unit's first
+// free slot regardless of distance (UnitAddItem semantics). The item is
+// detached from the ground (Transform + bucket) and carried. Same
+// failure vocabulary as PickupItem minus ItemTooFar.
+func (w *World) AddItemToInventory(unit, item EntityID) uint8 {
+	return w.takeItem(unit, item, false)
+}
+
+// takeItem is the shared pickup core; requireReach gates on itemReach
+// (instant pickup) vs force-grant.
+func (w *World) takeItem(unit, item EntityID, requireReach bool) uint8 {
 	r := w.Items.Row(item)
 	if r == -1 || w.itemDefs == nil || !w.Ents.Alive(item) {
 		return ItemBadItem
@@ -216,8 +311,16 @@ func (w *World) PickupItem(unit, item EntityID) uint8 {
 	if tr == -1 || ur == -1 {
 		return ItemBadItem
 	}
-	if !fixed.DistSqLess(w.Transforms.Pos[ur], w.Transforms.Pos[tr], itemReach) {
+	if requireReach && !fixed.DistSqLess(w.Transforms.Pos[ur], w.Transforms.Pos[tr], itemReach) {
 		return ItemTooFar
+	}
+	// Power-up: consumed the instant it is taken — the effect fires on the
+	// taker and the item is destroyed rather than stored (no slot needed).
+	if def := &w.itemDefs[w.Items.TypeID[r]]; def.PowerUp {
+		w.ExecuteEffects(def.Effects, EffectCtx{Source: unit, Target: unit})
+		w.Emit(Event{Kind: EvItemUsed, Src: unit, Dst: item, Arg: 0})
+		w.DestroyUnit(item)
+		return ItemOK
 	}
 	slot := -1
 	for s := 0; s < InventorySlots; s++ {

@@ -42,6 +42,7 @@ type Item struct {
 	Mods          []StatMod  // carried modifiers (#162 fold)
 	Consumable    bool       // removed when charges reach 0
 	DropOnDeath   bool       // carrier death grounds the item
+	PowerUp       bool       // consumed instantly on pickup (effect fires, item destroyed)
 }
 
 type rawItemFile struct {
@@ -61,6 +62,7 @@ type rawItem struct {
 	Mods        []rawStatMod     `toml:"mod" json:"mod"`
 	Consumable  bool             `toml:"consumable" json:"consumable"`
 	DropOnDeath bool             `toml:"drop-on-death" json:"drop-on-death"`
+	PowerUp     bool             `toml:"power-up" json:"power-up"`
 }
 
 // loadItems reads items/*.toml|json (optional directory). The caller
@@ -133,6 +135,14 @@ func (t *Tables) loadItems(fsys fs.FS, comp *effectCompiler) error {
 		if it.Consumable && it.Charges == 0 {
 			return fmt.Errorf("data: %s: item %q: consumable requires charges >= 1", p.file, p.raw.ID)
 		}
+		if it.PowerUp {
+			if it.Effects.Len == 0 {
+				return fmt.Errorf("data: %s: item %q: power-up requires an effects list (it fires on pickup)", p.file, p.raw.ID)
+			}
+			if it.Consumable || it.Targeted {
+				return fmt.Errorf("data: %s: item %q: power-up is instant + self-applied (not consumable/targeted)", p.file, p.raw.ID)
+			}
+		}
 		t.Items = append(t.Items, it)
 	}
 	return nil
@@ -143,7 +153,7 @@ func (t *Tables) convertItem(file string, r *rawItem) (Item, error) {
 		return Item{}, fmt.Errorf("data: %s: item %q: %s: %w", file, r.ID, field, err)
 	}
 	it := Item{ID: r.ID, Name: r.Name, Targeted: r.Targeted,
-		Consumable: r.Consumable, DropOnDeath: r.DropOnDeath}
+		Consumable: r.Consumable, DropOnDeath: r.DropOnDeath, PowerUp: r.PowerUp}
 	ci := indexOf(ItemClasses[:], r.Class)
 	if ci < 0 {
 		return fail("class", fmt.Errorf("%q is not one of %v", r.Class, ItemClasses))
@@ -218,6 +228,7 @@ func (t *Tables) hashItems(h *statehash.Hasher) {
 		}
 		h.WriteBool(it.Consumable)
 		h.WriteBool(it.DropOnDeath)
+		h.WriteBool(it.PowerUp)
 	}
 }
 

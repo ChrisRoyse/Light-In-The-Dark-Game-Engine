@@ -260,8 +260,9 @@ name = "UnitInventorySize"
 class = "D1"
 goMapping = "Unit.InventorySize"
 goSignature = "() int"
+collapsesWith = ["UnitInventorySizeBJ"]
 package = "litd/api"
-reason = "inventory-capacity getter maps onto the typed accessor (dedup §2); engine models inventory all-or-nothing (6 slots or none) (#217)"
+reason = "inventory-capacity getter maps onto the typed accessor (dedup §2); engine models inventory all-or-nothing (6 slots or none) (#217). The BJ wrapper folds here (#225)"
 
 [[override]]
 name = "IsUnitType"
@@ -5700,3 +5701,761 @@ class = "D2"
 tombstone = "deferred-v2"
 reason = "#229: unit-uses-item-on-destructable order deferred to the v2 order/item API"
 
+
+# -------------------------------------------------------------------------
+# #225 items category — item-entity + Unit inventory surface.
+# Canonical Go surface: litd/api/item.go (Item noun + ItemType), litd/api/
+# inventory.go (Unit inventory verbs). The deterministic sim ItemStore +
+# InventoryStore are the SoT. Power-ups auto-consume on pickup (data.Item
+# PowerUp). Shops/economy, item-granted abilities, runtime data-field
+# mutation, weighted random pools, and item-type data accessors defer to v2;
+# render/UI cosmetics (skin/tooltip/icon) are gameplay-irrelevant.
+# -------------------------------------------------------------------------
+
+[[override]]
+name = "CreateItem"
+class = "D1"
+goMapping = "Game.CreateItem"
+goSignature = "(typ ItemType, pos Vec2) Item"
+collapsesWith = ["CreateItemLoc"]
+package = "litd/api"
+reason = "#225: canonical item ctor over (ItemType,Vec2); the Loc (location) variant folds (dedup §4). Returned handle replaces bj_lastCreatedItem."
+
+[[override]]
+name = "GetItemCharges"
+class = "D1"
+goMapping = "Item.Charges"
+goSignature = "() int"
+package = "litd/api"
+reason = "#225: charge-count getter; sim ItemStore SoT."
+
+[[override]]
+name = "GetItemTypeId"
+class = "D1"
+goMapping = "Item.Type"
+goSignature = "() ItemType"
+package = "litd/api"
+reason = "#225: item type-id accessor; returns the bound ItemType handle."
+
+[[override]]
+name = "GetItemX"
+class = "D1"
+goMapping = "Item.Position"
+goSignature = "() Vec2"
+collapsesWith = ["GetItemY", "GetItemLoc"]
+package = "litd/api"
+reason = "#225: ground-item position getter; the Y and Loc forms fold onto the Vec2 getter (dedup §4)."
+
+[[override]]
+name = "RemoveItem"
+class = "D1"
+goMapping = "Item.Remove"
+goSignature = "()"
+package = "litd/api"
+reason = "#225: destroys the item, removing it from inventory or ground."
+
+[[override]]
+name = "SetItemCharges"
+class = "D1"
+goMapping = "Item.SetCharges"
+goSignature = "(n int)"
+package = "litd/api"
+reason = "#225: charge-count setter (0 does not destroy; consumable removal is via Unit.UseItem)."
+
+[[override]]
+name = "UnitAddItem"
+class = "D1"
+goMapping = "Unit.AddItem"
+goSignature = "(it Item) bool"
+collapsesWith = ["UnitAddItemSwapped"]
+package = "litd/api"
+reason = "#225: force-grant an existing item to the first free slot (UnitAddItem); the arg-swapped BJ folds here."
+
+[[override]]
+name = "UnitAddItemById"
+class = "D1"
+goMapping = "Unit.AddItemByType"
+goSignature = "(typ ItemType, opts ...SlotOption) Item"
+collapsesWith = ["UnitAddItemByIdSwapped", "UnitAddItemToSlotById"]
+package = "litd/api"
+reason = "#225: create-and-grant by type; the swapped form and the slot-targeted form (WithSlot) fold onto the one ctor convenience (dedup §2/§3)."
+
+[[override]]
+name = "UnitDropItemSlot"
+class = "D1"
+goMapping = "Unit.DropItem"
+goSignature = "(n int) bool"
+collapsesWith = ["UnitDropItemSlotBJ", "UnitDropItem", "UnitDropItemPoint", "UnitDropItemPointBJ", "UnitDropItemPointLoc", "WidgetDropItem", "UnitRemoveItem", "UnitRemoveItemSwapped", "UnitRemoveItemFromSlot", "UnitRemoveItemFromSlotSwapped"]
+package = "litd/api"
+reason = "#225: ground the slot item at a deterministic adjacent cell; the point-drop variants (drop position is engine-chosen and deterministic here) and the remove-from-inventory family all fold onto the one drop verb (dedup §3/§4)."
+
+[[override]]
+name = "UnitDropItemTarget"
+class = "D1"
+goMapping = "Unit.GiveItemTo"
+goSignature = "(n int, to Unit) bool"
+collapsesWith = ["UnitDropItemTargetBJ"]
+package = "litd/api"
+reason = "#225: hand the slot item to an adjacent same-player unit; the BJ wrapper folds here."
+
+[[override]]
+name = "UnitInventoryCount"
+class = "D1"
+goMapping = "Unit.ItemCount"
+goSignature = "() int"
+package = "litd/api"
+reason = "#225: count of carried items; sim InventoryStore SoT."
+
+[[override]]
+name = "UnitItemInSlot"
+class = "D1"
+goMapping = "Unit.ItemInSlot"
+goSignature = "(n int) Item"
+collapsesWith = ["UnitItemInSlotBJ"]
+package = "litd/api"
+reason = "#225: slot accessor; the BJ wrapper folds onto the same getter."
+
+[[override]]
+name = "UnitUseItem"
+class = "D1"
+goMapping = "Unit.UseItem"
+goSignature = "(n int, opts ...UseOption) bool"
+collapsesWith = ["UnitUseItemTarget", "UnitUseItemPoint", "UnitUseItemPointLoc"]
+package = "litd/api"
+reason = "#225: fire the slot item's use pipeline; the target/point variants fold via UseOn/UseAt options (dedup §3)."
+
+[[override]]
+name = "AddItemToAllStock"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "AddItemToStock"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "AddItemToStockBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "BlzCreateItemWithSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbsorbingItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemAbility"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemAbilityByIndex"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemBooleanField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemDescription"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzGetItemExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzGetItemIconPath"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzGetItemIntegerField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemRealField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzGetItemStringField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetItemTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzGetManipulatedItemWasAbsorbed"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetStackingItemSource"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetStackingItemTarget"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzGetStackingItemTargetPreviousCharges"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzItemAddAbility"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzItemAddAbilityBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzItemRemoveAbility"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzItemRemoveAbilityBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemBooleanField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemBooleanFieldBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemDescription"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzSetItemExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzSetItemIconPath"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzSetItemIntegerField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemIntegerFieldBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemName"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzSetItemRealField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemRealFieldBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemSkin"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "BlzSetItemStringField"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemStringFieldBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+
+[[override]]
+name = "BlzSetItemTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "CheckItemStatus"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "CheckItemcodeStatus"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "ChooseRandomItem"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "ChooseRandomItemBJ"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "ChooseRandomItemEx"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "ChooseRandomItemExBJ"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "CreateItemPool"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "DestroyItemPool"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "EnumItemsInRect"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "EnumItemsInRectBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "GetEnumItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "GetFilterItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "GetInventoryIndexOfItemTypeBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetItemLevel"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetItemLifeBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "GetItemName"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetItemOfTypeFromUnitBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetItemPlayer"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetItemType"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetItemUserData"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "GetLastCreatedItem"
+class = "D2"
+tombstone = "superseded"
+reason = "#225: Go return value from Game.CreateItem replaces the bj_lastCreatedItem side channel."
+
+[[override]]
+name = "GetLastRemovedItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "GetManipulatedItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "GetOrderTargetItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "IsItemHiddenBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "IsItemIdPawnable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "IsItemIdPowerup"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "IsItemIdSellable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "IsItemInvulnerable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "IsItemOwned"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "IsItemPawnable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "IsItemPowerup"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "IsItemSellable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "IsItemVisible"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "IssueTargetItemOrder"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "ItemAddIndicatorBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+
+[[override]]
+name = "ItemPoolAddItemType"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "ItemPoolRemoveItemType"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "NudgeItemsInRectEnum"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+
+[[override]]
+name = "PlaceRandomItem"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "RandomDistAddItem"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "RandomItemInRectBJ"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "RandomItemInRectBJEnum"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "RandomItemInRectSimpleBJ"
+class = "D4"
+tombstone = "deferred-v2"
+reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+
+[[override]]
+name = "RemoveItemFromAllStock"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "RemoveItemFromStock"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "RemoveItemFromStockBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "RemovePurchasedItem"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "SetAllItemTypeSlots"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "SetItemDropID"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "SetItemDropOnDeath"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemDropOnDeathBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemDroppable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemDroppableBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemInvulnerable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemInvulnerableBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemLifeBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemPawnable"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "SetItemPlayer"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "SetItemPlayerBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "SetItemPosition"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemPositionLoc"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemTypeSlots"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+
+[[override]]
+name = "SetItemUserData"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+[[override]]
+name = "SetItemVisible"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "SetItemVisibleBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+
+[[override]]
+name = "UnitHasItem"
+class = "D2"
+tombstone = "superseded"
+reason = "#225: queryable by scanning Unit.ItemInSlot over the six slots."
+
+[[override]]
+name = "UnitHasItemOfTypeBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."

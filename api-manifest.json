@@ -19,6 +19,317 @@
   ],
   "functions": [
     {
+      "name": "AddItemToStockBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "currentStock",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "stockMax",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "BlzItemAddAbilityBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzItemRemoveAbilityBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemBooleanFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itembooleanfield",
+            "tsType": "itembooleanfield"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemIntegerFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemintegerfield",
+            "tsType": "itemintegerfield"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemRealFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemrealfield",
+            "tsType": "itemrealfield"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemStringFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemstringfield",
+            "tsType": "itemstringfield"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "CheckItemStatus",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "status",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "CheckItemcodeStatus",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "status",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "ChooseRandomItemBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "ChooseRandomItemExBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichType",
+            "jassType": "itemtype",
+            "tsType": "itemtype"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
       "name": "CommentString",
       "origin": "blizzard.j",
       "signature": {
@@ -235,6 +546,32 @@
       }
     },
     {
+      "name": "EnumItemsInRectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "actionFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
       "name": "EnumUnitsSelected",
       "origin": "blizzard.j",
       "signature": {
@@ -417,6 +754,79 @@
       }
     },
     {
+      "name": "GetInventoryIndexOfItemTypeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "GetItemLifeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "GetItemOfTypeFromUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
       "name": "GetLastCreatedDestructable",
       "origin": "blizzard.j",
       "signature": {
@@ -507,6 +917,21 @@
       }
     },
     {
+      "name": "GetLastCreatedItem",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#225: Go return value from Game.CreateItem replaces the bj_lastCreatedItem side channel."
+      }
+    },
+    {
       "name": "GetLastCreatedTimerBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -534,6 +959,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel"
+      }
+    },
+    {
+      "name": "GetLastRemovedItem",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
       }
     },
     {
@@ -1333,6 +1773,27 @@
       }
     },
     {
+      "name": "IsItemHiddenBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
       "name": "IsUnitAliveBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1524,6 +1985,78 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: issuing a destructable-targeted order deferred to the v2 order API"
+      }
+    },
+    {
+      "name": "IssueTargetItemOrder",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "ItemAddIndicatorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
       }
     },
     {
@@ -2855,6 +3388,21 @@
       }
     },
     {
+      "name": "NudgeItemsInRectEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
       "name": "OffsetLocation",
       "origin": "blizzard.j",
       "signature": {
@@ -3027,6 +3575,94 @@
       }
     },
     {
+      "name": "RandomDistAddItem",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "inID",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "inChance",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "RandomItemInRectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "RandomItemInRectBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "RandomItemInRectSimpleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
       "name": "RectContainsCoords",
       "origin": "blizzard.j",
       "signature": {
@@ -3143,6 +3779,47 @@
         "symbol": "RectAround",
         "package": "litd/api",
         "goSignature": "(c Vec2, w, h float64) Rect"
+      }
+    },
+    {
+      "name": "RemoveItemFromStockBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "RemovePurchasedItem",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
       }
     },
     {
@@ -5024,6 +5701,193 @@
       }
     },
     {
+      "name": "SetItemDropOnDeathBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemDroppableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemInvulnerableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemLifeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "life",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemPlayerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "changeColor",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "SetItemPositionLoc",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemVisibleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
       "name": "SetTimeOfDay",
       "origin": "blizzard.j",
       "signature": {
@@ -5499,6 +6363,54 @@
       }
     },
     {
+      "name": "UnitHasItemOfTypeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "UnitInventoryCount",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.ItemCount",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
       "name": "UnitUseItemDestructable",
       "origin": "blizzard.j",
       "signature": {
@@ -5559,6 +6471,73 @@
         "symbol": "Unit.AddExperience",
         "package": "litd/api",
         "goSignature": "(xp int)"
+      }
+    },
+    {
+      "name": "AddItemToAllStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "currentStock",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "stockMax",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "AddItemToStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "currentStock",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "stockMax",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
       }
     },
     {
@@ -5983,6 +6962,378 @@
       }
     },
     {
+      "name": "BlzCreateItemWithSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbsorbingItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "ability"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemAbilityByIndex",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "ability"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemBooleanField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itembooleanfield",
+            "tsType": "itembooleanfield"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemDescription",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetItemExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetItemIconPath",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetItemIntegerField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemintegerfield",
+            "tsType": "itemintegerfield"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemrealfield",
+            "tsType": "itemrealfield"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetItemStringField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemstringfield",
+            "tsType": "itemstringfield"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetItemTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetManipulatedItemWasAbsorbed",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetStackingItemSource",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetStackingItemTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetStackingItemTargetPreviousCharges",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
       "name": "BlzGetTriggerFrame",
       "origin": "common.j",
       "signature": {
@@ -6366,6 +7717,58 @@
       }
     },
     {
+      "name": "BlzItemAddAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzItemRemoveAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
       "name": "BlzSetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -6406,6 +7809,286 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "damage-type override needs a damage-type field in the OnDamage payload; deferred (#219)"
+      }
+    },
+    {
+      "name": "BlzSetItemBooleanField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itembooleanfield",
+            "tsType": "itembooleanfield"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemDescription",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "description",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetItemExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "extendedTooltip",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetItemIconPath",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "iconPath",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetItemIntegerField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemintegerfield",
+            "tsType": "itemintegerfield"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "name",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetItemRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemrealfield",
+            "tsType": "itemrealfield"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemSkin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "skinId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetItemStringField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichField",
+            "jassType": "itemstringfield",
+            "tsType": "itemstringfield"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzSetItemTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "tooltip",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
       }
     },
     {
@@ -6616,6 +8299,53 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: single-player cheat-code entry; replaced by an out-of-band debug console (#252), never a shipped gameplay verb — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "ChooseRandomItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "ChooseRandomItemEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichType",
+            "jassType": "itemtype",
+            "tsType": "itemtype"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
       }
     },
     {
@@ -8710,6 +10440,56 @@
       }
     },
     {
+      "name": "CreateItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.CreateItem",
+        "package": "litd/api",
+        "goSignature": "(typ ItemType, pos Vec2) Item",
+        "collapsesWith": [
+          "CreateItemLoc"
+        ]
+      }
+    },
+    {
+      "name": "CreateItemPool",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "itempool"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
       "name": "CreateMIDISound",
       "origin": "common.j",
       "signature": {
@@ -9052,6 +10832,27 @@
       }
     },
     {
+      "name": "DestroyItemPool",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItemPool",
+            "jassType": "itempool",
+            "tsType": "itempool"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
       "name": "DestroyTimer",
       "origin": "common.j",
       "signature": {
@@ -9258,6 +11059,37 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: spatial enumeration deferred to the v2 group/query API"
+      }
+    },
+    {
+      "name": "EnumItemsInRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "filter",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          },
+          {
+            "name": "actionFunc",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
       }
     },
     {
@@ -9966,6 +11798,21 @@
       }
     },
     {
+      "name": "GetEnumItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
       "name": "GetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -10118,6 +11965,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: boolexpr filter-context accessor deferred to the v2 group/query API"
+      }
+    },
+    {
+      "name": "GetFilterItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
       }
     },
     {
@@ -10371,6 +12233,181 @@
       }
     },
     {
+      "name": "GetItemCharges",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Item.Charges",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetItemLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "GetItemName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "GetItemPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "player"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "GetItemType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "itemtype"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "GetItemTypeId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Item.Type",
+        "package": "litd/api",
+        "goSignature": "() ItemType"
+      }
+    },
+    {
+      "name": "GetItemUserData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "GetItemX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Item.Position",
+        "package": "litd/api",
+        "goSignature": "() Vec2",
+        "collapsesWith": [
+          "GetItemY",
+          "GetItemLoc"
+        ]
+      }
+    },
+    {
       "name": "GetKillingUnit",
       "origin": "common.j",
       "signature": {
@@ -10511,6 +12548,21 @@
       }
     },
     {
+      "name": "GetManipulatedItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
       "name": "GetOrderTargetDestructable",
       "origin": "common.j",
       "signature": {
@@ -10523,6 +12575,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: order-target-context accessor deferred to the v2 order/event API"
+      }
+    },
+    {
+      "name": "GetOrderTargetItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "item"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
       }
     },
     {
@@ -13560,6 +15627,195 @@
       }
     },
     {
+      "name": "IsItemIdPawnable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "IsItemIdPowerup",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "IsItemIdSellable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "IsItemInvulnerable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "IsItemOwned",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "IsItemPawnable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "IsItemPowerup",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "IsItemSellable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "IsItemVisible",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
       "name": "IsMapFlagSet",
       "origin": "common.j",
       "signature": {
@@ -14180,6 +16436,63 @@
           "IssueTargetOrderBJ",
           "IssueImmediateOrderBJ"
         ]
+      }
+    },
+    {
+      "name": "ItemPoolAddItemType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItemPool",
+            "jassType": "itempool",
+            "tsType": "itempool"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "weight",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "ItemPoolRemoveItemType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItemPool",
+            "jassType": "itempool",
+            "tsType": "itempool"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
       }
     },
     {
@@ -15821,6 +18134,37 @@
       }
     },
     {
+      "name": "PlaceRandomItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItemPool",
+            "jassType": "itempool",
+            "tsType": "itempool"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
       "name": "Player",
       "origin": "common.j",
       "signature": {
@@ -16368,6 +18712,75 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+      }
+    },
+    {
+      "name": "RemoveItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Item.Remove",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
+      "name": "RemoveItemFromAllStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "RemoveItemFromStock",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
       }
     },
     {
@@ -18496,6 +20909,27 @@
       }
     },
     {
+      "name": "SetAllItemTypeSlots",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "slots",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
       "name": "SetDefaultDifficulty",
       "origin": "common.j",
       "signature": {
@@ -19023,6 +21457,303 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: enum-keyed integer game-state setter; its constants are GAME_STATE_DIVINE_INTERVENTION (single-player campaign dialog) and GAME_STATE_DISCONNECTED (net link status) — neither has a v1 public surface (the one relevant float slice, TIME_OF_DAY, folds onto Game.SetTimeOfDay). Gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "SetItemCharges",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "charges",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Item.SetCharges",
+        "package": "litd/api",
+        "goSignature": "(n int)"
+      }
+    },
+    {
+      "name": "SetItemDropID",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "SetItemDropOnDeath",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemDroppable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemInvulnerable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemPawnable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "SetItemPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "changeColor",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "SetItemPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "i",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetItemTypeSlots",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "slots",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "SetItemUserData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "data",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+      }
+    },
+    {
+      "name": "SetItemVisible",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
       }
     },
     {
@@ -22037,6 +24768,172 @@
       }
     },
     {
+      "name": "UnitAddItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.AddItem",
+        "package": "litd/api",
+        "goSignature": "(it Item) bool",
+        "collapsesWith": [
+          "UnitAddItemSwapped"
+        ]
+      }
+    },
+    {
+      "name": "UnitAddItemById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.AddItemByType",
+        "package": "litd/api",
+        "goSignature": "(typ ItemType, opts ...SlotOption) Item",
+        "collapsesWith": [
+          "UnitAddItemByIdSwapped",
+          "UnitAddItemToSlotById"
+        ]
+      }
+    },
+    {
+      "name": "UnitDropItemSlot",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "slot",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.DropItem",
+        "package": "litd/api",
+        "goSignature": "(n int) bool",
+        "collapsesWith": [
+          "UnitDropItemSlotBJ",
+          "UnitDropItem",
+          "UnitDropItemPoint",
+          "UnitDropItemPointBJ",
+          "UnitDropItemPointLoc",
+          "WidgetDropItem",
+          "UnitRemoveItem",
+          "UnitRemoveItemSwapped",
+          "UnitRemoveItemFromSlot",
+          "UnitRemoveItemFromSlotSwapped"
+        ]
+      }
+    },
+    {
+      "name": "UnitDropItemTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          },
+          {
+            "name": "target",
+            "jassType": "widget",
+            "tsType": "widget"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.GiveItemTo",
+        "package": "litd/api",
+        "goSignature": "(n int, to Unit) bool",
+        "collapsesWith": [
+          "UnitDropItemTargetBJ"
+        ]
+      }
+    },
+    {
+      "name": "UnitHasItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#225: queryable by scanning Unit.ItemInSlot over the six slots."
+      }
+    },
+    {
       "name": "UnitInventorySize",
       "origin": "common.j",
       "signature": {
@@ -22055,7 +24952,40 @@
       "goMapping": {
         "symbol": "Unit.InventorySize",
         "package": "litd/api",
-        "goSignature": "() int"
+        "goSignature": "() int",
+        "collapsesWith": [
+          "UnitInventorySizeBJ"
+        ]
+      }
+    },
+    {
+      "name": "UnitItemInSlot",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "itemSlot",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "item"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.ItemInSlot",
+        "package": "litd/api",
+        "goSignature": "(n int) Item",
+        "collapsesWith": [
+          "UnitItemInSlotBJ"
+        ]
       }
     },
     {
@@ -22144,6 +25074,38 @@
         "goSignature": "(p Player, share bool)",
         "collapsesWith": [
           "UnitShareVisionBJ"
+        ]
+      }
+    },
+    {
+      "name": "UnitUseItem",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichItem",
+            "jassType": "item",
+            "tsType": "item"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.UseItem",
+        "package": "litd/api",
+        "goSignature": "(n int, opts ...UseOption) bool",
+        "collapsesWith": [
+          "UnitUseItemTarget",
+          "UnitUseItemPoint",
+          "UnitUseItemPointLoc"
         ]
       }
     },

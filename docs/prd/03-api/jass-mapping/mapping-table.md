@@ -273,8 +273,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetEnumUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetFilterDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: boolexpr filter-context accessor deferred to the v2 group/query API |
 | GetEnumDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: enumeration-context accessor deferred to the v2 group/query API |
-| GetFilterItem | common.j | unclassified | _pending (M2 backlog)_ |
-| GetEnumItem | common.j | unclassified | _pending (M2 backlog)_ |
+| GetFilterItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
+| GetEnumItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | ParseTags | common.j | unclassified | _pending (M2 backlog)_ |
 | GetFilterPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
 | GetEnumPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
@@ -350,12 +350,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetChangingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetChangingUnitPrevOwner | common.j | D2 | **tombstoned** (deferred-v2): GetChangingUnitPrevOwner returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
 | GetManipulatingUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| GetManipulatedItem | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbsorbingItem | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetManipulatedItemWasAbsorbed | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetStackingItemSource | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetStackingItemTarget | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetStackingItemTargetPreviousCharges | common.j | unclassified | _pending (M2 backlog)_ |
+| GetManipulatedItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
+| BlzGetAbsorbingItem | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetManipulatedItemWasAbsorbed | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetStackingItemSource | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetStackingItemTarget | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetStackingItemTargetPreviousCharges | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | GetOrderedUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetIssuedOrderId | common.j | D2 | **tombstoned** (deferred-v2): order id needs an Event payload field not yet carried for that kind; deferred (#219) |
 | GetOrderPointX | common.j | D3 | _pending (M2 backlog)_ |
@@ -363,7 +363,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetOrderPointLoc | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTarget | common.j | unclassified | _pending (M2 backlog)_ |
 | GetOrderTargetDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: order-target-context accessor deferred to the v2 order/event API |
-| GetOrderTargetItem | common.j | unclassified | _pending (M2 backlog)_ |
+| GetOrderTargetItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | GetOrderTargetUnit | common.j | D2 | `litd/api.Event.Target` |
 | GetSpellAbilityUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetSpellAbilityId | common.j | D2 | **tombstoned** (deferred-v2): cast ability id needs an Event payload field not yet carried for that kind; deferred (#219) |
@@ -434,37 +434,37 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetDestructableOccluderHeight | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: render occlusion height setter; no sim state |
 | GetDestructableName | common.j | D2 | **tombstoned** (deferred-v2): #229: display-name accessor deferred to v2 with the typed destructable data tables |
 | GetTriggerDestructable | common.j | D1 | **tombstoned** (superseded): trigger-destructable getter superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4) |
-| CreateItem | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveItem | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemTypeId | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemX | common.j | D3 | _pending (M2 backlog)_ |
-| GetItemY | common.j | D3 | _pending (M2 backlog)_ |
-| SetItemPosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemDropOnDeath | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemDroppable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemPawnable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemInvulnerable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemOwned | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemPowerup | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemSellable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemPawnable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemIdPowerup | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemIdSellable | common.j | unclassified | _pending (M2 backlog)_ |
-| IsItemIdPawnable | common.j | unclassified | _pending (M2 backlog)_ |
-| EnumItemsInRect | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemLevel | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemType | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemDropID | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemName | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemCharges | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemCharges | common.j | unclassified | _pending (M2 backlog)_ |
-| GetItemUserData | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemUserData | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateItem | common.j | D1 | `litd/api.Game.CreateItem` |
+| RemoveItem | common.j | D1 | `litd/api.Item.Remove` |
+| GetItemPlayer | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| GetItemTypeId | common.j | D1 | `litd/api.Item.Type` |
+| GetItemX | common.j | D1 | `litd/api.Item.Position` |
+| GetItemY | common.j | D1 | `litd/api.Item.Position` (D3 collapse → GetItemX) |
+| SetItemPosition | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemDropOnDeath | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemDroppable | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemPawnable | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| SetItemPlayer | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| SetItemInvulnerable | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| IsItemInvulnerable | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemVisible | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| IsItemVisible | common.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| IsItemOwned | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| IsItemPowerup | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| IsItemSellable | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| IsItemPawnable | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| IsItemIdPowerup | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| IsItemIdSellable | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| IsItemIdPawnable | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| EnumItemsInRect | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
+| GetItemLevel | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| GetItemType | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| SetItemDropID | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| GetItemName | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| GetItemCharges | common.j | D1 | `litd/api.Item.Charges` |
+| SetItemCharges | common.j | D1 | `litd/api.Item.SetCharges` |
+| GetItemUserData | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| SetItemUserData | common.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
 | CreateUnit | common.j | D2 | `litd/api.Game.CreateUnit` |
 | CreateUnitByName | common.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
 | CreateUnitAtLoc | common.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
@@ -543,20 +543,20 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SelectUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitPointValue | common.j | D1 | `litd/api.Unit.PointValue` |
 | GetUnitPointValueByType | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitAddItem | common.j | D3 | _pending (M2 backlog)_ |
-| UnitAddItemById | common.j | D3 | _pending (M2 backlog)_ |
-| UnitAddItemToSlotById | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitRemoveItem | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitRemoveItemFromSlot | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitHasItem | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitItemInSlot | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitAddItem | common.j | D1 | `litd/api.Unit.AddItem` |
+| UnitAddItemById | common.j | D1 | `litd/api.Unit.AddItemByType` |
+| UnitAddItemToSlotById | common.j | D1 | `litd/api.Unit.AddItemByType` (D3 collapse → UnitAddItemById) |
+| UnitRemoveItem | common.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitRemoveItemFromSlot | common.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitHasItem | common.j | D2 | **tombstoned** (superseded): #225: queryable by scanning Unit.ItemInSlot over the six slots. |
+| UnitItemInSlot | common.j | D1 | `litd/api.Unit.ItemInSlot` |
 | UnitInventorySize | common.j | D1 | `litd/api.Unit.InventorySize` |
-| UnitDropItemPoint | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitDropItemSlot | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitDropItemTarget | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitUseItem | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitUseItemPoint | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitUseItemTarget | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitDropItemPoint | common.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitDropItemSlot | common.j | D1 | `litd/api.Unit.DropItem` |
+| UnitDropItemTarget | common.j | D1 | `litd/api.Unit.GiveItemTo` |
+| UnitUseItem | common.j | D1 | `litd/api.Unit.UseItem` |
+| UnitUseItemPoint | common.j | D1 | `litd/api.Unit.UseItem` (D3 collapse → UnitUseItem) |
+| UnitUseItemTarget | common.j | D1 | `litd/api.Unit.UseItem` (D3 collapse → UnitUseItem) |
 | GetUnitX | common.j | D3 | `litd/api.Unit.Position` |
 | GetUnitY | common.j | D3 | `litd/api.Unit.Position` (D3 collapse → GetUnitX) |
 | GetUnitLoc | common.j | D3 | `litd/api.Unit.Position` (D3 collapse → GetUnitX) |
@@ -655,17 +655,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | WaygateSetDestination | common.j | unclassified | _pending (M2 backlog)_ |
 | WaygateActivate | common.j | unclassified | _pending (M2 backlog)_ |
 | WaygateIsActive | common.j | unclassified | _pending (M2 backlog)_ |
-| AddItemToAllStock | common.j | unclassified | _pending (M2 backlog)_ |
-| AddItemToStock | common.j | unclassified | _pending (M2 backlog)_ |
+| AddItemToAllStock | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| AddItemToStock | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | AddUnitToAllStock | common.j | unclassified | _pending (M2 backlog)_ |
 | AddUnitToStock | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveItemFromAllStock | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveItemFromStock | common.j | unclassified | _pending (M2 backlog)_ |
+| RemoveItemFromAllStock | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
+| RemoveItemFromStock | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | RemoveUnitFromAllStock | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveUnitFromStock | common.j | unclassified | _pending (M2 backlog)_ |
-| SetAllItemTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
+| SetAllItemTypeSlots | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | SetAllUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
-| SetItemTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
+| SetItemTypeSlots | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | SetUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitUserData | common.j | D1 | `litd/api.Unit.UserData` |
 | SetUnitUserData | common.j | D1 | `litd/api.Unit.SetUserData` |
@@ -899,15 +899,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitPoolAddUnitType | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitPoolRemoveUnitType | common.j | unclassified | _pending (M2 backlog)_ |
 | PlaceRandomUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateItemPool | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyItemPool | common.j | unclassified | _pending (M2 backlog)_ |
-| ItemPoolAddItemType | common.j | unclassified | _pending (M2 backlog)_ |
-| ItemPoolRemoveItemType | common.j | unclassified | _pending (M2 backlog)_ |
-| PlaceRandomItem | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateItemPool | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| DestroyItemPool | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| ItemPoolAddItemType | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| ItemPoolRemoveItemType | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| PlaceRandomItem | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | ChooseRandomCreep | common.j | unclassified | _pending (M2 backlog)_ |
 | ChooseRandomNPBuilding | common.j | unclassified | _pending (M2 backlog)_ |
-| ChooseRandomItem | common.j | unclassified | _pending (M2 backlog)_ |
-| ChooseRandomItemEx | common.j | unclassified | _pending (M2 backlog)_ |
+| ChooseRandomItem | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| ChooseRandomItemEx | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | SetRandomSeed | common.j | D1 | `litd/api.Game.SetRandomSeed` |
 | SetTerrainFog | common.j | unclassified | _pending (M2 backlog)_ |
 | ResetTerrainFog | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1294,15 +1294,15 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetUnitMaxHP | common.j | D5 | `litd/api.Unit.SetMaxLife` |
 | BlzGetUnitMaxMana | common.j | D5 | `litd/api.Unit.MaxMana` |
 | BlzSetUnitMaxMana | common.j | D5 | `litd/api.Unit.SetMaxMana` |
-| BlzSetItemName | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemDescription | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemDescription | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemIconPath | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemIconPath | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetItemName | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzSetItemDescription | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzGetItemDescription | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzSetItemTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzGetItemTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzSetItemExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzGetItemExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzSetItemIconPath | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzGetItemIconPath | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | BlzSetUnitName | common.j | D1 | `litd/api.Unit.SetName` |
 | BlzSetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitBaseDamage | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1501,18 +1501,18 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzRemoveAbilityIntegerLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzRemoveAbilityRealLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzRemoveAbilityStringLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemAbilityByIndex | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemAbility | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzItemAddAbility | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzItemRemoveAbility | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetItemAbilityByIndex | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetItemAbility | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzItemAddAbility | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetItemBooleanField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetItemIntegerField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetItemRealField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzGetItemStringField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemBooleanField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemIntegerField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemRealField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemStringField | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzItemRemoveAbility | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzGetUnitBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitRealField | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1530,10 +1530,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetUnitWeaponRealField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitWeaponStringField | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetItemSkin | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetItemSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | BlzSetUnitSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemSkin | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzCreateItemWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetItemSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
+| BlzCreateItemWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | BlzCreateUnitWithSkin | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzCreateDestructableWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: skin is a render alt-model id; create folds onto CreateDestructable, the skin arg has no sim meaning |
 | BlzCreateDestructableZWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: z-coord + render skin; no sim meaning beyond CreateDestructable |
@@ -1796,9 +1796,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CreateLearnCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateBuildCommandButtonEffectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetLastCreatedCommandButtonEffectBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetItemLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetItemLifeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetItemLifeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetItemLoc | blizzard.j | D1 | `litd/api.Item.Position` (D3 collapse → GetItemX) |
+| GetItemLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
 | AddHeroXPSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetHeroLevelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DecUnitAbilityLevelSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1807,14 +1807,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitAbilityLevelSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitHasBuffBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | UnitRemoveBuffBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitAddItemSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitAddItemByIdSwapped | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitRemoveItemSwapped | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitRemoveItemFromSlotSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateItemLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedItem | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetLastRemovedItem | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetItemPositionLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
+| UnitAddItemSwapped | blizzard.j | D1 | `litd/api.Unit.AddItem` (D3 collapse → UnitAddItem) |
+| UnitAddItemByIdSwapped | blizzard.j | D1 | `litd/api.Unit.AddItemByType` (D3 collapse → UnitAddItemById) |
+| UnitRemoveItemSwapped | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitRemoveItemFromSlotSwapped | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| CreateItemLoc | blizzard.j | D1 | `litd/api.Game.CreateItem` (D3 collapse → CreateItem) |
+| GetLastCreatedItem | blizzard.j | D2 | **tombstoned** (superseded): #225: Go return value from Game.CreateItem replaces the bj_lastCreatedItem side channel. |
+| GetLastRemovedItem | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
+| SetItemPositionLoc | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
 | GetLearnedSkillBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SuspendHeroXPBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapDamage` (D3 collapse → SetPlayerHandicapDamage) |
@@ -1829,34 +1829,34 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetHeroStat | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ModifyHeroStat | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ModifyHeroSkillPoints | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitDropItemPointBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| UnitDropItemPointLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitDropItemSlotBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitDropItemTargetBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| UnitDropItemPointBJ | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitDropItemPointLoc | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitDropItemSlotBJ | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| UnitDropItemTargetBJ | blizzard.j | D1 | `litd/api.Unit.GiveItemTo` (D3 collapse → UnitDropItemTarget) |
 | UnitUseItemDestructable | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: unit-uses-item-on-destructable order deferred to the v2 order/item API |
-| UnitUseItemPointLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitItemInSlotBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetInventoryIndexOfItemTypeBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetItemOfTypeFromUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitHasItemOfTypeBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| UnitInventoryCount | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitInventorySizeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetItemInvulnerableBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetItemDropOnDeathBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetItemDroppableBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetItemPlayerBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetItemVisibleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| IsItemHiddenBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| ChooseRandomItemBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| ChooseRandomItemExBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| UnitUseItemPointLoc | blizzard.j | D1 | `litd/api.Unit.UseItem` (D3 collapse → UnitUseItem) |
+| UnitItemInSlotBJ | blizzard.j | D1 | `litd/api.Unit.ItemInSlot` (D3 collapse → UnitItemInSlot) |
+| GetInventoryIndexOfItemTypeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| GetItemOfTypeFromUnitBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| UnitHasItemOfTypeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| UnitInventoryCount | blizzard.j | D1 | `litd/api.Unit.ItemCount` |
+| UnitInventorySizeBJ | blizzard.j | D1 | `litd/api.Unit.InventorySize` (D3 collapse → UnitInventorySize) |
+| SetItemInvulnerableBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemDropOnDeathBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemDroppableBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| SetItemPlayerBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| SetItemVisibleBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| IsItemHiddenBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
+| ChooseRandomItemBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| ChooseRandomItemExBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | ChooseRandomNPBuildingBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | ChooseRandomCreepBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| EnumItemsInRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RandomItemInRectBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RandomItemInRectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RandomItemInRectSimpleBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CheckItemStatus | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CheckItemcodeStatus | blizzard.j | D4 | _pending (M2 backlog)_ |
+| EnumItemsInRectBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
+| RandomItemInRectBJEnum | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| RandomItemInRectBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| RandomItemInRectSimpleBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| CheckItemStatus | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
+| CheckItemcodeStatus | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
 | UnitId2OrderIdBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | String2UnitIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | UnitId2StringBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1956,9 +1956,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastReplacedUnitBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitPositionLocFacingBJ | blizzard.j | D4 | **tombstoned** (superseded): one-call position+facing combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle) — the two canonical setters express it without a bundling helper |
 | SetUnitPositionLocFacingLocBJ | blizzard.j | D4 | **tombstoned** (superseded): position + face-toward-location combo; superseded by Unit.SetPosition(pos) + Unit.SetFacing(angle-to-target); the look-at angle is computed at the call site from the two points |
-| AddItemToStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| AddItemToStockBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | AddUnitToStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| RemoveItemFromStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| RemoveItemFromStockBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | RemoveUnitFromStockBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitUseFoodBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitDamagePointLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1984,7 +1984,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetElevatorHeight | blizzard.j | D4 | _pending (M2 backlog)_ |
 | ChangeElevatorHeight | blizzard.j | D4 | _pending (M2 backlog)_ |
 | NudgeUnitsInRectEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| NudgeItemsInRectEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
+| NudgeItemsInRectEnum | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | NudgeObjectsInRect | blizzard.j | D4 | _pending (M2 backlog)_ |
 | NearbyElevatorExistsEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | NearbyElevatorExists | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2045,7 +2045,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitVertexColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitAddIndicatorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | DestructableAddIndicatorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #229: draws a UI selection/ping indicator on a destructable; render/UI only |
-| ItemAddIndicatorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| ItemAddIndicatorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | SetUnitFacingToFaceLocTimed | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetUnitFacingToFaceUnitTimed | blizzard.j | D4 | _pending (M2 backlog)_ |
 | QueueUnitAnimationBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -2383,7 +2383,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueTargetOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssuePointOrderLocBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssueTargetDestructableOrder | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: issuing a destructable-targeted order deferred to the v2 order API |
-| IssueTargetItemOrder | blizzard.j | D1 | _pending (M2 backlog)_ |
+| IssueTargetItemOrder | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | IssueImmediateOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | GroupTargetOrderBJ | blizzard.j | D1 | **tombstoned** (superseded): target group order BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GroupPointOrderLocBJ | blizzard.j | D1 | **tombstoned** (superseded): point group order loc BJ superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
@@ -2480,16 +2480,16 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UpdateEachStockBuilding | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PerformStockUpdates | blizzard.j | D4 | _pending (M2 backlog)_ |
 | StartStockUpdates | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RemovePurchasedItem | blizzard.j | D2 | _pending (M2 backlog)_ |
+| RemovePurchasedItem | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | InitNeutralBuildings | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MarkGameStarted | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DetectGameStarted | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitBlizzard | blizzard.j | D4 | _pending (M2 backlog)_ |
 | RandomDistReset | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| RandomDistAddItem | blizzard.j | D4 | _pending (M2 backlog)_ |
+| RandomDistAddItem | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | RandomDistChoose | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitDropItem | blizzard.j | D4 | _pending (M2 backlog)_ |
-| WidgetDropItem | blizzard.j | D4 | _pending (M2 backlog)_ |
+| UnitDropItem | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
+| WidgetDropItem | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | BlzIsLastInstanceObjectFunctionSuccessful | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetAbilityBooleanFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetAbilityIntegerFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
@@ -2511,12 +2511,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzRemoveAbilityIntegerLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | BlzRemoveAbilityRealLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | BlzRemoveAbilityStringLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzItemAddAbilityBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzItemRemoveAbilityBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemBooleanFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemIntegerFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemRealFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetItemStringFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| BlzItemAddAbilityBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzItemRemoveAbilityBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemBooleanFieldBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemIntegerFieldBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemRealFieldBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
+| BlzSetItemStringFieldBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzSetUnitBooleanFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitIntegerFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitRealFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |

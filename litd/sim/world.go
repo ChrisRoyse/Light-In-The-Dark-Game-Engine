@@ -188,7 +188,8 @@ type World struct {
 	heroTables *data.HeroTables
 	deadHeroes [MaxPlayers][MaxDeadHeroes]HeroRecord
 	// item type table (#305)
-	itemDefs []data.Item
+	itemDefs      []data.Item
+	itemDefByCode map[string]uint16 // code -> typeID, built at BindItemDefs
 	// data-table content hash (#208 SaveData versioning)
 	dataFingerprint uint64
 	// patrol/follow behavior thresholds (#306, world units; 0 = default)
