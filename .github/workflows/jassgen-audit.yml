@@ -7,8 +7,10 @@
 #   - schema validation  : -emit fails if api-manifest.json violates the schema
 #   - reproducibility     : -check fails if committed outputs are not byte-identical
 #   - M2 dedup gate       : -audit fails while unclassified>0 or unmapped>0
-# NOTE: the M2 audit gate is intentionally RED until overrides map/tombstone
-# every symbol (the M2 content backlog); it flips green at M2 completion (#260).
+# STATUS: the M2 audit gate is GREEN as of #260 — all 2642 source functions are
+# mapped or tombstoned (unclassified=0, unmapped=0, duplicateTargets=0,
+# commonaiCapabilityTombstones=0). Trigger stays workflow_dispatch until the
+# Actions billing decision (#284, operator-only); flip to push/pull_request then.
 name: jassgen-audit
 on:
   workflow_dispatch: {}

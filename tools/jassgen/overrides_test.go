@@ -47,6 +47,38 @@ func TestApplyOverrideTombstoneFlipAndRevert(t *testing.T) {
 	}
 }
 
+// A collapse member inherits its canonical's dedup class. SetUnitX folds onto
+// SetUnitState's canonical; without propagation it would keep its heuristic
+// class and inflate the M2 unclassified counter. Regression for the
+// collapse-member class-propagation fix (#260 M2 green-gate).
+func TestApplyOverridePropagatesClassToCollapseMembers(t *testing.T) {
+	cs := append(baseClasses(),
+		Classification{Name: "SetUnitX", Class: ClassUnclassified, ClassifiedBy: "heuristic", Evidence: "native: no pattern"},
+	)
+	ovs := []Override{{
+		Name: "SetUnitState", Class: "D5", GoMapping: "Unit.SetLife", Reason: "state setter",
+		CollapsesWith: []string{"SetUnitX"},
+	}}
+	after, err := ApplyOverrides(cs, ovs)
+	if err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	var member Classification
+	for _, c := range after {
+		if c.Name == "SetUnitX" {
+			member = c
+		}
+	}
+	if member.Class != ClassD5 || member.ClassifiedBy != "override" {
+		t.Errorf("collapse member SetUnitX = %+v, want Class=D5 classifiedBy=override", member)
+	}
+	// The member stays a collapse member (no own mapping/tombstone), so it must
+	// not itself become a duplicate canonical target.
+	if member.GoMapping != "" || member.Tombstone != "" {
+		t.Errorf("collapse member must not get its own disposition: %+v", member)
+	}
+}
+
 func TestApplyOverrideRejections(t *testing.T) {
 	cs := baseClasses()
 	cases := []struct {
