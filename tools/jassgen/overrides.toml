@@ -2473,14 +2473,20 @@ reason = "#373: damage-dealt handicap setter; *BJ percent setter collapses on"
 [[override]]
 name = "GetPlayerTaxRate"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "upkeep tax-rate needs the gold/lumber upkeep economy (PLAYER_STATE_*_UPKEEP_RATE) not built in v1; tracked in #375 (split from #373, handicap portion done)"
+goMapping = "Player.TaxRate"
+goSignature = "(other Player, resource int) float64"
+package = "litd/api"
+collapsesWith = ["GetPlayerTaxRateBJ"]
+reason = "#375: inter-player transfer-tax getter over the tax matrix, applied in Game.TransferResource; *BJ arg-reorder reader collapses on"
 
 [[override]]
 name = "SetPlayerTaxRate"
 class = "D5"
-tombstone = "deferred-v2"
-reason = "tax-rate setter deferred with GetPlayerTaxRate (upkeep economy not in v1; see #375)"
+goMapping = "Player.SetTaxRate"
+goSignature = "(other Player, resource int, rate float64)"
+package = "litd/api"
+collapsesWith = ["SetPlayerTaxRateBJ"]
+reason = "#375: inter-player transfer-tax setter; *BJ arg-reorder setter collapses on"
 
 [[override]]
 name = "SetPlayerUnitsOwner"

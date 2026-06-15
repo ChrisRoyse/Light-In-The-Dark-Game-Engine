@@ -166,7 +166,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ForcePlayerStartLocation | common.j | unclassified | _pending (M2 backlog)_ |
 | SetPlayerColor | common.j | D5 | `litd/api.Player.SetColor` |
 | SetPlayerAlliance | common.j | D1 | `litd/api.Player.SetAllianceFlag` |
-| SetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): tax-rate setter deferred with GetPlayerTaxRate (upkeep economy not in v1; see #375) |
+| SetPlayerTaxRate | common.j | D5 | `litd/api.Player.SetTaxRate` |
 | SetPlayerRacePreference | common.j | D2 | `litd/api.Player.SetRace` |
 | SetPlayerRaceSelectable | common.j | D2 | `litd/api.Player.SetRace` (D3 collapse → SetPlayerRacePreference) |
 | SetPlayerController | common.j | D5 | `litd/api.Player.SetController` |
@@ -178,7 +178,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayerSelectable | common.j | D1 | **tombstoned** (gameplay-irrelevant): lobby selectability flag; no sim effect |
 | GetPlayerController | common.j | D5 | `litd/api.Player.Controller` |
 | GetPlayerSlotState | common.j | D1 | **tombstoned** (deferred-v2): player slot lifecycle (empty/playing/left) needs the leave/disconnect model not built in v1; deferred |
-| GetPlayerTaxRate | common.j | D5 | **tombstoned** (deferred-v2): upkeep tax-rate needs the gold/lumber upkeep economy (PLAYER_STATE_*_UPKEEP_RATE) not built in v1; tracked in #375 (split from #373, handicap portion done) |
+| GetPlayerTaxRate | common.j | D5 | `litd/api.Player.TaxRate` |
 | IsPlayerRacePrefSet | common.j | D1 | **tombstoned** (gameplay-irrelevant): lobby race-preference query; no sim effect |
 | GetPlayerName | common.j | D1 | `litd/api.Player.Name` |
 | CreateTimer | common.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
@@ -2363,8 +2363,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AdjustPlayerStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetPlayerStateBJ | blizzard.j | D5 | `litd/api.Player.SetGold` (D3 collapse → SetPlayerState) |
 | SetPlayerFlagBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
-| SetPlayerTaxRateBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerTaxRateBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetPlayerTaxRateBJ | blizzard.j | D5 | `litd/api.Player.SetTaxRate` (D3 collapse → SetPlayerTaxRate) |
+| GetPlayerTaxRateBJ | blizzard.j | D5 | `litd/api.Player.TaxRate` (D3 collapse → GetPlayerTaxRate) |
 | IsPlayerFlagSetBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | AddResourceAmountBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetConvertedPlayerId | blizzard.j | unclassified | _pending (M2 backlog)_ |

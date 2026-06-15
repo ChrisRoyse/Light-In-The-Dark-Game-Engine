@@ -278,6 +278,18 @@ type World struct {
 	resourceCount int
 	foodUsed      [MaxPlayers]int32
 	foodCap       [MaxPlayers]int32
+	// #375 upkeep economy + inter-player tax. upkeep* are the food-tier
+	// income-tax brackets (BindUpkeep); upkeepLost is the cumulative
+	// per-player/per-resource amount withheld at deposit (the
+	// PLAYER_SCORE_*_LOST_UPKEEP counters). taxRate[a][b][res] is a's
+	// transfer-tax fraction toward b (GetPlayerTaxRate/SetPlayerTaxRate),
+	// applied in TransferResource. All default zero = no tax (golden-safe);
+	// all hashed + serialized.
+	upkeepCount int
+	upkeepFood  [maxUpkeepTiers]int32
+	upkeepRate  [maxUpkeepTiers][data.MaxResourceTypes]fixed.F64
+	upkeepLost  [MaxPlayers][data.MaxResourceTypes]int64
+	taxRate     [MaxPlayers][MaxPlayers][data.MaxResourceTypes]fixed.F64
 	// #218 player roster: per-player metadata + the asymmetric alliance
 	// relation. Resources/food (above) carry the rest of the player-state
 	// matrix. alliance[a][b] is a flags bitset for a's stance toward b

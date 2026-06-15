@@ -8,13 +8,13 @@
     "D4": 355,
     "D5": 42
   },
-  "mapped": 193,
-  "tombstoned": 529,
-  "collapsed": 113,
+  "mapped": 195,
+  "tombstoned": 527,
+  "collapsed": 115,
   "unclassified": 1124,
-  "unmapped": 1807,
+  "unmapped": 1805,
   "tombstonesByReason": {
-    "deferred-v2": 92,
+    "deferred-v2": 90,
     "deprecated": 3,
     "gameplay-irrelevant": 104,
     "superseded": 330
@@ -25,6 +25,6 @@
   "featureTags": {},
   "violations": [
     "unclassified=1124 (M2 gate requires 0)",
-    "unmapped=1807 (M2 gate requires 0; every symbol mapped or tombstoned)"
+    "unmapped=1805 (M2 gate requires 0; every symbol mapped or tombstoned)"
   ]
 }

@@ -86,6 +86,9 @@ var HashSystems = []string{
 	// appended by #376: per-unit propulsion-window overrides. Sparse — only
 	// units with an explicitly set window contribute, in row order.
 	"propwindow",
+	// appended by #375: upkeep brackets + per-player upkeep-lost counters +
+	// the inter-player transfer-tax matrix (sparse, non-zero entries only).
+	"upkeep",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -645,6 +648,44 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := int32(0); i < pw.count; i++ {
 		hpw.WriteU32(uint32(pw.Entity[i]))
 		hpw.WriteU16(uint16(pw.Value[i]))
+	}
+
+	hup := h.next() // upkeep (#375): brackets, lost counters, tax matrix
+	hup.WriteU32(uint32(w.upkeepCount))
+	for i := 0; i < w.upkeepCount; i++ {
+		hup.WriteU32(uint32(w.upkeepFood[i]))
+		for r := 0; r < data.MaxResourceTypes; r++ {
+			hup.WriteI64(int64(w.upkeepRate[i][r]))
+		}
+	}
+	for p := 0; p < MaxPlayers; p++ {
+		for r := 0; r < data.MaxResourceTypes; r++ {
+			hup.WriteU64(uint64(w.upkeepLost[p][r]))
+		}
+	}
+	// tax matrix: sparse, non-zero entries in fixed (a,b,res) order.
+	var taxN uint32
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			for r := 0; r < data.MaxResourceTypes; r++ {
+				if w.taxRate[a][b][r] != 0 {
+					taxN++
+				}
+			}
+		}
+	}
+	hup.WriteU32(taxN)
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			for r := 0; r < data.MaxResourceTypes; r++ {
+				if v := w.taxRate[a][b][r]; v != 0 {
+					hup.WriteU8(uint8(a))
+					hup.WriteU8(uint8(b))
+					hup.WriteU8(uint8(r))
+					hup.WriteI64(int64(v))
+				}
+			}
+		}
 	}
 
 	return reg.Sum(dst)

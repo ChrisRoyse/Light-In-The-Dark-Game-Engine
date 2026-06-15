@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v25: upkeep economy appended after the heightfield: tax brackets,
+// per-player upkeep-lost counters, and the sparse inter-player tax matrix (#375).
 // v24: per-unit propulsion-window override rows as a sparse section after
 // flyheight (#376).
 // v23: per-unit flight-height animation rows (current/target/climb-rate)
@@ -92,7 +94,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 24
+const SaveFormatVersion uint32 = 25
 
 // ---- little-endian writer / reader ----
 
@@ -793,6 +795,43 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.f64(v)
 	}
 
+	// upkeep (#375, v25): brackets, per-player lost counters, sparse tax matrix.
+	s.u32(uint32(w.upkeepCount))
+	for i := 0; i < w.upkeepCount; i++ {
+		s.u32(uint32(w.upkeepFood[i]))
+		for r := 0; r < data.MaxResourceTypes; r++ {
+			s.f64(w.upkeepRate[i][r])
+		}
+	}
+	for p := 0; p < MaxPlayers; p++ {
+		for r := 0; r < data.MaxResourceTypes; r++ {
+			s.u64(uint64(w.upkeepLost[p][r]))
+		}
+	}
+	var taxN uint32
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			for r := 0; r < data.MaxResourceTypes; r++ {
+				if w.taxRate[a][b][r] != 0 {
+					taxN++
+				}
+			}
+		}
+	}
+	s.u32(taxN)
+	for a := 0; a < MaxPlayers; a++ {
+		for b := 0; b < MaxPlayers; b++ {
+			for r := 0; r < data.MaxResourceTypes; r++ {
+				if v := w.taxRate[a][b][r]; v != 0 {
+					s.u8(uint8(a))
+					s.u8(uint8(b))
+					s.u8(uint8(r))
+					s.f64(v)
+				}
+			}
+		}
+	}
+
 	return s.err
 }
 
@@ -1095,6 +1134,13 @@ type decodedSave struct {
 	hfCols, hfRows                int32
 	hfOriginX, hfOriginY, hfCell fixed.F64
 	hfSamples                    []fixed.F64
+
+	// upkeep (#375, v25): brackets, lost counters, sparse tax matrix.
+	upCount int
+	upFood  [maxUpkeepTiers]int32
+	upRate  [maxUpkeepTiers][data.MaxResourceTypes]fixed.F64
+	upLost  [MaxPlayers][data.MaxResourceTypes]int64
+	upTax   [MaxPlayers][MaxPlayers][data.MaxResourceTypes]fixed.F64
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2150,6 +2196,46 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 			d.hfSamples[i] = r.f64()
 		}
 	}
+
+	// upkeep (#375, v25): brackets, lost counters, sparse tax matrix.
+	r.what = "upkeep"
+	upN := int(r.u32())
+	if r.err != nil {
+		return r.err
+	}
+	if upN < 0 || upN > maxUpkeepTiers {
+		return fmt.Errorf("sim: save: %d upkeep tiers exceeds cap %d", upN, maxUpkeepTiers)
+	}
+	d.upCount = upN
+	for i := 0; i < upN; i++ {
+		d.upFood[i] = int32(r.u32())
+		for res := 0; res < data.MaxResourceTypes; res++ {
+			d.upRate[i][res] = r.f64()
+		}
+	}
+	for p := 0; p < MaxPlayers; p++ {
+		for res := 0; res < data.MaxResourceTypes; res++ {
+			d.upLost[p][res] = int64(r.u64())
+		}
+	}
+	taxN := int(r.u32())
+	if r.err != nil {
+		return r.err
+	}
+	const maxTaxEntries = MaxPlayers * MaxPlayers * data.MaxResourceTypes
+	if taxN < 0 || taxN > maxTaxEntries {
+		return fmt.Errorf("sim: save: %d tax-matrix entries exceeds cap %d", taxN, maxTaxEntries)
+	}
+	for i := 0; i < taxN; i++ {
+		a := r.u8()
+		b := r.u8()
+		res := r.u8()
+		v := r.f64()
+		if int(a) >= MaxPlayers || int(b) >= MaxPlayers || int(res) >= data.MaxResourceTypes {
+			return fmt.Errorf("sim: save: tax entry out of range (a=%d b=%d res=%d)", a, b, res)
+		}
+		d.upTax[a][b][res] = v
+	}
 	return r.err
 }
 
@@ -3101,6 +3187,13 @@ func applySave(d *decodedSave, w *World) {
 		originX: d.hfOriginX, originY: d.hfOriginY, cellSize: d.hfCell,
 		samples: d.hfSamples,
 	}
+
+	// upkeep (#375): brackets, lost counters, tax matrix restored wholesale.
+	w.upkeepCount = d.upCount
+	w.upkeepFood = d.upFood
+	w.upkeepRate = d.upRate
+	w.upkeepLost = d.upLost
+	w.taxRate = d.upTax
 
 	// mid-tick buffers are clean by the save contract
 	w.eventCount = 0

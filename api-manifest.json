@@ -9403,10 +9403,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "upkeep tax-rate needs the gold/lumber upkeep economy (PLAYER_STATE_*_UPKEEP_RATE) not built in v1; tracked in #375 (split from #373, handicap portion done)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.TaxRate",
+        "package": "litd/api",
+        "goSignature": "(other Player, resource int) float64",
+        "collapsesWith": [
+          "GetPlayerTaxRateBJ"
+        ]
       }
     },
     {
@@ -16825,10 +16829,14 @@
       },
       "classification": "D5",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "tax-rate setter deferred with GetPlayerTaxRate (upkeep economy not in v1; see #375)"
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Player.SetTaxRate",
+        "package": "litd/api",
+        "goSignature": "(other Player, resource int, rate float64)",
+        "collapsesWith": [
+          "SetPlayerTaxRateBJ"
+        ]
       }
     },
     {

@@ -487,7 +487,10 @@ func (w *World) driveHarvest(r int32, id EntityID) {
 			if or != -1 && w.resourceCount > 0 {
 				p := w.Owners.Player[or]
 				if p < MaxPlayers && int(h.CarriedRes[hr]) < w.resourceCount {
-					w.resources[p][h.CarriedRes[hr]] += int64(h.Carried[hr])
+					// #375: food-tier upkeep tax withholds part of the deposit.
+					// No brackets bound → applyUpkeep returns gross unchanged.
+					kept := w.applyUpkeep(p, h.CarriedRes[hr], int64(h.Carried[hr]))
+					w.resources[p][h.CarriedRes[hr]] += kept
 				}
 			}
 			w.Emit(Event{

@@ -414,3 +414,91 @@ func (p Player) SetHandicapReviveTime(v float64) {
 	}
 	p.g.w.SetHandicapReviveTime(uint8(p.idx), fromFloat(v))
 }
+
+// ---- upkeep economy + transfer tax (#375) ----
+
+// UpkeepTier is one food-tier income-tax bracket: when a player's food
+// usage reaches Food, harvested deposits of resource r are taxed by Rate[r]
+// (a fraction in [0,1]). Rate is indexed by resource (0=gold, 1=lumber, …);
+// a short or nil slice taxes the omitted resources at 0. Tiers passed to
+// Game.SetUpkeep must be in ascending Food order.
+type UpkeepTier struct {
+	Food int
+	Rate []float64
+}
+
+// SetUpkeep installs the food-tier upkeep brackets (JASS upkeep economy
+// behind PLAYER_STATE_*_UPKEEP_RATE). Ascending Food order required; an
+// empty slice clears upkeep (no tax). Returns false (no change) if the
+// tiers are invalid. Brackets are global (apply to every player by their
+// own food usage), mirroring WC3.
+func (g *Game) SetUpkeep(tiers []UpkeepTier) bool {
+	if g == nil || g.w == nil {
+		return false
+	}
+	st := make([]sim.UpkeepTier, len(tiers))
+	for i, t := range tiers {
+		st[i].Food = int32(t.Food)
+		for r := 0; r < len(t.Rate) && r < len(st[i].Rate); r++ {
+			st[i].Rate[r] = fromFloat(t.Rate[r])
+		}
+	}
+	return g.w.BindUpkeep(st)
+}
+
+// UpkeepRate reads the tax fraction currently applied to this player's
+// deposits of the given resource, derived live from food usage
+// (PLAYER_STATE_GOLD_UPKEEP_RATE / PLAYER_STATE_LUMBER_UPKEEP_RATE).
+func (p Player) UpkeepRate(resource int) float64 {
+	if !p.Valid() {
+		return 0
+	}
+	return toFloat(p.g.w.UpkeepRate(uint8(p.idx), resource))
+}
+
+// GoldUpkeepRate / LumberUpkeepRate are the gold/lumber conveniences for
+// UpkeepRate (the two WC3 upkeep player-states).
+func (p Player) GoldUpkeepRate() float64   { return p.UpkeepRate(resGold) }
+func (p Player) LumberUpkeepRate() float64 { return p.UpkeepRate(resLumber) }
+
+// LostToUpkeep reads the cumulative amount of the given resource this player
+// has had withheld by the upkeep tax (PLAYER_SCORE_*_LOST_UPKEEP).
+func (p Player) LostToUpkeep(resource int) int {
+	if !p.Valid() {
+		return 0
+	}
+	return int(p.g.w.UpkeepLost(uint8(p.idx), resource))
+}
+
+// GoldLostToUpkeep / LumberLostToUpkeep are the gold/lumber conveniences.
+func (p Player) GoldLostToUpkeep() int   { return p.LostToUpkeep(resGold) }
+func (p Player) LumberLostToUpkeep() int { return p.LostToUpkeep(resLumber) }
+
+// TaxRate / SetTaxRate read and write this player's transfer-tax fraction
+// toward another player for one resource (GetPlayerTaxRate / SetPlayerTaxRate).
+// The tax is withheld in Game.TransferResource. A player has no tax toward
+// itself. Rate clamps to [0,1].
+func (p Player) TaxRate(other Player, resource int) float64 {
+	if !p.Valid() || !other.Valid() {
+		return 0
+	}
+	return toFloat(p.g.w.TaxRate(uint8(p.idx), uint8(other.idx), resource))
+}
+func (p Player) SetTaxRate(other Player, resource int, rate float64) {
+	if !p.Valid() || !other.Valid() {
+		p.g.reportInvalid("Player.SetTaxRate")
+		return
+	}
+	p.g.w.SetTaxRate(uint8(p.idx), uint8(other.idx), resource, fromFloat(rate))
+}
+
+// TransferResource moves up to amount of a resource from one player to
+// another, applying the giver's transfer tax toward the receiver. The full
+// amount leaves the giver; the taxed fraction is destroyed; the remainder
+// is credited to the receiver. Returns the net amount delivered.
+func (g *Game) TransferResource(from, to Player, resource, amount int) int {
+	if g == nil || g.w == nil || !from.Valid() || !to.Valid() {
+		return 0
+	}
+	return int(g.w.TransferResource(uint8(from.idx), uint8(to.idx), resource, int64(amount)))
+}
