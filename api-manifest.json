@@ -272,6 +272,89 @@
       }
     },
     {
+      "name": "AdjustPlayerStateBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "delta",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerState",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: generic playerstate add/subtract over the full PLAYER_STATE_* enum (gold/lumber/upkeep/score/...); the typed Player.Gold/SetGold accessors ship, the full generic state table is deferred to v2."
+      }
+    },
+    {
+      "name": "AdjustPlayerStateSimpleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichPlayerState",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          },
+          {
+            "name": "delta",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: generic playerstate add/subtract over the full PLAYER_STATE_* enum (gold/lumber/upkeep/score/...); the typed Player.Gold/SetGold accessors ship, the full generic state table is deferred to v2."
+      }
+    },
+    {
+      "name": "AllowVictoryDefeat",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "gameResult",
+            "jassType": "playergameresult",
+            "tsType": "playergameresult"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
       "name": "AsinBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1607,6 +1690,21 @@
       }
     },
     {
+      "name": "CheckInitPlayerSlotAvailability",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+      }
+    },
+    {
       "name": "CheckItemStatus",
       "origin": "blizzard.j",
       "signature": {
@@ -1951,6 +2049,27 @@
       }
     },
     {
+      "name": "ClearSelectionForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
       "name": "CommentString",
       "origin": "blizzard.j",
       "signature": {
@@ -2033,6 +2152,27 @@
       }
     },
     {
+      "name": "ConvertedPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "convertedPlayerId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "player"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+      }
+    },
+    {
       "name": "CosBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -2051,6 +2191,32 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "CountLivingPlayerUnitsOfTypeId",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
       }
     },
     {
@@ -2217,6 +2383,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#229: location-arg pre-destroyed create; superseded by CreateDestructable(...).Kill()"
+      }
+    },
+    {
+      "name": "CreateDefeatConditionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "description",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "defeatcondition"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
       }
     },
     {
@@ -2862,6 +3049,32 @@
       }
     },
     {
+      "name": "CustomDefeatBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "message",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
       "name": "CustomDefeatDialogBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -2888,6 +3101,97 @@
       }
     },
     {
+      "name": "CustomDefeatLoadBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "CustomDefeatQuitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "CustomDefeatReduceDifficultyBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "CustomDefeatRestartBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "CustomVictoryBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "showDialog",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "showScores",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
       "name": "CustomVictoryDialogBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -2906,6 +3210,104 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "CustomVictoryOkBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "CustomVictoryQuitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "CustomVictorySkipBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "DefeatConditionSetDescriptionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichCondition",
+            "jassType": "defeatcondition",
+            "tsType": "defeatcondition"
+          },
+          {
+            "name": "description",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
+      "name": "DestroyDefeatConditionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichCondition",
+            "jassType": "defeatcondition",
+            "tsType": "defeatcondition"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
       }
     },
     {
@@ -3423,6 +3825,21 @@
       }
     },
     {
+      "name": "FFAInitPlayerSlots",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+      }
+    },
+    {
       "name": "FinishCinematicFadeAfterBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3589,6 +4006,27 @@
       }
     },
     {
+      "name": "ForcePickRandomPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "player"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
       "name": "ForceSetLeaderboardBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3612,6 +4050,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+      }
+    },
+    {
+      "name": "ForceUICancelBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
       }
     },
     {
@@ -3790,6 +4249,27 @@
       }
     },
     {
+      "name": "GetConvertedPlayerId",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+      }
+    },
+    {
       "name": "GetCurrentCameraBoundsMapRectBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3853,6 +4333,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: event-context accessor (destructable death event) deferred to the v2 event/trigger API"
+      }
+    },
+    {
+      "name": "GetForceOfPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "force"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
       }
     },
     {
@@ -4008,6 +4509,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "GetLastCreatedDefeatConditionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "defeatcondition"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
       }
     },
     {
@@ -4326,6 +4842,21 @@
       }
     },
     {
+      "name": "GetLastHauntedGoldMine",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
+      }
+    },
+    {
       "name": "GetLastPlayedMusic",
       "origin": "blizzard.j",
       "signature": {
@@ -4526,6 +5057,27 @@
         "symbol": "Game.Allies",
         "package": "litd/api",
         "goSignature": "(p Player) []Player"
+      }
+    },
+    {
+      "name": "GetPlayersByMapControl",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichControl",
+            "jassType": "mapcontrol",
+            "tsType": "mapcontrol"
+          }
+        ],
+        "returns": "force"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
       }
     },
     {
@@ -5529,6 +6081,21 @@
       }
     },
     {
+      "name": "InitGenericPlayerSlots",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+      }
+    },
+    {
       "name": "InitHashtableBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -5608,6 +6175,58 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "IsPlayerFlagSetBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayerFlag",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "IsPlayerSlotState",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichState",
+            "jassType": "playerslotstate",
+            "tsType": "playerslotstate"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
       }
     },
     {
@@ -6672,6 +7291,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: leaderboard render UI; deferred-v2 until the G3N GUI board facade lands."
+      }
+    },
+    {
+      "name": "LivingPlayerUnitsOfTypeIdFilter",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
       }
     },
     {
@@ -8070,6 +8704,63 @@
       }
     },
     {
+      "name": "MakeUnitsPassiveForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
+      "name": "MakeUnitsPassiveForPlayerEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
+      "name": "MakeUnitsPassiveForTeam",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
       "name": "MeleeDefeatDialogBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -8578,6 +9269,21 @@
         "symbol": "Vec2.Add",
         "package": "litd/api",
         "goSignature": "(o Vec2) Vec2"
+      }
+    },
+    {
+      "name": "OneOnOneInitPlayerSlots",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
       }
     },
     {
@@ -9872,6 +10578,37 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "RemovePlayerPreserveUnitsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "gameResult",
+            "jassType": "playergameresult",
+            "tsType": "playergameresult"
+          },
+          {
+            "name": "leftGame",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
       }
     },
     {
@@ -12853,6 +13590,37 @@
       }
     },
     {
+      "name": "SetPlayerFlagBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayerFlag",
+            "jassType": "playerstate",
+            "tsType": "playerstate"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
       "name": "SetPlayerMaxHeroesAllowed",
       "origin": "blizzard.j",
       "signature": {
@@ -12876,6 +13644,58 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+      }
+    },
+    {
+      "name": "SetPlayerOnScoreScreenBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "SetPlayerSlotAvailable",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "control",
+            "jassType": "mapcontrol",
+            "tsType": "mapcontrol"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
       }
     },
     {
@@ -12938,6 +13758,37 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "SetPlayerUnitAvailableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "allowed",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
       }
     },
     {
@@ -13958,6 +14809,90 @@
       }
     },
     {
+      "name": "SetUserControlForceOff",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "SetUserControlForceOn",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "ShareEverythingWithTeam",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: full-team resource+control+vision sharing presets; deferred to v2 (per-player vision sharing ships via Unit.ShareVision)."
+      }
+    },
+    {
+      "name": "ShareEverythingWithTeamAI",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: full-team resource+control+vision sharing presets; deferred to v2 (per-player vision sharing ships via Unit.ShareVision)."
+      }
+    },
+    {
       "name": "ShowCustomCampaignButton",
       "origin": "blizzard.j",
       "signature": {
@@ -14033,6 +14968,58 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ShowInterfaceForceOff",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "fadeDuration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
+      "name": "ShowInterfaceForceOn",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "fadeDuration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
       }
     },
     {
@@ -14432,6 +15419,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "TeamInitPlayerSlots",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "teamCount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
       }
     },
     {
@@ -15737,6 +16745,42 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "WakePlayerUnits",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
+      "name": "WakePlayerUnitsEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
       }
     },
     {
@@ -19471,6 +20515,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone."
+      }
+    },
+    {
+      "name": "BlzGetPlayerTownHallCount",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
       }
     },
     {
@@ -26355,6 +27420,32 @@
       }
     },
     {
+      "name": "DefeatConditionSetDescription",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichCondition",
+            "jassType": "defeatcondition",
+            "tsType": "defeatcondition"
+          },
+          {
+            "name": "description",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      }
+    },
+    {
       "name": "DefineStartLocation",
       "origin": "common.j",
       "signature": {
@@ -27817,6 +28908,21 @@
       }
     },
     {
+      "name": "ForceCampaignSelectScreen",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+      }
+    },
+    {
       "name": "ForceCinematicSubtitles",
       "origin": "common.j",
       "signature": {
@@ -27990,7 +29096,25 @@
       "goMapping": {
         "symbol": "Force.RemovePlayer",
         "package": "litd/api",
-        "goSignature": "(p Player)"
+        "goSignature": "(p Player)",
+        "collapsesWith": [
+          "ForceRemovePlayerSimple"
+        ]
+      }
+    },
+    {
+      "name": "ForceUICancel",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
       }
     },
     {
@@ -28148,6 +29272,66 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "GetBJMaxPlayerSlots",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+      }
+    },
+    {
+      "name": "GetBJMaxPlayers",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+      }
+    },
+    {
+      "name": "GetBJPlayerNeutralExtra",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+      }
+    },
+    {
+      "name": "GetBJPlayerNeutralVictim",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#players: JASS player-id\u003c-\u003ehandle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
       }
     },
     {
@@ -30030,7 +31214,12 @@
       "goMapping": {
         "symbol": "Player.StartLocation",
         "package": "litd/api",
-        "goSignature": "() Vec2"
+        "goSignature": "() Vec2",
+        "collapsesWith": [
+          "GetPlayerStartLocationX",
+          "GetPlayerStartLocationY",
+          "GetPlayerStartLocationLoc"
+        ]
       }
     },
     {
@@ -30493,6 +31682,21 @@
       }
     },
     {
+      "name": "GetResourceDensity",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "mapdensity"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
+      }
+    },
+    {
       "name": "GetSoldItem",
       "origin": "common.j",
       "signature": {
@@ -30724,6 +31928,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "spell target y needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetStartLocPrioSlot",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "prioSlotIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
       }
     },
     {
@@ -31889,6 +33119,21 @@
           "GetUnitY",
           "GetUnitLoc"
         ]
+      }
+    },
+    {
+      "name": "GetWinningPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "player"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
       }
     },
     {
@@ -33250,7 +34495,10 @@
       "goMapping": {
         "symbol": "Player.IsAlly",
         "package": "litd/api",
-        "goSignature": "(other Player) bool"
+        "goSignature": "(other Player) bool",
+        "collapsesWith": [
+          "PlayersAreCoAllied"
+        ]
       }
     },
     {
@@ -33304,7 +34552,10 @@
       "goMapping": {
         "symbol": "Force.Contains",
         "package": "litd/api",
-        "goSignature": "(p Player) bool"
+        "goSignature": "(p Player) bool",
+        "collapsesWith": [
+          "BlzForceHasPlayer"
+        ]
       }
     },
     {
@@ -41119,6 +42370,27 @@
       }
     },
     {
+      "name": "SetAllUnitTypeSlots",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "slots",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
       "name": "SetAltMinimapIcon",
       "origin": "common.j",
       "signature": {
@@ -43076,7 +44348,8 @@
           "SetPlayerAllianceStateAllyBJ",
           "SetPlayerAllianceStateVisionBJ",
           "SetPlayerAllianceStateControlBJ",
-          "SetPlayerAllianceStateFullControlBJ"
+          "SetPlayerAllianceStateFullControlBJ",
+          "SetForceAllianceStateBJ"
         ]
       }
     },
@@ -43104,7 +44377,10 @@
       "goMapping": {
         "symbol": "Player.SetColor",
         "package": "litd/api",
-        "goSignature": "(c int)"
+        "goSignature": "(c int)",
+        "collapsesWith": [
+          "SetPlayerColorBJ"
+        ]
       }
     },
     {
@@ -43717,6 +44993,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SetResourceDensity",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichdensity",
+            "jassType": "mapdensity",
+            "tsType": "mapdensity"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
       }
     },
     {
@@ -45528,6 +46825,32 @@
       }
     },
     {
+      "name": "SetUnitTypeSlots",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "slots",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
       "name": "SetUnitUseFood",
       "origin": "common.j",
       "signature": {
@@ -45671,6 +46994,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ShowInterface",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "fadeDuration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
       }
     },
     {
@@ -49502,6 +50851,47 @@
       }
     },
     {
+      "name": "GetGoldOwned",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
+      "name": "GetPlayerUnitTypeCount",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
       "name": "GetUnitBuildTime",
       "origin": "commonai",
       "signature": {
@@ -49608,6 +50998,27 @@
       }
     },
     {
+      "name": "GetUpgradeGoldCost",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
       "name": "MergeUnits",
       "origin": "commonai",
       "signature": {
@@ -49656,6 +51067,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SuicidePlayerUnits",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "check_full",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
       }
     },
     {

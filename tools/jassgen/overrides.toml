@@ -2112,6 +2112,7 @@ name = "SetPlayerColor"
 class = "D5"
 goMapping = "Player.SetColor"
 goSignature = "(c int)"
+collapsesWith = ["SetPlayerColorBJ"]
 package = "litd/api"
 reason = "player color setter maps onto Player.SetColor"
 
@@ -2152,6 +2153,7 @@ name = "GetPlayerStartLocation"
 class = "D3"
 goMapping = "Player.StartLocation"
 goSignature = "() Vec2"
+collapsesWith = ["GetPlayerStartLocationX", "GetPlayerStartLocationY", "GetPlayerStartLocationLoc"]
 package = "litd/api"
 reason = "start-location index collapses to the start point Vec2 (D3 location→Vec2); Player.StartLocation"
 
@@ -2177,7 +2179,7 @@ name = "SetPlayerAlliance"
 class = "D1"
 goMapping = "Player.SetAllianceFlag"
 goSignature = "(other Player, flag AllianceFlags, on bool)"
-collapsesWith = ["SetPlayerAllianceBJ", "SetPlayerAllianceStateBJ", "SetPlayerAllianceStateAllyBJ", "SetPlayerAllianceStateVisionBJ", "SetPlayerAllianceStateControlBJ", "SetPlayerAllianceStateFullControlBJ"]
+collapsesWith = ["SetPlayerAllianceBJ", "SetPlayerAllianceStateBJ", "SetPlayerAllianceStateAllyBJ", "SetPlayerAllianceStateVisionBJ", "SetPlayerAllianceStateControlBJ", "SetPlayerAllianceStateFullControlBJ", "SetForceAllianceStateBJ"]
 package = "litd/api"
 reason = "single-flag alliance setter maps onto Player.SetAllianceFlag; the preset-combination BJ zoo (ally/vision/control/full-control/state) collapses here (D2) — Player.SetAlliance(other, flags) sets the whole bitset at once"
 
@@ -2186,6 +2188,7 @@ name = "IsPlayerAlly"
 class = "D1"
 goMapping = "Player.IsAlly"
 goSignature = "(other Player) bool"
+collapsesWith = ["PlayersAreCoAllied"]
 package = "litd/api"
 reason = "passive-alliance predicate maps onto Player.IsAlly"
 
@@ -2254,6 +2257,7 @@ name = "ForceRemovePlayer"
 class = "D1"
 goMapping = "Force.RemovePlayer"
 goSignature = "(p Player)"
+collapsesWith = ["ForceRemovePlayerSimple"]
 package = "litd/api"
 reason = "force membership remove maps onto Force.RemovePlayer"
 
@@ -2279,6 +2283,7 @@ name = "IsPlayerInForce"
 class = "D1"
 goMapping = "Force.Contains"
 goSignature = "(p Player) bool"
+collapsesWith = ["BlzForceHasPlayer"]
 package = "litd/api"
 reason = "force membership predicate maps onto Force.Contains"
 
@@ -11912,3 +11917,411 @@ goMapping = "Game.RandomAngle"
 goSignature = "() Angle"
 package = "litd/api"
 reason = "#math: random heading collapses onto the seeded Game.RandomAngle() (sim PRNG, R-SIM-2)."
+
+[[override]]
+name = "ConvertedPlayer"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "GetConvertedPlayerId"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "GetForceOfPlayer"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "GetBJMaxPlayers"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "GetBJMaxPlayerSlots"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "GetBJPlayerNeutralExtra"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "GetBJPlayerNeutralVictim"
+class = "D3"
+tombstone = "superseded"
+reason = "#players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors."
+
+[[override]]
+name = "ClearSelectionForPlayer"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "ShowInterface"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "ShowInterfaceForceOn"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "ShowInterfaceForceOff"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "SetUserControlForceOn"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "SetUserControlForceOff"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "ForceUICancel"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "ForceUICancelBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "ForceCampaignSelectScreen"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "SetPlayerOnScoreScreenBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "IsPlayerFlagSetBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "SetPlayerFlagBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "GetPlayersByMapControl"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
+
+[[override]]
+name = "CustomVictoryBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomVictoryOkBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomVictoryQuitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomVictorySkipBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomDefeatBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomDefeatLoadBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomDefeatQuitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomDefeatRestartBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CustomDefeatReduceDifficultyBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "AllowVictoryDefeat"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "CreateDefeatConditionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "DefeatConditionSetDescription"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "DefeatConditionSetDescriptionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "DestroyDefeatConditionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "GetLastCreatedDefeatConditionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "GetWinningPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+
+[[override]]
+name = "IsPlayerSlotState"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "SetPlayerSlotAvailable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "CheckInitPlayerSlotAvailability"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "FFAInitPlayerSlots"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "TeamInitPlayerSlots"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "OneOnOneInitPlayerSlots"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "InitGenericPlayerSlots"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API."
+
+[[override]]
+name = "AdjustPlayerStateBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: generic playerstate add/subtract over the full PLAYER_STATE_* enum (gold/lumber/upkeep/score/...); the typed Player.Gold/SetGold accessors ship, the full generic state table is deferred to v2."
+
+[[override]]
+name = "AdjustPlayerStateSimpleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: generic playerstate add/subtract over the full PLAYER_STATE_* enum (gold/lumber/upkeep/score/...); the typed Player.Gold/SetGold accessors ship, the full generic state table is deferred to v2."
+
+[[override]]
+name = "ShareEverythingWithTeam"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: full-team resource+control+vision sharing presets; deferred to v2 (per-player vision sharing ships via Unit.ShareVision)."
+
+[[override]]
+name = "ShareEverythingWithTeamAI"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: full-team resource+control+vision sharing presets; deferred to v2 (per-player vision sharing ships via Unit.ShareVision)."
+
+[[override]]
+name = "GetResourceDensity"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
+
+[[override]]
+name = "SetResourceDensity"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
+
+[[override]]
+name = "BlzGetPlayerTownHallCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
+
+[[override]]
+name = "GetLastHauntedGoldMine"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API."
+
+[[override]]
+name = "RemovePlayerPreserveUnitsBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "MakeUnitsPassiveForPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "MakeUnitsPassiveForPlayerEnum"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "MakeUnitsPassiveForTeam"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "WakePlayerUnits"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "WakePlayerUnitsEnum"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "CountLivingPlayerUnitsOfTypeId"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "LivingPlayerUnitsOfTypeIdFilter"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "SetPlayerUnitAvailableBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "ForcePickRandomPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+
+[[override]]
+name = "GetGoldOwned"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "GetPlayerUnitTypeCount"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "SetAllUnitTypeSlots"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "SetUnitTypeSlots"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "GetStartLocPrioSlot"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "GetUpgradeGoldCost"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "SuicidePlayerUnits"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."

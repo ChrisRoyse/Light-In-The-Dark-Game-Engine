@@ -97,10 +97,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AbilityId | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
 | AbilityId2String | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetObjectName | common.j | D3 | **tombstoned** (deferred-v2): #strings: GetObjectName resolves a design-time object-editor display name; deferred to the v2 object-data API (no v1 runtime object-data name table). |
-| GetBJMaxPlayers | common.j | unclassified | _pending (M2 backlog)_ |
-| GetBJPlayerNeutralVictim | common.j | unclassified | _pending (M2 backlog)_ |
-| GetBJPlayerNeutralExtra | common.j | unclassified | _pending (M2 backlog)_ |
-| GetBJMaxPlayerSlots | common.j | unclassified | _pending (M2 backlog)_ |
+| GetBJMaxPlayers | common.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
+| GetBJPlayerNeutralVictim | common.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
+| GetBJPlayerNeutralExtra | common.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
+| GetBJMaxPlayerSlots | common.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
 | GetPlayerNeutralPassive | common.j | D1 | `litd/api.Game.NeutralPassive` |
 | GetPlayerNeutralAggressive | common.j | D1 | `litd/api.Game.NeutralHostile` |
 | Deg2Rad | common.j | D5 | `litd/api.Deg` |
@@ -137,7 +137,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DefineStartLocationLoc | common.j | D3 | **tombstoned** (deferred-v2): #256: location-handle form of DefineStartLocation; same static-map-metadata deferral, and the location-handle representation is itself superseded by Vec2 (D3) — deferred |
 | SetStartLocPrioCount | common.j | unclassified | _pending (M2 backlog)_ |
 | SetStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
-| GetStartLocPrioSlot | common.j | unclassified | _pending (M2 backlog)_ |
+| GetStartLocPrioSlot | common.j | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | GetStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
 | SetEnemyStartLocPrioCount | common.j | unclassified | _pending (M2 backlog)_ |
 | SetEnemyStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
@@ -146,7 +146,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetGamePlacement | common.j | D1 | **tombstoned** (deferred-v2): #256: start-placement-mode setter (teams-together / use-map-settings / random); placement is static match config resolved at map load — deferred |
 | SetGameSpeed | common.j | D1 | `litd/api.Game.SetSpeed` |
 | SetGameDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: campaign game-difficulty setter; the v1 vertical slice is melee (per-player AI difficulty via Game.AttachAI, #257), not a global campaign difficulty — deferred |
-| SetResourceDensity | common.j | unclassified | _pending (M2 backlog)_ |
+| SetResourceDensity | common.j | D3 | **tombstoned** (deferred-v2): #game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API. |
 | SetCreatureDensity | common.j | unclassified | _pending (M2 backlog)_ |
 | GetTeams | common.j | D1 | `litd/api.Game.Teams` |
 | GetPlayers | common.j | D1 | **tombstoned** (deferred-v2): active player-count query; deferred with SetPlayers |
@@ -156,7 +156,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetGamePlacement | common.j | D1 | **tombstoned** (deferred-v2): #256: start-placement-mode getter; no v1 public surface for the placement enum (config-only) — deferred |
 | GetGameSpeed | common.j | D1 | **tombstoned** (deferred-v2): #256: game-speed getter; speed is driver-owned real-time state with no v1 public readback (Game.SetSpeed is write-only on the driver hook) — deferred |
 | GetGameDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: campaign game-difficulty getter; no global-difficulty surface in the melee v1 slice (see SetGameDifficulty) — deferred |
-| GetResourceDensity | common.j | unclassified | _pending (M2 backlog)_ |
+| GetResourceDensity | common.j | D3 | **tombstoned** (deferred-v2): #game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API. |
 | GetCreatureDensity | common.j | unclassified | _pending (M2 backlog)_ |
 | GetStartLocationX | common.j | D3 | `litd/api.Game.StartLocation` |
 | GetStartLocationY | common.j | D3 | `litd/api.Game.StartLocation` (D3 collapse → GetStartLocationX) |
@@ -223,7 +223,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DestroyForce | common.j | D1 | **tombstoned** (gameplay-irrelevant): explicit handle free — Go forces are GC-managed script-side registry entries; no manual destroy |
 | ForceAddPlayer | common.j | D1 | `litd/api.Force.AddPlayer` |
 | ForceRemovePlayer | common.j | D1 | `litd/api.Force.RemovePlayer` |
-| BlzForceHasPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzForceHasPlayer | common.j | D1 | `litd/api.Force.Contains` (D3 collapse → IsPlayerInForce) |
 | ForceClear | common.j | D1 | `litd/api.Force.Clear` |
 | ForceEnumPlayers | common.j | D2 | `litd/api.Force.AddAllPlayers` |
 | ForceEnumPlayersCounted | common.j | D2 | `litd/api.Force.AddAllPlayers` (D3 collapse → ForceEnumPlayers) |
@@ -299,7 +299,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterDialogButtonEvent | common.j | D1 | **tombstoned** (deferred-v2): dialog-button events — ui-frames (#245) |
 | GetEventGameState | common.j | D2 | **tombstoned** (deferred-v2): game-state event value needs an Event payload field not yet carried for that kind; deferred (#219) |
 | TriggerRegisterGameEvent | common.j | D1 | **tombstoned** (superseded): game event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
-| GetWinningPlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| GetWinningPlayer | common.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | TriggerRegisterEnterRegion | common.j | D1 | **tombstoned** (superseded): trigger+boolexpr region-enter registration superseded by OnEvent(EventRegionEnter) (public-api-design.md R-API-4, #241) |
 | GetTriggeringRegion | common.j | D1 | `litd/api.Event.Region` |
 | GetEnteringUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
@@ -664,9 +664,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RemoveUnitFromAllStock | common.j | D3 | **tombstoned** (deferred-v2): #217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2. |
 | RemoveUnitFromStock | common.j | D3 | **tombstoned** (deferred-v2): #217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2. |
 | SetAllItemTypeSlots | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
-| SetAllUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
+| SetAllUnitTypeSlots | common.j | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | SetItemTypeSlots | common.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
-| SetUnitTypeSlots | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitTypeSlots | common.j | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | GetUnitUserData | common.j | D1 | `litd/api.Unit.UserData` |
 | SetUnitUserData | common.j | D1 | `litd/api.Unit.SetUserData` |
 | Player | common.j | D1 | `litd/api.Game.Player` |
@@ -731,7 +731,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ReloadGame | common.j | D1 | **tombstoned** (deferred-v2): #256: reloads the current game from its last save; deferred with mid-match save/load (#204) |
 | SetCampaignMenuRace | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCampaignMenuRaceEx | common.j | unclassified | _pending (M2 backlog)_ |
-| ForceCampaignSelectScreen | common.j | unclassified | _pending (M2 backlog)_ |
+| ForceCampaignSelectScreen | common.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | LoadGame | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
 | SaveGame | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
 | RenameSaveDirectory | common.j | D1 | **tombstoned** (deferred-v2): #256: save-directory management; whole-game mid-match save/load is deferred (#204), and directory-level file management rides that pipeline — deferred |
@@ -925,7 +925,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SuspendTimeOfDay | common.j | D1 | `litd/api.Game.SuspendTimeOfDay` |
 | SetTimeOfDayScale | common.j | D1 | `litd/api.Game.SetTimeOfDayScale` |
 | GetTimeOfDayScale | common.j | D1 | `litd/api.Game.TimeOfDayScale` |
-| ShowInterface | common.j | unclassified | _pending (M2 backlog)_ |
+| ShowInterface | common.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | PauseGame | common.j | D1 | `litd/api.Game.Pause` |
 | UnitAddIndicator | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | AddIndicator | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
@@ -945,7 +945,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | PlayModelCinematic | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | PlayCinematic | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | ForceUIKey | common.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
-| ForceUICancel | common.j | unclassified | _pending (M2 backlog)_ |
+| ForceUICancel | common.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | DisplayLoadDialog | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | SetAltMinimapIcon | common.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | DisableRestartMission | common.j | unclassified | _pending (M2 backlog)_ |
@@ -993,7 +993,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsQuestItemCompleted | common.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | CreateDefeatCondition | common.j | D1 | **tombstoned** (deferred-v2): defeat conditions belong to the game-state-and-melee surface (#256) |
 | DestroyDefeatCondition | common.j | D1 | **tombstoned** (deferred-v2): defeat-condition free — game-state-and-melee (#256) |
-| DefeatConditionSetDescription | common.j | unclassified | _pending (M2 backlog)_ |
+| DefeatConditionSetDescription | common.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | FlashQuestDialogButton | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | ForceQuestDialogUpdate | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | CreateTimerDialog | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
@@ -1539,7 +1539,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzCreateDestructableZWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: z-coord + render skin; no sim meaning beyond CreateDestructable |
 | BlzCreateDeadDestructableWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: pre-dead create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only |
 | BlzCreateDeadDestructableZWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: pre-dead z-create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only |
-| BlzGetPlayerTownHallCount | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetPlayerTownHallCount | common.j | D3 | **tombstoned** (deferred-v2): #game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API. |
 | BJDebugMsg | blizzard.j | D4 | _pending (M2 backlog)_ |
 | RMinBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
 | RMaxBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
@@ -1887,7 +1887,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SelectGroupBJ | blizzard.j | D1 | **tombstoned** (deferred-v2): group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
 | SelectUnitAdd | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface. |
 | SelectUnitRemove | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface. |
-| ClearSelectionForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ClearSelectionForPlayer | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | SelectUnitForPlayerSingle | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface. |
 | SelectGroupForPlayerBJ | blizzard.j | D1 | **tombstoned** (deferred-v2): per-player group selection — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
 | SelectUnitAddForPlayer | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface. |
@@ -1925,8 +1925,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitCanSleepBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2. |
 | UnitWakeUpBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2. |
 | UnitIsSleepingBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: creep sleep (night-time neutral-hostile sleep) has no v1 sim component; deferred to v2. |
-| WakePlayerUnitsEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| WakePlayerUnits | blizzard.j | D4 | _pending (M2 backlog)_ |
+| WakePlayerUnitsEnum | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
+| WakePlayerUnits | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
 | EnableCreepSleepBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | UnitGenerateAlarms | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2. |
 | DoesUnitGenerateAlarms | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2. |
@@ -1997,7 +1997,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | WaygateGetDestinationLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2. |
 | UnitSetUsesAltIconBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
 | ForceUIKeyBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: BlzFrame / custom-frame render UI (G3N GUI widget tree, hotkey/mouse/cursor binding); no v1 frame backend — the UI facade (g.UI()) lands with the render UI milestone. |
-| ForceUICancelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ForceUICancelBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | ForGroupBJ | blizzard.j | D3 | `litd/api.UnitSet.Units` (D3 collapse → ForGroup) |
 | GroupAddUnitSimple | blizzard.j | D1 | `litd/api.UnitSet.Add` (D3 collapse → GroupAddUnit) |
 | GroupRemoveUnitSimple | blizzard.j | D1 | `litd/api.UnitSet.Remove` (D3 collapse → GroupRemoveUnit) |
@@ -2006,11 +2006,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GroupRemoveGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): set difference enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GroupRemoveGroup | blizzard.j | D1 | **tombstoned** (superseded): set difference superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | ForceAddPlayerSimple | blizzard.j | D1 | `litd/api.Force.AddPlayer` (D3 collapse → ForceAddPlayer) |
-| ForceRemovePlayerSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
+| ForceRemovePlayerSimple | blizzard.j | D1 | `litd/api.Force.RemovePlayer` (D3 collapse → ForceRemovePlayer) |
 | GroupPickRandomUnitEnum | blizzard.j | D1 | **tombstoned** (superseded): random member pick enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GroupPickRandomUnit | blizzard.j | D1 | **tombstoned** (superseded): random member pick superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | ForcePickRandomPlayerEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ForcePickRandomPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ForcePickRandomPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
 | EnumUnitsSelected | blizzard.j | D1 | **tombstoned** (deferred-v2): selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
 | GetUnitsInRectMatching | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitsInRectAll | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2025,9 +2025,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetUnitsOfPlayerAndTypeIdFilter | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetUnitsOfPlayerAndTypeId | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitsSelectedAll | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetForceOfPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetForceOfPlayer | blizzard.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
 | GetPlayersAll | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
-| GetPlayersByMapControl | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetPlayersByMapControl | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | GetPlayersAllies | blizzard.j | D4 | `litd/api.Game.Allies` |
 | GetPlayersEnemies | blizzard.j | D4 | `litd/api.Game.Enemies` |
 | GetPlayersMatching | blizzard.j | D4 | `litd/api.Game.Players` |
@@ -2037,8 +2037,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CountPlayersInForceBJ | blizzard.j | D4 | `litd/api.Game.Players` (D3 collapse → GetPlayersMatching) |
 | GetRandomSubGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): random sub-group enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GetRandomSubGroup | blizzard.j | D1 | **tombstoned** (superseded): random sub-group superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| LivingPlayerUnitsOfTypeIdFilter | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CountLivingPlayerUnitsOfTypeId | blizzard.j | D4 | _pending (M2 backlog)_ |
+| LivingPlayerUnitsOfTypeIdFilter | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
+| CountLivingPlayerUnitsOfTypeId | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
 | ResetUnitAnimation | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
 | SetUnitTimeScalePercent | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
 | SetUnitScalePercent | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
@@ -2066,33 +2066,33 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetPlayerAllianceStateControlBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
 | SetPlayerAllianceStateFullControlBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
 | SetPlayerAllianceStateBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
-| SetForceAllianceStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PlayersAreCoAllied | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ShareEverythingWithTeamAI | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ShareEverythingWithTeam | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetForceAllianceStateBJ | blizzard.j | D1 | `litd/api.Player.SetAllianceFlag` (D3 collapse → SetPlayerAlliance) |
+| PlayersAreCoAllied | blizzard.j | D1 | `litd/api.Player.IsAlly` (D3 collapse → IsPlayerAlly) |
+| ShareEverythingWithTeamAI | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: full-team resource+control+vision sharing presets; deferred to v2 (per-player vision sharing ships via Unit.ShareVision). |
+| ShareEverythingWithTeam | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: full-team resource+control+vision sharing presets; deferred to v2 (per-player vision sharing ships via Unit.ShareVision). |
 | ConfigureNeutralVictim | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MakeUnitsPassiveForPlayerEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MakeUnitsPassiveForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MakeUnitsPassiveForTeam | blizzard.j | D4 | _pending (M2 backlog)_ |
-| AllowVictoryDefeat | blizzard.j | D4 | _pending (M2 backlog)_ |
+| MakeUnitsPassiveForPlayerEnum | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
+| MakeUnitsPassiveForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
+| MakeUnitsPassiveForTeam | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
+| AllowVictoryDefeat | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | EndGameBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | MeleeVictoryDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | MeleeDefeatDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | GameOverDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| RemovePlayerPreserveUnitsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomVictoryOkBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomVictoryQuitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| RemovePlayerPreserveUnitsBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
+| CustomVictoryOkBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomVictoryQuitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | CustomVictoryDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| CustomVictorySkipBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomVictoryBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomDefeatRestartBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomDefeatReduceDifficultyBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomDefeatLoadBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CustomDefeatQuitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CustomVictorySkipBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomVictoryBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomDefeatRestartBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomDefeatReduceDifficultyBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomDefeatLoadBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomDefeatQuitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | CustomDefeatDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| CustomDefeatBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CustomDefeatBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | SetNextLevelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerOnScoreScreenBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetPlayerOnScoreScreenBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | CreateQuestBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | DestroyQuestBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | QuestSetEnabledBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
@@ -2106,10 +2106,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | QuestItemSetDescriptionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | QuestItemSetCompletedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | GetLastCreatedQuestItemBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
-| CreateDefeatConditionBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyDefeatConditionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| DefeatConditionSetDescriptionBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedDefeatConditionBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| CreateDefeatConditionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| DestroyDefeatConditionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| DefeatConditionSetDescriptionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| GetLastCreatedDefeatConditionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
 | FlashQuestDialogButtonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | QuestMessageBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
 | StartTimerBJ | blizzard.j | D2 | `litd/api.Game.After` (D3 collapse → TimerStart) |
@@ -2182,10 +2182,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedTextTag | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
 | PauseGameOn | blizzard.j | D2 | _pending (M2 backlog)_ |
 | PauseGameOff | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetUserControlForceOn | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetUserControlForceOff | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ShowInterfaceForceOn | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ShowInterfaceForceOff | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetUserControlForceOn | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
+| SetUserControlForceOff | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
+| ShowInterfaceForceOn | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
+| ShowInterfaceForceOff | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | PingMinimapForForce | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | PingMinimapLocForForce | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
 | PingMinimapForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: minimap ping/icon/signal render UI; deferred-v2 until the render minimap pipeline lands. |
@@ -2352,32 +2352,32 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RenameSaveDirectoryBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | RemoveSaveDirectoryBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | CopySaveGameBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetPlayerStartLocationX | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerStartLocationY | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerStartLocationLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
+| GetPlayerStartLocationX | blizzard.j | D3 | `litd/api.Player.StartLocation` (D3 collapse → GetPlayerStartLocation) |
+| GetPlayerStartLocationY | blizzard.j | D3 | `litd/api.Player.StartLocation` (D3 collapse → GetPlayerStartLocation) |
+| GetPlayerStartLocationLoc | blizzard.j | D3 | `litd/api.Player.StartLocation` (D3 collapse → GetPlayerStartLocation) |
 | GetRectCenter | blizzard.j | D3 | `litd/api.Rect.Center` (D3 collapse → GetRectCenterX) |
-| IsPlayerSlotState | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| IsPlayerSlotState | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | GetFadeFromSeconds | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetFadeFromSecondsAsReal | blizzard.j | D4 | _pending (M2 backlog)_ |
-| AdjustPlayerStateSimpleBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
-| AdjustPlayerStateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| AdjustPlayerStateSimpleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: generic playerstate add/subtract over the full PLAYER_STATE_* enum (gold/lumber/upkeep/score/...); the typed Player.Gold/SetGold accessors ship, the full generic state table is deferred to v2. |
+| AdjustPlayerStateBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: generic playerstate add/subtract over the full PLAYER_STATE_* enum (gold/lumber/upkeep/score/...); the typed Player.Gold/SetGold accessors ship, the full generic state table is deferred to v2. |
 | SetPlayerStateBJ | blizzard.j | D5 | `litd/api.Player.SetGold` (D3 collapse → SetPlayerState) |
-| SetPlayerFlagBJ | blizzard.j | D5 | _pending (M2 backlog)_ |
+| SetPlayerFlagBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | SetPlayerTaxRateBJ | blizzard.j | D5 | `litd/api.Player.SetTaxRate` (D3 collapse → SetPlayerTaxRate) |
 | GetPlayerTaxRateBJ | blizzard.j | D5 | `litd/api.Player.TaxRate` (D3 collapse → GetPlayerTaxRate) |
-| IsPlayerFlagSetBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| IsPlayerFlagSetBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | AddResourceAmountBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: gold-mine resource-amount read/write on a resource widget; no v1 mine-resource sim component, deferred to v2. |
-| GetConvertedPlayerId | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| ConvertedPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
+| GetConvertedPlayerId | blizzard.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
+| ConvertedPlayer | blizzard.j | D3 | **tombstoned** (superseded): #players: JASS player-id<->handle converters, the per-player singleton-force accessor, and the bj_MAX_PLAYER* / neutral-player constant accessors are superseded by the typed Player handle, Force noun, and Game.Players/neutral accessors. |
 | GetRectWidthBJ | blizzard.j | D1 | `litd/api.Rect.Width` |
 | GetRectHeightBJ | blizzard.j | D1 | `litd/api.Rect.Height` |
 | BlightGoldMineForPlayerBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | BlightGoldMineForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
-| GetLastHauntedGoldMine | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| GetLastHauntedGoldMine | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API. |
 | IsPointBlightedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetPlayerColorBJEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerColorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerUnitAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| SetPlayerColorBJ | blizzard.j | D5 | `litd/api.Player.SetColor` (D3 collapse → SetPlayerColor) |
+| SetPlayerUnitAvailableBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
 | LockGameSpeedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnlockGameSpeedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | IssueTargetOrderBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
@@ -2459,13 +2459,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MeleeTournamentFinishNowRuleA | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MeleeTriggerTournamentFinishNow | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MeleeInitVictoryDefeat | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CheckInitPlayerSlotAvailability | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerSlotAvailable | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TeamInitPlayerSlots | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CheckInitPlayerSlotAvailability | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
+| SetPlayerSlotAvailable | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
+| TeamInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | MeleeInitPlayerSlots | blizzard.j | D2 | _pending (M2 backlog)_ |
-| FFAInitPlayerSlots | blizzard.j | D2 | _pending (M2 backlog)_ |
-| OneOnOneInitPlayerSlots | blizzard.j | D4 | _pending (M2 backlog)_ |
-| InitGenericPlayerSlots | blizzard.j | D4 | _pending (M2 backlog)_ |
+| FFAInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
+| OneOnOneInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
+| InitGenericPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | SetDNCSoundsDawn | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | SetDNCSoundsDusk | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | SetDNCSoundsDay | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
@@ -2537,19 +2537,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetHeroId | commonai | unclassified | _pending (M2 backlog)_ |
 | GetHeroLevelAI | commonai | unclassified | _pending (M2 backlog)_ |
 | GetUnitCount | commonai | D2 | `litd/ai.UnitCount` |
-| GetPlayerUnitTypeCount | commonai | unclassified | _pending (M2 backlog)_ |
+| GetPlayerUnitTypeCount | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | GetUnitCountDone | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
 | GetTownUnitCount | commonai | unclassified | _pending (M2 backlog)_ |
 | GetUnitGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
 | GetUnitWoodCost | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
 | GetUnitBuildTime | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
 | GetMinesOwned | commonai | unclassified | _pending (M2 backlog)_ |
-| GetGoldOwned | commonai | unclassified | _pending (M2 backlog)_ |
+| GetGoldOwned | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | TownWithMine | commonai | unclassified | _pending (M2 backlog)_ |
 | TownHasMine | commonai | unclassified | _pending (M2 backlog)_ |
 | TownHasHall | commonai | unclassified | _pending (M2 backlog)_ |
 | GetUpgradeLevel | commonai | unclassified | _pending (M2 backlog)_ |
-| GetUpgradeGoldCost | commonai | unclassified | _pending (M2 backlog)_ |
+| GetUpgradeGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | GetUpgradeWoodCost | commonai | unclassified | _pending (M2 backlog)_ |
 | GetNextExpansion | commonai | unclassified | _pending (M2 backlog)_ |
 | GetMegaTarget | commonai | unclassified | _pending (M2 backlog)_ |
@@ -2602,7 +2602,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AttackMoveXY | commonai | unclassified | _pending (M2 backlog)_ |
 | LoadZepWave | commonai | unclassified | _pending (M2 backlog)_ |
 | SuicidePlayer | commonai | unclassified | _pending (M2 backlog)_ |
-| SuicidePlayerUnits | commonai | unclassified | _pending (M2 backlog)_ |
+| SuicidePlayerUnits | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | CaptainInCombat | commonai | unclassified | _pending (M2 backlog)_ |
 | IsTowered | commonai | unclassified | _pending (M2 backlog)_ |
 | ClearHarvestAI | commonai | unclassified | _pending (M2 backlog)_ |
