@@ -90,30 +90,30 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ConvertRegenType | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
 | ConvertUnitCategory | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
 | ConvertPathingFlag | common.j | D1 | **tombstoned** (gameplay-irrelevant): JASS integer->enum-handle converter (e.g. RACE_HUMAN = ConvertRace(1)); a language artifact for declaring typed constants. The Go API exposes typed enum constants directly, so the converter has no public surface (dedup §7 gameplay-irrelevant) |
-| OrderId | common.j | unclassified | _pending (M2 backlog)_ |
-| OrderId2String | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitId | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitId2String | common.j | unclassified | _pending (M2 backlog)_ |
+| OrderId | common.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| OrderId2String | common.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| UnitId | common.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| UnitId2String | common.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
 | AbilityId | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
 | AbilityId2String | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| GetObjectName | common.j | unclassified | _pending (M2 backlog)_ |
+| GetObjectName | common.j | D3 | **tombstoned** (deferred-v2): #strings: GetObjectName resolves a design-time object-editor display name; deferred to the v2 object-data API (no v1 runtime object-data name table). |
 | GetBJMaxPlayers | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJPlayerNeutralVictim | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJPlayerNeutralExtra | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJMaxPlayerSlots | common.j | unclassified | _pending (M2 backlog)_ |
 | GetPlayerNeutralPassive | common.j | D1 | `litd/api.Game.NeutralPassive` |
 | GetPlayerNeutralAggressive | common.j | D1 | `litd/api.Game.NeutralHostile` |
-| Deg2Rad | common.j | unclassified | _pending (M2 backlog)_ |
-| Rad2Deg | common.j | unclassified | _pending (M2 backlog)_ |
-| Sin | common.j | unclassified | _pending (M2 backlog)_ |
-| Cos | common.j | unclassified | _pending (M2 backlog)_ |
-| Tan | common.j | unclassified | _pending (M2 backlog)_ |
-| Asin | common.j | unclassified | _pending (M2 backlog)_ |
-| Acos | common.j | unclassified | _pending (M2 backlog)_ |
-| Atan | common.j | unclassified | _pending (M2 backlog)_ |
-| Atan2 | common.j | unclassified | _pending (M2 backlog)_ |
-| SquareRoot | common.j | unclassified | _pending (M2 backlog)_ |
-| Pow | common.j | unclassified | _pending (M2 backlog)_ |
+| Deg2Rad | common.j | D5 | `litd/api.Deg` |
+| Rad2Deg | common.j | D5 | `litd/api.Angle.Degrees` |
+| Sin | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Cos | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Tan | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Asin | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Acos | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Atan | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Atan2 | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| SquareRoot | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Pow | common.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
 | MathRound | common.j | unclassified | _pending (M2 backlog)_ |
 | I2R | common.j | D1 | **tombstoned** (gameplay-irrelevant): int->real cast; Go uses float64(i) natively (math-strings-conversion.md). No public surface |
 | R2I | common.j | D1 | **tombstoned** (gameplay-irrelevant): real->int cast; Go uses int(r) natively (math-strings-conversion.md). No public surface |
@@ -123,12 +123,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | S2I | common.j | D1 | **tombstoned** (gameplay-irrelevant): string->int; Go uses strconv.Atoi (math-strings-conversion.md). No public surface |
 | S2R | common.j | D1 | **tombstoned** (gameplay-irrelevant): string->real; Go uses strconv.ParseFloat (math-strings-conversion.md). No public surface |
 | GetHandleId | common.j | D3 | `litd/api.Unit.ID` |
-| SubString | common.j | unclassified | _pending (M2 backlog)_ |
-| StringLength | common.j | unclassified | _pending (M2 backlog)_ |
-| StringCase | common.j | unclassified | _pending (M2 backlog)_ |
+| SubString | common.j | D3 | **tombstoned** (superseded): #strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md). |
+| StringLength | common.j | D3 | **tombstoned** (superseded): #strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md). |
+| StringCase | common.j | D3 | **tombstoned** (superseded): #strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md). |
 | StringHash | common.j | D1 | `litd/api.StringHash` |
-| GetLocalizedString | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLocalizedHotkey | common.j | unclassified | _pending (M2 backlog)_ |
+| GetLocalizedString | common.j | D3 | **tombstoned** (gameplay-irrelevant): #strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state. |
+| GetLocalizedHotkey | common.j | D3 | **tombstoned** (gameplay-irrelevant): #strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state. |
 | SetMapName | common.j | D1 | **tombstoned** (deferred-v2): #256: sets the displayed map name; map metadata is authored and loaded from the world archive (world format #205), not script-set at runtime in v1 — deferred |
 | SetMapDescription | common.j | unclassified | _pending (M2 backlog)_ |
 | SetTeams | common.j | D1 | **tombstoned** (deferred-v2): #256: team-count setter; team count is static match config set at map load (Game.Teams reads it), per the same immutable-config decision as SetPlayers — deferred |
@@ -275,7 +275,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetEnumDestructable | common.j | D2 | **tombstoned** (deferred-v2): #229: enumeration-context accessor deferred to the v2 group/query API |
 | GetFilterItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | GetEnumItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
-| ParseTags | common.j | unclassified | _pending (M2 backlog)_ |
+| ParseTags | common.j | D3 | **tombstoned** (gameplay-irrelevant): #strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state. |
 | GetFilterPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
 | GetEnumPlayer | common.j | D3 | `litd/api.Force.Players` (D3 collapse → ForForce) |
 | GetTriggeringTrigger | common.j | D1 | `litd/api.Event.Subscription` |
@@ -1541,29 +1541,29 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzCreateDeadDestructableZWithSkin | common.j | D3 | **tombstoned** (gameplay-irrelevant): #229: pre-dead z-create + render skin; superseded by CreateDestructable(...).Kill(), skin is render-only |
 | BlzGetPlayerTownHallCount | common.j | unclassified | _pending (M2 backlog)_ |
 | BJDebugMsg | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RMinBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RMaxBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RAbsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| RSignBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IMinBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IMaxBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| IAbsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ISignBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SinBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CosBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TanBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| AsinBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| AcosBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| AtanBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| Atan2BJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| RMinBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| RMaxBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| RAbsBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| RSignBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| IMinBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| IMaxBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| IAbsBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| ISignBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| SinBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| CosBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| TanBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| AsinBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| AcosBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| AtanBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| Atan2BJ | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
 | AngleBetweenPoints | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | DistanceBetweenPoints | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PolarProjectionBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetRandomDirectionDeg | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetRandomPercentageBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| PolarProjectionBJ | blizzard.j | D4 | `litd/api.Vec2.Polar` |
+| GetRandomDirectionDeg | blizzard.j | D2 | `litd/api.Game.RandomAngle` |
+| GetRandomPercentageBJ | blizzard.j | D3 | **tombstoned** (superseded): #math: GetRandomPercentageBJ is a BJ wrapper over GetRandomReal(0,100); superseded by the seeded Game.RandomFloat (dedup D1). |
 | GetRandomLocInRect | blizzard.j | D3 | `litd/api.Game.RandomPointIn` |
-| ModuloInteger | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ModuloReal | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ModuloInteger | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
+| ModuloReal | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
 | OffsetLocation | blizzard.j | D2 | `litd/api.Vec2.Add` |
 | OffsetRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | RectFromCenterSizeBJ | blizzard.j | D2 | `litd/api.RectAround` |
@@ -1594,7 +1594,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IntegerTertiaryOp | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DoNothing | blizzard.j | D4 | **tombstoned** (gameplay-irrelevant): no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5) |
 | CommentString | blizzard.j | D4 | **tombstoned** (deprecated): empty-body GUI comment-row artifact; dead even in WC3 |
-| StringIdentity | blizzard.j | D1 | _pending (M2 backlog)_ |
+| StringIdentity | blizzard.j | D3 | **tombstoned** (superseded): #strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md). |
 | GetBooleanAnd | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetBooleanOr | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | PercentToInt | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1646,7 +1646,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DisplayTextToForce | blizzard.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
 | DisplayTimedTextToForce | blizzard.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
 | ClearTextMessagesBJ | blizzard.j | D2 | `litd/api.Game.ClearMessages` (D3 collapse → ClearTextMessages) |
-| SubStringBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SubStringBJ | blizzard.j | D3 | **tombstoned** (superseded): #strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md). |
 | GetHandleIdBJ | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | StringHashBJ | blizzard.j | D1 | `litd/api.StringHash` (D3 collapse → StringHash) |
 | TriggerRegisterTimerEventPeriodic | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.Every), not the OnEvent route (timers.md) |
@@ -1857,11 +1857,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RandomItemInRectSimpleBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | CheckItemStatus | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
 | CheckItemcodeStatus | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
-| UnitId2OrderIdBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| String2UnitIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| UnitId2StringBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| String2OrderIdBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| OrderId2StringBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| UnitId2OrderIdBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| String2UnitIdBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| UnitId2StringBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| String2OrderIdBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
+| OrderId2StringBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
 | GetIssuedOrderIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetKillingUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | CreateUnitAtLocSaveLast | blizzard.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |

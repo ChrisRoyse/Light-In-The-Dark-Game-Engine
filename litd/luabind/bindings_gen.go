@@ -20,6 +20,7 @@ var Bindings = []Binding{
 	{LuaName: "Ability_Level", Package: "litd/api", Symbol: "Ability.Level", GoSignature: "() int"},
 	{LuaName: "Ability_SetField", Package: "litd/api", Symbol: "Ability.SetField", GoSignature: "(field AbilityField, value float64)"},
 	{LuaName: "Ability_SetLevel", Package: "litd/api", Symbol: "Ability.SetLevel", GoSignature: "(level int)"},
+	{LuaName: "Angle_Degrees", Package: "litd/api", Symbol: "Angle.Degrees", GoSignature: "() float64"},
 	{LuaName: "Camera_Field", Package: "litd/api", Symbol: "Camera.Field", GoSignature: "(f CameraField) float64"},
 	{LuaName: "Camera_Follow", Package: "litd/api", Symbol: "Camera.Follow", GoSignature: "(u Unit)"},
 	{LuaName: "Camera_Pan", Package: "litd/api", Symbol: "Camera.Pan", GoSignature: "(pos Vec2, opts ...PanOption)"},
@@ -28,6 +29,7 @@ var Bindings = []Binding{
 	{LuaName: "Camera_Shake", Package: "litd/api", Symbol: "Camera.Shake", GoSignature: "(magnitude float64)"},
 	{LuaName: "Camera_StopFollow", Package: "litd/api", Symbol: "Camera.StopFollow", GoSignature: "()"},
 	{LuaName: "DamageEvent_SetAmount", Package: "litd/api", Symbol: "DamageEvent.SetAmount", GoSignature: "(v float64)"},
+	{LuaName: "Deg", Package: "litd/api", Symbol: "Deg", GoSignature: "(degrees float64) Angle"},
 	{LuaName: "Destructable_Dead", Package: "litd/api", Symbol: "Destructable.Dead", GoSignature: "() bool"},
 	{LuaName: "Destructable_Invulnerable", Package: "litd/api", Symbol: "Destructable.Invulnerable", GoSignature: "() bool"},
 	{LuaName: "Destructable_Kill", Package: "litd/api", Symbol: "Destructable.Kill", GoSignature: "()"},
@@ -89,6 +91,7 @@ var Bindings = []Binding{
 	{LuaName: "Game_Player", Package: "litd/api", Symbol: "Game.Player", GoSignature: "(slot int) Player"},
 	{LuaName: "Game_Players", Package: "litd/api", Symbol: "Game.Players", GoSignature: "(filter PlayerFilter) []Player"},
 	{LuaName: "Game_Print", Package: "litd/api", Symbol: "Game.Print", GoSignature: "(to []Player, msg string, opts ...PrintOption)"},
+	{LuaName: "Game_RandomAngle", Package: "litd/api", Symbol: "Game.RandomAngle", GoSignature: "() Angle"},
 	{LuaName: "Game_RandomFloat", Package: "litd/api", Symbol: "Game.RandomFloat", GoSignature: "() float64"},
 	{LuaName: "Game_RandomInt", Package: "litd/api", Symbol: "Game.RandomInt", GoSignature: "(min, max int) int"},
 	{LuaName: "Game_RandomPointIn", Package: "litd/api", Symbol: "Game.RandomPointIn", GoSignature: "(rc Rect) Vec2"},
@@ -286,6 +289,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_UserData", Package: "litd/api", Symbol: "Unit.UserData", GoSignature: "() int"},
 	{LuaName: "Unit_VisibleTo", Package: "litd/api", Symbol: "Unit.VisibleTo", GoSignature: "(p Player) bool"},
 	{LuaName: "Vec2_Add", Package: "litd/api", Symbol: "Vec2.Add", GoSignature: "(o Vec2) Vec2"},
+	{LuaName: "Vec2_Polar", Package: "litd/api", Symbol: "Vec2.Polar", GoSignature: "(a Angle, dist float64) Vec2"},
 }
 
 // AIBindings is the AI-domain surface (litd/ai, R-EXEC-3 isolated).

@@ -11610,3 +11610,305 @@ goSignature = "(target Widget, amount float64, opts ...DamageOption) bool"
 collapsesWith = ["UnitDamageTargetBJ", "UnitDamagePoint", "UnitDamagePointLoc"]
 package = "litd/api"
 reason = "#217: the deal-damage family (target/point/Loc/BJ) collapses onto Unit.Damage over the sim combat chokepoint (QueueDamage -> armor matrix -> combat phase); attack-type row preserved via WithAttackType, render/sound cue args dropped (dedup D3)."
+
+[[override]]
+name = "Sin"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Cos"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Tan"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Asin"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Acos"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Atan"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Atan2"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "SquareRoot"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Pow"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "ModuloInteger"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "ModuloReal"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "SinBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "CosBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "TanBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "AsinBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "AcosBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "AtanBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "Atan2BJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "IAbsBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "IMaxBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "IMinBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "ISignBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "RAbsBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "RMaxBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "RMinBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "RSignBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+
+[[override]]
+name = "SubString"
+class = "D3"
+tombstone = "superseded"
+reason = "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+
+[[override]]
+name = "SubStringBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+
+[[override]]
+name = "StringLength"
+class = "D3"
+tombstone = "superseded"
+reason = "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+
+[[override]]
+name = "StringCase"
+class = "D3"
+tombstone = "superseded"
+reason = "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+
+[[override]]
+name = "StringIdentity"
+class = "D3"
+tombstone = "superseded"
+reason = "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+
+[[override]]
+name = "OrderId"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "OrderId2String"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "OrderId2StringBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "String2OrderIdBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "String2UnitIdBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "UnitId"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "UnitId2String"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "UnitId2StringBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "UnitId2OrderIdBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+
+[[override]]
+name = "GetLocalizedString"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state."
+
+[[override]]
+name = "GetLocalizedHotkey"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state."
+
+[[override]]
+name = "ParseTags"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state."
+
+[[override]]
+name = "GetObjectName"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#strings: GetObjectName resolves a design-time object-editor display name; deferred to the v2 object-data API (no v1 runtime object-data name table)."
+
+[[override]]
+name = "GetRandomPercentageBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#math: GetRandomPercentageBJ is a BJ wrapper over GetRandomReal(0,100); superseded by the seeded Game.RandomFloat (dedup D1)."
+
+[[override]]
+name = "Deg2Rad"
+class = "D5"
+goMapping = "Deg"
+goSignature = "(degrees float64) Angle"
+package = "litd/api"
+reason = "#math: degree->radian conversion is subsumed by the Angle type constructor litd.Deg(d) (dedup D5: the Deg2Rad/Rad2Deg pair becomes the type itself)."
+
+[[override]]
+name = "Rad2Deg"
+class = "D5"
+goMapping = "Angle.Degrees"
+goSignature = "() float64"
+package = "litd/api"
+reason = "#math: radian->degree conversion is subsumed by Angle.Degrees() (dedup D5)."
+
+[[override]]
+name = "PolarProjectionBJ"
+class = "D4"
+goMapping = "Vec2.Polar"
+goSignature = "(a Angle, dist float64) Vec2"
+package = "litd/api"
+reason = "#math: polar projection kept once as the real-capability Vec2.Polar(angle, dist) method (dedup D4)."
+
+[[override]]
+name = "GetRandomDirectionDeg"
+class = "D2"
+goMapping = "Game.RandomAngle"
+goSignature = "() Angle"
+package = "litd/api"
+reason = "#math: random heading collapses onto the seeded Game.RandomAngle() (sim PRNG, R-SIM-2)."

@@ -34,6 +34,27 @@
       }
     },
     {
+      "name": "AcosBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
       "name": "AddItemToStockBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -248,6 +269,74 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "AsinBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "Atan2BJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "AtanBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -1941,6 +2030,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+      }
+    },
+    {
+      "name": "CosBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -4469,6 +4579,22 @@
       }
     },
     {
+      "name": "GetRandomDirectionDeg",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.RandomAngle",
+        "package": "litd/api",
+        "goSignature": "() Angle"
+      }
+    },
+    {
       "name": "GetRandomLocInRect",
       "origin": "blizzard.j",
       "signature": {
@@ -4488,6 +4614,21 @@
         "symbol": "Game.RandomPointIn",
         "package": "litd/api",
         "goSignature": "(rc Rect) Vec2"
+      }
+    },
+    {
+      "name": "GetRandomPercentageBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: GetRandomPercentageBJ is a BJ wrapper over GetRandomReal(0,100); superseded by the seeded Game.RandomFloat (dedup D1)."
       }
     },
     {
@@ -5255,6 +5396,100 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "IAbsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "IMaxBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "IMinBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "ISignBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -7902,6 +8137,58 @@
       }
     },
     {
+      "name": "ModuloInteger",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "dividend",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "divisor",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "ModuloReal",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "dividend",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "divisor",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
       "name": "MoveLightningLoc",
       "origin": "blizzard.j",
       "signature": {
@@ -8291,6 +8578,27 @@
         "symbol": "Vec2.Add",
         "package": "litd/api",
         "goSignature": "(o Vec2) Vec2"
+      }
+    },
+    {
+      "name": "OrderId2StringBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "orderId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
       }
     },
     {
@@ -8828,6 +9136,38 @@
       }
     },
     {
+      "name": "PolarProjectionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "source",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "dist",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "angle",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "location"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Vec2.Polar",
+        "package": "litd/api",
+        "goSignature": "(a Angle, dist float64) Vec2"
+      }
+    },
+    {
       "name": "PolledWait",
       "origin": "blizzard.j",
       "signature": {
@@ -9112,6 +9452,100 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "RAbsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "RMaxBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "RMinBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "RSignBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -13659,6 +14093,27 @@
       }
     },
     {
+      "name": "SinBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
       "name": "StartSoundForPlayerBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -13862,6 +14317,121 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "String2OrderIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "orderIdString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
+      "name": "String2UnitIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitIdString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
+      "name": "StringIdentity",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "theString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+      }
+    },
+    {
+      "name": "SubStringBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "source",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "start",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "end",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+      }
+    },
+    {
+      "name": "TanBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -14789,6 +15359,48 @@
       }
     },
     {
+      "name": "UnitId2OrderIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
+      "name": "UnitId2StringBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
       "name": "UnitInventoryCount",
       "origin": "blizzard.j",
       "signature": {
@@ -15261,6 +15873,27 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "Acos",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -15780,6 +16413,74 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "boolexpr AND-combinator; Go closures compose with \u0026\u0026 (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "Asin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "Atan",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "Atan2",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -24575,6 +25276,27 @@
       }
     },
     {
+      "name": "Cos",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "radians",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
       "name": "CreateBlightedGoldmine",
       "origin": "common.j",
       "signature": {
@@ -25687,6 +26409,28 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#256: location-handle form of DefineStartLocation; same static-map-metadata deferral, and the location-handle representation is itself superseded by Vec2 (D3) — deferred"
+      }
+    },
+    {
+      "name": "Deg2Rad",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "degrees",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Deg",
+        "package": "litd/api",
+        "goSignature": "(degrees float64) Angle"
       }
     },
     {
@@ -28712,6 +29456,48 @@
       }
     },
     {
+      "name": "GetLocalizedHotkey",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "source",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state."
+      }
+    },
+    {
+      "name": "GetLocalizedString",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "source",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state."
+      }
+    },
+    {
       "name": "GetLocationX",
       "origin": "common.j",
       "signature": {
@@ -28788,6 +29574,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "GetObjectName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "objectId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#strings: GetObjectName resolves a design-time object-editor display name; deferred to the v2 object-data API (no v1 runtime object-data name table)."
       }
     },
     {
@@ -36486,6 +37293,48 @@
       }
     },
     {
+      "name": "OrderId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "orderIdString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
+      "name": "OrderId2String",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "orderId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
       "name": "PanCameraTo",
       "origin": "common.j",
       "signature": {
@@ -36528,6 +37377,27 @@
           "SetCameraQuickPositionLoc",
           "SetCameraQuickPositionLocForPlayer"
         ]
+      }
+    },
+    {
+      "name": "ParseTags",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "taggedString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#strings: localization/hotkey lookup and color-tag parsing are render/locale presentation, not deterministic sim state."
       }
     },
     {
@@ -36856,6 +37726,32 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "leaderboard UI binding; presentation"
+      }
+    },
+    {
+      "name": "Pow",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "power",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -37427,6 +38323,28 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "width/precision real-\u003estring; collapses onto fmt.Sprintf (math-strings-conversion.md D2). No public surface"
+      }
+    },
+    {
+      "name": "Rad2Deg",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "radians",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Angle.Degrees",
+        "package": "litd/api",
+        "goSignature": "() float64"
       }
     },
     {
@@ -44813,6 +45731,48 @@
       }
     },
     {
+      "name": "Sin",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "radians",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
+      "name": "SquareRoot",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
+      }
+    },
+    {
       "name": "StartMeleeAI",
       "origin": "common.j",
       "signature": {
@@ -45131,6 +46091,32 @@
       }
     },
     {
+      "name": "StringCase",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "source",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "upper",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+      }
+    },
+    {
       "name": "StringHash",
       "origin": "common.j",
       "signature": {
@@ -45153,6 +46139,58 @@
         "collapsesWith": [
           "StringHashBJ"
         ]
+      }
+    },
+    {
+      "name": "StringLength",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
+      }
+    },
+    {
+      "name": "SubString",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "source",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "start",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "end",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#strings: superseded by native Go string operations (slicing, len, strings.ToUpper/ToLower, identity); no ported JASS string BJ needed (math-strings-conversion.md)."
       }
     },
     {
@@ -45360,6 +46398,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+      }
+    },
+    {
+      "name": "Tan",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "radians",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1)."
       }
     },
     {
@@ -47469,6 +48528,48 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#225: queryable by scanning Unit.ItemInSlot over the six slots."
+      }
+    },
+    {
+      "name": "UnitId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitIdString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
+      "name": "UnitId2String",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
       }
     },
     {
