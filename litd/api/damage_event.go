@@ -27,6 +27,10 @@ type DamageEvent struct {
 	g        *Game
 }
 
+// Valid reports whether the event handle is usable (live only inside an
+// OnDamage callback). Every noun handle exposes Valid() bool (R-API-5).
+func (e *DamageEvent) Valid() bool { return e != nil && e.g != nil }
+
 // Source returns the attacking unit (zero Unit on an environmental hit).
 func (e *DamageEvent) Source() Unit { return Unit{id: e.src, g: e.g} }
 

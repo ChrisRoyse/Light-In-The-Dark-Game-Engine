@@ -48,6 +48,17 @@ var setupAllowlist = map[string]bool{
 	"LoadMap": true,
 }
 
+// methodErrAllowlist names persistence-boundary methods permitted to return
+// error. R-API-5 forbids error returns on gameplay verbs (a verb must no-op
+// on an invalid handle, never error) — but serialization IO is not a gameplay
+// verb. Storage.Save/Load read/write an external byte stream and MUST fail
+// closed on a bad magic / version / truncation (doctrine §9), which only an
+// error return can express. Keyed "Type.Method".
+var methodErrAllowlist = map[string]bool{
+	"Storage.Save": true,
+	"Storage.Load": true,
+}
+
 // forbiddenIdents are exported identifiers the API must never expose — the
 // trigger-zoo types events replaced (R-API-4) and the heap location type
 // values replaced (R-API-2).
@@ -199,6 +210,9 @@ func (c *checker) checkErrorReturn(d *ast.FuncDecl, sig *types.Signature, isMeth
 	}
 	if !isMethod && setupAllowlist[d.Name.Name] {
 		return // allowlisted setup constructor (NewGame/LoadMap)
+	}
+	if isMethod && methodErrAllowlist[c.funcName(d)] {
+		return // allowlisted persistence-boundary IO method (Storage.Save/Load)
 	}
 	c.report(d.Name.Pos(),
 		"R-API-5: %s returns error — gameplay verbs are no-ops on invalid handles, never error; only setup (NewGame/LoadMap) may return error",

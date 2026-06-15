@@ -26,6 +26,10 @@ func (g *Game) NewUnitSet() *UnitSet {
 	return &UnitSet{g: g}
 }
 
+// Valid reports whether the set is usable (made by Game.NewUnitSet, not the
+// nil/zero value). Every noun handle exposes Valid() bool (R-API-5).
+func (s *UnitSet) Valid() bool { return s != nil && s.g != nil && s.g.w != nil }
+
 // indexOf returns the position of u in the set, or -1.
 func (s *UnitSet) indexOf(id sim.EntityID) int {
 	for i, e := range s.ids {

@@ -26,6 +26,10 @@ func NewAttachment[V any](g *Game) *Attachment[V] {
 	return &Attachment[V]{g: g, m: make(map[sim.EntityID]V)}
 }
 
+// Valid reports whether the attachment is usable (made by NewAttachment,
+// not the nil/zero value). Every noun handle exposes Valid() bool (R-API-5).
+func (a *Attachment[V]) Valid() bool { return a != nil && a.g != nil && a.m != nil }
+
 // Set attaches v to u. No-op on an invalid or foreign unit, so a stale
 // handle cannot write into a recycled slot's data. JASS: SaveX(GetHandleId(u)).
 func (a *Attachment[V]) Set(u Unit, v V) {
