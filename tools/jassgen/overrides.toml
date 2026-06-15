@@ -1749,6 +1749,7 @@ name = "Rect"
 class = "D3"
 goMapping = "NewRect"
 goSignature = "(a, b Vec2) Rect"
+collapsesWith = ["RectFromLoc"]
 package = "litd/api"
 reason = "(minx,miny,maxx,maxy) rect constructor collapses onto NewRect over two Vec2 corners (R-API-2); GC owns the value, no RemoveRect"
 
@@ -1757,7 +1758,7 @@ name = "MoveRectTo"
 class = "D2"
 goMapping = "Rect.Offset"
 goSignature = "(d Vec2) Rect"
-collapsesWith = ["MoveRectToLoc"]
+collapsesWith = ["MoveRectToLoc", "OffsetRectBJ"]
 package = "litd/api"
 reason = "a Rect is a value with no identity to mutate; recentering re-issues a translated value via Rect.Offset (hazard 4); the Loc variant collapses (location->Vec2)"
 
@@ -1817,6 +1818,7 @@ name = "RectFromCenterSizeBJ"
 class = "D2"
 goMapping = "RectAround"
 goSignature = "(c Vec2, w, h float64) Rect"
+collapsesWith = ["GetRectFromCircleBJ"]
 package = "litd/api"
 reason = "center+size constructor collapses onto RectAround (dedup §3)"
 
@@ -1967,6 +1969,7 @@ name = "GetWorldBounds"
 class = "D1"
 goMapping = "Game.WorldBounds"
 goSignature = "() Rect"
+collapsesWith = ["GetEntireMapRect", "GetPlayableMapRect"]
 package = "litd/api"
 reason = "world playable-area bounds map onto Game.WorldBounds (dedup §2); deterministic grid-derived rect"
 
@@ -3178,7 +3181,7 @@ name = "GroupEnumUnitsInRect"
 class = "D3"
 goMapping = "Game.UnitsIn"
 goSignature = "(rect Rect, filter UnitFilter) []Unit"
-collapsesWith = ["GroupEnumUnitsInRectCounted"]
+collapsesWith = ["GroupEnumUnitsInRectCounted", "GetUnitsInRectAll", "GetUnitsInRectMatching", "GetUnitsInRectOfPlayer", "GetUnitsInRectOfPlayerFilter"]
 package = "litd/api"
 reason = "rect enumeration collapses to Game.UnitsIn (R-EXEC-4); the counted variant folds in"
 
@@ -12739,3 +12742,297 @@ name = "SetCreepCampFilterState"
 class = "D3"
 tombstone = "gameplay-irrelevant"
 reason = "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
+
+[[override]]
+name = "CompareLocationsBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#regions: value equality of two locations/rects; Go compares Vec2/Rect with == directly."
+
+[[override]]
+name = "CompareRectsBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#regions: value equality of two locations/rects; Go compares Vec2/Rect with == directly."
+
+[[override]]
+name = "NudgeObjectsInRect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#regions: nudge units/objects off an occupied footprint (build-spot clearing); deferred to v2 with the placement/pathing-clear API."
+
+[[override]]
+name = "NudgeUnitsInRectEnum"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#regions: nudge units/objects off an occupied footprint (build-spot clearing); deferred to v2 with the placement/pathing-clear API."
+
+[[override]]
+name = "InitMapRects"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#regions: engine-init seam that populates bj_mapInitialPlayable* globals; the LitD map loader owns world bounds (Game.WorldBounds), no script-callable init."
+
+[[override]]
+name = "FlushStoredBoolean"
+class = "D3"
+tombstone = "superseded"
+reason = "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+
+[[override]]
+name = "FlushStoredInteger"
+class = "D3"
+tombstone = "superseded"
+reason = "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+
+[[override]]
+name = "FlushStoredReal"
+class = "D3"
+tombstone = "superseded"
+reason = "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+
+[[override]]
+name = "FlushStoredString"
+class = "D3"
+tombstone = "superseded"
+reason = "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+
+[[override]]
+name = "BlzSendSyncData"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface."
+
+[[override]]
+name = "SyncSelections"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface."
+
+[[override]]
+name = "LoadZepWave"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline."
+
+[[override]]
+name = "DelayedSuspendDecayBoneEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "DelayedSuspendDecayFleshEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "DelayedSuspendDecayStopAnimEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "FindElevatorWallBlockerEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "ForcePickRandomPlayerEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "NearbyElevatorExistsEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "PauseAllUnitsBJEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "RegisterDestDeathInRegionEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "SetPlayerColorBJEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "UpdateEachStockBuildingEnum"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+
+[[override]]
+name = "GroupTimedLife"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store."
+
+[[override]]
+name = "CaptainGroupSize"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+
+[[override]]
+name = "SetGroupsFlee"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+
+[[override]]
+name = "DoTransmissionBasicsXYBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+
+[[override]]
+name = "GetLastTransmissionDurationBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+
+[[override]]
+name = "GetTransmissionDuration"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+
+[[override]]
+name = "WaitTransmissionDuration"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+
+[[override]]
+name = "TransmissionFromUnitTypeWithNameBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+
+[[override]]
+name = "TransmissionFromUnitWithNameBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+
+[[override]]
+name = "AddSpellEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+
+[[override]]
+name = "AddSpellEffectById"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+
+[[override]]
+name = "AddSpellEffectByIdLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+
+[[override]]
+name = "AddSpellEffectLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+
+[[override]]
+name = "AddSpellEffectTarget"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+
+[[override]]
+name = "AddSpellEffectTargetById"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+
+[[override]]
+name = "GetUpgradeLevel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+
+[[override]]
+name = "GetUpgradeWoodCost"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+
+[[override]]
+name = "SetUpgrade"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+
+[[override]]
+name = "ChangeElevatorHeight"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "ChangeElevatorWallBlocker"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "ChangeElevatorWalls"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "GetElevatorHeight"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "NearbyElevatorExists"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+
+[[override]]
+name = "ModifyGateBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#destructables: gate open/close/destroy state toggle; deferred to v2 with the destructable-state API."
+
+[[override]]
+name = "DetectGameStarted"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#visibility: the bj_gameStarted poll flag (a one-shot game-start latch); the LitD lifecycle exposes match start through the event/scheduler model, not a polled global."
+
+[[override]]
+name = "GetDetectedUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands."
+
+[[override]]
+name = "SetUnitFog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands."

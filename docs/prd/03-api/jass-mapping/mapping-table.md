@@ -231,7 +231,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ForceEnumEnemies | common.j | D1 | **tombstoned** (superseded): enumerate-enemies-into-force superseded by Game.Enemies(p) []Player |
 | ForForce | common.j | D3 | `litd/api.Force.Players` |
 | Rect | common.j | D3 | `litd/api.NewRect` |
-| RectFromLoc | common.j | unclassified | _pending (M2 backlog)_ |
+| RectFromLoc | common.j | D3 | `litd/api.NewRect` (D3 collapse → Rect) |
 | RemoveRect | common.j | D1 | **tombstoned** (superseded): rect heap-lifetime cleanup superseded — Rect is a GC'd value (R-API-2) |
 | SetRect | common.j | D2 | **tombstoned** (superseded): in-place rect bounds mutation superseded by constructing a new Rect value (NewRect); no identity to set (hazard 4) |
 | SetRectFromLoc | common.j | D3 | **tombstoned** (superseded): in-place rect-from-locations mutation superseded by NewRect over two Vec2 corners (R-API-2, hazard 4) |
@@ -338,7 +338,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetResearched | common.j | D2 | **tombstoned** (deferred-v2): researched upgrade id needs an Event payload field not yet carried for that kind; deferred (#219) |
 | GetTrainedUnitType | common.j | D2 | **tombstoned** (deferred-v2): trained unit type needs an Event payload field not yet carried for that kind; deferred (#219) |
 | GetTrainedUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
-| GetDetectedUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetDetectedUnit | common.j | D3 | **tombstoned** (deferred-v2): #visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands. |
 | GetSummoningUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetSummonedUnit | common.j | D2 | **tombstoned** (deferred-v2): GetSummonedUnit returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
 | GetTransportUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
@@ -740,7 +740,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SaveGameExists | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SetMaxCheckpointSaves | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveGameCheckpoint | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
-| SyncSelections | common.j | unclassified | _pending (M2 backlog)_ |
+| SyncSelections | common.j | D3 | **tombstoned** (deferred-v2): #net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface. |
 | SetFloatGameState | common.j | D1 | `litd/api.Game.SetTimeOfDay` (D3 collapse → SetTimeOfDay) |
 | GetFloatGameState | common.j | D1 | `litd/api.Game.TimeOfDay` (D3 collapse → GetTimeOfDay) |
 | SetIntegerGameState | common.j | D5 | **tombstoned** (gameplay-irrelevant): #256: enum-keyed integer game-state setter; its constants are GAME_STATE_DIVINE_INTERVENTION (single-player campaign dialog) and GAME_STATE_DISCONNECTED (net link status) — neither has a v1 public surface (the one relevant float slice, TIME_OF_DAY, folds onto Game.SetTimeOfDay). Gameplay-irrelevant |
@@ -782,11 +782,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | HaveStoredString | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | FlushGameCache | common.j | D1 | `litd/api.Storage.Clear` |
 | FlushStoredMission | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
-| FlushStoredInteger | common.j | unclassified | _pending (M2 backlog)_ |
-| FlushStoredReal | common.j | unclassified | _pending (M2 backlog)_ |
-| FlushStoredBoolean | common.j | unclassified | _pending (M2 backlog)_ |
+| FlushStoredInteger | common.j | D3 | **tombstoned** (superseded): #hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242). |
+| FlushStoredReal | common.j | D3 | **tombstoned** (superseded): #hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242). |
+| FlushStoredBoolean | common.j | D3 | **tombstoned** (superseded): #hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242). |
 | FlushStoredUnit | common.j | D3 | **tombstoned** (deferred-v2): #217: shop unit-stock (purchasable unit inventory) has no v1 sim component; deferred to v2. |
-| FlushStoredString | common.j | unclassified | _pending (M2 backlog)_ |
+| FlushStoredString | common.j | D3 | **tombstoned** (superseded): #hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242). |
 | GetStoredInteger | common.j | D5 | `litd/api.Storage.GetInt` |
 | GetStoredReal | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | GetStoredBoolean | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
@@ -911,7 +911,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetRandomSeed | common.j | D1 | `litd/api.Game.SetRandomSeed` |
 | SetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | ResetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
-| SetUnitFog | common.j | unclassified | _pending (M2 backlog)_ |
+| SetUnitFog | common.j | D3 | **tombstoned** (deferred-v2): #visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands. |
 | SetTerrainFogEx | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | DisplayTextToPlayer | common.j | D2 | `litd/api.Game.Print` |
 | DisplayTimedTextToPlayer | common.j | D2 | `litd/api.Game.Print` (D3 collapse → DisplayTextToPlayer) |
@@ -1184,12 +1184,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AddSpecialEffectLoc | common.j | D3 | `litd/api.Game.AddSpecialEffect` (D3 collapse → AddSpecialEffect) |
 | AddSpecialEffectTarget | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | DestroyEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| AddSpellEffect | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpellEffectLoc | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpellEffectById | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpellEffectByIdLoc | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpellEffectTarget | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpellEffectTargetById | common.j | D3 | _pending (M2 backlog)_ |
+| AddSpellEffect | common.j | D3 | **tombstoned** (deferred-v2): #effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral). |
+| AddSpellEffectLoc | common.j | D3 | **tombstoned** (deferred-v2): #effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral). |
+| AddSpellEffectById | common.j | D3 | **tombstoned** (deferred-v2): #effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral). |
+| AddSpellEffectByIdLoc | common.j | D3 | **tombstoned** (deferred-v2): #effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral). |
+| AddSpellEffectTarget | common.j | D3 | **tombstoned** (deferred-v2): #effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral). |
+| AddSpellEffectTargetById | common.j | D3 | **tombstoned** (deferred-v2): #effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral). |
 | AddLightning | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | AddLightningEx | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | DestroyLightning | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
@@ -1439,7 +1439,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetTriggerFrameValue | common.j | D1 | **tombstoned** (deferred-v2): frame value — ui-frames (#245) |
 | BlzGetTriggerFrameText | common.j | D1 | **tombstoned** (deferred-v2): frame text — ui-frames (#245) |
 | BlzTriggerRegisterPlayerSyncEvent | common.j | D1 | **tombstoned** (deferred-v2): player sync events — networking (#316) |
-| BlzSendSyncData | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSendSyncData | common.j | D3 | **tombstoned** (deferred-v2): #net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface. |
 | BlzGetTriggerSyncPrefix | common.j | D1 | **tombstoned** (deferred-v2): sync prefix — networking (#316) |
 | BlzGetTriggerSyncData | common.j | D1 | **tombstoned** (deferred-v2): sync data — networking (#316) |
 | BlzTriggerRegisterPlayerKeyEvent | common.j | D1 | **tombstoned** (deferred-v2): key events — ui-frames (#245) |
@@ -1565,7 +1565,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ModuloInteger | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
 | ModuloReal | blizzard.j | D3 | **tombstoned** (superseded): #math: superseded by the Go standard library (math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sqrt/Pow, math.Mod) and the min/max builtins + math.Abs; gameplay math routes through the sim fixed-point package, not a ported JASS trig wrapper (math-strings-conversion.md D1). |
 | OffsetLocation | blizzard.j | D2 | `litd/api.Vec2.Add` |
-| OffsetRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| OffsetRectBJ | blizzard.j | D2 | `litd/api.Rect.Offset` (D3 collapse → MoveRectTo) |
 | RectFromCenterSizeBJ | blizzard.j | D2 | `litd/api.RectAround` |
 | RectContainsCoords | blizzard.j | D2 | `litd/api.Rect.Contains` |
 | RectContainsLoc | blizzard.j | D2 | `litd/api.Rect.Contains` (D3 collapse → RectContainsCoords) |
@@ -1604,9 +1604,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetTimeOfDayScalePercentBJ | blizzard.j | D1 | `litd/api.Game.SetTimeOfDayScale` (D3 collapse → SetTimeOfDayScale) |
 | GetTimeOfDayScalePercentBJ | blizzard.j | D1 | `litd/api.Game.TimeOfDayScale` (D3 collapse → GetTimeOfDayScale) |
 | PlaySound | blizzard.j | D3 | `litd/api.Sound.Play` (D3 collapse → StartSound) |
-| CompareLocationsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CompareRectsBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetRectFromCircleBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| CompareLocationsBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #regions: value equality of two locations/rects; Go compares Vec2/Rect with == directly. |
+| CompareRectsBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #regions: value equality of two locations/rects; Go compares Vec2/Rect with == directly. |
+| GetRectFromCircleBJ | blizzard.j | D2 | `litd/api.RectAround` (D3 collapse → RectFromCenterSizeBJ) |
 | GetCurrentCameraSetup | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
 | CameraSetupApplyForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
 | CameraSetupApplyForPlayerSmooth | blizzard.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
@@ -1630,8 +1630,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CameraClearNoiseForPlayer | blizzard.j | D3 | `litd/api.Camera.Shake` (D3 collapse → CameraSetSourceNoise) |
 | GetCurrentCameraBoundsMapRectBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
 | GetCameraBoundsMapRect | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render-only camera read-state (eye/target position, live bounds/margin); no sim may query the camera, so no deterministic surface. |
-| GetPlayableMapRect | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetEntireMapRect | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetPlayableMapRect | blizzard.j | D1 | `litd/api.Game.WorldBounds` (D3 collapse → GetWorldBounds) |
+| GetEntireMapRect | blizzard.j | D1 | `litd/api.Game.WorldBounds` (D3 collapse → GetWorldBounds) |
 | SetCameraBoundsToRect | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
 | SetCameraBoundsToRectForPlayerBJ | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
 | AdjustCameraBoundsBJ | blizzard.j | D3 | `litd/api.Camera.SetBounds` (D3 collapse → SetCameraBounds) |
@@ -1680,7 +1680,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterCommonCommandEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
 | TriggerRegisterGameLoadedEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source. |
 | TriggerRegisterGameSavedEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source. |
-| RegisterDestDeathInRegionEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
+| RegisterDestDeathInRegionEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
 | TriggerRegisterDestDeathInRegionEvent | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
 | AddWeatherEffectSaveLast | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | GetLastCreatedWeatherEffect | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
@@ -1872,9 +1872,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedGroup | blizzard.j | D1 | **tombstoned** (superseded): last-created-group global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | CreateCorpseLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: spawn a decorative corpse; render/decoration with no gameplay sim component, deferred to v2. |
 | UnitSuspendDecayBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: suppress corpse decay; no v1 corpse-decay timer surface, deferred to v2. |
-| DelayedSuspendDecayStopAnimEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DelayedSuspendDecayBoneEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DelayedSuspendDecayFleshEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
+| DelayedSuspendDecayStopAnimEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
+| DelayedSuspendDecayBoneEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
+| DelayedSuspendDecayFleshEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
 | DelayedSuspendDecay | blizzard.j | D4 | _pending (M2 backlog)_ |
 | DelayedSuspendDecayCreate | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CreatePermanentCorpseLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1930,7 +1930,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | EnableCreepSleepBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | UnitGenerateAlarms | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2. |
 | DoesUnitGenerateAlarms | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: unit alarm-generation flags feed the AI alert system; no v1 sim component, deferred to v2. |
-| PauseAllUnitsBJEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
+| PauseAllUnitsBJEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
 | PauseAllUnitsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PauseUnitBJ | blizzard.j | D2 | `litd/api.Unit.SetPaused` |
 | IsUnitPausedBJ | blizzard.j | D1 | `litd/api.Unit.Paused` |
@@ -1980,17 +1980,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | EnumDestructablesInCircleBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: spatial enumeration (circle) deferred to the v2 group/query API |
 | SetDestructableLifePercentBJ | blizzard.j | D1 | **tombstoned** (superseded): #229: percent-life setter; callers write d.SetLife(int(float64(d.MaxLife()) * pct)) over the typed accessors |
 | SetDestructableMaxLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #229: BJ max-life mutation; deferred with SetDestructableMaxLife |
-| ModifyGateBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetElevatorHeight | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ChangeElevatorHeight | blizzard.j | D4 | _pending (M2 backlog)_ |
-| NudgeUnitsInRectEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ModifyGateBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #destructables: gate open/close/destroy state toggle; deferred to v2 with the destructable-state API. |
+| GetElevatorHeight | blizzard.j | D3 | **tombstoned** (deferred-v2): #destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2. |
+| ChangeElevatorHeight | blizzard.j | D3 | **tombstoned** (deferred-v2): #destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2. |
+| NudgeUnitsInRectEnum | blizzard.j | D3 | **tombstoned** (deferred-v2): #regions: nudge units/objects off an occupied footprint (build-spot clearing); deferred to v2 with the placement/pathing-clear API. |
 | NudgeItemsInRectEnum | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
-| NudgeObjectsInRect | blizzard.j | D4 | _pending (M2 backlog)_ |
-| NearbyElevatorExistsEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| NearbyElevatorExists | blizzard.j | D4 | _pending (M2 backlog)_ |
-| FindElevatorWallBlockerEnum | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| ChangeElevatorWallBlocker | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ChangeElevatorWalls | blizzard.j | D4 | _pending (M2 backlog)_ |
+| NudgeObjectsInRect | blizzard.j | D3 | **tombstoned** (deferred-v2): #regions: nudge units/objects off an occupied footprint (build-spot clearing); deferred to v2 with the placement/pathing-clear API. |
+| NearbyElevatorExistsEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
+| NearbyElevatorExists | blizzard.j | D3 | **tombstoned** (deferred-v2): #destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2. |
+| FindElevatorWallBlockerEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
+| ChangeElevatorWallBlocker | blizzard.j | D3 | **tombstoned** (deferred-v2): #destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2. |
+| ChangeElevatorWalls | blizzard.j | D3 | **tombstoned** (deferred-v2): #destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2. |
 | WaygateActivateBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2. |
 | WaygateIsActiveBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2. |
 | WaygateSetDestinationLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: waygate (teleporter) activation/destination has no v1 sim component; deferred to v2. |
@@ -2009,13 +2009,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ForceRemovePlayerSimple | blizzard.j | D1 | `litd/api.Force.RemovePlayer` (D3 collapse → ForceRemovePlayer) |
 | GroupPickRandomUnitEnum | blizzard.j | D1 | **tombstoned** (superseded): random member pick enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GroupPickRandomUnit | blizzard.j | D1 | **tombstoned** (superseded): random member pick superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| ForcePickRandomPlayerEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ForcePickRandomPlayerEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
 | ForcePickRandomPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
 | EnumUnitsSelected | blizzard.j | D1 | **tombstoned** (deferred-v2): selected-units enumeration — unit selection is per-player UI state; deferred to the ui-frames/selection surface (#245) |
-| GetUnitsInRectMatching | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetUnitsInRectAll | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetUnitsInRectOfPlayerFilter | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetUnitsInRectOfPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetUnitsInRectMatching | blizzard.j | D3 | `litd/api.Game.UnitsIn` (D3 collapse → GroupEnumUnitsInRect) |
+| GetUnitsInRectAll | blizzard.j | D3 | `litd/api.Game.UnitsIn` (D3 collapse → GroupEnumUnitsInRect) |
+| GetUnitsInRectOfPlayerFilter | blizzard.j | D3 | `litd/api.Game.UnitsIn` (D3 collapse → GroupEnumUnitsInRect) |
+| GetUnitsInRectOfPlayer | blizzard.j | D3 | `litd/api.Game.UnitsIn` (D3 collapse → GroupEnumUnitsInRect) |
 | GetUnitsInRangeOfLocMatching | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetUnitsInRangeOfLocAll | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetUnitsOfTypeIdAllFilter | blizzard.j | unclassified | _pending (M2 backlog)_ |
@@ -2197,14 +2197,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CancelCineSceneBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TryInitCinematicBehaviorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | SetCinematicSceneBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
-| GetTransmissionDuration | blizzard.j | D4 | _pending (M2 backlog)_ |
-| WaitTransmissionDuration | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DoTransmissionBasicsXYBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TransmissionFromUnitWithNameBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetTransmissionDuration | blizzard.j | D3 | **tombstoned** (deferred-v2): #sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245). |
+| WaitTransmissionDuration | blizzard.j | D3 | **tombstoned** (deferred-v2): #sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245). |
+| DoTransmissionBasicsXYBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245). |
+| TransmissionFromUnitWithNameBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245). |
 | PlayDialogueFromSpeakerEx | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | PlayDialogueFromSpeakerTypeEx | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| TransmissionFromUnitTypeWithNameBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetLastTransmissionDurationBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| TransmissionFromUnitTypeWithNameBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245). |
+| GetLastTransmissionDurationBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245). |
 | ForceCinematicSubtitlesBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | CinematicModeExBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | CinematicModeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
@@ -2375,7 +2375,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlightGoldMineForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | GetLastHauntedGoldMine | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: map creature/resource-density config and gold-mine/town-hall bookkeeping; deferred to the v2 map-config + economy API. |
 | IsPointBlightedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
-| SetPlayerColorBJEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetPlayerColorBJEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
 | SetPlayerColorBJ | blizzard.j | D5 | `litd/api.Player.SetColor` (D3 collapse → SetPlayerColor) |
 | SetPlayerUnitAvailableBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
 | LockGameSpeedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2473,17 +2473,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | InitDNCSounds | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | InitBlizzardGlobals | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitQueuedTriggers | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
-| InitMapRects | blizzard.j | D4 | _pending (M2 backlog)_ |
+| InitMapRects | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #regions: engine-init seam that populates bj_mapInitialPlayable* globals; the LitD map loader owns world bounds (Game.WorldBounds), no script-callable init. |
 | InitSummonableCaps | blizzard.j | D4 | _pending (M2 backlog)_ |
 | UpdateStockAvailability | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UpdateEachStockBuildingEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
+| UpdateEachStockBuildingEnum | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure). |
 | UpdateEachStockBuilding | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PerformStockUpdates | blizzard.j | D4 | _pending (M2 backlog)_ |
 | StartStockUpdates | blizzard.j | D4 | _pending (M2 backlog)_ |
 | RemovePurchasedItem | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface. |
 | InitNeutralBuildings | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MarkGameStarted | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DetectGameStarted | blizzard.j | D4 | _pending (M2 backlog)_ |
+| DetectGameStarted | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #visibility: the bj_gameStarted poll flag (a one-shot game-start latch); the LitD lifecycle exposes match start through the event/scheduler model, not a polled global. |
 | InitBlizzard | blizzard.j | D4 | _pending (M2 backlog)_ |
 | RandomDistReset | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | RandomDistAddItem | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
@@ -2548,9 +2548,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TownWithMine | commonai | unclassified | _pending (M2 backlog)_ |
 | TownHasMine | commonai | unclassified | _pending (M2 backlog)_ |
 | TownHasHall | commonai | unclassified | _pending (M2 backlog)_ |
-| GetUpgradeLevel | commonai | unclassified | _pending (M2 backlog)_ |
+| GetUpgradeLevel | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
 | GetUpgradeGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
-| GetUpgradeWoodCost | commonai | unclassified | _pending (M2 backlog)_ |
+| GetUpgradeWoodCost | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
 | GetNextExpansion | commonai | unclassified | _pending (M2 backlog)_ |
 | GetMegaTarget | commonai | unclassified | _pending (M2 backlog)_ |
 | GetBuilding | commonai | unclassified | _pending (M2 backlog)_ |
@@ -2560,7 +2560,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetProduce | commonai | unclassified | _pending (M2 backlog)_ |
 | Unsummon | commonai | unclassified | _pending (M2 backlog)_ |
 | SetExpansion | commonai | unclassified | _pending (M2 backlog)_ |
-| SetUpgrade | commonai | unclassified | _pending (M2 backlog)_ |
+| SetUpgrade | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
 | SetHeroLevels | commonai | unclassified | _pending (M2 backlog)_ |
 | SetNewHeroes | commonai | unclassified | _pending (M2 backlog)_ |
 | PurchaseZeppelin | commonai | unclassified | _pending (M2 backlog)_ |
@@ -2578,12 +2578,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetIgnoreInjured | commonai | unclassified | _pending (M2 backlog)_ |
 | SetHeroesTakeItems | commonai | unclassified | _pending (M2 backlog)_ |
 | SetUnitsFlee | commonai | unclassified | _pending (M2 backlog)_ |
-| SetGroupsFlee | commonai | unclassified | _pending (M2 backlog)_ |
+| SetGroupsFlee | commonai | D3 | **tombstoned** (deferred-v2): #ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain. |
 | SetSlowChopping | commonai | unclassified | _pending (M2 backlog)_ |
 | SetCaptainChanges | commonai | unclassified | _pending (M2 backlog)_ |
 | SetSmartArtillery | commonai | unclassified | _pending (M2 backlog)_ |
 | SetReplacementCount | commonai | unclassified | _pending (M2 backlog)_ |
-| GroupTimedLife | commonai | unclassified | _pending (M2 backlog)_ |
+| GroupTimedLife | commonai | D3 | **tombstoned** (deferred-v2): #groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store. |
 | RemoveInjuries | commonai | unclassified | _pending (M2 backlog)_ |
 | RemoveSiege | commonai | unclassified | _pending (M2 backlog)_ |
 | InitAssault | commonai | unclassified | _pending (M2 backlog)_ |
@@ -2600,7 +2600,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetStagePoint | commonai | unclassified | _pending (M2 backlog)_ |
 | AttackMoveKill | commonai | unclassified | _pending (M2 backlog)_ |
 | AttackMoveXY | commonai | unclassified | _pending (M2 backlog)_ |
-| LoadZepWave | commonai | unclassified | _pending (M2 backlog)_ |
+| LoadZepWave | commonai | D3 | **tombstoned** (deferred-v2): #assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline. |
 | SuicidePlayer | commonai | unclassified | _pending (M2 backlog)_ |
 | SuicidePlayerUnits | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | CaptainInCombat | commonai | unclassified | _pending (M2 backlog)_ |
@@ -2626,7 +2626,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CaptainIsHome | commonai | unclassified | _pending (M2 backlog)_ |
 | CaptainIsFull | commonai | unclassified | _pending (M2 backlog)_ |
 | CaptainIsEmpty | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainGroupSize | commonai | unclassified | _pending (M2 backlog)_ |
+| CaptainGroupSize | commonai | D3 | **tombstoned** (deferred-v2): #ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain. |
 | CaptainReadiness | commonai | unclassified | _pending (M2 backlog)_ |
 | CaptainRetreating | commonai | unclassified | _pending (M2 backlog)_ |
 | CaptainReadinessHP | commonai | unclassified | _pending (M2 backlog)_ |

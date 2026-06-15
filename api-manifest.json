@@ -1690,6 +1690,99 @@
       }
     },
     {
+      "name": "ChangeElevatorHeight",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          },
+          {
+            "name": "newHeight",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "ChangeElevatorWallBlocker",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "facing",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "open",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "ChangeElevatorWalls",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "open",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "walls",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+      }
+    },
+    {
       "name": "CheckInitPlayerSlotAvailability",
       "origin": "blizzard.j",
       "signature": {
@@ -2088,6 +2181,58 @@
       "tombstone": {
         "reason": "deprecated",
         "detail": "empty-body GUI comment-row artifact; dead even in WC3"
+      }
+    },
+    {
+      "name": "CompareLocationsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "A",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "B",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#regions: value equality of two locations/rects; Go compares Vec2/Rect with == directly."
+      }
+    },
+    {
+      "name": "CompareRectsBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "A",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "B",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#regions: value equality of two locations/rects; Go compares Vec2/Rect with == directly."
       }
     },
     {
@@ -3311,6 +3456,51 @@
       }
     },
     {
+      "name": "DelayedSuspendDecayBoneEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
+      "name": "DelayedSuspendDecayFleshEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
+      "name": "DelayedSuspendDecayStopAnimEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
       "name": "DestroyDefeatConditionBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3499,6 +3689,21 @@
       }
     },
     {
+      "name": "DetectGameStarted",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#visibility: the bj_gameStarted poll flag (a one-shot game-start latch); the LitD lifecycle exposes match start through the event/scheduler model, not a polled global."
+      }
+    },
+    {
       "name": "DialogAddButtonBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3667,6 +3872,62 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+      }
+    },
+    {
+      "name": "DoTransmissionBasicsXYBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "color",
+            "jassType": "playercolor",
+            "tsType": "playercolor"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "unitName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "message",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
       }
     },
     {
@@ -3882,6 +4143,21 @@
       }
     },
     {
+      "name": "FindElevatorWallBlockerEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
       "name": "FinishCinematicFadeAfterBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -4066,6 +4342,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship)."
+      }
+    },
+    {
+      "name": "ForcePickRandomPlayerEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
       }
     },
     {
@@ -4375,6 +4666,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: event-context accessor (destructable death event) deferred to the v2 event/trigger API"
+      }
+    },
+    {
+      "name": "GetElevatorHeight",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
       }
     },
     {
@@ -4956,6 +5268,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "GetLastTransmissionDurationBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
       }
     },
     {
@@ -5625,6 +5952,37 @@
       }
     },
     {
+      "name": "GetTransmissionDuration",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "timeType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "timeVal",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+      }
+    },
+    {
       "name": "GetTransportUnitBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -6210,6 +6568,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "InitMapRects",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#regions: engine-init seam that populates bj_mapInitialPlayable* globals; the LitD map loader owns world bounds (Game.WorldBounds), no script-callable init."
       }
     },
     {
@@ -8981,6 +9354,32 @@
       }
     },
     {
+      "name": "ModifyGateBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "gateOperation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "d",
+            "jassType": "destructable",
+            "tsType": "destructable"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#destructables: gate open/close/destroy state toggle; deferred to v2 with the destructable-state API."
+      }
+    },
+    {
       "name": "ModuloInteger",
       "origin": "blizzard.j",
       "signature": {
@@ -9378,6 +9777,47 @@
       }
     },
     {
+      "name": "NearbyElevatorExists",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#destructables: elevator (multi-level platform + wall-blocker) mechanic; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "NearbyElevatorExistsEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
       "name": "NudgeItemsInRectEnum",
       "origin": "blizzard.j",
       "signature": {
@@ -9390,6 +9830,42 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "NudgeObjectsInRect",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "nudgeArea",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#regions: nudge units/objects off an occupied footprint (build-spot clearing); deferred to v2 with the placement/pathing-clear API."
+      }
+    },
+    {
+      "name": "NudgeUnitsInRectEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#regions: nudge units/objects off an occupied footprint (build-spot clearing); deferred to v2 with the placement/pathing-clear API."
       }
     },
     {
@@ -9458,6 +9934,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#conversion: JASS fourCC-int\u003c-\u003estring and order-id\u003c-\u003estring converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification)."
+      }
+    },
+    {
+      "name": "PauseAllUnitsBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
       }
     },
     {
@@ -10878,7 +11369,10 @@
       "goMapping": {
         "symbol": "RectAround",
         "package": "litd/api",
-        "goSignature": "(c Vec2, w, h float64) Rect"
+        "goSignature": "(c Vec2, w, h float64) Rect",
+        "collapsesWith": [
+          "GetRectFromCircleBJ"
+        ]
       }
     },
     {
@@ -10910,6 +11404,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "RegisterDestDeathInRegionEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
       }
     },
     {
@@ -13948,6 +14457,21 @@
       }
     },
     {
+      "name": "SetPlayerColorBJEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
       "name": "SetPlayerFlagBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -16249,6 +16773,128 @@
       }
     },
     {
+      "name": "TransmissionFromUnitTypeWithNameBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "toForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "fromPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "unitName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "message",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "timeType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "timeVal",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "wait",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+      }
+    },
+    {
+      "name": "TransmissionFromUnitWithNameBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "toForce",
+            "jassType": "force",
+            "tsType": "force"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "unitName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "message",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "timeType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "timeVal",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "wait",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
+      }
+    },
+    {
       "name": "TriggerActionUnitRescuedBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -17723,6 +18369,21 @@
       }
     },
     {
+      "name": "UpdateEachStockBuildingEnum",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#groups: BJ ForGroup/enum iteration callback shims; superseded by the slice-based query API (Game.AppendUnitsIn*/UnitsIn returns a slice, no callback closure)."
+      }
+    },
+    {
       "name": "VolumeGroupResetBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -17776,6 +18437,37 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#244: render asset metadata / lifecycle (duration, last-played side channel, auto-kill, wait); no sim state."
+      }
+    },
+    {
+      "name": "WaitTransmissionDuration",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "soundHandle",
+            "jassType": "sound",
+            "tsType": "sound"
+          },
+          {
+            "name": "timeType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "timeVal",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#sound: cinematic transmission (timed speech with portrait + subtitle) is a cutscene presentation system; deferred to the v2 cutscene/audio pipeline (#244/#245)."
       }
     },
     {
@@ -18338,6 +19030,212 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "AddSpellEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityString",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+      }
+    },
+    {
+      "name": "AddSpellEffectById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+      }
+    },
+    {
+      "name": "AddSpellEffectByIdLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+      }
+    },
+    {
+      "name": "AddSpellEffectLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityString",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+      }
+    },
+    {
+      "name": "AddSpellEffectTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "modelName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "attachPoint",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
+      }
+    },
+    {
+      "name": "AddSpellEffectTargetById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "attachPoint",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#effects: attach an ability art model at a point/target (spell-effect VFX); render-only with no v1 particle/effect-art backend (effects-and-graphics #253 deferral)."
       }
     },
     {
@@ -22875,6 +23773,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSendSyncData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "prefix",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "data",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface."
       }
     },
     {
@@ -29832,6 +30756,68 @@
       }
     },
     {
+      "name": "FlushStoredBoolean",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cache",
+            "jassType": "gamecache",
+            "tsType": "gamecache"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "key",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+      }
+    },
+    {
+      "name": "FlushStoredInteger",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cache",
+            "jassType": "gamecache",
+            "tsType": "gamecache"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "key",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+      }
+    },
+    {
       "name": "FlushStoredMission",
       "origin": "common.j",
       "signature": {
@@ -29855,6 +30841,68 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "FlushStoredReal",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cache",
+            "jassType": "gamecache",
+            "tsType": "gamecache"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "key",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
+      }
+    },
+    {
+      "name": "FlushStoredString",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cache",
+            "jassType": "gamecache",
+            "tsType": "gamecache"
+          },
+          {
+            "name": "missionKey",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "key",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#hashtable: the typed gamecache per-key flush family is subsumed by the Game.Storage key-value store (savedata.go #242)."
       }
     },
     {
@@ -31003,6 +32051,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#229: position accessor deferred to v2; destructables are static (fixed at create) in v1"
+      }
+    },
+    {
+      "name": "GetDetectedUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands."
       }
     },
     {
@@ -34393,7 +35456,11 @@
       "goMapping": {
         "symbol": "Game.WorldBounds",
         "package": "litd/api",
-        "goSignature": "() Rect"
+        "goSignature": "() Rect",
+        "collapsesWith": [
+          "GetEntireMapRect",
+          "GetPlayableMapRect"
+        ]
       }
     },
     {
@@ -34526,7 +35593,11 @@
         "package": "litd/api",
         "goSignature": "(rect Rect, filter UnitFilter) []Unit",
         "collapsesWith": [
-          "GroupEnumUnitsInRectCounted"
+          "GroupEnumUnitsInRectCounted",
+          "GetUnitsInRectAll",
+          "GetUnitsInRectMatching",
+          "GetUnitsInRectOfPlayer",
+          "GetUnitsInRectOfPlayerFilter"
         ]
       }
     },
@@ -39102,7 +40173,8 @@
         "package": "litd/api",
         "goSignature": "(d Vec2) Rect",
         "collapsesWith": [
-          "MoveRectToLoc"
+          "MoveRectToLoc",
+          "OffsetRectBJ"
         ]
       }
     },
@@ -40891,7 +41963,10 @@
       "goMapping": {
         "symbol": "NewRect",
         "package": "litd/api",
-        "goSignature": "(a, b Vec2) Rect"
+        "goSignature": "(a, b Vec2) Rect",
+        "collapsesWith": [
+          "RectFromLoc"
+        ]
       }
     },
     {
@@ -47942,6 +49017,47 @@
       }
     },
     {
+      "name": "SetUnitFog",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "c",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "d",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "e",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands."
+      }
+    },
+    {
       "name": "SetUnitInvulnerable",
       "origin": "common.j",
       "signature": {
@@ -49121,6 +50237,21 @@
         "symbol": "Game.SuspendTimeOfDay",
         "package": "litd/api",
         "goSignature": "(suspended bool)"
+      }
+    },
+    {
+      "name": "SyncSelections",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#net: client state-sync primitives (arbitrary sync payload, selection sync) belong to the v2 netplay layer (litd/net); no v1 sync surface."
       }
     },
     {
@@ -52365,6 +53496,21 @@
       }
     },
     {
+      "name": "CaptainGroupSize",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+      }
+    },
+    {
       "name": "FillGuardPosts",
       "origin": "commonai",
       "signature": {
@@ -52548,6 +53694,95 @@
       }
     },
     {
+      "name": "GetUpgradeLevel",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+      }
+    },
+    {
+      "name": "GetUpgradeWoodCost",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+      }
+    },
+    {
+      "name": "GroupTimedLife",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "allow",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store."
+      }
+    },
+    {
+      "name": "LoadZepWave",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline."
+      }
+    },
+    {
       "name": "MergeUnits",
       "origin": "commonai",
       "signature": {
@@ -52596,6 +53831,48 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SetGroupsFlee",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+      }
+    },
+    {
+      "name": "SetUpgrade",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
       }
     },
     {
