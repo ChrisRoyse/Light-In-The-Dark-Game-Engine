@@ -157,12 +157,12 @@ func (w *World) flySystem() {
 		}
 		h, t, rate := s.Height[r], s.Target[r], s.Rate[r]
 		if h < t {
-			h += rate
+			h = h.Add(rate)
 			if h > t {
 				h = t
 			}
 		} else {
-			h -= rate
+			h = h.Sub(rate)
 			if h < t {
 				h = t
 			}

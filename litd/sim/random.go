@@ -36,12 +36,12 @@ func (w *World) RandAngle() fixed.Angle { return fixed.Angle(uint16(w.rng.Uint32
 // GetRandomLocInRect.
 func (w *World) RandPointInRect(minx, miny, maxx, maxy fixed.F64) (x, y fixed.F64) {
 	if maxx > minx {
-		x = minx + w.RandUnit().Mul(maxx-minx)
+		x = minx.Add(w.RandUnit().Mul(maxx.Sub(minx)))
 	} else {
 		x = minx
 	}
 	if maxy > miny {
-		y = miny + w.RandUnit().Mul(maxy-miny)
+		y = miny.Add(w.RandUnit().Mul(maxy.Sub(miny)))
 	} else {
 		y = miny
 	}
