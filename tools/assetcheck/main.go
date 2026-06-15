@@ -323,6 +323,7 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 		bf, bn := checkBudget(triangles, byPath, ws)
 		findings = append(findings, bf...)
 		notes = append(notes, bn...)
+		findings = append(findings, checkGeneratedProvenance(assets, prefix)...)
 	}
 
 	sort.Slice(findings, func(i, j int) bool {

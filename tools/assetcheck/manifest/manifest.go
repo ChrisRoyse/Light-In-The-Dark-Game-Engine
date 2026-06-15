@@ -28,11 +28,24 @@ type Asset struct {
 	Retrieved string // YYYY-MM-DD
 	SHA256    string // lowercase hex
 	Category  string // optional: triangle-budget category (unit/building/other); "" = uncategorized
-	Line      int    // line number of the [[asset]] header, for diagnostics
+	// Generated-asset provenance (G4.7). Provenance is "generated" for assetgen
+	// output, "" (downloaded) otherwise; the remaining fields are mandatory only
+	// when Provenance == "generated".
+	Provenance string // "generated" | "" (downloaded)
+	Generator  string // generating model/tool + version
+	Params     string // generation parameters or an assetgen.toml reference
+	Curator    string // human sign-off
+	Line       int    // line number of the [[asset]] header, for diagnostics
 }
 
 var requiredKeys = []string{"path", "pack", "source", "license", "retrieved", "sha256"}
-var optionalKeys = []string{"category"}
+var optionalKeys = []string{"category", "provenance", "generator", "params", "curator"}
+
+// LicenseAllowed reports whether a license string satisfies policy: CC0-1.0, or
+// free-commercial (the latter requires curator sign-off, enforced separately).
+func LicenseAllowed(license string) bool {
+	return license == "CC0-1.0" || license == "free-commercial"
+}
 
 // Parse reads the MANIFEST format. It returns an error on the first
 // malformed line, duplicate key, missing required key, or duplicate path.
@@ -63,7 +76,9 @@ func Parse(r io.Reader) ([]Asset, error) {
 		assets = append(assets, Asset{
 			Path: p, Pack: cur["pack"], Source: cur["source"], License: cur["license"],
 			Retrieved: cur["retrieved"], SHA256: strings.ToLower(cur["sha256"]),
-			Category: cur["category"], Line: curLine,
+			Category: cur["category"], Provenance: cur["provenance"],
+			Generator: cur["generator"], Params: cur["params"], Curator: cur["curator"],
+			Line: curLine,
 		})
 		return nil
 	}
@@ -239,8 +254,8 @@ func VerifyPrefix(assetsDir string, prefix string) ([]Violation, error) {
 		if sum != a.SHA256 {
 			violations = append(violations, Violation{a.Path, "PROV-HASH", fmt.Sprintf("sha256 mismatch: MANIFEST has %s, file is %s", a.SHA256, sum)})
 		}
-		if a.License != "CC0-1.0" {
-			violations = append(violations, Violation{a.Path, "PROV-LICENSE", fmt.Sprintf("license %q: policy is CC0-1.0 only (free-commercial needs operator sign-off)", a.License)})
+		if !LicenseAllowed(a.License) {
+			violations = append(violations, Violation{a.Path, "PROV-LICENSE", fmt.Sprintf("license %q: policy allows only CC0-1.0 or free-commercial", a.License)})
 		}
 	}
 
