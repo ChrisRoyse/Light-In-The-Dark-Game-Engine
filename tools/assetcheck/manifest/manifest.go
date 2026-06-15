@@ -27,10 +27,12 @@ type Asset struct {
 	License   string // SPDX id; policy: CC0-1.0 (free-commercial needs operator sign-off)
 	Retrieved string // YYYY-MM-DD
 	SHA256    string // lowercase hex
+	Category  string // optional: triangle-budget category (unit/building/other); "" = uncategorized
 	Line      int    // line number of the [[asset]] header, for diagnostics
 }
 
 var requiredKeys = []string{"path", "pack", "source", "license", "retrieved", "sha256"}
+var optionalKeys = []string{"category"}
 
 // Parse reads the MANIFEST format. It returns an error on the first
 // malformed line, duplicate key, missing required key, or duplicate path.
@@ -60,7 +62,8 @@ func Parse(r io.Reader) ([]Asset, error) {
 		seenPaths[p] = curLine
 		assets = append(assets, Asset{
 			Path: p, Pack: cur["pack"], Source: cur["source"], License: cur["license"],
-			Retrieved: cur["retrieved"], SHA256: strings.ToLower(cur["sha256"]), Line: curLine,
+			Retrieved: cur["retrieved"], SHA256: strings.ToLower(cur["sha256"]),
+			Category: cur["category"], Line: curLine,
 		})
 		return nil
 	}
@@ -96,6 +99,11 @@ func Parse(r io.Reader) ([]Asset, error) {
 			valid := false
 			for _, rk := range requiredKeys {
 				if k == rk {
+					valid = true
+				}
+			}
+			for _, ok := range optionalKeys {
+				if k == ok {
 					valid = true
 				}
 			}
@@ -139,6 +147,18 @@ type Violation struct {
 }
 
 func (v Violation) String() string { return v.Path + ": " + v.RuleID + ": " + v.Msg }
+
+// Load parses assetsDir/MANIFEST and returns its entries. It is the read-only
+// counterpart to Verify — callers that need the parsed ledger (e.g. the
+// triangle-budget gate reading per-asset categories) use this.
+func Load(assetsDir string) ([]Asset, error) {
+	f, err := os.Open(filepath.Join(assetsDir, "MANIFEST"))
+	if err != nil {
+		return nil, fmt.Errorf("open MANIFEST: %w", err)
+	}
+	defer f.Close()
+	return Parse(f)
+}
 
 // Verify checks the ledger in assetsDir/MANIFEST against the files on disk:
 // every file listed exactly once, every entry present, every hash matching,

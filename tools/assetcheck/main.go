@@ -63,6 +63,7 @@ var (
 func main() {
 	jsonMode := flag.Bool("json", false, "emit findings as JSON for CI annotation")
 	ingest := flag.Bool("ingest", false, "emit extension/clip census (R1 detection) instead of gating")
+	waiversPath := flag.String("waivers", "", "path to triangle-budget waivers.toml (default: <assets-root>/waivers.toml if present)")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		fmt.Fprintln(os.Stderr, "usage: assetcheck [--json] [--ingest] <assets-dir>")
@@ -103,10 +104,25 @@ func main() {
 	}
 
 	var findings []finding
+	var notes []string
 	if dataMode {
 		findings = checkData(root, files, prefix)
 	} else {
-		findings = check(root, files, prefix)
+		ws := newWaiverSet()
+		if *waiversPath != "" {
+			// An explicitly-named ledger that fails to load is fatal — the
+			// budget gate fails closed rather than silently ignoring waivers.
+			loaded, lerr := loadWaivers(*waiversPath)
+			if lerr != nil {
+				fmt.Fprintln(os.Stderr, "assetcheck: waivers:", lerr)
+				os.Exit(2)
+			}
+			ws = loaded
+		}
+		findings, notes = check(root, files, prefix, ws)
+	}
+	for _, n := range notes {
+		fmt.Fprintln(os.Stderr, "assetcheck:", n)
 	}
 	if *jsonMode {
 		enc := json.NewEncoder(os.Stdout)
@@ -225,10 +241,12 @@ func listFiles(dir string) ([]string, error) {
 	return files, err
 }
 
-// check runs every gate rule over the file list and returns sorted findings.
-func check(dir string, files []string, prefix string) []finding {
+// check runs every gate rule over the file list and returns sorted findings
+// plus informational notes (e.g. applied triangle-budget waivers).
+func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, []string) {
 	var findings []finding
 	add := func(path, rule, msg string) { findings = append(findings, finding{path, rule, msg}) }
+	triangles := map[string]int{}
 
 	for _, rel := range files {
 		ext := strings.ToLower(filepath.Ext(rel))
@@ -250,6 +268,7 @@ func check(dir string, files []string, prefix string) []finding {
 				add(rel, "GLTF-CORE", err.Error())
 				continue
 			}
+			triangles[rel] = info.Triangles
 			for _, u := range info.ExternalURIs {
 				add(rel, "GLTF-URI", fmt.Sprintf("external resource reference (%s) — committed GLBs must be self-contained", u))
 			}
@@ -287,13 +306,26 @@ func check(dir string, files []string, prefix string) []finding {
 		add(v.Path, v.RuleID, v.Msg)
 	}
 
+	// Triangle budget (#31). If the MANIFEST parses, run the budget gate over
+	// the GLBs we counted; a parse error was already reported as PROV-PARSE.
+	var notes []string
+	if assets, lerr := manifest.Load(dir); lerr == nil {
+		byPath := make(map[string]manifest.Asset, len(assets))
+		for _, a := range assets {
+			byPath[a.Path] = a
+		}
+		bf, bn := checkBudget(triangles, byPath, ws)
+		findings = append(findings, bf...)
+		notes = bn
+	}
+
 	sort.Slice(findings, func(i, j int) bool {
 		if findings[i].Path != findings[j].Path {
 			return findings[i].Path < findings[j].Path
 		}
 		return findings[i].Rule < findings[j].Rule
 	})
-	return findings
+	return findings, notes
 }
 
 func checkUIAtlas(files []string, add func(path, rule, msg string)) {

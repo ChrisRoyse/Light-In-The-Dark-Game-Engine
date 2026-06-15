@@ -85,7 +85,8 @@ func (f *fixture) run(t *testing.T) []finding {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return check(f.dir, files, "")
+	findings, _ := check(f.dir, files, "", newWaiverSet())
+	return findings
 }
 
 func (f *fixture) runSubdir(t *testing.T, subdir string) []finding {
@@ -100,7 +101,8 @@ func (f *fixture) runSubdir(t *testing.T, subdir string) []finding {
 	for i := range files {
 		files[i] = filepath.ToSlash(filepath.Join(subdir, filepath.FromSlash(files[i])))
 	}
-	return check(f.dir, files, subdir)
+	findings, _ := check(f.dir, files, subdir, newWaiverSet())
+	return findings
 }
 
 func rules(fs []finding) []string {

@@ -1,0 +1,24 @@
+# assetcheck triangle-budget waivers (#31; docs/prd/09-roadmap/tooling.md §3.3).
+#
+# The triangle-budget gate (units ≤ 1,500 tris, buildings ≤ 4,000; R-RND-2) is
+# not bypassable from the command line. The ONLY way an over-budget asset
+# passes is a reviewed entry in this file, with a reason and an expiry
+# milestone. Once the project's current_milestone is PAST a waiver's expiry,
+# that waiver is dead and the asset fails the gate again.
+#
+# CI invokes the gate with this ledger:
+#   go run ./tools/assetcheck --waivers tools/assetcheck/waivers.toml ./assets
+#
+# Format (strict TOML subset — comments, the current_milestone key, and
+# [[waiver]] tables; anything else is a parse error, fail-closed):
+#
+#   current_milestone = "M1"        # the project's current milestone
+#
+#   [[waiver]]
+#   path   = "units/dragon.glb"     # asset path, relative to assets/
+#   reason = "hero unit; decimation tracked in #999"
+#   expiry = "M3"                   # waiver dies once current_milestone > M3
+
+current_milestone = "M1"
+
+# (no active waivers)

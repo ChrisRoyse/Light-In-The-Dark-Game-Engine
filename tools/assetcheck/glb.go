@@ -16,6 +16,24 @@ type glbInfo struct {
 	ExtensionsRequired []string
 	Clips              []string
 	ExternalURIs       []string // non-data: buffer/image URIs — break self-containment
+	Triangles          int      // summed over all mesh primitives (triangle topologies only)
+}
+
+// trianglesForMode returns the triangle count a primitive of the given glTF
+// primitive mode contributes for `count` vertices/indices. Non-triangle
+// topologies (POINTS/LINES/...) contribute zero — they are not budgeted geometry.
+func trianglesForMode(mode, count int) int {
+	switch mode {
+	case 4: // TRIANGLES
+		return count / 3
+	case 5, 6: // TRIANGLE_STRIP, TRIANGLE_FAN
+		if count >= 3 {
+			return count - 2
+		}
+		return 0
+	default: // 0 POINTS, 1 LINES, 2 LINE_LOOP, 3 LINE_STRIP
+		return 0
+	}
 }
 
 const (
@@ -66,6 +84,16 @@ func parseGLB(path string) (*glbInfo, error) {
 		Images []struct {
 			URI string `json:"uri"`
 		} `json:"images"`
+		Meshes []struct {
+			Primitives []struct {
+				Mode       *int           `json:"mode"`
+				Indices    *int           `json:"indices"`
+				Attributes map[string]int `json:"attributes"`
+			} `json:"primitives"`
+		} `json:"meshes"`
+		Accessors []struct {
+			Count int `json:"count"`
+		} `json:"accessors"`
 	}
 	if err := json.Unmarshal(data[20:20+chunkLen], &doc); err != nil {
 		return nil, fmt.Errorf("JSON chunk: %w", err)
@@ -88,6 +116,33 @@ func parseGLB(path string) (*glbInfo, error) {
 	for _, im := range doc.Images {
 		if im.URI != "" && !strings.HasPrefix(im.URI, "data:") {
 			info.ExternalURIs = append(info.ExternalURIs, "image: "+im.URI)
+		}
+	}
+	nAcc := len(doc.Accessors)
+	for mi, m := range doc.Meshes {
+		for pi, prim := range m.Primitives {
+			mode := 4 // glTF default primitive mode is TRIANGLES
+			if prim.Mode != nil {
+				mode = *prim.Mode
+			}
+			var count int
+			if prim.Indices != nil { // indexed: triangles come from the index accessor
+				idx := *prim.Indices
+				if idx < 0 || idx >= nAcc {
+					return nil, fmt.Errorf("mesh %d primitive %d: indices accessor %d out of range [0,%d)", mi, pi, idx, nAcc)
+				}
+				count = doc.Accessors[idx].Count
+			} else { // non-indexed: every POSITION is a vertex
+				pos, ok := prim.Attributes["POSITION"]
+				if !ok {
+					continue // no POSITION and no indices — nothing to count
+				}
+				if pos < 0 || pos >= nAcc {
+					return nil, fmt.Errorf("mesh %d primitive %d: POSITION accessor %d out of range [0,%d)", mi, pi, pos, nAcc)
+				}
+				count = doc.Accessors[pos].Count
+			}
+			info.Triangles += trianglesForMode(mode, count)
 		}
 	}
 	return info, nil
