@@ -10,9 +10,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
@@ -41,6 +43,7 @@ func main() {
 	crashTest := flag.Int("crash-test", 0, "dev-only: panic right after this tick to exercise the crash reporter (#185)")
 	crashDir := flag.String("crash-dir", "", "crash-report directory (default: user config dir/litd)")
 	crashCapture := flag.Bool("crash-capture", true, "write a local crash dump on panic; false = stderr stack only, no file (#185)")
+	reportDir := flag.String("report-on-exit", "", "write a debug-report bundle (litd-report-*.zip) to this dir at run end (#250)")
 	flag.Parse()
 
 	// Fail closed: no map format exists yet, so any -map value would
@@ -96,7 +99,9 @@ func main() {
 		Ticks:    uint32(*ticks),
 		Commands: cmds,
 	}
-	wantTrace := *replayPath != ""
+	// The report bundle needs checkpoints in its replay so the extracted
+	// replay is -verify-able, so -report-on-exit forces trace capture too.
+	wantTrace := *replayPath != "" || *reportDir != ""
 
 	start := time.Now()
 	trace := runWorld(w, ids, cmds, *ticks, wantTrace, *crashTest, clog)
@@ -105,10 +110,12 @@ func main() {
 	reg := sim.NewHashRegistry()
 	var snap statehash.Snapshot
 	w.HashState(reg, &snap)
-	fmt.Printf("hash: %016x\n", snap.Top)
+	var shb strings.Builder
+	fmt.Fprintf(&shb, "hash: %016x\n", snap.Top)
 	for i, name := range sim.HashSystems {
-		fmt.Printf("sub: %-10s %016x\n", name, snap.Subs[i])
+		fmt.Fprintf(&shb, "sub: %-10s %016x\n", name, snap.Subs[i])
 	}
+	fmt.Print(shb.String())
 	if evw != nil {
 		if err := evw.Flush(); err != nil {
 			fatalf("event log flush: %v", err)
@@ -117,7 +124,7 @@ func main() {
 			fatalf("event log write: %v", err)
 		}
 	}
-	if wantTrace {
+	if *replayPath != "" {
 		rec.Checkpoints = trace
 		f, err := os.Create(*replayPath)
 		if err != nil {
@@ -151,6 +158,29 @@ func main() {
 		var after statehash.Snapshot
 		w.HashState(reg, &after)
 		fmt.Printf("hash-after-dump: %016x (read-only: %v)\n", after.Top, after.Top == snap.Top)
+	}
+	if *reportDir != "" {
+		rec.Checkpoints = trace
+		var replayBuf, stateBuf bytes.Buffer
+		if err := rec.Encode(&replayBuf); err != nil {
+			fatalf("report replay encode: %v", err)
+		}
+		if err := w.DumpState(&stateBuf); err != nil {
+			fatalf("report state dump: %v", err)
+		}
+		in := obs.ReportInputs{
+			StateDumpJSON: stateBuf.Bytes(),
+			StateHash:     shb.String(),
+			Replay:        replayBuf.Bytes(),
+		}
+		path, warnings, err := obs.WriteReport(*reportDir, in, time.Now)
+		if err != nil {
+			fatalf("report bundle: %v", err)
+		}
+		fmt.Printf("report: %s\n", path)
+		for _, wmsg := range warnings {
+			fmt.Printf("report WARNING: %s\n", wmsg)
+		}
 	}
 	fmt.Printf("ticks: %d\n", w.Tick())
 	fmt.Printf("units: %d\n", w.UnitCount())
