@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -15,8 +16,35 @@ type glbInfo struct {
 	ExtensionsUsed     []string
 	ExtensionsRequired []string
 	Clips              []string
-	ExternalURIs       []string // non-data: buffer/image URIs — break self-containment
-	Triangles          int      // summed over all mesh primitives (triangle topologies only)
+	ExternalURIs       []string   // non-data: buffer/image URIs — break self-containment
+	Triangles          int        // summed over all mesh primitives (triangle topologies only)
+	Images             []glbImage // embedded textures (bufferView- or data:-resolved)
+}
+
+// glbImage is one embedded texture: its declared name and resolved bytes. The
+// atlas gate decodes dimensions and content-hashes these. Images referenced by
+// an external (non-data) URI carry no bytes — they are reported as URI
+// violations by the self-containment rule instead.
+type glbImage struct {
+	Name string
+	Data []byte
+}
+
+// decodeDataURI decodes a base64 data: URI payload (data:[mime][;base64],<data>).
+func decodeDataURI(uri string) ([]byte, error) {
+	comma := strings.IndexByte(uri, ',')
+	if comma < 0 {
+		return nil, fmt.Errorf("malformed data URI (no comma)")
+	}
+	meta, payload := uri[:comma], uri[comma+1:]
+	if !strings.Contains(meta, ";base64") {
+		return nil, fmt.Errorf("data URI is not base64-encoded")
+	}
+	b, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return nil, fmt.Errorf("base64: %w", err)
+	}
+	return b, nil
 }
 
 // trianglesForMode returns the triangle count a primitive of the given glTF
@@ -39,6 +67,7 @@ func trianglesForMode(mode, count int) int {
 const (
 	glbMagic     = 0x46546C67 // "glTF"
 	glbChunkJSON = 0x4E4F534A // "JSON"
+	glbChunkBIN  = 0x004E4942 // "BIN\0"
 )
 
 // parseGLB reads the GLB container header and the JSON chunk.
@@ -82,8 +111,16 @@ func parseGLB(path string) (*glbInfo, error) {
 			URI string `json:"uri"`
 		} `json:"buffers"`
 		Images []struct {
-			URI string `json:"uri"`
+			URI        string `json:"uri"`
+			MimeType   string `json:"mimeType"`
+			Name       string `json:"name"`
+			BufferView *int   `json:"bufferView"`
 		} `json:"images"`
+		BufferViews []struct {
+			Buffer     int `json:"buffer"`
+			ByteOffset int `json:"byteOffset"`
+			ByteLength int `json:"byteLength"`
+		} `json:"bufferViews"`
 		Meshes []struct {
 			Primitives []struct {
 				Mode       *int           `json:"mode"`
@@ -113,9 +150,40 @@ func parseGLB(path string) (*glbInfo, error) {
 			info.ExternalURIs = append(info.ExternalURIs, "buffer: "+b.URI)
 		}
 	}
+	// Locate the optional BIN chunk (immediately after the JSON chunk) so we can
+	// resolve bufferView-backed embedded images.
+	var bin []byte
+	if pos := 20 + int(chunkLen); pos+8 <= len(data) {
+		binLen := binary.LittleEndian.Uint32(data[pos : pos+4])
+		binType := binary.LittleEndian.Uint32(data[pos+4 : pos+8])
+		if binType == glbChunkBIN && pos+8+int(binLen) <= len(data) {
+			bin = data[pos+8 : pos+8+int(binLen)]
+		}
+	}
 	for _, im := range doc.Images {
-		if im.URI != "" && !strings.HasPrefix(im.URI, "data:") {
+		switch {
+		case im.URI != "" && !strings.HasPrefix(im.URI, "data:"):
 			info.ExternalURIs = append(info.ExternalURIs, "image: "+im.URI)
+		case im.URI != "": // data: URI
+			payload, derr := decodeDataURI(im.URI)
+			if derr != nil {
+				return nil, fmt.Errorf("image %q: %w", im.Name, derr)
+			}
+			info.Images = append(info.Images, glbImage{Name: im.Name, Data: payload})
+		case im.BufferView != nil: // embedded in the BIN chunk
+			bv := *im.BufferView
+			if bv < 0 || bv >= len(doc.BufferViews) {
+				return nil, fmt.Errorf("image %q: bufferView %d out of range [0,%d)", im.Name, bv, len(doc.BufferViews))
+			}
+			view := doc.BufferViews[bv]
+			if view.Buffer != 0 {
+				return nil, fmt.Errorf("image %q: bufferView references buffer %d, only the GLB BIN buffer (0) is supported", im.Name, view.Buffer)
+			}
+			end := view.ByteOffset + view.ByteLength
+			if view.ByteOffset < 0 || end > len(bin) {
+				return nil, fmt.Errorf("image %q: bufferView [%d,%d) exceeds BIN chunk of %d bytes", im.Name, view.ByteOffset, end, len(bin))
+			}
+			info.Images = append(info.Images, glbImage{Name: im.Name, Data: bin[view.ByteOffset:end]})
 		}
 	}
 	nAcc := len(doc.Accessors)

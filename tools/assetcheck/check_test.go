@@ -239,9 +239,10 @@ func TestExternalURIRejected(t *testing.T) {
 	doc := gltfDoc(nil, nil)
 	doc["images"] = []map[string]any{{"uri": "Textures/colormap.png"}}
 	f.add(t, "props/external.glb", buildGLB(t, doc), true)
-	// data: URIs are self-contained and must pass
+	// data: URIs are self-contained and must pass (valid embedded 8x8 PNG;
+	// alone in the tree so the atlas uniqueness rule does not fire)
 	doc2 := gltfDoc(nil, nil)
-	doc2["images"] = []map[string]any{{"uri": "data:image/png;base64,AAAA"}}
+	doc2["images"] = []map[string]any{{"uri": "data:image/png;base64," + tinyPNGB64(t, 8, 8)}}
 	f.add(t, "props/datauri.glb", buildGLB(t, doc2), true)
 	got := f.run(t)
 	if len(got) != 1 || got[0].Rule != "GLTF-URI" || got[0].Path != "props/external.glb" {

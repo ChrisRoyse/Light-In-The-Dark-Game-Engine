@@ -247,6 +247,7 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 	var findings []finding
 	add := func(path, rule, msg string) { findings = append(findings, finding{path, rule, msg}) }
 	triangles := map[string]int{}
+	textures := map[string][]textureInfo{}
 
 	for _, rel := range files {
 		ext := strings.ToLower(filepath.Ext(rel))
@@ -269,6 +270,9 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 				continue
 			}
 			triangles[rel] = info.Triangles
+			if tis := decodeTextures(info); tis != nil {
+				textures[rel] = tis
+			}
 			for _, u := range info.ExternalURIs {
 				add(rel, "GLTF-URI", fmt.Sprintf("external resource reference (%s) — committed GLBs must be self-contained", u))
 			}
@@ -297,6 +301,8 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 		}
 	}
 	checkUIAtlas(files, add)
+	atlasFindings, atlasNotes := checkAtlas(textures)
+	findings = append(findings, atlasFindings...)
 
 	prov, err := manifest.VerifyPrefix(dir, prefix)
 	if err != nil {
@@ -308,7 +314,7 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 
 	// Triangle budget (#31). If the MANIFEST parses, run the budget gate over
 	// the GLBs we counted; a parse error was already reported as PROV-PARSE.
-	var notes []string
+	notes := atlasNotes
 	if assets, lerr := manifest.Load(dir); lerr == nil {
 		byPath := make(map[string]manifest.Asset, len(assets))
 		for _, a := range assets {
@@ -316,7 +322,7 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 		}
 		bf, bn := checkBudget(triangles, byPath, ws)
 		findings = append(findings, bf...)
-		notes = bn
+		notes = append(notes, bn...)
 	}
 
 	sort.Slice(findings, func(i, j int) bool {
@@ -523,6 +529,7 @@ func census(dir string, files []string, jsonMode bool) error {
 		Ext        string   `json:"ext"`
 		Extensions []string `json:"gltf_extensions,omitempty"`
 		Clips      []string `json:"clips,omitempty"`
+		Textures   []string `json:"textures,omitempty"` // "WxH" per embedded texture
 		ParseError string   `json:"parse_error,omitempty"`
 	}
 	var rows []fileCensus
@@ -546,6 +553,13 @@ func census(dir string, files []string, jsonMode bool) error {
 				}
 				for _, c := range info.Clips {
 					clipCount[c]++
+				}
+				for _, ti := range decodeTextures(info) {
+					if ti.Err != nil {
+						row.Textures = append(row.Textures, "?x?")
+					} else {
+						row.Textures = append(row.Textures, fmt.Sprintf("%dx%d", ti.Width, ti.Height))
+					}
 				}
 			}
 		}
