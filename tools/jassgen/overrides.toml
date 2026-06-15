@@ -148,6 +148,7 @@ name = "SetHeroLevel"
 class = "D2"
 goMapping = "Unit.SetHeroLevel"
 goSignature = "(level int)"
+collapsesWith = ["SetHeroLevelBJ"] # #234
 package = "litd/api"
 reason = "raise-to-level setter (grants XP to the curve threshold); never lowers. showEyeCandy dropped (cosmetic) (dedup §3, D2) (#217, #304)"
 
@@ -156,6 +157,7 @@ name = "SuspendHeroXP"
 class = "D1"
 goMapping = "Unit.SuspendExperience"
 goSignature = "(suspend bool)"
+collapsesWith = ["SuspendHeroXPBJ"] # #234
 package = "litd/api"
 reason = "XP-suspend toggle maps onto the typed setter (dedup §2); gates AddXP at the chokepoint, backed by a sparse presenceSet (#217, #304)"
 
@@ -172,6 +174,7 @@ name = "AddHeroXP"
 class = "D2"
 goMapping = "Unit.AddExperience"
 goSignature = "(xp int)"
+collapsesWith = ["AddHeroXPSwapped"] # #234
 package = "litd/api"
 reason = "hero XP grant maps onto AddXP; showEyeCandy dropped (cosmetic, no sim effect) (dedup §3, D2) (#217, #304)"
 
@@ -188,6 +191,7 @@ name = "UnitModifySkillPoints"
 class = "D1"
 goMapping = "Unit.ModifySkillPoints"
 goSignature = "(delta int) bool"
+collapsesWith = ["ModifyHeroSkillPoints"] # #234
 package = "litd/api"
 reason = "skill-point delta maps onto the typed mutator (dedup §2); clamps to [0,255], false for non-heroes (#217, #304)"
 
@@ -196,6 +200,7 @@ name = "SetHeroStr"
 class = "D2"
 goMapping = "Unit.SetStrength"
 goSignature = "(v int)"
+collapsesWith = ["SetHeroStat", "ModifyHeroStat"] # #234
 package = "litd/api"
 reason = "hero strength setter; applies str->life/regen via the level-up delta path. `permanent` dropped — no temporary attribute layer (#366), so permanent vs temporary is identical (dedup §3, D2 defaulted arg) (#217, #304)"
 
@@ -310,6 +315,7 @@ name = "UnitAddAbility"
 class = "D2"
 goMapping = "Unit.AddAbility"
 goSignature = "(ref AbilityRef) Ability"
+collapsesWith = ["UnitAddAbilityBJ"] # #234
 package = "litd/api"
 reason = "equip an ability; the JASS integer rawcode becomes the typed AbilityRef (D2 arg-type), and the boolean success return becomes the per-unit Ability handle (a zero/invalid handle == failure) (#217)"
 
@@ -318,6 +324,7 @@ name = "UnitRemoveAbility"
 class = "D2"
 goMapping = "Unit.RemoveAbility"
 goSignature = "(ref AbilityRef) bool"
+collapsesWith = ["UnitRemoveAbilityBJ"] # #234
 package = "litd/api"
 reason = "remove an equipped ability; JASS rawcode becomes the typed AbilityRef (D2), boolean return preserved (#217)"
 
@@ -326,6 +333,7 @@ name = "GetUnitAbilityLevel"
 class = "D3"
 goMapping = "Ability.Level"
 goSignature = "() int"
+collapsesWith = ["GetUnitAbilityLevelSwapped"] # #234
 package = "litd/api"
 reason = "the flat (unit, abilcode) addressing collapses onto the resolved Ability noun handle's Level accessor (D3 family collapse); the abilcode->handle resolution is the binding layer's job (#217)"
 
@@ -334,6 +342,7 @@ name = "SetUnitAbilityLevel"
 class = "D3"
 goMapping = "Ability.SetLevel"
 goSignature = "(level int)"
+collapsesWith = ["SetUnitAbilityLevelSwapped", "DecUnitAbilityLevelSwapped"] # #234
 package = "litd/api"
 reason = "(unit, abilcode, level) collapses onto the Ability noun setter (D3); the native's new-level integer return is observable via Level() so the setter returns nothing (#217)"
 
@@ -421,6 +430,7 @@ name = "IncUnitAbilityLevel"
 class = "D3"
 goMapping = "Ability.IncLevel"
 goSignature = "() int"
+collapsesWith = ["IncUnitAbilityLevelSwapped"] # #234
 package = "litd/api"
 reason = "(unit, abilcode) +1 collapses onto the Ability noun (D3); returns the new level, saturating at 255 (no wrap) (#217)"
 
@@ -6459,3 +6469,738 @@ name = "UnitHasItemOfTypeBJ"
 class = "D2"
 tombstone = "deferred-v2"
 reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables."
+
+# -------------------------------------------------------------------------
+# #234 abilities + buffs + hero + tech category surface.
+# Canonical Go: litd/api/ability.go (Ability + Game.RegisterAbility), buff.go
+# (Buff + Unit buff verbs), Unit hero verbs in unit.go. The D5 flagship folds
+# the BlzGet/SetAbility*Field reflection matrix onto Ability.Field/SetField
+# (copy-on-write per instance). Per-level/array field granularity, runtime
+# cooldown control, command-card cosmetics, altar revive, and the player
+# tech/upgrade surface defer to v2. Melee* hero-grants belong to #258.
+# -------------------------------------------------------------------------
+
+
+[[override]]
+name = "BlzGetAbilityRealField"
+class = "D1"
+goMapping = "Ability.Field"
+goSignature = "(field AbilityField) float64"
+collapsesWith = ["BlzGetAbilityBooleanField", "BlzGetAbilityIntegerField", "BlzGetAbilityStringField", "BlzGetAbilityCooldown", "BlzGetAbilityManaCost", "BlzGetUnitAbilityCooldown", "BlzGetUnitAbilityManaCost", "BlzGetUnitAbilityCooldownRemaining"]
+package = "litd/api"
+reason = "#234 D5 flagship: the typed Ability.Field getter is the one canonical read for the ability field-reflection matrix; the boolean/integer/string scalar getters plus the cooldown/mana convenience natives fold onto it (16 field natives -> 2 methods)."
+
+[[override]]
+name = "BlzSetAbilityRealField"
+class = "D1"
+goMapping = "Ability.SetField"
+goSignature = "(field AbilityField, value float64)"
+collapsesWith = ["BlzSetAbilityBooleanField", "BlzSetAbilityIntegerField", "BlzSetAbilityStringField", "BlzSetAbilityRealFieldBJ", "BlzSetAbilityBooleanFieldBJ", "BlzSetAbilityIntegerFieldBJ", "BlzSetAbilityStringFieldBJ"]
+package = "litd/api"
+reason = "#234 D5 flagship: the typed Ability.SetField setter is the one canonical write (copy-on-write per ability instance); the boolean/integer/string scalar setters and their BJ wrappers fold onto it."
+
+
+
+
+[[override]]
+name = "SelectHeroSkill"
+class = "D1"
+goMapping = "Unit.LearnSkill"
+goSignature = "(skill int) bool"
+package = "litd/api"
+reason = "#234: spend a skill point to learn/level a hero skill."
+
+
+
+
+
+
+[[override]]
+name = "UnitCountBuffsEx"
+class = "D1"
+goMapping = "Unit.BuffCount"
+goSignature = "() int"
+collapsesWith = ["UnitCountBuffsExBJ"]
+package = "litd/api"
+reason = "#234: live-buff count; the BJ wrapper folds onto Unit.BuffCount."
+
+[[override]]
+name = "UnitHasBuffBJ"
+class = "D1"
+goMapping = "Unit.HasBuff"
+goSignature = "(typ BuffType) bool"
+collapsesWith = ["UnitHasBuffsEx"]
+package = "litd/api"
+reason = "#234: buff-presence query; the Ex (polarity/resist-filtered) form folds onto the typed Unit.HasBuff."
+
+
+[[override]]
+name = "UnitRemoveBuffBJ"
+class = "D1"
+goMapping = "Unit.RemoveBuff"
+goSignature = "(typ BuffType) bool"
+package = "litd/api"
+reason = "#234: remove one buff type (BJ wrapper)."
+
+[[override]]
+name = "UnitRemoveBuffsEx"
+class = "D1"
+goMapping = "Unit.RemoveAllBuffs"
+goSignature = "() int"
+collapsesWith = ["UnitRemoveBuffs", "UnitRemoveBuffsBJ", "UnitRemoveBuffsExBJ"]
+package = "litd/api"
+reason = "#234: strip-all-buffs; the polarity/Ex/BJ variants fold onto Unit.RemoveAllBuffs (v1 dispels without the WC3 positive/negative partition)."
+
+[[override]]
+name = "AbilityId"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+
+[[override]]
+name = "AbilityId2String"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "AddPlayerTechResearched"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "BlzAddAbilityBooleanLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityBooleanLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityIntegerLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityIntegerLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityRealLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityRealLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityStringLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzAddAbilityStringLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzDecPlayerTechResearched"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "BlzEndUnitAbilityCooldown"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzGetAbilityActivatedExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityActivatedIcon"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityActivatedPosX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityActivatedPosY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityActivatedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityBooleanLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityBooleanLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityIcon"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityIntegerLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityIntegerLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityPosX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityPosY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityRealLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityRealLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityResearchExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityResearchTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetAbilityStringLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityStringLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzGetAbilityTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzGetUnitAbility"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzGetUnitAbilityByIndex"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzRemoveAbilityBooleanLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityBooleanLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityIntegerLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityIntegerLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityRealLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityRealLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityStringLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzRemoveAbilityStringLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityActivatedExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityActivatedIcon"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityActivatedPosX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityActivatedPosY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityActivatedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityBooleanLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityBooleanLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityBooleanLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityBooleanLevelFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityIcon"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityIntegerLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityIntegerLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityIntegerLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityIntegerLevelFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityPosX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityPosY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityRealLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityRealLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityRealLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityRealLevelFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityResearchExtendedTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityResearchTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetAbilityStringLevelArrayField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityStringLevelArrayFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityStringLevelField"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityStringLevelFieldBJ"
+class = "D5"
+tombstone = "deferred-v2"
+reason = "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+
+[[override]]
+name = "BlzSetAbilityTooltip"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetHeroProperName"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "BlzSetUnitAbilityCooldown"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzSetUnitAbilityManaCost"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzStartUnitAbilityCooldown"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzUnitDisableAbility"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "BlzUnitHideAbility"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "CachePlayerHeroData"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "CreateUpgradeCommandButtonEffect"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "CreateUpgradeCommandButtonEffectBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "GetAbilityEffect"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+
+[[override]]
+name = "GetAbilityEffectBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+
+[[override]]
+name = "GetAbilityEffectById"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+
+[[override]]
+name = "GetAbilityName"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "GetAbilitySound"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "GetAbilitySoundBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "GetAbilitySoundById"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "GetHeroProperName"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "GetHeroStatBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "GetPlayerTechCountSimple"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "GetPlayerTechMaxAllowedSwap"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "GetResearchingUnit"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "GetSpellAbilityUnit"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+
+[[override]]
+name = "IsHeroUnitId"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "IssueUpgradeOrderByIdBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "MeleeStartingHeroLimit"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "ReducePlayerTechMaxAllowed"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "ReviveHero"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "ReviveHeroLoc"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "SetPlayerAbilityAvailableBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "SetPlayerMaxHeroesAllowed"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+
+[[override]]
+name = "SetPlayerTechMaxAllowedSwap"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "SetPlayerTechResearchedSwap"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "SetReservedLocalHeroButtons"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+
+[[override]]
+name = "TriggerRegisterUpgradeCommandEventBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "UnitMakeAbilityPermanent"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "UnitMakeAbilityPermanentBJ"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+
+[[override]]
+name = "UnitSetUpgradeProgress"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+
+[[override]]
+name = "UnitStripHeroLevel"
+class = "D2"
+tombstone = "deferred-v2"
+reason = "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."

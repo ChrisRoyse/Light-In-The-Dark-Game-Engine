@@ -166,7 +166,8 @@ type World struct {
 	runtimeAbilityDefs []data.Ability
 	// loaded buff-type rows (buff.go #162); BuffInstance.BuffID
 	// indexes this slice
-	buffTypes []data.BuffType
+	buffTypes      []data.BuffType
+	buffTypeByCode map[string]uint16 // code -> typeIdx, built at BindBuffTypes
 	// loaded unit rows (produce.go #302); UnitTypeStore.TypeID indexes
 	// this slice; BindUnitDefs installs, read-only thereafter
 	unitDefs []data.Unit

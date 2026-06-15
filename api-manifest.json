@@ -55,6 +55,150 @@
       }
     },
     {
+      "name": "BlzAddAbilityBooleanLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzAddAbilityIntegerLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzAddAbilityRealLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzAddAbilityStringLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
       "name": "BlzItemAddAbilityBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -104,6 +248,458 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityBooleanLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityIntegerLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityRealLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityStringLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityBooleanLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityBooleanLevelFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelfield",
+            "tsType": "abilitybooleanlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityIntegerLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityIntegerLevelFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelfield",
+            "tsType": "abilityintegerlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityRealLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityRealLevelFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelfield",
+            "tsType": "abilityreallevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityStringLevelArrayFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityStringLevelFieldBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelfield",
+            "tsType": "abilitystringlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
       }
     },
     {
@@ -418,6 +1014,27 @@
       }
     },
     {
+      "name": "CreateUpgradeCommandButtonEffectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "techId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "commandbuttoneffect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "DestructableAddIndicatorBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -697,6 +1314,84 @@
       }
     },
     {
+      "name": "GetAbilityEffectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+      }
+    },
+    {
+      "name": "GetAbilityName",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "GetAbilitySoundBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "soundtype",
+            "tsType": "soundtype"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "GetDestructableLoc",
       "origin": "blizzard.j",
       "signature": {
@@ -751,6 +1446,37 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "GetHeroStatBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStat",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "includeBonuses",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
       }
     },
     {
@@ -974,6 +1700,58 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "GetPlayerTechCountSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "GetPlayerTechMaxAllowedSwap",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
       }
     },
     {
@@ -2016,6 +2794,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "IssueUpgradeOrderByIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "techId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
       }
     },
     {
@@ -3388,6 +4192,21 @@
       }
     },
     {
+      "name": "MeleeStartingHeroLimit",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+      }
+    },
+    {
       "name": "NudgeItemsInRectEnum",
       "origin": "blizzard.j",
       "signature": {
@@ -3779,6 +4598,37 @@
         "symbol": "RectAround",
         "package": "litd/api",
         "goSignature": "(c Vec2, w, h float64) Rect"
+      }
+    },
+    {
+      "name": "ReducePlayerTechMaxAllowed",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "limit",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
       }
     },
     {
@@ -5888,6 +6738,125 @@
       }
     },
     {
+      "name": "SetPlayerAbilityAvailableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "avail",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "abilid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "SetPlayerMaxHeroesAllowed",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "maximum",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+      }
+    },
+    {
+      "name": "SetPlayerTechMaxAllowedSwap",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "maximum",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "SetPlayerTechResearchedSwap",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "levels",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
       "name": "SetTimeOfDay",
       "origin": "blizzard.j",
       "signature": {
@@ -6363,6 +7332,62 @@
       }
     },
     {
+      "name": "TriggerRegisterUpgradeCommandEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "techId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "UnitHasBuffBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "buffcode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.HasBuff",
+        "package": "litd/api",
+        "goSignature": "(typ BuffType) bool",
+        "collapsesWith": [
+          "UnitHasBuffsEx"
+        ]
+      }
+    },
+    {
       "name": "UnitHasItemOfTypeBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -6411,6 +7436,64 @@
       }
     },
     {
+      "name": "UnitMakeAbilityPermanentBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "UnitRemoveBuffBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "buffcode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.RemoveBuff",
+        "package": "litd/api",
+        "goSignature": "(typ BuffType) bool"
+      }
+    },
+    {
       "name": "UnitUseItemDestructable",
       "origin": "blizzard.j",
       "signature": {
@@ -6442,6 +7525,48 @@
       }
     },
     {
+      "name": "AbilityId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityIdString",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+      }
+    },
+    {
+      "name": "AbilityId2String",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "AddHeroXP",
       "origin": "common.j",
       "signature": {
@@ -6470,7 +7595,10 @@
       "goMapping": {
         "symbol": "Unit.AddExperience",
         "package": "litd/api",
-        "goSignature": "(xp int)"
+        "goSignature": "(xp int)",
+        "collapsesWith": [
+          "AddHeroXPSwapped"
+        ]
       }
     },
     {
@@ -6538,6 +7666,37 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "AddPlayerTechResearched",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "levels",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
       }
     },
     {
@@ -6667,6 +7826,150 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "BlzAddAbilityBooleanLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzAddAbilityIntegerLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzAddAbilityRealLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzAddAbilityStringLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
       }
     },
     {
@@ -6995,6 +8298,650 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzDecPlayerTechResearched",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "techid",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "levels",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "BlzEndUnitAbilityCooldown",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "BlzGetAbilityActivatedExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityActivatedIcon",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityActivatedPosX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityActivatedPosY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityActivatedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityBooleanLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityBooleanLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelfield",
+            "tsType": "abilitybooleanlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityIcon",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityIntegerLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityIntegerLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelfield",
+            "tsType": "abilityintegerlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityPosX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityPosY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityrealfield",
+            "tsType": "abilityrealfield"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Ability.Field",
+        "package": "litd/api",
+        "goSignature": "(field AbilityField) float64",
+        "collapsesWith": [
+          "BlzGetAbilityBooleanField",
+          "BlzGetAbilityIntegerField",
+          "BlzGetAbilityStringField",
+          "BlzGetAbilityCooldown",
+          "BlzGetAbilityManaCost",
+          "BlzGetUnitAbilityCooldown",
+          "BlzGetUnitAbilityManaCost",
+          "BlzGetUnitAbilityCooldownRemaining"
+        ]
+      }
+    },
+    {
+      "name": "BlzGetAbilityRealLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityRealLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelfield",
+            "tsType": "abilityreallevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityResearchExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityResearchTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzGetAbilityStringLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityStringLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelfield",
+            "tsType": "abilitystringlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzGetAbilityTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
       }
     },
     {
@@ -7529,6 +9476,58 @@
       }
     },
     {
+      "name": "BlzGetUnitAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "ability"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "BlzGetUnitAbilityByIndex",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "ability"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
       "name": "BlzGetUnitArmor",
       "origin": "common.j",
       "signature": {
@@ -7769,6 +9768,841 @@
       }
     },
     {
+      "name": "BlzRemoveAbilityBooleanLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityIntegerLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityRealLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzRemoveAbilityStringLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityActivatedExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "extendedTooltip",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityActivatedIcon",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "iconPath",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityActivatedPosX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityActivatedPosY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityActivatedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "tooltip",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityBooleanLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelarrayfield",
+            "tsType": "abilitybooleanlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityBooleanLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitybooleanlevelfield",
+            "tsType": "abilitybooleanlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "extendedTooltip",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityIcon",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "iconPath",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityIntegerLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelarrayfield",
+            "tsType": "abilityintegerlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityIntegerLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityintegerlevelfield",
+            "tsType": "abilityintegerlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityPosX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityPosY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityRealField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityrealfield",
+            "tsType": "abilityrealfield"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Ability.SetField",
+        "package": "litd/api",
+        "goSignature": "(field AbilityField, value float64)",
+        "collapsesWith": [
+          "BlzSetAbilityBooleanField",
+          "BlzSetAbilityIntegerField",
+          "BlzSetAbilityStringField",
+          "BlzSetAbilityRealFieldBJ",
+          "BlzSetAbilityBooleanFieldBJ",
+          "BlzSetAbilityIntegerFieldBJ",
+          "BlzSetAbilityStringFieldBJ"
+        ]
+      }
+    },
+    {
+      "name": "BlzSetAbilityRealLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelarrayfield",
+            "tsType": "abilityreallevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityRealLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilityreallevelfield",
+            "tsType": "abilityreallevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityResearchExtendedTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "researchExtendedTooltip",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityResearchTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "researchTooltip",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "BlzSetAbilityStringLevelArrayField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelarrayfield",
+            "tsType": "abilitystringlevelarrayfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityStringLevelField",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichAbility",
+            "jassType": "ability",
+            "tsType": "ability"
+          },
+          {
+            "name": "whichField",
+            "jassType": "abilitystringlevelfield",
+            "tsType": "abilitystringlevelfield"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "value",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzSetAbilityTooltip",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "tooltip",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "BlzSetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -7809,6 +10643,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "damage-type override needs a damage-type field in the OnDamage payload; deferred (#219)"
+      }
+    },
+    {
+      "name": "BlzSetHeroProperName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "heroProperName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
       }
     },
     {
@@ -8092,6 +10952,78 @@
       }
     },
     {
+      "name": "BlzSetUnitAbilityCooldown",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "cooldown",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "BlzSetUnitAbilityManaCost",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "level",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "manaCost",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
       "name": "BlzSetUnitMaxHP",
       "origin": "common.j",
       "signature": {
@@ -8170,6 +11102,37 @@
         "symbol": "Unit.SetName",
         "package": "litd/api",
         "goSignature": "(name string)"
+      }
+    },
+    {
+      "name": "BlzStartUnitAbilityCooldown",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilCode",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "cooldown",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
       }
     },
     {
@@ -8278,6 +11241,94 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "player sync events — networking (#316)"
+      }
+    },
+    {
+      "name": "BlzUnitDisableAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "hideUI",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "BlzUnitHideAbility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
+      "name": "CachePlayerHeroData",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
       }
     },
     {
@@ -10600,6 +13651,27 @@
       }
     },
     {
+      "name": "CreateUpgradeCommandButtonEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUprgade",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "commandbuttoneffect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "DecUnitAbilityLevel",
       "origin": "common.j",
       "signature": {
@@ -11604,6 +14676,120 @@
       }
     },
     {
+      "name": "GetAbilityEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityString",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+      }
+    },
+    {
+      "name": "GetAbilityEffectById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "effecttype",
+            "tsType": "effecttype"
+          },
+          {
+            "name": "index",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
+      }
+    },
+    {
+      "name": "GetAbilitySound",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityString",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "t",
+            "jassType": "soundtype",
+            "tsType": "soundtype"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "GetAbilitySoundById",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "soundtype",
+            "tsType": "soundtype"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "GetChangingUnitPrevOwner",
       "origin": "common.j",
       "signature": {
@@ -12123,6 +15309,27 @@
         "symbol": "Unit.HeroLevel",
         "package": "litd/api",
         "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetHeroProperName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "string"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
       }
     },
     {
@@ -13422,6 +16629,21 @@
       }
     },
     {
+      "name": "GetResearchingUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
       "name": "GetSoldItem",
       "origin": "common.j",
       "signature": {
@@ -13479,6 +16701,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "cast ability id needs an Event payload field not yet carried for that kind; deferred (#219)"
+      }
+    },
+    {
+      "name": "GetSpellAbilityUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API)."
       }
     },
     {
@@ -14049,7 +17286,10 @@
       "goMapping": {
         "symbol": "Ability.Level",
         "package": "litd/api",
-        "goSignature": "() int"
+        "goSignature": "() int",
+        "collapsesWith": [
+          "GetUnitAbilityLevelSwapped"
+        ]
       }
     },
     {
@@ -15491,7 +18731,10 @@
       "goMapping": {
         "symbol": "Ability.IncLevel",
         "package": "litd/api",
-        "goSignature": "() int"
+        "goSignature": "() int",
+        "collapsesWith": [
+          "IncUnitAbilityLevelSwapped"
+        ]
       }
     },
     {
@@ -15624,6 +18867,27 @@
           "IsMaskedToPlayer",
           "IsLocationMaskedToPlayer"
         ]
+      }
+    },
+    {
+      "name": "IsHeroUnitId",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
       }
     },
     {
@@ -19193,6 +22457,73 @@
       }
     },
     {
+      "name": "ReviveHero",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "doEyecandy",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+      }
+    },
+    {
+      "name": "ReviveHeroLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "doEyecandy",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+      }
+    },
+    {
       "name": "S2I",
       "origin": "common.j",
       "signature": {
@@ -20909,6 +24240,33 @@
       }
     },
     {
+      "name": "SelectHeroSkill",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "abilcode",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.LearnSkill",
+        "package": "litd/api",
+        "goSignature": "(skill int) bool"
+      }
+    },
+    {
       "name": "SetAllItemTypeSlots",
       "origin": "common.j",
       "signature": {
@@ -21366,7 +24724,10 @@
       "goMapping": {
         "symbol": "Unit.SetHeroLevel",
         "package": "litd/api",
-        "goSignature": "(level int)"
+        "goSignature": "(level int)",
+        "collapsesWith": [
+          "SetHeroLevelBJ"
+        ]
       }
     },
     {
@@ -21398,7 +24759,11 @@
       "goMapping": {
         "symbol": "Unit.SetStrength",
         "package": "litd/api",
-        "goSignature": "(v int)"
+        "goSignature": "(v int)",
+        "collapsesWith": [
+          "SetHeroStat",
+          "ModifyHeroStat"
+        ]
       }
     },
     {
@@ -22472,6 +25837,27 @@
       }
     },
     {
+      "name": "SetReservedLocalHeroButtons",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "reserved",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
       "name": "SetTeams",
       "origin": "common.j",
       "signature": {
@@ -22546,7 +25932,11 @@
       "goMapping": {
         "symbol": "Ability.SetLevel",
         "package": "litd/api",
-        "goSignature": "(level int)"
+        "goSignature": "(level int)",
+        "collapsesWith": [
+          "SetUnitAbilityLevelSwapped",
+          "DecUnitAbilityLevelSwapped"
+        ]
       }
     },
     {
@@ -23417,7 +26807,10 @@
       "goMapping": {
         "symbol": "Unit.SuspendExperience",
         "package": "litd/api",
-        "goSignature": "(suspend bool)"
+        "goSignature": "(suspend bool)",
+        "collapsesWith": [
+          "SuspendHeroXPBJ"
+        ]
       }
     },
     {
@@ -24764,7 +28157,10 @@
       "goMapping": {
         "symbol": "Unit.AddAbility",
         "package": "litd/api",
-        "goSignature": "(ref AbilityRef) Ability"
+        "goSignature": "(ref AbilityRef) Ability",
+        "collapsesWith": [
+          "UnitAddAbilityBJ"
+        ]
       }
     },
     {
@@ -24825,6 +28221,66 @@
         "collapsesWith": [
           "UnitAddItemByIdSwapped",
           "UnitAddItemToSlotById"
+        ]
+      }
+    },
+    {
+      "name": "UnitCountBuffsEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "removePositive",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "removeNegative",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "magic",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "physical",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "timedLife",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "aura",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "autoDispel",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.BuffCount",
+        "package": "litd/api",
+        "goSignature": "() int",
+        "collapsesWith": [
+          "UnitCountBuffsExBJ"
         ]
       }
     },
@@ -24989,6 +28445,37 @@
       }
     },
     {
+      "name": "UnitMakeAbilityPermanent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "abilityId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven."
+      }
+    },
+    {
       "name": "UnitModifySkillPoints",
       "origin": "common.j",
       "signature": {
@@ -25012,7 +28499,10 @@
       "goMapping": {
         "symbol": "Unit.ModifySkillPoints",
         "package": "litd/api",
-        "goSignature": "(delta int) bool"
+        "goSignature": "(delta int) bool",
+        "collapsesWith": [
+          "ModifyHeroSkillPoints"
+        ]
       }
     },
     {
@@ -25039,7 +28529,98 @@
       "goMapping": {
         "symbol": "Unit.RemoveAbility",
         "package": "litd/api",
-        "goSignature": "(ref AbilityRef) bool"
+        "goSignature": "(ref AbilityRef) bool",
+        "collapsesWith": [
+          "UnitRemoveAbilityBJ"
+        ]
+      }
+    },
+    {
+      "name": "UnitRemoveBuffsEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "removePositive",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "removeNegative",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "magic",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "physical",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "timedLife",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "aura",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "autoDispel",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.RemoveAllBuffs",
+        "package": "litd/api",
+        "goSignature": "() int",
+        "collapsesWith": [
+          "UnitRemoveBuffs",
+          "UnitRemoveBuffsBJ",
+          "UnitRemoveBuffsExBJ"
+        ]
+      }
+    },
+    {
+      "name": "UnitSetUpgradeProgress",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "upgradePercentage",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
       }
     },
     {
@@ -25075,6 +28656,32 @@
         "collapsesWith": [
           "UnitShareVisionBJ"
         ]
+      }
+    },
+    {
+      "name": "UnitStripHeroLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichHero",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "howManyLevels",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
       }
     },
     {

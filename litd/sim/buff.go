@@ -42,7 +42,104 @@ func (w *World) BindBuffTypes(types []data.BuffType) bool {
 		return false
 	}
 	w.buffTypes = types
+	idx := make(map[string]uint16, len(types))
+	for i := range types {
+		if types[i].ID != "" {
+			idx[types[i].ID] = uint16(i)
+		}
+	}
+	w.buffTypeByCode = idx
 	return true
+}
+
+// BuffTypeID resolves a buff code (data.BuffType.ID) to its bound type
+// index. ok=false for an unknown code or before BindBuffTypes.
+func (w *World) BuffTypeID(code string) (uint16, bool) {
+	id, ok := w.buffTypeByCode[code]
+	return id, ok
+}
+
+// UnitHasBuff reports whether the unit carries at least one live instance
+// of the given buff type.
+func (w *World) UnitHasBuff(id EntityID, buffID uint16) bool {
+	p := w.Buffs
+	for i := int32(0); int(i) < p.Cap(); i++ {
+		if p.live[i] && p.rows[i].Target == id && p.rows[i].BuffID == buffID {
+			return true
+		}
+	}
+	return false
+}
+
+// UnitBuffCount returns the number of live buff instances on the unit
+// (each instance counts once, regardless of stacks).
+func (w *World) UnitBuffCount(id EntityID) int {
+	n := 0
+	p := w.Buffs
+	for i := int32(0); int(i) < p.Cap(); i++ {
+		if p.live[i] && p.rows[i].Target == id {
+			n++
+		}
+	}
+	return n
+}
+
+// BuffStacks returns the stack count of the unit's instance of buffID, or
+// 0 if absent.
+func (w *World) BuffStacks(id EntityID, buffID uint16) uint8 {
+	p := w.Buffs
+	for i := int32(0); int(i) < p.Cap(); i++ {
+		if p.live[i] && p.rows[i].Target == id && p.rows[i].BuffID == buffID {
+			return p.rows[i].Stacks
+		}
+	}
+	return 0
+}
+
+// BuffRemainingTicks returns the remaining duration (ticks) of the unit's
+// instance of buffID, or 0 if absent.
+func (w *World) BuffRemainingTicks(id EntityID, buffID uint16) uint32 {
+	p := w.Buffs
+	for i := int32(0); int(i) < p.Cap(); i++ {
+		if p.live[i] && p.rows[i].Target == id && p.rows[i].BuffID == buffID {
+			return p.rows[i].RemainingTicks
+		}
+	}
+	return 0
+}
+
+// RemoveBuff frees every live instance of buffID on the unit, returning
+// the number removed; the derived-stat cache is recomputed if any went.
+func (w *World) RemoveBuff(id EntityID, buffID uint16) int {
+	n := 0
+	p := w.Buffs
+	for i := int32(0); int(i) < p.Cap(); i++ {
+		if p.live[i] && p.rows[i].Target == id && p.rows[i].BuffID == buffID {
+			p.Free(i)
+			n++
+		}
+	}
+	if n > 0 && w.Ents.Alive(id) {
+		w.recomputeBuffStats(id)
+	}
+	return n
+}
+
+// RemoveAllBuffs frees every live buff instance on the unit, returning the
+// count removed.
+func (w *World) RemoveAllBuffs(id EntityID) int {
+	n := 0
+	p := w.Buffs
+	for i := int32(0); int(i) < p.Cap(); i++ {
+		if p.live[i] && p.rows[i].Target == id {
+			p.Free(i)
+			n++
+		}
+	}
+	if n > 0 && w.Ents.Alive(id) {
+		w.recomputeBuffStats(id)
+	}
+	return n
 }
 
 // ApplyBuff applies one buff type to target, resolving the type's

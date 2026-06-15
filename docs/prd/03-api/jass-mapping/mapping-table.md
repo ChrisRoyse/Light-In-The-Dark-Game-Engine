@@ -94,8 +94,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | OrderId2String | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitId | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitId2String | common.j | unclassified | _pending (M2 backlog)_ |
-| AbilityId | common.j | unclassified | _pending (M2 backlog)_ |
-| AbilityId2String | common.j | unclassified | _pending (M2 backlog)_ |
+| AbilityId | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
+| AbilityId2String | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetObjectName | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJMaxPlayers | common.j | unclassified | _pending (M2 backlog)_ |
 | GetBJPlayerNeutralVictim | common.j | unclassified | _pending (M2 backlog)_ |
@@ -515,7 +515,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetHeroStr | common.j | D2 | `litd/api.Unit.Strength` |
 | GetHeroAgi | common.j | D2 | `litd/api.Unit.Agility` |
 | GetHeroInt | common.j | D2 | `litd/api.Unit.Intelligence` |
-| UnitStripHeroLevel | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitStripHeroLevel | common.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
 | GetHeroXP | common.j | D1 | `litd/api.Unit.HeroXP` |
 | SetHeroXP | common.j | D2 | `litd/api.Unit.SetHeroXP` |
 | GetHeroSkillPoints | common.j | D1 | `litd/api.Unit.SkillPoints` |
@@ -524,16 +524,16 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetHeroLevel | common.j | D2 | `litd/api.Unit.SetHeroLevel` |
 | GetHeroLevel | common.j | D1 | `litd/api.Unit.HeroLevel` |
 | GetUnitLevel | common.j | D1 | `litd/api.Unit.Level` |
-| GetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |
+| GetHeroProperName | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | SuspendHeroXP | common.j | D1 | `litd/api.Unit.SuspendExperience` |
 | IsSuspendedXP | common.j | D1 | `litd/api.Unit.ExperienceSuspended` |
-| SelectHeroSkill | common.j | unclassified | _pending (M2 backlog)_ |
+| SelectHeroSkill | common.j | D1 | `litd/api.Unit.LearnSkill` |
 | GetUnitAbilityLevel | common.j | D3 | `litd/api.Ability.Level` |
 | DecUnitAbilityLevel | common.j | D3 | `litd/api.Ability.DecLevel` |
 | IncUnitAbilityLevel | common.j | D3 | `litd/api.Ability.IncLevel` |
 | SetUnitAbilityLevel | common.j | D3 | `litd/api.Ability.SetLevel` |
-| ReviveHero | common.j | D3 | _pending (M2 backlog)_ |
-| ReviveHeroLoc | common.j | D3 | _pending (M2 backlog)_ |
+| ReviveHero | common.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
+| ReviveHeroLoc | common.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
 | SetUnitExploded | common.j | unclassified | _pending (M2 backlog)_ |
 | SetUnitInvulnerable | common.j | D1 | `litd/api.Unit.SetInvulnerable` |
 | PauseUnit | common.j | D2 | `litd/api.Unit.SetPaused` (D3 collapse → PauseUnitBJ) |
@@ -597,7 +597,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsUnitIllusion | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitInTransport | common.j | unclassified | _pending (M2 backlog)_ |
 | IsUnitLoaded | common.j | unclassified | _pending (M2 backlog)_ |
-| IsHeroUnitId | common.j | unclassified | _pending (M2 backlog)_ |
+| IsHeroUnitId | common.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
 | IsUnitIdType | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitShareVision | common.j | D1 | `litd/api.Unit.ShareVision` |
 | UnitSuspendDecay | common.j | unclassified | _pending (M2 backlog)_ |
@@ -605,11 +605,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitRemoveType | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitAddAbility | common.j | D2 | `litd/api.Unit.AddAbility` |
 | UnitRemoveAbility | common.j | D2 | `litd/api.Unit.RemoveAbility` |
-| UnitMakeAbilityPermanent | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitRemoveBuffs | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitRemoveBuffsEx | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitHasBuffsEx | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitCountBuffsEx | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitMakeAbilityPermanent | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
+| UnitRemoveBuffs | common.j | D1 | `litd/api.Unit.RemoveAllBuffs` (D3 collapse → UnitRemoveBuffsEx) |
+| UnitRemoveBuffsEx | common.j | D1 | `litd/api.Unit.RemoveAllBuffs` |
+| UnitHasBuffsEx | common.j | D1 | `litd/api.Unit.HasBuff` (D3 collapse → UnitHasBuffBJ) |
+| UnitCountBuffsEx | common.j | D1 | `litd/api.Unit.BuffCount` |
 | UnitAddSleep | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitCanSleep | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitAddSleepPerm | common.j | unclassified | _pending (M2 backlog)_ |
@@ -621,7 +621,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitIgnoreAlarmToggled | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitResetCooldown | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitSetConstructionProgress | common.j | unclassified | _pending (M2 backlog)_ |
-| UnitSetUpgradeProgress | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitSetUpgradeProgress | common.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | UnitPauseTimedLife | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitSetUsesAltIcon | common.j | unclassified | _pending (M2 backlog)_ |
 | UnitDamagePoint | common.j | unclassified | _pending (M2 backlog)_ |
@@ -699,7 +699,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetPlayerHandicapDamage | common.j | D5 | `litd/api.Player.SetHandicapDamage` |
 | SetPlayerTechMaxAllowed | common.j | D1 | **tombstoned** (deferred-v2): tech max-allowed belongs to the tech-tree surface (#303/#234); deferred |
 | GetPlayerTechMaxAllowed | common.j | D1 | **tombstoned** (deferred-v2): tech max-allowed query — tech-tree surface (#303); deferred |
-| AddPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
+| AddPlayerTechResearched | common.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | SetPlayerTechResearched | common.j | D1 | **tombstoned** (deferred-v2): tech-researched setter — tech-tree surface (#303); deferred |
 | GetPlayerTechResearched | common.j | D1 | **tombstoned** (deferred-v2): tech-researched query — tech-tree surface (#303); deferred |
 | GetPlayerTechCount | common.j | D1 | **tombstoned** (deferred-v2): tech-count query — tech-tree surface (#303); deferred |
@@ -708,7 +708,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetPlayerAbilityAvailable | common.j | D1 | **tombstoned** (deferred-v2): per-player ability availability belongs to the abilities surface (#234); deferred |
 | SetPlayerState | common.j | D5 | `litd/api.Player.SetGold` |
 | RemovePlayer | common.j | D1 | **tombstoned** (superseded): #256: removes a player from the match with a game-result; the gameplay outcomes are expressed by the typed Game.Victory(p) / Game.Defeat(p, msg) verbs (victory.go), which write the deterministic per-player result store — superseded |
-| CachePlayerHeroData | common.j | unclassified | _pending (M2 backlog)_ |
+| CachePlayerHeroData | common.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
 | SetFogStateRect | common.j | D3 | `litd/api.Game.SetFogState` |
 | SetFogStateRadius | common.j | D3 | `litd/api.Game.SetFogState` (D3 collapse → SetFogStateRect) |
 | SetFogStateRadiusLoc | common.j | D3 | `litd/api.Game.SetFogState` (D3 collapse → SetFogStateRect) |
@@ -962,7 +962,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetTextTagAge | common.j | unclassified | _pending (M2 backlog)_ |
 | SetTextTagLifespan | common.j | unclassified | _pending (M2 backlog)_ |
 | SetTextTagFadepoint | common.j | unclassified | _pending (M2 backlog)_ |
-| SetReservedLocalHeroButtons | common.j | unclassified | _pending (M2 backlog)_ |
+| SetReservedLocalHeroButtons | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
 | SetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCreepCampFilterState | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1200,10 +1200,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLightningColorG | common.j | unclassified | _pending (M2 backlog)_ |
 | GetLightningColorB | common.j | unclassified | _pending (M2 backlog)_ |
 | SetLightningColor | common.j | unclassified | _pending (M2 backlog)_ |
-| GetAbilityEffect | common.j | D3 | _pending (M2 backlog)_ |
-| GetAbilityEffectById | common.j | D3 | _pending (M2 backlog)_ |
-| GetAbilitySound | common.j | D3 | _pending (M2 backlog)_ |
-| GetAbilitySoundById | common.j | D3 | _pending (M2 backlog)_ |
+| GetAbilityEffect | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
+| GetAbilityEffectById | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
+| GetAbilitySound | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| GetAbilitySoundById | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetTerrainCliffLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | SetWaterBaseColor | common.j | unclassified | _pending (M2 backlog)_ |
 | SetWaterDeforms | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1266,30 +1266,30 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetTriggerPlayerMouseY | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
 | BlzGetTriggerPlayerMousePosition | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
 | BlzGetTriggerPlayerMouseButton | common.j | D1 | **tombstoned** (deferred-v2): mouse-button input — ui-frames (#245) |
-| BlzSetAbilityTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityActivatedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityActivatedExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityResearchTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityResearchExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityActivatedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityActivatedExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityResearchTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityResearchExtendedTooltip | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityActivatedIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityActivatedIcon | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityPosX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetAbilityPosY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetAbilityPosX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetAbilityPosY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetAbilityActivatedPosX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetAbilityActivatedPosY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetAbilityActivatedPosX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetAbilityActivatedPosY | common.j | D3 | _pending (M2 backlog)_ |
+| BlzSetAbilityTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityActivatedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityActivatedExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityResearchTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityResearchExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityActivatedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityActivatedExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityResearchTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityResearchExtendedTooltip | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityIcon | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityIcon | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityActivatedIcon | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityActivatedIcon | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityPosX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityPosY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityPosX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityPosY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityActivatedPosX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzGetAbilityActivatedPosY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityActivatedPosX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
+| BlzSetAbilityActivatedPosY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | BlzGetUnitMaxHP | common.j | D5 | `litd/api.Unit.MaxLife` |
 | BlzSetUnitMaxHP | common.j | D5 | `litd/api.Unit.SetMaxLife` |
 | BlzGetUnitMaxMana | common.j | D5 | `litd/api.Unit.MaxMana` |
@@ -1304,7 +1304,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetItemIconPath | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | BlzGetItemIconPath | common.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | BlzSetUnitName | common.j | D1 | `litd/api.Unit.SetName` |
-| BlzSetHeroProperName | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetHeroProperName | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | BlzGetUnitBaseDamage | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitBaseDamage | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitDiceNumber | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1340,24 +1340,24 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetAnimName | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitArmor | common.j | D1 | `litd/api.Unit.Armor` |
 | BlzSetUnitArmor | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzUnitHideAbility | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzUnitDisableAbility | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzUnitHideAbility | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
+| BlzUnitDisableAbility | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | BlzUnitCancelTimedLife | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsUnitSelectable | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsUnitInvulnerable | common.j | D1 | `litd/api.Unit.Invulnerable` |
 | BlzUnitInterruptAttack | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitCollisionSize | common.j | D1 | `litd/api.Unit.CollisionSize` |
-| BlzGetAbilityManaCost | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetUnitAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitAbilityCooldownRemaining | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzEndUnitAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzStartUnitAbilityCooldown | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitAbilityManaCost | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetUnitAbilityManaCost | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetAbilityManaCost | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzGetAbilityCooldown | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzSetUnitAbilityCooldown | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
+| BlzGetUnitAbilityCooldown | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzGetUnitAbilityCooldownRemaining | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzEndUnitAbilityCooldown | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
+| BlzStartUnitAbilityCooldown | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
+| BlzGetUnitAbilityManaCost | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzSetUnitAbilityManaCost | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | BlzGetLocalUnitZ | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzDecPlayerTechResearched | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzDecPlayerTechResearched | common.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | BlzSetEventDamage | common.j | D1 | `litd/api.DamageEvent.SetAmount` |
 | BlzGetEventDamageTarget | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetEventAttackType | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1457,50 +1457,50 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetSpecialEffectScale | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetSpecialEffectMatrixScale | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzResetSpecialEffectMatrix | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitAbility | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetUnitAbilityByIndex | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetUnitAbility | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
+| BlzGetUnitAbilityByIndex | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | BlzDisplayChatMessage | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzPauseUnitEx | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitFacingEx | common.j | D1 | `litd/api.Unit.SetFacing` (D3 collapse → SetUnitFacing) |
 | CreateCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateUpgradeCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateUpgradeCommandButtonEffect | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | CreateLearnCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | DestroyCommandButtonEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzBitOr | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise OR; Go has the native | operator. No public surface (math-strings-conversion.md) |
 | BlzBitAnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise AND; Go has the native & operator. No public surface (math-strings-conversion.md) |
 | BlzBitXor | common.j | D1 | **tombstoned** (gameplay-irrelevant): bitwise XOR; Go has the native ^ operator. No public surface (math-strings-conversion.md) |
-| BlzGetAbilityBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityBooleanLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityIntegerLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityRealLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityStringLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityBooleanLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityIntegerLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityRealLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetAbilityStringLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityBooleanField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIntegerField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityRealField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityStringField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityBooleanLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIntegerLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityRealLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityStringLevelField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityBooleanLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIntegerLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityRealLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityStringLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityBooleanLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityIntegerLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityRealLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityStringLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityBooleanLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityIntegerLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityRealLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityStringLevelArrayField | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetAbilityBooleanField | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzGetAbilityIntegerField | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzGetAbilityRealField | common.j | D1 | `litd/api.Ability.Field` |
+| BlzGetAbilityStringField | common.j | D1 | `litd/api.Ability.Field` (D3 collapse → BlzGetAbilityRealField) |
+| BlzGetAbilityBooleanLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityIntegerLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityRealLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityStringLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityBooleanLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityIntegerLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityRealLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzGetAbilityStringLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityBooleanField | common.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityIntegerField | common.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityRealField | common.j | D1 | `litd/api.Ability.SetField` |
+| BlzSetAbilityStringField | common.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityBooleanLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityIntegerLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityRealLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityStringLevelField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityBooleanLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityIntegerLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityRealLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityStringLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityBooleanLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityIntegerLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityRealLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityStringLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityBooleanLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityIntegerLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityRealLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityStringLevelArrayField | common.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
 | BlzGetItemAbilityByIndex | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzGetItemAbility | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzItemAddAbility | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
@@ -1676,7 +1676,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterBuildSubmenuEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterBuildCommandEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TriggerRegisterTrainCommandEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterUpgradeCommandEventBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| TriggerRegisterUpgradeCommandEventBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | TriggerRegisterCommonCommandEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterGameLoadedEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | TriggerRegisterGameSavedEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1700,8 +1700,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLightningColorBBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetLightningColorBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetLastCreatedLightningBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| GetAbilityEffectBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetAbilitySoundBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetAbilityEffectBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
+| GetAbilitySoundBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetTerrainCliffLevelBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetTerrainTypeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetTerrainVarianceBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1791,7 +1791,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedEffectBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CreateCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateTrainCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateUpgradeCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| CreateUpgradeCommandButtonEffectBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | CreateCommonCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateLearnCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateBuildCommandButtonEffectBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -1799,14 +1799,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetItemLoc | blizzard.j | D1 | `litd/api.Item.Position` (D3 collapse → GetItemX) |
 | GetItemLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
 | SetItemLifeBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
-| AddHeroXPSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetHeroLevelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DecUnitAbilityLevelSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| IncUnitAbilityLevelSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetUnitAbilityLevelSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetUnitAbilityLevelSwapped | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitHasBuffBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| UnitRemoveBuffBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| AddHeroXPSwapped | blizzard.j | D2 | `litd/api.Unit.AddExperience` (D3 collapse → AddHeroXP) |
+| SetHeroLevelBJ | blizzard.j | D2 | `litd/api.Unit.SetHeroLevel` (D3 collapse → SetHeroLevel) |
+| DecUnitAbilityLevelSwapped | blizzard.j | D3 | `litd/api.Ability.SetLevel` (D3 collapse → SetUnitAbilityLevel) |
+| IncUnitAbilityLevelSwapped | blizzard.j | D3 | `litd/api.Ability.IncLevel` (D3 collapse → IncUnitAbilityLevel) |
+| SetUnitAbilityLevelSwapped | blizzard.j | D3 | `litd/api.Ability.SetLevel` (D3 collapse → SetUnitAbilityLevel) |
+| GetUnitAbilityLevelSwapped | blizzard.j | D3 | `litd/api.Ability.Level` (D3 collapse → GetUnitAbilityLevel) |
+| UnitHasBuffBJ | blizzard.j | D1 | `litd/api.Unit.HasBuff` |
+| UnitRemoveBuffBJ | blizzard.j | D1 | `litd/api.Unit.RemoveBuff` |
 | UnitAddItemSwapped | blizzard.j | D1 | `litd/api.Unit.AddItem` (D3 collapse → UnitAddItem) |
 | UnitAddItemByIdSwapped | blizzard.j | D1 | `litd/api.Unit.AddItemByType` (D3 collapse → UnitAddItemById) |
 | UnitRemoveItemSwapped | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
@@ -1816,7 +1816,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastRemovedItem | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | SetItemPositionLoc | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
 | GetLearnedSkillBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SuspendHeroXPBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SuspendHeroXPBJ | blizzard.j | D1 | `litd/api.Unit.SuspendExperience` (D3 collapse → SuspendHeroXP) |
 | SetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapDamage` (D3 collapse → SetPlayerHandicapDamage) |
 | GetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.HandicapDamage` (D3 collapse → GetPlayerHandicapDamage) |
 | SetPlayerHandicapReviveTimeBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapReviveTime` (D3 collapse → SetPlayerHandicapReviveTime) |
@@ -1825,10 +1825,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetPlayerHandicapXPBJ | blizzard.j | D5 | `litd/api.Player.HandicapXP` (D3 collapse → GetPlayerHandicapXP) |
 | SetPlayerHandicapBJ | blizzard.j | D5 | `litd/api.Player.SetHandicap` (D3 collapse → SetPlayerHandicap) |
 | GetPlayerHandicapBJ | blizzard.j | D5 | `litd/api.Player.Handicap` (D3 collapse → GetPlayerHandicap) |
-| GetHeroStatBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetHeroStat | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ModifyHeroStat | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ModifyHeroSkillPoints | blizzard.j | D4 | _pending (M2 backlog)_ |
+| GetHeroStatBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
+| SetHeroStat | blizzard.j | D2 | `litd/api.Unit.SetStrength` (D3 collapse → SetHeroStr) |
+| ModifyHeroStat | blizzard.j | D2 | `litd/api.Unit.SetStrength` (D3 collapse → SetHeroStr) |
+| ModifyHeroSkillPoints | blizzard.j | D1 | `litd/api.Unit.ModifySkillPoints` (D3 collapse → UnitModifySkillPoints) |
 | UnitDropItemPointBJ | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | UnitDropItemPointLoc | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | UnitDropItemSlotBJ | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
@@ -1912,7 +1912,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueBuildOrderByIdLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | IssueTrainOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GroupTrainOrderByIdBJ | blizzard.j | D1 | **tombstoned** (superseded): group train order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
-| IssueUpgradeOrderByIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| IssueUpgradeOrderByIdBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | GetAttackedUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | SetUnitFlyHeightBJ | blizzard.j | D5 | `litd/api.Unit.SetFlyHeight` (D3 collapse → SetUnitFlyHeight) |
 | SetUnitTurnSpeedBJ | blizzard.j | D1 | `litd/api.Unit.SetTurnSpeed` (D3 collapse → SetUnitTurnSpeed) |
@@ -1937,14 +1937,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitPauseTimedLifeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitApplyTimedLifeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitShareVisionBJ | blizzard.j | D1 | `litd/api.Unit.ShareVision` (D3 collapse → UnitShareVision) |
-| UnitRemoveBuffsBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitRemoveBuffsExBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitCountBuffsExBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| UnitRemoveAbilityBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitAddAbilityBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| UnitRemoveBuffsBJ | blizzard.j | D1 | `litd/api.Unit.RemoveAllBuffs` (D3 collapse → UnitRemoveBuffsEx) |
+| UnitRemoveBuffsExBJ | blizzard.j | D1 | `litd/api.Unit.RemoveAllBuffs` (D3 collapse → UnitRemoveBuffsEx) |
+| UnitCountBuffsExBJ | blizzard.j | D1 | `litd/api.Unit.BuffCount` (D3 collapse → UnitCountBuffsEx) |
+| UnitRemoveAbilityBJ | blizzard.j | D2 | `litd/api.Unit.RemoveAbility` (D3 collapse → UnitRemoveAbility) |
+| UnitAddAbilityBJ | blizzard.j | D2 | `litd/api.Unit.AddAbility` (D3 collapse → UnitAddAbility) |
 | UnitRemoveTypeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | UnitAddTypeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitMakeAbilityPermanentBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| UnitMakeAbilityPermanentBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | SetUnitExplodedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | ExplodeUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | GetTransportUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
@@ -2225,12 +2225,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MakeUnitRescuableToForceBJEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MakeUnitRescuableToForceBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitRescuableBehaviorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetPlayerTechResearchedSwap | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerTechMaxAllowedSwap | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerMaxHeroesAllowed | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerTechCountSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetPlayerTechMaxAllowedSwap | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetPlayerAbilityAvailableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetPlayerTechResearchedSwap | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
+| SetPlayerTechMaxAllowedSwap | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
+| SetPlayerMaxHeroesAllowed | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
+| GetPlayerTechCountSimple | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
+| GetPlayerTechMaxAllowedSwap | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
+| SetPlayerAbilityAvailableBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | SetCampaignMenuRaceBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetMissionAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetCampaignAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2397,11 +2397,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SaveDyingWidget | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SetBlightRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetBlightRadiusLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetAbilityName | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetAbilityName | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | MeleeStartingVisibility | blizzard.j | D2 | _pending (M2 backlog)_ |
 | MeleeStartingResources | blizzard.j | D4 | _pending (M2 backlog)_ |
-| ReducePlayerTechMaxAllowed | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingHeroLimit | blizzard.j | D4 | _pending (M2 backlog)_ |
+| ReducePlayerTechMaxAllowed | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
+| MeleeStartingHeroLimit | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
 | MeleeTrainedUnitIsHeroBJFilter | blizzard.j | D2 | _pending (M2 backlog)_ |
 | MeleeGrantItemsToHero | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MeleeGrantItemsToTrainedHero | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2491,26 +2491,26 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitDropItem | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | WidgetDropItem | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | BlzIsLastInstanceObjectFunctionSuccessful | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityBooleanFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIntegerFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityRealFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityStringFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityBooleanLevelFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIntegerLevelFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityRealLevelFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityStringLevelFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityBooleanLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityIntegerLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityRealLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetAbilityStringLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityBooleanLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityIntegerLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityRealLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzAddAbilityStringLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityBooleanLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityIntegerLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityRealLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| BlzRemoveAbilityStringLevelArrayFieldBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetAbilityBooleanFieldBJ | blizzard.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityIntegerFieldBJ | blizzard.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityRealFieldBJ | blizzard.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityStringFieldBJ | blizzard.j | D1 | `litd/api.Ability.SetField` (D3 collapse → BlzSetAbilityRealField) |
+| BlzSetAbilityBooleanLevelFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityIntegerLevelFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityRealLevelFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityStringLevelFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityBooleanLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityIntegerLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityRealLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzSetAbilityStringLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityBooleanLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityIntegerLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityRealLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzAddAbilityStringLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityBooleanLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityIntegerLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityRealLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
+| BlzRemoveAbilityStringLevelArrayFieldBJ | blizzard.j | D5 | **tombstoned** (deferred-v2): #234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField. |
 | BlzItemAddAbilityBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzItemRemoveAbilityBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzSetItemBooleanFieldBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |

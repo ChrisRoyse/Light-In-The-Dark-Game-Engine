@@ -3,6 +3,7 @@ package litd
 import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
 // unit.go is the canonical units-category surface (jass-mapping/units.md):
@@ -732,6 +733,18 @@ func (u Unit) ModifySkillPoints(delta int) bool {
 	return u.g.w.ModifySkillPoints(u.id, delta)
 }
 
+// LearnSkill spends one skill point to learn (or level up) the hero's skill at
+// the given index, returning true on success. It is a no-op returning false on
+// an invalid handle, a non-hero, an unknown skill index, no available skill
+// points, a maxed skill, or a hero-level-locked tier. JASS: SelectHeroSkill.
+func (u Unit) LearnSkill(skill int) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.LearnSkill")
+		return false
+	}
+	return u.g.w.LearnSkill(u.id, skill) == sim.SkillOK
+}
+
 // SetStrength sets the hero's strength, updating its max life and regen
 // accordingly. No-op on an invalid handle or a non-hero. The JASS `permanent`
 // parameter is dropped — the engine has no temporary attribute layer (#366).
@@ -785,15 +798,15 @@ func (u Unit) InventorySize() int {
 type UnitClass uint8
 
 const (
-	ClassHero      UnitClass = iota // UNIT_TYPE_HERO
-	ClassDead                       // UNIT_TYPE_DEAD
-	ClassStructure                  // UNIT_TYPE_STRUCTURE (building footprint)
-	ClassFlying                     // UNIT_TYPE_FLYING (air pathing)
-	ClassGround                     // UNIT_TYPE_GROUND (ground pathing)
-	ClassMelee                      // UNIT_TYPE_MELEE_ATTACKER (instant weapon)
-	ClassRanged                     // UNIT_TYPE_RANGED_ATTACKER (projectile weapon)
-	ClassAttacksGround              // UNIT_TYPE_ATTACKS_GROUND
-	ClassAttacksFlying              // UNIT_TYPE_ATTACKS_FLYING
+	ClassHero          UnitClass = iota // UNIT_TYPE_HERO
+	ClassDead                           // UNIT_TYPE_DEAD
+	ClassStructure                      // UNIT_TYPE_STRUCTURE (building footprint)
+	ClassFlying                         // UNIT_TYPE_FLYING (air pathing)
+	ClassGround                         // UNIT_TYPE_GROUND (ground pathing)
+	ClassMelee                          // UNIT_TYPE_MELEE_ATTACKER (instant weapon)
+	ClassRanged                         // UNIT_TYPE_RANGED_ATTACKER (projectile weapon)
+	ClassAttacksGround                  // UNIT_TYPE_ATTACKS_GROUND
+	ClassAttacksFlying                  // UNIT_TYPE_ATTACKS_FLYING
 )
 
 // IsType reports whether the unit belongs to the given structural class.
