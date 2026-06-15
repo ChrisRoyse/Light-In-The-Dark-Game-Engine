@@ -5047,7 +5047,7 @@ class = "D3"
 goMapping = "Game.AttachAI"
 goSignature = "(p Player, ai AIController, d Difficulty)"
 package = "litd/api"
-collapsesWith = ["StartCampaignAI"]
+collapsesWith = ["StartCampaignAI", "SetMeleeAI", "SetCampaignAI"]
 reason = "#257: attach a computer player; melee/campaign constructor variants collapse onto one AttachAI taking the strategy controller (D3). Live AI domain is M5.5 (R-EXEC-3); the M5 surface records difficulty + controller."
 
 [[override]]
@@ -13830,3 +13830,763 @@ goSignature = "()"
 collapsesWith = ["DestroyEffectBJ"]
 package = "litd/api"
 reason = "#effects: destroy a special effect maps onto Effect.Destroy (plays death anim then frees); BJ passthrough folds in."
+
+[[override]]
+name = "DebugFI"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DebugS"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DebugUnitID"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DisplayText"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DisplayTextI"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DisplayTextII"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DisplayTextIII"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "DoAiScriptDebug"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+
+[[override]]
+name = "AddAssault"
+class = "D3"
+goMapping = "AICommander.AddAssault"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "AddDefenders"
+class = "D3"
+goMapping = "AICommander.AddDefenders"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "AttackMoveKill"
+class = "D3"
+goMapping = "AICommander.AttackMoveKill"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "AttackMoveXY"
+class = "D3"
+goMapping = "AICommander.AttackMoveXY"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "CaptainAtGoal"
+class = "D3"
+goMapping = "AIView.CaptainAtGoal"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainAttack"
+class = "D3"
+goMapping = "AICommander.CaptainAttack"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "CaptainGoHome"
+class = "D3"
+goMapping = "AICommander.CaptainGoHome"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "CaptainInCombat"
+class = "D3"
+goMapping = "AIView.CaptainInCombat"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainIsEmpty"
+class = "D3"
+goMapping = "AIView.CaptainIsEmpty"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainIsFull"
+class = "D3"
+goMapping = "AIView.CaptainIsFull"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainIsHome"
+class = "D3"
+goMapping = "AIView.CaptainIsHome"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainReadiness"
+class = "D3"
+goMapping = "AIView.CaptainReadiness"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainReadinessHP"
+class = "D3"
+goMapping = "AIView.CaptainReadinessHP"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainReadinessMa"
+class = "D3"
+goMapping = "AIView.CaptainReadinessMa"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainRetreating"
+class = "D3"
+goMapping = "AIView.CaptainRetreating"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainVsPlayer"
+class = "D3"
+goMapping = "AIView.CaptainVsPlayer"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CaptainVsUnits"
+class = "D3"
+goMapping = "AIView.CaptainVsUnits"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "ClearCaptainTargets"
+class = "D3"
+goMapping = "AICommander.ClearCaptainTargets"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "ClearHarvestAI"
+class = "D3"
+goMapping = "AICommander.ClearHarvestAI"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "CommandsWaiting"
+class = "D2"
+goMapping = "AICommander.CommandsWaiting"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): the integer-pair command-stack inbox (CommandsWaiting/GetLastCommand/GetLastData/PopLastCommand) becomes the typed AICommander message-queue receive side (R-EXEC-3)."
+
+[[override]]
+name = "ConvertUnits"
+class = "D3"
+goMapping = "AIView.ConvertUnits"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "CreateCaptains"
+class = "D3"
+goMapping = "AICommander.CreateCaptains"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "CreepsOnMap"
+class = "D3"
+goMapping = "AIView.CreepsOnMap"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "DisablePathing"
+class = "D3"
+goMapping = "AICommander.DisablePathing"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "GetAiPlayer"
+class = "D3"
+goMapping = "AIView.AiPlayer"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetAllianceTarget"
+class = "D3"
+goMapping = "AIView.AllianceTarget"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetBuilding"
+class = "D3"
+goMapping = "AIView.Building"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetCreepCamp"
+class = "D3"
+goMapping = "AIView.CreepCamp"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetEnemyBase"
+class = "D3"
+goMapping = "AIView.EnemyBase"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetEnemyExpansion"
+class = "D3"
+goMapping = "AIView.EnemyExpansion"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetEnemyPower"
+class = "D3"
+goMapping = "AIView.EnemyPower"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetExpansionFoe"
+class = "D3"
+goMapping = "AIView.ExpansionFoe"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetExpansionPeon"
+class = "D3"
+goMapping = "AIView.ExpansionPeon"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetExpansionX"
+class = "D3"
+goMapping = "AIView.ExpansionX"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetExpansionY"
+class = "D3"
+goMapping = "AIView.ExpansionY"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetHeroId"
+class = "D3"
+goMapping = "AIView.HeroId"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetHeroLevelAI"
+class = "D3"
+goMapping = "AIView.HeroLevelAI"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetLastCommand"
+class = "D2"
+goMapping = "AICommander.LastCommand"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): the integer-pair command-stack inbox (CommandsWaiting/GetLastCommand/GetLastData/PopLastCommand) becomes the typed AICommander message-queue receive side (R-EXEC-3)."
+
+[[override]]
+name = "GetLastData"
+class = "D2"
+goMapping = "AICommander.LastData"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): the integer-pair command-stack inbox (CommandsWaiting/GetLastCommand/GetLastData/PopLastCommand) becomes the typed AICommander message-queue receive side (R-EXEC-3)."
+
+[[override]]
+name = "GetMegaTarget"
+class = "D3"
+goMapping = "AIView.MegaTarget"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetMinesOwned"
+class = "D3"
+goMapping = "AIView.MinesOwned"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetNextExpansion"
+class = "D3"
+goMapping = "AIView.NextExpansion"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "GetTownUnitCount"
+class = "D3"
+goMapping = "AIView.TownUnitCount"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "HarvestGold"
+class = "D3"
+goMapping = "AICommander.HarvestGold"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "HarvestWood"
+class = "D3"
+goMapping = "AICommander.HarvestWood"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "IgnoredUnits"
+class = "D3"
+goMapping = "AIView.IgnoredUnits"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "InitAssault"
+class = "D3"
+goMapping = "AICommander.InitAssault"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "IsTowered"
+class = "D3"
+goMapping = "AIView.Towered"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "PopLastCommand"
+class = "D2"
+goMapping = "AICommander.PopCommand"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): the integer-pair command-stack inbox (CommandsWaiting/GetLastCommand/GetLastData/PopLastCommand) becomes the typed AICommander message-queue receive side (R-EXEC-3)."
+
+[[override]]
+name = "PurchaseZeppelin"
+class = "D3"
+goMapping = "AICommander.PurchaseZeppelin"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "RemoveInjuries"
+class = "D3"
+goMapping = "AICommander.RemoveInjuries"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "RemoveSiege"
+class = "D3"
+goMapping = "AICommander.RemoveSiege"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "ResetCaptainLocs"
+class = "D3"
+goMapping = "AICommander.ResetCaptainLocs"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetAllianceTarget"
+class = "D3"
+goMapping = "AICommander.SetAllianceTarget"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetAmphibious"
+class = "D3"
+goMapping = "AICommander.SetAmphibious"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetCaptainChanges"
+class = "D3"
+goMapping = "AICommander.SetCaptainChanges"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetCaptainHome"
+class = "D3"
+goMapping = "AICommander.SetCaptainHome"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetDefendPlayer"
+class = "D3"
+goMapping = "AICommander.SetDefendPlayer"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetExpansion"
+class = "D3"
+goMapping = "AICommander.SetExpansion"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetHeroLevels"
+class = "D3"
+goMapping = "AICommander.SetHeroLevels"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetHeroesBuyItems"
+class = "D3"
+goMapping = "AICommander.SetHeroesBuyItems"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetHeroesFlee"
+class = "D3"
+goMapping = "AICommander.SetHeroesFlee"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetHeroesTakeItems"
+class = "D3"
+goMapping = "AICommander.SetHeroesTakeItems"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetIgnoreInjured"
+class = "D3"
+goMapping = "AICommander.SetIgnoreInjured"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetNewHeroes"
+class = "D3"
+goMapping = "AICommander.SetNewHeroes"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetPeonsRepair"
+class = "D3"
+goMapping = "AICommander.SetPeonsRepair"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetProduce"
+class = "D3"
+goMapping = "AICommander.SetProduce"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetRandomPaths"
+class = "D3"
+goMapping = "AICommander.SetRandomPaths"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetReplacementCount"
+class = "D3"
+goMapping = "AICommander.SetReplacementCount"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetRescueBuildingColorChangeBJ"
+class = "D3"
+goMapping = "AICommander.SetRescueBuildingColorChangeBJ"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetSlowChopping"
+class = "D3"
+goMapping = "AICommander.SetSlowChopping"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetSmartArtillery"
+class = "D3"
+goMapping = "AICommander.SetSmartArtillery"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetStagePoint"
+class = "D3"
+goMapping = "AICommander.SetStagePoint"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetTargetHeroes"
+class = "D3"
+goMapping = "AICommander.SetTargetHeroes"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetUnitsFlee"
+class = "D3"
+goMapping = "AICommander.SetUnitsFlee"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SetWatchMegaTargets"
+class = "D3"
+goMapping = "AICommander.SetWatchMegaTargets"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "ShiftTownSpot"
+class = "D3"
+goMapping = "AICommander.ShiftTownSpot"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "Sleep"
+class = "D2"
+goMapping = "AIThread.Sleep"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI sleep/spawn/get-enemy-base wait verbs run on the AI domain scheduler (same deterministic scheduler, isolated job space; R-EXEC-3/5)."
+
+[[override]]
+name = "StartGetEnemyBase"
+class = "D2"
+goMapping = "AIThread.StartGetEnemyBase"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI sleep/spawn/get-enemy-base wait verbs run on the AI domain scheduler (same deterministic scheduler, isolated job space; R-EXEC-3/5)."
+
+[[override]]
+name = "StartThread"
+class = "D2"
+goMapping = "AIThread.Start"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI sleep/spawn/get-enemy-base wait verbs run on the AI domain scheduler (same deterministic scheduler, isolated job space; R-EXEC-3/5)."
+
+[[override]]
+name = "StopGathering"
+class = "D3"
+goMapping = "AICommander.StopGathering"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "SuicidePlayer"
+class = "D3"
+goMapping = "AICommander.SuicidePlayer"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "TeleportCaptain"
+class = "D3"
+goMapping = "AICommander.TeleportCaptain"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "TownHasHall"
+class = "D3"
+goMapping = "AIView.TownHasHall"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "TownHasMine"
+class = "D3"
+goMapping = "AIView.TownHasMine"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "TownThreatened"
+class = "D3"
+goMapping = "AIView.TownThreatened"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "TownWithMine"
+class = "D3"
+goMapping = "AIView.TownWithMine"
+goSignature = "(...) "
+package = "litd/api"
+reason = "#ai (M5.5): AI-legal read query on the read-only AIView (own/visible state, base/expansion/threat/town/captain status); isolated AI scheduler domain (R-EXEC-3)."
+
+[[override]]
+name = "Unsummon"
+class = "D3"
+goMapping = "AICommander.Unsummon"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI build/train/harvest/attack/captain/hero intent issued through AICommander into the AI domain (R-EXEC-3); deduped Loc/preset variants fold per D1-D3 at implementation."
+
+[[override]]
+name = "WaitGetEnemyBase"
+class = "D2"
+goMapping = "AIThread.WaitGetEnemyBase"
+goSignature = "(...)"
+package = "litd/api"
+reason = "#ai (M5.5): AI sleep/spawn/get-enemy-base wait verbs run on the AI domain scheduler (same deterministic scheduler, isolated job space; R-EXEC-3/5)."

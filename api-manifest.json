@@ -15772,6 +15772,28 @@
       }
     },
     {
+      "name": "SetRescueBuildingColorChangeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "changeColor",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetRescueBuildingColorChangeBJ",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
       "name": "SetRescueUnitColorChangeBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -52753,7 +52775,9 @@
         "package": "litd/api",
         "goSignature": "(p Player, ai AIController, d Difficulty)",
         "collapsesWith": [
-          "StartCampaignAI"
+          "StartCampaignAI",
+          "SetMeleeAI",
+          "SetCampaignAI"
         ]
       }
     },
@@ -56429,6 +56453,60 @@
       }
     },
     {
+      "name": "AddAssault",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "qty",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.AddAssault",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "AddDefenders",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "qty",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.AddDefenders",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
       "name": "AddGuardPost",
       "origin": "commonai",
       "signature": {
@@ -56460,6 +56538,114 @@
       }
     },
     {
+      "name": "AttackMoveKill",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "target",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.AttackMoveKill",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "AttackMoveXY",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.AttackMoveXY",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "CaptainAtGoal",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainAtGoal",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainAttack",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.CaptainAttack",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "CaptainGoHome",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.CaptainGoHome",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
       "name": "CaptainGroupSize",
       "origin": "commonai",
       "signature": {
@@ -56472,6 +56658,529 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain."
+      }
+    },
+    {
+      "name": "CaptainInCombat",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "attack_captain",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainInCombat",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainIsEmpty",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainIsEmpty",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainIsFull",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainIsFull",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainIsHome",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainIsHome",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainReadiness",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainReadiness",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainReadinessHP",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainReadinessHP",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainReadinessMa",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainReadinessMa",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainRetreating",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainRetreating",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainVsPlayer",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainVsPlayer",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CaptainVsUnits",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CaptainVsUnits",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "ClearCaptainTargets",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.ClearCaptainTargets",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "ClearHarvestAI",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.ClearHarvestAI",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "CommandsWaiting",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.CommandsWaiting",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "ConvertUnits",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "qty",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.ConvertUnits",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "CreateCaptains",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.CreateCaptains",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "CreepsOnMap",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CreepsOnMap",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "DebugFI",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "val",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DebugS",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DebugUnitID",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "val",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DisablePathing",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.DisablePathing",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "DisplayText",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DisplayTextI",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "val",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DisplayTextII",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "v1",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "v2",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DisplayTextIII",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "str",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "v1",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "v2",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "v3",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
+      }
+    },
+    {
+      "name": "DoAiScriptDebug",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging."
       }
     },
     {
@@ -56490,6 +57199,204 @@
       }
     },
     {
+      "name": "GetAiPlayer",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.AiPlayer",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetAllianceTarget",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.AllianceTarget",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetBuilding",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.Building",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetCreepCamp",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "min",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "max",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "flyers_ok",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.CreepCamp",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetEnemyBase",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.EnemyBase",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetEnemyExpansion",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.EnemyExpansion",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetEnemyPower",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.EnemyPower",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetExpansionFoe",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.ExpansionFoe",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetExpansionPeon",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.ExpansionPeon",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetExpansionX",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.ExpansionX",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetExpansionY",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.ExpansionY",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
       "name": "GetGoldOwned",
       "origin": "commonai",
       "signature": {
@@ -56502,6 +57409,118 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
+      "name": "GetHeroId",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.HeroId",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetHeroLevelAI",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.HeroLevelAI",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetLastCommand",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.LastCommand",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "GetLastData",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.LastData",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "GetMegaTarget",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.MegaTarget",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetMinesOwned",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.MinesOwned",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "GetNextExpansion",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.NextExpansion",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -56528,6 +57547,38 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+      }
+    },
+    {
+      "name": "GetTownUnitCount",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "tn",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "dn",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.TownUnitCount",
+        "package": "litd/api",
+        "goSignature": "(...) "
       }
     },
     {
@@ -56721,6 +57772,120 @@
       }
     },
     {
+      "name": "HarvestGold",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "town",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "peons",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.HarvestGold",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "HarvestWood",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "town",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "peons",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.HarvestWood",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "IgnoredUnits",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.IgnoredUnits",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "InitAssault",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.InitAssault",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "IsTowered",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "target",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.Towered",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
       "name": "LoadZepWave",
       "origin": "commonai",
       "signature": {
@@ -56783,6 +57948,86 @@
       }
     },
     {
+      "name": "PopLastCommand",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.PopCommand",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "PurchaseZeppelin",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.PurchaseZeppelin",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "RemoveInjuries",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.RemoveInjuries",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "RemoveSiege",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.RemoveSiege",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "ResetCaptainLocs",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.ResetCaptainLocs",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
       "name": "ReturnGuardPosts",
       "origin": "commonai",
       "signature": {
@@ -56795,6 +58040,147 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "SetAllianceTarget",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetAllianceTarget",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetAmphibious",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetAmphibious",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetCaptainChanges",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "allow",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetCaptainChanges",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetCaptainHome",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "which",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetCaptainHome",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetDefendPlayer",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetDefendPlayer",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetExpansion",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "peon",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetExpansion",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -56819,6 +58205,351 @@
       }
     },
     {
+      "name": "SetHeroLevels",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "func",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetHeroLevels",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetHeroesBuyItems",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetHeroesBuyItems",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetHeroesFlee",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetHeroesFlee",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetHeroesTakeItems",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetHeroesTakeItems",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetIgnoreInjured",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetIgnoreInjured",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetNewHeroes",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetNewHeroes",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetPeonsRepair",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetPeonsRepair",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetProduce",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "qty",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "id",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "town",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetProduce",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetRandomPaths",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetRandomPaths",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetReplacementCount",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "qty",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetReplacementCount",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetSlowChopping",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetSlowChopping",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetSmartArtillery",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetSmartArtillery",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetStagePoint",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetStagePoint",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetTargetHeroes",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetTargetHeroes",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SetUnitsFlee",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetUnitsFlee",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
       "name": "SetUpgrade",
       "origin": "commonai",
       "signature": {
@@ -56837,6 +58568,158 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API."
+      }
+    },
+    {
+      "name": "SetWatchMegaTargets",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SetWatchMegaTargets",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "ShiftTownSpot",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.ShiftTownSpot",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "Sleep",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "seconds",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.Sleep",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "StartGetEnemyBase",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.StartGetEnemyBase",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "StartThread",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "func",
+            "jassType": "code",
+            "tsType": "() =\u003e void"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.Start",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "StopGathering",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.StopGathering",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "SuicidePlayer",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "check_full",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.SuicidePlayer",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     },
     {
@@ -56923,6 +58806,109 @@
       }
     },
     {
+      "name": "TeleportCaptain",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.TeleportCaptain",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "TownHasHall",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "townid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.TownHasHall",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "TownHasMine",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "townid",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.TownHasMine",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "TownThreatened",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.TownThreatened",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
+      "name": "TownWithMine",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIView.TownWithMine",
+        "package": "litd/api",
+        "goSignature": "(...) "
+      }
+    },
+    {
       "name": "UnitInvis",
       "origin": "commonai",
       "signature": {
@@ -56941,6 +58927,44 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#217: AI invisibility flag; no v1 sim component, deferred to v2."
+      }
+    },
+    {
+      "name": "Unsummon",
+      "origin": "commonai",
+      "signature": {
+        "params": [
+          {
+            "name": "unitid",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AICommander.Unsummon",
+        "package": "litd/api",
+        "goSignature": "(...)"
+      }
+    },
+    {
+      "name": "WaitGetEnemyBase",
+      "origin": "commonai",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D2",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "AIThread.WaitGetEnemyBase",
+        "package": "litd/api",
+        "goSignature": "(...)"
       }
     }
   ]

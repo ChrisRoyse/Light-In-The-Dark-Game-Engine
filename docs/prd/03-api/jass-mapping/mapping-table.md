@@ -2221,7 +2221,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerActionUnitRescuedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | TryInitRescuableTriggersBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | SetRescueUnitColorChangeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2. |
-| SetRescueBuildingColorChangeBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| SetRescueBuildingColorChangeBJ | blizzard.j | D3 | `litd/api.AICommander.SetRescueBuildingColorChangeBJ` |
 | MakeUnitRescuableToForceBJEnum | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2. |
 | MakeUnitRescuableToForceBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2. |
 | InitRescuableBehaviorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface. |
@@ -2525,126 +2525,126 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetUnitWeaponIntegerFieldBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API. |
 | BlzSetUnitWeaponRealFieldBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API. |
 | BlzSetUnitWeaponStringFieldBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the BlzGet/SetUnit*Field object-data reflection matrix (incl. weapon-slot fields) edits the unit/weapon data row at runtime; the v1 sim has no runtime object-data mutation surface (data tables are load-time). Deferred to the v2 object-data API. |
-| DebugS | commonai | unclassified | _pending (M2 backlog)_ |
-| DebugFI | commonai | unclassified | _pending (M2 backlog)_ |
-| DebugUnitID | commonai | unclassified | _pending (M2 backlog)_ |
-| DisplayText | commonai | unclassified | _pending (M2 backlog)_ |
-| DisplayTextI | commonai | unclassified | _pending (M2 backlog)_ |
-| DisplayTextII | commonai | unclassified | _pending (M2 backlog)_ |
-| DisplayTextIII | commonai | unclassified | _pending (M2 backlog)_ |
-| DoAiScriptDebug | commonai | unclassified | _pending (M2 backlog)_ |
-| GetAiPlayer | commonai | unclassified | _pending (M2 backlog)_ |
-| GetHeroId | commonai | unclassified | _pending (M2 backlog)_ |
-| GetHeroLevelAI | commonai | unclassified | _pending (M2 backlog)_ |
+| DebugS | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DebugFI | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DebugUnitID | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DisplayText | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DisplayTextI | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DisplayTextII | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DisplayTextIII | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| DoAiScriptDebug | commonai | D3 | **tombstoned** (gameplay-irrelevant): #ai: AI-script debug print (DisplayText/Debug*/DoAiScriptDebug); diagnostics with no deterministic-sim surface, replaced by structured logging. |
+| GetAiPlayer | commonai | D3 | `litd/api.AIView.AiPlayer` |
+| GetHeroId | commonai | D3 | `litd/api.AIView.HeroId` |
+| GetHeroLevelAI | commonai | D3 | `litd/api.AIView.HeroLevelAI` |
 | GetUnitCount | commonai | D2 | `litd/ai.UnitCount` |
 | GetPlayerUnitTypeCount | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | GetUnitCountDone | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
-| GetTownUnitCount | commonai | unclassified | _pending (M2 backlog)_ |
+| GetTownUnitCount | commonai | D3 | `litd/api.AIView.TownUnitCount` |
 | GetUnitGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
 | GetUnitWoodCost | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
 | GetUnitBuildTime | commonai | D3 | **tombstoned** (deferred-v2): #217: unit-TYPE data-table queries (build time / cost / point value by type id); these are UnitType data accessors deferred to the v2 UnitType data API (the per-instance Unit.PointValue ships). |
-| GetMinesOwned | commonai | unclassified | _pending (M2 backlog)_ |
+| GetMinesOwned | commonai | D3 | `litd/api.AIView.MinesOwned` |
 | GetGoldOwned | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
-| TownWithMine | commonai | unclassified | _pending (M2 backlog)_ |
-| TownHasMine | commonai | unclassified | _pending (M2 backlog)_ |
-| TownHasHall | commonai | unclassified | _pending (M2 backlog)_ |
+| TownWithMine | commonai | D3 | `litd/api.AIView.TownWithMine` |
+| TownHasMine | commonai | D3 | `litd/api.AIView.TownHasMine` |
+| TownHasHall | commonai | D3 | `litd/api.AIView.TownHasHall` |
 | GetUpgradeLevel | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
 | GetUpgradeGoldCost | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
 | GetUpgradeWoodCost | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
-| GetNextExpansion | commonai | unclassified | _pending (M2 backlog)_ |
-| GetMegaTarget | commonai | unclassified | _pending (M2 backlog)_ |
-| GetBuilding | commonai | unclassified | _pending (M2 backlog)_ |
-| GetEnemyPower | commonai | unclassified | _pending (M2 backlog)_ |
-| SetAllianceTarget | commonai | unclassified | _pending (M2 backlog)_ |
-| GetAllianceTarget | commonai | unclassified | _pending (M2 backlog)_ |
-| SetProduce | commonai | unclassified | _pending (M2 backlog)_ |
-| Unsummon | commonai | unclassified | _pending (M2 backlog)_ |
-| SetExpansion | commonai | unclassified | _pending (M2 backlog)_ |
+| GetNextExpansion | commonai | D3 | `litd/api.AIView.NextExpansion` |
+| GetMegaTarget | commonai | D3 | `litd/api.AIView.MegaTarget` |
+| GetBuilding | commonai | D3 | `litd/api.AIView.Building` |
+| GetEnemyPower | commonai | D3 | `litd/api.AIView.EnemyPower` |
+| SetAllianceTarget | commonai | D3 | `litd/api.AICommander.SetAllianceTarget` |
+| GetAllianceTarget | commonai | D3 | `litd/api.AIView.AllianceTarget` |
+| SetProduce | commonai | D3 | `litd/api.AICommander.SetProduce` |
+| Unsummon | commonai | D3 | `litd/api.AICommander.Unsummon` |
+| SetExpansion | commonai | D3 | `litd/api.AICommander.SetExpansion` |
 | SetUpgrade | commonai | D3 | **tombstoned** (deferred-v2): #tech: player upgrade level get/set and upgrade cost queries; deferred to the v2 tech/upgrade data API. |
-| SetHeroLevels | commonai | unclassified | _pending (M2 backlog)_ |
-| SetNewHeroes | commonai | unclassified | _pending (M2 backlog)_ |
-| PurchaseZeppelin | commonai | unclassified | _pending (M2 backlog)_ |
+| SetHeroLevels | commonai | D3 | `litd/api.AICommander.SetHeroLevels` |
+| SetNewHeroes | commonai | D3 | `litd/api.AICommander.SetNewHeroes` |
+| PurchaseZeppelin | commonai | D3 | `litd/api.AICommander.PurchaseZeppelin` |
 | MergeUnits | commonai | D3 | **tombstoned** (deferred-v2): #217: replace-in-place / merge-into one unit transforms; no v1 sim transform surface, deferred to v2. |
-| ConvertUnits | commonai | unclassified | _pending (M2 backlog)_ |
-| SetCampaignAI | commonai | unclassified | _pending (M2 backlog)_ |
-| SetMeleeAI | commonai | unclassified | _pending (M2 backlog)_ |
-| SetTargetHeroes | commonai | unclassified | _pending (M2 backlog)_ |
-| SetPeonsRepair | commonai | unclassified | _pending (M2 backlog)_ |
-| SetRandomPaths | commonai | unclassified | _pending (M2 backlog)_ |
-| SetDefendPlayer | commonai | unclassified | _pending (M2 backlog)_ |
-| SetHeroesFlee | commonai | unclassified | _pending (M2 backlog)_ |
-| SetHeroesBuyItems | commonai | unclassified | _pending (M2 backlog)_ |
-| SetWatchMegaTargets | commonai | unclassified | _pending (M2 backlog)_ |
-| SetIgnoreInjured | commonai | unclassified | _pending (M2 backlog)_ |
-| SetHeroesTakeItems | commonai | unclassified | _pending (M2 backlog)_ |
-| SetUnitsFlee | commonai | unclassified | _pending (M2 backlog)_ |
+| ConvertUnits | commonai | D3 | `litd/api.AIView.ConvertUnits` |
+| SetCampaignAI | commonai | D3 | `litd/api.Game.AttachAI` (D3 collapse → StartMeleeAI) |
+| SetMeleeAI | commonai | D3 | `litd/api.Game.AttachAI` (D3 collapse → StartMeleeAI) |
+| SetTargetHeroes | commonai | D3 | `litd/api.AICommander.SetTargetHeroes` |
+| SetPeonsRepair | commonai | D3 | `litd/api.AICommander.SetPeonsRepair` |
+| SetRandomPaths | commonai | D3 | `litd/api.AICommander.SetRandomPaths` |
+| SetDefendPlayer | commonai | D3 | `litd/api.AICommander.SetDefendPlayer` |
+| SetHeroesFlee | commonai | D3 | `litd/api.AICommander.SetHeroesFlee` |
+| SetHeroesBuyItems | commonai | D3 | `litd/api.AICommander.SetHeroesBuyItems` |
+| SetWatchMegaTargets | commonai | D3 | `litd/api.AICommander.SetWatchMegaTargets` |
+| SetIgnoreInjured | commonai | D3 | `litd/api.AICommander.SetIgnoreInjured` |
+| SetHeroesTakeItems | commonai | D3 | `litd/api.AICommander.SetHeroesTakeItems` |
+| SetUnitsFlee | commonai | D3 | `litd/api.AICommander.SetUnitsFlee` |
 | SetGroupsFlee | commonai | D3 | **tombstoned** (deferred-v2): #ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain. |
-| SetSlowChopping | commonai | unclassified | _pending (M2 backlog)_ |
-| SetCaptainChanges | commonai | unclassified | _pending (M2 backlog)_ |
-| SetSmartArtillery | commonai | unclassified | _pending (M2 backlog)_ |
-| SetReplacementCount | commonai | unclassified | _pending (M2 backlog)_ |
+| SetSlowChopping | commonai | D3 | `litd/api.AICommander.SetSlowChopping` |
+| SetCaptainChanges | commonai | D3 | `litd/api.AICommander.SetCaptainChanges` |
+| SetSmartArtillery | commonai | D3 | `litd/api.AICommander.SetSmartArtillery` |
+| SetReplacementCount | commonai | D3 | `litd/api.AICommander.SetReplacementCount` |
 | GroupTimedLife | commonai | D3 | **tombstoned** (deferred-v2): #groups: apply a timed-life expiry to a whole group; deferred with the v2 timed-life store. |
-| RemoveInjuries | commonai | unclassified | _pending (M2 backlog)_ |
-| RemoveSiege | commonai | unclassified | _pending (M2 backlog)_ |
-| InitAssault | commonai | unclassified | _pending (M2 backlog)_ |
-| AddAssault | commonai | unclassified | _pending (M2 backlog)_ |
-| AddDefenders | commonai | unclassified | _pending (M2 backlog)_ |
-| GetCreepCamp | commonai | unclassified | _pending (M2 backlog)_ |
-| StartGetEnemyBase | commonai | unclassified | _pending (M2 backlog)_ |
-| WaitGetEnemyBase | commonai | unclassified | _pending (M2 backlog)_ |
-| GetEnemyBase | commonai | unclassified | _pending (M2 backlog)_ |
-| GetExpansionFoe | commonai | unclassified | _pending (M2 backlog)_ |
-| GetEnemyExpansion | commonai | unclassified | _pending (M2 backlog)_ |
-| GetExpansionX | commonai | D3 | _pending (M2 backlog)_ |
-| GetExpansionY | commonai | D3 | _pending (M2 backlog)_ |
-| SetStagePoint | commonai | unclassified | _pending (M2 backlog)_ |
-| AttackMoveKill | commonai | unclassified | _pending (M2 backlog)_ |
-| AttackMoveXY | commonai | unclassified | _pending (M2 backlog)_ |
+| RemoveInjuries | commonai | D3 | `litd/api.AICommander.RemoveInjuries` |
+| RemoveSiege | commonai | D3 | `litd/api.AICommander.RemoveSiege` |
+| InitAssault | commonai | D3 | `litd/api.AICommander.InitAssault` |
+| AddAssault | commonai | D3 | `litd/api.AICommander.AddAssault` |
+| AddDefenders | commonai | D3 | `litd/api.AICommander.AddDefenders` |
+| GetCreepCamp | commonai | D3 | `litd/api.AIView.CreepCamp` |
+| StartGetEnemyBase | commonai | D2 | `litd/api.AIThread.StartGetEnemyBase` |
+| WaitGetEnemyBase | commonai | D2 | `litd/api.AIThread.WaitGetEnemyBase` |
+| GetEnemyBase | commonai | D3 | `litd/api.AIView.EnemyBase` |
+| GetExpansionFoe | commonai | D3 | `litd/api.AIView.ExpansionFoe` |
+| GetEnemyExpansion | commonai | D3 | `litd/api.AIView.EnemyExpansion` |
+| GetExpansionX | commonai | D3 | `litd/api.AIView.ExpansionX` |
+| GetExpansionY | commonai | D3 | `litd/api.AIView.ExpansionY` |
+| SetStagePoint | commonai | D3 | `litd/api.AICommander.SetStagePoint` |
+| AttackMoveKill | commonai | D3 | `litd/api.AICommander.AttackMoveKill` |
+| AttackMoveXY | commonai | D3 | `litd/api.AICommander.AttackMoveXY` |
 | LoadZepWave | commonai | D3 | **tombstoned** (deferred-v2): #assets: load a packed sound wave from an archive; deferred to the v2 asset/audio-load pipeline. |
-| SuicidePlayer | commonai | unclassified | _pending (M2 backlog)_ |
+| SuicidePlayer | commonai | D3 | `litd/api.AICommander.SuicidePlayer` |
 | SuicidePlayerUnits | commonai | D3 | **tombstoned** (deferred-v2): #game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API. |
-| CaptainInCombat | commonai | unclassified | _pending (M2 backlog)_ |
-| IsTowered | commonai | unclassified | _pending (M2 backlog)_ |
-| ClearHarvestAI | commonai | unclassified | _pending (M2 backlog)_ |
-| HarvestGold | commonai | unclassified | _pending (M2 backlog)_ |
-| HarvestWood | commonai | unclassified | _pending (M2 backlog)_ |
-| GetExpansionPeon | commonai | unclassified | _pending (M2 backlog)_ |
-| StopGathering | commonai | unclassified | _pending (M2 backlog)_ |
+| CaptainInCombat | commonai | D3 | `litd/api.AIView.CaptainInCombat` |
+| IsTowered | commonai | D3 | `litd/api.AIView.Towered` |
+| ClearHarvestAI | commonai | D3 | `litd/api.AICommander.ClearHarvestAI` |
+| HarvestGold | commonai | D3 | `litd/api.AICommander.HarvestGold` |
+| HarvestWood | commonai | D3 | `litd/api.AICommander.HarvestWood` |
+| GetExpansionPeon | commonai | D3 | `litd/api.AIView.ExpansionPeon` |
+| StopGathering | commonai | D3 | `litd/api.AICommander.StopGathering` |
 | AddGuardPost | commonai | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
 | FillGuardPosts | commonai | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
 | ReturnGuardPosts | commonai | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
-| CreateCaptains | commonai | unclassified | _pending (M2 backlog)_ |
-| SetCaptainHome | commonai | unclassified | _pending (M2 backlog)_ |
-| ResetCaptainLocs | commonai | unclassified | _pending (M2 backlog)_ |
-| ShiftTownSpot | commonai | unclassified | _pending (M2 backlog)_ |
-| TeleportCaptain | commonai | unclassified | _pending (M2 backlog)_ |
-| ClearCaptainTargets | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainAttack | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainVsUnits | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainVsPlayer | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainGoHome | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainIsHome | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainIsFull | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainIsEmpty | commonai | unclassified | _pending (M2 backlog)_ |
+| CreateCaptains | commonai | D3 | `litd/api.AICommander.CreateCaptains` |
+| SetCaptainHome | commonai | D3 | `litd/api.AICommander.SetCaptainHome` |
+| ResetCaptainLocs | commonai | D3 | `litd/api.AICommander.ResetCaptainLocs` |
+| ShiftTownSpot | commonai | D3 | `litd/api.AICommander.ShiftTownSpot` |
+| TeleportCaptain | commonai | D3 | `litd/api.AICommander.TeleportCaptain` |
+| ClearCaptainTargets | commonai | D3 | `litd/api.AICommander.ClearCaptainTargets` |
+| CaptainAttack | commonai | D3 | `litd/api.AICommander.CaptainAttack` |
+| CaptainVsUnits | commonai | D3 | `litd/api.AIView.CaptainVsUnits` |
+| CaptainVsPlayer | commonai | D3 | `litd/api.AIView.CaptainVsPlayer` |
+| CaptainGoHome | commonai | D3 | `litd/api.AICommander.CaptainGoHome` |
+| CaptainIsHome | commonai | D3 | `litd/api.AIView.CaptainIsHome` |
+| CaptainIsFull | commonai | D3 | `litd/api.AIView.CaptainIsFull` |
+| CaptainIsEmpty | commonai | D3 | `litd/api.AIView.CaptainIsEmpty` |
 | CaptainGroupSize | commonai | D3 | **tombstoned** (deferred-v2): #ai: AI captain group-size query / flee-toggle; deferred to the M5.5 AI domain. |
-| CaptainReadiness | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainRetreating | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainReadinessHP | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainReadinessMa | commonai | unclassified | _pending (M2 backlog)_ |
-| CaptainAtGoal | commonai | unclassified | _pending (M2 backlog)_ |
-| CreepsOnMap | commonai | unclassified | _pending (M2 backlog)_ |
+| CaptainReadiness | commonai | D3 | `litd/api.AIView.CaptainReadiness` |
+| CaptainRetreating | commonai | D3 | `litd/api.AIView.CaptainRetreating` |
+| CaptainReadinessHP | commonai | D3 | `litd/api.AIView.CaptainReadinessHP` |
+| CaptainReadinessMa | commonai | D3 | `litd/api.AIView.CaptainReadinessMa` |
+| CaptainAtGoal | commonai | D3 | `litd/api.AIView.CaptainAtGoal` |
+| CreepsOnMap | commonai | D3 | `litd/api.AIView.CreepsOnMap` |
 | SuicideUnit | commonai | D3 | **tombstoned** (deferred-v2): #217: AI self-destruct timer; no v1 sim component, deferred to v2. |
 | SuicideUnitEx | commonai | D3 | **tombstoned** (deferred-v2): #217: AI self-destruct timer; no v1 sim component, deferred to v2. |
-| StartThread | commonai | unclassified | _pending (M2 backlog)_ |
-| Sleep | commonai | unclassified | _pending (M2 backlog)_ |
+| StartThread | commonai | D2 | `litd/api.AIThread.Start` |
+| Sleep | commonai | D2 | `litd/api.AIThread.Sleep` |
 | UnitAlive | commonai | D3 | `litd/api.Unit.Alive` (D3 collapse → IsUnitAliveBJ) |
 | UnitInvis | commonai | D3 | **tombstoned** (deferred-v2): #217: AI invisibility flag; no v1 sim component, deferred to v2. |
-| IgnoredUnits | commonai | unclassified | _pending (M2 backlog)_ |
-| TownThreatened | commonai | unclassified | _pending (M2 backlog)_ |
-| DisablePathing | commonai | unclassified | _pending (M2 backlog)_ |
-| SetAmphibious | commonai | unclassified | _pending (M2 backlog)_ |
-| CommandsWaiting | commonai | unclassified | _pending (M2 backlog)_ |
-| GetLastCommand | commonai | unclassified | _pending (M2 backlog)_ |
-| GetLastData | commonai | unclassified | _pending (M2 backlog)_ |
-| PopLastCommand | commonai | unclassified | _pending (M2 backlog)_ |
+| IgnoredUnits | commonai | D3 | `litd/api.AIView.IgnoredUnits` |
+| TownThreatened | commonai | D3 | `litd/api.AIView.TownThreatened` |
+| DisablePathing | commonai | D3 | `litd/api.AICommander.DisablePathing` |
+| SetAmphibious | commonai | D3 | `litd/api.AICommander.SetAmphibious` |
+| CommandsWaiting | commonai | D2 | `litd/api.AICommander.CommandsWaiting` |
+| GetLastCommand | commonai | D2 | `litd/api.AICommander.LastCommand` |
+| GetLastData | commonai | D2 | `litd/api.AICommander.LastData` |
+| PopLastCommand | commonai | D2 | `litd/api.AICommander.PopCommand` |
 | MeleeDifficulty | commonai | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
