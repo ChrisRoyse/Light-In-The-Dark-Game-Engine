@@ -5015,3 +5015,36 @@ name = "GetLastCreatedFogModifier"
 class = "D1"
 tombstone = "superseded"
 reason = "#243: last-created global superseded — NewFogModifier returns the handle directly"
+
+[[override]]
+name = "StartMeleeAI"
+class = "D3"
+goMapping = "Game.AttachAI"
+goSignature = "(p Player, ai AIController, d Difficulty)"
+package = "litd/api"
+collapsesWith = ["StartCampaignAI"]
+reason = "#257: attach a computer player; melee/campaign constructor variants collapse onto one AttachAI taking the strategy controller (D3). Live AI domain is M5.5 (R-EXEC-3); the M5 surface records difficulty + controller."
+
+[[override]]
+name = "CommandAI"
+class = "D1"
+goMapping = "Game.CommandAI"
+goSignature = "(p Player, command, data int)"
+package = "litd/api"
+reason = "#257: the integer-pair AI command stack maps onto a typed enqueue, drained by the AI domain at M5.5 (R-EXEC-3)."
+
+[[override]]
+name = "PauseCompAI"
+class = "D1"
+goMapping = "Game.PauseAI"
+goSignature = "(p Player, paused bool)"
+package = "litd/api"
+reason = "#257: suspend/resume a computer player maps directly onto the bool verb."
+
+[[override]]
+name = "GetAIDifficulty"
+class = "D1"
+goMapping = "Game.AIDifficulty"
+goSignature = "(p Player) Difficulty"
+package = "litd/api"
+reason = "#257: AI difficulty getter; the Difficulty enum mirrors AI_DIFFICULTY_* (NEWBIE=0..INSANE=2)."

@@ -1237,11 +1237,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsPointBlighted | common.j | unclassified | _pending (M2 backlog)_ |
 | SetDoodadAnimation | common.j | unclassified | _pending (M2 backlog)_ |
 | SetDoodadAnimationRect | common.j | unclassified | _pending (M2 backlog)_ |
-| StartMeleeAI | common.j | unclassified | _pending (M2 backlog)_ |
-| StartCampaignAI | common.j | unclassified | _pending (M2 backlog)_ |
-| CommandAI | common.j | unclassified | _pending (M2 backlog)_ |
-| PauseCompAI | common.j | unclassified | _pending (M2 backlog)_ |
-| GetAIDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
+| StartMeleeAI | common.j | D3 | `litd/api.Game.AttachAI` |
+| StartCampaignAI | common.j | D3 | `litd/api.Game.AttachAI` (D3 collapse → StartMeleeAI) |
+| CommandAI | common.j | D1 | `litd/api.Game.CommandAI` |
+| PauseCompAI | common.j | D1 | `litd/api.Game.PauseAI` |
+| GetAIDifficulty | common.j | D1 | `litd/api.Game.AIDifficulty` |
 | RemoveGuardPosition | common.j | unclassified | _pending (M2 backlog)_ |
 | RecycleGuardPosition | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveAllGuardPositions | common.j | unclassified | _pending (M2 backlog)_ |

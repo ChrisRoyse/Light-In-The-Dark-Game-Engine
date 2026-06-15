@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v27: AI hook state appended after fog overrides: per-player difficulty,
+// paused/attached flags, and the integer-pair command stack (#257).
 // v26: fog-of-war overrides appended after upkeep: the global fog/mask
 // toggles, the modifier pool + free list, and per-unit shared vision (#243).
 // v25: upkeep economy appended after the heightfield: tax brackets,
@@ -96,7 +98,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 26
+const SaveFormatVersion uint32 = 27
 
 // ---- little-endian writer / reader ----
 
@@ -863,6 +865,18 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u16(sv.Mask[i])
 	}
 
+	// AI hooks (#257, v27): per-player difficulty/paused/attached + command stack.
+	for p := 0; p < MaxPlayers; p++ {
+		s.u8(w.ai.difficulty[p])
+		s.boolean(w.ai.paused[p])
+		s.boolean(w.ai.attached[p])
+		s.u32(uint32(len(w.ai.inbox[p])))
+		for _, c := range w.ai.inbox[p] {
+			s.i32(c.Command)
+			s.i32(c.Data)
+		}
+	}
+
 	return s.err
 }
 
@@ -1183,6 +1197,12 @@ type decodedSave struct {
 	fmFree                       []int32
 	svEntity                     []EntityID
 	svMask                       []uint16
+
+	// AI hooks (#257, v27): per-player difficulty/paused/attached + command stack.
+	aiDifficulty [MaxPlayers]uint8
+	aiPaused     [MaxPlayers]bool
+	aiAttached   [MaxPlayers]bool
+	aiInbox      [MaxPlayers][]aiCommand
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2343,6 +2363,27 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.svEntity[i] = r.ent()
 		d.svMask[i] = r.u16()
 	}
+
+	// AI hooks (#257, v27): per-player difficulty/paused/attached + command stack.
+	r.what = "ai hooks"
+	for p := 0; p < MaxPlayers; p++ {
+		d.aiDifficulty[p] = r.u8()
+		d.aiPaused[p] = r.boolean()
+		d.aiAttached[p] = r.boolean()
+		cmdN := int32(r.u32())
+		if r.err != nil {
+			return r.err
+		}
+		if cmdN < 0 || cmdN > maxAIInbox {
+			return fmt.Errorf("sim: save: AI command count %d exceeds cap %d for player %d", cmdN, maxAIInbox, p)
+		}
+		if cmdN > 0 {
+			d.aiInbox[p] = make([]aiCommand, cmdN)
+			for i := int32(0); i < cmdN; i++ {
+				d.aiInbox[p][i] = aiCommand{Command: r.i32(), Data: r.i32()}
+			}
+		}
+	}
 	return r.err
 }
 
@@ -3330,6 +3371,15 @@ func applySave(d *decodedSave, w *World) {
 		sv.Entity[sv.count] = id
 		sv.rowOf[id.Index()] = sv.count
 		sv.count++
+	}
+
+	// AI hooks (#257): per-player flags + command stacks restored wholesale.
+	w.ai.difficulty = d.aiDifficulty
+	w.ai.paused = d.aiPaused
+	w.ai.attached = d.aiAttached
+	for p := 0; p < MaxPlayers; p++ {
+		w.ai.inbox[p] = w.ai.inbox[p][:0]
+		w.ai.inbox[p] = append(w.ai.inbox[p], d.aiInbox[p]...)
 	}
 
 	// mid-tick buffers are clean by the save contract

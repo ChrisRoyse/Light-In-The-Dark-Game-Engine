@@ -5874,6 +5874,38 @@
       }
     },
     {
+      "name": "CommandAI",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "num",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "command",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "data",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.CommandAI",
+        "package": "litd/api",
+        "goSignature": "(p Player, command, data int)"
+      }
+    },
+    {
       "name": "Condition",
       "origin": "common.j",
       "signature": {
@@ -8618,6 +8650,28 @@
         "symbol": "Force.RemovePlayer",
         "package": "litd/api",
         "goSignature": "(p Player)"
+      }
+    },
+    {
+      "name": "GetAIDifficulty",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "num",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "aidifficulty"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.AIDifficulty",
+        "package": "litd/api",
+        "goSignature": "(p Player) Difficulty"
       }
     },
     {
@@ -14114,6 +14168,33 @@
       }
     },
     {
+      "name": "PauseCompAI",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "p",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "pause",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.PauseAI",
+        "package": "litd/api",
+        "goSignature": "(p Player, paused bool)"
+      }
+    },
+    {
       "name": "PauseTimer",
       "origin": "common.j",
       "signature": {
@@ -18034,6 +18115,36 @@
         "symbol": "Unit.Show",
         "package": "litd/api",
         "goSignature": "(show bool)"
+      }
+    },
+    {
+      "name": "StartMeleeAI",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "num",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "script",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.AttachAI",
+        "package": "litd/api",
+        "goSignature": "(p Player, ai AIController, d Difficulty)",
+        "collapsesWith": [
+          "StartCampaignAI"
+        ]
       }
     },
     {

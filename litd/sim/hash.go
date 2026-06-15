@@ -92,6 +92,10 @@ var HashSystems = []string{
 	// appended by #243: fog-of-war area modifiers (pool + free list), the two
 	// global fog toggles, and per-unit shared-vision bitmasks.
 	"fogmod",
+	// appended by #257: per-player AI hook state — difficulty, paused/attached
+	// flags, and the integer-pair command inbox (stack). Empty by default so an
+	// AI-free match leaves this sub-hash at its zero contribution.
+	"ai",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -718,6 +722,18 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := int32(0); i < sv.count; i++ {
 		hfm.WriteU32(uint32(sv.Entity[i]))
 		hfm.WriteU16(sv.Mask[i])
+	}
+
+	hai := h.next() // ai (#257): per-player difficulty/paused/attached + command inbox
+	for p := 0; p < MaxPlayers; p++ {
+		hai.WriteU8(w.ai.difficulty[p])
+		hai.WriteBool(w.ai.paused[p])
+		hai.WriteBool(w.ai.attached[p])
+		hai.WriteU32(uint32(len(w.ai.inbox[p])))
+		for _, c := range w.ai.inbox[p] {
+			hai.WriteI64(int64(c.Command))
+			hai.WriteI64(int64(c.Data))
+		}
 	}
 
 	return reg.Sum(dst)

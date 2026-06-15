@@ -296,6 +296,11 @@ type World struct {
 	// (the default, golden-safe); FogStateAt applies them at query time.
 	fogDisabled     bool
 	fogMaskDisabled bool
+	// #257 AI hook state: per-player difficulty/paused/attached flags and the
+	// integer-pair command inbox. The AIController itself lives at the api
+	// layer (a Go behavior, not deterministic state); only these replay-safe
+	// inputs live in the sim. Zero value = no AI attached, golden-safe.
+	ai aiState
 	// #218 player roster: per-player metadata + the asymmetric alliance
 	// relation. Resources/food (above) carry the rest of the player-state
 	// matrix. alliance[a][b] is a flags bitset for a's stance toward b

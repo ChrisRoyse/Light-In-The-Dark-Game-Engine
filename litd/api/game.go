@@ -45,6 +45,13 @@ type Game struct {
 	// ids, and unknown keys fail closed.
 	effectModels map[string]uint16
 
+	// aiControllers holds the attached computer-player strategies (#257),
+	// keyed by player slot. This is api-runtime state, not deterministic sim
+	// state: the controller is a Go behavior dispatched by the sandboxed AI
+	// scheduler domain at M5.5. The replay-safe inputs (difficulty, paused,
+	// command stack) live in the sim. nil until the first AttachAI.
+	aiControllers map[uint8]AIController
+
 	// debug enables R-API-5 invalid-handle assertions; off in shipped
 	// maps (WC3 forgiveness), on in development (catch the swallowed
 	// bug). Toggled via SetDebug.
