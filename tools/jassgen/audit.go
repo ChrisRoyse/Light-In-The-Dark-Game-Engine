@@ -33,6 +33,8 @@ type AuditReport struct {
 	DuplicateTargets             []string       `json:"duplicateTargets"`             // M5 gate (emitted now)
 	HelperShadowsCore            []string       `json:"helperShadowsCore"`            // M5 gate (scaffold)
 	CommonaiCapabilityTombstones int            `json:"commonaiCapabilityTombstones"` // must be 0 (D-2026-06-11-6)
+	ExportedVerbs                int            `json:"exportedVerbs"`                // litd/api exported funcs+methods (reverse-closure universe)
+	UnaccountedExports           []string       `json:"unaccountedExports"`           // reverse-closure gate: must be empty
 	FeatureTags                  map[string]int `json:"featureTags"`                  // R4 census rollup
 	Violations                   []string       `json:"violations"`                   // M2 gate breaches
 }
@@ -46,6 +48,7 @@ func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 		FeatureTags:        map[string]int{},
 		DuplicateTargets:   []string{},
 		HelperShadowsCore:  []string{},
+		UnaccountedExports: []string{},
 	}
 	r.Total = len(cs)
 	for _, c := range cs {
@@ -129,6 +132,24 @@ func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 	return r
 }
 
+// ApplyReverseClosure records the reverse-closure result on the report and folds
+// an unaccounted-exports breach into the violation list. Kept separate from
+// ComputeAudit so that function stays a pure (cs, manifest) -> counters mapping;
+// the export universe needs filesystem access (the litd/api Go sources), which
+// the caller provides.
+func ApplyReverseClosure(r *AuditReport, exportedVerbs int, unaccounted []string) {
+	r.ExportedVerbs = exportedVerbs
+	if unaccounted == nil {
+		unaccounted = []string{}
+	}
+	r.UnaccountedExports = unaccounted
+	if len(unaccounted) > 0 {
+		r.Violations = append(r.Violations, fmt.Sprintf(
+			"unaccountedExports=%d: %s (each exported litd/api verb must trace to a manifest goMapping or new-capabilities.txt)",
+			len(unaccounted), strings.Join(unaccounted, ", ")))
+	}
+}
+
 // auditViolations returns the M2 gate breaches in stable order.
 func auditViolations(r AuditReport, cs []Classification) []string {
 	var v []string
@@ -198,6 +219,14 @@ func RenderAuditMarkdown(r AuditReport) string {
 	fmt.Fprintf(&b, "  Unmapped ..............   %d\n", r.Unmapped)
 	fmt.Fprintf(&b, "commonai capability tombstones: %d (must be 0)\n", r.CommonaiCapabilityTombstones)
 	fmt.Fprintf(&b, "duplicate canonical targets:    %d (M5 gate)\n\n", len(r.DuplicateTargets))
+
+	b.WriteString("## Reverse closure (litd/api)\n\n")
+	fmt.Fprintf(&b, "Exported verbs ........... %d\n", r.ExportedVerbs)
+	fmt.Fprintf(&b, "Unaccounted exports ...... %d (gate requires 0)\n", len(r.UnaccountedExports))
+	for _, u := range r.UnaccountedExports {
+		fmt.Fprintf(&b, "  - %s\n", u)
+	}
+	b.WriteString("\n")
 
 	b.WriteString("## VIOLATIONS\n\n")
 	if len(r.Violations) == 0 {

@@ -17,6 +17,11 @@ Disposition
 commonai capability tombstones: 0 (must be 0)
 duplicate canonical targets:    0 (M5 gate)
 
+## Reverse closure (litd/api)
+
+Exported verbs ........... 452
+Unaccounted exports ...... 0 (gate requires 0)
+
 ## VIOLATIONS
 
 (none — all M2 gates green)

@@ -22,6 +22,8 @@
   "duplicateTargets": [],
   "helperShadowsCore": [],
   "commonaiCapabilityTombstones": 0,
+  "exportedVerbs": 452,
+  "unaccountedExports": [],
   "featureTags": {},
   "violations": null
 }

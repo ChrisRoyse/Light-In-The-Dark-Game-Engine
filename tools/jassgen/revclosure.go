@@ -185,13 +185,13 @@ const (
 	newCapabilitiesPath = "tools/jassgen/new-capabilities.txt"
 )
 
-// runRevClosure executes the reverse-closure gate end to end and exits nonzero
-// on any unaccounted export.
-func runRevClosure() {
-	cs, sigs, sources := buildClassifiedUniverse()
-	m, _ := BuildManifest(cs, sigs, sources)
+// computeReverseClosure parses the litd/api export universe against the given
+// manifest + the committed whitelist and returns (exported-verb count,
+// unaccounted set). Fatal on any I/O error — the gate must never pass for want
+// of its inputs. Shared by -audit (folds the result into audit-report.md) and
+// -revclosure (the standalone gate).
+func computeReverseClosure(m Manifest) (int, []string) {
 	syms := manifestGoMappingSet(m, "litd/api")
-
 	exports, err := ParseAPIExports(apiPackageDir)
 	if err != nil {
 		fatal(err)
@@ -200,10 +200,18 @@ func runRevClosure() {
 	if err != nil {
 		fatal(err)
 	}
-	unaccounted := ReverseClosure(exports, syms, rules)
+	return len(exports), ReverseClosure(exports, syms, rules)
+}
 
-	fmt.Fprintf(os.Stderr, "reverse-closure: %d exported verbs, %d manifest mappings, %d whitelist rules\n",
-		len(exports), len(syms), len(rules))
+// runRevClosure executes the reverse-closure gate end to end and exits nonzero
+// on any unaccounted export.
+func runRevClosure() {
+	cs, sigs, sources := buildClassifiedUniverse()
+	m, _ := BuildManifest(cs, sigs, sources)
+	verbs, unaccounted := computeReverseClosure(m)
+
+	fmt.Fprintf(os.Stderr, "reverse-closure: %d exported verbs, %d manifest mappings\n",
+		verbs, len(manifestGoMappingSet(m, "litd/api")))
 	if len(unaccounted) > 0 {
 		fmt.Fprintf(os.Stderr, "REVERSE-CLOSURE FAIL — %d export(s) trace to neither a manifest goMapping nor new-capabilities.txt:\n", len(unaccounted))
 		for _, u := range unaccounted {
