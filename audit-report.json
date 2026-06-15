@@ -2,29 +2,29 @@
   "total": 2642,
   "totalCore": 2519,
   "byRule": {
-    "D1": 707,
+    "D1": 754,
     "D2": 291,
-    "D3": 139,
+    "D3": 138,
     "D4": 355,
-    "D5": 43
+    "D5": 45
   },
-  "mapped": 211,
-  "tombstoned": 528,
-  "collapsed": 133,
-  "unclassified": 1107,
-  "unmapped": 1770,
+  "mapped": 217,
+  "tombstoned": 573,
+  "collapsed": 138,
+  "unclassified": 1059,
+  "unmapped": 1714,
   "tombstonesByReason": {
-    "deferred-v2": 90,
+    "deferred-v2": 106,
     "deprecated": 3,
-    "gameplay-irrelevant": 104,
-    "superseded": 331
+    "gameplay-irrelevant": 132,
+    "superseded": 332
   },
   "duplicateTargets": [],
   "helperShadowsCore": [],
   "commonaiCapabilityTombstones": 0,
   "featureTags": {},
   "violations": [
-    "unclassified=1107 (M2 gate requires 0)",
-    "unmapped=1770 (M2 gate requires 0; every symbol mapped or tombstoned)"
+    "unclassified=1059 (M2 gate requires 0)",
+    "unmapped=1714 (M2 gate requires 0; every symbol mapped or tombstoned)"
   ]
 }

@@ -1448,16 +1448,18 @@ name = "GetTimeOfDay"
 class = "D1"
 goMapping = "Game.TimeOfDay"
 goSignature = "() float64"
+collapsesWith = ["GetFloatGameState"]
 package = "litd/api"
-reason = "current time-of-day getter; BJ passthrough to the canonical Game.TimeOfDay (clock.go, #339, dedup §2)"
+reason = "current time-of-day getter; BJ passthrough to the canonical Game.TimeOfDay (clock.go, #339, dedup §2). GetFloatGameState is the D5 enum-keyed float-state matrix accessor whose only v1-relevant slice is GAME_STATE_TIME_OF_DAY; its other constants (DIVINE_INTERVENTION campaign, DISCONNECTED net) have no public surface, so the whole native folds onto Game.TimeOfDay (#256, dedup §6 D5 representative)"
 
 [[override]]
 name = "SetTimeOfDay"
 class = "D1"
 goMapping = "Game.SetTimeOfDay"
 goSignature = "(h float64)"
+collapsesWith = ["SetFloatGameState"]
 package = "litd/api"
-reason = "sets the time-of-day; BJ passthrough to the canonical Game.SetTimeOfDay (clock.go, #339, dedup §2)"
+reason = "sets the time-of-day; BJ passthrough to the canonical Game.SetTimeOfDay (clock.go, #339, dedup §2). SetFloatGameState is the D5 enum-keyed float-state matrix setter whose only v1-relevant slice is GAME_STATE_TIME_OF_DAY (other constants are campaign/net artifacts with no public surface), so the whole native folds onto Game.SetTimeOfDay (#256, dedup §6 D5 representative)"
 
 # --- boolexpr/condition/filter zoo: superseded by the closure+subscription model ---
 # triggers-and-events.md §"boolexpr combinators (And/Or/Not) and DestroyBoolExpr
@@ -2145,8 +2147,9 @@ name = "SetPlayerStartLocation"
 class = "D3"
 goMapping = "Player.SetStartLocation"
 goSignature = "(loc Vec2)"
+collapsesWith = ["ForcePlayerStartLocation"]
 package = "litd/api"
-reason = "start-location setter collapses onto Player.SetStartLocation (Vec2)"
+reason = "start-location setter collapses onto Player.SetStartLocation (Vec2). ForcePlayerStartLocation is the same write with the WC3 force-to-location side effect (camera/selection snap) folded in; both set the player's start point, so they collapse onto the one Player.SetStartLocation canonical (#256, dedup D1)"
 
 [[override]]
 name = "GetPlayerAlliance"
@@ -5048,3 +5051,329 @@ goMapping = "Game.AIDifficulty"
 goSignature = "(p Player) Difficulty"
 package = "litd/api"
 reason = "#257: AI difficulty getter; the Difficulty enum mirrors AI_DIFFICULTY_* (NEWBIE=0..INSANE=2)."
+
+# --- #256 game-state-and-melee: common.j lifecycle/clock/flags/config natives ---
+# Go surface lives in gamestate.go / clock.go / victory.go. Lifecycle + config
+# getters map onto the shipped Game verbs; static-config setters defer to map-load
+# (v1 reads config, scripts don't mutate it); cheats/preload/automation/tournament/
+# version/save-dir families tombstone with explicit reasons. The melee BJ library
+# (blizzard.j) is tracked separately by the helpers issue #258 per #256's scoping.
+
+[[override]]
+name = "SetGameSpeed"
+class = "D1"
+goMapping = "Game.SetSpeed"
+goSignature = "(s GameSpeed)"
+package = "litd/api"
+reason = "#256: real-time game-speed setter; canonical Game.SetSpeed (gamestate.go). The fixed 20 Hz sim tick is unchanged — speed scales the driver's real-time-to-tick feed only"
+
+[[override]]
+name = "GetGameSpeed"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: game-speed getter; speed is driver-owned real-time state with no v1 public readback (Game.SetSpeed is write-only on the driver hook) — deferred"
+
+[[override]]
+name = "PauseGame"
+class = "D1"
+goMapping = "Game.Pause"
+goSignature = "()"
+package = "litd/api"
+reason = "#256: pause toggle; PauseGame(true) is the canonical Game.Pause and PauseGame(false) is its Game.Resume counterpart (gamestate.go). Pause halts the driver's tick feed; render continues. Game.Pause is the representative canonical symbol for the toggle"
+
+[[override]]
+name = "EndGame"
+class = "D1"
+goMapping = "Game.EndMatch"
+goSignature = "()"
+package = "litd/api"
+reason = "#256: ends the match; canonical Game.EndMatch (victory.go) stages defeat for every still-playing slot in the deterministic phase-6 pass. The doScoreScreen arg is UI presentation (score screen), dropped from the sim verb (dedup D1)"
+
+[[override]]
+name = "IsMapFlagSet"
+class = "D1"
+goMapping = "Game.MapFlag"
+goSignature = "(f MapFlag) bool"
+package = "litd/api"
+reason = "#256: static map-flag query; canonical Game.MapFlag (gamestate.go) over the typed MapFlag bitset"
+
+[[override]]
+name = "SetMapFlag"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: map-flag setter; match/map flags are static config read at map load and immutable after in v1 (Game.MapFlag is read-only), mirroring the SetPlayers fixed-roster decision — script-time mutation deferred"
+
+[[override]]
+name = "GetTeams"
+class = "D1"
+goMapping = "Game.Teams"
+goSignature = "() int"
+package = "litd/api"
+reason = "#256: team-count getter; canonical Game.Teams (gamestate.go) reads the loaded match config"
+
+[[override]]
+name = "SetTeams"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: team-count setter; team count is static match config set at map load (Game.Teams reads it), per the same immutable-config decision as SetPlayers — deferred"
+
+[[override]]
+name = "SetGamePlacement"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: start-placement-mode setter (teams-together / use-map-settings / random); placement is static match config resolved at map load — deferred"
+
+[[override]]
+name = "GetGamePlacement"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: start-placement-mode getter; no v1 public surface for the placement enum (config-only) — deferred"
+
+[[override]]
+name = "SetGameDifficulty"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: campaign game-difficulty setter; the v1 vertical slice is melee (per-player AI difficulty via Game.AttachAI, #257), not a global campaign difficulty — deferred"
+
+[[override]]
+name = "GetGameDifficulty"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: campaign game-difficulty getter; no global-difficulty surface in the melee v1 slice (see SetGameDifficulty) — deferred"
+
+[[override]]
+name = "GetDefaultDifficulty"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: default campaign-difficulty getter; campaign difficulty deferred with SetGameDifficulty — deferred"
+
+[[override]]
+name = "SetDefaultDifficulty"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: default campaign-difficulty setter; campaign difficulty deferred with SetGameDifficulty — deferred"
+
+[[override]]
+name = "GetStartLocationX"
+class = "D3"
+goMapping = "Game.StartLocation"
+goSignature = "(i int) Vec2"
+collapsesWith = ["GetStartLocationY", "GetStartLocationLoc"]
+package = "litd/api"
+reason = "#256: start-location coordinate getter; the X/Y scalar pair and the location-handle form collapse onto the single Game.StartLocation(i) Vec2 accessor (dedup D3 coordinate/location→Vec2)"
+
+[[override]]
+name = "DefineStartLocation"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: defines a start location by index; start locations are authored map metadata loaded into the match config (Game.StartLocation reads them), not script-defined at runtime in v1 — deferred"
+
+[[override]]
+name = "DefineStartLocationLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#256: location-handle form of DefineStartLocation; same static-map-metadata deferral, and the location-handle representation is itself superseded by Vec2 (D3) — deferred"
+
+[[override]]
+name = "RemovePlayer"
+class = "D1"
+tombstone = "superseded"
+reason = "#256: removes a player from the match with a game-result; the gameplay outcomes are expressed by the typed Game.Victory(p) / Game.Defeat(p, msg) verbs (victory.go), which write the deterministic per-player result store — superseded"
+
+[[override]]
+name = "SetIntegerGameState"
+class = "D5"
+tombstone = "gameplay-irrelevant"
+reason = "#256: enum-keyed integer game-state setter; its constants are GAME_STATE_DIVINE_INTERVENTION (single-player campaign dialog) and GAME_STATE_DISCONNECTED (net link status) — neither has a v1 public surface (the one relevant float slice, TIME_OF_DAY, folds onto Game.SetTimeOfDay). Gameplay-irrelevant"
+
+[[override]]
+name = "GetIntegerGameState"
+class = "D5"
+tombstone = "gameplay-irrelevant"
+reason = "#256: enum-keyed integer game-state getter; same DIVINE_INTERVENTION/DISCONNECTED constants with no v1 surface as SetIntegerGameState. Gameplay-irrelevant"
+
+[[override]]
+name = "EnableUserControl"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: cinematic input lock (disables player input during cutscenes); a UI/cinematic-mode control, not deterministic sim state — gameplay-irrelevant (cinematic surface)"
+
+[[override]]
+name = "VersionGet"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: WC3 SKU/patch version detection (ROC vs TFT); the LitD engine versions itself and gates worlds via engine-range matching (#180), so the runtime version handle has no public surface — gameplay-irrelevant"
+
+[[override]]
+name = "VersionCompatible"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: WC3 version-compatibility check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant"
+
+[[override]]
+name = "VersionSupported"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: WC3 version-support check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant"
+
+[[override]]
+name = "DoNotSaveReplay"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: suppresses automatic Battle.net replay capture; LitD replays are an explicit command-stream mechanism (net #83), not an auto-captured artifact to suppress — gameplay-irrelevant"
+
+[[override]]
+name = "Cheat"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: single-player cheat-code entry; replaced by an out-of-band debug console (#252), never a shipped gameplay verb — gameplay-irrelevant"
+
+[[override]]
+name = "IsNoVictoryCheat"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: queries the no-victory cheat flag; cheats are debug-console-only (see Cheat) — gameplay-irrelevant"
+
+[[override]]
+name = "IsNoDefeatCheat"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: queries the no-defeat cheat flag; cheats are debug-console-only (see Cheat) — gameplay-irrelevant"
+
+[[override]]
+name = "Preload"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: imperative asset preload hint; LitD preloads assets declaratively from the asset manifest/MANIFEST pipeline (assetcheck), so the imperative hint has no public surface — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadEnd"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadStart"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadRefresh"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadEndEx"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadGenClear"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload-generation family (preload-script authoring tool) — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadGenStart"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant"
+
+[[override]]
+name = "PreloadGenEnd"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant"
+
+[[override]]
+name = "Preloader"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: runs a generated preload script file; no LitD analogue (declarative manifest pipeline) — gameplay-irrelevant"
+
+[[override]]
+name = "AutomationSetTestType"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Blizzard internal automation-test harness hook; LitD uses Go's testing harness instead — gameplay-irrelevant"
+
+[[override]]
+name = "AutomationTestStart"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
+
+[[override]]
+name = "AutomationTestEnd"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
+
+[[override]]
+name = "AutomationTestingFinished"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
+
+[[override]]
+name = "GetTournamentFinishSoonTimeRemaining"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Battle.net tournament infrastructure (finish-soon timer); no LitD tournament hosting — gameplay-irrelevant"
+
+[[override]]
+name = "GetTournamentFinishNowRule"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Battle.net tournament infrastructure (finish-now rule); no LitD tournament hosting — gameplay-irrelevant"
+
+[[override]]
+name = "GetTournamentFinishNowPlayer"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Battle.net tournament infrastructure (finish-now player); no LitD tournament hosting — gameplay-irrelevant"
+
+[[override]]
+name = "GetTournamentScore"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Battle.net tournament infrastructure (tournament score); no LitD tournament hosting — gameplay-irrelevant"
+
+[[override]]
+name = "SetGameTypeSupported"
+class = "D1"
+tombstone = "gameplay-irrelevant"
+reason = "#256: Battle.net game-type advertisement flags (melee/ffa/ladder/etc); a matchmaking-listing concern, not sim state — gameplay-irrelevant"
+
+[[override]]
+name = "RenameSaveDirectory"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: save-directory management; whole-game mid-match save/load is deferred (#204), and directory-level file management rides that pipeline — deferred"
+
+[[override]]
+name = "RemoveSaveDirectory"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: save-directory management; deferred with mid-match save/load (#204)"
+
+[[override]]
+name = "CopySaveGame"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: save-file copy; deferred with mid-match save/load (#204)"
+
+[[override]]
+name = "ReloadGame"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: reloads the current game from its last save; deferred with mid-match save/load (#204)"
+
+[[override]]
+name = "SetMapName"
+class = "D1"
+tombstone = "deferred-v2"
+reason = "#256: sets the displayed map name; map metadata is authored and loaded from the world archive (world format #205), not script-set at runtime in v1 — deferred"

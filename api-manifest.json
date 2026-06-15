@@ -647,7 +647,10 @@
       "goMapping": {
         "symbol": "Game.TimeOfDay",
         "package": "litd/api",
-        "goSignature": "() float64"
+        "goSignature": "() float64",
+        "collapsesWith": [
+          "GetFloatGameState"
+        ]
       }
     },
     {
@@ -4664,7 +4667,10 @@
       "goMapping": {
         "symbol": "Game.SetTimeOfDay",
         "package": "litd/api",
-        "goSignature": "(h float64)"
+        "goSignature": "(h float64)",
+        "collapsesWith": [
+          "SetFloatGameState"
+        ]
       }
     },
     {
@@ -5178,6 +5184,78 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "boolexpr AND-combinator; Go closures compose with \u0026\u0026 (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "AutomationSetTestType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "testType",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Blizzard internal automation-test harness hook; LitD uses Go's testing harness instead — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "AutomationTestEnd",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "AutomationTestStart",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "testName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "AutomationTestingFinished",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant"
       }
     },
     {
@@ -5871,6 +5949,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "player sync events — networking (#316)"
+      }
+    },
+    {
+      "name": "Cheat",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "cheatStr",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: single-player cheat-code entry; replaced by an out-of-band debug console (#252), never a shipped gameplay verb — gameplay-irrelevant"
       }
     },
     {
@@ -7691,6 +7790,32 @@
       }
     },
     {
+      "name": "CopySaveGame",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceSaveName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "destSaveName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: save-file copy; deferred with mid-match save/load (#204)"
+      }
+    },
+    {
       "name": "CreateDefeatCondition",
       "origin": "common.j",
       "signature": {
@@ -7928,6 +8053,63 @@
       }
     },
     {
+      "name": "DefineStartLocation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: defines a start location by index; start locations are authored map metadata loaded into the match config (Game.StartLocation reads them), not script-defined at runtime in v1 — deferred"
+      }
+    },
+    {
+      "name": "DefineStartLocationLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLoc",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: location-handle form of DefineStartLocation; same static-map-metadata deferral, and the location-handle representation is itself superseded by Vec2 (D3) — deferred"
+      }
+    },
+    {
       "name": "DestroyBoolExpr",
       "origin": "common.j",
       "signature": {
@@ -8143,6 +8325,21 @@
       }
     },
     {
+      "name": "DoNotSaveReplay",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: suppresses automatic Battle.net replay capture; LitD replays are an explicit command-stream mechanism (net #83), not an auto-captured artifact to suppress — gameplay-irrelevant"
+      }
+    },
+    {
       "name": "EnableTrigger",
       "origin": "common.j",
       "signature": {
@@ -8161,6 +8358,49 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "trigger enable superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "EnableUserControl",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "b",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: cinematic input lock (disables player input during cutscenes); a UI/cinematic-mode control, not deterministic sim state — gameplay-irrelevant (cinematic surface)"
+      }
+    },
+    {
+      "name": "EndGame",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "doScoreScreen",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.EndMatch",
+        "package": "litd/api",
+        "goSignature": "()"
       }
     },
     {
@@ -8690,6 +8930,21 @@
       }
     },
     {
+      "name": "GetDefaultDifficulty",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "gamedifficulty"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: default campaign-difficulty getter; campaign difficulty deferred with SetGameDifficulty — deferred"
+      }
+    },
+    {
       "name": "GetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -8827,6 +9082,51 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "thread-local current-timer accessor; superseded by the periodic callback receiving its Timer parameter (R-EXEC-4 eliminates implicit current-element state), timers.md"
+      }
+    },
+    {
+      "name": "GetGameDifficulty",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "gamedifficulty"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: campaign game-difficulty getter; no global-difficulty surface in the melee v1 slice (see SetGameDifficulty) — deferred"
+      }
+    },
+    {
+      "name": "GetGamePlacement",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "placement"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: start-placement-mode getter; no v1 public surface for the placement enum (config-only) — deferred"
+      }
+    },
+    {
+      "name": "GetGameSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "gamespeed"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: game-speed getter; speed is driver-owned real-time state with no v1 public readback (Game.SetSpeed is write-only on the driver hook) — deferred"
       }
     },
     {
@@ -8996,6 +9296,27 @@
         "symbol": "Unit.HeroXP",
         "package": "litd/api",
         "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetIntegerGameState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichIntegerGameState",
+            "jassType": "igamestate",
+            "tsType": "igamestate"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: enum-keyed integer game-state getter; same DIVINE_INTERVENTION/DISCONNECTED constants with no v1 surface as SetIntegerGameState. Gameplay-irrelevant"
       }
     },
     {
@@ -10118,6 +10439,32 @@
       }
     },
     {
+      "name": "GetStartLocationX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichStartLocation",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.StartLocation",
+        "package": "litd/api",
+        "goSignature": "(i int) Vec2",
+        "collapsesWith": [
+          "GetStartLocationY",
+          "GetStartLocationLoc"
+        ]
+      }
+    },
+    {
       "name": "GetStoredBoolean",
       "origin": "common.j",
       "signature": {
@@ -10258,6 +10605,22 @@
       }
     },
     {
+      "name": "GetTeams",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Teams",
+        "package": "litd/api",
+        "goSignature": "() int"
+      }
+    },
+    {
       "name": "GetTimeOfDayScale",
       "origin": "common.j",
       "signature": {
@@ -10274,6 +10637,72 @@
         "collapsesWith": [
           "GetTimeOfDayScalePercentBJ"
         ]
+      }
+    },
+    {
+      "name": "GetTournamentFinishNowPlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "player"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Battle.net tournament infrastructure (finish-now player); no LitD tournament hosting — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "GetTournamentFinishNowRule",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Battle.net tournament infrastructure (finish-now rule); no LitD tournament hosting — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "GetTournamentFinishSoonTimeRemaining",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "real"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Battle.net tournament infrastructure (finish-soon timer); no LitD tournament hosting — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "GetTournamentScore",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Battle.net tournament infrastructure (tournament score); no LitD tournament hosting — gameplay-irrelevant"
       }
     },
     {
@@ -12052,6 +12481,58 @@
           "IsMaskedToPlayer",
           "IsLocationMaskedToPlayer"
         ]
+      }
+    },
+    {
+      "name": "IsMapFlagSet",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichMapFlag",
+            "jassType": "mapflag",
+            "tsType": "mapflag"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.MapFlag",
+        "package": "litd/api",
+        "goSignature": "(f MapFlag) bool"
+      }
+    },
+    {
+      "name": "IsNoDefeatCheat",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: queries the no-defeat cheat flag; cheats are debug-console-only (see Cheat) — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "IsNoVictoryCheat",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: queries the no-victory cheat flag; cheats are debug-console-only (see Cheat) — gameplay-irrelevant"
       }
     },
     {
@@ -14195,6 +14676,28 @@
       }
     },
     {
+      "name": "PauseGame",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Pause",
+        "package": "litd/api",
+        "goSignature": "()"
+      }
+    },
+    {
       "name": "PauseTimer",
       "origin": "common.j",
       "signature": {
@@ -14283,6 +14786,165 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "leaderboard UI binding; presentation"
+      }
+    },
+    {
+      "name": "Preload",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "filename",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: imperative asset preload hint; LitD preloads assets declaratively from the asset manifest/MANIFEST pipeline (assetcheck), so the imperative hint has no public surface — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadEnd",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "timeout",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadEndEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadGenClear",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload-generation family (preload-script authoring tool) — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadGenEnd",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "filename",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadGenStart",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadRefresh",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "PreloadStart",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "Preloader",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "filename",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: runs a generated preload script file; no LitD analogue (declarative manifest pipeline) — gameplay-irrelevant"
       }
     },
     {
@@ -14546,6 +15208,21 @@
       }
     },
     {
+      "name": "ReloadGame",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: reloads the current game from its last save; deferred with mid-match save/load (#204)"
+      }
+    },
+    {
       "name": "ReloadGameCachesFromDisk",
       "origin": "common.j",
       "signature": {
@@ -14579,6 +15256,32 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "location heap-lifetime cleanup superseded — Vec2 is a GC'd value, the leak hazard is deleted (R-API-2)"
+      }
+    },
+    {
+      "name": "RemovePlayer",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "gameResult",
+            "jassType": "playergameresult",
+            "tsType": "playergameresult"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#256: removes a player from the match with a game-result; the gameplay outcomes are expressed by the typed Game.Victory(p) / Game.Defeat(p, msg) verbs (victory.go), which write the deterministic per-player result store — superseded"
       }
     },
     {
@@ -14622,6 +15325,27 @@
         "symbol": "Region.Remove",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "RemoveSaveDirectory",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceDirName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: save-directory management; deferred with mid-match save/load (#204)"
       }
     },
     {
@@ -14800,6 +15524,32 @@
         "symbol": "Unit.Remove",
         "package": "litd/api",
         "goSignature": "()"
+      }
+    },
+    {
+      "name": "RenameSaveDirectory",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "sourceDirName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "destDirName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: save-directory management; whole-game mid-match save/load is deferred (#204), and directory-level file management rides that pipeline — deferred"
       }
     },
     {
@@ -16613,6 +17363,27 @@
       }
     },
     {
+      "name": "SetDefaultDifficulty",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "g",
+            "jassType": "gamedifficulty",
+            "tsType": "gamedifficulty"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: default campaign-difficulty setter; campaign difficulty deferred with SetGameDifficulty — deferred"
+      }
+    },
+    {
       "name": "SetFogStateRect",
       "origin": "common.j",
       "signature": {
@@ -16651,6 +17422,96 @@
           "SetFogStateRadius",
           "SetFogStateRadiusLoc"
         ]
+      }
+    },
+    {
+      "name": "SetGameDifficulty",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichdifficulty",
+            "jassType": "gamedifficulty",
+            "tsType": "gamedifficulty"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: campaign game-difficulty setter; the v1 vertical slice is melee (per-player AI difficulty via Game.AttachAI, #257), not a global campaign difficulty — deferred"
+      }
+    },
+    {
+      "name": "SetGamePlacement",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlacementType",
+            "jassType": "placement",
+            "tsType": "placement"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: start-placement-mode setter (teams-together / use-map-settings / random); placement is static match config resolved at map load — deferred"
+      }
+    },
+    {
+      "name": "SetGameSpeed",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichspeed",
+            "jassType": "gamespeed",
+            "tsType": "gamespeed"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.SetSpeed",
+        "package": "litd/api",
+        "goSignature": "(s GameSpeed)"
+      }
+    },
+    {
+      "name": "SetGameTypeSupported",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichGameType",
+            "jassType": "gametype",
+            "tsType": "gametype"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: Battle.net game-type advertisement flags (melee/ffa/ladder/etc); a matchmaking-listing concern, not sim state — gameplay-irrelevant"
       }
     },
     {
@@ -16811,6 +17672,79 @@
         "symbol": "Unit.SetHeroXP",
         "package": "litd/api",
         "goSignature": "(xp int)"
+      }
+    },
+    {
+      "name": "SetIntegerGameState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichIntegerGameState",
+            "jassType": "igamestate",
+            "tsType": "igamestate"
+          },
+          {
+            "name": "value",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: enum-keyed integer game-state setter; its constants are GAME_STATE_DIVINE_INTERVENTION (single-player campaign dialog) and GAME_STATE_DISCONNECTED (net link status) — neither has a v1 public surface (the one relevant float slice, TIME_OF_DAY, folds onto Game.SetTimeOfDay). Gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "SetMapFlag",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichMapFlag",
+            "jassType": "mapflag",
+            "tsType": "mapflag"
+          },
+          {
+            "name": "value",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: map-flag setter; match/map flags are static config read at map load and immutable after in v1 (Game.MapFlag is read-only), mirroring the SetPlayers fixed-roster decision — script-time mutation deferred"
+      }
+    },
+    {
+      "name": "SetMapName",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "name",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: sets the displayed map name; map metadata is authored and loaded from the world archive (world format #205), not script-set at runtime in v1 — deferred"
       }
     },
     {
@@ -17170,7 +18104,10 @@
       "goMapping": {
         "symbol": "Player.SetStartLocation",
         "package": "litd/api",
-        "goSignature": "(loc Vec2)"
+        "goSignature": "(loc Vec2)",
+        "collapsesWith": [
+          "ForcePlayerStartLocation"
+        ]
       }
     },
     {
@@ -17476,6 +18413,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "in-place rect-from-locations mutation superseded by NewRect over two Vec2 corners (R-API-2, hazard 4)"
+      }
+    },
+    {
+      "name": "SetTeams",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "teamcount",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#256: team-count setter; team count is static match config set at map load (Game.Teams reads it), per the same immutable-config decision as SetPlayers — deferred"
       }
     },
     {
@@ -19836,6 +20794,63 @@
         "collapsesWith": [
           "UnitShareVisionBJ"
         ]
+      }
+    },
+    {
+      "name": "VersionCompatible",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichVersion",
+            "jassType": "version",
+            "tsType": "version"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: WC3 version-compatibility check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "VersionGet",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "version"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: WC3 SKU/patch version detection (ROC vs TFT); the LitD engine versions itself and gates worlds via engine-range matching (#180), so the runtime version handle has no public surface — gameplay-irrelevant"
+      }
+    },
+    {
+      "name": "VersionSupported",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichVersion",
+            "jassType": "version",
+            "tsType": "version"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D1",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#256: WC3 version-support check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant"
       }
     },
     {

@@ -129,41 +129,41 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | StringHash | common.j | D1 | `litd/api.StringHash` |
 | GetLocalizedString | common.j | unclassified | _pending (M2 backlog)_ |
 | GetLocalizedHotkey | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMapName | common.j | unclassified | _pending (M2 backlog)_ |
+| SetMapName | common.j | D1 | **tombstoned** (deferred-v2): #256: sets the displayed map name; map metadata is authored and loaded from the world archive (world format #205), not script-set at runtime in v1 — deferred |
 | SetMapDescription | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTeams | common.j | unclassified | _pending (M2 backlog)_ |
+| SetTeams | common.j | D1 | **tombstoned** (deferred-v2): #256: team-count setter; team count is static match config set at map load (Game.Teams reads it), per the same immutable-config decision as SetPlayers — deferred |
 | SetPlayers | common.j | D1 | **tombstoned** (deferred-v2): active player-count config; the fixed MaxPlayers roster covers v1 — dynamic count deferred |
-| DefineStartLocation | common.j | D3 | _pending (M2 backlog)_ |
-| DefineStartLocationLoc | common.j | D3 | _pending (M2 backlog)_ |
+| DefineStartLocation | common.j | D1 | **tombstoned** (deferred-v2): #256: defines a start location by index; start locations are authored map metadata loaded into the match config (Game.StartLocation reads them), not script-defined at runtime in v1 — deferred |
+| DefineStartLocationLoc | common.j | D3 | **tombstoned** (deferred-v2): #256: location-handle form of DefineStartLocation; same static-map-metadata deferral, and the location-handle representation is itself superseded by Vec2 (D3) — deferred |
 | SetStartLocPrioCount | common.j | unclassified | _pending (M2 backlog)_ |
 | SetStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
 | GetStartLocPrioSlot | common.j | unclassified | _pending (M2 backlog)_ |
 | GetStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
 | SetEnemyStartLocPrioCount | common.j | unclassified | _pending (M2 backlog)_ |
 | SetEnemyStartLocPrio | common.j | unclassified | _pending (M2 backlog)_ |
-| SetGameTypeSupported | common.j | unclassified | _pending (M2 backlog)_ |
-| SetMapFlag | common.j | unclassified | _pending (M2 backlog)_ |
-| SetGamePlacement | common.j | unclassified | _pending (M2 backlog)_ |
-| SetGameSpeed | common.j | unclassified | _pending (M2 backlog)_ |
-| SetGameDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
+| SetGameTypeSupported | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net game-type advertisement flags (melee/ffa/ladder/etc); a matchmaking-listing concern, not sim state — gameplay-irrelevant |
+| SetMapFlag | common.j | D1 | **tombstoned** (deferred-v2): #256: map-flag setter; match/map flags are static config read at map load and immutable after in v1 (Game.MapFlag is read-only), mirroring the SetPlayers fixed-roster decision — script-time mutation deferred |
+| SetGamePlacement | common.j | D1 | **tombstoned** (deferred-v2): #256: start-placement-mode setter (teams-together / use-map-settings / random); placement is static match config resolved at map load — deferred |
+| SetGameSpeed | common.j | D1 | `litd/api.Game.SetSpeed` |
+| SetGameDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: campaign game-difficulty setter; the v1 vertical slice is melee (per-player AI difficulty via Game.AttachAI, #257), not a global campaign difficulty — deferred |
 | SetResourceDensity | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCreatureDensity | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTeams | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTeams | common.j | D1 | `litd/api.Game.Teams` |
 | GetPlayers | common.j | D1 | **tombstoned** (deferred-v2): active player-count query; deferred with SetPlayers |
 | IsGameTypeSupported | common.j | unclassified | _pending (M2 backlog)_ |
 | GetGameTypeSelected | common.j | unclassified | _pending (M2 backlog)_ |
-| IsMapFlagSet | common.j | unclassified | _pending (M2 backlog)_ |
-| GetGamePlacement | common.j | unclassified | _pending (M2 backlog)_ |
-| GetGameSpeed | common.j | unclassified | _pending (M2 backlog)_ |
-| GetGameDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
+| IsMapFlagSet | common.j | D1 | `litd/api.Game.MapFlag` |
+| GetGamePlacement | common.j | D1 | **tombstoned** (deferred-v2): #256: start-placement-mode getter; no v1 public surface for the placement enum (config-only) — deferred |
+| GetGameSpeed | common.j | D1 | **tombstoned** (deferred-v2): #256: game-speed getter; speed is driver-owned real-time state with no v1 public readback (Game.SetSpeed is write-only on the driver hook) — deferred |
+| GetGameDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: campaign game-difficulty getter; no global-difficulty surface in the melee v1 slice (see SetGameDifficulty) — deferred |
 | GetResourceDensity | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCreatureDensity | common.j | unclassified | _pending (M2 backlog)_ |
-| GetStartLocationX | common.j | D3 | _pending (M2 backlog)_ |
-| GetStartLocationY | common.j | D3 | _pending (M2 backlog)_ |
-| GetStartLocationLoc | common.j | unclassified | _pending (M2 backlog)_ |
+| GetStartLocationX | common.j | D3 | `litd/api.Game.StartLocation` |
+| GetStartLocationY | common.j | D3 | `litd/api.Game.StartLocation` (D3 collapse → GetStartLocationX) |
+| GetStartLocationLoc | common.j | D3 | `litd/api.Game.StartLocation` (D3 collapse → GetStartLocationX) |
 | SetPlayerTeam | common.j | D5 | `litd/api.Player.SetTeam` |
 | SetPlayerStartLocation | common.j | D3 | `litd/api.Player.SetStartLocation` |
-| ForcePlayerStartLocation | common.j | unclassified | _pending (M2 backlog)_ |
+| ForcePlayerStartLocation | common.j | D3 | `litd/api.Player.SetStartLocation` (D3 collapse → SetPlayerStartLocation) |
 | SetPlayerColor | common.j | D5 | `litd/api.Player.SetColor` |
 | SetPlayerAlliance | common.j | D1 | `litd/api.Player.SetAllianceFlag` |
 | SetPlayerTaxRate | common.j | D5 | `litd/api.Player.SetTaxRate` |
@@ -312,10 +312,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetTriggeringTrackable | common.j | D1 | **tombstoned** (deferred-v2): trackable getter — ui-frames (#245) |
 | GetClickedButton | common.j | unclassified | _pending (M2 backlog)_ |
 | GetClickedDialog | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTournamentFinishSoonTimeRemaining | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTournamentFinishNowRule | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTournamentFinishNowPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTournamentScore | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTournamentFinishSoonTimeRemaining | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (finish-soon timer); no LitD tournament hosting — gameplay-irrelevant |
+| GetTournamentFinishNowRule | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (finish-now rule); no LitD tournament hosting — gameplay-irrelevant |
+| GetTournamentFinishNowPlayer | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (finish-now player); no LitD tournament hosting — gameplay-irrelevant |
+| GetTournamentScore | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Battle.net tournament infrastructure (tournament score); no LitD tournament hosting — gameplay-irrelevant |
 | GetSaveBasicFilename | common.j | unclassified | _pending (M2 backlog)_ |
 | TriggerRegisterPlayerEvent | common.j | D1 | **tombstoned** (superseded): player event registration superseded by OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219) |
 | GetTriggerPlayer | common.j | D2 | `litd/api.Event.Player` |
@@ -707,7 +707,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CripplePlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | SetPlayerAbilityAvailable | common.j | D1 | **tombstoned** (deferred-v2): per-player ability availability belongs to the abilities surface (#234); deferred |
 | SetPlayerState | common.j | D5 | `litd/api.Player.SetGold` |
-| RemovePlayer | common.j | unclassified | _pending (M2 backlog)_ |
+| RemovePlayer | common.j | D1 | **tombstoned** (superseded): #256: removes a player from the match with a game-result; the gameplay outcomes are expressed by the typed Game.Victory(p) / Game.Defeat(p, msg) verbs (victory.go), which write the deterministic per-player result store — superseded |
 | CachePlayerHeroData | common.j | unclassified | _pending (M2 backlog)_ |
 | SetFogStateRect | common.j | D3 | `litd/api.Game.SetFogState` |
 | SetFogStateRadius | common.j | D3 | `litd/api.Game.SetFogState` (D3 collapse → SetFogStateRect) |
@@ -722,39 +722,39 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DestroyFogModifier | common.j | D1 | `litd/api.FogModifier.Destroy` |
 | FogModifierStart | common.j | D1 | `litd/api.FogModifier.Start` |
 | FogModifierStop | common.j | D1 | `litd/api.FogModifier.Stop` |
-| VersionGet | common.j | unclassified | _pending (M2 backlog)_ |
-| VersionCompatible | common.j | unclassified | _pending (M2 backlog)_ |
-| VersionSupported | common.j | unclassified | _pending (M2 backlog)_ |
-| EndGame | common.j | unclassified | _pending (M2 backlog)_ |
+| VersionGet | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: WC3 SKU/patch version detection (ROC vs TFT); the LitD engine versions itself and gates worlds via engine-range matching (#180), so the runtime version handle has no public surface — gameplay-irrelevant |
+| VersionCompatible | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: WC3 version-compatibility check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant |
+| VersionSupported | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: WC3 version-support check; superseded by LitD engine-range matching (#180) — gameplay-irrelevant |
+| EndGame | common.j | D1 | `litd/api.Game.EndMatch` |
 | ChangeLevel | common.j | unclassified | _pending (M2 backlog)_ |
 | RestartGame | common.j | unclassified | _pending (M2 backlog)_ |
-| ReloadGame | common.j | unclassified | _pending (M2 backlog)_ |
+| ReloadGame | common.j | D1 | **tombstoned** (deferred-v2): #256: reloads the current game from its last save; deferred with mid-match save/load (#204) |
 | SetCampaignMenuRace | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCampaignMenuRaceEx | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceCampaignSelectScreen | common.j | unclassified | _pending (M2 backlog)_ |
 | LoadGame | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
 | SaveGame | common.j | D1 | **tombstoned** (deferred-v2): whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316) |
-| RenameSaveDirectory | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveSaveDirectory | common.j | unclassified | _pending (M2 backlog)_ |
-| CopySaveGame | common.j | unclassified | _pending (M2 backlog)_ |
+| RenameSaveDirectory | common.j | D1 | **tombstoned** (deferred-v2): #256: save-directory management; whole-game mid-match save/load is deferred (#204), and directory-level file management rides that pipeline — deferred |
+| RemoveSaveDirectory | common.j | D1 | **tombstoned** (deferred-v2): #256: save-directory management; deferred with mid-match save/load (#204) |
+| CopySaveGame | common.j | D1 | **tombstoned** (deferred-v2): #256: save-file copy; deferred with mid-match save/load (#204) |
 | SaveGameExists | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SetMaxCheckpointSaves | common.j | unclassified | _pending (M2 backlog)_ |
 | SaveGameCheckpoint | common.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
 | SyncSelections | common.j | unclassified | _pending (M2 backlog)_ |
-| SetFloatGameState | common.j | unclassified | _pending (M2 backlog)_ |
-| GetFloatGameState | common.j | unclassified | _pending (M2 backlog)_ |
-| SetIntegerGameState | common.j | unclassified | _pending (M2 backlog)_ |
-| GetIntegerGameState | common.j | unclassified | _pending (M2 backlog)_ |
+| SetFloatGameState | common.j | D1 | `litd/api.Game.SetTimeOfDay` (D3 collapse → SetTimeOfDay) |
+| GetFloatGameState | common.j | D1 | `litd/api.Game.TimeOfDay` (D3 collapse → GetTimeOfDay) |
+| SetIntegerGameState | common.j | D5 | **tombstoned** (gameplay-irrelevant): #256: enum-keyed integer game-state setter; its constants are GAME_STATE_DIVINE_INTERVENTION (single-player campaign dialog) and GAME_STATE_DISCONNECTED (net link status) — neither has a v1 public surface (the one relevant float slice, TIME_OF_DAY, folds onto Game.SetTimeOfDay). Gameplay-irrelevant |
+| GetIntegerGameState | common.j | D5 | **tombstoned** (gameplay-irrelevant): #256: enum-keyed integer game-state getter; same DIVINE_INTERVENTION/DISCONNECTED constants with no v1 surface as SetIntegerGameState. Gameplay-irrelevant |
 | SetTutorialCleared | common.j | unclassified | _pending (M2 backlog)_ |
 | SetMissionAvailable | common.j | unclassified | _pending (M2 backlog)_ |
 | SetCampaignAvailable | common.j | unclassified | _pending (M2 backlog)_ |
 | SetOpCinematicAvailable | common.j | unclassified | _pending (M2 backlog)_ |
 | SetEdCinematicAvailable | common.j | unclassified | _pending (M2 backlog)_ |
-| GetDefaultDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDefaultDifficulty | common.j | unclassified | _pending (M2 backlog)_ |
+| GetDefaultDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: default campaign-difficulty getter; campaign difficulty deferred with SetGameDifficulty — deferred |
+| SetDefaultDifficulty | common.j | D1 | **tombstoned** (deferred-v2): #256: default campaign-difficulty setter; campaign difficulty deferred with SetGameDifficulty — deferred |
 | SetCustomCampaignButtonVisible | common.j | unclassified | _pending (M2 backlog)_ |
 | GetCustomCampaignButtonVisible | common.j | unclassified | _pending (M2 backlog)_ |
-| DoNotSaveReplay | common.j | unclassified | _pending (M2 backlog)_ |
+| DoNotSaveReplay | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: suppresses automatic Battle.net replay capture; LitD replays are an explicit command-stream mechanism (net #83), not an auto-captured artifact to suppress — gameplay-irrelevant |
 | DialogCreate | common.j | unclassified | _pending (M2 backlog)_ |
 | DialogDestroy | common.j | unclassified | _pending (M2 backlog)_ |
 | DialogClear | common.j | unclassified | _pending (M2 backlog)_ |
@@ -920,13 +920,13 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetDayNightModels | common.j | unclassified | _pending (M2 backlog)_ |
 | SetPortraitLight | common.j | unclassified | _pending (M2 backlog)_ |
 | SetSkyModel | common.j | unclassified | _pending (M2 backlog)_ |
-| EnableUserControl | common.j | unclassified | _pending (M2 backlog)_ |
+| EnableUserControl | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: cinematic input lock (disables player input during cutscenes); a UI/cinematic-mode control, not deterministic sim state — gameplay-irrelevant (cinematic surface) |
 | EnableUserUI | common.j | unclassified | _pending (M2 backlog)_ |
 | SuspendTimeOfDay | common.j | D1 | `litd/api.Game.SuspendTimeOfDay` |
 | SetTimeOfDayScale | common.j | D1 | `litd/api.Game.SetTimeOfDayScale` |
 | GetTimeOfDayScale | common.j | D1 | `litd/api.Game.TimeOfDayScale` |
 | ShowInterface | common.j | unclassified | _pending (M2 backlog)_ |
-| PauseGame | common.j | unclassified | _pending (M2 backlog)_ |
+| PauseGame | common.j | D1 | `litd/api.Game.Pause` |
 | UnitAddIndicator | common.j | unclassified | _pending (M2 backlog)_ |
 | AddIndicator | common.j | unclassified | _pending (M2 backlog)_ |
 | PingMinimap | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1245,23 +1245,23 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RemoveGuardPosition | common.j | unclassified | _pending (M2 backlog)_ |
 | RecycleGuardPosition | common.j | unclassified | _pending (M2 backlog)_ |
 | RemoveAllGuardPositions | common.j | unclassified | _pending (M2 backlog)_ |
-| Cheat | common.j | unclassified | _pending (M2 backlog)_ |
-| IsNoVictoryCheat | common.j | unclassified | _pending (M2 backlog)_ |
-| IsNoDefeatCheat | common.j | unclassified | _pending (M2 backlog)_ |
-| Preload | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadEnd | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadStart | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadRefresh | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadEndEx | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadGenClear | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadGenStart | common.j | unclassified | _pending (M2 backlog)_ |
-| PreloadGenEnd | common.j | unclassified | _pending (M2 backlog)_ |
-| Preloader | common.j | unclassified | _pending (M2 backlog)_ |
+| Cheat | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: single-player cheat-code entry; replaced by an out-of-band debug console (#252), never a shipped gameplay verb — gameplay-irrelevant |
+| IsNoVictoryCheat | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: queries the no-victory cheat flag; cheats are debug-console-only (see Cheat) — gameplay-irrelevant |
+| IsNoDefeatCheat | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: queries the no-defeat cheat flag; cheats are debug-console-only (see Cheat) — gameplay-irrelevant |
+| Preload | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: imperative asset preload hint; LitD preloads assets declaratively from the asset manifest/MANIFEST pipeline (assetcheck), so the imperative hint has no public surface — gameplay-irrelevant |
+| PreloadEnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant |
+| PreloadStart | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant |
+| PreloadRefresh | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant |
+| PreloadEndEx | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload family — declarative asset pipeline supersedes imperative preload hints — gameplay-irrelevant |
+| PreloadGenClear | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload-generation family (preload-script authoring tool) — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant |
+| PreloadGenStart | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant |
+| PreloadGenEnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Preload-generation family — no LitD analogue; declarative manifest pipeline — gameplay-irrelevant |
+| Preloader | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: runs a generated preload script file; no LitD analogue (declarative manifest pipeline) — gameplay-irrelevant |
 | BlzHideCinematicPanels | common.j | unclassified | _pending (M2 backlog)_ |
-| AutomationSetTestType | common.j | unclassified | _pending (M2 backlog)_ |
-| AutomationTestStart | common.j | unclassified | _pending (M2 backlog)_ |
-| AutomationTestEnd | common.j | unclassified | _pending (M2 backlog)_ |
-| AutomationTestingFinished | common.j | unclassified | _pending (M2 backlog)_ |
+| AutomationSetTestType | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard internal automation-test harness hook; LitD uses Go's testing harness instead — gameplay-irrelevant |
+| AutomationTestStart | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant |
+| AutomationTestEnd | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant |
+| AutomationTestingFinished | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: Blizzard automation-test harness — replaced by Go tests — gameplay-irrelevant |
 | BlzGetTriggerPlayerMouseX | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
 | BlzGetTriggerPlayerMouseY | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
 | BlzGetTriggerPlayerMousePosition | common.j | D1 | **tombstoned** (deferred-v2): mouse input — ui-frames (#245) |
