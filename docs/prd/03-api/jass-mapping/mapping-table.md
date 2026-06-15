@@ -909,17 +909,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ChooseRandomItem | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | ChooseRandomItemEx | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | SetRandomSeed | common.j | D1 | `litd/api.Game.SetRandomSeed` |
-| SetTerrainFog | common.j | unclassified | _pending (M2 backlog)_ |
-| ResetTerrainFog | common.j | unclassified | _pending (M2 backlog)_ |
+| SetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
+| ResetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | SetUnitFog | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTerrainFogEx | common.j | unclassified | _pending (M2 backlog)_ |
+| SetTerrainFogEx | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | DisplayTextToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | DisplayTimedTextToPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | DisplayTimedTextFromPlayer | common.j | unclassified | _pending (M2 backlog)_ |
 | ClearTextMessages | common.j | unclassified | _pending (M2 backlog)_ |
-| SetDayNightModels | common.j | unclassified | _pending (M2 backlog)_ |
+| SetDayNightModels | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | SetPortraitLight | common.j | unclassified | _pending (M2 backlog)_ |
-| SetSkyModel | common.j | unclassified | _pending (M2 backlog)_ |
+| SetSkyModel | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | EnableUserControl | common.j | D1 | **tombstoned** (gameplay-irrelevant): #256: cinematic input lock (disables player input during cutscenes); a UI/cinematic-mode control, not deterministic sim state — gameplay-irrelevant (cinematic surface) |
 | EnableUserUI | common.j | unclassified | _pending (M2 backlog)_ |
 | SuspendTimeOfDay | common.j | D1 | `litd/api.Game.SuspendTimeOfDay` |
@@ -927,8 +927,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetTimeOfDayScale | common.j | D1 | `litd/api.Game.TimeOfDayScale` |
 | ShowInterface | common.j | unclassified | _pending (M2 backlog)_ |
 | PauseGame | common.j | D1 | `litd/api.Game.Pause` |
-| UnitAddIndicator | common.j | unclassified | _pending (M2 backlog)_ |
-| AddIndicator | common.j | unclassified | _pending (M2 backlog)_ |
+| UnitAddIndicator | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| AddIndicator | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | PingMinimap | common.j | unclassified | _pending (M2 backlog)_ |
 | PingMinimapEx | common.j | unclassified | _pending (M2 backlog)_ |
 | CreateMinimapIconOnUnit | common.j | unclassified | _pending (M2 backlog)_ |
@@ -941,7 +941,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | EnableOcclusion | common.j | unclassified | _pending (M2 backlog)_ |
 | SetIntroShotText | common.j | unclassified | _pending (M2 backlog)_ |
 | SetIntroShotModel | common.j | unclassified | _pending (M2 backlog)_ |
-| EnableWorldFogBoundary | common.j | unclassified | _pending (M2 backlog)_ |
+| EnableWorldFogBoundary | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | PlayModelCinematic | common.j | unclassified | _pending (M2 backlog)_ |
 | PlayCinematic | common.j | unclassified | _pending (M2 backlog)_ |
 | ForceUIKey | common.j | unclassified | _pending (M2 backlog)_ |
@@ -949,19 +949,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | DisplayLoadDialog | common.j | unclassified | _pending (M2 backlog)_ |
 | SetAltMinimapIcon | common.j | unclassified | _pending (M2 backlog)_ |
 | DisableRestartMission | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateTextTag | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyTextTag | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagText | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagPos | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagPosUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagColor | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagVelocity | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagVisibility | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagSuspended | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagPermanent | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagAge | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagLifespan | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagFadepoint | common.j | unclassified | _pending (M2 backlog)_ |
+| CreateTextTag | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| DestroyTextTag | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagText | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagPos | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagPosUnit | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagColor | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagVelocity | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagVisibility | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagSuspended | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagPermanent | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagAge | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagLifespan | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagFadepoint | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | SetReservedLocalHeroButtons | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
 | SetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1171,18 +1171,18 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetDialogueSpeakerNameKey | common.j | unclassified | _pending (M2 backlog)_ |
 | SetDialogueTextKey | common.j | unclassified | _pending (M2 backlog)_ |
 | GetDialogueTextKey | common.j | unclassified | _pending (M2 backlog)_ |
-| AddWeatherEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| RemoveWeatherEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| EnableWeatherEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| TerrainDeformCrater | common.j | unclassified | _pending (M2 backlog)_ |
-| TerrainDeformRipple | common.j | unclassified | _pending (M2 backlog)_ |
-| TerrainDeformWave | common.j | unclassified | _pending (M2 backlog)_ |
-| TerrainDeformRandom | common.j | unclassified | _pending (M2 backlog)_ |
-| TerrainDeformStop | common.j | unclassified | _pending (M2 backlog)_ |
-| TerrainDeformStopAll | common.j | unclassified | _pending (M2 backlog)_ |
-| AddSpecialEffect | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpecialEffectLoc | common.j | D3 | _pending (M2 backlog)_ |
-| AddSpecialEffectTarget | common.j | unclassified | _pending (M2 backlog)_ |
+| AddWeatherEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| RemoveWeatherEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| EnableWeatherEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformCrater | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformRipple | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformWave | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformRandom | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformStop | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformStopAll | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| AddSpecialEffect | common.j | D3 | `litd/api.Game.AddSpecialEffect` |
+| AddSpecialEffectLoc | common.j | D3 | `litd/api.Game.AddSpecialEffect` (D3 collapse → AddSpecialEffect) |
+| AddSpecialEffectTarget | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | DestroyEffect | common.j | unclassified | _pending (M2 backlog)_ |
 | AddSpellEffect | common.j | D3 | _pending (M2 backlog)_ |
 | AddSpellEffectLoc | common.j | D3 | _pending (M2 backlog)_ |
@@ -1190,51 +1190,51 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | AddSpellEffectByIdLoc | common.j | D3 | _pending (M2 backlog)_ |
 | AddSpellEffectTarget | common.j | D3 | _pending (M2 backlog)_ |
 | AddSpellEffectTargetById | common.j | D3 | _pending (M2 backlog)_ |
-| AddLightning | common.j | unclassified | _pending (M2 backlog)_ |
-| AddLightningEx | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyLightning | common.j | unclassified | _pending (M2 backlog)_ |
-| MoveLightning | common.j | unclassified | _pending (M2 backlog)_ |
-| MoveLightningEx | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLightningColorA | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLightningColorR | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLightningColorG | common.j | unclassified | _pending (M2 backlog)_ |
-| GetLightningColorB | common.j | unclassified | _pending (M2 backlog)_ |
-| SetLightningColor | common.j | unclassified | _pending (M2 backlog)_ |
+| AddLightning | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| AddLightningEx | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| DestroyLightning | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| MoveLightning | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| MoveLightningEx | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLightningColorA | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| GetLightningColorR | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| GetLightningColorG | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| GetLightningColorB | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| SetLightningColor | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | GetAbilityEffect | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
 | GetAbilityEffectById | common.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
 | GetAbilitySound | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | GetAbilitySoundById | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| GetTerrainCliffLevel | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTerrainCliffLevel | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetWaterBaseColor | common.j | unclassified | _pending (M2 backlog)_ |
 | SetWaterDeforms | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTerrainType | common.j | unclassified | _pending (M2 backlog)_ |
-| GetTerrainVariance | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTerrainType | common.j | unclassified | _pending (M2 backlog)_ |
-| IsTerrainPathable | common.j | unclassified | _pending (M2 backlog)_ |
-| SetTerrainPathable | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateImage | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyImage | common.j | unclassified | _pending (M2 backlog)_ |
-| ShowImage | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImageConstantHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImagePosition | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImageColor | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImageRender | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImageRenderAlways | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImageAboveWater | common.j | unclassified | _pending (M2 backlog)_ |
-| SetImageType | common.j | unclassified | _pending (M2 backlog)_ |
-| CreateUbersplat | common.j | unclassified | _pending (M2 backlog)_ |
-| DestroyUbersplat | common.j | unclassified | _pending (M2 backlog)_ |
-| ResetUbersplat | common.j | unclassified | _pending (M2 backlog)_ |
-| FinishUbersplat | common.j | unclassified | _pending (M2 backlog)_ |
-| ShowUbersplat | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUbersplatRender | common.j | unclassified | _pending (M2 backlog)_ |
-| SetUbersplatRenderAlways | common.j | unclassified | _pending (M2 backlog)_ |
-| SetBlight | common.j | D3 | _pending (M2 backlog)_ |
-| SetBlightRect | common.j | unclassified | _pending (M2 backlog)_ |
-| SetBlightPoint | common.j | unclassified | _pending (M2 backlog)_ |
-| SetBlightLoc | common.j | D3 | _pending (M2 backlog)_ |
-| CreateBlightedGoldmine | common.j | unclassified | _pending (M2 backlog)_ |
-| IsPointBlighted | common.j | unclassified | _pending (M2 backlog)_ |
+| GetTerrainType | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| GetTerrainVariance | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetTerrainType | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| IsTerrainPathable | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetTerrainPathable | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| CreateImage | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| DestroyImage | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| ShowImage | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageConstantHeight | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImagePosition | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageColor | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageRender | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageRenderAlways | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageAboveWater | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageType | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| CreateUbersplat | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| DestroyUbersplat | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| ResetUbersplat | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| FinishUbersplat | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| ShowUbersplat | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetUbersplatRender | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetUbersplatRenderAlways | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetBlight | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetBlightRect | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetBlightPoint | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetBlightLoc | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| CreateBlightedGoldmine | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| IsPointBlighted | common.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetDoodadAnimation | common.j | D1 | `litd/api.Doodad.SetAnimation` |
 | SetDoodadAnimationRect | common.j | D1 | `litd/api.Doodad.SetAnimation` (D3 collapse → SetDoodadAnimation) |
 | StartMeleeAI | common.j | D3 | `litd/api.Game.AttachAI` |
@@ -1313,30 +1313,30 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzSetUnitDiceSides | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitAttackCooldown | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzSetUnitAttackCooldown | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectColorByPlayer | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectColor | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectAlpha | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectScale | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectPosition | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectHeight | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectTimeScale | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectTime | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectOrientation | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectYaw | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectPitch | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectRoll | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectZ | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectPositionLoc | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetLocalSpecialEffectX | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetLocalSpecialEffectY | common.j | D3 | _pending (M2 backlog)_ |
-| BlzGetLocalSpecialEffectZ | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSpecialEffectClearSubAnimations | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSpecialEffectRemoveSubAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSpecialEffectAddSubAnimation | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzPlaySpecialEffect | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzPlaySpecialEffectWithTimeScale | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetSpecialEffectColorByPlayer | common.j | D5 | `litd/api.Effect.SetColor` (D3 collapse → BlzSetSpecialEffectColor) |
+| BlzSetSpecialEffectColor | common.j | D5 | `litd/api.Effect.SetColor` |
+| BlzSetSpecialEffectAlpha | common.j | D5 | `litd/api.Effect.SetColor` (D3 collapse → BlzSetSpecialEffectColor) |
+| BlzSetSpecialEffectScale | common.j | D5 | `litd/api.Effect.SetScale` |
+| BlzSetSpecialEffectPosition | common.j | D3 | `litd/api.Effect.SetPosition` |
+| BlzSetSpecialEffectHeight | common.j | D3 | `litd/api.Effect.SetPosition` (D3 collapse → BlzSetSpecialEffectPosition) |
+| BlzSetSpecialEffectTimeScale | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSetSpecialEffectTime | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSetSpecialEffectOrientation | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSetSpecialEffectYaw | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSetSpecialEffectPitch | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSetSpecialEffectRoll | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSetSpecialEffectX | common.j | D3 | `litd/api.Effect.SetPosition` (D3 collapse → BlzSetSpecialEffectPosition) |
+| BlzSetSpecialEffectY | common.j | D3 | `litd/api.Effect.SetPosition` (D3 collapse → BlzSetSpecialEffectPosition) |
+| BlzSetSpecialEffectZ | common.j | D3 | `litd/api.Effect.SetPosition` (D3 collapse → BlzSetSpecialEffectPosition) |
+| BlzSetSpecialEffectPositionLoc | common.j | D3 | `litd/api.Effect.SetPosition` (D3 collapse → BlzSetSpecialEffectPosition) |
+| BlzGetLocalSpecialEffectX | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| BlzGetLocalSpecialEffectY | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| BlzGetLocalSpecialEffectZ | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| BlzSpecialEffectClearSubAnimations | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSpecialEffectRemoveSubAnimation | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzSpecialEffectAddSubAnimation | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzPlaySpecialEffect | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
+| BlzPlaySpecialEffectWithTimeScale | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | BlzGetAnimName | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetUnitArmor | common.j | D1 | `litd/api.Unit.Armor` |
 | BlzSetUnitArmor | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1378,7 +1378,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzCameraSetupApplyForceDurationSmooth | common.j | D3 | **tombstoned** (deferred-v2): #248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic. |
 | BlzEnableTargetIndicator | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsTargetIndicatorEnabled | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzShowTerrain | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzShowTerrain | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | BlzShowSkyBox | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzStartRecording | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzEndRecording | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1452,11 +1452,11 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetLocalClientHeight | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzIsLocalClientActive | common.j | unclassified | _pending (M2 backlog)_ |
 | BlzGetMouseFocusUnit | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzChangeMinimapTerrainTex | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzChangeMinimapTerrainTex | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | BlzGetLocale | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetSpecialEffectScale | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetSpecialEffectMatrixScale | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzResetSpecialEffectMatrix | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetSpecialEffectScale | common.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| BlzSetSpecialEffectMatrixScale | common.j | D5 | `litd/api.Effect.SetScale` (D3 collapse → BlzSetSpecialEffectScale) |
+| BlzResetSpecialEffectMatrix | common.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | BlzGetUnitAbility | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | BlzGetUnitAbilityByIndex | common.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | BlzDisplayChatMessage | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1682,32 +1682,32 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterGameSavedEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | RegisterDestDeathInRegionEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TriggerRegisterDestDeathInRegionEvent | blizzard.j | D4 | _pending (M2 backlog)_ |
-| AddWeatherEffectSaveLast | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedWeatherEffect | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| RemoveWeatherEffectBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| TerrainDeformationCraterBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TerrainDeformationRippleBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TerrainDeformationWaveBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TerrainDeformationRandomBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TerrainDeformationStopBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedTerrainDeformation | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| AddLightningLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| DestroyLightningBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| MoveLightningLoc | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLightningColorABJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLightningColorRBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLightningColorGBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLightningColorBBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetLightningColorBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLastCreatedLightningBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| AddWeatherEffectSaveLast | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLastCreatedWeatherEffect | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
+| RemoveWeatherEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformationCraterBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformationRippleBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformationWaveBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformationRandomBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TerrainDeformationStopBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLastCreatedTerrainDeformation | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
+| AddLightningLoc | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| DestroyLightningBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| MoveLightningLoc | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLightningColorABJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| GetLightningColorRBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| GetLightningColorGBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| GetLightningColorBBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface. |
+| SetLightningColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLastCreatedLightningBJ | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
 | GetAbilityEffectBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: rawcode lookup / ability-effect string / spell-event-context accessors deferred to v2 (typed ids + event API). |
 | GetAbilitySoundBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| GetTerrainCliffLevelBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetTerrainTypeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetTerrainVarianceBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTerrainTypeBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| IsTerrainPathableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTerrainPathableBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| GetTerrainCliffLevelBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| GetTerrainTypeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| GetTerrainVarianceBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetTerrainTypeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| IsTerrainPathableBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetTerrainPathableBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetWaterBaseColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateFogModifierRectSimple | blizzard.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
 | CreateFogModifierRadiusLocSimple | blizzard.j | D3 | `litd/api.Game.NewFogModifier` (D3 collapse → CreateFogModifierRect) |
@@ -1719,19 +1719,19 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | FogMaskEnableOn | blizzard.j | D1 | `litd/api.Game.SetFogMaskEnabled` (D3 collapse → FogMaskEnable) |
 | FogMaskEnableOff | blizzard.j | D1 | `litd/api.Game.SetFogMaskEnabled` (D3 collapse → FogMaskEnable) |
 | UseTimeOfDayBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTerrainFogExBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| ResetTerrainFogBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| SetTerrainFogExBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
+| ResetTerrainFogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | SetDoodadAnimationBJ | blizzard.j | D1 | `litd/api.Doodad.SetAnimation` (D3 collapse → SetDoodadAnimation) |
 | SetDoodadAnimationRectBJ | blizzard.j | D1 | `litd/api.Doodad.SetAnimation` (D3 collapse → SetDoodadAnimation) |
 | AddUnitAnimationPropertiesBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| CreateImageBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| ShowImageBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetImagePositionBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetImageColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedImage | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| CreateUbersplatBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| ShowUbersplatBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| GetLastCreatedUbersplat | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| CreateImageBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| ShowImageBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImagePositionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetImageColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLastCreatedImage | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
+| CreateUbersplatBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| ShowUbersplatBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLastCreatedUbersplat | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
 | GetLastCreatedMinimapIcon | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CreateMinimapIconOnUnitBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
 | CreateMinimapIconAtLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -1785,8 +1785,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IsDawnDuskEnabled | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | SetAmbientDaySound | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | SetAmbientNightSound | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
-| AddSpecialEffectLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| AddSpecialEffectTargetUnitBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| AddSpecialEffectLocBJ | blizzard.j | D3 | `litd/api.Game.AddSpecialEffect` (D3 collapse → AddSpecialEffect) |
+| AddSpecialEffectTargetUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands. |
 | DestroyEffectBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | GetLastCreatedEffectBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | CreateCommandButtonEffectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
@@ -2043,7 +2043,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitTimeScalePercent | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitScalePercent | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitVertexColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| UnitAddIndicatorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| UnitAddIndicatorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | DestructableAddIndicatorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #229: draws a UI selection/ping indicator on a destructable; render/UI only |
 | ItemAddIndicatorBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #225: render/UI cosmetic (skin/tooltip/description/icon/name/indicator); no deterministic sim state. |
 | SetUnitFacingToFaceLocTimed | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2163,23 +2163,23 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MultiboardSetItemColorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MultiboardSetItemWidthBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | MultiboardSetItemIconBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TextTagSize2Height | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| TextTagSpeed2Velocity | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| SetTextTagColorBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTextTagVelocityBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetTextTagTextBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| SetTextTagPosBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetTextTagPosUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetTextTagSuspendedBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetTextTagPermanentBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetTextTagAgeBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetTextTagLifespanBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| SetTextTagFadepointBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| CreateTextTagLocBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| CreateTextTagUnitBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| DestroyTextTagBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| ShowTextTagForceBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| GetLastCreatedTextTag | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| TextTagSize2Height | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| TextTagSpeed2Velocity | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagColorBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagVelocityBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagTextBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagPosBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagPosUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagSuspendedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagPermanentBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagAgeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagLifespanBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| SetTextTagFadepointBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| CreateTextTagLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| CreateTextTagUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| DestroyTextTagBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| ShowTextTagForceBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
+| GetLastCreatedTextTag | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
 | PauseGameOn | blizzard.j | D2 | _pending (M2 backlog)_ |
 | PauseGameOff | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUserControlForceOn | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2192,7 +2192,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | PingMinimapLocForPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
 | PingMinimapForForceEx | blizzard.j | D4 | _pending (M2 backlog)_ |
 | PingMinimapLocForForceEx | blizzard.j | D2 | _pending (M2 backlog)_ |
-| EnableWorldFogBoundaryBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| EnableWorldFogBoundaryBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | EnableOcclusionBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | CancelCineSceneBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | TryInitCinematicBehaviorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2371,10 +2371,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ConvertedPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
 | GetRectWidthBJ | blizzard.j | D1 | `litd/api.Rect.Width` |
 | GetRectHeightBJ | blizzard.j | D1 | `litd/api.Rect.Height` |
-| BlightGoldMineForPlayerBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| BlightGoldMineForPlayer | blizzard.j | D2 | _pending (M2 backlog)_ |
+| BlightGoldMineForPlayerBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| BlightGoldMineForPlayer | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | GetLastHauntedGoldMine | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| IsPointBlightedBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| IsPointBlightedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetPlayerColorBJEnum | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetPlayerColorBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetPlayerUnitAvailableBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
@@ -2395,8 +2395,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetUnitRallyUnit | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SetUnitRallyDestructable | blizzard.j | D2 | _pending (M2 backlog)_ |
 | SaveDyingWidget | blizzard.j | D1 | **tombstoned** (superseded): typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse) |
-| SetBlightRectBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| SetBlightRadiusLocBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| SetBlightRectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
+| SetBlightRadiusLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | GetAbilityName | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
 | MeleeStartingVisibility | blizzard.j | D2 | _pending (M2 backlog)_ |
 | MeleeStartingResources | blizzard.j | D4 | _pending (M2 backlog)_ |

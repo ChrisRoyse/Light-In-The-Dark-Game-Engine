@@ -55,6 +55,146 @@
       }
     },
     {
+      "name": "AddLightningLoc",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "codeName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "where1",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "where2",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "lightning"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "AddSpecialEffectTargetUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "attachPointName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "modelName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "AddWeatherEffectSaveLast",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "effectID",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "weathereffect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "BlightGoldMineForPlayer",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "goldMine",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "BlightGoldMineForPlayerBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "goldMine",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
       "name": "BlzAddAbilityBooleanLevelArrayFieldBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1152,6 +1292,215 @@
       }
     },
     {
+      "name": "CreateImageBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "file",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "size",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "zOffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "imageType",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "image"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "CreateTextTagLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "zOffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "size",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "texttag"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "CreateTextTagUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "zOffset",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "size",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "texttag"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "CreateUbersplatBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "name",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "forcePaused",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "noBirthTime",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "ubersplat"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "CreateUpgradeCommandButtonEffectBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -1170,6 +1519,48 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state."
+      }
+    },
+    {
+      "name": "DestroyLightningBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "DestroyTextTagBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -1226,6 +1617,32 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "no-op stub; engine housekeeping with no LitD equivalent (tooling.md §2.5)"
+      }
+    },
+    {
+      "name": "EnableWorldFogBoundaryBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "f",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
       }
     },
     {
@@ -1826,6 +2243,21 @@
       }
     },
     {
+      "name": "GetLastCreatedImage",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "image"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+      }
+    },
+    {
       "name": "GetLastCreatedItem",
       "origin": "blizzard.j",
       "signature": {
@@ -1838,6 +2270,51 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "#225: Go return value from Game.CreateItem replaces the bj_lastCreatedItem side channel."
+      }
+    },
+    {
+      "name": "GetLastCreatedLightningBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "lightning"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+      }
+    },
+    {
+      "name": "GetLastCreatedTerrainDeformation",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+      }
+    },
+    {
+      "name": "GetLastCreatedTextTag",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "texttag"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
       }
     },
     {
@@ -1856,6 +2333,21 @@
       }
     },
     {
+      "name": "GetLastCreatedUbersplat",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "ubersplat"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+      }
+    },
+    {
       "name": "GetLastCreatedUnit",
       "origin": "blizzard.j",
       "signature": {
@@ -1868,6 +2360,21 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel"
+      }
+    },
+    {
+      "name": "GetLastCreatedWeatherEffect",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "weathereffect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
       }
     },
     {
@@ -1913,6 +2420,90 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs."
+      }
+    },
+    {
+      "name": "GetLightningColorABJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLightningColorBBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLightningColorGBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLightningColorRBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
       }
     },
     {
@@ -2331,6 +2922,69 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "typed hashtable/gamecache variant superseded by the generic Table[V]/Attachment[V]/Storage surface (#242, D3 type-matrix collapse)"
+      }
+    },
+    {
+      "name": "GetTerrainCliffLevelBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "GetTerrainTypeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "GetTerrainVarianceBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
       }
     },
     {
@@ -2860,6 +3514,53 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "IsPointBlightedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "IsTerrainPathableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "t",
+            "jassType": "pathingtype",
+            "tsType": "pathingtype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
       }
     },
     {
@@ -4519,6 +5220,37 @@
       }
     },
     {
+      "name": "MoveLightningLoc",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          },
+          {
+            "name": "where1",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "where2",
+            "jassType": "location",
+            "tsType": "location"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "NudgeItemsInRectEnum",
       "origin": "blizzard.j",
       "signature": {
@@ -5090,6 +5822,42 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: shop stock / pawn / sell economy deferred to the v2 shop+economy surface."
+      }
+    },
+    {
+      "name": "RemoveWeatherEffectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWeatherEffect",
+            "jassType": "weathereffect",
+            "tsType": "weathereffect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ResetTerrainFogBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
       }
     },
     {
@@ -7023,6 +7791,73 @@
       }
     },
     {
+      "name": "SetBlightRadiusLocBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "addBlight",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetBlightRectBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "addBlight",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
       "name": "SetCameraOrientControllerForPlayerBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -7227,6 +8062,78 @@
       }
     },
     {
+      "name": "SetImageColorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImagePositionBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "zOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "SetItemDropOnDeathBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -7411,6 +8318,47 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetLightningColorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          },
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "g",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -7750,6 +8698,424 @@
       }
     },
     {
+      "name": "SetTerrainFogExBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "style",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "zstart",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "zend",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "density",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
+      "name": "SetTerrainPathableBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "t",
+            "jassType": "pathingtype",
+            "tsType": "pathingtype"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetTerrainTypeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "terrainType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "area",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "shape",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetTextTagAgeBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "age",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagColorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagFadepointBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "fadepoint",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagLifespanBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "lifespan",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagPermanentBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagPosBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "loc",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "zOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagPosUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "zOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagSuspendedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagTextBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "size",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagVelocityBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "speed",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "angle",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "SetThematicMusicOffsetBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -7881,6 +9247,89 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#229: BJ wrapper of ShowDestructable; render visibility only"
+      }
+    },
+    {
+      "name": "ShowImageBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ShowTextTagForceBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "tt",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "whichForce",
+            "jassType": "force",
+            "tsType": "force"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ShowUbersplatBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -8090,6 +9539,263 @@
       }
     },
     {
+      "name": "TerrainDeformationCraterBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "depth",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformationRandomBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "minDelta",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxDelta",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "updateInterval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformationRippleBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "limitNeg",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "where",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "startRadius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "endRadius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "depth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "wavePeriod",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "waveWidth",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformationStopBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "deformation",
+            "jassType": "terraindeformation",
+            "tsType": "terraindeformation"
+          },
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformationWaveBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "source",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "target",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "depth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "trailDelay",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TextTagSize2Height",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "size",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TextTagSpeed2Velocity",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "speed",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "TriggerRegisterEnterRectSimple",
       "origin": "blizzard.j",
       "signature": {
@@ -8295,6 +10001,47 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing)."
+      }
+    },
+    {
+      "name": "UnitAddIndicatorBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "transparency",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -8598,6 +10345,47 @@
       }
     },
     {
+      "name": "AddIndicator",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "AddItemToAllStock",
       "origin": "common.j",
       "signature": {
@@ -8665,6 +10453,108 @@
       }
     },
     {
+      "name": "AddLightning",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "codeName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "checkVisibility",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "x1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y2",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "lightning"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "AddLightningEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "codeName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "checkVisibility",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "x1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z2",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "lightning"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "AddPlayerTechResearched",
       "origin": "common.j",
       "signature": {
@@ -8696,6 +10586,73 @@
       }
     },
     {
+      "name": "AddSpecialEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "modelName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.AddSpecialEffect",
+        "package": "litd/api",
+        "goSignature": "(model string, pos Vec2) Effect",
+        "collapsesWith": [
+          "AddSpecialEffectLoc",
+          "AddSpecialEffectLocBJ"
+        ]
+      }
+    },
+    {
+      "name": "AddSpecialEffectTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "modelName",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "targetWidget",
+            "jassType": "widget",
+            "tsType": "widget"
+          },
+          {
+            "name": "attachPointName",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "effect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
       "name": "AddUnitAnimationProperties",
       "origin": "common.j",
       "signature": {
@@ -8724,6 +10681,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "render-only animation-tag toggle; no sim effect (R-API-6). Deferred to a render/cinematic API (#364)"
+      }
+    },
+    {
+      "name": "AddWeatherEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "where",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "effectID",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "weathereffect"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -9137,6 +11120,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "BlzChangeMinimapTerrainTex",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "texFile",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
       }
     },
     {
@@ -10310,6 +12314,69 @@
       }
     },
     {
+      "name": "BlzGetLocalSpecialEffectX",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "BlzGetLocalSpecialEffectY",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "BlzGetLocalSpecialEffectZ",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
       "name": "BlzGetManipulatedItemWasAbsorbed",
       "origin": "common.j",
       "signature": {
@@ -10322,6 +12389,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables)."
+      }
+    },
+    {
+      "name": "BlzGetSpecialEffectScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
       }
     },
     {
@@ -10857,6 +12945,63 @@
       }
     },
     {
+      "name": "BlzPlaySpecialEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "whichAnim",
+            "jassType": "animtype",
+            "tsType": "animtype"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzPlaySpecialEffectWithTimeScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "whichAnim",
+            "jassType": "animtype",
+            "tsType": "animtype"
+          },
+          {
+            "name": "timeScale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
       "name": "BlzRemoveAbilityBooleanLevelArrayField",
       "origin": "common.j",
       "signature": {
@@ -10998,6 +13143,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: per-level and level-array ability field granularity deferred to v2; v1 exposes the scalar field via Ability.Field/SetField."
+      }
+    },
+    {
+      "name": "BlzResetSpecialEffectMatrix",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
       }
     },
     {
@@ -12041,6 +14207,287 @@
       }
     },
     {
+      "name": "BlzSetSpecialEffectColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "r",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "g",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Effect.SetColor",
+        "package": "litd/api",
+        "goSignature": "(r, g, b uint8)",
+        "collapsesWith": [
+          "BlzSetSpecialEffectColorByPlayer",
+          "BlzSetSpecialEffectAlpha"
+        ]
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectOrientation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "yaw",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "pitch",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "roll",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectPitch",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "pitch",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectPosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Effect.SetPosition",
+        "package": "litd/api",
+        "goSignature": "(pos Vec2)",
+        "collapsesWith": [
+          "BlzSetSpecialEffectPositionLoc",
+          "BlzSetSpecialEffectX",
+          "BlzSetSpecialEffectY",
+          "BlzSetSpecialEffectZ",
+          "BlzSetSpecialEffectHeight"
+        ]
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectRoll",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "roll",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "scale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Effect.SetScale",
+        "package": "litd/api",
+        "goSignature": "(scale float64)",
+        "collapsesWith": [
+          "BlzSetSpecialEffectMatrixScale"
+        ]
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectTime",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "time",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectTimeScale",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "timeScale",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSetSpecialEffectYaw",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "yaw",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
       "name": "BlzSetUnitAbilityCooldown",
       "origin": "common.j",
       "signature": {
@@ -12191,6 +14638,100 @@
         "symbol": "Unit.SetName",
         "package": "litd/api",
         "goSignature": "(name string)"
+      }
+    },
+    {
+      "name": "BlzShowTerrain",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "show",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
+      "name": "BlzSpecialEffectAddSubAnimation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "whichSubAnim",
+            "jassType": "subanimtype",
+            "tsType": "subanimtype"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSpecialEffectClearSubAnimations",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+      }
+    },
+    {
+      "name": "BlzSpecialEffectRemoveSubAnimation",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "effect",
+            "tsType": "effect"
+          },
+          {
+            "name": "whichSubAnim",
+            "jassType": "subanimtype",
+            "tsType": "subanimtype"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
       }
     },
     {
@@ -14664,6 +17205,42 @@
       }
     },
     {
+      "name": "CreateBlightedGoldmine",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "id",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "face",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
       "name": "CreateCameraSetup",
       "origin": "common.j",
       "signature": {
@@ -14927,6 +17504,77 @@
       }
     },
     {
+      "name": "CreateImage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "file",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "sizeX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "sizeY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "sizeZ",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "posX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "posY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "posZ",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "originX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "originY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "originZ",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "imageType",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "image"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "CreateItem",
       "origin": "common.j",
       "signature": {
@@ -15080,6 +17728,21 @@
       }
     },
     {
+      "name": "CreateTextTag",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "texttag"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "CreateTrigger",
       "origin": "common.j",
       "signature": {
@@ -15092,6 +17755,67 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "trigger creation superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "CreateUbersplat",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "name",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "forcePaused",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "noBirthTime",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "ubersplat"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -15396,6 +18120,27 @@
       }
     },
     {
+      "name": "DestroyImage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "DestroyItemPool",
       "origin": "common.j",
       "signature": {
@@ -15414,6 +18159,48 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      }
+    },
+    {
+      "name": "DestroyLightning",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "DestroyTextTag",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -15460,6 +18247,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "trigger free (GC) superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "DestroyUbersplat",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -15570,6 +18378,53 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#256: cinematic input lock (disables player input during cutscenes); a UI/cinematic-mode control, not deterministic sim state — gameplay-irrelevant (cinematic surface)"
+      }
+    },
+    {
+      "name": "EnableWeatherEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "weathereffect",
+            "tsType": "weathereffect"
+          },
+          {
+            "name": "enable",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "EnableWorldFogBoundary",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "b",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
       }
     },
     {
@@ -15696,6 +18551,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "wraps a code func into a filterfunc; a Go func(Event) bool IS the filter — WithFilter(fn) (triggers-and-events.md, R-API-4)"
+      }
+    },
+    {
+      "name": "FinishUbersplat",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -17380,6 +20256,90 @@
       }
     },
     {
+      "name": "GetLightningColorA",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLightningColorB",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLightningColorG",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLightningColorR",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          }
+        ],
+        "returns": "real"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
       "name": "GetLoadedUnit",
       "origin": "common.j",
       "signature": {
@@ -18776,6 +21736,84 @@
         "symbol": "Game.Teams",
         "package": "litd/api",
         "goSignature": "() int"
+      }
+    },
+    {
+      "name": "GetTerrainCliffLevel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "GetTerrainType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "GetTerrainVariance",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
       }
     },
     {
@@ -21063,6 +24101,32 @@
       }
     },
     {
+      "name": "IsPointBlighted",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
       "name": "IsPointInRegion",
       "origin": "common.j",
       "signature": {
@@ -21117,6 +24181,37 @@
         "symbol": "Unit.ExperienceSuspended",
         "package": "litd/api",
         "goSignature": "() bool"
+      }
+    },
+    {
+      "name": "IsTerrainPathable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "pathingtype",
+            "tsType": "pathingtype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
       }
     },
     {
@@ -23017,6 +26112,108 @@
       }
     },
     {
+      "name": "MoveLightning",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          },
+          {
+            "name": "checkVisibility",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "x1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y2",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "MoveLightningEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          },
+          {
+            "name": "checkVisibility",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "x1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z1",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "x2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y2",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z2",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "MoveLocation",
       "origin": "common.j",
       "signature": {
@@ -24275,6 +27472,27 @@
       }
     },
     {
+      "name": "RemoveWeatherEffect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichEffect",
+            "jassType": "weathereffect",
+            "tsType": "weathereffect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "RenameSaveDirectory",
       "origin": "common.j",
       "signature": {
@@ -24298,6 +27516,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#256: save-directory management; whole-game mid-match save/load is deferred (#204), and directory-level file management rides that pipeline — deferred"
+      }
+    },
+    {
+      "name": "ResetTerrainFog",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
       }
     },
     {
@@ -24340,6 +27573,27 @@
       "tombstone": {
         "reason": "superseded",
         "detail": "trigger reset superseded by OnEvent(kind, closure) + Subscription.Cancel (no trigger/condition/action handles in the Go model, R-API-4)"
+      }
+    },
+    {
+      "name": "ResetUbersplat",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -26247,6 +29501,150 @@
       }
     },
     {
+      "name": "SetBlight",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "addBlight",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetBlightLoc",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichLocation",
+            "jassType": "location",
+            "tsType": "location"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "addBlight",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetBlightPoint",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "addBlight",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetBlightRect",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          },
+          {
+            "name": "addBlight",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
       "name": "SetCameraBounds",
       "origin": "common.j",
       "signature": {
@@ -26493,6 +29891,32 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+      }
+    },
+    {
+      "name": "SetDayNightModels",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "terrainDNCFile",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "unitDNCFile",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
       }
     },
     {
@@ -27007,6 +30431,223 @@
       }
     },
     {
+      "name": "SetImageAboveWater",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "useWaterAlpha",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImageColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImageConstantHeight",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          },
+          {
+            "name": "height",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImagePosition",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "z",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImageRender",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImageRenderAlways",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetImageType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "imageType",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "SetIntegerGameState",
       "origin": "common.j",
       "signature": {
@@ -27327,6 +30968,47 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2."
+      }
+    },
+    {
+      "name": "SetLightningColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichBolt",
+            "jassType": "lightning",
+            "tsType": "lightning"
+          },
+          {
+            "name": "r",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "g",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -28145,6 +31827,27 @@
       }
     },
     {
+      "name": "SetSkyModel",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "skyModelFile",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
       "name": "SetSoundChannel",
       "origin": "common.j",
       "signature": {
@@ -28573,6 +32276,506 @@
       }
     },
     {
+      "name": "SetTerrainFog",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "a",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "b",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "c",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "d",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "e",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
+      "name": "SetTerrainFogEx",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "style",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "zstart",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "zend",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "density",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "red",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+      }
+    },
+    {
+      "name": "SetTerrainPathable",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "t",
+            "jassType": "pathingtype",
+            "tsType": "pathingtype"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetTerrainType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "terrainType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "variation",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "area",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "shape",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "SetTextTagAge",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "age",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagFadepoint",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "fadepoint",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagLifespan",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "lifespan",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagPermanent",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagPos",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "heightOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagPosUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "heightOffset",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagSuspended",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagText",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "s",
+            "jassType": "string",
+            "tsType": "string"
+          },
+          {
+            "name": "height",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagVelocity",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "xvel",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "yvel",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetTextTagVisibility",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "t",
+            "jassType": "texttag",
+            "tsType": "texttag"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "SetThematicMusicPlayPosition",
       "origin": "common.j",
       "signature": {
@@ -28616,6 +32819,58 @@
         "collapsesWith": [
           "SetTimeOfDayScalePercentBJ"
         ]
+      }
+    },
+    {
+      "name": "SetUbersplatRender",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "SetUbersplatRenderAlways",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -29236,6 +33491,58 @@
       }
     },
     {
+      "name": "ShowImage",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichImage",
+            "jassType": "image",
+            "tsType": "image"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "ShowUbersplat",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichSplat",
+            "jassType": "ubersplat",
+            "tsType": "ubersplat"
+          },
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
       "name": "ShowUnit",
       "origin": "common.j",
       "signature": {
@@ -29810,6 +34117,276 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "whole-game save / unit snapshot / cross-client sync — deferred (sim SaveState covers world save #206; lockstep sync is M7 #316)"
+      }
+    },
+    {
+      "name": "TerrainDeformCrater",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "depth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "permanent",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformRandom",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "minDelta",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxDelta",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "updateInterval",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformRipple",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "depth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "duration",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "count",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "spaceWaves",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "timeWaves",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radiusStartPct",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "limitNeg",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformStop",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "deformation",
+            "jassType": "terraindeformation",
+            "tsType": "terraindeformation"
+          },
+          {
+            "name": "duration",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformStopAll",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+      }
+    },
+    {
+      "name": "TerrainDeformWave",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "x",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "y",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "dirX",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "dirY",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "distance",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "speed",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "radius",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "depth",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "trailTime",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "count",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "terraindeformation"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {
@@ -30983,6 +35560,47 @@
         "collapsesWith": [
           "UnitAddAbilityBJ"
         ]
+      }
+    },
+    {
+      "name": "UnitAddIndicator",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
       }
     },
     {

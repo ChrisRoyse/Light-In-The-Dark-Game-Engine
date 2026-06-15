@@ -7972,3 +7972,925 @@ name = "SetCinematicCameraForPlayer"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#248: the CameraSetup preset-object system (authored presets applied/blended at runtime) deferred to v2; v1 drives the camera imperatively via Camera.Pan/SetField/BeginCinematic."
+
+# === #253 effects-and-graphics surface (effects-and-graphics.md). Special-effect
+# family maps onto the existing sim-backed Effect surface; render-only graphics and
+# runtime terrain/blight mutation are deferred-v2 (no v1 render/sim backend).
+
+[[override]]
+name = "AddSpecialEffect"
+class = "D3"
+goMapping = "Game.AddSpecialEffect"
+goSignature = "(model string, pos Vec2) Effect"
+collapsesWith = ["AddSpecialEffectLoc", "AddSpecialEffectLocBJ"]
+package = "litd/api"
+reason = "#253: the point/Loc/BJ special-effect constructors collapse onto Game.AddSpecialEffect(model, Vec2) (already implemented + tested over the sim EffectStore)."
+
+[[override]]
+name = "BlzSetSpecialEffectColor"
+class = "D5"
+goMapping = "Effect.SetColor"
+goSignature = "(r, g, b uint8)"
+collapsesWith = ["BlzSetSpecialEffectColorByPlayer", "BlzSetSpecialEffectAlpha"]
+package = "litd/api"
+reason = "#253: the Blz color/alpha/team-color setters collapse onto Effect.SetColor (the store carries one RGBA field)."
+
+[[override]]
+name = "BlzSetSpecialEffectPosition"
+class = "D3"
+goMapping = "Effect.SetPosition"
+goSignature = "(pos Vec2)"
+collapsesWith = ["BlzSetSpecialEffectPositionLoc", "BlzSetSpecialEffectX", "BlzSetSpecialEffectY", "BlzSetSpecialEffectZ", "BlzSetSpecialEffectHeight"]
+package = "litd/api"
+reason = "#253: the Blz X/Y/Z/Loc/Height position setters collapse onto Effect.SetPosition(Vec2) (the store position lives in Transforms; Z/height is render-only and folds)."
+
+[[override]]
+name = "BlzSetSpecialEffectScale"
+class = "D5"
+goMapping = "Effect.SetScale"
+goSignature = "(scale float64)"
+collapsesWith = ["BlzSetSpecialEffectMatrixScale"]
+package = "litd/api"
+reason = "#253: the Blz scale setters collapse onto the typed Effect.SetScale (the store carries one Scale field)."
+
+[[override]]
+name = "AddIndicator"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "AddLightning"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "AddLightningEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "AddLightningLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "AddSpecialEffectTarget"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "AddSpecialEffectTargetUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "AddWeatherEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "AddWeatherEffectSaveLast"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "BlightGoldMineForPlayer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "BlightGoldMineForPlayerBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "BlzChangeMinimapTerrainTex"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "BlzGetLocalSpecialEffectX"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "BlzGetLocalSpecialEffectY"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "BlzGetLocalSpecialEffectZ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "BlzGetSpecialEffectScale"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "BlzPlaySpecialEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzPlaySpecialEffectWithTimeScale"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzResetSpecialEffectMatrix"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSetSpecialEffectOrientation"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSetSpecialEffectPitch"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSetSpecialEffectRoll"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSetSpecialEffectTime"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSetSpecialEffectTimeScale"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSetSpecialEffectYaw"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzShowTerrain"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "BlzSpecialEffectAddSubAnimation"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSpecialEffectClearSubAnimations"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "BlzSpecialEffectRemoveSubAnimation"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: special-effect orientation/animation/time-scale/sub-animation control and widget-attachment have no field in the v1 sim EffectStore (ModelID/Pos/Scale/Color only); deferred until the render animation/attachment pipeline lands."
+
+[[override]]
+name = "CreateBlightedGoldmine"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "CreateImage"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "CreateImageBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "CreateTextTag"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "CreateTextTagLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "CreateTextTagUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "CreateUbersplat"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "CreateUbersplatBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "DestroyImage"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "DestroyLightning"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "DestroyLightningBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "DestroyTextTag"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "DestroyTextTagBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "DestroyUbersplat"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "EnableWeatherEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "EnableWorldFogBoundary"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "EnableWorldFogBoundaryBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "FinishUbersplat"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "GetLastCreatedImage"
+class = "D3"
+tombstone = "superseded"
+reason = "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+
+[[override]]
+name = "GetLastCreatedLightningBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+
+[[override]]
+name = "GetLastCreatedTerrainDeformation"
+class = "D3"
+tombstone = "superseded"
+reason = "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+
+[[override]]
+name = "GetLastCreatedTextTag"
+class = "D3"
+tombstone = "superseded"
+reason = "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+
+[[override]]
+name = "GetLastCreatedUbersplat"
+class = "D3"
+tombstone = "superseded"
+reason = "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+
+[[override]]
+name = "GetLastCreatedWeatherEffect"
+class = "D3"
+tombstone = "superseded"
+reason = "#253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1)."
+
+[[override]]
+name = "GetLightningColorA"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorABJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorB"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorBBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorG"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorGBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorR"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetLightningColorRBJ"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+
+[[override]]
+name = "GetTerrainCliffLevel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "GetTerrainCliffLevelBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "GetTerrainType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "GetTerrainTypeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "GetTerrainVariance"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "GetTerrainVarianceBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "IsPointBlighted"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "IsPointBlightedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "IsTerrainPathable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "IsTerrainPathableBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "MoveLightning"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "MoveLightningEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "MoveLightningLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "RemoveWeatherEffect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "RemoveWeatherEffectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "ResetTerrainFog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "ResetTerrainFogBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "ResetUbersplat"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetBlight"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetBlightLoc"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetBlightPoint"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetBlightRadiusLocBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetBlightRect"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetBlightRectBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetDayNightModels"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "SetImageAboveWater"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImageColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImageColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImageConstantHeight"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImagePosition"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImagePositionBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImageRender"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImageRenderAlways"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetImageType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetLightningColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetLightningColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetSkyModel"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "SetTerrainFog"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "SetTerrainFogEx"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "SetTerrainFogExBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6)."
+
+[[override]]
+name = "SetTerrainPathable"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetTerrainPathableBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetTerrainType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetTerrainTypeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+
+[[override]]
+name = "SetTextTagAge"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagAgeBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagColorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagFadepoint"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagFadepointBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagLifespan"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagLifespanBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagPermanent"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagPermanentBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagPos"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagPosBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagPosUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagPosUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagSuspended"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagSuspendedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagText"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagTextBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagVelocity"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagVelocityBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetTextTagVisibility"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetUbersplatRender"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "SetUbersplatRenderAlways"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "ShowImage"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "ShowImageBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "ShowTextTagForceBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "ShowUbersplat"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "ShowUbersplatBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformCrater"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformRandom"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformRipple"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformStop"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformStopAll"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformWave"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformationCraterBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformationRandomBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformationRippleBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformationStopBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TerrainDeformationWaveBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TextTagSize2Height"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "TextTagSpeed2Velocity"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "UnitAddIndicator"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
+
+[[override]]
+name = "UnitAddIndicatorBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item)."
