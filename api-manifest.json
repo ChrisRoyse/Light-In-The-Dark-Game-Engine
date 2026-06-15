@@ -2091,6 +2091,27 @@
       }
     },
     {
+      "name": "ConditionalTriggerExecute",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
       "name": "ContinueCinematicFadeAfterBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3613,6 +3634,27 @@
       }
     },
     {
+      "name": "DisplayCineFilterBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
       "name": "DoNothing",
       "origin": "blizzard.j",
       "signature": {
@@ -4435,6 +4477,21 @@
       }
     },
     {
+      "name": "GetIssuedOrderIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+      }
+    },
+    {
       "name": "GetItemLifeBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -4902,6 +4959,21 @@
       }
     },
     {
+      "name": "GetLearnedSkillBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+      }
+    },
+    {
       "name": "GetLightningColorABJ",
       "origin": "blizzard.j",
       "signature": {
@@ -4983,6 +5055,21 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#253: render-side read-back of a presentation handle's local position/scale/color; no sim state, no deterministic surface."
+      }
+    },
+    {
+      "name": "GetLoadedUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -5535,6 +5622,21 @@
         "collapsesWith": [
           "GetFloatGameState"
         ]
+      }
+    },
+    {
+      "name": "GetTransportUnitBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -6111,6 +6213,21 @@
       }
     },
     {
+      "name": "InitQueuedTriggers",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
       "name": "IsCustomCampaignButtonVisibile",
       "origin": "blizzard.j",
       "signature": {
@@ -6274,6 +6391,42 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands."
+      }
+    },
+    {
+      "name": "IsTriggerQueueEmptyBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "IsTriggerQueuedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
       }
     },
     {
@@ -9896,6 +10049,32 @@
       }
     },
     {
+      "name": "PostTriggerExecuteBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "checkConditions",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
       "name": "QuestItemSetCompletedBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -10158,6 +10337,185 @@
       "tombstone": {
         "reason": "gameplay-irrelevant",
         "detail": "#217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect."
+      }
+    },
+    {
+      "name": "QueuedTriggerAddBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "checkConditions",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerAttemptExec",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerCheck",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerClearBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerClearInactiveBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerCountBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerDoneBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerGetIndex",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerRemoveBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "QueuedTriggerRemoveByIndex",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trigIndex",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
       }
     },
     {
@@ -15891,6 +16249,172 @@
       }
     },
     {
+      "name": "TriggerActionUnitRescuedBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+      }
+    },
+    {
+      "name": "TriggerExecuteBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "checkConditions",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+      }
+    },
+    {
+      "name": "TriggerRegisterAnyUnitEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichEvent",
+            "jassType": "playerunitevent",
+            "tsType": "playerunitevent"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterBuildCommandEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterBuildSubmenuEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterCommonCommandEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "order",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterDestDeathInRegionEvent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "r",
+            "jassType": "rect",
+            "tsType": "rect"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
       "name": "TriggerRegisterDialogEventBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -15914,6 +16438,42 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "TriggerRegisterDistanceBetweenUnits",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "condition",
+            "jassType": "boolexpr",
+            "tsType": "boolexpr | (() =\u003e boolean) | null"
+          },
+          {
+            "name": "range",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
       }
     },
     {
@@ -15969,6 +16529,79 @@
       }
     },
     {
+      "name": "TriggerRegisterGameLoadedEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterGameSavedEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterGameStateEventTimeOfDay",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
       "name": "TriggerRegisterLeaveRectSimple",
       "origin": "blizzard.j",
       "signature": {
@@ -16021,6 +16654,58 @@
       }
     },
     {
+      "name": "TriggerRegisterPlayerEventAllianceChanged",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerEventDefeat",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
       "name": "TriggerRegisterPlayerEventEndCinematic",
       "origin": "blizzard.j",
       "signature": {
@@ -16044,6 +16729,208 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerEventLeave",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerEventVictory",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerKeyEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "keType",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "keKey",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerMouseEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "meType",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerSelectionEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "selected",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterPlayerUnitEventSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichPlayer",
+            "jassType": "player",
+            "tsType": "player"
+          },
+          {
+            "name": "whichEvent",
+            "jassType": "playerunitevent",
+            "tsType": "playerunitevent"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterShowSkillEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
       }
     },
     {
@@ -16125,6 +17012,135 @@
       }
     },
     {
+      "name": "TriggerRegisterTrainCommandEventBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+      }
+    },
+    {
+      "name": "TriggerRegisterUnitInRangeSimple",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "range",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterUnitLifeEvent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
+      "name": "TriggerRegisterUnitManaEvent",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "trig",
+            "jassType": "trigger",
+            "tsType": "trigger"
+          },
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "opcode",
+            "jassType": "limitop",
+            "tsType": "limitop"
+          },
+          {
+            "name": "limitval",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "event"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "superseded",
+        "detail": "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+      }
+    },
+    {
       "name": "TriggerRegisterUpgradeCommandEventBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -16163,6 +17179,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+      }
+    },
+    {
+      "name": "TryInitRescuableTriggersBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -20091,6 +21122,81 @@
       }
     },
     {
+      "name": "BlzGetEventAttackType",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "attacktype"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+      }
+    },
+    {
+      "name": "BlzGetEventDamageTarget",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+      }
+    },
+    {
+      "name": "BlzGetEventDamageType",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "damagetype"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+      }
+    },
+    {
+      "name": "BlzGetEventIsAttack",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+      }
+    },
+    {
+      "name": "BlzGetEventWeaponType",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "weapontype"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+      }
+    },
+    {
       "name": "BlzGetFrameByName",
       "origin": "common.j",
       "signature": {
@@ -22463,6 +23569,27 @@
       }
     },
     {
+      "name": "BlzSetEventAttackType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "attackType",
+            "jassType": "attacktype",
+            "tsType": "attacktype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+      }
+    },
+    {
       "name": "BlzSetEventDamage",
       "origin": "common.j",
       "signature": {
@@ -22503,6 +23630,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "damage-type override needs a damage-type field in the OnDamage payload; deferred (#219)"
+      }
+    },
+    {
+      "name": "BlzSetEventWeaponType",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "weaponType",
+            "jassType": "weapontype",
+            "tsType": "weapontype"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
       }
     },
     {
@@ -28205,6 +29353,27 @@
       }
     },
     {
+      "name": "DisplayCineFilter",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "flag",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
       "name": "DisplayLoadDialog",
       "origin": "common.j",
       "signature": {
@@ -29275,6 +30444,21 @@
       }
     },
     {
+      "name": "GetAllyColorFilterState",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "integer"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
+      }
+    },
+    {
       "name": "GetBJMaxPlayerSlots",
       "origin": "common.j",
       "signature": {
@@ -29562,6 +30746,21 @@
       }
     },
     {
+      "name": "GetCancelledStructure",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+      }
+    },
+    {
       "name": "GetChangingUnitPrevOwner",
       "origin": "common.j",
       "signature": {
@@ -29604,6 +30803,21 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
+      }
+    },
+    {
+      "name": "GetCreepCampFilterState",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
       }
     },
     {
@@ -30761,6 +31975,21 @@
       }
     },
     {
+      "name": "GetManipulatingUnit",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+      }
+    },
+    {
       "name": "GetObjectName",
       "origin": "common.j",
       "signature": {
@@ -31628,6 +32857,21 @@
         "collapsesWith": [
           "GetRectMinY"
         ]
+      }
+    },
+    {
+      "name": "GetRescuer",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "unit"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
       }
     },
     {
@@ -34050,6 +35294,21 @@
         "symbol": "NewTable",
         "package": "litd/api",
         "goSignature": "[V any]() *Table[V]"
+      }
+    },
+    {
+      "name": "IsCineFilterDisplayed",
+      "origin": "common.j",
+      "signature": {
+        "params": [],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
       }
     },
     {
@@ -42391,6 +43650,27 @@
       }
     },
     {
+      "name": "SetAllyColorFilterState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
+      }
+    },
+    {
       "name": "SetAltMinimapIcon",
       "origin": "common.j",
       "signature": {
@@ -42763,6 +44043,234 @@
       }
     },
     {
+      "name": "SetCineFilterBlendMode",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichMode",
+            "jassType": "blendmode",
+            "tsType": "blendmode"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterDuration",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "duration",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterEndColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterEndUV",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "minu",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "minv",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxu",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxv",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterStartColor",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "red",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "green",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "blue",
+            "jassType": "integer",
+            "tsType": "number"
+          },
+          {
+            "name": "alpha",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterStartUV",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "minu",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "minv",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxu",
+            "jassType": "real",
+            "tsType": "number"
+          },
+          {
+            "name": "maxv",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterTexMapFlags",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichFlags",
+            "jassType": "texmapflags",
+            "tsType": "texmapflags"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
+      "name": "SetCineFilterTexture",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "filename",
+            "jassType": "string",
+            "tsType": "string"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "deferred-v2",
+        "detail": "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+      }
+    },
+    {
       "name": "SetCinematicAudio",
       "origin": "common.j",
       "signature": {
@@ -42848,6 +44356,27 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248)."
+      }
+    },
+    {
+      "name": "SetCreepCampFilterState",
+      "origin": "common.j",
+      "signature": {
+        "params": [
+          {
+            "name": "state",
+            "jassType": "boolean",
+            "tsType": "boolean"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "tombstoned",
+      "tombstone": {
+        "reason": "gameplay-irrelevant",
+        "detail": "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
       }
     },
     {

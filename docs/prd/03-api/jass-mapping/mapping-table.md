@@ -327,12 +327,12 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetRevivableUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetRevivingUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetAttacker | common.j | D2 | `litd/api.Event.Source` (D3 collapse → GetEventDamageSource) |
-| GetRescuer | common.j | unclassified | _pending (M2 backlog)_ |
+| GetRescuer | common.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | GetDyingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetKillingUnit | common.j | D2 | `litd/api.Event.KillingUnit` |
 | GetDecayingUnit | common.j | unclassified | _pending (M2 backlog)_ |
 | GetConstructingStructure | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
-| GetCancelledStructure | common.j | unclassified | _pending (M2 backlog)_ |
+| GetCancelledStructure | common.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | GetConstructedStructure | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetResearchingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetResearched | common.j | D2 | **tombstoned** (deferred-v2): researched upgrade id needs an Event payload field not yet carried for that kind; deferred (#219) |
@@ -349,7 +349,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetSoldItem | common.j | D2 | **tombstoned** (deferred-v2): GetSoldItem returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
 | GetChangingUnit | common.j | D2 | `litd/api.Event.Unit` (D3 collapse → GetTriggerUnit) |
 | GetChangingUnitPrevOwner | common.j | D2 | **tombstoned** (deferred-v2): GetChangingUnitPrevOwner returns a second participant the current Event payload does not carry; deferred until the payload grows a secondary-entity slot for those kinds (#219) |
-| GetManipulatingUnit | common.j | unclassified | _pending (M2 backlog)_ |
+| GetManipulatingUnit | common.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | GetManipulatedItem | common.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | BlzGetAbsorbingItem | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
 | BlzGetManipulatedItemWasAbsorbed | common.j | D2 | **tombstoned** (deferred-v2): #225: runtime item field-mutation / item-granted abilities / stacking deferred to v2 (depends on the abilities surface #234 and the typed item data tables). |
@@ -963,10 +963,10 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetTextTagLifespan | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | SetTextTagFadepoint | common.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | SetReservedLocalHeroButtons | common.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| GetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
-| SetAllyColorFilterState | common.j | unclassified | _pending (M2 backlog)_ |
-| GetCreepCampFilterState | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCreepCampFilterState | common.j | unclassified | _pending (M2 backlog)_ |
+| GetAllyColorFilterState | common.j | D3 | **tombstoned** (gameplay-irrelevant): #triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state. |
+| SetAllyColorFilterState | common.j | D3 | **tombstoned** (gameplay-irrelevant): #triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state. |
+| GetCreepCampFilterState | common.j | D3 | **tombstoned** (gameplay-irrelevant): #triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state. |
+| SetCreepCampFilterState | common.j | D3 | **tombstoned** (gameplay-irrelevant): #triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state. |
 | EnableMinimapFilterButtons | common.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | EnableDragSelect | common.j | unclassified | _pending (M2 backlog)_ |
 | EnablePreSelect | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1094,16 +1094,16 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CameraSetSmoothingFactor | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
 | CameraSetFocalDistance | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
 | CameraSetDepthOfFieldScale | common.j | D3 | **tombstoned** (gameplay-irrelevant): #248: render camera dynamics (smoothing, depth-of-field, focal distance, orient/rotate controllers, reset-to-game) — presentation polish with no sim state. |
-| SetCineFilterTexture | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterBlendMode | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterTexMapFlags | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterStartUV | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterEndUV | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterStartColor | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterEndColor | common.j | unclassified | _pending (M2 backlog)_ |
-| SetCineFilterDuration | common.j | unclassified | _pending (M2 backlog)_ |
-| DisplayCineFilter | common.j | unclassified | _pending (M2 backlog)_ |
-| IsCineFilterDisplayed | common.j | unclassified | _pending (M2 backlog)_ |
+| SetCineFilterTexture | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterBlendMode | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterTexMapFlags | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterStartUV | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterEndUV | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterStartColor | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterEndColor | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| SetCineFilterDuration | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| DisplayCineFilter | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
+| IsCineFilterDisplayed | common.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
 | SetCinematicScene | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | EndCinematicScene | common.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | ForceCinematicSubtitles | common.j | D1 | **tombstoned** (gameplay-irrelevant): cinematic subtitle presentation toggle; no sim effect |
@@ -1359,14 +1359,14 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | BlzGetLocalUnitZ | common.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
 | BlzDecPlayerTechResearched | common.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | BlzSetEventDamage | common.j | D1 | `litd/api.DamageEvent.SetAmount` |
-| BlzGetEventDamageTarget | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetEventAttackType | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetEventDamageType | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetEventWeaponType | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzSetEventAttackType | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzGetEventDamageTarget | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
+| BlzGetEventAttackType | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
+| BlzGetEventDamageType | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
+| BlzGetEventWeaponType | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
+| BlzSetEventAttackType | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
 | BlzSetEventDamageType | common.j | D1 | **tombstoned** (deferred-v2): damage-type override needs a damage-type field in the OnDamage payload; deferred (#219) |
-| BlzSetEventWeaponType | common.j | unclassified | _pending (M2 backlog)_ |
-| BlzGetEventIsAttack | common.j | unclassified | _pending (M2 backlog)_ |
+| BlzSetEventWeaponType | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
+| BlzGetEventIsAttack | common.j | D3 | **tombstoned** (deferred-v2): #triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens. |
 | RequestExtraIntegerData | common.j | unclassified | _pending (M2 backlog)_ |
 | RequestExtraBooleanData | common.j | unclassified | _pending (M2 backlog)_ |
 | RequestExtraStringData | common.j | unclassified | _pending (M2 backlog)_ |
@@ -1571,21 +1571,21 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | RectContainsLoc | blizzard.j | D2 | `litd/api.Rect.Contains` (D3 collapse → RectContainsCoords) |
 | RectContainsUnit | blizzard.j | D1 | **tombstoned** (superseded): superseded by composing Rect.Contains(u.Position()) — no dedicated overload (R-API-2) |
 | RectContainsItem | blizzard.j | D1 | **tombstoned** (superseded): superseded by composing Rect.Contains(i.Position()) — no dedicated overload (R-API-2) |
-| ConditionalTriggerExecute | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerExecuteBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| PostTriggerExecuteBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerCheck | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerGetIndex | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerRemoveByIndex | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerAttemptExec | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerAddBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerRemoveBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerDoneBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerClearBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| QueuedTriggerClearInactiveBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| QueuedTriggerCountBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| IsTriggerQueueEmptyBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| IsTriggerQueuedBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
+| ConditionalTriggerExecute | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| TriggerExecuteBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| PostTriggerExecuteBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerCheck | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerGetIndex | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerRemoveByIndex | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerAttemptExec | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerAddBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerRemoveBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerDoneBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerClearBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerClearInactiveBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| QueuedTriggerCountBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| IsTriggerQueueEmptyBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
+| IsTriggerQueuedBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
 | GetForLoopIndexA | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | SetForLoopIndexA | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | GetForLoopIndexB | blizzard.j | unclassified | _pending (M2 backlog)_ |
@@ -1652,36 +1652,36 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | TriggerRegisterTimerEventPeriodic | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.Every), not the OnEvent route (timers.md) |
 | TriggerRegisterTimerEventSingle | blizzard.j | D2 | **tombstoned** (superseded): timer-as-event-bus convenience superseded; timer callbacks are the canonical path (Game.After), not the OnEvent route (timers.md) |
 | TriggerRegisterTimerExpireEventBJ | blizzard.j | D2 | **tombstoned** (superseded): timer-expire event registration superseded; the periodic/one-shot callback is the canonical path, not the OnEvent route (timers.md) |
-| TriggerRegisterPlayerUnitEventSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterAnyUnitEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerSelectionEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerKeyEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerMouseEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerEventVictory | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerEventDefeat | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerEventLeave | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterPlayerEventAllianceChanged | blizzard.j | D2 | _pending (M2 backlog)_ |
+| TriggerRegisterPlayerUnitEventSimple | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterAnyUnitEventBJ | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterPlayerSelectionEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterPlayerKeyEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterPlayerMouseEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterPlayerEventVictory | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterPlayerEventDefeat | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterPlayerEventLeave | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterPlayerEventAllianceChanged | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
 | TriggerRegisterPlayerEventEndCinematic | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
-| TriggerRegisterGameStateEventTimeOfDay | blizzard.j | D2 | _pending (M2 backlog)_ |
+| TriggerRegisterGameStateEventTimeOfDay | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
 | TriggerRegisterEnterRegionSimple | blizzard.j | D1 | **tombstoned** (superseded): null-filter region-enter wrapper superseded by OnEvent(EventRegionEnter) (#241) |
 | TriggerRegisterLeaveRegionSimple | blizzard.j | D1 | **tombstoned** (superseded): null-filter region-leave wrapper superseded by OnEvent(EventRegionLeave) (#241) |
 | TriggerRegisterEnterRectSimple | blizzard.j | D1 | **tombstoned** (superseded): rect-as-region enter wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionEnter) (#241) |
 | TriggerRegisterLeaveRectSimple | blizzard.j | D1 | **tombstoned** (superseded): rect-as-region leave wrapper superseded by NewRegion+AddRect then OnEvent(EventRegionLeave) (#241) |
-| TriggerRegisterDistanceBetweenUnits | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterUnitInRangeSimple | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterUnitLifeEvent | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterUnitManaEvent | blizzard.j | D2 | _pending (M2 backlog)_ |
+| TriggerRegisterDistanceBetweenUnits | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterUnitInRangeSimple | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterUnitLifeEvent | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
+| TriggerRegisterUnitManaEvent | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
 | TriggerRegisterDialogEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| TriggerRegisterShowSkillEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterBuildSubmenuEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterBuildCommandEventBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterTrainCommandEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| TriggerRegisterShowSkillEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterBuildSubmenuEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterBuildCommandEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterTrainCommandEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
 | TriggerRegisterUpgradeCommandEventBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
-| TriggerRegisterCommonCommandEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterGameLoadedEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
-| TriggerRegisterGameSavedEventBJ | blizzard.j | D2 | _pending (M2 backlog)_ |
+| TriggerRegisterCommonCommandEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source. |
+| TriggerRegisterGameLoadedEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source. |
+| TriggerRegisterGameSavedEventBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source. |
 | RegisterDestDeathInRegionEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TriggerRegisterDestDeathInRegionEvent | blizzard.j | D4 | _pending (M2 backlog)_ |
+| TriggerRegisterDestDeathInRegionEvent | blizzard.j | D3 | **tombstoned** (superseded): #triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241). |
 | AddWeatherEffectSaveLast | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
 | GetLastCreatedWeatherEffect | blizzard.j | D3 | **tombstoned** (superseded): #253: GetLastCreated* side-channel is superseded — the LitD constructor returns the handle directly (dedup D1). |
 | RemoveWeatherEffectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: render-only world graphic (lightning beams / weather / floating text tags / ubersplats / images / terrain deformation / selection indicators); v1 has no particle/beam/billboard render system (spec porting-hazard 5: particle MVP is an M4 line item). |
@@ -1815,7 +1815,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCreatedItem | blizzard.j | D2 | **tombstoned** (superseded): #225: Go return value from Game.CreateItem replaces the bj_lastCreatedItem side channel. |
 | GetLastRemovedItem | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
 | SetItemPositionLoc | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
-| GetLearnedSkillBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetLearnedSkillBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | SuspendHeroXPBJ | blizzard.j | D1 | `litd/api.Unit.SuspendExperience` (D3 collapse → SuspendHeroXP) |
 | SetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.SetHandicapDamage` (D3 collapse → SetPlayerHandicapDamage) |
 | GetPlayerHandicapDamageBJ | blizzard.j | D5 | `litd/api.Player.HandicapDamage` (D3 collapse → GetPlayerHandicapDamage) |
@@ -1862,7 +1862,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitId2StringBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
 | String2OrderIdBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
 | OrderId2StringBJ | blizzard.j | D3 | **tombstoned** (superseded): #conversion: JASS fourCC-int<->string and order-id<->string converters are language artifacts; the Go API uses the typed Order constant set and typed UnitType keys directly, which subsume the conversion (math-strings-conversion.md; units.md order unification). |
-| GetIssuedOrderIdBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetIssuedOrderIdBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | GetKillingUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
 | CreateUnitAtLocSaveLast | blizzard.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
 | GetLastCreatedUnit | blizzard.j | D2 | **tombstoned** (superseded): Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel |
@@ -1947,8 +1947,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | UnitMakeAbilityPermanentBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: runtime per-unit ability cooldown manipulation / enable-hide / by-index handle / permanence deferred to v2; v1 cooldowns are table+cast driven. |
 | SetUnitExplodedBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
 | ExplodeUnitBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217 (DECISION #364): render-only unit presentation (vertex tint/scale/time-scale/blend/team-glow/animation playback/look-at/death-explosion/alt-icon/render-Z/selectable flag); R-API-6 bars the sim API from render and these have zero deterministic-sim effect. |
-| GetTransportUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
-| GetLoadedUnitBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| GetTransportUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
+| GetLoadedUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | IsUnitInTransportBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: transport/cargo predicates; no v1 transport sim component, deferred to v2. |
 | IsUnitLoadedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: transport/cargo predicates; no v1 transport sim component, deferred to v2. |
 | IsUnitIllusionBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: illusion (mirror-image) predicate; no v1 illusion sim component, deferred to v2. |
@@ -2208,7 +2208,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | ForceCinematicSubtitlesBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | CinematicModeExBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | CinematicModeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
-| DisplayCineFilterBJ | blizzard.j | D1 | _pending (M2 backlog)_ |
+| DisplayCineFilterBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline. |
 | CinematicFadeCommonBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | FinishCinematicFadeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | FinishCinematicFadeAfterBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
@@ -2218,8 +2218,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | CinematicFadeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | CinematicFilterGenericBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: cinematic/cutscene overlay render UI (fade/scene/subtitle/mode); deferred-v2 until the render cutscene pipeline lands (cinematic camera is handled in camera.md #248). |
 | RescueUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2. |
-| TriggerActionUnitRescuedBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
-| TryInitRescuableTriggersBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
+| TriggerActionUnitRescuedBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
+| TryInitRescuableTriggersBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land. |
 | SetRescueUnitColorChangeBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2. |
 | SetRescueBuildingColorChangeBJ | blizzard.j | unclassified | _pending (M2 backlog)_ |
 | MakeUnitRescuableToForceBJEnum | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: the rescuable-unit mechanic (neutral units captured by proximity) has no v1 sim component; deferred to v2. |
@@ -2472,7 +2472,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetDNCSoundsNight | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | InitDNCSounds | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #244: day/night ambient soundscape; render domain. |
 | InitBlizzardGlobals | blizzard.j | D4 | _pending (M2 backlog)_ |
-| InitQueuedTriggers | blizzard.j | D4 | _pending (M2 backlog)_ |
+| InitQueuedTriggers | blizzard.j | D3 | **tombstoned** (superseded): #triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue. |
 | InitMapRects | blizzard.j | D4 | _pending (M2 backlog)_ |
 | InitSummonableCaps | blizzard.j | D4 | _pending (M2 backlog)_ |
 | UpdateStockAvailability | blizzard.j | D4 | _pending (M2 backlog)_ |

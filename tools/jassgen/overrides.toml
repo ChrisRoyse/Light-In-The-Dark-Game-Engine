@@ -12325,3 +12325,417 @@ name = "SuicidePlayerUnits"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#game-state: economy/tech bookkeeping (gold owned, per-type unit counts + buildable slot limits, start-loc priority, upgrade cost) and bulk player-unit suicide; deferred to the v2 economy/tech/match-config API."
+
+[[override]]
+name = "TriggerRegisterAnyUnitEventBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterDestDeathInRegionEvent"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterDistanceBetweenUnits"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterGameStateEventTimeOfDay"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterPlayerEventAllianceChanged"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterPlayerEventDefeat"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterPlayerEventLeave"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterPlayerEventVictory"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterPlayerUnitEventSimple"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterUnitInRangeSimple"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterUnitLifeEvent"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterUnitManaEvent"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: trigger+boolexpr event registration superseded by Game.OnEvent(EventKind, closure[, ForPlayer/Where]) (R-API-4, #219/#241)."
+
+[[override]]
+name = "TriggerRegisterPlayerKeyEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterPlayerMouseEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterPlayerSelectionEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterShowSkillEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterBuildCommandEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterBuildSubmenuEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterCommonCommandEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterTrainCommandEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: UI input + command-card events (key/mouse/selection/skill/build/train command) belong to the v2 UI input layer (#245); no v1 UI input event source."
+
+[[override]]
+name = "TriggerRegisterGameLoadedEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source."
+
+[[override]]
+name = "TriggerRegisterGameSavedEventBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: game save/load events belong to the v2 savedata layer (#242); no v1 save/load event source."
+
+[[override]]
+name = "QueuedTriggerAddBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerAttemptExec"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerCheck"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerClearBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerClearInactiveBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerCountBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerDoneBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerGetIndex"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerRemoveBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "QueuedTriggerRemoveByIndex"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "InitQueuedTriggers"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "IsTriggerQueueEmptyBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "IsTriggerQueuedBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "PostTriggerExecuteBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "TriggerExecuteBJ"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "ConditionalTriggerExecute"
+class = "D3"
+tombstone = "superseded"
+reason = "#triggers: the JASS trigger-queue + manual trigger-execute orchestration is superseded by the deterministic cooperative scheduler + OnEvent closures (R-EXEC-1/2); there is no trigger-handle object to queue."
+
+[[override]]
+name = "BlzGetEventDamageTarget"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "BlzGetEventAttackType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "BlzGetEventDamageType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "BlzGetEventWeaponType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "BlzGetEventIsAttack"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "BlzSetEventAttackType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "BlzSetEventWeaponType"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: extended damage-event fields (attack/damage/weapon-type, is-attack, retarget) beyond the v1 DamageEvent (Source/Unit/Amount/SetAmount); deferred to v2 when the combat event taxonomy widens."
+
+[[override]]
+name = "GetManipulatingUnit"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetCancelledStructure"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetRescuer"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetLearnedSkillBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetIssuedOrderIdBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetLoadedUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "GetTransportUnitBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "TriggerActionUnitRescuedBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "TryInitRescuableTriggersBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: event-context getters for event kinds not in the v1 taxonomy (item manipulation, construction cancel, rescue, skill learned, issued-order id, transport load); deferred to v2 as those event kinds land."
+
+[[override]]
+name = "DisplayCineFilter"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "DisplayCineFilterBJ"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "IsCineFilterDisplayed"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterBlendMode"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterDuration"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterEndColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterEndUV"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterStartColor"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterStartUV"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterTexMapFlags"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "SetCineFilterTexture"
+class = "D3"
+tombstone = "deferred-v2"
+reason = "#triggers: cinematic full-screen filter (fade/UV/blend overlay) is render cutscene UI (#245); deferred to the v2 render cutscene pipeline."
+
+[[override]]
+name = "GetAllyColorFilterState"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
+
+[[override]]
+name = "SetAllyColorFilterState"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
+
+[[override]]
+name = "GetCreepCampFilterState"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
+
+[[override]]
+name = "SetCreepCampFilterState"
+class = "D3"
+tombstone = "gameplay-irrelevant"
+reason = "#triggers: minimap ally-color / creep-camp display-filter toggles; render/UI presentation with no sim state."
