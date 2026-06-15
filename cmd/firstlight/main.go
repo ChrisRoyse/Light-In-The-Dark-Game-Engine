@@ -230,6 +230,15 @@ func main() {
 	flag.IntVar(&d.perfToggleSpam, "perf-toggle-spam", 0, "autotest-only: toggle the F11 overlay this many times at 10 Hz")
 	flag.IntVar(&d.stressUnits, "stress-units", 0, "spawn N synthetic visible units for perf overlay stress counters")
 	flag.Parse()
+
+	// Opt-in crash capture (#185): install the recover hook before any GL or
+	// world setup so a panic during init or in the render loop is written to a
+	// local crash-<timestamp>.txt in the user data dir, then re-exits nonzero.
+	// Nothing leaves the machine. The shared litd/obs.Reporter is exercised
+	// headlessly via `cmd/headless -crash-test`.
+	crash := litobs.NewReporter("", true)
+	defer crash.Recover()
+
 	if d.perfToggleSpam < 0 {
 		fatalf("perf-toggle-spam must be >=0, got %d", d.perfToggleSpam)
 	}

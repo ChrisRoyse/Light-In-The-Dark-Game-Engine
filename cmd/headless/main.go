@@ -17,6 +17,7 @@ import (
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/prng"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
@@ -37,6 +38,9 @@ func main() {
 	eventLogPath := flag.String("eventlog", "", "stream the structured event log here as JSONL (R-FSV-3)")
 	replayPath := flag.String("replay", "", "record this run to a .litdreplay file (header + commands + hash checkpoints)")
 	verifyPath := flag.String("verify", "", "verify a .litdreplay: re-run its inputs, compare the full checkpoint trace")
+	crashTest := flag.Int("crash-test", 0, "dev-only: panic right after this tick to exercise the crash reporter (#185)")
+	crashDir := flag.String("crash-dir", "", "crash-report directory (default: user config dir/litd)")
+	crashCapture := flag.Bool("crash-capture", true, "write a local crash dump on panic; false = stderr stack only, no file (#185)")
 	flag.Parse()
 
 	// Fail closed: no map format exists yet, so any -map value would
@@ -53,6 +57,20 @@ func main() {
 	}
 
 	w, ids := buildWorld(*seed, *units)
+
+	// Crash-report capture (#185): install the recover hook before any work
+	// runs so a panic anywhere below is captured to a local dump and the
+	// process still dies nonzero. The reporter reads the live sim tick and a
+	// small log ring at crash time. defer-LIFO means the file-close defers
+	// below flush during unwind, then Recover writes the dump and exits.
+	var clog *obs.Logger
+	if *crashTest > 0 {
+		clog = obs.New(1024)
+	}
+	reporter := obs.NewReporter(*crashDir, *crashCapture)
+	reporter.Log = clog
+	reporter.Tick = w.Tick
+	defer reporter.Recover()
 
 	var evw *bufio.Writer
 	if *eventLogPath != "" {
@@ -81,7 +99,7 @@ func main() {
 	wantTrace := *replayPath != ""
 
 	start := time.Now()
-	trace := runWorld(w, ids, cmds, *ticks, wantTrace)
+	trace := runWorld(w, ids, cmds, *ticks, wantTrace, *crashTest, clog)
 	elapsed := time.Since(start)
 
 	reg := sim.NewHashRegistry()
@@ -196,13 +214,17 @@ func buildWorld(seed uint64, n int) (*sim.World, []sim.EntityID) {
 // boundary (the same deterministic driver position as a script; kind
 // 0 = move, anything else fails closed) and capturing the checkpoint
 // trace when asked.
-func runWorld(w *sim.World, ids []sim.EntityID, cmds []sim.ReplayCommand, ticks int, trace bool) []sim.ReplayCheckpoint {
+func runWorld(w *sim.World, ids []sim.EntityID, cmds []sim.ReplayCommand, ticks int, trace bool, crashTest int, clog *obs.Logger) []sim.ReplayCheckpoint {
 	var cps []sim.ReplayCheckpoint
 	var reg *statehash.Registry
 	var snap statehash.Snapshot
 	if trace {
 		cps = make([]sim.ReplayCheckpoint, 0, ticks/int(sim.DefaultCheckpointInterval)+1)
 		reg = sim.NewHashRegistry()
+	}
+	var crashMsg obs.MsgID
+	if clog != nil {
+		crashMsg = clog.Register("crash-test loop at tick {0}")
 	}
 	next := 0
 	for t := 1; t <= ticks; t++ {
@@ -217,6 +239,14 @@ func runWorld(w *sim.World, ids []sim.EntityID, cmds []sim.ReplayCommand, ticks 
 			next++
 		}
 		w.Step()
+		if clog != nil {
+			clog.Log(w.Tick(), 0, obs.Info, obs.ChSimTick, crashMsg, int64(t), 0, 0, 0)
+		}
+		if crashTest > 0 && t == crashTest {
+			// Induced crash for #185 FSV: panic after the tick has been
+			// committed so w.Tick() reads the crash tick in the dump.
+			panic(fmt.Sprintf("crash-test: induced panic at tick %d", t))
+		}
 		if trace && uint32(t)%sim.DefaultCheckpointInterval == 0 {
 			w.HashState(reg, &snap)
 			cps = append(cps, sim.CheckpointFrom(uint32(t), &snap))
