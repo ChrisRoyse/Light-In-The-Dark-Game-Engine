@@ -2080,17 +2080,17 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MeleeDefeatDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | GameOverDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
 | RemovePlayerPreserveUnitsBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #players: bulk player-scoped unit operations (defeat-cleanup, make-passive, wake, living-of-type counts, tech availability, random-player pick); deferred to v2 (these are loop helpers over the per-unit/per-player verbs that ship). |
-| CustomVictoryOkBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
-| CustomVictoryQuitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomVictoryOkBJ | blizzard.j | D2 | `litd/api.Game.Victory` (D3 collapse → CustomVictoryBJ) |
+| CustomVictoryQuitBJ | blizzard.j | D2 | `litd/api.Game.Victory` (D3 collapse → CustomVictoryBJ) |
 | CustomVictoryDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| CustomVictorySkipBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
-| CustomVictoryBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
-| CustomDefeatRestartBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
-| CustomDefeatReduceDifficultyBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
-| CustomDefeatLoadBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
-| CustomDefeatQuitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomVictorySkipBJ | blizzard.j | D2 | `litd/api.Game.Victory` (D3 collapse → CustomVictoryBJ) |
+| CustomVictoryBJ | blizzard.j | D2 | `litd/api.Game.Victory` |
+| CustomDefeatRestartBJ | blizzard.j | D2 | `litd/api.Game.Defeat` (D3 collapse → CustomDefeatBJ) |
+| CustomDefeatReduceDifficultyBJ | blizzard.j | D2 | `litd/api.Game.Defeat` (D3 collapse → CustomDefeatBJ) |
+| CustomDefeatLoadBJ | blizzard.j | D2 | `litd/api.Game.Defeat` (D3 collapse → CustomDefeatBJ) |
+| CustomDefeatQuitBJ | blizzard.j | D2 | `litd/api.Game.Defeat` (D3 collapse → CustomDefeatBJ) |
 | CustomDefeatDialogBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands. |
-| CustomDefeatBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API. |
+| CustomDefeatBJ | blizzard.j | D2 | `litd/api.Game.Defeat` |
 | SetNextLevelBJ | blizzard.j | D4 | _pending (M2 backlog)_ |
 | SetPlayerOnScoreScreenBJ | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads. |
 | CreateQuestBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #245: quest-log render UI; deferred-v2 until the G3N GUI quest facade lands. |
@@ -2398,71 +2398,71 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetBlightRectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetBlightRadiusLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | GetAbilityName | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| MeleeStartingVisibility | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeStartingResources | blizzard.j | D4 | _pending (M2 backlog)_ |
+| MeleeStartingVisibility | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeStartingResources | blizzard.j | D4 | `litd/api.melee.StartingResources` |
 | ReducePlayerTechMaxAllowed | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | MeleeStartingHeroLimit | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
-| MeleeTrainedUnitIsHeroBJFilter | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeGrantItemsToHero | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGrantItemsToTrainedHero | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeGrantItemsToHiredHero | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeGrantHeroItems | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeClearExcessUnit | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeClearNearbyUnits | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeClearExcessUnits | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeEnumFindNearestMine | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeFindNearestMine | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeRandomHeroLoc | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetProjectedLoc | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetNearestValueWithin | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetLocWithinRect | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnitsHuman | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnitsOrc | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnitsUndead | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnitsNightElf | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnitsUnknownRace | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnits | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingUnitsForPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
+| MeleeTrainedUnitIsHeroBJFilter | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantItemsToHero | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantItemsToTrainedHero | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantItemsToHiredHero | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantHeroItems | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeClearExcessUnit | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeClearNearbyUnits | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeClearExcessUnits | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeEnumFindNearestMine | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeFindNearestMine | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeRandomHeroLoc | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetProjectedLoc | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetNearestValueWithin | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetLocWithinRect | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeStartingUnitsHuman | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsOrc | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsUndead | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsNightElf | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsUnknownRace | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnits | blizzard.j | D4 | `litd/api.melee.StartingUnits` |
+| MeleeStartingUnitsForPlayer | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
 | PickMeleeAI | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeStartingAI | blizzard.j | D4 | _pending (M2 backlog)_ |
+| MeleeStartingAI | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
 | LockGuardPosition | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
-| MeleePlayerIsOpponent | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetAllyStructureCount | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetAllyCount | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetAllyKeyStructureCount | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeDoDrawEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeDoVictoryEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeDoDefeat | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeDoDefeatEnum | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeDoLeave | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeRemoveObservers | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeCheckForVictors | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeCheckForLosersAndVictors | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetCrippledWarningMessage | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetCrippledTimerMessage | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeGetCrippledRevealedMessage | blizzard.j | unclassified | _pending (M2 backlog)_ |
-| MeleeExposePlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeExposeAllPlayers | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeCrippledPlayerTimeout | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleePlayerIsCrippled | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeCheckForCrippledPlayers | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeCheckLostUnit | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeCheckAddedUnit | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTriggerActionConstructCancel | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeTriggerActionUnitDeath | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTriggerActionUnitConstructionStart | blizzard.j | D2 | _pending (M2 backlog)_ |
-| MeleeTriggerActionPlayerDefeated | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTriggerActionPlayerLeft | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTriggerActionAllianceChange | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTriggerTournamentFinishSoon | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeWasUserPlayer | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTournamentFinishNowRuleA | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeTriggerTournamentFinishNow | blizzard.j | D4 | _pending (M2 backlog)_ |
-| MeleeInitVictoryDefeat | blizzard.j | D4 | _pending (M2 backlog)_ |
+| MeleePlayerIsOpponent | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetAllyStructureCount | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetAllyCount | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetAllyKeyStructureCount | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeDoDrawEnum | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoVictoryEnum | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoDefeat | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoDefeatEnum | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoLeave | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeRemoveObservers | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckForVictors | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckForLosersAndVictors | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeGetCrippledWarningMessage | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeGetCrippledTimerMessage | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeGetCrippledRevealedMessage | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeExposePlayer | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeExposeAllPlayers | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCrippledPlayerTimeout | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleePlayerIsCrippled | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckForCrippledPlayers | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckLostUnit | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeCheckAddedUnit | blizzard.j | D4 | `litd/api.melee.Standard` |
+| MeleeTriggerActionConstructCancel | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeTriggerActionUnitDeath | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeTriggerActionUnitConstructionStart | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeTriggerActionPlayerDefeated | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerActionPlayerLeft | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerActionAllianceChange | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerTournamentFinishSoon | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeWasUserPlayer | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTournamentFinishNowRuleA | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerTournamentFinishNow | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeInitVictoryDefeat | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` |
 | CheckInitPlayerSlotAvailability | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | SetPlayerSlotAvailable | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | TeamInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
-| MeleeInitPlayerSlots | blizzard.j | D2 | _pending (M2 backlog)_ |
+| MeleeInitPlayerSlots | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
 | FFAInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | OneOnOneInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | InitGenericPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
@@ -2647,4 +2647,4 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCommand | commonai | unclassified | _pending (M2 backlog)_ |
 | GetLastData | commonai | unclassified | _pending (M2 backlog)_ |
 | PopLastCommand | commonai | unclassified | _pending (M2 backlog)_ |
-| MeleeDifficulty | commonai | unclassified | _pending (M2 backlog)_ |
+| MeleeDifficulty | commonai | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |

@@ -73,6 +73,7 @@ var Bindings = []Binding{
 	{LuaName: "Game_CreateItem", Package: "litd/api", Symbol: "Game.CreateItem", GoSignature: "(typ ItemType, pos Vec2) Item"},
 	{LuaName: "Game_CreateSound", Package: "litd/api", Symbol: "Game.CreateSound", GoSignature: "(cue string) Sound"},
 	{LuaName: "Game_CreateUnit", Package: "litd/api", Symbol: "Game.CreateUnit", GoSignature: "(owner Player, typ UnitType, pos Vec2, facing Angle) Unit"},
+	{LuaName: "Game_Defeat", Package: "litd/api", Symbol: "Game.Defeat", GoSignature: "(p Player, msg string)"},
 	{LuaName: "Game_EndMatch", Package: "litd/api", Symbol: "Game.EndMatch", GoSignature: "()"},
 	{LuaName: "Game_Enemies", Package: "litd/api", Symbol: "Game.Enemies", GoSignature: "(p Player) []Player"},
 	{LuaName: "Game_FogEnabled", Package: "litd/api", Symbol: "Game.FogEnabled", GoSignature: "() bool"},
@@ -114,6 +115,7 @@ var Bindings = []Binding{
 	{LuaName: "Game_TimeOfDayScale", Package: "litd/api", Symbol: "Game.TimeOfDayScale", GoSignature: "() float64"},
 	{LuaName: "Game_UnitsIn", Package: "litd/api", Symbol: "Game.UnitsIn", GoSignature: "(rect Rect, filter UnitFilter) []Unit"},
 	{LuaName: "Game_UnitsInRange", Package: "litd/api", Symbol: "Game.UnitsInRange", GoSignature: "(pos Vec2, r float64, filter UnitFilter) []Unit"},
+	{LuaName: "Game_Victory", Package: "litd/api", Symbol: "Game.Victory", GoSignature: "(p Player)"},
 	{LuaName: "Game_WorldBounds", Package: "litd/api", Symbol: "Game.WorldBounds", GoSignature: "() Rect"},
 	{LuaName: "Item_Charges", Package: "litd/api", Symbol: "Item.Charges", GoSignature: "() int"},
 	{LuaName: "Item_Position", Package: "litd/api", Symbol: "Item.Position", GoSignature: "() Vec2"},
@@ -290,6 +292,10 @@ var Bindings = []Binding{
 	{LuaName: "Unit_VisibleTo", Package: "litd/api", Symbol: "Unit.VisibleTo", GoSignature: "(p Player) bool"},
 	{LuaName: "Vec2_Add", Package: "litd/api", Symbol: "Vec2.Add", GoSignature: "(o Vec2) Vec2"},
 	{LuaName: "Vec2_Polar", Package: "litd/api", Symbol: "Vec2.Polar", GoSignature: "(a Angle, dist float64) Vec2"},
+	{LuaName: "melee_Standard", Package: "litd/api", Symbol: "melee.Standard", GoSignature: "(g *litd.Game)"},
+	{LuaName: "melee_StartingResources", Package: "litd/api", Symbol: "melee.StartingResources", GoSignature: "(g *litd.Game)"},
+	{LuaName: "melee_StartingUnits", Package: "litd/api", Symbol: "melee.StartingUnits", GoSignature: "(g *litd.Game)"},
+	{LuaName: "melee_VictoryDefeatConditions", Package: "litd/api", Symbol: "melee.VictoryDefeatConditions", GoSignature: "(g *litd.Game)"},
 }
 
 // AIBindings is the AI-domain surface (litd/ai, R-EXEC-3 isolated).

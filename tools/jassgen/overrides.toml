@@ -12042,60 +12042,6 @@ tombstone = "gameplay-irrelevant"
 reason = "#players: per-player UI/HUD state (selection clear, interface show/hide, forced UI cancel, score-screen, campaign select, UI player flags, lobby map-control query); render/UI presentation the deterministic sim never reads."
 
 [[override]]
-name = "CustomVictoryBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomVictoryOkBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomVictoryQuitBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomVictorySkipBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomDefeatBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomDefeatLoadBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomDefeatQuitBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomDefeatRestartBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
-name = "CustomDefeatReduceDifficultyBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-
-[[override]]
 name = "AllowVictoryDefeat"
 class = "D3"
 tombstone = "deferred-v2"
@@ -13036,3 +12982,56 @@ name = "SetUnitFog"
 class = "D3"
 tombstone = "deferred-v2"
 reason = "#visibility: true-sight detection event target + per-unit fog override; deferred to v2 as the detection/per-unit-fog model lands."
+
+[[override]]
+name = "CustomVictoryBJ"
+class = "D2"
+goMapping = "Game.Victory"
+goSignature = "(p Player)"
+collapsesWith = ["CustomVictoryOkBJ", "CustomVictoryQuitBJ", "CustomVictorySkipBJ"]
+package = "litd/api"
+reason = "#game-state: the custom-victory family (ok/quit/skip dialog variants) collapses onto Game.Victory(p) (the post-win dialog flow is UI; the sim-visible act is the win). Spec game-state-and-melee.md."
+
+[[override]]
+name = "CustomDefeatBJ"
+class = "D2"
+goMapping = "Game.Defeat"
+goSignature = "(p Player, msg string)"
+collapsesWith = ["CustomDefeatLoadBJ", "CustomDefeatQuitBJ", "CustomDefeatRestartBJ", "CustomDefeatReduceDifficultyBJ"]
+package = "litd/api"
+reason = "#game-state: the custom-defeat family (load/quit/restart/reduce-difficulty dialog variants) collapses onto Game.Defeat(p, msg); the post-loss dialog flow is UI. Spec game-state-and-melee.md."
+
+[[override]]
+name = "MeleeStartingUnits"
+class = "D4"
+goMapping = "melee.StartingUnits"
+goSignature = "(g *litd.Game)"
+collapsesWith = ["MeleeStartingUnitsForPlayer", "MeleeStartingUnitsHuman", "MeleeStartingUnitsNightElf", "MeleeStartingUnitsOrc", "MeleeStartingUnitsUndead", "MeleeStartingUnitsUnknownRace"]
+package = "litd/api"
+reason = "#258 D4: the per-race + per-player melee starting-unit placement collapses onto the data-driven melee.StartingUnits (no five hard-coded race funcs; reads data/ tables). Spec game-state-and-melee.md / #258."
+
+[[override]]
+name = "MeleeStartingResources"
+class = "D4"
+goMapping = "melee.StartingResources"
+goSignature = "(g *litd.Game)"
+package = "litd/api"
+reason = "#258 D4: melee starting gold/lumber by map size, kept once as melee.StartingResources."
+
+[[override]]
+name = "MeleeInitVictoryDefeat"
+class = "D4"
+goMapping = "melee.VictoryDefeatConditions"
+goSignature = "(g *litd.Game)"
+collapsesWith = ["MeleeCheckForCrippledPlayers", "MeleeCheckForLosersAndVictors", "MeleeCheckForVictors", "MeleeCrippledPlayerTimeout", "MeleeDoDefeat", "MeleeDoDefeatEnum", "MeleeDoDrawEnum", "MeleeDoLeave", "MeleeDoVictoryEnum", "MeleeExposeAllPlayers", "MeleeExposePlayer", "MeleeGetCrippledRevealedMessage", "MeleeGetCrippledTimerMessage", "MeleeGetCrippledWarningMessage", "MeleePlayerIsCrippled", "MeleeTriggerActionPlayerDefeated", "MeleeTriggerActionPlayerLeft", "MeleeTournamentFinishNowRuleA", "MeleeTriggerTournamentFinishNow", "MeleeTriggerTournamentFinishSoon", "MeleeWasUserPlayer", "MeleeRemoveObservers", "MeleeTriggerActionAllianceChange"]
+package = "litd/api"
+reason = "#258 D4: the whole melee victory/defeat/crippling/observer/tournament subsystem collapses onto melee.VictoryDefeatConditions (one composable conditions installer)."
+
+[[override]]
+name = "MeleeCheckAddedUnit"
+class = "D4"
+goMapping = "melee.Standard"
+goSignature = "(g *litd.Game)"
+collapsesWith = ["MeleeCheckLostUnit", "MeleeClearExcessUnit", "MeleeClearExcessUnits", "MeleeClearNearbyUnits", "MeleeDifficulty", "MeleeEnumFindNearestMine", "MeleeFindNearestMine", "MeleeGetAllyCount", "MeleeGetAllyKeyStructureCount", "MeleeGetAllyStructureCount", "MeleeGetLocWithinRect", "MeleeGetNearestValueWithin", "MeleeGetProjectedLoc", "MeleeGrantHeroItems", "MeleeGrantItemsToHero", "MeleeGrantItemsToHiredHero", "MeleeGrantItemsToTrainedHero", "MeleeInitPlayerSlots", "MeleePlayerIsOpponent", "MeleeRandomHeroLoc", "MeleeStartingAI", "MeleeStartingVisibility", "MeleeTrainedUnitIsHeroBJFilter", "MeleeTriggerActionConstructCancel", "MeleeTriggerActionUnitConstructionStart", "MeleeTriggerActionUnitDeath"]
+package = "litd/api"
+reason = "#258 D4: the standard melee mode composition (visibility, AI attach, starting setup, nearest-mine/projection/hero-item helpers, unit add/lost tracking) collapses onto melee.Standard built only on public litd/api exports. Spec #258 / D-2026-06-11-6 (AI via g.AttachAI at M5.5)."

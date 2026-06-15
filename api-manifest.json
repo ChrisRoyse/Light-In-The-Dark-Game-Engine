@@ -3232,12 +3232,19 @@
         ],
         "returns": "nothing"
       },
-      "classification": "D3",
+      "classification": "D2",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Defeat",
+        "package": "litd/api",
+        "goSignature": "(p Player, msg string)",
+        "collapsesWith": [
+          "CustomDefeatLoadBJ",
+          "CustomDefeatQuitBJ",
+          "CustomDefeatRestartBJ",
+          "CustomDefeatReduceDifficultyBJ"
+        ]
       }
     },
     {
@@ -3267,66 +3274,6 @@
       }
     },
     {
-      "name": "CustomDefeatLoadBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-      }
-    },
-    {
-      "name": "CustomDefeatQuitBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-      }
-    },
-    {
-      "name": "CustomDefeatReduceDifficultyBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-      }
-    },
-    {
-      "name": "CustomDefeatRestartBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-      }
-    },
-    {
       "name": "CustomVictoryBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3349,12 +3296,18 @@
         ],
         "returns": "nothing"
       },
-      "classification": "D3",
+      "classification": "D2",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Game.Victory",
+        "package": "litd/api",
+        "goSignature": "(p Player)",
+        "collapsesWith": [
+          "CustomVictoryOkBJ",
+          "CustomVictoryQuitBJ",
+          "CustomVictorySkipBJ"
+        ]
       }
     },
     {
@@ -3376,57 +3329,6 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#245: modal dialog + dialog-button render UI; deferred-v2 until the G3N GUI dialog facade lands."
-      }
-    },
-    {
-      "name": "CustomVictoryOkBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-      }
-    },
-    {
-      "name": "CustomVictoryQuitBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
-      }
-    },
-    {
-      "name": "CustomVictorySkipBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [
-          {
-            "name": "whichPlayer",
-            "jassType": "player",
-            "tsType": "player"
-          }
-        ],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: the victory/defeat-condition machinery (custom win/lose screens, defeat-condition objects) is bound to the campaign/match-flow + UI layer; deferred to the v2 game-flow API."
       }
     },
     {
@@ -9287,6 +9189,56 @@
       }
     },
     {
+      "name": "MeleeCheckAddedUnit",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "addedUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "melee.Standard",
+        "package": "litd/api",
+        "goSignature": "(g *litd.Game)",
+        "collapsesWith": [
+          "MeleeCheckLostUnit",
+          "MeleeClearExcessUnit",
+          "MeleeClearExcessUnits",
+          "MeleeClearNearbyUnits",
+          "MeleeDifficulty",
+          "MeleeEnumFindNearestMine",
+          "MeleeFindNearestMine",
+          "MeleeGetAllyCount",
+          "MeleeGetAllyKeyStructureCount",
+          "MeleeGetAllyStructureCount",
+          "MeleeGetLocWithinRect",
+          "MeleeGetNearestValueWithin",
+          "MeleeGetProjectedLoc",
+          "MeleeGrantHeroItems",
+          "MeleeGrantItemsToHero",
+          "MeleeGrantItemsToHiredHero",
+          "MeleeGrantItemsToTrainedHero",
+          "MeleeInitPlayerSlots",
+          "MeleePlayerIsOpponent",
+          "MeleeRandomHeroLoc",
+          "MeleeStartingAI",
+          "MeleeStartingVisibility",
+          "MeleeTrainedUnitIsHeroBJFilter",
+          "MeleeTriggerActionConstructCancel",
+          "MeleeTriggerActionUnitConstructionStart",
+          "MeleeTriggerActionUnitDeath"
+        ]
+      }
+    },
+    {
       "name": "MeleeDefeatDialogBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -9313,6 +9265,47 @@
       }
     },
     {
+      "name": "MeleeInitVictoryDefeat",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "melee.VictoryDefeatConditions",
+        "package": "litd/api",
+        "goSignature": "(g *litd.Game)",
+        "collapsesWith": [
+          "MeleeCheckForCrippledPlayers",
+          "MeleeCheckForLosersAndVictors",
+          "MeleeCheckForVictors",
+          "MeleeCrippledPlayerTimeout",
+          "MeleeDoDefeat",
+          "MeleeDoDefeatEnum",
+          "MeleeDoDrawEnum",
+          "MeleeDoLeave",
+          "MeleeDoVictoryEnum",
+          "MeleeExposeAllPlayers",
+          "MeleeExposePlayer",
+          "MeleeGetCrippledRevealedMessage",
+          "MeleeGetCrippledTimerMessage",
+          "MeleeGetCrippledWarningMessage",
+          "MeleePlayerIsCrippled",
+          "MeleeTriggerActionPlayerDefeated",
+          "MeleeTriggerActionPlayerLeft",
+          "MeleeTournamentFinishNowRuleA",
+          "MeleeTriggerTournamentFinishNow",
+          "MeleeTriggerTournamentFinishSoon",
+          "MeleeWasUserPlayer",
+          "MeleeRemoveObservers",
+          "MeleeTriggerActionAllianceChange"
+        ]
+      }
+    },
+    {
       "name": "MeleeStartingHeroLimit",
       "origin": "blizzard.j",
       "signature": {
@@ -9325,6 +9318,46 @@
       "tombstone": {
         "reason": "deferred-v2",
         "detail": "#234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2."
+      }
+    },
+    {
+      "name": "MeleeStartingResources",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "melee.StartingResources",
+        "package": "litd/api",
+        "goSignature": "(g *litd.Game)"
+      }
+    },
+    {
+      "name": "MeleeStartingUnits",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [],
+        "returns": "nothing"
+      },
+      "classification": "D4",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "melee.StartingUnits",
+        "package": "litd/api",
+        "goSignature": "(g *litd.Game)",
+        "collapsesWith": [
+          "MeleeStartingUnitsForPlayer",
+          "MeleeStartingUnitsHuman",
+          "MeleeStartingUnitsNightElf",
+          "MeleeStartingUnitsOrc",
+          "MeleeStartingUnitsUndead",
+          "MeleeStartingUnitsUnknownRace"
+        ]
       }
     },
     {
