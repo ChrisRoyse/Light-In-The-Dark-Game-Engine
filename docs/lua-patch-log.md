@@ -49,7 +49,7 @@ The four D-25 patches land in their own issues on top of this pinned base:
 |---|---|---|---|
 | 1 | instruction-budget counter in `mainLoop` | #262 | **done** (fork commit `46381dc`) |
 | 2 | deterministic mathlib (`math.random` → sim PRNG; `randomseed` disabled) | #263 | **done — random half** (fork commit `b579629`); transcendental golden half blocked on #284 |
-| 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | **in progress** — read side `LitdSnapshot` done (fork commit `5c53948`); restore side pending |
+| 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | **in progress** — VM read+restore done (`LitdSnapshot` `5c53948`, `LitdRestoreThread` `54426ff`); luabind cross-process rebind (steps 4–5) pending |
 | 4 | `LState`/call-frame pooling + golden cross-arch CI test | #265 | pending |
 | S | deterministic memory-budget accountant (`string.rep` charge) | #266 | **done** (fork commit `d855815`) |
 
