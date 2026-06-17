@@ -154,3 +154,29 @@ func ExampleGame_UnitsInRange_filter() {
 	fmt.Println(len(owned))
 	// Output: 0
 }
+
+// Rect is an axis-aligned world rectangle with value-type geometry helpers.
+func ExampleRect() {
+	r := litd.NewRect(litd.Vec2{X: 0, Y: 0}, litd.Vec2{X: 200, Y: 100})
+	c := r.Center()
+	fmt.Printf("center (%.0f,%.0f) w=%.0f h=%.0f contains(50,50)=%v\n",
+		c.X, c.Y, r.Width(), r.Height(), r.Contains(litd.Vec2{X: 50, Y: 50}))
+	// Output: center (100,50) w=200 h=100 contains(50,50)=true
+}
+
+// Angle is a value type in radians with degree accessors; Normalized folds into
+// a single turn.
+func ExampleAngle() {
+	fmt.Printf("%.0f %.0f\n", litd.Deg(90).Degrees(), litd.Deg(450).Normalized().Degrees())
+	// Output: 90 90
+}
+
+// Force is a stateful player group; AddPlayer builds the membership set.
+func ExampleGame_CreateForce() {
+	g := exampleGame()
+	f := g.CreateForce()
+	f.AddPlayer(g.Player(0))
+	f.AddPlayer(g.Player(1))
+	fmt.Println(f.Count())
+	// Output: 2
+}
