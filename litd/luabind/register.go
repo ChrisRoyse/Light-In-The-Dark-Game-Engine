@@ -38,6 +38,7 @@ func Register(L *lua.LState, g *api.Game) error {
 	registerGenerated(L) // value/handle/Player verbs (no game needed)
 	if g != nil {
 		registerGameBound(L, gameBinder{g: g}) // Game-receiver verbs, bound to g
+		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 	}
 	return nil
 }
