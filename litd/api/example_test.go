@@ -7,7 +7,9 @@ package litd_test
 // contract.
 
 import (
+	"bytes"
 	"fmt"
+	"time"
 
 	litd "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
@@ -74,4 +76,48 @@ func ExampleGame_OnEvent() {
 	g.Advance(1)
 	fmt.Println("deaths:", deaths)
 	// Output: deaths: 1
+}
+
+// SetName writes a player's display name (the writable companion to Name).
+func ExamplePlayer_SetName() {
+	g := exampleGame()
+	p := g.Player(0)
+	p.SetName("Commander")
+	fmt.Println(p.Name())
+	// Output: Commander
+}
+
+// After schedules a one-shot callback on the deterministic scheduler; it fires
+// when game time reaches the delay, advanced by stepping the sim (20 ticks/s).
+func ExampleGame_After() {
+	g := exampleGame()
+	fired := false
+	g.After(1*time.Second, func() { fired = true })
+	fmt.Println("before:", fired)
+	g.Advance(20)
+	fmt.Println("after:", fired)
+	// Output:
+	// before: false
+	// after: true
+}
+
+// Storage is the campaign key-value store; Save/Load round-trips it through any
+// byte stream, so cross-map state survives between worlds.
+func ExampleStorage() {
+	g := exampleGame()
+	g.Storage().SetInt("campaign", "gold_banked", 500)
+
+	var buf bytes.Buffer
+	if err := g.Storage().Save(&buf); err != nil {
+		panic(err)
+	}
+
+	// A fresh game (e.g. the next map) loads the persisted store.
+	next := exampleGame()
+	if err := next.Storage().Load(&buf); err != nil {
+		panic(err)
+	}
+	v, ok := next.Storage().GetInt("campaign", "gold_banked")
+	fmt.Println(v, ok)
+	// Output: 500 true
 }
