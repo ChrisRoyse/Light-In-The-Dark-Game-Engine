@@ -37,9 +37,10 @@ func WriteLuaDispatch(m Manifest) error {
 
 // dispatchBind is one emitted binding.
 type dispatchBind struct {
-	luaName string // e.g. "Vec2_Add"
-	fnName  string // e.g. "bindVec2Add"
-	code    string // the full func declaration
+	luaName   string // e.g. "Vec2_Add"
+	fnName    string // e.g. "bindVec2Add"
+	code      string // the full func/method declaration
+	gameBound bool   // true => a method on gameBinder (needs the *Game)
 }
 
 // supportedArg returns the Go expression reading a parameter of type typ at Lua
@@ -121,46 +122,68 @@ func emitDispatch(symbol, sig string) (dispatchBind, bool) {
 		return dispatchBind{}, false // free functions need a *Game / other types — later
 	}
 	recvType, method := symbol[:dot], symbol[dot+1:]
-	recvExpr, ok := supportedArg(recvType, 1)
-	if !ok {
-		return dispatchBind{}, false
-	}
 	if len(gs.Returns) > 1 {
 		return dispatchBind{}, false
 	}
 
-	var b strings.Builder
-	fnName := "bind" + strings.ReplaceAll(symbol, ".", "")
-	luaName := luaBindingName(symbol)
-	fmt.Fprintf(&b, "// %s -> %s%s\n", luaName, symbol, sig)
-	fmt.Fprintf(&b, "func %s(L *lua.LState) int {\n", fnName)
-	fmt.Fprintf(&b, "\trecv := %s\n", recvExpr)
+	// A Game-receiver verb becomes a method on gameBinder using the bound b.g;
+	// its params start at Lua arg 1 (no receiver arg). Any other receiver is a
+	// value/handle the script passes as arg 1.
+	gameBound := recvType == "Game"
+	argStart := 2
+	var recvLine, callRecv string
+	if gameBound {
+		argStart = 1
+		callRecv = "b.g"
+	} else {
+		recvExpr, ok := supportedArg(recvType, 1)
+		if !ok {
+			return dispatchBind{}, false
+		}
+		recvLine = fmt.Sprintf("\trecv := %s\n", recvExpr)
+		callRecv = "recv"
+	}
 
+	var body strings.Builder
 	args := make([]string, 0, len(gs.Params))
 	for i, p := range gs.Params {
 		if p.Variadic {
 			return dispatchBind{}, false
 		}
-		expr, ok := supportedArg(p.Type, i+2) // receiver is arg 1
+		expr, ok := supportedArg(p.Type, i+argStart)
 		if !ok {
 			return dispatchBind{}, false
 		}
 		name := fmt.Sprintf("a%d", i)
-		fmt.Fprintf(&b, "\t%s := %s\n", name, expr)
+		fmt.Fprintf(&body, "\t%s := %s\n", name, expr)
 		args = append(args, name)
 	}
-	call := fmt.Sprintf("recv.%s(%s)", method, strings.Join(args, ", "))
-
+	call := fmt.Sprintf("%s.%s(%s)", callRecv, method, strings.Join(args, ", "))
+	var tail string
 	if len(gs.Returns) == 0 {
-		fmt.Fprintf(&b, "\t%s\n\treturn 0\n}\n", call)
+		tail = fmt.Sprintf("\t%s\n\treturn 0\n", call)
 	} else {
 		push, ok := supportedRet(gs.Returns[0], "res")
 		if !ok {
 			return dispatchBind{}, false
 		}
-		fmt.Fprintf(&b, "\tres := %s\n\t%s\n\treturn 1\n}\n", call, push)
+		tail = fmt.Sprintf("\tres := %s\n\t%s\n\treturn 1\n", call, push)
 	}
-	return dispatchBind{luaName: luaName, fnName: fnName, code: b.String()}, true
+
+	fnName := "bind" + strings.ReplaceAll(symbol, ".", "")
+	luaName := luaBindingName(symbol)
+	var b strings.Builder
+	fmt.Fprintf(&b, "// %s -> %s%s\n", luaName, symbol, sig)
+	if gameBound {
+		fmt.Fprintf(&b, "func (b gameBinder) %s(L *lua.LState) int {\n", fnName)
+	} else {
+		fmt.Fprintf(&b, "func %s(L *lua.LState) int {\n", fnName)
+		b.WriteString(recvLine)
+	}
+	b.WriteString(body.String())
+	b.WriteString(tail)
+	b.WriteString("}\n")
+	return dispatchBind{luaName: luaName, fnName: fnName, code: b.String(), gameBound: gameBound}, true
 }
 
 // collectDispatch returns the emitted bindings (sorted) plus the total mapped
@@ -195,11 +218,25 @@ func RenderLuaDispatch(m Manifest) string {
 	b.WriteString("package luabind\n\n")
 	b.WriteString("import (\n\tlua \"github.com/yuin/gopher-lua\"\n)\n\n")
 	b.WriteString("// registerGenerated installs the generated value/handle-verb globals on L.\n")
-	b.WriteString("// These verbs need no game: value types are pure and a handle userdata\n")
-	b.WriteString("// self-carries its *Game. Game-bound and Player/enum verbs install elsewhere.\n")
+	b.WriteString("// These verbs need no game: value types are pure and a handle/Player userdata\n")
+	b.WriteString("// self-carries its *Game. Game-receiver verbs install via registerGameBound.\n")
 	b.WriteString("func registerGenerated(L *lua.LState) {\n")
 	for _, d := range binds {
+		if d.gameBound {
+			continue
+		}
 		fmt.Fprintf(&b, "\tL.SetGlobal(%q, L.NewFunction(%s))\n", d.luaName, d.fnName)
+	}
+	b.WriteString("}\n\n")
+	b.WriteString("// registerGameBound installs the generated Game-receiver verb globals on L,\n")
+	b.WriteString("// each bound through b (the implicit game receiver; the script passes no game\n")
+	b.WriteString("// arg). gameBinder is defined in register.go so this file imports only lua.\n")
+	b.WriteString("func registerGameBound(L *lua.LState, b gameBinder) {\n")
+	for _, d := range binds {
+		if !d.gameBound {
+			continue
+		}
+		fmt.Fprintf(&b, "\tL.SetGlobal(%q, L.NewFunction(b.%s))\n", d.luaName, d.fnName)
 	}
 	b.WriteString("}\n\n")
 	for _, d := range binds {

@@ -128,3 +128,48 @@ func TestGeneratedPlayerBindingsFSV(t *testing.T) {
 	}
 	t.Logf("FSV Player param: Unit_SetOwner via Lua -> sim ownership reassigned, Lua OwnedBy=true")
 }
+
+func TestGeneratedGameBoundBindingsFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 1})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+
+	// A Game-receiver verb is bound to g (no game arg from Lua). Game_NeutralHostile()
+	// returns a Player; its slot must equal the Go call's (the binder used b.g).
+	if err := L.DoString(`np = Game_NeutralHostile()`); err != nil {
+		t.Fatalf("Game_NeutralHostile script: %v", err)
+	}
+	npud, ok := L.GetGlobal("np").(*lua.LUserData)
+	if !ok {
+		t.Fatalf("Game_NeutralHostile returned %s, want Player userdata", L.GetGlobal("np").Type())
+	}
+	p, ok := npud.Value.(api.Player)
+	if !ok {
+		t.Fatalf("returned userdata holds %T, not api.Player", npud.Value)
+	}
+	t.Logf("FSV Game_NeutralHostile: Lua player slot=%d, Go slot=%d", p.Slot(), g.NeutralHostile().Slot())
+	if p.Slot() != g.NeutralHostile().Slot() {
+		t.Fatalf("Game_NeutralHostile slot via Lua=%d != Go=%d", p.Slot(), g.NeutralHostile().Slot())
+	}
+
+	// Game-receiver verbs are gated on a game: Register(L2, nil) installs none.
+	L2 := lua.NewState()
+	defer L2.Close()
+	if err := Register(L2, nil); err != nil {
+		t.Fatalf("Register(nil): %v", err)
+	}
+	if L2.GetGlobal("Game_NeutralHostile") != lua.LNil {
+		t.Fatal("Game_NeutralHostile installed without a game (should be gated on g != nil)")
+	}
+	// ...but no-game value verbs ARE installed even without a game.
+	if L2.GetGlobal("Vec2_Add") == lua.LNil {
+		t.Fatal("Vec2_Add should be installed even without a game")
+	}
+	t.Logf("FSV game-gating: Game_* absent without a game; value/handle verbs present")
+}

@@ -34,12 +34,17 @@ import (
 // g may be nil for the pure value-math verbs (they need no game); handle and
 // free-function verbs require a non-nil g and are registered against it.
 func Register(L *lua.LState, g *api.Game) error {
-	registerGenerated(L) // generated: bindings_dispatch_gen.go
-	// Game-bound free functions and Player/enum verbs install here once the
-	// generator supports those type shapes (they need g threaded; the handle
-	// and value verbs above do not — a handle userdata self-carries its game).
+	registerGenerated(L) // value/handle/Player verbs (no game needed)
+	if g != nil {
+		registerGameBound(L, gameBinder{g: g}) // Game-receiver verbs, bound to g
+	}
 	return nil
 }
+
+// gameBinder carries the bound game for the generated Game-receiver verb
+// methods (bindings_dispatch_gen.go emits methods on this type using b.g). It
+// lives here so the generated file imports only gopher-lua, never api.
+type gameBinder struct{ g *api.Game }
 
 // --- stable ABI argument readers (used by the generated dispatch) ---
 
