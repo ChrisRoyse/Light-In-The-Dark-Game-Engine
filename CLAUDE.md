@@ -21,10 +21,12 @@ Warcraft III–inspired RTS engine in pure Go on the G3N OpenGL engine. The publ
 git clone https://github.com/cipherxof/war3-types repoes/war3-types
 git clone https://github.com/g3n/engine repoes/engine
 # re-apply LITD-PATCH commits to repoes/engine (grep -rn "LITD-PATCH" for current set)
+git clone https://github.com/yuin/gopher-lua repoes/gopher-lua
+git -C repoes/gopher-lua checkout 75f497656b1c6864139dd2a7d88cf96d09550814  # then re-apply LITD patches — see docs/lua-patch-log.md
 sudo apt-get install -y xorg-dev libgl1-mesa-dev libopenal-dev libvorbis-dev
 ```
 
-Requires Go 1.26+, gcc (cgo), OpenGL driver. `go.mod` replaces `github.com/g3n/engine` with `./repoes/engine`.
+Requires Go 1.26+, gcc (cgo), OpenGL driver. `go.mod` replaces `github.com/g3n/engine` with `./repoes/engine` and `github.com/yuin/gopher-lua` with `./repoes/gopher-lua` (the deterministic Lua fork, D-25; provenance in `docs/lua-patch-log.md`).
 
 ## Build
 
