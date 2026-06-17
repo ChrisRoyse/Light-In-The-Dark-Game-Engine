@@ -96,30 +96,30 @@ const (
 // path. A kind absent here is unknown and OnEvent rejects it
 // (fail-closed).
 var simKindOf = map[EventKind]uint16{
-	EventUnitDeath:         1,  // sim.EvUnitDeath
-	EventUnitDamaged:       7,  // sim.EvUnitDamaged
-	EventOrderIssued:       4,  // sim.EvOrderIssued
-	EventOrderDone:         5,  // sim.EvOrderDone
-	EventUnitTrained:       11, // sim.EvUnitTrained
-	EventResearchFinished:  13, // sim.EvResearchFinished
-	EventHeroLevel:         14, // sim.EvHeroLevel
-	EventItemPickedUp:      16, // sim.EvItemPickedUp
-	EventConstructFinished: 20, // sim.EvConstructFinished
-	EventMissileImpact:     22, // sim.EvMissileImpact
-	EventMissileExpired:    23, // sim.EvMissileExpired
-	EventVictory:           sim.EvVictory,
-	EventDefeat:            sim.EvDefeat,
-	EventRegionEnter:       sim.EvRegionEnter,
-	EventRegionLeave:       sim.EvRegionLeave,
-	EventOrderDropped:      sim.EvOrderDropped,
-	EventBuffExpired:       sim.EvBuffExpired,
-	EventResourceDeposited: sim.EvResourceDeposited,
-	EventResourceDepleted:  sim.EvResourceDepleted,
-	EventTrainRefused:      sim.EvTrainRefused,
-	EventHeroDied:          sim.EvHeroDied,
-	EventItemUsed:          sim.EvItemUsed,
-	EventItemDropped:       sim.EvItemDropped,
-	EventConstructStarted:  sim.EvConstructStarted,
+	EventUnitDeath:          1,  // sim.EvUnitDeath
+	EventUnitDamaged:        7,  // sim.EvUnitDamaged
+	EventOrderIssued:        4,  // sim.EvOrderIssued
+	EventOrderDone:          5,  // sim.EvOrderDone
+	EventUnitTrained:        11, // sim.EvUnitTrained
+	EventResearchFinished:   13, // sim.EvResearchFinished
+	EventHeroLevel:          14, // sim.EvHeroLevel
+	EventItemPickedUp:       16, // sim.EvItemPickedUp
+	EventConstructFinished:  20, // sim.EvConstructFinished
+	EventMissileImpact:      22, // sim.EvMissileImpact
+	EventMissileExpired:     23, // sim.EvMissileExpired
+	EventVictory:            sim.EvVictory,
+	EventDefeat:             sim.EvDefeat,
+	EventRegionEnter:        sim.EvRegionEnter,
+	EventRegionLeave:        sim.EvRegionLeave,
+	EventOrderDropped:       sim.EvOrderDropped,
+	EventBuffExpired:        sim.EvBuffExpired,
+	EventResourceDeposited:  sim.EvResourceDeposited,
+	EventResourceDepleted:   sim.EvResourceDepleted,
+	EventTrainRefused:       sim.EvTrainRefused,
+	EventHeroDied:           sim.EvHeroDied,
+	EventItemUsed:           sim.EvItemUsed,
+	EventItemDropped:        sim.EvItemDropped,
+	EventConstructStarted:   sim.EvConstructStarted,
 	EventConstructCancelled: sim.EvConstructCancelled,
 }
 

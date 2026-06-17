@@ -199,7 +199,7 @@ func TestAIHooksLiveAttachTwiceReplacesFSV(t *testing.T) {
 // and the AI context clock.
 func TestAIHooksLivePauseShiftsFSV(t *testing.T) {
 	const player uint8 = 1
-	const delay = 20      // controller trains on its 20th AI tick (well after the pause begins)
+	const delay = 20       // controller trains on its 20th AI tick (well after the pause begins)
 	const totalTicks = 200 // run both scenarios the same length so clocks compare at a common tick
 
 	// Runs totalTicks sim ticks; returns the sim tick the footman first appears

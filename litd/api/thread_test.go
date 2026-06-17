@@ -168,7 +168,7 @@ func TestThreadQuantizationCeilingFSV(t *testing.T) {
 		stepN(w, 10)
 		return resume
 	}
-	one := resumeTickFor(1 * time.Millisecond)   // sub-tick → 1 tick
+	one := resumeTickFor(1 * time.Millisecond)    // sub-tick → 1 tick
 	floor := resumeTickFor(50 * time.Millisecond) // exactly 1 tick
 	ceil := resumeTickFor(75 * time.Millisecond)  // 1.5 ticks → ceil 2
 	two := resumeTickFor(100 * time.Millisecond)  // exactly 2 ticks

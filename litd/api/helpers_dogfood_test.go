@@ -69,8 +69,8 @@ func TestHelpersPolledWaitDogfoodFSV(t *testing.T) {
 	var ticks []uint32
 	g.Run(func(*litd.Thread) {
 		ticks = append(ticks, w.Tick()) // tick 0
-		helpers.PolledWait(0)            // edge (1): guard, same-tick, no record
-		ticks = append(ticks, w.Tick())  // still tick 0
+		helpers.PolledWait(0)           // edge (1): guard, same-tick, no record
+		ticks = append(ticks, w.Tick()) // still tick 0
 		helpers.PolledWait(100 * time.Millisecond)
 		ticks = append(ticks, w.Tick()) // resume tick 2
 	})

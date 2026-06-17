@@ -28,7 +28,7 @@ func TestQueries(t *testing.T) {
 		unitAt(t, w, g, 0, 150, 150)
 		unitAt(t, w, g, 0, 120, 80)
 		unitAt(t, w, g, 0, 5000, 5000) // far
-		stepN(w, 1)                     // populate spatial buckets
+		stepN(w, 1)                    // populate spatial buckets
 
 		inRange := idsOf(g.UnitsInRange(Vec2{100, 100}, 200, nil))
 		inRect := idsOf(g.UnitsIn(NewRect(Vec2{0, 0}, Vec2{300, 300}), nil))
