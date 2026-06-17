@@ -81,6 +81,13 @@ exact   Subscription.Cancel
 exact   UnitView.OwnerPlayer
 exact   UnitView.Position
 
+# handle marshaling seam (#267, decision #385): the opaque handle<->HandleRef
+# codec the Lua binding layer and the coroutine save system (#264) cross.
+# Structural plumbing, no JASS equivalent. (HandleRef/HandleKind/Handle are
+# exported types — out of this gate's verb scope.)
+exact   RefOf
+exact   Game.Resolve
+
 # value-math (R-API-2 value types; no JASS native)
 exact   Angle.Normalized
 exact   Angle.Radians
