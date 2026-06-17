@@ -49,7 +49,7 @@ The four D-25 patches land in their own issues on top of this pinned base:
 |---|---|---|---|
 | 1 | instruction-budget counter in `mainLoop` | #262 | **done** (fork commit `46381dc`) |
 | 2 | deterministic mathlib (`math.random` → sim PRNG; `randomseed` disabled) | #263 | **done — random half** (fork commit `b579629`); transcendental golden half blocked on #284 |
-| 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | **in progress** — VM snapshot/restore (`5c53948`/`54426ff`) + closure/upvalue accessors (`a05c253`); luabind save/load incl. register closures with shared upvalues (`6931cef`/`e3d4f05`/`331aee9`). Pending: nested coroutines, userdata→handle rebind, frame-closures-with-upvalues |
+| 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | **in progress** — VM snapshot/restore (`5c53948`/`54426ff`) + closure/upvalue accessors (`a05c253`); luabind save/load incl. register closures with shared upvalues (`331aee9`) and nested coroutines (`ef55fbd`). Pending: userdata→handle rebind (gated on the #267 handle store), frame-closures-with-upvalues — both fail closed today |
 | 4 | `LState`/call-frame pooling + golden cross-arch CI test | #265 | pending |
 | S | deterministic memory-budget accountant (`string.rep` charge) | #266 | **done** (fork commit `d855815`) |
 
