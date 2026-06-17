@@ -5,32 +5,47 @@ import (
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
-// drainTrace pops the whole stack via the WC3 natives, recording the
-// (command,data) it sees at each step — the exact sequence a ported AI script
-// would observe with GetLastCommand/GetLastData/PopLastCommand.
-func drainTrace(b *ai.Inbox) [][2]int {
+// These tests verify the litd/ai command-stack facade against the AUTHORITATIVE
+// source of truth: the sim-owned per-player AI command stack (litd/sim/ai.go).
+// sim.World is the CommandStackSource; we cross-check every facade operation
+// against the sim's own accessors, proving the facade holds no second copy
+// (#379). The stack's LIFO/cap/save semantics themselves are owned and FSV'd by
+// litd/sim/ai_test.go; here we verify delegation and the WC3 native behavior.
+
+const aiPlayer = 3
+
+func newAIWorld() *sim.World {
+	w := sim.NewWorld(sim.Caps{Units: 16})
+	w.AttachAI(aiPlayer, 1)
+	return w
+}
+
+func drainTrace(cs ai.CommandStack) [][2]int {
 	var tr [][2]int
-	for b.CommandsWaiting() != 0 {
-		tr = append(tr, [2]int{b.GetLastCommand(), b.GetLastData()})
-		b.PopLastCommand()
+	for cs.CommandsWaiting() != 0 {
+		tr = append(tr, [2]int{cs.GetLastCommand(), cs.GetLastData()})
+		cs.PopLastCommand()
 	}
 	return tr
 }
 
-// TestInboxNativesGoldenSemanticsFSV — push (1,10),(2,20),(3,30); the natives
-// must read them top-down (LIFO): 3,2,1. Golden semantics table.
+// TestInboxNativesGoldenSemanticsFSV — push (1,10),(2,20),(3,30) via the
+// map-side CommandAI; the natives read them top-down (LIFO): 3,2,1. Golden table.
 func TestInboxNativesGoldenSemanticsFSV(t *testing.T) {
-	b := ai.NewCommandStack()
-	b.Push(ai.InboxMsg{Command: 1, Data: 10})
-	b.Push(ai.InboxMsg{Command: 2, Data: 20})
-	b.Push(ai.InboxMsg{Command: 3, Data: 30})
-	t.Logf("FSV pushed (1,10),(2,20),(3,30); CommandsWaiting=%d cap=%d", b.CommandsWaiting(), b.Cap())
-	if b.CommandsWaiting() != 3 || b.Cap() != 12 {
-		t.Fatalf("waiting=%d cap=%d want 3/12", b.CommandsWaiting(), b.Cap())
+	w := newAIWorld()
+	cs := ai.NewCommandStack(w, aiPlayer)
+	ai.CommandAI(w, aiPlayer, 1, 10)
+	ai.CommandAI(w, aiPlayer, 2, 20)
+	ai.CommandAI(w, aiPlayer, 3, 30)
+	// Cross-check against the sim SoT directly — the facade wrote to the sim.
+	t.Logf("FSV CommandsWaiting=%d, sim AICommandCount=%d (must agree)", cs.CommandsWaiting(), w.AICommandCount(aiPlayer))
+	if cs.CommandsWaiting() != 3 || w.AICommandCount(aiPlayer) != 3 {
+		t.Fatalf("facade=%d sim=%d want 3/3", cs.CommandsWaiting(), w.AICommandCount(aiPlayer))
 	}
-	got := drainTrace(b)
+	got := drainTrace(cs)
 	golden := [][2]int{{3, 30}, {2, 20}, {1, 10}}
 	t.Logf("FSV drain trace (GetLastCommand,GetLastData) = %v want golden %v", got, golden)
 	if len(got) != 3 {
@@ -41,136 +56,144 @@ func TestInboxNativesGoldenSemanticsFSV(t *testing.T) {
 			t.Fatalf("trace[%d]=%v want %v (LIFO)", i, got[i], golden[i])
 		}
 	}
+	// Drain emptied the sim stack too (no second copy).
+	if w.AICommandCount(aiPlayer) != 0 {
+		t.Fatalf("after facade drain, sim still holds %d (facade not delegating)", w.AICommandCount(aiPlayer))
+	}
 }
 
-// TestInboxNativesPopEmptyFSV — Pop/Get on an empty stack are WC3-faithful: 0
-// and no-op, never a panic. Issue edge 1.
-func TestInboxNativesPopEmptyFSV(t *testing.T) {
-	b := ai.NewCommandStack()
-	t.Logf("FSV empty stack: waiting=%d GetLastCommand=%d GetLastData=%d", b.CommandsWaiting(), b.GetLastCommand(), b.GetLastData())
-	if b.CommandsWaiting() != 0 || b.GetLastCommand() != 0 || b.GetLastData() != 0 {
-		t.Fatalf("empty stack waiting/cmd/data = %d/%d/%d want 0/0/0", b.CommandsWaiting(), b.GetLastCommand(), b.GetLastData())
+// TestInboxNativesDelegationFSV — the facade is a pure view: a push through the
+// map-side CommandAI is observable via the sim accessors, and a pop through the
+// native is observable in the sim. No second representation (#379 regression).
+func TestInboxNativesDelegationFSV(t *testing.T) {
+	w := newAIWorld()
+	cs := ai.NewCommandStack(w, aiPlayer)
+	ai.CommandAI(w, aiPlayer, 42, 99)
+	// Facade read == sim read.
+	fc, fd, fok := cs.LastPair()
+	sc, sd, sok := w.LastAICommand(aiPlayer)
+	t.Logf("FSV facade top=(%d,%d,%v) sim top=(%d,%d,%v)", fc, fd, fok, sc, sd, sok)
+	if !fok || !sok || fc != int(sc) || fd != int(sd) {
+		t.Fatalf("facade/sim top disagree: (%d,%d) vs (%d,%d)", fc, fd, sc, sd)
 	}
-	b.PopLastCommand() // must not panic, must not go negative
-	b.PopLastCommand()
-	if _, _, ok := b.LastPair(); ok {
+	// Pop through the native; the sim observes it.
+	cs.PopLastCommand()
+	t.Logf("FSV after native pop: facade waiting=%d sim count=%d", cs.CommandsWaiting(), w.AICommandCount(aiPlayer))
+	if cs.CommandsWaiting() != 0 || w.AICommandCount(aiPlayer) != 0 {
+		t.Fatalf("native pop not reflected in sim: facade=%d sim=%d", cs.CommandsWaiting(), w.AICommandCount(aiPlayer))
+	}
+}
+
+// TestInboxNativesPopEmptyFSV — empty-stack access is WC3-faithful and
+// panic-free. Issue edge 1.
+func TestInboxNativesPopEmptyFSV(t *testing.T) {
+	w := newAIWorld()
+	cs := ai.NewCommandStack(w, aiPlayer)
+	t.Logf("FSV empty: waiting=%d GetLastCommand=%d GetLastData=%d", cs.CommandsWaiting(), cs.GetLastCommand(), cs.GetLastData())
+	if cs.CommandsWaiting() != 0 || cs.GetLastCommand() != 0 || cs.GetLastData() != 0 {
+		t.Fatalf("empty waiting/cmd/data = %d/%d/%d want 0/0/0", cs.CommandsWaiting(), cs.GetLastCommand(), cs.GetLastData())
+	}
+	cs.PopLastCommand() // no panic, no negative
+	cs.PopLastCommand()
+	if _, _, ok := cs.LastPair(); ok {
 		t.Fatal("LastPair on empty returned ok")
 	}
-	t.Logf("FSV PopLastCommand on empty is a no-op; waiting still %d", b.CommandsWaiting())
-	if b.CommandsWaiting() != 0 {
-		t.Fatalf("empty pop made waiting=%d want 0", b.CommandsWaiting())
+	if cs.CommandsWaiting() != 0 {
+		t.Fatalf("empty pop made waiting=%d want 0", cs.CommandsWaiting())
 	}
+	t.Logf("FSV PopLastCommand on empty is a no-op")
 }
 
 // TestInboxNativesThreeSameTickFSV — the map script sends 3 commands in one
-// tick via CommandAI; the AI sees all three on the SAME tick, top = the last
-// one sent (LIFO). Issue edge 2 (AI-visible order + delivery tick).
+// tick via CommandAI; all three are visible on the SAME tick, top = last sent
+// (LIFO). Issue edge 2 (AI-visible order + delivery tick).
 func TestInboxNativesThreeSameTickFSV(t *testing.T) {
-	bus := ai.NewCommandBus()
-	bus.Add(1)
-	// "tick T": the map domain sends three commands before the AI sub-phase.
-	bus.CommandAI(1, 5, 50)
-	bus.CommandAI(1, 6, 60)
-	bus.CommandAI(1, 7, 70)
-	box := bus.Box(1)
-	// Same-tick delivery: all three already visible.
-	t.Logf("FSV after 3 CommandAI on tick T: CommandsWaiting=%d (same-tick delivery)", box.CommandsWaiting())
-	if box.CommandsWaiting() != 3 {
-		t.Fatalf("waiting=%d want 3 (commands not delivered same tick)", box.CommandsWaiting())
+	w := newAIWorld()
+	cs := ai.NewCommandStack(w, aiPlayer)
+	// "tick T": three CommandAI before the AI sub-phase reads.
+	ai.CommandAI(w, aiPlayer, 5, 50)
+	ai.CommandAI(w, aiPlayer, 6, 60)
+	ai.CommandAI(w, aiPlayer, 7, 70)
+	t.Logf("FSV after 3 CommandAI on tick T: CommandsWaiting=%d (same-tick delivery)", cs.CommandsWaiting())
+	if cs.CommandsWaiting() != 3 {
+		t.Fatalf("waiting=%d want 3 (not delivered same tick)", cs.CommandsWaiting())
 	}
-	// AI-visible order: top is the last sent (7,70), per LIFO.
-	c, d, _ := box.LastPair()
-	t.Logf("FSV AI sees top=(%d,%d) want (7,70); full drain=%v", c, d, drainTrace2(box))
+	c, d, _ := cs.LastPair()
+	t.Logf("FSV AI sees top=(%d,%d) want (7,70); full drain=%v", c, d, drainTrace(cs))
 	if c != 7 || d != 70 {
 		t.Fatalf("top=(%d,%d) want (7,70)", c, d)
 	}
 }
 
-func drainTrace2(b *ai.Inbox) [][2]int { return drainTrace(b) }
-
-// TestInboxNativesSaveRestoreFSV — a bus with undrained commands serializes and
-// restores byte-for-byte identical stacks. Issue edge 3.
+// TestInboxNativesSaveRestoreFSV — undrained commands survive a sim save/load;
+// the facade on the reloaded world sees the identical stack. Issue edge 3 (the
+// stack is sim state, so the sim save is the authoritative round-trip).
 func TestInboxNativesSaveRestoreFSV(t *testing.T) {
-	bus := ai.NewCommandBus()
-	bus.Add(1)
-	bus.Add(2)
-	// Player 1: 5 undrained commands; player 2: 2.
+	w := newAIWorld()
+	// Known input: push (1,100)..(5,500); known LIFO drain: 5,4,3,2,1.
 	for i := 1; i <= 5; i++ {
-		bus.CommandAI(1, i, i*100)
+		ai.CommandAI(w, aiPlayer, i, i*100)
 	}
-	bus.CommandAI(2, 9, 90)
-	bus.CommandAI(2, 8, 80)
-	// Force a drop on player 1 to confirm the dropped counter persists too.
-	for i := 0; i < 10; i++ {
-		bus.CommandAI(1, 99, 0) // 5 already + push to cap 12, then overflow
-	}
-	beforeW1, beforeDrop1 := bus.Box(1).CommandsWaiting(), bus.Box(1).Dropped()
-	t.Logf("FSV before save: p1 waiting=%d dropped=%d, p2 waiting=%d", beforeW1, beforeDrop1, bus.Box(2).CommandsWaiting())
-	blob := bus.Save(nil)
+	want := [][2]int{{5, 500}, {4, 400}, {3, 300}, {2, 200}, {1, 100}}
+	t.Logf("FSV before save: waiting=%d (pushed 1..5)", ai.NewCommandStack(w, aiPlayer).CommandsWaiting())
 
-	// Fresh bus, same players registered, then Load.
-	r := ai.NewCommandBus()
-	r.Add(1)
-	r.Add(2)
-	if err := r.Load(blob); err != nil {
-		t.Fatalf("Load: %v", err)
+	var buf bytes.Buffer
+	const fp = 0x276276
+	if err := w.SaveState(&buf, fp); err != nil {
+		t.Fatalf("save: %v", err)
 	}
-	// Re-save must be byte-identical.
-	if !bytes.Equal(blob, r.Save(nil)) {
-		t.Fatal("re-save after restore not byte-identical")
+	w2 := sim.NewWorld(sim.Caps{Units: 16})
+	if err := w2.LoadState(bytes.NewReader(buf.Bytes()), fp); err != nil {
+		t.Fatalf("load: %v", err)
 	}
-	// SoT: each player's stack drains to the identical trace, with identical
-	// waiting + dropped counters.
-	if r.Box(1).CommandsWaiting() != beforeW1 || r.Box(1).Dropped() != beforeDrop1 {
-		t.Fatalf("p1 restored waiting=%d dropped=%d want %d/%d",
-			r.Box(1).CommandsWaiting(), r.Box(1).Dropped(), beforeW1, beforeDrop1)
+	cs2 := ai.NewCommandStack(w2, aiPlayer)
+	t.Logf("FSV after restore: waiting=%d (want 5)", cs2.CommandsWaiting())
+	if cs2.CommandsWaiting() != 5 {
+		t.Fatalf("restored waiting=%d want 5", cs2.CommandsWaiting())
 	}
-	origTrace1 := drainTrace(bus.Box(1))
-	restTrace1 := drainTrace(r.Box(1))
-	t.Logf("FSV p1 orig trace len=%d, restored trace len=%d", len(origTrace1), len(restTrace1))
-	if len(origTrace1) != len(restTrace1) {
-		t.Fatalf("p1 trace lengths differ: %d vs %d", len(origTrace1), len(restTrace1))
+	got := drainTrace(cs2)
+	t.Logf("FSV restored drain trace=%v want %v (LIFO)", got, want)
+	if len(got) != len(want) {
+		t.Fatalf("restored trace len %d != %d", len(got), len(want))
 	}
-	for i := range origTrace1 {
-		if origTrace1[i] != restTrace1[i] {
-			t.Fatalf("p1 trace[%d] %v != restored %v", i, origTrace1[i], restTrace1[i])
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("restored trace[%d]=%v != %v", i, got[i], want[i])
 		}
 	}
-	t.Logf("FSV save/restore: p1 %d cmds + %d dropped, p2 stack — all identical post-restore", beforeW1, beforeDrop1)
+	t.Logf("FSV 5 undrained commands survived the sim save/load identically")
 }
 
 // TestInboxNativesDeterminismFSV — two runs of the same interleaved send/pop
-// script produce identical observation traces. Issue edge 4.
+// script over fresh worlds produce identical observation traces. Issue edge 4.
 func TestInboxNativesDeterminismFSV(t *testing.T) {
 	script := func() [][2]int {
-		bus := ai.NewCommandBus()
-		bus.Add(3)
-		box := bus.Box(3)
+		w := newAIWorld()
+		cs := ai.NewCommandStack(w, aiPlayer)
 		var tr [][2]int
 		record := func() {
-			c, d, ok := box.LastPair()
-			if ok {
+			if c, d, ok := cs.LastPair(); ok {
 				tr = append(tr, [2]int{c, d})
 			} else {
 				tr = append(tr, [2]int{-1, -1})
 			}
 		}
-		bus.CommandAI(3, 1, 1)
-		bus.CommandAI(3, 2, 2)
-		record()              // top should be (2,2)
-		box.PopLastCommand()  // remove 2
-		bus.CommandAI(3, 3, 3)
-		record()              // top should be (3,3)
-		box.PopLastCommand()  // remove 3
-		record()              // top should be (1,1)
-		box.PopLastCommand()  // remove 1
-		record()              // empty → (-1,-1)
+		ai.CommandAI(w, aiPlayer, 1, 1)
+		ai.CommandAI(w, aiPlayer, 2, 2)
+		record()           // top (2,2)
+		cs.PopLastCommand() // remove 2
+		ai.CommandAI(w, aiPlayer, 3, 3)
+		record()           // top (3,3)
+		cs.PopLastCommand() // remove 3
+		record()           // top (1,1)
+		cs.PopLastCommand() // remove 1
+		record()           // empty → (-1,-1)
 		return tr
 	}
 	a := script()
 	b := script()
-	t.Logf("FSV run A trace=%v", a)
-	t.Logf("FSV run B trace=%v", b)
+	t.Logf("FSV run A=%v", a)
+	t.Logf("FSV run B=%v", b)
 	want := [][2]int{{2, 2}, {3, 3}, {1, 1}, {-1, -1}}
 	if len(a) != len(want) {
 		t.Fatalf("trace len=%d want %d", len(a), len(want))
@@ -181,34 +204,4 @@ func TestInboxNativesDeterminismFSV(t *testing.T) {
 		}
 	}
 	t.Logf("FSV interleaved send/pop deterministic across 2 runs, matches golden %v", want)
-}
-
-// TestInboxNativesFailClosedLoadFSV — a corrupt bus blob leaves the bus
-// unchanged (atomic, fail-closed).
-func TestInboxNativesFailClosedLoadFSV(t *testing.T) {
-	bus := ai.NewCommandBus()
-	bus.Add(1)
-	bus.CommandAI(1, 4, 40)
-	bus.CommandAI(1, 5, 50)
-	before := bus.Save(nil)
-
-	if err := bus.Load([]byte("garbage-not-a-bus")); err == nil {
-		t.Fatal("Load accepted a bad-magic blob")
-	}
-	good := bus.Save(nil)
-	if err := bus.Load(good[:len(good)-3]); err == nil {
-		t.Fatal("Load accepted a truncated blob")
-	}
-	// Player-mismatch: corrupt the player id.
-	corrupt := append([]byte{}, good...)
-	corrupt[8+2+4] ^= 0xFF
-	if err := bus.Load(corrupt); err == nil {
-		t.Fatal("Load accepted an unknown-player blob")
-	}
-	after := bus.Save(nil)
-	t.Logf("FSV bus bytes before=%d after-failed-loads=%d", len(before), len(after))
-	if !bytes.Equal(before, after) {
-		t.Fatal("failed Load mutated the bus (not fail-closed)")
-	}
-	t.Logf("FSV three rejected loads; bus unchanged (waiting=%d)", bus.Box(1).CommandsWaiting())
 }

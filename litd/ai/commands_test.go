@@ -1,7 +1,6 @@
 package ai_test
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
@@ -189,80 +188,6 @@ func TestCommandDuringPauseFSV(t *testing.T) {
 		t.Fatalf("post-resume order %v want [1 2 3]", order)
 	}
 	t.Logf("FSV paused commands applied in order on resume")
-}
-
-// TestInboxOverflowBoundedFSV — the command stack is bounded; overflow rejects
-// the newest command (preserving the stacked commands), counts the drop, and the
-// stack never grows past capacity. Regression for #378 (LIFO). Issue edge 3.
-func TestInboxOverflowBoundedFSV(t *testing.T) {
-	var diag bytes.Buffer
-	b := ai.NewInbox(4)
-	b.SetDiagnostics(&diag)
-	accepted := 0
-	for i := 1; i <= 6; i++ { // push 6 into a cap-4 stack
-		if b.Push(ai.InboxMsg{Command: int32(i), Data: int32(i * 10)}) {
-			accepted++
-		}
-	}
-	t.Logf("FSV after pushing 6 into cap-4 stack: accepted=%d waiting=%d dropped=%d cap=%d",
-		accepted, b.Waiting(), b.Dropped(), b.Cap())
-	if accepted != 4 || b.Waiting() != 4 || b.Dropped() != 2 {
-		t.Fatalf("accepted=%d waiting=%d dropped=%d want 4/4/2", accepted, b.Waiting(), b.Dropped())
-	}
-	if b.Waiting() > b.Cap() {
-		t.Fatal("stack grew past capacity (unbounded)")
-	}
-	// LIFO: 1,2,3,4 accepted (5,6 rejected); pop order is 4,3,2,1 (top first).
-	for want := int32(4); want >= 1; want-- {
-		m, ok := b.Pop()
-		if !ok || m.Command != want || m.Data != want*10 {
-			t.Fatalf("pop got %+v ok=%v want Command=%d (LIFO)", m, ok, want)
-		}
-	}
-	if _, ok := b.Pop(); ok {
-		t.Fatal("stack not empty after draining 4")
-	}
-	t.Logf("FSV reject-newest preserved stack [1,2,3,4]; LIFO pop order 4,3,2,1; diagnostic=%q", diag.String())
-	if diag.Len() == 0 {
-		t.Fatal("overflow produced no diagnostic (must be loud)")
-	}
-}
-
-// TestInboxLIFOTopPopFSV — WC3-faithful command-stack semantics: Push onto top,
-// Top reads the most recent without consuming, Pop removes the top exposing
-// older. Regression for #378 (was FIFO).
-func TestInboxLIFOTopPopFSV(t *testing.T) {
-	b := ai.NewInbox(8)
-	if _, ok := b.Top(); ok {
-		t.Fatal("Top on empty stack returned ok")
-	}
-	b.Push(ai.InboxMsg{Command: 7, Data: 70})
-	b.Push(ai.InboxMsg{Command: 8, Data: 80})
-	if b.Waiting() != 2 {
-		t.Fatalf("waiting=%d want 2", b.Waiting())
-	}
-	// Top is the most-recent (8) and does not consume.
-	m, _ := b.Top()
-	if m.Command != 8 || b.Waiting() != 2 {
-		t.Fatalf("Top consumed or wrong (want most-recent 8): %+v waiting=%d", m, b.Waiting())
-	}
-	// LIFO pop: 8 then 7.
-	p1, _ := b.Pop()
-	p2, _ := b.Pop()
-	t.Logf("FSV stack LIFO pop order: %+v then %+v (waiting now %d)", p1, p2, b.Waiting())
-	if p1.Command != 8 || p2.Command != 7 || b.Waiting() != 0 {
-		t.Fatalf("LIFO order wrong: %+v %+v waiting=%d", p1, p2, b.Waiting())
-	}
-	// Interleave push/pop: A,B → pop B → push C → top is C, then B's slot is gone.
-	b.Push(ai.InboxMsg{Command: 1})
-	b.Push(ai.InboxMsg{Command: 2})
-	b.Pop() // removes 2
-	b.Push(ai.InboxMsg{Command: 3})
-	top, _ := b.Top()
-	if top.Command != 3 || b.Waiting() != 2 {
-		t.Fatalf("after interleave top=%+v waiting=%d want Command=3 waiting=2", top, b.Waiting())
-	}
-	t.Logf("FSV stack interleave: push A,B / pop / push C → top=%d, waiting=%d", top.Command, b.Waiting())
 }
 
 // TestCommandInvalidKindRejectedFSV — a malformed command (invalid kind) is
