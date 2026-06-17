@@ -36,6 +36,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	litobs "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
@@ -229,7 +230,13 @@ func main() {
 	flag.StringVar(&d.perfDumpPath, "perf-dump", "", "write F11 perf overlay/counter JSON at autotest completion")
 	flag.IntVar(&d.perfToggleSpam, "perf-toggle-spam", 0, "autotest-only: toggle the F11 overlay this many times at 10 Hz")
 	flag.IntVar(&d.stressUnits, "stress-units", 0, "spawn N synthetic visible units for perf overlay stress counters")
+	showVersion := flag.Bool("version", false, "print version, commit, and build date, then exit (#184)")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(buildinfo.Get())
+		return
+	}
 
 	// Opt-in crash capture (#185): install the recover hook before any GL or
 	// world setup so a panic during init or in the render loop is written to a

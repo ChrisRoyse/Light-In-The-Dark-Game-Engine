@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
@@ -44,7 +45,13 @@ func main() {
 	crashDir := flag.String("crash-dir", "", "crash-report directory (default: user config dir/litd)")
 	crashCapture := flag.Bool("crash-capture", true, "write a local crash dump on panic; false = stderr stack only, no file (#185)")
 	reportDir := flag.String("report-on-exit", "", "write a debug-report bundle (litd-report-*.zip) to this dir at run end (#250)")
+	showVersion := flag.Bool("version", false, "print version, commit, and build date, then exit (#184)")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(buildinfo.Get())
+		return
+	}
 
 	// Fail closed: no map format exists yet, so any -map value would
 	// silently mean "ignored". Refuse instead.
