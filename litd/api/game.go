@@ -136,6 +136,18 @@ type Game struct {
 	// #242) — the gamecache replacement reached via Game.Storage().
 	// Lazily created; persisted explicitly via Storage.Save/Load.
 	storage *Storage
+
+	// threads is the cooperative Go script-thread table (thread.go, #377):
+	// one entry per live or retired-and-recyclable green thread, indexed by
+	// Thread.slot. threadFree holds retired slots for reuse; threadContReg
+	// records whether the shared scheduler continuation that resumes them
+	// has been registered yet (lazy, once). suspendedThreads counts threads
+	// currently parked on a wait — the save path fails closed if non-zero
+	// (a parked Go stack is not serializable; same posture as Go timers).
+	threads          []threadEntry
+	threadFree       []uint32
+	threadContReg    bool
+	suspendedThreads int
 }
 
 // newGame wraps a simulation world. The public setup path —

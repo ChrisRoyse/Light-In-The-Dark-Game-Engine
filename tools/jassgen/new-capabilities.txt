@@ -113,6 +113,16 @@ exact   Camera.Following
 exact   Camera.InCinematic
 exact   Camera.SetZoom
 
+# cooperative script threads (#377): the green-thread execution model over
+# the stackless scheduler. The canonical JASS PolledWait/TriggerSleepAction
+# port is helpers.PolledWait (D4); these are the LitD primitives it rides —
+# the thread constructor, the in-thread suspend verb, and the ambient/save
+# introspection (execution-model.md §2, R-EXEC-1).
+exact   Game.Run
+exact   Thread.PolledWait
+exact   CurrentThread
+exact   Game.SuspendedThreadCount
+
 # engine control (new-capability: registry/scheduler/debug surface)
 exact   Game.DetachAI
 exact   Game.ElapsedTime
