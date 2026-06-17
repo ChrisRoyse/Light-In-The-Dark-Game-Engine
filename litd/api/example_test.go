@@ -121,3 +121,36 @@ func ExampleStorage() {
 	fmt.Println(v, ok)
 	// Output: 500 true
 }
+
+// A Region is a script-defined area; AddRect fills it with the grid cells a
+// rectangle overlaps, and Contains answers point membership.
+func ExampleRegion() {
+	g := exampleGame()
+	rg := g.NewRegion()
+	rg.AddRect(litd.NewRect(litd.Vec2{X: 0, Y: 0}, litd.Vec2{X: 300, Y: 300}))
+	fmt.Println(rg.Contains(litd.Vec2{X: 150, Y: 150}), rg.Contains(litd.Vec2{X: 500, Y: 500}))
+	// Output: true false
+}
+
+// UnitsInRange returns the units within a radius of a point; a nil filter
+// accepts all. The query reads live sim positions.
+func ExampleGame_UnitsInRange() {
+	g := exampleGame()
+	g.CreateUnit(g.Player(0), g.UnitType("hfoo"), litd.Vec2{X: 100, Y: 100}, litd.Deg(0))
+	near := g.UnitsInRange(litd.Vec2{X: 100, Y: 100}, 50, nil)
+	far := g.UnitsInRange(litd.Vec2{X: 1000, Y: 1000}, 50, nil)
+	fmt.Println(len(near), len(far))
+	// Output: 1 0
+}
+
+// A UnitFilter narrows a query: here, only units owned by player 5 (there are
+// none), so the result is empty.
+func ExampleGame_UnitsInRange_filter() {
+	g := exampleGame()
+	g.CreateUnit(g.Player(0), g.UnitType("hfoo"), litd.Vec2{X: 100, Y: 100}, litd.Deg(0))
+	owned := g.UnitsInRange(litd.Vec2{X: 100, Y: 100}, 50, func(v litd.UnitView) bool {
+		return v.OwnerPlayer() == 5
+	})
+	fmt.Println(len(owned))
+	// Output: 0
+}
