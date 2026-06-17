@@ -173,6 +173,12 @@ func TestLuaZeroHandleVerbIsNoOpFSV(t *testing.T) {
 	if !hero.Valid() || hero.Life() != 100 {
 		t.Fatalf("live hero perturbed by zero-handle calls: valid=%v life=%v", hero.Valid(), hero.Life())
 	}
+	// #267 edge 1, Lua-side half (unblocked by #392): the script can observe the
+	// zero handle is invalid and the live one is valid via the bound predicate.
+	if err := L.DoString(`assert(Valid(dead) == false, "zero handle must be invalid from Lua"); assert(Valid(hero) == true, "live handle must be valid from Lua")`); err != nil {
+		t.Fatalf("Lua-side Valid() disagreed with handle liveness: %v", err)
+	}
+	t.Logf("FSV edge1 Lua-side: Valid(dead)=false Valid(hero)=true (asserts passed)")
 }
 
 // TestLuaMalformedVec2FailsLoudFSV — #267 edge 2 (implemented half): a Vec2
