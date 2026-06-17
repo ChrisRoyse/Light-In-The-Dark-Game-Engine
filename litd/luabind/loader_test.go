@@ -208,3 +208,28 @@ func TestLoadWorldQuotaBreachNamedFSV(t *testing.T) {
 		t.Errorf("quota error should name the world/entry: %v", err)
 	}
 }
+
+// TestLoadWorldViaGameSeamFSV exercises the full #268 seam end to end: wire the
+// luabind loader as the game's backend (InstallWorldLoader), then load through
+// the PUBLIC verb g.LoadWorld(path) — not the luabind function directly — and
+// verify the world's Lua ran against the live game. SoT = sim state.
+func TestLoadWorldViaGameSeamFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	reg := NewChunkRegistry()
+	defer reg.Close()
+
+	InstallWorldLoader(g, L, reg)
+	if !g.HasWorldLoader() {
+		t.Fatal("InstallWorldLoader did not install a backend")
+	}
+	if err := g.LoadWorld(filepath.Join("..", "..", "worlds", "dev-sandbox")); err != nil {
+		t.Fatalf("g.LoadWorld: %v", err)
+	}
+	units := g.UnitsInRange(api.Vec2{X: 320, Y: 256}, 8, nil)
+	t.Logf("FSV via g.LoadWorld: tod=%v unitsNearSpawn=%d", g.TimeOfDay(), len(units))
+	if g.TimeOfDay() != 12.0 || len(units) != 1 {
+		t.Fatalf("world did not run via the public verb: tod=%v units=%d", g.TimeOfDay(), len(units))
+	}
+}

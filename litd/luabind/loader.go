@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strings"
 
+	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -121,4 +122,17 @@ func LoadWorld(L *lua.LState, reg *ChunkRegistry, dir string) (*WorldInfo, error
 		return nil, fmt.Errorf("luabind: world %q entry run: %w", dir, err)
 	}
 	return info, nil
+}
+
+// InstallWorldLoader wires the luabind loader as g's LoadWorld backend (#268),
+// closing over L (already sandboxed and Register'd to g) and reg. After this,
+// the public verb g.LoadWorld(path) loads worlds through this engine — keeping
+// litd/api Lua-agnostic (it never imports luabind; the backend crosses in
+// through the api.WorldLoader seam). The api-side WorldInfo is discarded; call
+// LoadWorld directly when the caller needs it.
+func InstallWorldLoader(g *api.Game, L *lua.LState, reg *ChunkRegistry) {
+	g.SetWorldLoader(func(_ *api.Game, path string) error {
+		_, err := LoadWorld(L, reg, path)
+		return err
+	})
 }

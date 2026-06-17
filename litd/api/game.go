@@ -148,6 +148,11 @@ type Game struct {
 	threadFree       []uint32
 	threadContReg    bool
 	suspendedThreads int
+
+	// worldLoader is the host-installed backend for LoadWorld (#268). It is
+	// nil until SetWorldLoader wires the luabind-backed loader; litd/api never
+	// imports the script runtime, so the loader crosses in through this seam.
+	worldLoader WorldLoader
 }
 
 // newGame wraps a simulation world. The public setup path —
