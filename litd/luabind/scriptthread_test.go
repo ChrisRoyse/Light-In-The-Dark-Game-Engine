@@ -181,6 +181,61 @@ func TestLuaThreadsDeterministicFSV(t *testing.T) {
 	}
 }
 
+func TestLuaThreadNestedSpawnFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 31})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+	u1 := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	u2 := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 1, Y: 0}, api.Deg(0))
+
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	OnScriptError(L, func(e error) { t.Errorf("unexpected script error: %v", e) })
+	set := func(n string, u api.Unit) {
+		ud := L.NewUserData()
+		ud.Value = u
+		L.SetGlobal(n, ud)
+	}
+	set("u1", u1)
+	set("u2", u2)
+
+	// A thread that, mid-body, spawns ANOTHER thread; both then PolledWait.
+	if err := L.DoString(`Run(function()
+		Unit_SetLife(u1, 7)
+		Run(function() Unit_SetLife(u2, 8); PolledWait(0.05); Unit_SetLife(u2, 88) end)
+		PolledWait(0.05)
+		Unit_SetLife(u1, 77)
+	end)`); err != nil {
+		t.Fatalf("DoString nested: %v", err)
+	}
+	// Both threads parked at their first wait, with their pre-wait writes applied.
+	if u1.Life() != 7 || u2.Life() != 8 {
+		t.Fatalf("pre-advance: u1=%v u2=%v, want 7/8", u1.Life(), u2.Life())
+	}
+	if g.SuspendedThreadCount() != 2 {
+		t.Fatalf("expected 2 suspended (outer + nested), got %d", g.SuspendedThreadCount())
+	}
+	t.Logf("FSV nested pre-advance: u1=7 u2=8 suspended=2")
+
+	g.Advance(1) // 0.05s = 1 tick: both wake
+	if u1.Life() != 77 || u2.Life() != 88 {
+		t.Fatalf("post-advance: u1=%v u2=%v, want 77/88 (nested resume failed)", u1.Life(), u2.Life())
+	}
+	if g.SuspendedThreadCount() != 0 {
+		t.Fatalf("both threads should have finished, suspended=%d", g.SuspendedThreadCount())
+	}
+	t.Logf("FSV nested post-advance: u1=77 u2=88 suspended=0 — nested thread resumed correctly")
+}
+
 func TestLuaThreadNoWaitRunsToCompletionFSV(t *testing.T) {
 	g, u := scriptGame(t)
 	L := lua.NewState()
