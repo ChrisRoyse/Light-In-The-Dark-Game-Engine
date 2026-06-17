@@ -50,8 +50,34 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argVec2(L, %d)", idx), true
 	case "Angle":
 		return fmt.Sprintf("argAngle(L, %d)", idx), true
+	case "Rect":
+		return fmt.Sprintf("argRect(L, %d)", idx), true
+	case "Unit":
+		return fmt.Sprintf("argUnit(L, %d)", idx), true
+	case "Item":
+		return fmt.Sprintf("argItem(L, %d)", idx), true
+	case "Destructable":
+		return fmt.Sprintf("argDestructable(L, %d)", idx), true
+	case "Missile":
+		return fmt.Sprintf("argMissile(L, %d)", idx), true
+	case "Effect":
+		return fmt.Sprintf("argEffect(L, %d)", idx), true
 	case "float64":
 		return fmt.Sprintf("float64(L.CheckNumber(%d))", idx), true
+	case "int":
+		return fmt.Sprintf("L.CheckInt(%d)", idx), true
+	case "int32":
+		return fmt.Sprintf("int32(L.CheckInt(%d))", idx), true
+	case "int64":
+		return fmt.Sprintf("L.CheckInt64(%d)", idx), true
+	case "uint32":
+		return fmt.Sprintf("uint32(L.CheckInt(%d))", idx), true
+	case "uint8":
+		return fmt.Sprintf("uint8(L.CheckInt(%d))", idx), true
+	case "string":
+		return fmt.Sprintf("L.CheckString(%d)", idx), true
+	case "bool":
+		return fmt.Sprintf("L.CheckBool(%d)", idx), true
 	default:
 		return "", false
 	}
@@ -65,8 +91,16 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(vec2ToLua(L, %s))", expr), true
 	case "Angle":
 		return fmt.Sprintf("L.Push(angleToLua(%s))", expr), true
-	case "float64":
+	case "Rect":
+		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
+	case "Unit", "Item", "Destructable", "Missile", "Effect":
+		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
+	case "float64", "int", "int32", "int64", "uint32", "uint8":
 		return fmt.Sprintf("L.Push(lua.LNumber(%s))", expr), true
+	case "string":
+		return fmt.Sprintf("L.Push(lua.LString(%s))", expr), true
+	case "bool":
+		return fmt.Sprintf("L.Push(lua.LBool(%s))", expr), true
 	default:
 		return "", false
 	}
@@ -158,8 +192,10 @@ func RenderLuaDispatch(m Manifest) string {
 	b.WriteString("// emitted by the generator and are intentionally unbound (no silent drop).\n\n")
 	b.WriteString("package luabind\n\n")
 	b.WriteString("import (\n\tlua \"github.com/yuin/gopher-lua\"\n)\n\n")
-	b.WriteString("// registerValueMath installs the generated value-math globals on L.\n")
-	b.WriteString("func registerValueMath(L *lua.LState) {\n")
+	b.WriteString("// registerGenerated installs the generated value/handle-verb globals on L.\n")
+	b.WriteString("// These verbs need no game: value types are pure and a handle userdata\n")
+	b.WriteString("// self-carries its *Game. Game-bound and Player/enum verbs install elsewhere.\n")
+	b.WriteString("func registerGenerated(L *lua.LState) {\n")
 	for _, d := range binds {
 		fmt.Fprintf(&b, "\tL.SetGlobal(%q, L.NewFunction(%s))\n", d.luaName, d.fnName)
 	}
