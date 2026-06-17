@@ -51,6 +51,7 @@ The four D-25 patches land in their own issues on top of this pinned base:
 | 2 | deterministic mathlib (`math.random` → sim PRNG; `randomseed` disabled) | #263 | **done — random half** (fork commit `b579629`); transcendental golden half blocked on #284 |
 | 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | pending |
 | 4 | `LState`/call-frame pooling + golden cross-arch CI test | #265 | pending |
+| S | deterministic memory-budget accountant (`string.rep` charge) | #266 | **done** (fork commit `d855815`) |
 
 ### Patch 1 — instruction budget (#262)
 
@@ -83,3 +84,18 @@ needs a cross-arch golden-vector CI matrix (the Actions runners gated on #284)
 and new `litd/fixed` primitives (exp/log/pow are absent today). Tracked there;
 the random half above stands on its own and is fully verified (FSV in
 `litd/luabind/mathrand_test.go`).
+
+### Patch S — memory-budget accountant (#266)
+
+Files: `value.go` (LState fields `litdMemLimited`/`litdMemLeft`), `litd_mem.go`
+(`SetMemoryBudget`/`RemainingMemory`/`MemoryBudgetEnabled`/`litdCharge`),
+`stringlib.go` (`strRep` charges `len(str)*n` before `strings.Repeat`). The
+sandbox (R-SEC-1) needs a CPU **and** a memory ceiling; the instruction budget
+(patch 1) bounds iterative allocators but not a single-instruction bomb like
+`string.rep(s, 2^30)`. This accountant is deterministic — it charges *requested
+bytes* (not RSS, which would be GC-/arch-dependent), so the same script breaches
+at the same point everywhere — and fail-closed: the charge happens BEFORE the
+allocation, so a bomb is rejected without the process ever allocating it.
+Lettered "S" (sandbox) rather than numbered: it is the #266 deliverable, not one
+of the four D-25 patches. Verified in `litd/luabind/sandbox_escape_test.go`
+(`TestSandboxMemoryBomb` prints HeapAlloc before/after — heap does not balloon).
