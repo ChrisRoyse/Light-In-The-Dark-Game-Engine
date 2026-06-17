@@ -82,6 +82,52 @@ func TestLuaThreadResumesAcrossTicksFSV(t *testing.T) {
 	}
 }
 
+func TestLuaThreadErrorIsSurfacedFSV(t *testing.T) {
+	g, u := scriptGame(t)
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	hero := L.NewUserData()
+	hero.Value = u
+	L.SetGlobal("hero", hero)
+
+	var got []string
+	OnScriptError(L, func(err error) { got = append(got, err.Error()) })
+
+	// Error at spawn (before any wait): must surface, not be swallowed.
+	if err := L.DoString(`Run(function() error("boom-immediate") end)`); err != nil {
+		t.Fatalf("DoString (spawn-error thread): %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("immediate script error not surfaced: handler calls=%d", len(got))
+	}
+	t.Logf("FSV spawn-error surfaced: %q", got[0])
+
+	// Error on a POST-WAIT resume: the failure happens during Advance, after the
+	// thread parked. It must still surface.
+	got = nil
+	if err := L.DoString(`Run(function()
+		Unit_SetLife(hero, 5)
+		PolledWait(0.05)
+		error("boom-after-wait")
+	end)`); err != nil {
+		t.Fatalf("DoString (resume-error thread): %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("error fired before the wait resumed: %v", got)
+	}
+	g.Advance(1) // 0.05s = 1 tick: reaches the wake, the resume raises
+	if len(got) != 1 {
+		t.Fatalf("post-wait script error not surfaced after Advance: calls=%d", len(got))
+	}
+	if g.SuspendedThreadCount() != 0 {
+		t.Fatalf("errored thread should have retired, suspended=%d", g.SuspendedThreadCount())
+	}
+	t.Logf("FSV resume-error surfaced after Advance: %q", got[0])
+}
+
 func TestLuaThreadNoWaitRunsToCompletionFSV(t *testing.T) {
 	g, u := scriptGame(t)
 	L := lua.NewState()

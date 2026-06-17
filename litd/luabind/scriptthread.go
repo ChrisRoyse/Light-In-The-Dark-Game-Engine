@@ -24,11 +24,41 @@ package luabind
 // scheduler-integration half (#269).
 
 import (
+	"fmt"
+	"os"
+	"sync"
 	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	lua "github.com/yuin/gopher-lua"
 )
+
+// scriptErrHandlers maps an LState to its installed script-thread error handler.
+// A cooperative thread runs asynchronously to the host (it resumes on a later
+// tick), so an error in its body cannot propagate up a Go return path — it is
+// routed here instead. Never swallowed: with no handler the error is written to
+// stderr so a failing script is always visible (no fallback hides failure).
+var scriptErrHandlers sync.Map // *lua.LState -> func(error)
+
+// OnScriptError installs h as the handler for errors raised inside Run bodies on
+// L (including errors surfacing on a post-wait resume). Passing nil clears it.
+// The handler runs on the sim goroutine, one at a time (the cooperative baton),
+// so it needs no locking against other script threads.
+func OnScriptError(L *lua.LState, h func(err error)) {
+	if h == nil {
+		scriptErrHandlers.Delete(L)
+		return
+	}
+	scriptErrHandlers.Store(L, h)
+}
+
+func reportScriptError(L *lua.LState, err error) {
+	if v, ok := scriptErrHandlers.Load(L); ok {
+		v.(func(error))(err)
+		return
+	}
+	fmt.Fprintf(os.Stderr, "luabind: uncaught script-thread error: %v\n", err)
+}
 
 // registerScriptThreads installs Run/PolledWait on L, bound to g. Called by
 // Register when g != nil (the threads need a game to schedule on).
@@ -61,11 +91,15 @@ func spawnLuaThread(L *lua.LState, g *api.Game, fn *lua.LFunction) {
 	g.Run(func(t *api.Thread) {
 		var args []lua.LValue
 		for {
-			st, _, rets := L.Resume(co, fn, args...)
+			st, err, rets := L.Resume(co, fn, args...)
 			args = nil
 			if st != lua.ResumeYield {
 				// Finished (ResumeOK) or errored (ResumeError): the coroutine is
-				// done. Restore host currency and let the Go thread retire.
+				// done. Surface an error (never swallow it), restore host
+				// currency, and let the Go thread retire.
+				if st == lua.ResumeError && err != nil {
+					reportScriptError(L, err)
+				}
 				L.G.CurrentThread = L.G.MainThread
 				return
 			}
