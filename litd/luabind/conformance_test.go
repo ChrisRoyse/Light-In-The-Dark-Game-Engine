@@ -13,6 +13,7 @@ package luabind
 // between the Go-driven game and the Lua-driven game.
 
 import (
+	"strings"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -137,5 +138,75 @@ func TestLuaBindingConformance(t *testing.T) {
 				t.Fatalf("%s: CONFORMANCE FAIL — Go and Lua produce different sim state: go=%#x lua=%#x", c.name, hGo, hLua)
 			}
 		})
+	}
+}
+
+// TestLuaZeroHandleVerbIsNoOpFSV — #267 edge 1: a gameplay verb invoked on a
+// zero-value handle from Lua is a silent no-op (R-API-5), not a crash and not a
+// stray state mutation. SoT = Game.StateHash before/after (must be byte-equal)
+// plus the live hero's untouched life.
+func TestLuaZeroHandleVerbIsNoOpFSV(t *testing.T) {
+	g, hero := confGame(t, 21)
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	// Bind a ZERO-VALUE Unit (api.Unit{}) — the handle a query returns for "no
+	// such unit". A script can hold one and call verbs on it.
+	dead := L.NewUserData()
+	dead.Value = api.Unit{}
+	L.SetGlobal("dead", dead)
+	live := L.NewUserData()
+	live.Value = hero
+	L.SetGlobal("hero", live)
+
+	before := g.StateHash()
+	if err := L.DoString(`Unit_SetLife(dead, 50); Unit_SetPosition(dead, {x = 1, y = 2}); Unit_SetFacing(dead, 90)`); err != nil {
+		t.Fatalf("zero-handle verbs must be no-ops, not errors: %v", err)
+	}
+	after := g.StateHash()
+	t.Logf("FSV zero-handle no-op: before=%#x after=%#x heroLife=%v", before, after, hero.Life())
+	if before != after {
+		t.Fatalf("zero-handle verb mutated sim state: %#x -> %#x (R-API-5 violated)", before, after)
+	}
+	if !hero.Valid() || hero.Life() != 100 {
+		t.Fatalf("live hero perturbed by zero-handle calls: valid=%v life=%v", hero.Valid(), hero.Life())
+	}
+}
+
+// TestLuaMalformedVec2FailsLoudFSV — #267 edge 2 (implemented half): a Vec2
+// table missing a required component, or a non-table where a Vec2 is expected,
+// is a loud Lua error at the boundary — never a silent zero coercion. SoT = the
+// error string + the unchanged sim state.
+func TestLuaMalformedVec2FailsLoudFSV(t *testing.T) {
+	g, hero := confGame(t, 21)
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	ud := L.NewUserData()
+	ud.Value = hero
+	L.SetGlobal("hero", ud)
+
+	before := g.StateHash()
+	for _, c := range []struct{ src, wantSub string }{
+		{`Unit_SetPosition(hero, {x = 120})`, "y"},                  // missing required y
+		{`Unit_SetPosition(hero, {y = 120})`, "x"},                  // missing required x
+		{`Unit_SetPosition(hero, 5)`, "want table"},                 // non-table
+		{`Unit_SetPosition(hero, {x = "a", y = 2})`, "want number"}, // wrong type
+	} {
+		err := L.DoString(c.src)
+		if err == nil {
+			t.Fatalf("%s: expected a loud error, got nil (silent coercion = fail-open)", c.src)
+		}
+		t.Logf("FSV malformed Vec2 %-34s -> error: %v", c.src, err)
+		if !strings.Contains(err.Error(), c.wantSub) {
+			t.Errorf("%s: error %q missing %q", c.src, err.Error(), c.wantSub)
+		}
+	}
+	if g.StateHash() != before {
+		t.Fatalf("a rejected malformed call still mutated state: %#x -> %#x", before, g.StateHash())
 	}
 }
