@@ -96,13 +96,11 @@ func TestAttackMoveToPointBehavior(t *testing.T) {
 	}
 }
 
-// TestAttackMoveToPointDoesNotTravel — the genuine remaining gap (#380, narrowed
-// after verification): with NO enemy in acquisition range, OrderAttack-to-a-
-// point does not travel toward the point — the order completes instantly
-// (target 0 is dead) and the unit reverts to Stop and sits. This test LOCKS the
-// current gap; when true attack-move-travel lands it will need updating (and
-// the unit should then advance toward the point).
-func TestAttackMoveToPointDoesNotTravel(t *testing.T) {
+// TestAttackMoveTravelsToPoint — #384: with NO enemy in range, an attack-move
+// (OrderAttack with a point, no target) now TRAVELS to the point and the order
+// completes on arrival (it no longer reverts to Stop and sits). SoT = the
+// attacker's Transform.X reaching the point's X.
+func TestAttackMoveTravelsToPoint(t *testing.T) {
 	w := NewWorld(Caps{})
 	if err := w.BindDamageMatrix(atkMatrix); err != nil {
 		t.Fatal(err)
@@ -111,20 +109,67 @@ func TestAttackMoveToPointDoesNotTravel(t *testing.T) {
 	a := atkUnit(t, w, 0, fixed.Vec2{X: fx(1000), Y: fx(1000)}, fx(60))
 	arm(t, w, a, 0, 0)
 	w.Combats.AcquisitionRange[w.Combats.Row(a)] = fx(600)
-	// no enemy anywhere.
+	// no enemy anywhere; gap to the point = 2000 units, speed 60 => ~34 ticks.
 
 	ar := w.Transforms.Row(a)
 	startX := w.Transforms.Pos[ar].X
 	if !w.IssueOrder(a, Order{Kind: OrderAttack, Point: fixed.Vec2{X: fx(3000), Y: fx(1000)}, Target: 0}, false) {
 		t.Fatal("issue attack-move")
 	}
-	for i := 0; i < 30; i++ {
+	// snapshot mid-travel to prove progress, then run to arrival.
+	for i := 0; i < 10; i++ {
+		w.Step()
+	}
+	midX := w.Transforms.Pos[ar].X
+	for i := 0; i < 80; i++ {
 		w.Step()
 	}
 	endX := w.Transforms.Pos[ar].X
-	t.Logf("FSV attack-move, no enemy: attacker.X %d -> %d (point X=3000)", startX/fixed.One, endX/fixed.One)
-	if endX != startX {
-		t.Fatalf("unit moved (X %d -> %d): attack-move-travel may now be implemented — update this test and #380",
-			startX/fixed.One, endX/fixed.One)
+	t.Logf("FSV attack-move travel: X start=%d mid(10t)=%d end(90t)=%d (point X=3000)",
+		startX/fixed.One, midX/fixed.One, endX/fixed.One)
+	if midX <= startX {
+		t.Fatalf("attack-move did not begin travelling: X %d -> %d", startX/fixed.One, midX/fixed.One)
+	}
+	if endX != fx(3000) {
+		t.Fatalf("attack-move did not arrive at the point: X=%d, want 3000", endX/fixed.One)
+	}
+}
+
+// TestAttackMoveEngagesEnRouteThenArrives — the full primitive: an enemy sits on
+// the path; the attack-mover acquires it en route, kills it, then resumes to the
+// point. SoT = enemy Life (dead) AND attacker advancing past the enemy to the
+// point.
+func TestAttackMoveEngagesEnRouteThenArrives(t *testing.T) {
+	w := NewWorld(Caps{})
+	if err := w.BindDamageMatrix(atkMatrix); err != nil {
+		t.Fatal(err)
+	}
+	w.SetAcquireInterval(1)
+	a := atkUnit(t, w, 0, fixed.Vec2{X: fx(1000), Y: fx(1000)}, fx(60))
+	arm(t, w, a, 0, 0) // 10 dmg, range 100
+	w.Combats.AcquisitionRange[w.Combats.Row(a)] = fx(600)
+	e := atkUnit(t, w, 1, fixed.Vec2{X: fx(1500), Y: fx(1000)}, 0)
+	w.Healths.Life[w.Healths.Row(e)] = fx(15) // dies in 2 hits
+
+	ar, er := w.Transforms.Row(a), w.Healths.Row(e)
+	t.Logf("FSV before: attacker.X=%d enemy.Life=%d (enemy at X=1500, point X=3000)",
+		w.Transforms.Pos[ar].X/fixed.One, w.Healths.Life[er]/fixed.One)
+	if !w.IssueOrder(a, Order{Kind: OrderAttack, Point: fixed.Vec2{X: fx(3000), Y: fx(1000)}, Target: 0}, false) {
+		t.Fatal("issue attack-move")
+	}
+	enemyDiedBy := -1
+	for i := 0; i < 200; i++ {
+		w.Step()
+		if enemyDiedBy == -1 && !w.Ents.Alive(e) {
+			enemyDiedBy = i
+		}
+	}
+	endX := w.Transforms.Pos[ar].X
+	t.Logf("FSV after 200t: enemyAlive=%v (diedAtTick=%d) attacker.X=%d", w.Ents.Alive(e), enemyDiedBy, endX/fixed.One)
+	if w.Ents.Alive(e) {
+		t.Fatalf("attack-mover did not kill the enemy en route")
+	}
+	if endX <= fx(1500) {
+		t.Fatalf("attack-mover did not continue past the enemy toward the point: X=%d", endX/fixed.One)
 	}
 }

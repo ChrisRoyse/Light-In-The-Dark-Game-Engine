@@ -266,10 +266,55 @@ func (w *World) ordersSystem() {
 		case OrderBuild:
 			w.driveBuild(r, id) // walk to site → start construction (#301)
 		case OrderAttack:
-			// the attack cycle (attack.go) drives the engagement; the
-			// order completes when its target is gone
-			if !w.Ents.Alive(s.Target[r]) {
+			if s.Target[r] != 0 {
+				// explicit-target attack: the attack cycle (attack.go) drives
+				// engagement/chase; the order completes when its target is gone.
+				if !w.Ents.Alive(s.Target[r]) {
+					w.completeOrder(r, id, true)
+				}
+				break
+			}
+			// attack-move-by-point (#384): no explicit target. Travel toward
+			// the point, acquiring + engaging enemies en route; complete on
+			// arrival. A degenerate order with no point and no target is a
+			// no-op completion (legacy behavior).
+			if s.Point[r] == (fixed.Vec2{}) {
 				w.completeOrder(r, id, true)
+				break
+			}
+			mr := w.Movements.Row(id)
+			if mr == -1 {
+				break // immobile attack-mover: hold position and acquire only
+			}
+			// while a valid target is engaged, the attack cycle owns movement
+			// (chase). Suspend point-travel and re-arm it for after disengage.
+			if cr := w.Combats.Row(id); cr != -1 {
+				if t := w.Combats.Target[cr]; t != 0 && w.validAcquireTarget(id, t) {
+					s.Phase[r] = orderFresh
+					break
+				}
+			}
+			// not engaged: drive (or resume) movement toward the point.
+			if s.Phase[r] == orderFresh {
+				phase, ok := w.startMoveOrder(r, id)
+				if !ok {
+					w.completeOrder(r, id, false)
+					break
+				}
+				s.Phase[r] = phase
+				break
+			}
+			if s.Phase[r] == orderPathing {
+				break
+			}
+			switch w.Movements.State[mr] {
+			case MoveIdle: // arrived at the attack-move point
+				w.completeOrder(r, id, true)
+			case MoveBlocked:
+				w.releaseMoveHandle(mr)
+				w.Movements.State[mr] = MoveIdle
+				w.Movements.Stall[mr] = 0
+				w.completeOrder(r, id, false)
 			}
 		default:
 			// smart execution lands with #146; until then the order

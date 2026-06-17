@@ -75,13 +75,16 @@ func (w *World) acquisitionSystem() {
 			}
 			c.Target[cr] = 0
 		}
-		// acquiring stances: default order (Stop), Hold, or Patrol
-		// (attack-move-like). A patroller leashing back to its segment
-		// suppresses acquisition until it is home (#306). Move/follow/
-		// cast and the rest do not auto-acquire.
+		// acquiring stances: default order (Stop), Hold, Patrol
+		// (attack-move-like), and OrderAttack (#384: attack-move-by-point
+		// acquires enemies en route; an explicit-target attack already
+		// carries its target via the c.Target guard above, so the rescan is
+		// a no-op for it). A patroller leashing back to its segment
+		// suppresses acquisition until it is home (#306). Move/follow/cast
+		// and the rest do not auto-acquire.
 		if or := w.Orders.Row(id); or != -1 {
 			k := w.Orders.Kind[or]
-			if k != OrderStop && k != OrderHold && k != OrderPatrol {
+			if k != OrderStop && k != OrderHold && k != OrderPatrol && k != OrderAttack {
 				continue
 			}
 			if k == OrderPatrol && w.patrolReturningRow(id) {
