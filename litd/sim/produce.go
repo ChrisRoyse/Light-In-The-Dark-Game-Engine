@@ -286,6 +286,98 @@ func (w *World) EnqueueTrain(building EntityID, typeID uint16) uint8 {
 	return w.enqueueTrain(building, typeID, 0)
 }
 
+// TrainForPlayer admits one train request of typeID on behalf of player,
+// choosing the producer building deterministically rather than naming one — the
+// WC3 AI training model (common.ai SetProduce/TrainUnits), where the script
+// asks for a unit type and the engine picks the building. R-EXEC-3: the AI
+// never selects a building or mutates a queue directly; it names a typeID and
+// the sim chooses, so production stays authoritative sim state.
+//
+// Selection: among the player's living producers that can train typeID and have
+// queue space, the least-loaded (smallest queue), ties broken by lowest entity
+// index — balancing load across buildings while staying fully deterministic
+// (one idle producer ⇒ the lowest-index one). Returns the chosen building and
+// the EnqueueTrain reason (TrainOK on success). When no producer can take it,
+// returns (0, TrainNoProducer). A global refusal (no gold/food/tech) returns
+// the chosen building with the refusal reason and changes nothing — a
+// deterministic no-op the AI observes via the production counts.
+func (w *World) TrainForPlayer(player uint8, typeID uint16) (EntityID, uint8) {
+	if player >= MaxPlayers || w.unitDefs == nil {
+		return 0, TrainNoProducer
+	}
+	s := w.Produce
+	var best EntityID
+	bestRow := int32(-1)
+	var bestLoad uint8
+	for r := int32(0); r < s.count; r++ {
+		b := s.Entity[r]
+		or := w.Owners.Row(b)
+		if or == -1 || w.Owners.Player[or] != player || !w.Ents.Alive(b) {
+			continue
+		}
+		if s.QCount[r] >= ProduceQueueCap || !w.producerTrains(b, typeID) {
+			continue
+		}
+		load := s.QCount[r]
+		if bestRow == -1 || load < bestLoad || (load == bestLoad && b.Index() < best.Index()) {
+			best, bestRow, bestLoad = b, r, load
+		}
+	}
+	if bestRow == -1 {
+		return 0, TrainNoProducer
+	}
+	return best, w.EnqueueTrain(best, typeID)
+}
+
+// PlayerTrainInProgress counts the player's producers whose HEAD slot (the entry
+// actively training now) is a unit of typeID — the in-progress production of
+// that type. Research/revive head slots are not unit production and are skipped.
+func (w *World) PlayerTrainInProgress(player uint8, typeID uint16) int {
+	s := w.Produce
+	n := 0
+	for r := int32(0); r < s.count; r++ {
+		if s.QCount[r] == 0 {
+			continue
+		}
+		or := w.Owners.Row(s.Entity[r])
+		if or == -1 || w.Owners.Player[or] != player {
+			continue
+		}
+		if s.QFlags[r][0]&(TrainFlagResearch|TrainFlagHeroRevive) != 0 {
+			continue
+		}
+		if s.Queue[r][0] == typeID {
+			n++
+		}
+	}
+	return n
+}
+
+// PlayerTrainQueued counts the player's queued-but-not-yet-started slots of
+// typeID — the entries behind the head, across all producers, still waiting.
+// Together with PlayerTrainInProgress (head) and the completed-entity count
+// (the AIView GetUnitCountDone analogue) these distinguish in-queue,
+// in-progress, and done production of a type.
+func (w *World) PlayerTrainQueued(player uint8, typeID uint16) int {
+	s := w.Produce
+	n := 0
+	for r := int32(0); r < s.count; r++ {
+		or := w.Owners.Row(s.Entity[r])
+		if or == -1 || w.Owners.Player[or] != player {
+			continue
+		}
+		for slot := uint8(1); slot < s.QCount[r]; slot++ {
+			if s.QFlags[r][slot]&(TrainFlagResearch|TrainFlagHeroRevive) != 0 {
+				continue
+			}
+			if s.Queue[r][slot] == typeID {
+				n++
+			}
+		}
+	}
+	return n
+}
+
 func (w *World) enqueueTrain(building EntityID, typeID uint16, flags uint8) uint8 {
 	refuse := func(reason uint8) uint8 {
 		w.Emit(Event{Kind: EvTrainRefused, Src: building, Arg: int64(reason)<<16 | int64(typeID)})
