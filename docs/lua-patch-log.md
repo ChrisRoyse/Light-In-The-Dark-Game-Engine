@@ -47,10 +47,19 @@ The four D-25 patches land in their own issues on top of this pinned base:
 
 | # | Patch | Issue | Status |
 |---|---|---|---|
-| 1 | instruction-budget counter in `mainLoop` | #262 | pending |
+| 1 | instruction-budget counter in `mainLoop` | #262 | **done** (fork commit `46381dc`) |
 | 2 | deterministic mathlib (fixed-point; `math.random` → sim PRNG) | #263 | pending |
 | 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | pending |
 | 4 | `LState`/call-frame pooling + golden cross-arch CI test | #265 | pending |
 
-**Patch count at #261: 0** (vendor-and-wire only — the stock fork, proven to
-build and run via `litd/luabind` smoke tests).
+### Patch 1 — instruction budget (#262)
+
+Files: `value.go` (LState fields `litdInstrLimited`/`litdInstrLeft`),
+`vm.go` + `_vm.go` (`mainLoop` and `mainLoopWithContext` per-instruction
+check), `litd_budget.go` (`SetInstructionBudget`/`RemainingBudget`/
+`InstructionBudgetEnabled`). The check is `if L.litdInstrLimited { if
+L.litdInstrLeft<=0 { RaiseError } ; L.litdInstrLeft-- }` at the top of each
+dispatch — checked-then-decremented, so a budget of N runs exactly N
+instructions and the (N+1)th raises. Allocation-neutral; overhead below the
+benchmark noise floor (see #262 closing comment). `_vm.go` is `_`-prefixed
+(Go-tool-ignored template) — patched for regen fidelity, not compiled.
