@@ -107,6 +107,7 @@ func runCheck() {
 	table, _ := RenderMappingTable(cs)
 	mForLua, _ := BuildManifest(cs, sigs, sources)
 	luaSrc := RenderLuaBindings(mForLua)
+	luaDispatch := RenderLuaDispatch(mForLua)
 	fail := false
 	for _, f := range []struct {
 		path string
@@ -117,6 +118,7 @@ func runCheck() {
 		{"audit-report.md", amd},
 		{mappingTablePath, []byte(table)},
 		{filepath.Join(luabindDir, "bindings_gen.go"), []byte(luaSrc)},
+		{filepath.Join(luabindDir, luabindDispatchFile), []byte(luaDispatch)},
 	} {
 		got, err := os.ReadFile(f.path)
 		if err != nil {
@@ -238,8 +240,13 @@ func runEmitLua() {
 	if err := WriteLuaBindings(m); err != nil {
 		fatal(err)
 	}
+	if err := WriteLuaDispatch(m); err != nil {
+		fatal(err)
+	}
 	core, ai := CollectLuaBindings(m)
+	binds, total := collectDispatch(m)
 	fmt.Fprintf(os.Stderr, "wrote %s/bindings_gen.go: %d core + %d ai bindings\n", luabindDir, len(core), len(ai))
+	fmt.Fprintf(os.Stderr, "wrote %s/%s: %d of %d mapped verbs bound\n", luabindDir, luabindDispatchFile, len(binds), total)
 }
 
 func runEmitStubs() {

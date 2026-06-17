@@ -32,8 +32,29 @@ import (
 // g may be nil for the pure value-math verbs (they need no game); handle and
 // free-function verbs require a non-nil g and are registered against it.
 func Register(L *lua.LState, g *api.Game) error {
-	registerValueMath(L)
+	registerValueMath(L) // generated: bindings_dispatch_gen.go
 	// Generated handle/free-function bindings (against GameHandles{g}) install
-	// here once the jassgen -luabind generator lands.
+	// here once the generator supports those type shapes.
 	return nil
+}
+
+// --- stable ABI argument readers (used by the generated dispatch) ---
+
+// argVec2 reads argument i as a Vec2, raising a Lua arg error on a malformed
+// value (fail-closed — never coerced to a zero vector).
+func argVec2(L *lua.LState, i int) api.Vec2 {
+	v, err := luaToVec2(L.Get(i))
+	if err != nil {
+		L.ArgError(i, err.Error())
+	}
+	return v
+}
+
+// argAngle reads argument i as an Angle (degrees), raising on a non-number.
+func argAngle(L *lua.LState, i int) api.Angle {
+	a, err := luaToAngle(L.Get(i))
+	if err != nil {
+		L.ArgError(i, err.Error())
+	}
+	return a
 }
