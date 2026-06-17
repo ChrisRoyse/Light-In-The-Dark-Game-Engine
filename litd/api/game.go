@@ -17,6 +17,7 @@
 package litd
 
 import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
@@ -51,6 +52,14 @@ type Game struct {
 	// scheduler domain at M5.5. The replay-safe inputs (difficulty, paused,
 	// command stack) live in the sim. nil until the first AttachAI.
 	aiControllers map[uint8]AIController
+
+	// aiDomain is the live second scheduler domain (R-EXEC-3) hosting one
+	// isolated context per attached computer player. Lazily created on the
+	// first AttachAI and ticked every sim tick in the AI sub-phase of phase 2
+	// (via w.OnAIPhase). nil until then. aiBudget is the per-player counted
+	// resume slice handed to Domain.Tick (0 disables the watchdog).
+	aiDomain *ai.Domain
+	aiBudget int
 
 	// debug enables R-API-5 invalid-handle assertions; off in shipped
 	// maps (WC3 forgiveness), on in development (catch the swallowed

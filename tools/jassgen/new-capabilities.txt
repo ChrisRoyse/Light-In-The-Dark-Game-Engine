@@ -114,6 +114,7 @@ exact   Camera.InCinematic
 exact   Camera.SetZoom
 
 # engine control (new-capability: registry/scheduler/debug surface)
+exact   Game.DetachAI
 exact   Game.ElapsedTime
 exact   Game.Every
 exact   Game.IsAIPlayer

@@ -39,4 +39,10 @@ func (w *World) scriptPhase() {
 	if w.OnScriptPhase != nil {
 		w.OnScriptPhase(w.tick)
 	}
+	// AI sub-phase: the second scheduler domain ticks after the map-script
+	// domain, so AI decisions this tick see the post-script world and enqueue
+	// their commands deterministically (R-EXEC-3).
+	if w.OnAIPhase != nil {
+		w.OnAIPhase(w.tick)
+	}
 }

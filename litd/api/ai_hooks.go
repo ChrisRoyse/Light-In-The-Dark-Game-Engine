@@ -1,5 +1,7 @@
 package litd
 
+import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
+
 // AI hooks — the map-script-side AI natives (#257; ai-natives.md, R-EXEC-3,
 // D-2026-06-11-6). These are the verbs a *map script* uses to stand up,
 // pause, and message a computer player. The computer player's strategy runs
@@ -32,6 +34,16 @@ const (
 type AIView interface {
 	// Difficulty reports the controller's configured difficulty.
 	Difficulty() Difficulty
+	// UnitCount reports how many live units of unitTypeID the given player
+	// owns, as THIS AI is allowed to see them. Own units always count; enemy
+	// units count only when visible to this AI's player (fog-honest), unless
+	// the difficulty is the cheating tier (DifficultyInsane), whose full-vision
+	// knob lets the AI count through fog. The full-vision behavior is a
+	// data-driven difficulty flag, never branching script logic (hazard 3).
+	UnitCount(player, unitTypeID int) int
+	// OwnUnitCount is UnitCount for this AI's own player — the common
+	// GetUnitCount/GetUnitCountDone query.
+	OwnUnitCount(unitTypeID int) int
 }
 
 // AICommander is the intent + inbox surface handed to an AIController at M5.5.
@@ -45,6 +57,13 @@ type AICommander interface {
 	LastCommand() (command, data int, ok bool)
 	// PopCommand is PopLastCommand — drop the top of the command stack.
 	PopCommand() bool
+	// Train issues a train-unit intent for unitTypeID: the sim picks the
+	// least-loaded eligible producer the AI's player owns and admits it
+	// (#277 TrainForPlayer). Returns true when admitted, false on any refusal
+	// (no producer, no resources, queue full, food cap) — a deterministic
+	// no-op the AI observes. The AI names WHAT to train; the sim picks WHERE
+	// and validates (R-EXEC-3) — the AI never bypasses production rules.
+	Train(unitTypeID int) bool
 }
 
 // AIController is a computer player's strategy. Tick runs inside the second
@@ -56,21 +75,52 @@ type AIController interface {
 }
 
 // AttachAI makes player p a computer player at difficulty d, running strategy
-// ai (StartMeleeAI / StartCampaignAI). A nil controller still marks the player
-// AI-controlled (difficulty/flags set) — useful before a controller is bound.
-// No-op on an invalid player.
-func (g *Game) AttachAI(p Player, ai AIController, d Difficulty) {
+// ctrl (StartMeleeAI / StartCampaignAI). The controller runs inside the second
+// sandboxed scheduler domain, ticked every sim tick in the AI sub-phase of
+// phase 2 (R-EXEC-3). A nil controller still marks the player AI-controlled
+// (difficulty/flags set) but installs no decision loop — useful before a
+// controller is bound. Attaching again REPLACES any prior controller wholesale
+// (its isolated context is torn down first, leaving no hooks behind).
+//
+// No-op on an invalid player or a player who has already lost/left the match
+// (a defeated slot gets no computer player).
+func (g *Game) AttachAI(p Player, ctrl AIController, d Difficulty) {
 	if !p.Valid() {
 		g.reportInvalid("Game.AttachAI")
 		return
 	}
-	g.w.AttachAI(uint8(p.idx), uint8(d))
-	if ai != nil {
-		if g.aiControllers == nil {
-			g.aiControllers = make(map[uint8]AIController)
-		}
-		g.aiControllers[uint8(p.idx)] = ai
+	idx := uint8(p.idx)
+	if r := g.w.PlayerResult(idx); r == sim.ResultLost || r == sim.ResultLeft {
+		return // defeated player: no-op
 	}
+	g.w.AttachAI(idx, uint8(d)) // replay-safe sim flags
+	g.ensureAIDomain()
+	g.aiDomain.RemovePlayer(int(idx)) // replace any prior context wholesale
+	if ctrl == nil {
+		delete(g.aiControllers, idx)
+		return
+	}
+	if g.aiControllers == nil {
+		g.aiControllers = make(map[uint8]AIController)
+	}
+	g.aiControllers[idx] = ctrl
+	g.installAIContext(idx, ctrl)
+}
+
+// DetachAI removes player p's computer control entirely: the controller's
+// isolated context is dropped and the sim AI flags/command stack cleared. The
+// player reverts to non-AI. No-op on an invalid player.
+func (g *Game) DetachAI(p Player) {
+	if !p.Valid() {
+		g.reportInvalid("Game.DetachAI")
+		return
+	}
+	idx := uint8(p.idx)
+	if g.aiDomain != nil {
+		g.aiDomain.RemovePlayer(int(idx))
+	}
+	delete(g.aiControllers, idx)
+	g.w.DetachAI(idx)
 }
 
 // PauseAI suspends or resumes player p's computer control (PauseCompAI).

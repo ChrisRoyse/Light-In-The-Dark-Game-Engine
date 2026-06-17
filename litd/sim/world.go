@@ -263,6 +263,12 @@ type World struct {
 	// (avoidance.go §5 — the decision log for FSV).
 	OnShove       func(tick uint32, mover, shoved EntityID, cell int32)
 	OnScriptPhase func(tick uint32)
+	// OnAIPhase fires at the tail of tick phase 2, AFTER the map-script
+	// scheduler has drained — the dedicated AI sub-phase (R-EXEC-3,
+	// tick-and-scheduler.md §3.4). The api layer installs the AI domain tick
+	// here so computer-player decisions are deterministic sim input that runs
+	// every tick, inside the determinism boundary, ordered after map scripts.
+	OnAIPhase     func(tick uint32)
 	OnCombatPhase func(tick uint32)
 	// missile flight traces (#158 FSV SoT)
 	OnMissileImpact func(tick uint32, id EntityID, at fixed.Vec2, tgt EntityID)
