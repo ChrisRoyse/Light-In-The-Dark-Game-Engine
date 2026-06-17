@@ -132,8 +132,19 @@ type terrainRuntimeDump struct {
 	HeightSamples     []litterrain.HeightSample `json:"heightSamples"`
 	BorderVertices    []terrainBorderDump       `json:"borderVertices"`
 	Units             []terrainUnitDump         `json:"units,omitempty"`
-	OK                bool                      `json:"ok"`
-	Errors            []string                  `json:"errors,omitempty"`
+
+	// Chunk fields are populated only for the terrain-chunks scene.
+	Chunked        bool  `json:"chunked"`
+	ChunkCells     int   `json:"chunkCells,omitempty"`
+	ChunkCount     int   `json:"chunkCount,omitempty"`
+	ChunkCols      int   `json:"chunkCols,omitempty"`
+	ChunkRows      int   `json:"chunkRows,omitempty"`
+	MaxChunkTris   int   `json:"maxChunkTris,omitempty"`
+	ChunkTris      []int `json:"chunkTris,omitempty"`
+	SeamMismatches int   `json:"seamMismatches"`
+
+	OK     bool     `json:"ok"`
+	Errors []string `json:"errors,omitempty"`
 }
 
 type terrainBorderDump struct {
@@ -454,7 +465,7 @@ type resourceBarValues struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
@@ -837,6 +848,9 @@ func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, 
 	if name == "" {
 		name = "terrain"
 	}
+	if name == "terrain-chunks" {
+		return buildTerrainChunksFSV(scene, wireframe)
+	}
 	if name != "terrain" && name != "terrain-units" {
 		return sceneSpec{}, nil, fmt.Errorf("unknown terrain scene %q", name)
 	}
@@ -908,6 +922,124 @@ func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, 
 		opaqueStates++
 	}
 	return sceneSpec{name: name, expected: expectedStats(visible, 0, visible, 0, opaqueStates, 0)}, dump, nil
+}
+
+// buildTerrainChunksFSV bakes the map into 16×16-cell chunks and adds one Mesh
+// (one draw call) per chunk, sharing a single terrain material. The dump
+// reports the chunk grid, per-chunk triangle counts, and the seam-mismatch
+// count across every shared chunk edge (must be 0 — no cracks). The rendered
+// FrameStats in the enclosing scene dump carry the real draw-call/visible-graphic
+// numbers for the ≤40-call terrain sub-budget check.
+func buildTerrainChunksFSV(scene *core.Node, wireframe bool) (sceneSpec, *terrainRuntimeDump, error) {
+	const mapPath = "data/maps/test64"
+	m, err := litmapdata.Load(os.DirFS("."), mapPath)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cs, err := litterrain.BuildChunks(m, litterrain.ChunkCellSpan)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	mat := material.NewStandard(&math32.Color{R: 0.28, G: 0.45, B: 0.22})
+	mat.SetSpecularColor(&math32.Color{R: 0.08, G: 0.08, B: 0.06})
+	mat.SetWireframe(wireframe)
+
+	dump := &terrainRuntimeDump{
+		Scene:      "terrain-chunks",
+		MapPath:    mapPath,
+		Wireframe:  wireframe,
+		Chunked:    true,
+		ChunkCells: cs.ChunkCells,
+		ChunkCount: len(cs.Chunks),
+		ChunkCols:  cs.Cols,
+		ChunkRows:  cs.Rows,
+		OK:         true,
+	}
+	totalVerts, totalTris := 0, 0
+	for i := range cs.Chunks {
+		c := &cs.Chunks[i]
+		scene.Add(graphic.NewMesh(c.Geometry, mat))
+		dump.ChunkTris = append(dump.ChunkTris, c.TriangleCount)
+		if c.TriangleCount > dump.MaxChunkTris {
+			dump.MaxChunkTris = c.TriangleCount
+		}
+		if c.TriangleCount > litterrain.MaxChunkTriangles {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("chunk %d tris %d exceeds cap %d", i, c.TriangleCount, litterrain.MaxChunkTriangles))
+		}
+		if inv := c.InvertedTriangles(); inv != 0 {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("chunk %d has %d inverted triangles", i, inv))
+		}
+		totalVerts += c.VertexCount
+		totalTris += c.TriangleCount
+	}
+	dump.VertexCount = totalVerts
+	dump.TriangleCount = totalTris
+	if totalTris != m.Width*m.Height*2 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("chunk tris sum %d, want whole-map %d", totalTris, m.Width*m.Height*2))
+	}
+
+	// Seam check: every vertex on a shared edge must resolve to the identical
+	// world position in both adjacent chunks.
+	dump.SeamMismatches = countSeamMismatches(cs)
+	if dump.SeamMismatches != 0 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("%d seam vertex mismatches (cracks)", dump.SeamMismatches))
+	}
+
+	// Border-corner sample vertices, same as the single-mesh scene, for the dump.
+	for _, p := range [][2]int{{0, 0}, {m.Width, 0}, {0, m.Height}, {m.Width, m.Height}} {
+		idx := cs.IndexOfVertexOwner(p[0], p[1])
+		if idx < 0 {
+			continue
+		}
+		if pos, ok := cs.Chunks[idx].WorldPosAt(p[0], p[1]); ok {
+			dump.BorderVertices = append(dump.BorderVertices, terrainBorderDump{
+				X: p[0], Y: p[1], WorldX: pos.X, WorldY: pos.Y, WorldZ: pos.Z,
+			})
+		}
+	}
+
+	visible := len(cs.Chunks)
+	return sceneSpec{name: "terrain-chunks", expected: expectedStats(visible, 0, visible, 0, 1, 0)}, dump, nil
+}
+
+// countSeamMismatches compares the shared edge between each chunk and its right
+// and bottom neighbour; any differing shared-edge vertex is a crack.
+func countSeamMismatches(cs *litterrain.ChunkSet) int {
+	mism := 0
+	at := func(col, row int) *litterrain.Chunk {
+		if col < 0 || row < 0 || col >= cs.Cols || row >= cs.Rows {
+			return nil
+		}
+		return &cs.Chunks[row*cs.Cols+col]
+	}
+	for row := 0; row < cs.Rows; row++ {
+		for col := 0; col < cs.Cols; col++ {
+			c := at(col, row)
+			if r := at(col+1, row); r != nil { // shared column gx = c.CellX1
+				for gy := c.CellY0; gy <= c.CellY1; gy++ {
+					cp, cok := c.WorldPosAt(c.CellX1, gy)
+					rp, rok := r.WorldPosAt(c.CellX1, gy)
+					if !cok || !rok || cp != rp {
+						mism++
+					}
+				}
+			}
+			if b := at(col, row+1); b != nil { // shared row gy = c.CellY1
+				for gx := c.CellX0; gx <= c.CellX1; gx++ {
+					cp, cok := c.WorldPosAt(gx, c.CellY1)
+					bp, bok := b.WorldPosAt(gx, c.CellY1)
+					if !cok || !bok || cp != bp {
+						mism++
+					}
+				}
+			}
+		}
+	}
+	return mism
 }
 
 func addTerrainUnits(scene *core.Node, mesh *litterrain.Mesh, dump *terrainRuntimeDump) {

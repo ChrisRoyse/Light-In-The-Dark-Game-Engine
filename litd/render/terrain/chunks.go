@@ -233,4 +233,17 @@ func (c *Chunk) InvertedTriangles() int {
 	return inverted
 }
 
+// IndexOfVertexOwner returns the index of a chunk whose span includes the global
+// vertex (gx,gy), or -1 if none. A vertex on a shared edge belongs to several
+// chunks; the first is returned (they all store the identical world position).
+func (cs *ChunkSet) IndexOfVertexOwner(gx, gy int) int {
+	for i := range cs.Chunks {
+		c := &cs.Chunks[i]
+		if gx >= c.CellX0 && gx <= c.CellX1 && gy >= c.CellY0 && gy <= c.CellY1 {
+			return i
+		}
+	}
+	return -1
+}
+
 func ceilDiv(a, b int) int { return (a + b - 1) / b }

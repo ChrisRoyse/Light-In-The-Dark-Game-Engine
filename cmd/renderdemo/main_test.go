@@ -265,6 +265,32 @@ func TestBuildTerrainFSV(t *testing.T) {
 	}
 }
 
+func TestBuildTerrainChunksFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	scene := core.NewNode()
+	spec, dump, err := buildTerrainChunksFSV(scene, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo terrain-chunks spec=%+v count=%d cols=%d rows=%d maxTris=%d totalTris=%d seams=%d border=%+v",
+		spec.name, dump.ChunkCount, dump.ChunkCols, dump.ChunkRows, dump.MaxChunkTris, dump.TriangleCount, dump.SeamMismatches, dump.BorderVertices)
+	if !dump.OK || !dump.Chunked {
+		t.Fatalf("chunk dump not OK: %+v", dump)
+	}
+	if dump.ChunkCount != 16 || dump.ChunkCols != 4 || dump.ChunkRows != 4 {
+		t.Fatalf("chunk grid wrong: count=%d cols=%d rows=%d", dump.ChunkCount, dump.ChunkCols, dump.ChunkRows)
+	}
+	if dump.MaxChunkTris != 512 || dump.TriangleCount != 8192 {
+		t.Fatalf("chunk tris wrong: max=%d total=%d", dump.MaxChunkTris, dump.TriangleCount)
+	}
+	if dump.SeamMismatches != 0 {
+		t.Fatalf("seam mismatches=%d, want 0 (cracks)", dump.SeamMismatches)
+	}
+	if len(dump.BorderVertices) != 4 || len(dump.ChunkTris) != 16 {
+		t.Fatalf("coverage wrong: border=%d chunkTris=%d", len(dump.BorderVertices), len(dump.ChunkTris))
+	}
+}
+
 func chdirRepoRoot(t *testing.T) func() {
 	t.Helper()
 	cwd, err := os.Getwd()
