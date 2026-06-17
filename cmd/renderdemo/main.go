@@ -475,6 +475,7 @@ func main() {
 	autotestOrders := flag.Bool("autotest-orders", false, "render the smart-right-click order FSV fixture")
 	autotestQueue := flag.Bool("autotest-queue", false, "render the shift-queue order FSV fixture")
 	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
+	debugFarplane := flag.Float64("debug-farplane", 1, "multiply the computed far plane by this factor (#40 invariant probe: 2x must not change the visible-graphic set)")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
@@ -513,6 +514,13 @@ func main() {
 		os.Exit(1)
 	}
 	cam := cameraRig.Camera
+	if *debugFarplane != 1 {
+		// #40 invariant probe: stretching the far plane must not pull anything new
+		// into the visible-graphic set — the production far plane is not clipping
+		// visible content.
+		cam.SetFar(cam.Far() * float32(*debugFarplane))
+	}
+	fmt.Fprintf(os.Stderr, "renderdemo: clip planes near=%g far=%g (farplaneFactor=%g)\n", cam.Near(), cam.Far(), *debugFarplane)
 
 	var spec sceneSpec
 	var canvasFSV canvasDump

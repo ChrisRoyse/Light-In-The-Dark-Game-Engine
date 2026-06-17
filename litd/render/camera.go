@@ -91,6 +91,7 @@ type RTSCamera struct {
 func DefaultRTSCameraConfig(aspect float32) RTSCameraConfig {
 	zoomMin := RTSCameraDefaultZoom * 0.7
 	zoomMax := RTSCameraDefaultZoom * 1.4
+	near, far := ComputeNearFar(zoomMin, zoomMax)
 	return RTSCameraConfig{
 		Aspect:               aspect,
 		Zoom:                 RTSCameraDefaultZoom,
@@ -99,8 +100,8 @@ func DefaultRTSCameraConfig(aspect float32) RTSCameraConfig {
 		PitchFromVerticalDeg: RTSCameraPitchFromVerticalDeg,
 		YawDeg:               RTSCameraYawDeg,
 		FOVDeg:               RTSCameraFOVDeg,
-		Near:                 0.25 * zoomMin,
-		Far:                  1.6 * zoomMax,
+		Near:                 near,
+		Far:                  far,
 	}
 }
 
@@ -135,6 +136,21 @@ func (r *RTSCamera) SetAnchor(anchor math32.Vector3) {
 func (r *RTSCamera) SetZoomRequested(zoom float32) {
 	r.zoomRequested = zoom
 	r.zoom = clampZoom(zoom, r.cfg.ZoomMin, r.cfg.ZoomMax)
+	r.Apply()
+}
+
+// SetZoomClamps changes the zoom-distance range (the camera's effective Z
+// range) and recomputes the near/far clip planes from the new clamps via
+// ComputeNearFar, pushing them to the projection. This is the "Z_max change"
+// path of camera-and-culling.md §5.3; map load goes through the constructor.
+// The current zoom is re-clamped into the new range.
+func (r *RTSCamera) SetZoomClamps(zoomMin, zoomMax float32) {
+	r.cfg.ZoomMin = zoomMin
+	r.cfg.ZoomMax = zoomMax
+	r.cfg.Near, r.cfg.Far = ComputeNearFar(zoomMin, zoomMax)
+	r.Camera.SetNear(r.cfg.Near)
+	r.Camera.SetFar(r.cfg.Far)
+	r.zoom = clampZoom(r.zoomRequested, zoomMin, zoomMax)
 	r.Apply()
 }
 
@@ -261,11 +277,12 @@ func normalizeRTSCameraConfig(cfg RTSCameraConfig) RTSCameraConfig {
 	if cfg.FOVDeg <= 0 || math32.IsNaN(cfg.FOVDeg) {
 		cfg.FOVDeg = RTSCameraFOVDeg
 	}
+	defNear, defFar := ComputeNearFar(cfg.ZoomMin, cfg.ZoomMax)
 	if cfg.Near <= 0 || math32.IsNaN(cfg.Near) {
-		cfg.Near = 0.25 * cfg.ZoomMin
+		cfg.Near = defNear
 	}
 	if cfg.Far <= cfg.Near || math32.IsNaN(cfg.Far) {
-		cfg.Far = 1.6 * cfg.ZoomMax
+		cfg.Far = defFar
 	}
 	return cfg
 }
