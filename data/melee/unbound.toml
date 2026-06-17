@@ -1,0 +1,18 @@
+# Unbound — melee start table (D4 helpers/melee, #258).
+# See vigil.toml for the code-binding contract.
+name = "Unbound"
+
+gold = 500
+lumber = 150
+food_cap = 11
+
+town_hall = "ugol"
+
+[workers]
+code = "uaco"
+count = 5
+
+# Unbound opens with one extra scout.
+[[extra]]
+code = "ushd"
+count = 1

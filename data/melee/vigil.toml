@@ -1,0 +1,21 @@
+# Vigil — melee start table (D4 helpers/melee, #258).
+# Codes are unit-table rawcodes resolved at match start via Game.UnitType;
+# a map binds these codes to its unit defs. Tombstoned/unbound codes fail
+# StartingUnits loudly (no silent partial base).
+name = "Vigil"
+
+# Starting economy (MeleeStartingResources).
+gold = 500
+lumber = 150
+food_cap = 12
+
+# First building dropped at the start location.
+town_hall = "htow"
+
+# Additional starting units (none for Vigil's standard opener).
+extra = []
+
+# Harvester squad.
+[workers]
+code = "hpea"
+count = 5

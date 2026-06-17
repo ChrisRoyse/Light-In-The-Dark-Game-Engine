@@ -113,6 +113,27 @@ exact   Camera.Following
 exact   Camera.InCinematic
 exact   Camera.SetZoom
 
+# D4 helpers library (#258): the logic-bearing blizzard.j BJ survivors, kept
+# once in litd/api/helpers (+ helpers/melee), reimplemented on the public api.
+# Their forward-closure JASS disposition is recorded in overrides.toml; they
+# are accounted here for reverse closure because the gate's manifest match is
+# package=litd/api + bare-symbol, while helper verbs live in sub-packages
+# (same treatment as PolledWait above). helpers verbs:
+exact   CreateUnits
+exact   WeightedChoice
+exact   RandomItemType
+exact   Gate
+exact   Elevator
+exact   Transmit
+# helpers/melee data-driven setup library:
+exact   LoadFaction
+exact   LoadFactionBytes
+exact   StartingResources
+exact   StartingUnits
+exact   VictoryDefeatConditions
+exact   Standard
+exact   PlayerUnitCount
+
 # cooperative script threads (#377): the green-thread execution model over
 # the stackless scheduler. The canonical JASS PolledWait/TriggerSleepAction
 # port is helpers.PolledWait (D4); these are the LitD primitives it rides —
