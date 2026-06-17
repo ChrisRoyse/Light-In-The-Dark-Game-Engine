@@ -30,7 +30,11 @@ jobs:
         with: { go-version-file: go.mod }
       - name: 10k-tick trace
         run: go test ./litd/sim/ -run 'TestDeterminism10k$' ${{ matrix.flags }} -v 2>&1 | tee trace-${{ runner.os }}-${{ runner.arch }}.txt
+      - name: 10k-tick AI determinism gate (#283)
+        run: go test ./litd/ai/ -run 'TestAIDeterminism10k$|TestAISaveRestore$|TestAIDeterminismGOMAXPROCS$' ${{ matrix.flags }} -v 2>&1 | tee aitrace-${{ runner.os }}-${{ runner.arch }}.txt
       - uses: actions/upload-artifact@v4
         with:
           name: trace-${{ matrix.os }}-${{ strategy.job-index }}
-          path: trace-*.txt
+          path: |
+            trace-*.txt
+            aitrace-*.txt

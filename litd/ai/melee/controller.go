@@ -1,6 +1,12 @@
 package melee
 
-import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
+import (
+	"encoding/binary"
+	"errors"
+	"fmt"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
+)
 
 // Controller is the one data-driven melee AI. Every faction runs THIS code over
 // a different Strategy table. It drives the native families each tick:
@@ -148,3 +154,82 @@ func (c *Controller) BuildIssued(i int) int { return c.bo.Issued(i) }
 
 // ActiveWaves exposes the wave manager's live wave count.
 func (c *Controller) ActiveWaves() int { return c.wm.ActiveWaves() }
+
+// --- serialization: the controller's running plan state round-trips so a saved
+// match resumes identically (the build-order progress and wave roster, plus the
+// observable counters). The strategy table and the bridge binding are NOT
+// serialized — they are reconstructed by the caller before Load, exactly like
+// the AI domain's controller-re-install contract. ---
+
+var controllerMagic = [8]byte{'L', 'I', 'T', 'D', 'M', 'E', 'L', 'E'}
+
+const controllerVersion uint16 = 1
+
+var (
+	errControllerMagic   = errors.New("melee: bad controller save magic")
+	errControllerVersion = errors.New("melee: unsupported controller save version")
+)
+
+// Save serializes the controller's build-order and wave-manager state plus the
+// FSV counters.
+func (c *Controller) Save(dst []byte) []byte {
+	dst = append(dst, controllerMagic[:]...)
+	dst = binary.LittleEndian.AppendUint16(dst, controllerVersion)
+	dst = binary.LittleEndian.AppendUint32(dst, c.firstWaveTick)
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(c.wavesLaunched))
+	dst = binary.LittleEndian.AppendUint32(dst, c.lastWaveID)
+	bo := c.bo.Save(nil)
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(len(bo)))
+	dst = append(dst, bo...)
+	wm := c.wm.Save(nil)
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(len(wm)))
+	dst = append(dst, wm...)
+	return dst
+}
+
+// Load restores controller state from blob. Fail-closed: the whole blob is
+// length-validated before either sub-blob is applied.
+func (c *Controller) Load(blob []byte) error {
+	const header = 8 + 2 + 4*3 + 4
+	if len(blob) < header {
+		return fmt.Errorf("melee: controller blob too short (%d bytes)", len(blob))
+	}
+	for i := range controllerMagic {
+		if blob[i] != controllerMagic[i] {
+			return errControllerMagic
+		}
+	}
+	off := 8
+	if v := binary.LittleEndian.Uint16(blob[off:]); v != controllerVersion {
+		return fmt.Errorf("%w: %d (want %d)", errControllerVersion, v, controllerVersion)
+	}
+	off += 2
+	firstWave := binary.LittleEndian.Uint32(blob[off:])
+	off += 4
+	waves := binary.LittleEndian.Uint32(blob[off:])
+	off += 4
+	lastID := binary.LittleEndian.Uint32(blob[off:])
+	off += 4
+	boLen := int(binary.LittleEndian.Uint32(blob[off:]))
+	off += 4
+	if off+boLen+4 > len(blob) {
+		return fmt.Errorf("melee: controller build-order blob exceeds bytes")
+	}
+	boBlob := blob[off : off+boLen]
+	off += boLen
+	wmLen := int(binary.LittleEndian.Uint32(blob[off:]))
+	off += 4
+	if off+wmLen > len(blob) {
+		return fmt.Errorf("melee: controller wave blob exceeds bytes")
+	}
+	wmBlob := blob[off : off+wmLen]
+	// apply (BuildOrder.Load / WaveManager.Load are each fail-closed)
+	if err := c.bo.Load(boBlob); err != nil {
+		return fmt.Errorf("melee: controller build-order restore: %w", err)
+	}
+	if err := c.wm.Load(wmBlob); err != nil {
+		return fmt.Errorf("melee: controller wave restore: %w", err)
+	}
+	c.firstWaveTick, c.wavesLaunched, c.lastWaveID = firstWave, int(waves), uint32(lastID)
+	return nil
+}
