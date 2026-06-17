@@ -66,7 +66,25 @@ type renderDemoDump struct {
 	Orders    *orderRuntimeDump       `json:"orders,omitempty"`
 	Queue     *queueRuntimeDump       `json:"queue,omitempty"`
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
+	VFXLights *vfxLightsRuntimeDump   `json:"vfxLights,omitempty"`
 	OK        bool                    `json:"ok"`
+}
+
+type vfxLightsRuntimeDump struct {
+	Scene       string                  `json:"scene"`
+	LowPreset   bool                    `json:"lowPreset"`
+	MaxActive   int                     `json:"maxActive"`
+	FinalActive int                     `json:"finalActive"`
+	Events      []vfxLightEventDump     `json:"events"`
+	Slots       []litrender.VFXSlotInfo `json:"slots"`
+	OK          bool                    `json:"ok"`
+	Errors      []string                `json:"errors,omitempty"`
+}
+
+type vfxLightEventDump struct {
+	Request  string                `json:"request"`
+	Priority litrender.VFXPriority `json:"priority"`
+	Decision litrender.VFXDecision `json:"decision"`
 }
 
 type mapDataRuntimeDump struct {
@@ -465,7 +483,7 @@ type resourceBarValues struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
@@ -476,6 +494,7 @@ func main() {
 	autotestQueue := flag.Bool("autotest-queue", false, "render the shift-queue order FSV fixture")
 	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
 	debugFarplane := flag.Float64("debug-farplane", 1, "multiply the computed far plane by this factor (#40 invariant probe: 2x must not change the visible-graphic set)")
+	vfxLowPreset := flag.Bool("vfx-low-preset", false, "spellstorm scene: run the VFX light pool in low preset (requests accounted, no light bound)")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
@@ -529,6 +548,7 @@ func main() {
 	var orderFSV *orderRuntimeDump
 	var queueFSV *queueRuntimeDump
 	var terrainFSV *terrainRuntimeDump
+	var vfxFSV *vfxLightsRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -592,6 +612,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: terrain: %v\n", err)
 				os.Exit(1)
 			}
+		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "spellstorm" {
+			spec, vfxFSV, err = buildSpellstormFSV(scene, *vfxLowPreset)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: spellstorm: %v\n", err)
+				os.Exit(1)
+			}
 		} else {
 			spec, err = buildScene(scene, *sceneName)
 			if err != nil {
@@ -634,10 +660,12 @@ func main() {
 				pass = pass && queueFSV.OK
 			} else if terrainFSV != nil {
 				pass = pass && terrainFSV.OK
+			} else if vfxFSV != nil {
+				pass = pass && vfxFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -849,6 +877,73 @@ func buildScene(scene *core.Node, name string) (sceneSpec, error) {
 	default:
 		return sceneSpec{}, fmt.Errorf("unknown scene %q", name)
 	}
+}
+
+// buildSpellstormFSV lights a dark ground plane with the fixed VFX light pool
+// and scripts the 8-up-then-9th-eviction sequence, recording the acquire/evict
+// event log and the final pool snapshot. lowPreset exercises the no-light path.
+func buildSpellstormFSV(scene *core.Node, lowPreset bool) (sceneSpec, *vfxLightsRuntimeDump, error) {
+	// Dark ground plane so the point lights read as distinct glows.
+	plane := geometry.NewPlane(4000, 4000)
+	mat := material.NewStandard(&math32.Color{R: 0.06, G: 0.06, B: 0.08})
+	ground := graphic.NewMesh(plane, mat)
+	ground.SetRotationX(-math32.Pi / 2) // lay flat on XZ
+	scene.Add(ground)
+
+	pool := litrender.NewVFXLightPool(scene, lowPreset)
+	dump := &vfxLightsRuntimeDump{Scene: "spellstorm", LowPreset: lowPreset, OK: true}
+
+	record := func(label string, r litrender.VFXRequest) {
+		_, d := pool.Acquire(r)
+		dump.Events = append(dump.Events, vfxLightEventDump{Request: label, Priority: r.Priority, Decision: d})
+		if a := pool.ActiveCount(); a > dump.MaxActive {
+			dump.MaxActive = a
+		}
+	}
+
+	// 8 standard-spell lights spread across the plane.
+	for i := 0; i < litrender.MaxVFXLights; i++ {
+		ang := float32(i) / float32(litrender.MaxVFXLights) * 2 * math32.Pi
+		x := 1200 * math32.Cos(ang)
+		z := 1200 * math32.Sin(ang)
+		record(fmt.Sprintf("standard#%d", i), litrender.VFXRequest{
+			Priority: litrender.VFXStandardSpell, Lifetime: 200, Radius: 1400, ScreenDist: float32(i) * 100,
+			Color: math32.Color{R: 0.4, G: 0.7, B: 1.0}, Intensity: 8, Pos: math32.Vector3{X: x, Y: 200, Z: z},
+		})
+	}
+	// 9th request, higher priority → must evict the lowest-priority light.
+	record("ultimate#9", litrender.VFXRequest{
+		Priority: litrender.VFXUltimate, Lifetime: 200, Radius: 1600, ScreenDist: 0,
+		Color: math32.Color{R: 1.0, G: 0.5, B: 0.2}, Intensity: 12, Pos: math32.Vector3{X: 0, Y: 300, Z: 0},
+	})
+
+	buf := make([]litrender.VFXSlotInfo, 0, litrender.MaxVFXLights)
+	dump.Slots = pool.SnapshotInto(buf)
+	dump.FinalActive = pool.ActiveCount()
+
+	// Invariants for the autotest verdict.
+	wantActive := litrender.MaxVFXLights
+	if lowPreset {
+		wantActive = 0
+	}
+	if dump.MaxActive > litrender.MaxVFXLights {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("pool exceeded cap: %d", dump.MaxActive))
+	}
+	if dump.FinalActive != wantActive {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("final active %d, want %d", dump.FinalActive, wantActive))
+	}
+	if !lowPreset {
+		last := dump.Events[len(dump.Events)-1].Decision
+		if !last.Granted || last.Victim < 0 {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, "9th higher-priority request did not evict")
+		}
+	}
+	// Hard build failures would return an error; invariant failures live in
+	// dump.OK and surface through the autotest verdict.
+	return sceneSpec{name: "spellstorm", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
 }
 
 func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, *terrainRuntimeDump, error) {

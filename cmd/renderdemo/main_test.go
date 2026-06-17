@@ -291,6 +291,34 @@ func TestBuildTerrainChunksFSV(t *testing.T) {
 	}
 }
 
+func TestBuildSpellstormFSV(t *testing.T) {
+	scene := core.NewNode()
+	_, dump, err := buildSpellstormFSV(scene, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	last := dump.Events[len(dump.Events)-1].Decision
+	t.Logf("FSV spellstorm maxActive=%d finalActive=%d events=%d lastEvict=%+v OK=%v",
+		dump.MaxActive, dump.FinalActive, len(dump.Events), last, dump.OK)
+	if !dump.OK || dump.MaxActive != 8 || dump.FinalActive != 8 || len(dump.Events) != 9 {
+		t.Fatalf("spellstorm dump wrong: %+v", dump)
+	}
+	if !last.Granted || last.Victim < 0 || last.Reason != "evict:lower-priority" {
+		t.Fatalf("9th request must evict a lower-priority light: %+v", last)
+	}
+
+	sceneLow := core.NewNode()
+	_, low, err := buildSpellstormFSV(sceneLow, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lastLow := low.Events[len(low.Events)-1].Decision
+	t.Logf("FSV spellstorm low-preset finalActive=%d lastReason=%s OK=%v", low.FinalActive, lastLow.Reason, low.OK)
+	if !low.OK || low.FinalActive != 0 || lastLow.Reason != "denied:low-preset" {
+		t.Fatalf("low preset must bind no lights: %+v", low)
+	}
+}
+
 func chdirRepoRoot(t *testing.T) func() {
 	t.Helper()
 	cwd, err := os.Getwd()
