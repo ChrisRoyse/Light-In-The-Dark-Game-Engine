@@ -180,3 +180,27 @@ func ExampleGame_CreateForce() {
 	fmt.Println(f.Count())
 	// Output: 2
 }
+
+// An ability is registered once, equipped on a unit, then leveled — the handle
+// reads back its live level.
+func ExampleUnit_AddAbility() {
+	g := exampleGame()
+	ref := g.RegisterAbility(litd.AbilityDef{ID: "AHbz", Name: "Blizzard", Cooldown: 6})
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), litd.Vec2{}, litd.Deg(0))
+	a := u.AddAbility(ref)
+	a.SetLevel(3)
+	fmt.Println(a.Valid(), a.Level())
+	// Output: true 3
+}
+
+// The camera is sim-inert render state: a verb for the local player emits a
+// CameraEvent to the installed sink without touching the simulation.
+func ExampleGame_Camera() {
+	g := exampleGame()
+	var got litd.CameraEvent
+	g.OnCamera(func(e litd.CameraEvent) { got = e })
+	g.SetLocalPlayer(g.Player(0))
+	g.Camera(g.Player(0)).Pan(litd.Vec2{X: 512, Y: 256})
+	fmt.Printf("%v (%.0f,%.0f)\n", got.Kind == litd.CameraPan, got.Pos.X, got.Pos.Y)
+	// Output: true (512,256)
+}
