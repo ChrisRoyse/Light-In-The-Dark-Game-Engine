@@ -6089,26 +6089,11 @@ reason = "#225: item-type/data accessors (name/level/class/userdata/owner/by-typ
 [[override]]
 name = "ChooseRandomItem"
 class = "D4"
-tombstone = "deferred-v2"
-reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-
-[[override]]
-name = "ChooseRandomItemBJ"
-class = "D4"
-tombstone = "deferred-v2"
-reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-
-[[override]]
-name = "ChooseRandomItemEx"
-class = "D4"
-tombstone = "deferred-v2"
-reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-
-[[override]]
-name = "ChooseRandomItemExBJ"
-class = "D4"
-tombstone = "deferred-v2"
-reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+goMapping = "RandomItemType"
+goSignature = "(g *Game, codes []string) ItemType"
+collapsesWith = ["ChooseRandomItemBJ", "ChooseRandomItemEx", "ChooseRandomItemExBJ"]
+package = "litd/api/helpers"
+reason = "#258 (commit 42c1bdb) shipped helpers.RandomItemType: uniform random item-type choice over the sim PRNG (R-SIM-2). The BJ/Ex/ExBJ variants are arg-reorderings/wrappers folded onto the one canonical (dedup D4). Full map-gen item-pool distribution remains a separate v2 feature."
 
 [[override]]
 name = "CreateItemPool"
@@ -6310,12 +6295,6 @@ reason = "#225: enumeration / event-context / order-target accessors deferred to
 
 [[override]]
 name = "PlaceRandomItem"
-class = "D4"
-tombstone = "deferred-v2"
-reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-
-[[override]]
-name = "RandomDistAddItem"
 class = "D4"
 tombstone = "deferred-v2"
 reason = "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
@@ -11398,15 +11377,12 @@ reason = "#217: toggle a unit's food consumption at runtime; no v1 runtime food-
 
 [[override]]
 name = "CreateNUnitsAtLoc"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
-
-[[override]]
-name = "CreateNUnitsAtLocFacingLocBJ"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
+class = "D4"
+goMapping = "CreateUnits"
+goSignature = "(g *Game, n int, owner Player, typ UnitType, pos Vec2, facing Angle) []Unit"
+collapsesWith = ["CreateNUnitsAtLocFacingLocBJ"]
+package = "litd/api/helpers"
+reason = "#258 (commit 42c1bdb) shipped helpers.CreateUnits: bulk create-N-units-and-return-slice (D4 loop over Game.CreateUnit). The FacingLocBJ variant differs only in facing-as-location vs angle and folds onto the canonical (dedup D4)."
 
 [[override]]
 name = "MakeUnitRescuableToForceBJ"
@@ -13274,15 +13250,12 @@ reason = "#game-state: map-config extra-data request hooks (custom map metadata 
 
 [[override]]
 name = "RandomDistChoose"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
-
-[[override]]
-name = "RandomDistReset"
-class = "D3"
-tombstone = "deferred-v2"
-reason = "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+class = "D4"
+goMapping = "WeightedChoice"
+goSignature = "(g *Game, weights []int) int"
+collapsesWith = ["RandomDistReset", "RandomDistAddItem"]
+package = "litd/api/helpers"
+reason = "#258 (commit 42c1bdb) shipped helpers.WeightedChoice: weighted random index over the sim PRNG (R-SIM-2). The stateful RandomDist Reset/AddItem/Choose builder API folds onto the one stateless canonical (dedup D4). Full map-gen creep/building placement distribution remains a separate v2 feature."
 
 [[override]]
 name = "ChooseRandomCreep"

@@ -1949,53 +1949,6 @@
       }
     },
     {
-      "name": "ChooseRandomItemBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [
-          {
-            "name": "level",
-            "jassType": "integer",
-            "tsType": "number"
-          }
-        ],
-        "returns": "integer"
-      },
-      "classification": "D4",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-      }
-    },
-    {
-      "name": "ChooseRandomItemExBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [
-          {
-            "name": "level",
-            "jassType": "integer",
-            "tsType": "number"
-          },
-          {
-            "name": "whichType",
-            "jassType": "itemtype",
-            "tsType": "itemtype"
-          }
-        ],
-        "returns": "integer"
-      },
-      "classification": "D4",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-      }
-    },
-    {
       "name": "ChooseRandomNPBuildingBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -3022,53 +2975,16 @@
         ],
         "returns": "group"
       },
-      "classification": "D3",
+      "classification": "D4",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
-      }
-    },
-    {
-      "name": "CreateNUnitsAtLocFacingLocBJ",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [
-          {
-            "name": "count",
-            "jassType": "integer",
-            "tsType": "number"
-          },
-          {
-            "name": "unitId",
-            "jassType": "integer",
-            "tsType": "number"
-          },
-          {
-            "name": "whichPlayer",
-            "jassType": "player",
-            "tsType": "player"
-          },
-          {
-            "name": "loc",
-            "jassType": "location",
-            "tsType": "location"
-          },
-          {
-            "name": "lookAt",
-            "jassType": "location",
-            "tsType": "location"
-          }
-        ],
-        "returns": "group"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "CreateUnits",
+        "package": "litd/api/helpers",
+        "goSignature": "(g *Game, n int, owner Player, typ UnitType, pos Vec2, facing Angle) []Unit",
+        "collapsesWith": [
+          "CreateNUnitsAtLocFacingLocBJ"
+        ]
       }
     },
     {
@@ -12025,59 +11941,23 @@
       }
     },
     {
-      "name": "RandomDistAddItem",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [
-          {
-            "name": "inID",
-            "jassType": "integer",
-            "tsType": "number"
-          },
-          {
-            "name": "inChance",
-            "jassType": "integer",
-            "tsType": "number"
-          }
-        ],
-        "returns": "nothing"
-      },
-      "classification": "D4",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-      }
-    },
-    {
       "name": "RandomDistChoose",
       "origin": "blizzard.j",
       "signature": {
         "params": [],
         "returns": "integer"
       },
-      "classification": "D3",
+      "classification": "D4",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
-      }
-    },
-    {
-      "name": "RandomDistReset",
-      "origin": "blizzard.j",
-      "signature": {
-        "params": [],
-        "returns": "nothing"
-      },
-      "classification": "D3",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258)."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "WeightedChoice",
+        "package": "litd/api/helpers",
+        "goSignature": "(g *Game, weights []int) int",
+        "collapsesWith": [
+          "RandomDistReset",
+          "RandomDistAddItem"
+        ]
       }
     },
     {
@@ -28096,36 +27976,16 @@
       },
       "classification": "D4",
       "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
-      }
-    },
-    {
-      "name": "ChooseRandomItemEx",
-      "origin": "common.j",
-      "signature": {
-        "params": [
-          {
-            "name": "whichType",
-            "jassType": "itemtype",
-            "tsType": "itemtype"
-          },
-          {
-            "name": "level",
-            "jassType": "integer",
-            "tsType": "number"
-          }
-        ],
-        "returns": "integer"
-      },
-      "classification": "D4",
-      "classifiedBy": "override",
-      "disposition": "tombstoned",
-      "tombstone": {
-        "reason": "deferred-v2",
-        "detail": "#225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG."
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "RandomItemType",
+        "package": "litd/api/helpers",
+        "goSignature": "(g *Game, codes []string) ItemType",
+        "collapsesWith": [
+          "ChooseRandomItemBJ",
+          "ChooseRandomItemEx",
+          "ChooseRandomItemExBJ"
+        ]
       }
     },
     {

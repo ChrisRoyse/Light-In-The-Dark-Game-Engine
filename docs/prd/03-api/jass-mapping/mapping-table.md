@@ -906,8 +906,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | PlaceRandomItem | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
 | ChooseRandomCreep | common.j | D3 | **tombstoned** (deferred-v2): #game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258). |
 | ChooseRandomNPBuilding | common.j | D3 | **tombstoned** (deferred-v2): #game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258). |
-| ChooseRandomItem | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
-| ChooseRandomItemEx | common.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| ChooseRandomItem | common.j | D4 | `litd/api/helpers.RandomItemType` |
+| ChooseRandomItemEx | common.j | D4 | `litd/api/helpers.RandomItemType` (D3 collapse → ChooseRandomItem) |
 | SetRandomSeed | common.j | D1 | `litd/api.Game.SetRandomSeed` |
 | SetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
 | ResetTerrainFog | common.j | D3 | **tombstoned** (deferred-v2): #253: atmospheric/sky/distance-fog/minimap-terrain render presentation; deferred until the render environment pipeline lands (distinct from vision fog-of-war in visibility-and-fog.md, hazard 6). |
@@ -1847,8 +1847,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetItemPlayerBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: item-type/data accessors (name/level/class/userdata/owner/by-type lookups) deferred to v2 with the typed item data tables. |
 | SetItemVisibleBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
 | IsItemHiddenBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: per-item runtime flags (drop-on-death/droppable/invulnerable/visibility/life/reposition) are table-seeded in v1; runtime mutation deferred to v2. |
-| ChooseRandomItemBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
-| ChooseRandomItemExBJ | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
+| ChooseRandomItemBJ | blizzard.j | D4 | `litd/api/helpers.RandomItemType` (D3 collapse → ChooseRandomItem) |
+| ChooseRandomItemExBJ | blizzard.j | D4 | `litd/api/helpers.RandomItemType` (D3 collapse → ChooseRandomItem) |
 | ChooseRandomNPBuildingBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258). |
 | ChooseRandomCreepBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258). |
 | EnumItemsInRectBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #225: enumeration / event-context / order-target accessors deferred to the v2 group-query, event, and order APIs. |
@@ -1866,8 +1866,8 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetKillingUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land. |
 | CreateUnitAtLocSaveLast | blizzard.j | D2 | `litd/api.Game.CreateUnit` (D3 collapse → CreateUnit) |
 | GetLastCreatedUnit | blizzard.j | D2 | **tombstoned** (superseded): Go return value from Game.CreateUnit replaces the bj_lastCreatedUnit side channel |
-| CreateNUnitsAtLoc | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility. |
-| CreateNUnitsAtLocFacingLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: bulk create-N-units-and-return-group helper (D4 loop over Game.CreateUnit); deferred to a v2 helpers utility. |
+| CreateNUnitsAtLoc | blizzard.j | D4 | `litd/api/helpers.CreateUnits` |
+| CreateNUnitsAtLocFacingLocBJ | blizzard.j | D4 | `litd/api/helpers.CreateUnits` (D3 collapse → CreateNUnitsAtLoc) |
 | GetLastCreatedGroupEnum | blizzard.j | D1 | **tombstoned** (superseded): last-created-group enum global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | GetLastCreatedGroup | blizzard.j | D1 | **tombstoned** (superseded): last-created-group global superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | CreateCorpseLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: spawn a decorative corpse; render/decoration with no gameplay sim component, deferred to v2. |
@@ -2485,9 +2485,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | MarkGameStarted | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface. |
 | DetectGameStarted | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #visibility: the bj_gameStarted poll flag (a one-shot game-start latch); the LitD lifecycle exposes match start through the event/scheduler model, not a polled global. |
 | InitBlizzard | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #game-state: blizzard.j engine-init / global-bootstrap seams; the LitD engine owns initialization, these have no script-callable surface. |
-| RandomDistReset | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258). |
-| RandomDistAddItem | blizzard.j | D4 | **tombstoned** (deferred-v2): #225: weighted random item pools land as helpers.RandomItemType (D4) with the helpers issue (#258); over the sim PRNG. |
-| RandomDistChoose | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: weighted random-distribution tables + random creep/NP-building/unit map-gen placement; deferred to v2 (helpers.WeightedChoice covers the dist primitive at #258). |
+| RandomDistReset | blizzard.j | D4 | `litd/api/helpers.WeightedChoice` (D3 collapse → RandomDistChoose) |
+| RandomDistAddItem | blizzard.j | D4 | `litd/api/helpers.WeightedChoice` (D3 collapse → RandomDistChoose) |
+| RandomDistChoose | blizzard.j | D4 | `litd/api/helpers.WeightedChoice` |
 | UnitDropItem | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | WidgetDropItem | blizzard.j | D1 | `litd/api.Unit.DropItem` (D3 collapse → UnitDropItemSlot) |
 | BlzIsLastInstanceObjectFunctionSuccessful | blizzard.j | D3 | **tombstoned** (deferred-v2): #units: object-data field-edit success flag; deferred with the v2 object-data API. |

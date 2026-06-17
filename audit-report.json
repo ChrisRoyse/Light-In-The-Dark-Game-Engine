@@ -4,17 +4,17 @@
   "byRule": {
     "D1": 768,
     "D2": 269,
-    "D3": 1400,
-    "D4": 89,
+    "D3": 1396,
+    "D4": 93,
     "D5": 116
   },
-  "mapped": 405,
-  "tombstoned": 1844,
-  "collapsed": 393,
+  "mapped": 408,
+  "tombstoned": 1835,
+  "collapsed": 399,
   "unclassified": 0,
   "unmapped": 0,
   "tombstonesByReason": {
-    "deferred-v2": 1010,
+    "deferred-v2": 1001,
     "deprecated": 3,
     "gameplay-irrelevant": 392,
     "superseded": 439
@@ -22,7 +22,7 @@
   "duplicateTargets": [],
   "helperShadowsCore": [],
   "commonaiCapabilityTombstones": 0,
-  "exportedVerbs": 452,
+  "exportedVerbs": 471,
   "unaccountedExports": [],
   "unimplementedCanonicals": [],
   "featureTags": {},

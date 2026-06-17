@@ -5,21 +5,21 @@
 Source functions ......... 2642  (common.j+blizzard.j = 2519, +commonai = 2642)
   Classified (D1) .......   768
   Classified (D2) .......   269
-  Classified (D3) .......   1400
-  Classified (D4) .......   89
+  Classified (D3) .......   1396
+  Classified (D4) .......   93
   Classified (D5) .......   116
   Unclassified ..........   0
 Disposition
-  Mapped ................   405
-  Tombstoned ............   1844  (superseded 439, gameplay-irrelevant 392, deprecated 3, deferred-v2 1010)
-  Collapsed (D3 members) .   393
+  Mapped ................   408
+  Tombstoned ............   1835  (superseded 439, gameplay-irrelevant 392, deprecated 3, deferred-v2 1001)
+  Collapsed (D3 members) .   399
   Unmapped ..............   0
 commonai capability tombstones: 0 (must be 0)
 duplicate canonical targets:    0 (M5 gate)
 
 ## Reverse closure (litd/api)
 
-Exported verbs ........... 452
+Exported verbs ........... 471
 Unaccounted exports ...... 0 (gate requires 0)
 Unimplemented canonicals . 0 (mapped symbols on a panic stub; gate requires 0)
 
