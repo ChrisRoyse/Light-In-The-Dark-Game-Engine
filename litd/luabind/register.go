@@ -52,13 +52,23 @@ func argRect(L *lua.LState, i int) api.Rect {
 	return r
 }
 
-// handleToLua wraps an api handle in a fresh userdata carrying the handle value
-// (which self-carries its *Game). The script receives an opaque handle it can
-// pass to other verbs; GameHandles persists it across a save (#264/#267).
-func handleToLua(L *lua.LState, h api.Handle) *lua.LUserData {
+// handleToLua wraps an api handle or Player in a fresh userdata carrying the
+// value (which self-carries its *Game). The script receives an opaque handle it
+// can pass to other verbs; GameHandles persists noun handles across a save
+// (#264/#267).
+func handleToLua(L *lua.LState, h any) *lua.LUserData {
 	ud := L.NewUserData()
 	ud.Value = h
 	return ud
+}
+
+// argPlayer reads argument i as a Player userdata (self-carries its game).
+func argPlayer(L *lua.LState, i int) api.Player {
+	p, ok := handleArg(L, i).(api.Player)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Player userdata, got %T", handleArg(L, i)))
+	}
+	return p
 }
 
 // handleArg reads argument i as a userdata and returns its payload, raising if i

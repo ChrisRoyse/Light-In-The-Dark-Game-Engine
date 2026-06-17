@@ -73,3 +73,58 @@ func TestGeneratedHandleBindingsFSV(t *testing.T) {
 	}
 	t.Logf("FSV fail-closed: non-Unit userdata rejected")
 }
+
+func TestGeneratedPlayerBindingsFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 5})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+	u := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 10, Y: 10}, api.Deg(0))
+
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	hero := L.NewUserData()
+	hero.Value = u
+	L.SetGlobal("hero", hero)
+	p2ud := L.NewUserData()
+	p2ud.Value = g.Player(2) // a Player handle (self-carries game)
+	L.SetGlobal("p2", p2ud)
+
+	// Player getter parity: Player_Gold(p2) via Lua == the Go call (the
+	// binding's contract is faithful forwarding; econ init in a bare game is a
+	// separate api concern, gap #388).
+	if err := L.DoString(`gold = Player_Gold(p2)`); err != nil {
+		t.Fatalf("Player_Gold: %v", err)
+	}
+	if got, want := luaNum(t, L, "gold"), float64(g.Player(2).Gold()); got != want {
+		t.Fatalf("Player_Gold parity: Lua=%v Go=%v", got, want)
+	}
+	t.Logf("FSV Player_Gold parity: Lua==Go==%d", g.Player(2).Gold())
+
+	// Player-as-param: Unit_SetOwner(hero, p2, false) reassigns ownership in sim.
+	if u.OwnedBy(g.Player(2)) {
+		t.Fatal("precondition: unit should not start owned by player 2")
+	}
+	if err := L.DoString(`Unit_SetOwner(hero, p2, false)`); err != nil {
+		t.Fatalf("Unit_SetOwner: %v", err)
+	}
+	if !u.OwnedBy(g.Player(2)) {
+		t.Fatal("Unit_SetOwner(p2) did not reassign ownership in the sim")
+	}
+	// And the Lua-side ownership check agrees.
+	if err := L.DoString(`owned = Unit_OwnedBy(hero, p2)`); err != nil {
+		t.Fatalf("Unit_OwnedBy: %v", err)
+	}
+	if L.GetGlobal("owned") != lua.LTrue {
+		t.Fatalf("Unit_OwnedBy(hero, p2) = %v, want true", L.GetGlobal("owned"))
+	}
+	t.Logf("FSV Player param: Unit_SetOwner via Lua -> sim ownership reassigned, Lua OwnedBy=true")
+}
