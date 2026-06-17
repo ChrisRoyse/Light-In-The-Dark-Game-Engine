@@ -7,13 +7,65 @@ package luabind
 // reaches the wake tick. Verified by reading the unit back through the Go api.
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	lua "github.com/yuin/gopher-lua"
 )
+
+// TestMixedSchedOrderFSV is the #269 headline: Go scheduler jobs (Game.After
+// timers) and Lua coroutine waits share ONE total order — the scheduler's
+// (wakeTick, registrationSeq). With four jobs registered G,L,G,L all waking on
+// the same tick, the firing trace must be exactly G1,L1,G2,L2, and identical
+// across two runs. SoT = the firing trace itself.
+func TestMixedSchedOrderFSV(t *testing.T) {
+	run := func() []string {
+		g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 41})
+		if err != nil {
+			t.Fatalf("NewGame: %v", err)
+		}
+		L := lua.NewState()
+		defer L.Close()
+		if err := Register(L, g); err != nil {
+			t.Fatalf("Register: %v", err)
+		}
+		var trace []string
+		L.SetGlobal("mark", L.NewFunction(func(L *lua.LState) int {
+			trace = append(trace, L.CheckString(1))
+			return 0
+		}))
+
+		// Registration order G1, L1, G2, L2 — all waking at tick 1 (0.05s = 1
+		// tick). A Lua wait's record is registered when Run resumes the coroutine
+		// to its first PolledWait (synchronously inside DoString), so the seq
+		// order is exactly the source order here.
+		g.After(50*time.Millisecond, func() { trace = append(trace, "G1") })
+		if err := L.DoString(`Run(function() PolledWait(0.05); mark("L1") end)`); err != nil {
+			t.Fatalf("Run L1: %v", err)
+		}
+		g.After(50*time.Millisecond, func() { trace = append(trace, "G2") })
+		if err := L.DoString(`Run(function() PolledWait(0.05); mark("L2") end)`); err != nil {
+			t.Fatalf("Run L2: %v", err)
+		}
+
+		g.Advance(1)
+		return trace
+	}
+
+	const golden = "G1,L1,G2,L2"
+	r1, r2 := strings.Join(run(), ","), strings.Join(run(), ",")
+	t.Logf("FSV mixed order: run1=[%s] run2=[%s] golden=[%s]", r1, r2, golden)
+	if r1 != golden {
+		t.Fatalf("mixed Go/Lua firing order = [%s], want [%s]", r1, golden)
+	}
+	if r1 != r2 {
+		t.Fatalf("non-deterministic firing order: [%s] vs [%s]", r1, r2)
+	}
+}
 
 func scriptGame(t *testing.T) (*api.Game, api.Unit) {
 	t.Helper()
@@ -55,10 +107,10 @@ func TestLuaThreadResumesAcrossTicksFSV(t *testing.T) {
 	if got := u.Life(); got != 10 {
 		t.Fatalf("after Run (pre-wait): Life=%v, want 10", got)
 	}
-	if g.SuspendedThreadCount() != 1 {
-		t.Fatalf("expected 1 suspended thread after PolledWait, got %d", g.SuspendedThreadCount())
+	if PendingScriptWaits(L) != 1 {
+		t.Fatalf("expected 1 suspended thread after PolledWait, got %d", PendingScriptWaits(L))
 	}
-	t.Logf("FSV pre-advance: Lua thread set Life=10 then parked (suspended=%d)", g.SuspendedThreadCount())
+	t.Logf("FSV pre-advance: Lua thread set Life=10 then parked (suspended=%d)", PendingScriptWaits(L))
 
 	// One tick: not yet (100ms = 2 ticks).
 	g.Advance(1)
@@ -71,8 +123,8 @@ func TestLuaThreadResumesAcrossTicksFSV(t *testing.T) {
 	if got := u.Life(); got != 20 {
 		t.Fatalf("after Advance(2): Life=%v, want 20 (Lua thread did not resume)", got)
 	}
-	if g.SuspendedThreadCount() != 0 {
-		t.Fatalf("Lua thread should have finished, suspended=%d", g.SuspendedThreadCount())
+	if PendingScriptWaits(L) != 0 {
+		t.Fatalf("Lua thread should have finished, suspended=%d", PendingScriptWaits(L))
 	}
 	t.Logf("FSV post-advance: Lua thread resumed at wake tick, Life=20 (suspended=0)")
 
@@ -122,8 +174,8 @@ func TestLuaThreadErrorIsSurfacedFSV(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("post-wait script error not surfaced after Advance: calls=%d", len(got))
 	}
-	if g.SuspendedThreadCount() != 0 {
-		t.Fatalf("errored thread should have retired, suspended=%d", g.SuspendedThreadCount())
+	if PendingScriptWaits(L) != 0 {
+		t.Fatalf("errored thread should have retired, suspended=%d", PendingScriptWaits(L))
 	}
 	t.Logf("FSV resume-error surfaced after Advance: %q", got[0])
 }
@@ -168,7 +220,7 @@ func TestLuaThreadsDeterministicFSV(t *testing.T) {
 			t.Fatalf("DoString multi-thread: %v", err)
 		}
 		g.Advance(4)
-		if n := g.SuspendedThreadCount(); n != 0 {
+		if n := PendingScriptWaits(L); n != 0 {
 			t.Fatalf("all threads should have finished after Advance(4), suspended=%d", n)
 		}
 		return g.StateHash()
@@ -221,8 +273,8 @@ func TestLuaThreadNestedSpawnFSV(t *testing.T) {
 	if u1.Life() != 7 || u2.Life() != 8 {
 		t.Fatalf("pre-advance: u1=%v u2=%v, want 7/8", u1.Life(), u2.Life())
 	}
-	if g.SuspendedThreadCount() != 2 {
-		t.Fatalf("expected 2 suspended (outer + nested), got %d", g.SuspendedThreadCount())
+	if PendingScriptWaits(L) != 2 {
+		t.Fatalf("expected 2 suspended (outer + nested), got %d", PendingScriptWaits(L))
 	}
 	t.Logf("FSV nested pre-advance: u1=7 u2=8 suspended=2")
 
@@ -230,8 +282,8 @@ func TestLuaThreadNestedSpawnFSV(t *testing.T) {
 	if u1.Life() != 77 || u2.Life() != 88 {
 		t.Fatalf("post-advance: u1=%v u2=%v, want 77/88 (nested resume failed)", u1.Life(), u2.Life())
 	}
-	if g.SuspendedThreadCount() != 0 {
-		t.Fatalf("both threads should have finished, suspended=%d", g.SuspendedThreadCount())
+	if PendingScriptWaits(L) != 0 {
+		t.Fatalf("both threads should have finished, suspended=%d", PendingScriptWaits(L))
 	}
 	t.Logf("FSV nested post-advance: u1=77 u2=88 suspended=0 — nested thread resumed correctly")
 }
@@ -254,8 +306,8 @@ func TestLuaThreadNoWaitRunsToCompletionFSV(t *testing.T) {
 	if got := u.Life(); got != 42 {
 		t.Fatalf("no-wait thread: Life=%v, want 42", got)
 	}
-	if g.SuspendedThreadCount() != 0 {
-		t.Fatalf("no-wait thread should leave nothing suspended, got %d", g.SuspendedThreadCount())
+	if PendingScriptWaits(L) != 0 {
+		t.Fatalf("no-wait thread should leave nothing suspended, got %d", PendingScriptWaits(L))
 	}
 	t.Logf("FSV no-wait: Lua thread ran to completion in Run, Life=42, suspended=0")
 }
