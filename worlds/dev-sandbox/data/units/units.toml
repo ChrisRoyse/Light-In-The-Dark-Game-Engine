@@ -1,0 +1,17 @@
+# dev-sandbox unit table (#268). Defines "hfoo" — the type main.lua resolves
+# via Game_UnitType("hfoo") and spawns. Plain unit: no attacks, no abilities,
+# so it installs through the units-only api seam (g.DefineUnits) with nothing
+# silently dropped.
+[[unit]]
+id = "hfoo"
+life = 100
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 500
+model = "units/hfoo.glb"
+name = "Sandbox Footman"
