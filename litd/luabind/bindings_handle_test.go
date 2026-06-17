@@ -9,6 +9,7 @@ package luabind
 import (
 	"strings"
 	"testing"
+	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
@@ -127,6 +128,38 @@ func TestGeneratedPlayerBindingsFSV(t *testing.T) {
 		t.Fatalf("Unit_OwnedBy(hero, p2) = %v, want true", L.GetGlobal("owned"))
 	}
 	t.Logf("FSV Player param: Unit_SetOwner via Lua -> sim ownership reassigned, Lua OwnedBy=true")
+}
+
+func TestGeneratedTimerBindingFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 9})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	tmr := g.After(2*time.Second, func() {}) // a live Timer handle (self-carries game)
+	if !tmr.Valid() {
+		t.Fatal("After returned invalid timer")
+	}
+
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	tud := L.NewUserData()
+	tud.Value = tmr
+	L.SetGlobal("tmr", tud)
+
+	// Timer_Timeout returns a time.Duration marshaled to SECONDS: 2s -> 2.0,
+	// matching the Go call bit-for-bit.
+	if err := L.DoString(`to = Timer_Timeout(tmr)`); err != nil {
+		t.Fatalf("Timer_Timeout: %v", err)
+	}
+	got := luaNum(t, L, "to")
+	wantSec := tmr.Timeout().Seconds()
+	t.Logf("FSV Timer_Timeout: Lua=%v s, Go=%v s (raw=%v)", got, wantSec, tmr.Timeout())
+	if got != wantSec || got != 2.0 {
+		t.Fatalf("Timer_Timeout: Lua=%v Go=%v, want 2.0", got, wantSec)
+	}
 }
 
 func TestGeneratedGameBoundBindingsFSV(t *testing.T) {

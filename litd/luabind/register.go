@@ -25,6 +25,7 @@ package luabind
 
 import (
 	"fmt"
+	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	lua "github.com/yuin/gopher-lua"
@@ -97,6 +98,12 @@ func stringSliceToLua(L *lua.LState, s []string) *lua.LTable {
 	return t
 }
 
+// argDuration reads argument i as a time.Duration expressed in SECONDS (the Lua
+// surface uses seconds: PolledWait(0.5)), raising on a non-number.
+func argDuration(L *lua.LState, i int) time.Duration {
+	return time.Duration(float64(L.CheckNumber(i)) * float64(time.Second))
+}
+
 // argPlayer reads argument i as a Player userdata (self-carries its game).
 func argPlayer(L *lua.LState, i int) api.Player {
 	p, ok := handleArg(L, i).(api.Player)
@@ -149,6 +156,14 @@ func argEffect(L *lua.LState, i int) api.Effect {
 	v, ok := handleArg(L, i).(api.Effect)
 	if !ok {
 		L.ArgError(i, fmt.Sprintf("expected Effect userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+func argTimer(L *lua.LState, i int) api.Timer {
+	v, ok := handleArg(L, i).(api.Timer)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Timer userdata, got %T", handleArg(L, i)))
 	}
 	return v
 }

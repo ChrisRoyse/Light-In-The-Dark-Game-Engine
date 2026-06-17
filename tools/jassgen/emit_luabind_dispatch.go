@@ -65,6 +65,8 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argEffect(L, %d)", idx), true
 	case "Player":
 		return fmt.Sprintf("argPlayer(L, %d)", idx), true
+	case "Timer":
+		return fmt.Sprintf("argTimer(L, %d)", idx), true
 	case "float64":
 		return fmt.Sprintf("float64(L.CheckNumber(%d))", idx), true
 	case "int":
@@ -81,6 +83,8 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("L.CheckString(%d)", idx), true
 	case "bool":
 		return fmt.Sprintf("L.CheckBool(%d)", idx), true
+	case "time.Duration":
+		return fmt.Sprintf("argDuration(L, %d)", idx), true
 	default:
 		return "", false
 	}
@@ -96,7 +100,7 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(angleToLua(%s))", expr), true
 	case "Rect":
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
-	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player":
+	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer":
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
 	case "float64", "int", "int32", "int64", "uint32", "uint8":
 		return fmt.Sprintf("L.Push(lua.LNumber(%s))", expr), true
@@ -110,6 +114,9 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(intSliceToLua(L, %s))", expr), true
 	case "[]string":
 		return fmt.Sprintf("L.Push(stringSliceToLua(L, %s))", expr), true
+	case "time.Duration":
+		// Lua surface is seconds (a method call, no api/time import in the gen file).
+		return fmt.Sprintf("L.Push(lua.LNumber(%s.Seconds()))", expr), true
 	default:
 		return "", false
 	}
