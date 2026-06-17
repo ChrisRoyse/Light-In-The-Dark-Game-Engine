@@ -48,15 +48,21 @@ var setupAllowlist = map[string]bool{
 	"LoadMap": true,
 }
 
-// methodErrAllowlist names persistence-boundary methods permitted to return
-// error. R-API-5 forbids error returns on gameplay verbs (a verb must no-op
-// on an invalid handle, never error) — but serialization IO is not a gameplay
-// verb. Storage.Save/Load read/write an external byte stream and MUST fail
-// closed on a bad magic / version / truncation (doctrine §9), which only an
-// error return can express. Keyed "Type.Method".
+// methodErrAllowlist names methods permitted to return error despite R-API-5's
+// "gameplay verbs never error" rule. Two kinds qualify, neither a gameplay verb:
+//   - persistence-boundary IO: Storage.Save/Load read/write an external byte
+//     stream and MUST fail closed on bad magic / version / truncation
+//     (doctrine §9), expressible only as an error.
+//   - SETUP methods: construction-time verbs that validate their inputs before a
+//     match runs. Game.DefineUnits (#387) seeds unit definitions (the method
+//     analog of the NewGame/LoadMap free-func setup allowlist) and returns error
+//     on invalid/conflicting defs — a load-time failure, never mid-match.
+//
+// Keyed "Type.Method".
 var methodErrAllowlist = map[string]bool{
-	"Storage.Save": true,
-	"Storage.Load": true,
+	"Storage.Save":     true,
+	"Storage.Load":     true,
+	"Game.DefineUnits": true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the
