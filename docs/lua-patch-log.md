@@ -49,7 +49,7 @@ The four D-25 patches land in their own issues on top of this pinned base:
 |---|---|---|---|
 | 1 | instruction-budget counter in `mainLoop` | #262 | **done** (fork commit `46381dc`) |
 | 2 | deterministic mathlib (`math.random` → sim PRNG; `randomseed` disabled) | #263 | **done — random half** (fork commit `b579629`); transcendental golden half blocked on #284 |
-| 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | **in progress** — VM snapshot/restore (`5c53948`/`54426ff`) + closure/upvalue accessors (`a05c253`); luabind save/load incl. register closures with shared upvalues (`331aee9`), nested coroutines (`ef55fbd`), and frame-closures-with-upvalues via a unified value+frame graph (`ea5204d`). **Sole remaining piece:** userdata→sim-handle rebind — fails closed, gated on the #267 handle store |
+| 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | **complete** — VM snapshot/restore (`5c53948`/`54426ff`) + closure/upvalue accessors (`a05c253`); luabind save/load of the full value graph: register closures with shared upvalues (`331aee9`), nested coroutines (`ef55fbd`), frame-closures-with-upvalues (`ea5204d`), and userdata→host-handle rebind via the `HandleMarshaler` seam — handle marshals to an opaque token, rebinds with shared identity on cold load, fails closed (loud) without a marshaler. The api codec it resolves through is `litd/api` `RefOf`/`Game.Resolve` (#267, `c2b8850`) |
 | 4 | `LState`/call-frame pooling + golden cross-arch CI test | #265 | pending |
 | S | deterministic memory-budget accountant (`string.rep` charge) | #266 | **done** (fork commit `d855815`) |
 

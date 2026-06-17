@@ -7,11 +7,34 @@ package luabind
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
 	lua "github.com/yuin/gopher-lua"
 )
+
+// intHandleMarshaler is a synthetic HandleMarshaler standing in for the binding
+// layer: it round-trips a userdata whose Value is an int token. (The real
+// api.RefOf/Game.Resolve codec is verified in litd/api/handle_marshal_test.go;
+// here we exercise the persister's userdata path with the marshaler injected.)
+type intHandleMarshaler struct{}
+
+func (intHandleMarshaler) MarshalUserData(ud *lua.LUserData) ([]byte, error) {
+	n, ok := ud.Value.(int)
+	if !ok {
+		return nil, fmt.Errorf("userdata value is %T, not a handle token", ud.Value)
+	}
+	return json.Marshal(n)
+}
+
+func (intHandleMarshaler) UnmarshalUserData(data []byte) (*lua.LUserData, error) {
+	var n int
+	if err := json.Unmarshal(data, &n); err != nil {
+		return nil, err
+	}
+	return &lua.LUserData{Value: n}, nil
+}
 
 const persistSrc = `
 	local x = 111
@@ -49,7 +72,7 @@ func TestSaveLoadThreadColdRoundTrip(t *testing.T) {
 	defer regHot.Close()
 	co, _ := runToYield(t, regHot, persistSrc)
 
-	img, err := SaveThread(regHot, co)
+	img, err := SaveThread(regHot, co, nil)
 	if err != nil {
 		t.Fatalf("SaveThread: %v", err)
 	}
@@ -79,7 +102,7 @@ func TestSaveLoadThreadColdRoundTrip(t *testing.T) {
 		t.Fatalf("cold register: %v", err)
 	}
 	rtCold := lua.NewState()
-	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	th, topFn, err := LoadThread(regCold, rtCold, &img2, nil)
 	if err != nil {
 		t.Fatalf("LoadThread: %v", err)
 	}
@@ -108,7 +131,7 @@ func TestSaveLoadThreadPreservesRegisterAliasing(t *testing.T) {
 	regHot := NewChunkRegistry()
 	defer regHot.Close()
 	co, _ := runToYield(t, regHot, aliasSrc)
-	img, err := SaveThread(regHot, co)
+	img, err := SaveThread(regHot, co, nil)
 	if err != nil {
 		t.Fatalf("SaveThread: %v", err)
 	}
@@ -124,7 +147,7 @@ func TestSaveLoadThreadPreservesRegisterAliasing(t *testing.T) {
 		t.Fatalf("cold register: %v", err)
 	}
 	rtCold := lua.NewState()
-	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	th, topFn, err := LoadThread(regCold, rtCold, &img2, nil)
 	if err != nil {
 		t.Fatalf("LoadThread: %v", err)
 	}
@@ -141,7 +164,7 @@ func TestLoadThreadContentMismatch(t *testing.T) {
 	regHot := NewChunkRegistry()
 	defer regHot.Close()
 	co, _ := runToYield(t, regHot, persistSrc)
-	img, err := SaveThread(regHot, co)
+	img, err := SaveThread(regHot, co, nil)
 	if err != nil {
 		t.Fatalf("SaveThread: %v", err)
 	}
@@ -150,7 +173,7 @@ func TestLoadThreadContentMismatch(t *testing.T) {
 	if _, err := regWrong.Register("world", "return 1\n"); err != nil {
 		t.Fatalf("register: %v", err)
 	}
-	_, _, err = LoadThread(regWrong, lua.NewState(), img)
+	_, _, err = LoadThread(regWrong, lua.NewState(), img, nil)
 	if err == nil {
 		t.Fatal("expected a content-hash-mismatch error, got nil")
 	}
@@ -177,7 +200,7 @@ func TestSaveLoadThreadClosureSharedUpvalue(t *testing.T) {
 	regHot := NewChunkRegistry()
 	defer regHot.Close()
 	co, _ := runToYield(t, regHot, closureSrc)
-	img, err := SaveThread(regHot, co)
+	img, err := SaveThread(regHot, co, nil)
 	if err != nil {
 		t.Fatalf("SaveThread: %v", err)
 	}
@@ -196,7 +219,7 @@ func TestSaveLoadThreadClosureSharedUpvalue(t *testing.T) {
 		t.Fatalf("cold register: %v", err)
 	}
 	rtCold := lua.NewState()
-	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	th, topFn, err := LoadThread(regCold, rtCold, &img2, nil)
 	if err != nil {
 		t.Fatalf("LoadThread: %v", err)
 	}
@@ -226,7 +249,7 @@ func TestSaveLoadThreadNestedCoroutine(t *testing.T) {
 	regHot := NewChunkRegistry()
 	defer regHot.Close()
 	co, _ := runToYield(t, regHot, nestedSrc)
-	img, err := SaveThread(regHot, co)
+	img, err := SaveThread(regHot, co, nil)
 	if err != nil {
 		t.Fatalf("SaveThread: %v", err)
 	}
@@ -245,7 +268,7 @@ func TestSaveLoadThreadNestedCoroutine(t *testing.T) {
 		t.Fatalf("cold register: %v", err)
 	}
 	rtCold := lua.NewState()
-	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	th, topFn, err := LoadThread(regCold, rtCold, &img2, nil)
 	if err != nil {
 		t.Fatalf("LoadThread: %v", err)
 	}
@@ -260,8 +283,9 @@ func TestSaveLoadThreadNestedCoroutine(t *testing.T) {
 }
 
 // TestSaveThreadRejectsUserdataRegister — userdata (a host object) in a register
-// is the remaining unpersistable value and must be rejected loudly until the
-// handle-rebind step lands.
+// is unpersistable WITHOUT a HandleMarshaler: saving with a nil marshaler must
+// fail loudly (fail-closed), never silently drop the handle. (The positive path
+// — a marshaler rebinding the userdata — is TestSaveLoadThreadUserDataRebind.)
 func TestSaveThreadRejectsUserdataRegister(t *testing.T) {
 	reg := NewChunkRegistry()
 	defer reg.Close()
@@ -283,7 +307,7 @@ func TestSaveThreadRejectsUserdataRegister(t *testing.T) {
 	if st, _, _ := rt.Resume(co, rt.NewFunctionFromProto(proto)); st != lua.ResumeYield {
 		t.Fatalf("expected yield, got %v", st)
 	}
-	_, err = SaveThread(reg, co)
+	_, err = SaveThread(reg, co, nil)
 	if err == nil {
 		t.Fatal("expected SaveThread to reject a userdata register, got nil")
 	}
@@ -307,7 +331,7 @@ func TestSaveLoadThreadFrameWithUpvalues(t *testing.T) {
 	regHot := NewChunkRegistry()
 	defer regHot.Close()
 	co, _ := runToYield(t, regHot, frameUpSrc)
-	img, err := SaveThread(regHot, co)
+	img, err := SaveThread(regHot, co, nil)
 	if err != nil {
 		t.Fatalf("SaveThread: %v", err)
 	}
@@ -323,7 +347,7 @@ func TestSaveLoadThreadFrameWithUpvalues(t *testing.T) {
 		t.Fatalf("cold register: %v", err)
 	}
 	rtCold := lua.NewState()
-	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	th, topFn, err := LoadThread(regCold, rtCold, &img2, nil)
 	if err != nil {
 		t.Fatalf("LoadThread: %v", err)
 	}
@@ -335,4 +359,102 @@ func TestSaveLoadThreadFrameWithUpvalues(t *testing.T) {
 		t.Fatalf("frame closure upvalue not preserved: got %v, want [10] (x=5 *2)", vals)
 	}
 	t.Logf("FSV frame closure w/ upvalue: cold resume = %v", vals)
+}
+
+// TestSaveLoadThreadUserDataRebind — a suspended coroutine holding a userdata
+// (host handle) in registers, saved WITH a HandleMarshaler, must (1) emit the
+// handle's opaque token into the artifact (no Go pointer), (2) on cold reload
+// rebuild the userdata through the marshaler, and (3) preserve identity: a
+// userdata aliased across two registers round-trips as ONE *LUserData, not two.
+// SoT = the artifact's userdata token pool + the reloaded thread's register
+// file (read via LitdSnapshot), plus the thread still resuming to completion.
+func TestSaveLoadThreadUserDataRebind(t *testing.T) {
+	const udSrc = `
+		local h = injected_handle    -- a userdata (host handle), token 7
+		local also = h               -- alias: same userdata in a 2nd register
+		coroutine.yield()
+		return 1
+	`
+	regHot := NewChunkRegistry()
+	defer regHot.Close()
+	cid, err := regHot.Register("world", udSrc)
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	proto, err := regHot.ResolveProto(cid, "")
+	if err != nil {
+		t.Fatalf("resolve: %v", err)
+	}
+	rt := lua.NewState()
+	ud := rt.NewUserData()
+	ud.Value = 7 // synthetic handle token the marshaler round-trips
+	rt.SetGlobal("injected_handle", ud)
+	co, _ := rt.NewThread()
+	if st, rerr, _ := rt.Resume(co, rt.NewFunctionFromProto(proto)); st != lua.ResumeYield || rerr != nil {
+		t.Fatalf("expected yield, got state=%v err=%v", st, rerr)
+	}
+
+	// Save WITH the marshaler. SoT #1: the artifact carries the token, not a ptr.
+	img, err := SaveThread(regHot, co, intHandleMarshaler{})
+	if err != nil {
+		t.Fatalf("SaveThread: %v", err)
+	}
+	blob, _ := json.Marshal(img)
+	t.Logf("FSV userdata artifact: %s", blob)
+	if !strings.Contains(string(blob), `"userdata":[7]`) {
+		t.Fatalf("artifact missing userdata token pool [7]: %s", blob)
+	}
+	if strings.Contains(string(blob), "0x") {
+		t.Fatalf("artifact leaked a Go pointer: %s", blob)
+	}
+
+	// Edge (fail-closed): the SAME thread saved with no marshaler must error loud.
+	if _, err := SaveThread(regHot, co, nil); err == nil || !strings.Contains(err.Error(), "HandleMarshaler") {
+		t.Fatalf("nil marshaler must fail loudly naming HandleMarshaler, got %v", err)
+	}
+
+	// Cold reload with a fresh marshaler instance.
+	var img2 ThreadImage
+	if err := json.Unmarshal(blob, &img2); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	regCold := NewChunkRegistry()
+	defer regCold.Close()
+	if _, err := regCold.Register("world", udSrc); err != nil {
+		t.Fatalf("cold register: %v", err)
+	}
+	rtCold := lua.NewState()
+	th, topFn, err := LoadThread(regCold, rtCold, &img2, intHandleMarshaler{})
+	if err != nil {
+		t.Fatalf("LoadThread: %v", err)
+	}
+
+	// SoT #2: read the reloaded register file. Every token-7 userdata slot must
+	// be the SAME pointer (identity interned), Value rebound to 7.
+	v := th.LitdSnapshot()
+	var seven []*lua.LUserData
+	for _, sv := range v.Stack {
+		if u, ok := sv.(*lua.LUserData); ok && u.Value == 7 {
+			seven = append(seven, u)
+		}
+	}
+	if len(seven) < 2 {
+		t.Fatalf("expected >=2 register slots holding the rebound userdata (h, also), got %d", len(seven))
+	}
+	for i, u := range seven {
+		if u != seven[0] {
+			t.Fatalf("aliased userdata not interned: slot %d %p != %p", i, u, seven[0])
+		}
+	}
+	t.Logf("FSV userdata rebind: %d token-7 slots, all shared=%v, Value=%v", len(seven), seven[1] == seven[0], seven[0].Value)
+
+	// SoT #3: the rebound thread still resumes to completion.
+	st, rerr, vals := rtCold.Resume(th, topFn)
+	if st != lua.ResumeOK || rerr != nil {
+		t.Fatalf("cold resume after rebind failed: state=%v err=%v", st, rerr)
+	}
+	if len(vals) != 1 || vals[0] != lua.LNumber(1) {
+		t.Fatalf("resume = %v, want [1]", vals)
+	}
+	t.Logf("FSV: thread resumable after userdata rebind, returned %v", vals)
 }

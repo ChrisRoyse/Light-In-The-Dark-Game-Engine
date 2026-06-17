@@ -27,11 +27,11 @@ import (
 
 // sval tags one serialized value. T selects which payload field is live.
 type sval struct {
-	T   string  `json:"t"`             // "nil" | "bool" | "num" | "str" | "table" | "func" | "thread"
+	T   string  `json:"t"`             // "nil" | "bool" | "num" | "str" | "table" | "func" | "thread" | "ud"
 	B   bool    `json:"b,omitempty"`   // T=="bool"
 	N   float64 `json:"n,omitempty"`   // T=="num"
 	S   string  `json:"s,omitempty"`   // T=="str"
-	Ref int     `json:"ref,omitempty"` // index into Tables / Funcs / Threads per T
+	Ref int     `json:"ref,omitempty"` // index into Tables / Funcs / Threads / UserData per T
 }
 
 // supval is one serialized upvalue of a closure: OPEN (aliases the owning
@@ -72,10 +72,11 @@ type valueBlob struct {
 // register slots aliasing the same table, or two closures sharing an upvalue)
 // round-trips as a single shared object rather than independent copies.
 type valuesBlob struct {
-	Roots   []sval         `json:"roots"`
-	Tables  []stable       `json:"tables"`
-	Funcs   []sfunc        `json:"funcs,omitempty"`
-	Threads []*ThreadImage `json:"threads,omitempty"`
+	Roots    []sval            `json:"roots"`
+	Tables   []stable          `json:"tables"`
+	Funcs    []sfunc           `json:"funcs,omitempty"`
+	Threads  []*ThreadImage    `json:"threads,omitempty"`
+	UserData []json.RawMessage `json:"userdata,omitempty"`
 }
 
 // vEncoder interns tables (and, when reg+owner are set, closures) by pointer
@@ -92,6 +93,9 @@ type vEncoder struct {
 	funcs     []sfunc
 	threadIDs map[*lua.LState]int
 	threads   []*ThreadImage
+	handles   HandleMarshaler
+	udIDs     map[*lua.LUserData]int
+	uds       []json.RawMessage
 }
 
 // SerializeValue encodes a data-subset LValue graph to a deterministic blob.
@@ -122,9 +126,34 @@ func (e *vEncoder) encode(v lua.LValue) (sval, error) {
 		return e.encodeFunc(x)
 	case *lua.LState:
 		return e.encodeThread(x)
+	case *lua.LUserData:
+		return e.encodeUserData(x)
 	default:
-		return sval{}, fmt.Errorf("luabind: cannot serialize value of type %s in the data graph (userdata is handled by a later persister step)", v.Type())
+		return sval{}, fmt.Errorf("luabind: cannot serialize value of type %s in the data graph", v.Type())
 	}
+}
+
+// encodeUserData marshals a host object (sim handle) through the binding layer's
+// HandleMarshaler, interning by identity. Without a marshaler userdata is
+// unpersistable — a loud error, never a silent drop.
+func (e *vEncoder) encodeUserData(ud *lua.LUserData) (sval, error) {
+	if e.handles == nil {
+		return sval{}, fmt.Errorf("luabind: cannot serialize userdata without a HandleMarshaler (host handle in a saved coroutine, but no binding-layer marshaler supplied)")
+	}
+	if id, ok := e.udIDs[ud]; ok {
+		return sval{T: "ud", Ref: id}, nil
+	}
+	tok, err := e.handles.MarshalUserData(ud)
+	if err != nil {
+		return sval{}, fmt.Errorf("luabind: userdata: %w", err)
+	}
+	id := len(e.uds)
+	if e.udIDs == nil {
+		e.udIDs = map[*lua.LUserData]int{}
+	}
+	e.udIDs[ud] = id
+	e.uds = append(e.uds, tok)
+	return sval{T: "ud", Ref: id}, nil
 }
 
 // encodeThread interns a nested coroutine and serializes it recursively as its
@@ -141,7 +170,7 @@ func (e *vEncoder) encodeThread(co *lua.LState) (sval, error) {
 	id := len(e.threads)
 	e.threadIDs[co] = id
 	e.threads = append(e.threads, nil) // reserve before recursing
-	img, err := SaveThread(e.reg, co)
+	img, err := SaveThread(e.reg, co, e.handles)
 	if err != nil {
 		return sval{}, fmt.Errorf("luabind: nested coroutine: %w", err)
 	}
@@ -194,13 +223,15 @@ func (e *vEncoder) encodeFunc(fn *lua.LFunction) (sval, error) {
 // resolving closures through reg and classifying their upvalues relative to
 // owner (the thread being saved). Loud error on any value that cannot be
 // persisted.
-func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue) ([]byte, error) {
+func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue, handles HandleMarshaler) ([]byte, error) {
 	e := &vEncoder{
 		ids:       map[*lua.LTable]int{},
 		fnIDs:     map[*lua.LFunction]int{},
 		threadIDs: map[*lua.LState]int{},
+		udIDs:     map[*lua.LUserData]int{},
 		reg:       reg,
 		owner:     owner,
+		handles:   handles,
 	}
 	roots := make([]sval, len(vs))
 	for i, v := range vs {
@@ -210,7 +241,7 @@ func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue) 
 		}
 		roots[i] = r
 	}
-	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs, Threads: e.threads})
+	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs, Threads: e.threads, UserData: e.uds})
 }
 
 func (e *vEncoder) encodeTable(t *lua.LTable) (sval, error) {
@@ -325,9 +356,10 @@ type graphDecoder struct {
 	tablePool  []*lua.LTable
 	fnPool     []*lua.LFunction
 	threadPool []*lua.LState
+	udPool     []*lua.LUserData
 }
 
-func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob) (*graphDecoder, error) {
+func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob, handles HandleMarshaler) (*graphDecoder, error) {
 	d := &graphDecoder{parent: parent, blob: blob}
 	d.tablePool = make([]*lua.LTable, len(blob.Tables))
 	for i := range blob.Tables {
@@ -345,11 +377,23 @@ func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob) (
 	// table/register can reference one.
 	d.threadPool = make([]*lua.LState, len(blob.Threads))
 	for i, ti := range blob.Threads {
-		th, _, err := LoadThread(reg, parent, ti)
+		th, _, err := LoadThread(reg, parent, ti, handles)
 		if err != nil {
 			return nil, fmt.Errorf("luabind: nested coroutine %d: %w", i, err)
 		}
 		d.threadPool[i] = th
+	}
+	// Userdata (host handles) rebuilt through the binding-layer marshaler.
+	d.udPool = make([]*lua.LUserData, len(blob.UserData))
+	for i, tok := range blob.UserData {
+		if handles == nil {
+			return nil, fmt.Errorf("luabind: userdata %d in save but no HandleMarshaler supplied to rebind it", i)
+		}
+		ud, err := handles.UnmarshalUserData(tok)
+		if err != nil {
+			return nil, fmt.Errorf("luabind: userdata %d: %w", i, err)
+		}
+		d.udPool[i] = ud
 	}
 	// Wire table entries now (closures may be stored but their upvalues wait).
 	for i, st := range blob.Tables {
@@ -404,6 +448,11 @@ func (d *graphDecoder) decode(s sval) (lua.LValue, error) {
 			return nil, fmt.Errorf("luabind: thread ref %d out of range (%d threads)", s.Ref, len(d.threadPool))
 		}
 		return d.threadPool[s.Ref], nil
+	case "ud":
+		if s.Ref < 0 || s.Ref >= len(d.udPool) {
+			return nil, fmt.Errorf("luabind: userdata ref %d out of range (%d userdata)", s.Ref, len(d.udPool))
+		}
+		return d.udPool[s.Ref], nil
 	default:
 		return nil, fmt.Errorf("luabind: unknown serialized value tag %q", s.T)
 	}

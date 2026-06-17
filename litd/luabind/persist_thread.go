@@ -19,9 +19,11 @@ package luabind
 // resumable LState via LitdRestoreThread.
 //
 // Persists: the data subset (nil/bool/number/string/table, cycles, shared
-// identity), Lua closures (open+closed upvalues), and nested coroutines.
-// Fails closed: a Go-function frame/value, and userdata (a host object — handle
-// rebind is gated on the binding-layer handle store, #267).
+// identity), Lua closures (open+closed upvalues), nested coroutines, and
+// userdata (host handles) via an injected HandleMarshaler — the handle marshals
+// to an opaque token (litd/api RefOf) and rebinds against the live world on load
+// (Game.Resolve), preserving identity. Fails closed: a Go-function frame/value,
+// and userdata when NO marshaler is supplied (loud error, never a silent drop).
 
 import (
 	"encoding/json"
@@ -29,6 +31,20 @@ import (
 
 	lua "github.com/yuin/gopher-lua"
 )
+
+// HandleMarshaler bridges Lua userdata (host objects — sim handles) to a
+// serializable token and back. The binding layer implements it (via
+// api.RefOf / Game.Resolve); the persister calls it for any userdata in a
+// suspended thread. A nil marshaler means userdata is unpersistable: the
+// persister fails closed (loud) rather than dropping or corrupting it.
+type HandleMarshaler interface {
+	// MarshalUserData encodes ud to an opaque token, or errors if ud is not a
+	// marshalable handle.
+	MarshalUserData(ud *lua.LUserData) ([]byte, error)
+	// UnmarshalUserData rebuilds a userdata from a token produced by
+	// MarshalUserData (resolving the handle against the live world).
+	UnmarshalUserData(data []byte) (*lua.LUserData, error)
+}
 
 // FrameImage is one serialized call frame's execution cursor and register
 // window. The frame's executing function is serialized in the shared graph (as
@@ -69,7 +85,7 @@ type ThreadImage struct {
 // identity with the registers); frame metadata records the execution cursors.
 // Fails loudly on a Go-function frame or any non-serializable value rather than
 // producing a save that cannot be restored.
-func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
+func SaveThread(reg *ChunkRegistry, th *lua.LState, handles HandleMarshaler) (*ThreadImage, error) {
 	v := th.LitdSnapshot()
 	img := &ThreadImage{
 		Dead:         v.Dead,
@@ -109,7 +125,7 @@ func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 	for _, f := range v.Frames {
 		vals = append(vals, f.Fn)
 	}
-	blob, err := serializeRegisters(reg, th, vals)
+	blob, err := serializeRegisters(reg, th, vals, handles)
 	if err != nil {
 		return nil, fmt.Errorf("luabind: register stack: %w", err)
 	}
@@ -122,7 +138,7 @@ func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 // function; resume it with parent.Resume(thread, topFn, args...). It fails
 // loudly if any frame's chunk-id is unknown (content changed since save) or a
 // register value cannot be deserialized.
-func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage) (*lua.LState, *lua.LFunction, error) {
+func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage, handles HandleMarshaler) (*lua.LState, *lua.LFunction, error) {
 	v := &lua.LitdThreadView{
 		Dead:         img.Dead,
 		Wrapped:      img.Wrapped,
@@ -137,7 +153,7 @@ func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage) (*lua.
 	if err := json.Unmarshal(img.Stack, &blob); err != nil {
 		return nil, nil, fmt.Errorf("luabind: register stack: malformed graph: %w", err)
 	}
-	d, err := newGraphDecoder(parent, reg, &blob)
+	d, err := newGraphDecoder(parent, reg, &blob, handles)
 	if err != nil {
 		return nil, nil, err
 	}
