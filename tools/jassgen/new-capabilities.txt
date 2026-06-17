@@ -93,6 +93,11 @@ exact   Game.Resolve
 # (supersedes JASS slk/data-table loading) — structural, no single JASS verb.
 exact   Game.DefineUnits
 
+# verification seam (#267/#271): a deterministic uint64 digest of authoritative
+# sim state, for Go-vs-Lua binding conformance and run-to-run determinism.
+# Structural, no JASS equivalent (a leak-free uint64, no sim types exposed).
+exact   Game.StateHash
+
 # value-math (R-API-2 value types; no JASS native)
 exact   Angle.Normalized
 exact   Angle.Radians
