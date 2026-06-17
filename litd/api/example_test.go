@@ -204,3 +204,58 @@ func ExampleGame_Camera() {
 	fmt.Printf("%v (%.0f,%.0f)\n", got.Kind == litd.CameraPan, got.Pos.X, got.Pos.Y)
 	// Output: true (512,256)
 }
+
+// Modder contract rule 1: handlers run one at a time, in registration order,
+// inside the tick — no mutex needed.
+func Example_contractHandlersRunInOrder() {
+	g := exampleGame()
+	var order []int
+	for i := 1; i <= 3; i++ {
+		n := i
+		g.OnEvent(litd.EventUnitDeath, func(litd.Event) { order = append(order, n) })
+	}
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), litd.Vec2{}, litd.Deg(0))
+	u.Kill()
+	g.Advance(1)
+	fmt.Println(order)
+	// Output: [1 2 3]
+}
+
+// Modder contract rule 2: after a wait you resume on a later tick — everything
+// may have changed, so re-check handles with Valid().
+func Example_contractRecheckHandlesAfterWait() {
+	g := exampleGame()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), litd.Vec2{}, litd.Deg(0))
+	var stillValid bool
+	g.After(1*time.Second, func() { stillValid = u.Valid() })
+	u.Kill() // dies before the scheduled callback resumes
+	g.Advance(40)
+	fmt.Println("handle valid after wait:", stillValid)
+	// Output: handle valid after wait: false
+}
+
+// Modder contract rule 3: all time is game time in 50 ms steps — After(50ms)
+// resumes after exactly one tick.
+func Example_contractGameTimeInTicks() {
+	g := exampleGame()
+	fired := 0
+	g.After(50*time.Millisecond, func() { fired++ })
+	g.Advance(1)
+	fmt.Println("fired after one 50ms tick:", fired)
+	// Output: fired after one 50ms tick: 1
+}
+
+// Modder contract rule 4: filters can look but not touch — they receive a
+// read-only UnitView (no mutators exist on the type).
+func Example_contractFiltersAreReadOnly() {
+	g := exampleGame()
+	g.CreateUnit(g.Player(0), g.UnitType("hfoo"), litd.Vec2{X: 100, Y: 100}, litd.Deg(0))
+	inspected := 0
+	g.UnitsInRange(litd.Vec2{X: 100, Y: 100}, 50, func(v litd.UnitView) bool {
+		_ = v.OwnerPlayer() // read-only inspection; UnitView exposes no setters
+		inspected++
+		return true
+	})
+	fmt.Println("units inspected by filter:", inspected)
+	// Output: units inspected by filter: 1
+}
