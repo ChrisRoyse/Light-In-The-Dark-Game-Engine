@@ -288,6 +288,42 @@ func TestLuaThreadNestedSpawnFSV(t *testing.T) {
 	t.Logf("FSV nested post-advance: u1=77 u2=88 suspended=0 — nested thread resumed correctly")
 }
 
+func TestLuaThreadSubTickWaitQuantizesFSV(t *testing.T) {
+	// #269 edge: PolledWait(0.001s) is below one 50ms tick but > 0, so it
+	// quantizes UP to the one-tick minimum — the coroutine wakes at current+1,
+	// not same-tick. (PolledWait(0) is the same-tick case, covered separately.)
+	g, u := scriptGame(t)
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	hero := L.NewUserData()
+	hero.Value = u
+	L.SetGlobal("hero", hero)
+
+	if err := L.DoString(`Run(function()
+		Unit_SetLife(hero, 3)
+		PolledWait(0.001)
+		Unit_SetLife(hero, 9)
+	end)`); err != nil {
+		t.Fatalf("DoString: %v", err)
+	}
+	// Parked at the sub-tick wait (it did NOT continue same-tick).
+	if got := u.Life(); got != 3 {
+		t.Fatalf("sub-tick wait ran same-tick: Life=%v, want 3 (still parked)", got)
+	}
+	if PendingScriptWaits(L) != 1 {
+		t.Fatalf("expected 1 parked coroutine, got %d", PendingScriptWaits(L))
+	}
+	// Exactly one tick wakes it.
+	g.Advance(1)
+	if got := u.Life(); got != 9 {
+		t.Fatalf("after Advance(1): Life=%v, want 9 (sub-tick wait should wake at current+1)", got)
+	}
+	t.Logf("FSV sub-tick quantize: PolledWait(0.001) parked, woke at exactly +1 tick (Life 3->9)")
+}
+
 func TestLuaThreadNoWaitRunsToCompletionFSV(t *testing.T) {
 	g, u := scriptGame(t)
 	L := lua.NewState()
