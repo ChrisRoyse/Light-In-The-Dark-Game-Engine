@@ -28,14 +28,42 @@ func NewState() *lua.LState {
 // primitive — `Eval("return 1+1")` yields "2". Any Lua compile/runtime error
 // is returned (fail-closed: never a swallowed default).
 func Eval(src string) (string, error) {
-	L := NewState()
-	defer L.Close()
-	if err := L.DoString(src); err != nil {
+	i := New()
+	defer i.Close()
+	return i.Eval(src)
+}
+
+// Interp is a luabind-owned, reusable Lua interpreter. It lets a host (or a
+// test) bind a deterministic random source and drive several evals against ONE
+// persistent state — without importing the gopher-lua fork directly (luabind
+// is the sole importer). The real binding layer (#267) builds on this seam.
+type Interp struct{ L *lua.LState }
+
+// New returns a fresh interpreter. Callers must Close it.
+func New() *Interp { return &Interp{L: NewState()} }
+
+// Close releases the interpreter.
+func (i *Interp) Close() { i.L.Close() }
+
+// SetRandomSource binds the deterministic source math.random draws from
+// (#263). fn must return a value in [0, 1); the host wires it to the sim PRNG
+// (R-SIM-2). With none bound, math.random raises a loud error.
+func (i *Interp) SetRandomSource(fn func() float64) { i.L.SetRandomSource(fn) }
+
+// SetInstructionBudget arms the per-eval VM instruction budget (#262); n<=0
+// disables it.
+func (i *Interp) SetInstructionBudget(n int64) { i.L.SetInstructionBudget(n) }
+
+// Eval runs src and returns its first return value as a string.
+func (i *Interp) Eval(src string) (string, error) {
+	if err := i.L.DoString(src); err != nil {
 		return "", fmt.Errorf("luabind: eval: %w", err)
 	}
-	if L.GetTop() == 0 {
-		return "", nil // chunk returned nothing
+	if i.L.GetTop() == 0 {
+		return "", nil
 	}
-	v := L.Get(-1)
-	return lua.LVAsString(L.ToStringMeta(v)), nil
+	v := i.L.Get(-1)
+	s := lua.LVAsString(i.L.ToStringMeta(v))
+	i.L.SetTop(0) // clear results so successive evals don't accumulate stack
+	return s, nil
 }

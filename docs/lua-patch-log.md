@@ -48,7 +48,7 @@ The four D-25 patches land in their own issues on top of this pinned base:
 | # | Patch | Issue | Status |
 |---|---|---|---|
 | 1 | instruction-budget counter in `mainLoop` | #262 | **done** (fork commit `46381dc`) |
-| 2 | deterministic mathlib (fixed-point; `math.random` → sim PRNG) | #263 | pending |
+| 2 | deterministic mathlib (`math.random` → sim PRNG; `randomseed` disabled) | #263 | **done — random half** (fork commit `b579629`); transcendental golden half blocked on #284 |
 | 3 | coroutine / `LState` persister (serialize suspended coroutines) | #264 | pending |
 | 4 | `LState`/call-frame pooling + golden cross-arch CI test | #265 | pending |
 
@@ -63,3 +63,23 @@ dispatch — checked-then-decremented, so a budget of N runs exactly N
 instructions and the (N+1)th raises. Allocation-neutral; overhead below the
 benchmark noise floor (see #262 closing comment). `_vm.go` is `_`-prefixed
 (Go-tool-ignored template) — patched for regen fidelity, not compiled.
+
+### Patch 2 — deterministic random (#263), random half
+
+Files: `value.go` (LState field `litdRand func() float64`), `litd_math.go`
+(`SetRandomSource`/`RandomSourceBound`), `mathlib.go` (`mathRandom` draws from
+`litdRand`; `mathRandomseed` raises; `math/rand` import removed). With no
+source bound `math.random` raises `litd: math.random has no deterministic
+source bound (R-SIM-2)` — fail-closed, no nondeterministic fallback. One draw
+advances the shared stream once: `random()`→[0,1) is the raw `u`; `random(n)`→
+`int64(u*n)+1`; `random(m,n)`→`int64(u*(n-m+1))+m`. The host (luabind) wires
+`litdRand` to the sim's seeded PRNG so Lua and Go-side draws share one hashed
+stream. `math.randomseed` is a loud sandbox error: the seed is sim state.
+
+**Deferred (blocked on #284):** the transcendental half — replacing
+`math.{exp,log,log10,pow,sin,cos,tan,…}`'s `math/*` libc-equivalent calls with
+fixed-point / golden-table evaluators verified bit-identical across arch. That
+needs a cross-arch golden-vector CI matrix (the Actions runners gated on #284)
+and new `litd/fixed` primitives (exp/log/pow are absent today). Tracked there;
+the random half above stands on its own and is fully verified (FSV in
+`litd/luabind/mathrand_test.go`).
