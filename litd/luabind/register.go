@@ -67,6 +67,36 @@ func handleToLua(L *lua.LState, h any) *lua.LUserData {
 	return ud
 }
 
+// handleSliceToLua marshals a slice of handles/Players to a 1-based Lua array
+// table, each element wrapped as a userdata (the generated dispatch uses this
+// for []Unit/[]Player/... returns).
+func handleSliceToLua[T any](L *lua.LState, s []T) *lua.LTable {
+	t := L.NewTable()
+	for i, v := range s {
+		ud := L.NewUserData()
+		ud.Value = v
+		t.RawSetInt(i+1, ud)
+	}
+	return t
+}
+
+// intSliceToLua / stringSliceToLua marshal primitive slices to Lua array tables.
+func intSliceToLua[T ~int | ~int32 | ~int64 | ~uint32 | ~uint8](L *lua.LState, s []T) *lua.LTable {
+	t := L.NewTable()
+	for i, v := range s {
+		t.RawSetInt(i+1, lua.LNumber(v))
+	}
+	return t
+}
+
+func stringSliceToLua(L *lua.LState, s []string) *lua.LTable {
+	t := L.NewTable()
+	for i, v := range s {
+		t.RawSetInt(i+1, lua.LString(v))
+	}
+	return t
+}
+
 // argPlayer reads argument i as a Player userdata (self-carries its game).
 func argPlayer(L *lua.LState, i int) api.Player {
 	p, ok := handleArg(L, i).(api.Player)

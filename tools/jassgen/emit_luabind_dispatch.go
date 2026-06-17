@@ -104,6 +104,12 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(lua.LString(%s))", expr), true
 	case "bool":
 		return fmt.Sprintf("L.Push(lua.LBool(%s))", expr), true
+	case "[]Unit", "[]Item", "[]Destructable", "[]Missile", "[]Effect", "[]Player":
+		return fmt.Sprintf("L.Push(handleSliceToLua(L, %s))", expr), true
+	case "[]int", "[]int32", "[]int64", "[]uint32", "[]uint8":
+		return fmt.Sprintf("L.Push(intSliceToLua(L, %s))", expr), true
+	case "[]string":
+		return fmt.Sprintf("L.Push(stringSliceToLua(L, %s))", expr), true
 	default:
 		return "", false
 	}

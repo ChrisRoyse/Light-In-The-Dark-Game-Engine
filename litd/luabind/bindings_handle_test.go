@@ -158,6 +158,27 @@ func TestGeneratedGameBoundBindingsFSV(t *testing.T) {
 		t.Fatalf("Game_NeutralHostile slot via Lua=%d != Go=%d", p.Slot(), g.NeutralHostile().Slot())
 	}
 
+	// Slice return: Game_Allies(p) yields a Lua array table of Player userdata
+	// whose length equals the Go call's slice length (parity), and element 1 is
+	// a Player userdata.
+	p1 := L.NewUserData()
+	p1.Value = g.Player(1)
+	L.SetGlobal("p1", p1)
+	if err := L.DoString(`al = Game_Allies(p1); n = #al`); err != nil {
+		t.Fatalf("Game_Allies script: %v", err)
+	}
+	goAllies := g.Allies(g.Player(1))
+	if got := int(luaNum(t, L, "n")); got != len(goAllies) {
+		t.Fatalf("Game_Allies length via Lua=%d != Go=%d", got, len(goAllies))
+	}
+	altbl := L.GetGlobal("al").(*lua.LTable)
+	if len(goAllies) > 0 {
+		if _, ok := altbl.RawGetInt(1).(*lua.LUserData); !ok {
+			t.Fatalf("Game_Allies[1] is %s, want Player userdata", altbl.RawGetInt(1).Type())
+		}
+	}
+	t.Logf("FSV Game_Allies slice: Lua len=%d == Go len=%d", int(luaNum(t, L, "n")), len(goAllies))
+
 	// Game-receiver verbs are gated on a game: Register(L2, nil) installs none.
 	L2 := lua.NewState()
 	defer L2.Close()
