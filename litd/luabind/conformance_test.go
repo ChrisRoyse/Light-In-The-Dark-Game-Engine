@@ -62,6 +62,32 @@ func newConfState(t *testing.T, g *api.Game, u api.Unit) *lua.LState {
 	return L
 }
 
+// TestConformanceGateDetectsDivergence is the negative control: it proves the
+// StateHash comparison actually CATCHES a Go-vs-Lua mismatch. We deliberately
+// apply DIFFERENT magnitudes (Go SetLife 33, Lua SetLife 34) and require the
+// hashes to diverge — if they matched, the conformance gate above would be
+// worthless (a test that cannot fail).
+func TestConformanceGateDetectsDivergence(t *testing.T) {
+	const seed = 21
+	gGo, uGo := confGame(t, seed)
+	gLua, uLua := confGame(t, seed)
+	if gGo.StateHash() != gLua.StateHash() {
+		t.Fatalf("twin setup diverges: %#x != %#x", gGo.StateHash(), gLua.StateHash())
+	}
+
+	uGo.SetLife(33)
+	L := newConfState(t, gLua, uLua)
+	defer L.Close()
+	if err := L.DoString(`Unit_SetLife(hero, 34)`); err != nil {
+		t.Fatalf("lua: %v", err)
+	}
+	hGo, hLua := gGo.StateHash(), gLua.StateHash()
+	t.Logf("divergence control: go(life=33)=%#x  lua(life=34)=%#x", hGo, hLua)
+	if hGo == hLua {
+		t.Fatal("gate is blind: different unit life produced the same StateHash")
+	}
+}
+
 func TestLuaBindingConformance(t *testing.T) {
 	cases := []struct {
 		name string
