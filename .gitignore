@@ -24,3 +24,6 @@ benchmarks/history.jsonl
 assets/**/*.glb
 assets/**/*.png
 assets/**/*.ogg
+
+# apilint build artifact (go build ./tools/apilint writes ./apilint) — never track
+/apilint
