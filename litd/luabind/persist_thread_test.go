@@ -61,7 +61,7 @@ func TestSaveLoadThreadColdRoundTrip(t *testing.T) {
 	if strings.Contains(string(blob), "OP_") {
 		t.Fatalf("save artifact contains bytecode: %s", blob)
 	}
-	if len(img.Frames) != 1 || img.Frames[0].Pc != 6 || img.Frames[0].ProtoPath != "" {
+	if len(img.Frames) != 1 || img.Frames[0].Pc != 6 {
 		t.Fatalf("unexpected frame image: %+v", img.Frames)
 	}
 	// SoT: the locals 111/222 are captured in the register slots.
@@ -293,24 +293,46 @@ func TestSaveThreadRejectsUserdataRegister(t *testing.T) {
 	t.Logf("FSV userdata reject: %v", err)
 }
 
-// TestSaveThreadRejectsFrameWithUpvalues — yielding INSIDE a closure that has
-// upvalues makes the suspended frame's function carry upvalues; the restore
-// path rebuilds an upvalue-less frame closure, so SaveThread must reject this
-// rather than silently break it.
-func TestSaveThreadRejectsFrameWithUpvalues(t *testing.T) {
-	reg := NewChunkRegistry()
-	defer reg.Close()
-	co, _ := runToYield(t, reg, `
+// TestSaveLoadThreadFrameWithUpvalues — yielding INSIDE a closure that has
+// upvalues makes the suspended frame's function carry upvalues. The frame
+// function is serialized through the shared graph and its upvalues are wired on
+// restore, so the closure still reads its captured local after a cold reload.
+// SoT = the cold-resumed value (the captured x).
+func TestSaveLoadThreadFrameWithUpvalues(t *testing.T) {
+	const frameUpSrc = `
 		local x = 5
-		local f = function() coroutine.yield(); return x end
-		return f()
-	`)
-	_, err := SaveThread(reg, co)
-	if err == nil {
-		t.Fatal("expected SaveThread to reject a frame closure with upvalues, got nil")
+		local f = function() coroutine.yield(); return x * 2 end
+		return f()             -- yields inside f; f's frame holds the upvalue x
+	`
+	regHot := NewChunkRegistry()
+	defer regHot.Close()
+	co, _ := runToYield(t, regHot, frameUpSrc)
+	img, err := SaveThread(regHot, co)
+	if err != nil {
+		t.Fatalf("SaveThread: %v", err)
 	}
-	if !strings.Contains(err.Error(), "upvalue") {
-		t.Fatalf("error did not name the upvalue limitation: %v", err)
+	blob, _ := json.Marshal(img)
+
+	var img2 ThreadImage
+	if err := json.Unmarshal(blob, &img2); err != nil {
+		t.Fatalf("unmarshal: %v", err)
 	}
-	t.Logf("FSV frame-upvalue reject: %v", err)
+	regCold := NewChunkRegistry()
+	defer regCold.Close()
+	if _, err := regCold.Register("world", frameUpSrc); err != nil {
+		t.Fatalf("cold register: %v", err)
+	}
+	rtCold := lua.NewState()
+	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	if err != nil {
+		t.Fatalf("LoadThread: %v", err)
+	}
+	st, rerr, vals := rtCold.Resume(th, topFn)
+	if st != lua.ResumeOK || rerr != nil {
+		t.Fatalf("cold resume failed: state=%v err=%v", st, rerr)
+	}
+	if len(vals) != 1 || vals[0] != lua.LNumber(10) {
+		t.Fatalf("frame closure upvalue not preserved: got %v, want [10] (x=5 *2)", vals)
+	}
+	t.Logf("FSV frame closure w/ upvalue: cold resume = %v", vals)
 }

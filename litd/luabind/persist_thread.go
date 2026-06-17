@@ -1,27 +1,27 @@
 package luabind
 
-// Cross-process thread persistence (#264 step 4) — the layer that turns the
-// fork's in-process snapshot/restore primitives (LitdSnapshot /
-// LitdRestoreThread) into a save artifact that survives process exit and a
-// cold restart. A suspended coroutine is serialized as:
+// Cross-process thread persistence (#264) — the layer that turns the fork's
+// in-process snapshot/restore primitives (LitdSnapshot / LitdRestoreThread)
+// into a save artifact that survives process exit and a cold restart.
 //
-//   - each call frame as a (chunk-id, proto-path) reference plus its execution
-//     cursor (Pc) and register window — the frame's *FunctionProto is mapped
-//     through the step-1 ChunkRegistry by pointer identity, NEVER embedded, so
-//     the save never carries bytecode and a content-hash mismatch on load is a
-//     loud "world content changed" error rather than silent corruption;
-//   - each register slot through the step-2 value-graph serializer.
+// A suspended coroutine serializes as one shared value graph (the register file
+// PLUS every call frame's executing function) followed by per-frame execution
+// cursors. Functions are encoded as a (chunk-id, proto-path) reference mapped
+// through the ChunkRegistry by pointer identity — NEVER embedded bytecode — so
+// the save carries no code and a content-hash mismatch on load is a loud "world
+// content changed" error, not silent corruption. Because registers and frame
+// functions share one interned graph, a table/closure aliased across registers,
+// frames, and upvalues round-trips as a single object; open upvalues rebind to
+// the restored register file (and shared cells coincide).
 //
 // LoadThread reconstructs against a COLD registry (a fresh process re-registers
 // the world's chunks, which content-address to the same ids) and rebuilds a
 // resumable LState via LitdRestoreThread.
 //
-// Scope (step 4): pure-Lua coroutines whose register slots hold the data subset
-// (nil/bool/number/string/table). A Go-function frame, or a function/closure/
-// userdata value sitting in a register, fails loudly — the shared-upvalue
-// graph, nested coroutines and userdata→handle rebind are step 5. Per-slot
-// value serialization does not yet preserve table identity SHARED across
-// distinct registers (also step 5); single-register graphs are exact.
+// Persists: the data subset (nil/bool/number/string/table, cycles, shared
+// identity), Lua closures (open+closed upvalues), and nested coroutines.
+// Fails closed: a Go-function frame/value, and userdata (a host object — handle
+// rebind is gated on the binding-layer handle store, #267).
 
 import (
 	"encoding/json"
@@ -30,26 +30,27 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// FrameImage is one serialized call frame: a proto reference (never bytecode)
-// plus the execution cursor and register window.
+// FrameImage is one serialized call frame's execution cursor and register
+// window. The frame's executing function is serialized in the shared graph (as
+// a trailing root, one per frame in order) so its upvalues share identity with
+// the registers; FrameImage itself carries no proto reference.
 type FrameImage struct {
-	ChunkID    string `json:"chunk"`
-	ProtoPath  string `json:"proto"`
-	Idx        int    `json:"idx"`
-	Pc         int    `json:"pc"`
-	Base       int    `json:"base"`
-	LocalBase  int    `json:"localBase"`
-	ReturnBase int    `json:"returnBase"`
-	NArgs      int    `json:"nargs"`
-	NRet       int    `json:"nret"`
-	TailCall   int    `json:"tailcall"`
+	Idx        int `json:"idx"`
+	Pc         int `json:"pc"`
+	Base       int `json:"base"`
+	LocalBase  int `json:"localBase"`
+	ReturnBase int `json:"returnBase"`
+	NArgs      int `json:"nargs"`
+	NRet       int `json:"nret"`
+	TailCall   int `json:"tailcall"`
 }
 
-// ThreadImage is the serializable form of a suspended LState. The whole
-// register stack is encoded as ONE shared value graph (Stack) so a table
-// aliased across distinct registers round-trips as a single object; StackNil
-// marks slots that were Go-nil (uninitialized register) so they restore as
-// Go-nil rather than LNil.
+// ThreadImage is the serializable form of a suspended LState. Stack is one
+// shared value graph whose roots are the register slots (NumRegisters of them)
+// followed by each frame's executing function, in frame order — so a value
+// aliased across registers, frames, and upvalues round-trips as one object.
+// StackNil marks register slots that were Go-nil (uninitialized) so they
+// restore as Go-nil rather than LNil.
 type ThreadImage struct {
 	Dead         bool            `json:"dead"`
 	Wrapped      bool            `json:"wrapped"`
@@ -57,15 +58,17 @@ type ThreadImage struct {
 	InstrLeft    int64           `json:"instrLeft"`
 	MemLimited   bool            `json:"memLimited"`
 	MemLeft      int64           `json:"memLeft"`
+	NumRegisters int             `json:"nreg"`
 	Frames       []FrameImage    `json:"frames"`
 	Stack        json.RawMessage `json:"stack"`
 	StackNil     []bool          `json:"stackNil,omitempty"`
 }
 
-// SaveThread serializes a suspended coroutine th into a ThreadImage, mapping
-// every frame's prototype through reg. It fails loudly on a Go-function frame
-// or a non-serializable register value rather than producing a save that
-// cannot be restored.
+// SaveThread serializes a suspended coroutine th into a ThreadImage. Registers
+// and frame functions are encoded as one shared graph (so their upvalues share
+// identity with the registers); frame metadata records the execution cursors.
+// Fails loudly on a Go-function frame or any non-serializable value rather than
+// producing a save that cannot be restored.
 func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 	v := th.LitdSnapshot()
 	img := &ThreadImage{
@@ -75,43 +78,36 @@ func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 		InstrLeft:    v.InstrLeft,
 		MemLimited:   v.MemLimited,
 		MemLeft:      v.MemLeft,
+		NumRegisters: len(v.Stack),
 	}
 	for i, f := range v.Frames {
 		if f.Fn == nil || f.Fn.IsG || f.Fn.Proto == nil {
-			return nil, fmt.Errorf("luabind: frame %d is a Go-function frame — cannot persist (step 5)", i)
-		}
-		if len(f.Fn.Upvalues) > 0 {
-			// A frame whose executing closure has upvalues would need those
-			// upvalues rebuilt too; the restore path makes a fresh upvalue-less
-			// closure from the proto. Reject rather than silently break it.
-			return nil, fmt.Errorf("luabind: frame %d executes a closure with %d upvalue(s) — not yet supported (yield inside a closure-with-upvalues)", i, len(f.Fn.Upvalues))
-		}
-		cid, path, err := reg.PathOf(f.Fn.Proto)
-		if err != nil {
-			return nil, fmt.Errorf("luabind: frame %d: %w", i, err)
+			return nil, fmt.Errorf("luabind: frame %d is a Go-function frame — cannot persist", i)
 		}
 		img.Frames = append(img.Frames, FrameImage{
-			ChunkID: cid, ProtoPath: path,
 			Idx: f.Idx, Pc: f.Pc, Base: f.Base, LocalBase: f.LocalBase,
 			ReturnBase: f.ReturnBase, NArgs: f.NArgs, NRet: f.NRet, TailCall: f.TailCall,
 		})
 	}
-	// Encode the whole register stack as one shared graph; Go-nil slots are
-	// sent as LNil and recorded in StackNil so they restore as Go-nil.
-	vals := make([]lua.LValue, len(v.Stack))
+	// One shared graph: register slots (Go-nil sent as LNil + recorded in
+	// StackNil so they restore as Go-nil) followed by each frame's function.
+	vals := make([]lua.LValue, 0, len(v.Stack)+len(v.Frames))
 	img.StackNil = make([]bool, len(v.Stack))
 	anyNil := false
 	for i, sv := range v.Stack {
 		if sv == nil {
-			vals[i] = lua.LNil
+			vals = append(vals, lua.LNil)
 			img.StackNil[i] = true
 			anyNil = true
 			continue
 		}
-		vals[i] = sv
+		vals = append(vals, sv)
 	}
 	if !anyNil {
 		img.StackNil = nil
+	}
+	for _, f := range v.Frames {
+		vals = append(vals, f.Fn)
 	}
 	blob, err := serializeRegisters(reg, th, vals)
 	if err != nil {
@@ -135,21 +131,8 @@ func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage) (*lua.
 		MemLimited:   img.MemLimited,
 		MemLeft:      img.MemLeft,
 	}
-	var topFn *lua.LFunction
-	for i, fi := range img.Frames {
-		proto, err := reg.ResolveProto(fi.ChunkID, fi.ProtoPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("luabind: frame %d: %w", i, err)
-		}
-		fn := parent.NewFunctionFromProto(proto)
-		topFn = fn
-		v.Frames = append(v.Frames, lua.LitdFrameView{
-			Fn: fn, Idx: fi.Idx, Pc: fi.Pc, Base: fi.Base, LocalBase: fi.LocalBase,
-			ReturnBase: fi.ReturnBase, NArgs: fi.NArgs, NRet: fi.NRet, TailCall: fi.TailCall,
-		})
-	}
-
-	// Decode the register graph (tables + closures share interned pools).
+	// Decode the shared graph: roots are NumRegisters register slots followed by
+	// one function per frame, in frame order.
 	var blob valuesBlob
 	if err := json.Unmarshal(img.Stack, &blob); err != nil {
 		return nil, nil, fmt.Errorf("luabind: register stack: malformed graph: %w", err)
@@ -162,18 +145,37 @@ func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage) (*lua.
 	if err != nil {
 		return nil, nil, err
 	}
-	v.Stack = make([]lua.LValue, len(roots))
-	for i, val := range roots {
+	nReg := img.NumRegisters
+	if nReg < 0 || nReg+len(img.Frames) != len(roots) {
+		return nil, nil, fmt.Errorf("luabind: graph has %d roots, expected %d registers + %d frame functions", len(roots), nReg, len(img.Frames))
+	}
+
+	v.Stack = make([]lua.LValue, nReg)
+	for i := 0; i < nReg; i++ {
 		if i < len(img.StackNil) && img.StackNil[i] {
 			v.Stack[i] = nil // restore Go-nil register
 			continue
 		}
-		v.Stack[i] = val
+		v.Stack[i] = roots[i]
+	}
+
+	var topFn *lua.LFunction
+	for i, fi := range img.Frames {
+		fn, ok := roots[nReg+i].(*lua.LFunction)
+		if !ok {
+			return nil, nil, fmt.Errorf("luabind: frame %d function root is %s, not a function", i, roots[nReg+i].Type())
+		}
+		topFn = fn
+		v.Frames = append(v.Frames, lua.LitdFrameView{
+			Fn: fn, Idx: fi.Idx, Pc: fi.Pc, Base: fi.Base, LocalBase: fi.LocalBase,
+			ReturnBase: fi.ReturnBase, NArgs: fi.NArgs, NRet: fi.NRet, TailCall: fi.TailCall,
+		})
 	}
 
 	th := parent.LitdRestoreThread(v)
-	// Wire closure upvalues AFTER restore, so open upvalues bind into th's live
-	// register file (and shared cells alias the same register).
+	// Wire closure upvalues AFTER restore (covers both register closures and the
+	// frame functions, which all live in the graph's func pool), so open
+	// upvalues bind into th's live register file and shared cells coincide.
 	if err := d.wireUpvalues(th); err != nil {
 		return nil, nil, err
 	}
