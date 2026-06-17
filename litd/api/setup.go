@@ -3,6 +3,7 @@ package litd
 import (
 	"fmt"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
@@ -59,4 +60,20 @@ func NewGame(opts GameOptions) (*Game, error) {
 	})
 	w.SetSeed(uint64(opts.Seed))
 	return newGame(w), nil
+}
+
+// DefineUnits installs the unit-type definitions this game can spawn — the
+// public path to seed unit data from outside the api package (#387). A setup
+// verb (R-API-5): it returns an error and fails closed on an empty or oversized
+// table, or a conflicting rebind, rather than silently ignoring the data. The
+// world loader (#268) calls this with a world's parsed unit table; it can also
+// seed a programmatic game directly. UnitType(code) resolves against these defs.
+func (g *Game) DefineUnits(defs []data.Unit) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineUnits: nil game")
+	}
+	if !g.w.BindUnitDefs(defs) {
+		return fmt.Errorf("api: DefineUnits: rejected %d definitions (empty, exceeds the 65536 type-id space, or conflicts with an existing binding)", len(defs))
+	}
+	return nil
 }

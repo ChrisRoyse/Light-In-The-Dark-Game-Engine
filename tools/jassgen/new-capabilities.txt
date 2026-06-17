@@ -88,6 +88,11 @@ exact   UnitView.Position
 exact   RefOf
 exact   Game.Resolve
 
+# public setup path (#386/#387): construct + seed a game from outside the api
+# package. NewGame is covered by `prefix func New`; DefineUnits seeds unit data
+# (supersedes JASS slk/data-table loading) — structural, no single JASS verb.
+exact   Game.DefineUnits
+
 # value-math (R-API-2 value types; no JASS native)
 exact   Angle.Normalized
 exact   Angle.Radians
