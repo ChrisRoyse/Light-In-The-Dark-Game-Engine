@@ -181,6 +181,40 @@ func argTimer(L *lua.LState, i int) api.Timer {
 	return v
 }
 
+// Id-ref value types (UnitType/ItemType/BuffType/Order) are tiny self-contained
+// structs; they ride the same opaque-userdata seam as the noun handles.
+func argUnitType(L *lua.LState, i int) api.UnitType {
+	v, ok := handleArg(L, i).(api.UnitType)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected UnitType userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+func argItemType(L *lua.LState, i int) api.ItemType {
+	v, ok := handleArg(L, i).(api.ItemType)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected ItemType userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+func argBuffType(L *lua.LState, i int) api.BuffType {
+	v, ok := handleArg(L, i).(api.BuffType)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected BuffType userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+func argOrder(L *lua.LState, i int) api.Order {
+	v, ok := handleArg(L, i).(api.Order)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Order userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
 // --- stable ABI argument readers (used by the generated dispatch) ---
 
 // argVec2 reads argument i as a Vec2, raising a Lua arg error on a malformed

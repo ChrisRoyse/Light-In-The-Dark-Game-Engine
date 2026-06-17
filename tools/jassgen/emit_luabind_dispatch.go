@@ -67,6 +67,14 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argPlayer(L, %d)", idx), true
 	case "Timer":
 		return fmt.Sprintf("argTimer(L, %d)", idx), true
+	case "UnitType":
+		return fmt.Sprintf("argUnitType(L, %d)", idx), true
+	case "ItemType":
+		return fmt.Sprintf("argItemType(L, %d)", idx), true
+	case "BuffType":
+		return fmt.Sprintf("argBuffType(L, %d)", idx), true
+	case "Order":
+		return fmt.Sprintf("argOrder(L, %d)", idx), true
 	case "float64":
 		return fmt.Sprintf("float64(L.CheckNumber(%d))", idx), true
 	case "int":
@@ -116,7 +124,8 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(angleToLua(%s))", expr), true
 	case "Rect":
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
-	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer":
+	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer",
+		"UnitType", "ItemType", "BuffType", "Order":
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
 	case "float64", "int", "int32", "int64", "uint32", "uint8",
 		"Race", "Difficulty", "FogState", "Controller", "AllianceFlags",

@@ -130,6 +130,56 @@ func TestGeneratedPlayerBindingsFSV(t *testing.T) {
 	t.Logf("FSV Player param: Unit_SetOwner via Lua -> sim ownership reassigned, Lua OwnedBy=true")
 }
 
+func TestGeneratedCreateUnitFromLuaFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 13})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	p1 := L.NewUserData()
+	p1.Value = g.Player(1)
+	L.SetGlobal("p1", p1)
+	ut := L.NewUserData()
+	ut.Value = g.UnitType("hfoo") // a UnitType id-ref passed in as opaque userdata
+	L.SetGlobal("ut", ut)
+
+	// The core spawn verb, driven from Lua: Game_CreateUnit(owner, type, pos,
+	// facing) must create a real unit in the sim. SoT = the sim entity read back
+	// via Go (Valid + actual stored position + ownership).
+	if err := L.DoString(`u = Game_CreateUnit(p1, ut, {x = 64, y = 96}, 0)`); err != nil {
+		t.Fatalf("Game_CreateUnit: %v", err)
+	}
+	uud, ok := L.GetGlobal("u").(*lua.LUserData)
+	if !ok {
+		t.Fatalf("Game_CreateUnit returned %s, want Unit userdata", L.GetGlobal("u").Type())
+	}
+	created, ok := uud.Value.(api.Unit)
+	if !ok {
+		t.Fatalf("returned userdata holds %T, not api.Unit", uud.Value)
+	}
+	if !created.Valid() {
+		t.Fatal("unit created from Lua is invalid in the sim")
+	}
+	pos := created.Position()
+	t.Logf("FSV CreateUnit-from-Lua: sim unit Valid=%v pos=%+v owner-p1=%v", created.Valid(), pos, created.OwnedBy(g.Player(1)))
+	if pos.X != 64 || pos.Y != 96 {
+		t.Fatalf("created unit pos=%+v, want {64,96}", pos)
+	}
+	if !created.OwnedBy(g.Player(1)) {
+		t.Fatal("created unit not owned by player 1")
+	}
+}
+
 func TestGeneratedEnumBindingFSV(t *testing.T) {
 	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 11})
 	if err != nil {
