@@ -14,6 +14,8 @@ import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/lit
 // the Get/SetCameraField constant family).
 type CameraField uint8
 
+// The CameraField values index the camera's continuous parameters in the order
+// the field accessors and clamp table expect.
 const (
 	CameraTargetDistance CameraField = iota // "zoom"
 	CameraFarZ
@@ -47,6 +49,7 @@ type cameraState struct {
 // CameraEventKind tags a CameraEvent.
 type CameraEventKind uint8
 
+// The CameraEventKind values tag the camera operations emitted as CameraEvents.
 const (
 	CameraPan CameraEventKind = iota
 	CameraSetField

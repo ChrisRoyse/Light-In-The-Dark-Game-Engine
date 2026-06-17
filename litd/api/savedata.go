@@ -67,6 +67,9 @@ func (s *Storage) SetInt(category, key string, v int) {
 		s.ints[storageKey{category, key}] = int64(v)
 	}
 }
+
+// GetInt reads a stored integer; ok is false if absent (see SetInt). JASS:
+// GetStoredInteger + HaveStoredInteger.
 func (s *Storage) GetInt(category, key string) (int, bool) {
 	if s == nil {
 		return 0, false
@@ -81,6 +84,9 @@ func (s *Storage) SetReal(category, key string, v float64) {
 		s.reals[storageKey{category, key}] = v
 	}
 }
+
+// GetReal reads a stored float; ok is false if absent (see SetReal). JASS:
+// GetStoredReal + HaveStoredReal.
 func (s *Storage) GetReal(category, key string) (float64, bool) {
 	if s == nil {
 		return 0, false
@@ -95,6 +101,9 @@ func (s *Storage) SetString(category, key, v string) {
 		s.strs[storageKey{category, key}] = v
 	}
 }
+
+// GetString reads a stored string; ok is false if absent (see SetString).
+// JASS: GetStoredString + HaveStoredString.
 func (s *Storage) GetString(category, key string) (string, bool) {
 	if s == nil {
 		return "", false
@@ -109,6 +118,9 @@ func (s *Storage) SetBool(category, key string, v bool) {
 		s.bools[storageKey{category, key}] = v
 	}
 }
+
+// GetBool reads a stored boolean; ok is false if absent (see SetBool). JASS:
+// GetStoredBoolean + HaveStoredBoolean.
 func (s *Storage) GetBool(category, key string) (bool, bool) {
 	if s == nil {
 		return false, false
@@ -153,8 +165,18 @@ func (s *Storage) Save(w io.Writer) error {
 	if err := bw.WriteByte(storageVersion); err != nil {
 		return err
 	}
-	wU32 := func(v uint32) error { var b [4]byte; binary.LittleEndian.PutUint32(b[:], v); _, e := bw.Write(b[:]); return e }
-	wU64 := func(v uint64) error { var b [8]byte; binary.LittleEndian.PutUint64(b[:], v); _, e := bw.Write(b[:]); return e }
+	wU32 := func(v uint32) error {
+		var b [4]byte
+		binary.LittleEndian.PutUint32(b[:], v)
+		_, e := bw.Write(b[:])
+		return e
+	}
+	wU64 := func(v uint64) error {
+		var b [8]byte
+		binary.LittleEndian.PutUint64(b[:], v)
+		_, e := bw.Write(b[:])
+		return e
+	}
 	wStr := func(str string) error {
 		if err := wU32(uint32(len(str))); err != nil {
 			return err
@@ -242,8 +264,16 @@ func (s *Storage) Load(r io.Reader) error {
 	if ver != storageVersion {
 		return fmt.Errorf("litd: Storage.Load: version %d, this build reads %d", ver, storageVersion)
 	}
-	rU32 := func() (uint32, error) { var b [4]byte; _, e := io.ReadFull(br, b[:]); return binary.LittleEndian.Uint32(b[:]), e }
-	rU64 := func() (uint64, error) { var b [8]byte; _, e := io.ReadFull(br, b[:]); return binary.LittleEndian.Uint64(b[:]), e }
+	rU32 := func() (uint32, error) {
+		var b [4]byte
+		_, e := io.ReadFull(br, b[:])
+		return binary.LittleEndian.Uint32(b[:]), e
+	}
+	rU64 := func() (uint64, error) {
+		var b [8]byte
+		_, e := io.ReadFull(br, b[:])
+		return binary.LittleEndian.Uint64(b[:]), e
+	}
 	rStr := func() (string, error) {
 		n, e := rU32()
 		if e != nil {

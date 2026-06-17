@@ -15,6 +15,8 @@ type driverHook interface {
 // GameSpeed is the public real-time-to-tick scale accepted by SetSpeed.
 type GameSpeed float64
 
+// The GameSpeed values are the standard real-time-to-tick scales accepted by
+// SetSpeed (matching the WC3 slow/normal/fast presets).
 const (
 	GameSpeedSlow   GameSpeed = 0.8
 	GameSpeedNormal GameSpeed = 1.0
@@ -25,6 +27,8 @@ const (
 // bit values while using Go names.
 type MapFlag uint32
 
+// The MapFlag values are the static match/map flags; their bit values mirror
+// the common.j mapflag family. Combine with |.
 const (
 	MapFlagFogHideTerrain            MapFlag = 1
 	MapFlagFogMapExplored            MapFlag = 2

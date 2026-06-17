@@ -48,7 +48,11 @@ type Item struct {
 	g  *Game
 }
 
-func (i Item) Valid() bool  { return i.g.alive(i.id) }
+// Valid reports whether the item still exists. A zero-value Item{} and a
+// handle to a destroyed/recycled item both report false (R-API-5).
+func (i Item) Valid() bool { return i.g.alive(i.id) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (i Item) IsZero() bool { return i == Item{} }
 func (Item) isWidget()      {}
 
@@ -59,7 +63,11 @@ type Destructable struct {
 	g  *Game
 }
 
-func (d Destructable) Valid() bool  { return d.g.alive(d.id) }
+// Valid reports whether the destructable still exists. A zero-value
+// Destructable{} and a handle to a destroyed one both report false (R-API-5).
+func (d Destructable) Valid() bool { return d.g.alive(d.id) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (d Destructable) IsZero() bool { return d == Destructable{} }
 func (Destructable) isWidget()      {}
 
@@ -71,7 +79,11 @@ type Missile struct {
 	g  *Game
 }
 
-func (m Missile) Valid() bool  { return m.g.alive(m.id) }
+// Valid reports whether the missile still exists in the flight pool. A
+// zero-value Missile{} and a handle to an expired missile both report false.
+func (m Missile) Valid() bool { return m.g.alive(m.id) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (m Missile) IsZero() bool { return m == Missile{} }
 
 // Widget is the common surface of the targetable world nouns —
@@ -100,7 +112,9 @@ type Player struct {
 // Valid reports whether the handle names a real player slot. A
 // zero-value Player{} has no bound game and reports false even though
 // slot 0 is itself a legal player index.
-func (p Player) Valid() bool  { return p.g.playerValid(p.idx) }
+func (p Player) Valid() bool { return p.g.playerValid(p.idx) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (p Player) IsZero() bool { return p == Player{} }
 
 // Force is a stateful player group (public-api-design.md §2 row 3):
@@ -111,7 +125,10 @@ type Force struct {
 	g  *Game
 }
 
-func (f Force) Valid() bool  { return f.g != nil && f.id != 0 && int(f.id) <= len(f.g.forces) }
+// Valid reports whether the handle names a live force in the bound game.
+func (f Force) Valid() bool { return f.g != nil && f.id != 0 && int(f.id) <= len(f.g.forces) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (f Force) IsZero() bool { return f == Force{} }
 
 // Ability is one ability instance on a unit (public-api-design.md §2
@@ -124,10 +141,14 @@ type Ability struct {
 	g     *Game
 }
 
+// Valid reports whether the ability instance still exists on its owning unit;
+// it reports false once the owner dies or the ability is removed (R-API-5).
 func (a Ability) Valid() bool {
 	_, _, ok := a.g.abilitySlot(a.owner, a.ref)
 	return ok
 }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (a Ability) IsZero() bool { return a == Ability{} }
 
 // Buff is one buff/aura instance on a unit (public-api-design.md §2
@@ -138,7 +159,11 @@ type Buff struct {
 	g     *Game
 }
 
-func (b Buff) Valid() bool  { return b.g.alive(b.owner) && b.ref != 0 }
+// Valid reports whether the buff instance still exists on its owning unit
+// (false once the owner dies or the buff lapses).
+func (b Buff) Valid() bool { return b.g.alive(b.owner) && b.ref != 0 }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (b Buff) IsZero() bool { return b == Buff{} }
 
 // Timer is a game-time timer (public-api-design.md §2 row 11), backed
@@ -157,7 +182,9 @@ type Timer struct {
 // Valid reports whether the timer still exists (created, not yet
 // Stopped, not auto-retired after a one-shot fire). A zero-value
 // Timer{} and a handle to a retired slot both report false.
-func (t Timer) Valid() bool  { return t.entry() != nil }
+func (t Timer) Valid() bool { return t.entry() != nil }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (t Timer) IsZero() bool { return t == Timer{} }
 
 // Region is a cell-based area (public-api-design.md §2 row 13): a
@@ -172,7 +199,9 @@ type Region struct {
 }
 
 // Valid reports whether the region still exists (created, not Removed).
-func (r Region) Valid() bool  { return r.g != nil && r.g.w != nil && r.g.w.Regions.Alive(r.id, r.gen) }
+func (r Region) Valid() bool { return r.g != nil && r.g.w != nil && r.g.w.Regions.Alive(r.id, r.gen) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (r Region) IsZero() bool { return r == Region{} }
 
 // Sound is a playable sound handle (public-api-design.md §2 row 17). In
@@ -182,7 +211,10 @@ type Sound struct {
 	g  *Game
 }
 
-func (s Sound) Valid() bool  { return s.g != nil && s.id != 0 }
+// Valid reports whether the handle names a live sound in the bound game.
+func (s Sound) Valid() bool { return s.g != nil && s.id != 0 }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (s Sound) IsZero() bool { return s == Sound{} }
 
 // Effect is a persistent presentation entity — special effects now,
@@ -193,7 +225,11 @@ type Effect struct {
 	g  *Game
 }
 
-func (e Effect) Valid() bool  { return e.g.effectAlive(e.id) }
+// Valid reports whether the effect is still playing (false once it has been
+// destroyed or has finished a one-shot animation).
+func (e Effect) Valid() bool { return e.g.effectAlive(e.id) }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (e Effect) IsZero() bool { return e == Effect{} }
 
 // Camera is the RTS camera control surface (public-api-design.md §2
@@ -203,7 +239,10 @@ type Camera struct {
 	g  *Game
 }
 
-func (c Camera) Valid() bool  { return c.g != nil && c.id != 0 }
+// Valid reports whether the handle names a live camera in the bound game.
+func (c Camera) Valid() bool { return c.g != nil && c.id != 0 }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (c Camera) IsZero() bool { return c == Camera{} }
 
 // Frame is a UI element under Game.UI() (public-api-design.md §2 row
@@ -214,7 +253,10 @@ type Frame struct {
 	g  *Game
 }
 
-func (f Frame) Valid() bool  { return f.g != nil && f.id != 0 }
+// Valid reports whether the handle names a live UI frame in the bound game.
+func (f Frame) Valid() bool { return f.g != nil && f.id != 0 }
+
+// IsZero reports whether this is the zero-value handle (no bound game).
 func (f Frame) IsZero() bool { return f == Frame{} }
 
 // -- Value types ------------------------------------------------------

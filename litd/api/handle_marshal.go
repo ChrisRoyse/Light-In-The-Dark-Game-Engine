@@ -20,6 +20,8 @@ import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/lit
 // (HandleNone) is the null ref.
 type HandleKind uint8
 
+// The Handle* values tag which noun a HandleRef reconstructs to; HandleNone is
+// the null ref.
 const (
 	HandleNone HandleKind = iota
 	HandleUnit

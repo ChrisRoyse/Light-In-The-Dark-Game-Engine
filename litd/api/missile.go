@@ -29,12 +29,16 @@ const (
 	GuidanceLinear
 )
 
+// The MissileGuidance*ID strings are the script-facing names for the Guidance
+// flight kinds (used by the missile spawn API and the Lua surface).
 const (
 	MissileGuidanceHomingID = "homing"
 	MissileGuidancePointID  = "point"
 	MissileGuidanceLinearID = "linear"
 )
 
+// The MissileImpact*ID strings are the script-facing names for a missile's
+// on-impact behavior.
 const (
 	MissileImpactDeliverID  = "deliver"
 	MissileImpactDetonateID = "detonate"
@@ -47,6 +51,8 @@ const (
 // ground/air/structure class filter.
 type MissileHitMask uint16
 
+// The MissileHit* bits select which target classes a linear skillshot collides
+// with; combine with |. The zero mask is the enemies-only default.
 const (
 	MissileHitGround    MissileHitMask = MissileHitMask(sim.MissileHitGround)
 	MissileHitAir       MissileHitMask = MissileHitMask(sim.MissileHitAir)

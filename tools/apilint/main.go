@@ -12,6 +12,8 @@
 //	              free func not in the setup allowlist NewGame/LoadMap)
 //	R-API-5       every noun handle exposes Valid() bool
 //	§2            a noun handle has zero exported fields
+//	G-1           every exported func/method/type/const/var is documented
+//	              (naming-and-style §4/§6; the godoc-coverage gate, #259)
 //
 // A "noun handle" is detected structurally: an exported struct that has a
 // *Game field and zero exported fields. Event is exempt — it is a value
@@ -159,8 +161,10 @@ func (c *checker) check() {
 			switch d := decl.(type) {
 			case *ast.FuncDecl:
 				c.checkFunc(d)
+				c.checkDocFunc(d)
 			case *ast.GenDecl:
 				c.checkGenDecl(d)
+				c.checkDocGen(d)
 			}
 		}
 	}
@@ -224,6 +228,56 @@ func (c *checker) checkErrorReturn(d *ast.FuncDecl, sig *types.Signature, isMeth
 		"R-API-5: %s returns error — gameplay verbs are no-ops on invalid handles, never error; only setup (NewGame/LoadMap) may return error",
 		c.funcName(d))
 }
+
+// checkDocFunc enforces G-1 (naming-and-style §4/§6): every exported func and
+// method on an exported receiver carries a doc comment. This is the godoc
+// coverage gate (#259) — 100% of the exported surface documented.
+func (c *checker) checkDocFunc(d *ast.FuncDecl) {
+	if !d.Name.IsExported() {
+		return
+	}
+	if d.Recv != nil && len(d.Recv.List) > 0 && !c.receiverIsExported(d) {
+		return // method on an unexported type is internal
+	}
+	if !hasDoc(d.Doc) {
+		c.report(d.Name.Pos(), "G-1: exported %s has no doc comment (godoc coverage must be 100%%)", c.funcName(d))
+	}
+}
+
+// checkDocGen enforces G-1 for exported types, consts, and vars. A type needs a
+// lead doc comment (its own or the block's). A const/var is documented by its
+// own doc, its block's lead comment, or a trailing line comment — the latter is
+// the conventional form for enum-value blocks (e.g. AllianceFlags bits).
+func (c *checker) checkDocGen(d *ast.GenDecl) {
+	if d.Tok != token.TYPE && d.Tok != token.CONST && d.Tok != token.VAR {
+		return
+	}
+	blockDoc := hasDoc(d.Doc)
+	for _, spec := range d.Specs {
+		switch s := spec.(type) {
+		case *ast.TypeSpec:
+			if !s.Name.IsExported() {
+				continue
+			}
+			if !hasDoc(s.Doc) && !blockDoc {
+				c.report(s.Name.Pos(), "G-1: exported type %q has no doc comment", s.Name.Name)
+			}
+		case *ast.ValueSpec:
+			own := hasDoc(s.Doc) || hasDoc(s.Comment)
+			for _, n := range s.Names {
+				if !n.IsExported() {
+					continue
+				}
+				if !own && !blockDoc {
+					c.report(n.Pos(), "G-1: exported %s %q has no doc comment", d.Tok.String(), n.Name)
+				}
+			}
+		}
+	}
+}
+
+// hasDoc reports whether a comment group carries non-empty text.
+func hasDoc(g *ast.CommentGroup) bool { return g != nil && strings.TrimSpace(g.Text()) != "" }
 
 // checkFreeFuncHandleParam enforces G2.4/R-API-1: a package-level func may not
 // take a noun-handle param (it should be a method on that noun) unless it is

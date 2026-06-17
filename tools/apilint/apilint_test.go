@@ -20,6 +20,7 @@ var wantFindings = []struct{ where, msg string }{
 	{"Trigger", `exported type "Trigger" is forbidden`}, // forbidden ident
 	{"Location", `exported type "Location" is forbidden`},
 	{"Surface", `exported field "Node" exposes foreign engine type`}, // G3N field
+	{"Undocumented", "G-1"},                                          // exported method with no doc comment
 }
 
 func TestFixturesProduceExactFindings(t *testing.T) {

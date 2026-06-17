@@ -26,7 +26,13 @@ type Gizmo struct {
 	g  *Game
 }
 
+// Valid reports whether the gizmo is live (documented, so clean for G-1).
 func (x Gizmo) Valid() bool { return x.g != nil && x.id != 0 } // OK
+
+// The next method intentionally has NO doc comment (this paragraph is separated
+// by a blank line, so it is not attached as the method's doc) -> G-1.
+
+func (x Gizmo) Undocumented() {} // WANT G-1 no doc
 
 // OkVerb is a clean method: 2 positional params + a variadic options slot.
 func (x Gizmo) OkVerb(a, b int, opts ...Opt) {} // OK (variadic excluded -> 2)
@@ -65,6 +71,7 @@ type Leaky struct {
 	g       *Game
 }
 
+// Valid reports liveness (documented, so clean for G-1).
 func (l Leaky) Valid() bool { return l.g != nil } // OK
 
 // NoValid is a handle ({id; *Game}, zero exported fields) with no Valid()

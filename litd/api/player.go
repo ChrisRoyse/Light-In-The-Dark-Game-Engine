@@ -25,6 +25,7 @@ const (
 // (USER=0 … NONE=5); the sim stores its own ordering, mapped here.
 type Controller uint8
 
+// The Controller values name how a player slot is driven (see Controller).
 const (
 	ControllerUser Controller = iota
 	ControllerComputer
@@ -39,16 +40,18 @@ const (
 // original. Combine with |.
 type AllianceFlags uint16
 
+// The Ally* bits are the per-direction alliance relationship flags (see
+// AllianceFlags); their positions mirror JASS alliancetype. Combine with |.
 const (
-	AllyPassive          AllianceFlags = 1 << 0 // not at war (the "ally" bit)
-	AllyHelpRequest      AllianceFlags = 1 << 1
-	AllyHelpResponse     AllianceFlags = 1 << 2
-	AllySharedXP         AllianceFlags = 1 << 3
-	AllySharedSpells     AllianceFlags = 1 << 4
-	AllySharedVision     AllianceFlags = 1 << 5
-	AllySharedControl    AllianceFlags = 1 << 6
-	AllySharedAdvControl AllianceFlags = 1 << 7
-	AllyRescuable        AllianceFlags = 1 << 8
+	AllyPassive           AllianceFlags = 1 << 0 // not at war (the "ally" bit)
+	AllyHelpRequest       AllianceFlags = 1 << 1
+	AllyHelpResponse      AllianceFlags = 1 << 2
+	AllySharedXP          AllianceFlags = 1 << 3
+	AllySharedSpells      AllianceFlags = 1 << 4
+	AllySharedVision      AllianceFlags = 1 << 5
+	AllySharedControl     AllianceFlags = 1 << 6
+	AllySharedAdvControl  AllianceFlags = 1 << 7
+	AllyRescuable         AllianceFlags = 1 << 8
 	AllySharedVisionForce AllianceFlags = 1 << 9
 )
 
@@ -100,8 +103,15 @@ func (g *Game) Player(slot int) Player {
 // Neutral player slots (porting hazard 3): the four fixed high slots.
 // In the 16-slot model these are the top four.
 func (g *Game) NeutralHostile() Player { return g.Player(sim.MaxPlayers - 4) } // aggressive
-func (g *Game) NeutralVictim() Player  { return g.Player(sim.MaxPlayers - 3) }
-func (g *Game) NeutralExtra() Player   { return g.Player(sim.MaxPlayers - 2) }
+
+// NeutralVictim returns the second-from-top fixed neutral slot (porting hazard 3).
+func (g *Game) NeutralVictim() Player { return g.Player(sim.MaxPlayers - 3) }
+
+// NeutralExtra returns the third-from-top fixed neutral slot (porting hazard 3).
+func (g *Game) NeutralExtra() Player { return g.Player(sim.MaxPlayers - 2) }
+
+// NeutralPassive returns the top fixed neutral slot — the passive owner of
+// shops and critters (porting hazard 3).
 func (g *Game) NeutralPassive() Player { return g.Player(sim.MaxPlayers - 1) }
 
 // Slot returns the player's slot index, or -1 on an invalid handle.
@@ -132,6 +142,8 @@ func (p Player) Gold() int {
 	}
 	return int(p.g.w.Resources(uint8(p.idx), resGold))
 }
+
+// SetGold writes PLAYER_STATE_RESOURCE_GOLD (see Gold). No-op on an invalid handle.
 func (p Player) SetGold(v int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetGold")
@@ -147,6 +159,8 @@ func (p Player) Lumber() int {
 	}
 	return int(p.g.w.Resources(uint8(p.idx), resLumber))
 }
+
+// SetLumber writes PLAYER_STATE_RESOURCE_LUMBER (see Lumber). No-op on an invalid handle.
 func (p Player) SetLumber(v int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetLumber")
@@ -171,6 +185,8 @@ func (p Player) FoodCap() int {
 	}
 	return int(p.g.w.FoodCap(uint8(p.idx)))
 }
+
+// SetFoodCap writes PLAYER_STATE_RESOURCE_FOOD_CAP (see FoodCap). No-op on an invalid handle.
 func (p Player) SetFoodCap(v int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetFoodCap")
@@ -187,6 +203,9 @@ func (p Player) Race() Race {
 	}
 	return Race(p.g.w.PlayerRace(uint8(p.idx)))
 }
+
+// SetRace writes the player's race (see Race). JASS: SetPlayerRacePreference.
+// No-op on an invalid handle.
 func (p Player) SetRace(r Race) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetRace")
@@ -203,6 +222,9 @@ func (p Player) Color() int {
 	}
 	return int(p.g.w.PlayerColor(uint8(p.idx)))
 }
+
+// SetColor writes the player's color slot, clamped to >= 0 (see Color).
+// JASS: SetPlayerColor. No-op on an invalid handle.
 func (p Player) SetColor(c int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetColor")
@@ -223,6 +245,10 @@ func (p Player) Team() int {
 	}
 	return int(p.g.w.PlayerTeam(uint8(p.idx)))
 }
+
+// SetTeam writes the player's roster team, clamped to >= 0 (see Team). Roster
+// metadata only — does not re-team already-spawned units. JASS: SetPlayerTeam.
+// No-op on an invalid handle.
 func (p Player) SetTeam(t int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetTeam")
@@ -242,6 +268,9 @@ func (p Player) Controller() Controller {
 	}
 	return controllerFromSim(p.g.w.Controller(uint8(p.idx)))
 }
+
+// SetController writes how the slot is driven (see Controller). JASS:
+// SetPlayerController. No-op on an invalid handle.
 func (p Player) SetController(c Controller) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetController")
@@ -259,6 +288,9 @@ func (p Player) StartLocation() Vec2 {
 	x, y := p.g.w.PlayerStart(uint8(p.idx))
 	return Vec2{X: toFloat(x), Y: toFloat(y)}
 }
+
+// SetStartLocation writes the player's start point (see StartLocation). No-op
+// on an invalid handle.
 func (p Player) SetStartLocation(loc Vec2) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetStartLocation")
@@ -275,6 +307,9 @@ func (p Player) AlliedVictory() bool {
 	}
 	return p.g.w.AlliedVictory(uint8(p.idx))
 }
+
+// SetAlliedVictory writes PLAYER_STATE_ALLIED_VICTORY (see AlliedVictory).
+// No-op on an invalid handle.
 func (p Player) SetAlliedVictory(on bool) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetAlliedVictory")
@@ -358,6 +393,9 @@ func (p Player) Handicap() float64 {
 	}
 	return toFloat(p.g.w.Handicap(uint8(p.idx)))
 }
+
+// SetHandicap writes the damage-taken multiplier (see Handicap). 1.0 = no
+// effect; negative inputs clamp to 0. No-op on an invalid handle.
 func (p Player) SetHandicap(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicap")
@@ -374,6 +412,9 @@ func (p Player) HandicapDamage() float64 {
 	}
 	return toFloat(p.g.w.HandicapDamage(uint8(p.idx)))
 }
+
+// SetHandicapDamage writes the damage-dealt multiplier (see HandicapDamage).
+// 1.0 = no effect; negative inputs clamp to 0. No-op on an invalid handle.
 func (p Player) SetHandicapDamage(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicapDamage")
@@ -390,6 +431,9 @@ func (p Player) HandicapXP() float64 {
 	}
 	return toFloat(p.g.w.HandicapXP(uint8(p.idx)))
 }
+
+// SetHandicapXP writes the hero kill-XP multiplier (see HandicapXP). 1.0 = no
+// effect; negative inputs clamp to 0. No-op on an invalid handle.
 func (p Player) SetHandicapXP(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicapXP")
@@ -407,6 +451,10 @@ func (p Player) HandicapReviveTime() float64 {
 	}
 	return toFloat(p.g.w.HandicapReviveTime(uint8(p.idx)))
 }
+
+// SetHandicapReviveTime writes the hero-revive-time multiplier (see
+// HandicapReviveTime). 1.0 = no effect; negative inputs clamp to 0. No-op on an
+// invalid handle.
 func (p Player) SetHandicapReviveTime(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicapReviveTime")
@@ -458,7 +506,9 @@ func (p Player) UpkeepRate(resource int) float64 {
 
 // GoldUpkeepRate / LumberUpkeepRate are the gold/lumber conveniences for
 // UpkeepRate (the two WC3 upkeep player-states).
-func (p Player) GoldUpkeepRate() float64   { return p.UpkeepRate(resGold) }
+func (p Player) GoldUpkeepRate() float64 { return p.UpkeepRate(resGold) }
+
+// LumberUpkeepRate is the lumber convenience for UpkeepRate.
 func (p Player) LumberUpkeepRate() float64 { return p.UpkeepRate(resLumber) }
 
 // LostToUpkeep reads the cumulative amount of the given resource this player
@@ -471,7 +521,9 @@ func (p Player) LostToUpkeep(resource int) int {
 }
 
 // GoldLostToUpkeep / LumberLostToUpkeep are the gold/lumber conveniences.
-func (p Player) GoldLostToUpkeep() int   { return p.LostToUpkeep(resGold) }
+func (p Player) GoldLostToUpkeep() int { return p.LostToUpkeep(resGold) }
+
+// LumberLostToUpkeep is the lumber convenience for LostToUpkeep.
 func (p Player) LumberLostToUpkeep() int { return p.LostToUpkeep(resLumber) }
 
 // TaxRate / SetTaxRate read and write this player's transfer-tax fraction
@@ -484,6 +536,10 @@ func (p Player) TaxRate(other Player, resource int) float64 {
 	}
 	return toFloat(p.g.w.TaxRate(uint8(p.idx), uint8(other.idx), resource))
 }
+
+// SetTaxRate writes this player's transfer-tax fraction toward other for one
+// resource (see TaxRate). Rate clamps to [0,1]; no tax toward itself. JASS:
+// SetPlayerTaxRate. No-op on an invalid handle.
 func (p Player) SetTaxRate(other Player, resource int, rate float64) {
 	if !p.Valid() || !other.Valid() {
 		p.g.reportInvalid("Player.SetTaxRate")

@@ -23,6 +23,8 @@ func (r AbilityRef) IsZero() bool { return r == 0 }
 // the sim field matrix without exposing sim types in API signatures.
 type AbilityField uint8
 
+// The AbilityField values name the public per-instance ability fields, in the
+// order the Ability field accessors expect.
 const (
 	AbilityFieldCooldown AbilityField = iota
 	AbilityFieldManaCost

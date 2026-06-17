@@ -13,6 +13,8 @@ import "hash/fnv"
 // AudioEventKind tags an AudioEvent.
 type AudioEventKind uint8
 
+// The Audio* values tag the audio operations emitted as AudioEvents to the
+// presentation sink.
 const (
 	AudioPlay AudioEventKind = iota
 	AudioPlayAt
@@ -29,6 +31,8 @@ const (
 // SoundChannel is a mix group whose master volume is set independently.
 type SoundChannel uint8
 
+// The Channel* values name the independently-mixed sound channels (see
+// SoundChannel).
 const (
 	ChannelEffects SoundChannel = iota
 	ChannelMusic
