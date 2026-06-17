@@ -39,6 +39,7 @@ func Register(L *lua.LState, g *api.Game) error {
 	if g != nil {
 		registerGameBound(L, gameBinder{g: g}) // Game-receiver verbs, bound to g
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
+		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
 	}
 	return nil
 }
