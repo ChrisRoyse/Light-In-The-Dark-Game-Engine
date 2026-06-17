@@ -217,6 +217,35 @@ func argOrder(L *lua.LState, i int) api.Order {
 	return v
 }
 
+// Event / Region / Subscription ride the same opaque-userdata seam (they carry
+// their game / subscription pointer).
+func argEvent(L *lua.LState, i int) api.Event {
+	v, ok := handleArg(L, i).(api.Event)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Event userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+func argRegion(L *lua.LState, i int) api.Region {
+	v, ok := handleArg(L, i).(api.Region)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Region userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+func argSubscription(L *lua.LState, i int) api.Subscription {
+	v, ok := handleArg(L, i).(api.Subscription)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Subscription userdata, got %T", handleArg(L, i)))
+	}
+	return v
+}
+
+// argEventKind reads the integer EventKind constant.
+func argEventKind(L *lua.LState, i int) api.EventKind { return api.EventKind(L.CheckInt(i)) }
+
 // --- stable ABI argument readers (used by the generated dispatch) ---
 
 // argVec2 reads argument i as a Vec2, raising a Lua arg error on a malformed

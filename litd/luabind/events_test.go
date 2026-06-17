@@ -90,6 +90,32 @@ func TestLuaOnEventCancelFSV(t *testing.T) {
 	t.Logf("FSV OnEvent Cancel: handler fired once, silent after Cancel (deaths=1)")
 }
 
+func TestLuaOnEventReadsEventFSV(t *testing.T) {
+	// The handler must be able to INSPECT the event: Event_Unit(ev) returns the
+	// dying unit, and reading its position through Unit_Position from Lua yields
+	// the unit's real sim position. SoT = the spawn position the handler reads
+	// back during dispatch.
+	g, L := eventGame(t)
+	defer L.Close()
+
+	if err := L.DoString(`vx = -1; vy = -1
+		OnEvent(` + strconv.Itoa(eventUnitDeath) + `, function(ev)
+			local p = Unit_Position(Event_Unit(ev))
+			vx = p.x; vy = p.y
+		end)`); err != nil {
+		t.Fatalf("OnEvent register: %v", err)
+	}
+
+	u := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 64, Y: 96}, api.Deg(0))
+	u.Kill()
+	g.Advance(1)
+
+	if gx, gy := luaNum(t, L, "vx"), luaNum(t, L, "vy"); gx != 64 || gy != 96 {
+		t.Fatalf("handler read dying unit pos via Lua = {%v,%v}, want {64,96}", gx, gy)
+	}
+	t.Logf("FSV OnEvent read: handler read Event_Unit's real position {64,96} during dispatch")
+}
+
 func TestLuaGoEventOrderFSV(t *testing.T) {
 	// #269 requirement: Lua OnEvent handlers join the SAME ordered subscriber
 	// list as Go handlers and dispatch in global registration order. Register

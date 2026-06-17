@@ -75,6 +75,14 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argBuffType(L, %d)", idx), true
 	case "Order":
 		return fmt.Sprintf("argOrder(L, %d)", idx), true
+	case "Event":
+		return fmt.Sprintf("argEvent(L, %d)", idx), true
+	case "Region":
+		return fmt.Sprintf("argRegion(L, %d)", idx), true
+	case "Subscription":
+		return fmt.Sprintf("argSubscription(L, %d)", idx), true
+	case "EventKind":
+		return fmt.Sprintf("argEventKind(L, %d)", idx), true
 	case "float64":
 		return fmt.Sprintf("float64(L.CheckNumber(%d))", idx), true
 	case "int":
@@ -125,11 +133,11 @@ func supportedRet(typ, expr string) (string, bool) {
 	case "Rect":
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
 	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer",
-		"UnitType", "ItemType", "BuffType", "Order":
+		"UnitType", "ItemType", "BuffType", "Order", "Event", "Region", "Subscription":
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
 	case "float64", "int", "int32", "int64", "uint32", "uint8",
 		"Race", "Difficulty", "FogState", "Controller", "AllianceFlags",
-		"AbilityField", "CameraField", "AbilityRef":
+		"AbilityField", "CameraField", "AbilityRef", "EventKind":
 		// Plain + integer-enum returns push as a number (LNumber converts any
 		// numeric value; the enum type name is never referenced here).
 		return fmt.Sprintf("L.Push(lua.LNumber(%s))", expr), true
