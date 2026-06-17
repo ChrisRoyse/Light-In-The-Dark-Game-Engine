@@ -41,6 +41,7 @@ func WithAttackType(idx int) DamageOption {
 // phase, deterministically. A non-positive amount, an invalid source/target, or
 // an item target is a no-op returning false. JASS: UnitDamageTarget /
 // UnitDamageTargetBJ / UnitDamagePoint / UnitDamagePointLoc collapse here.
+// JASS: UnitDamagePoint, UnitDamagePointLoc, UnitDamageTarget, UnitDamageTargetBJ
 func (u Unit) Damage(target Widget, amount float64, opts ...DamageOption) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Damage")

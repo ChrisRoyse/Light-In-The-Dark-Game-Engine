@@ -16,7 +16,7 @@ import (
 
 // RandomInt returns a uniformly-distributed integer in [min, max]
 // inclusive, drawn from the sim PRNG. A degenerate range returns min.
-// JASS: GetRandomInt.
+// JASS: GetRandomInt
 func (g *Game) RandomInt(min, max int) int {
 	if g == nil || g.w == nil {
 		return min
@@ -27,6 +27,7 @@ func (g *Game) RandomInt(min, max int) int {
 // RandomFloat returns a uniformly-distributed value in [0, 1) drawn
 // from the sim PRNG. JASS: GetRandomReal(0, 1) (scale the result for
 // other ranges).
+// JASS: GetRandomReal
 func (g *Game) RandomFloat() float64 {
 	if g == nil || g.w == nil {
 		return 0
@@ -36,6 +37,7 @@ func (g *Game) RandomFloat() float64 {
 
 // RandomAngle returns a uniformly-distributed Angle drawn from the sim
 // PRNG.
+// JASS: GetRandomDirectionDeg
 func (g *Game) RandomAngle() Angle {
 	if g == nil || g.w == nil {
 		return Angle{}
@@ -46,6 +48,7 @@ func (g *Game) RandomAngle() Angle {
 // SetRandomSeed reseeds the sim PRNG. The reseed is deterministic sim
 // state: identical command streams that reseed identically stay in
 // lockstep. JASS: SetRandomSeed.
+// JASS: SetRandomSeed
 func (g *Game) SetRandomSeed(seed int64) {
 	if g != nil && g.w != nil {
 		g.w.SetSeed(uint64(seed))

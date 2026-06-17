@@ -19,6 +19,7 @@ type UnitSet struct {
 
 // NewUnitSet returns an empty UnitSet. JASS: CreateGroup (for the
 // persistent-group use; transient enumeration uses the slice queries).
+// JASS: CreateGroup
 func (g *Game) NewUnitSet() *UnitSet {
 	if g == nil || g.w == nil {
 		return nil
@@ -42,7 +43,7 @@ func (s *UnitSet) indexOf(id sim.EntityID) int {
 
 // Add inserts u if absent and from this game; duplicates are ignored, so
 // insertion order is preserved. No-op on a nil set or foreign/zero unit.
-// JASS: GroupAddUnit.
+// JASS: GroupAddUnit, GroupAddUnitSimple
 func (s *UnitSet) Add(u Unit) {
 	if s == nil || u.g != s.g || u.id == 0 {
 		return
@@ -53,7 +54,7 @@ func (s *UnitSet) Add(u Unit) {
 }
 
 // Remove drops u, preserving the order of the rest. No-op if absent.
-// JASS: GroupRemoveUnit.
+// JASS: GroupRemoveUnit, GroupRemoveUnitSimple
 func (s *UnitSet) Remove(u Unit) {
 	if s == nil {
 		return
@@ -64,6 +65,7 @@ func (s *UnitSet) Remove(u Unit) {
 }
 
 // Clear empties the set, keeping the backing capacity. JASS: GroupClear.
+// JASS: GroupClear
 func (s *UnitSet) Clear() {
 	if s != nil {
 		s.ids = s.ids[:0]
@@ -71,6 +73,7 @@ func (s *UnitSet) Clear() {
 }
 
 // Contains reports membership. JASS: IsUnitInGroup.
+// JASS: IsUnitInGroup
 func (s *UnitSet) Contains(u Unit) bool {
 	return s != nil && s.indexOf(u.id) != -1
 }
@@ -78,6 +81,7 @@ func (s *UnitSet) Contains(u Unit) bool {
 // Count returns the number of members (including any whose unit has since
 // died — call Compact to drop the dead). JASS: CountUnitsInGroup /
 // BlzGroupGetSize.
+// JASS: BlzGroupGetSize, CountUnitsInGroup, CountUnitsInGroupEnum
 func (s *UnitSet) Count() int {
 	if s == nil {
 		return 0
@@ -104,6 +108,7 @@ func (s *UnitSet) Compact() {
 // Units returns the members as a slice in insertion order. The slice is a
 // fresh copy — mutating the set afterward does not change it. JASS:
 // ForGroup enumeration collapsed to a slice (R-EXEC-4).
+// JASS: FirstOfGroup, ForGroup, ForGroupBJ
 func (s *UnitSet) Units() []Unit {
 	if s == nil {
 		return make([]Unit, 0)

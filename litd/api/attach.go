@@ -70,6 +70,7 @@ func (a *Attachment[V]) Remove(u Unit) {
 // recycled slot yields a different ID than the handle it replaced. The
 // replacement for GetHandleId (whose arithmetic is not portable). 0 for
 // an invalid handle.
+// JASS: GetHandleId
 func (u Unit) ID() uint32 {
 	if !u.Valid() {
 		return 0

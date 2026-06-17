@@ -22,6 +22,7 @@ type PlayerFilter func(Player) bool
 // order. A nil filter returns every slot. Replaces the JASS
 // force-enumeration zoo (ForForce/CountPlayersInForceBJ/…). Returns nil
 // on a nil game.
+// JASS: CountPlayersInForceBJ, CountPlayersInForceEnum, GetPlayersAll, GetPlayersAllMatching, GetPlayersMatching
 func (g *Game) Players(filter PlayerFilter) []Player {
 	if g == nil || g.w == nil {
 		return nil
@@ -41,12 +42,14 @@ func (g *Game) AllPlayers() []Player { return g.Players(nil) }
 
 // Allies returns the players p is passive toward (its allies). D4 helper
 // (GetPlayersAllies). Excludes p itself.
+// JASS: GetPlayersAllies
 func (g *Game) Allies(p Player) []Player {
 	return g.Players(func(o Player) bool { return o.idx != p.idx && p.IsAlly(o) })
 }
 
 // Enemies returns the players p is at war with. D4 helper
 // (GetPlayersEnemies). Excludes p itself.
+// JASS: GetPlayersEnemies
 func (g *Game) Enemies(p Player) []Player {
 	return g.Players(func(o Player) bool { return o.idx != p.idx && p.IsEnemy(o) })
 }
@@ -55,6 +58,7 @@ func (g *Game) Enemies(p Player) []Player {
 
 // CreateForce makes a new, empty force. JASS: CreateForce / CreateForceBJ.
 // Zero-value Force on a nil game.
+// JASS: CreateForce, CreateForceBJ
 func (g *Game) CreateForce() Force {
 	if g == nil || g.w == nil {
 		return Force{}
@@ -73,6 +77,7 @@ func (f Force) mask() *uint32 {
 
 // AddPlayer adds p to the force. No-op on an invalid force or a foreign/
 // invalid player. JASS: ForceAddPlayer.
+// JASS: ForceAddPlayer, ForceAddPlayerSimple
 func (f Force) AddPlayer(p Player) {
 	m := f.mask()
 	if m == nil {
@@ -87,6 +92,7 @@ func (f Force) AddPlayer(p Player) {
 
 // RemovePlayer removes p from the force. No-op on an invalid force or
 // player. JASS: ForceRemovePlayer.
+// JASS: ForceRemovePlayer, ForceRemovePlayerSimple
 func (f Force) RemovePlayer(p Player) {
 	m := f.mask()
 	if m == nil {
@@ -100,6 +106,7 @@ func (f Force) RemovePlayer(p Player) {
 }
 
 // Clear empties the force. JASS: ForceClear.
+// JASS: ForceClear
 func (f Force) Clear() {
 	if m := f.mask(); m != nil {
 		*m = 0
@@ -108,6 +115,7 @@ func (f Force) Clear() {
 
 // AddAllPlayers adds every player slot to the force. JASS: ForceEnumPlayers
 // with a null filter.
+// JASS: ForceEnumPlayers, ForceEnumPlayersCounted
 func (f Force) AddAllPlayers() {
 	if m := f.mask(); m != nil {
 		*m = (1 << uint(sim.MaxPlayers)) - 1
@@ -115,6 +123,7 @@ func (f Force) AddAllPlayers() {
 }
 
 // Contains reports whether p is in the force. JASS: IsPlayerInForce.
+// JASS: BlzForceHasPlayer, IsPlayerInForce
 func (f Force) Contains(p Player) bool {
 	m := f.mask()
 	if m == nil || p.g != f.g || !p.Valid() {
@@ -139,6 +148,7 @@ func (f Force) Count() int {
 
 // Players returns the force's members in ascending slot order. JASS:
 // ForForce enumeration collapsed to a slice (R-EXEC-4).
+// JASS: ForForce, GetEnumPlayer, GetFilterPlayer
 func (f Force) Players() []Player {
 	m := f.mask()
 	if m == nil {

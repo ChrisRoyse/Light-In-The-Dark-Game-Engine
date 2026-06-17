@@ -113,6 +113,7 @@ func abilitySecondsToTicks(g *Game, field string, seconds float64) (uint16, bool
 // AddAbility equips ref in the first available unit slot and returns
 // the per-unit Ability handle. If the ref is already equipped, the
 // existing handle is returned.
+// JASS: UnitAddAbility, UnitAddAbilityBJ
 func (u Unit) AddAbility(ref AbilityRef) Ability {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.AddAbility")
@@ -163,6 +164,7 @@ func (u Unit) AddAbility(ref AbilityRef) Ability {
 // RemoveAbility removes ref from the unit, clearing all per-instance
 // overrides for the slot. It returns false on invalid handles, unknown
 // refs, or refs not equipped by the unit.
+// JASS: UnitRemoveAbility, UnitRemoveAbilityBJ
 func (u Unit) RemoveAbility(ref AbilityRef) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.RemoveAbility")
@@ -193,6 +195,7 @@ func (u Unit) RemoveAbility(ref AbilityRef) bool {
 
 // Level returns the current unit ability level, or zero on an invalid
 // handle.
+// JASS: GetUnitAbilityLevel, GetUnitAbilityLevelSwapped
 func (a Ability) Level() int {
 	ar, slot, ok := a.g.abilitySlot(a.owner, a.ref)
 	if !ok {
@@ -204,6 +207,7 @@ func (a Ability) Level() int {
 
 // SetLevel updates the unit ability level. Levels outside uint8 range
 // fail closed and leave the store unchanged.
+// JASS: DecUnitAbilityLevelSwapped, SetUnitAbilityLevel, SetUnitAbilityLevelSwapped
 func (a Ability) SetLevel(level int) {
 	ar, slot, ok := a.g.abilitySlot(a.owner, a.ref)
 	if !ok {
@@ -220,6 +224,7 @@ func (a Ability) SetLevel(level int) {
 // IncLevel raises the ability level by one and returns the new level,
 // or 0 on an invalid handle. The level saturates at 255 (the store's
 // uint8 ceiling) — it never wraps. JASS: IncUnitAbilityLevel.
+// JASS: IncUnitAbilityLevel, IncUnitAbilityLevelSwapped
 func (a Ability) IncLevel() int {
 	ar, slot, ok := a.g.abilitySlot(a.owner, a.ref)
 	if !ok {
@@ -241,6 +246,7 @@ func (a Ability) IncLevel() int {
 // the ability at level 0; this engine keeps removal an explicit verb so
 // the Ability handle stays valid — documented divergence.) JASS:
 // DecUnitAbilityLevel.
+// JASS: DecUnitAbilityLevel
 func (a Ability) DecLevel() int {
 	ar, slot, ok := a.g.abilitySlot(a.owner, a.ref)
 	if !ok {
@@ -257,6 +263,7 @@ func (a Ability) DecLevel() int {
 
 // Field resolves an ability field override or its definition default,
 // returning zero on invalid handles or unknown fields.
+// JASS: BlzGetAbilityBooleanField, BlzGetAbilityCooldown, BlzGetAbilityIntegerField, BlzGetAbilityManaCost, BlzGetAbilityRealField, BlzGetAbilityStringField, BlzGetUnitAbilityCooldown, BlzGetUnitAbilityCooldownRemaining, BlzGetUnitAbilityManaCost
 func (a Ability) Field(field AbilityField) float64 {
 	_, slot, ok := a.g.abilitySlot(a.owner, a.ref)
 	if !ok {
@@ -277,6 +284,7 @@ func (a Ability) Field(field AbilityField) float64 {
 }
 
 // SetField writes a per-instance override row for this ability.
+// JASS: BlzSetAbilityBooleanField, BlzSetAbilityBooleanFieldBJ, BlzSetAbilityIntegerField, BlzSetAbilityIntegerFieldBJ, BlzSetAbilityRealField, BlzSetAbilityRealFieldBJ, BlzSetAbilityStringField, BlzSetAbilityStringFieldBJ
 func (a Ability) SetField(field AbilityField, value float64) {
 	_, slot, ok := a.g.abilitySlot(a.owner, a.ref)
 	if !ok {

@@ -86,7 +86,7 @@ func clamp01(v float64) float64 {
 // CreateSound resolves a sound cue (e.g. "Spells/footman-attack") to a
 // playable handle. The cue maps to an .ogg via the data tables at render time;
 // the returned handle is a stable reference (the zero Sound for an empty cue).
-// JASS: CreateSound, CreateSoundFilenameWithLabel collapse here.
+// JASS: CreateSound, CreateSoundFilenameWithLabel, CreateSoundFromLabel
 func (g *Game) CreateSound(cue string) Sound {
 	if g == nil || cue == "" {
 		return Sound{}
@@ -102,6 +102,7 @@ func (g *Game) CreateSound(cue string) Sound {
 
 // Play starts the sound on the effects channel (non-positional). No-op on an
 // invalid handle. JASS: StartSound.
+// JASS: PlaySound, PlaySoundBJ, StartSound
 func (s Sound) Play() {
 	if !s.valid("Sound.Play") {
 		return
@@ -113,6 +114,7 @@ func (s Sound) Play() {
 // playback consults the visibility grid at render time (no audio intel through
 // fog, R-AUD-1) — that gating lives in the sink, not the sim. No-op on an
 // invalid handle. JASS: the XY/Loc positional play variants collapse here.
+// JASS: PlaySoundAtPointBJ, SetSoundPosition, SetSoundPositionLocBJ
 func (s Sound) PlayAt(pos Vec2, z float64) {
 	if !s.valid("Sound.PlayAt") {
 		return
@@ -121,7 +123,7 @@ func (s Sound) PlayAt(pos Vec2, z float64) {
 }
 
 // PlayOn attaches the sound to a unit. No-op on an invalid handle or unit.
-// JASS: AttachSoundToUnit + start.
+// JASS: AttachSoundToUnit, AttachSoundToUnitBJ, PlaySoundOnUnitBJ
 func (s Sound) PlayOn(u Unit) {
 	if !s.valid("Sound.PlayOn") {
 		return
@@ -130,6 +132,7 @@ func (s Sound) PlayOn(u Unit) {
 }
 
 // Stop stops the sound. No-op on an invalid handle. JASS: StopSound.
+// JASS: StopSound, StopSoundBJ
 func (s Sound) Stop() {
 	if !s.valid("Sound.Stop") {
 		return
@@ -139,7 +142,7 @@ func (s Sound) Stop() {
 
 // SetVolume sets the sound's volume on a 0..1 scale (clamped). The JASS
 // 0..127 / percent forms collapse onto this float. No-op on an invalid handle.
-// JASS: SetSoundVolume, SetSoundVolumeBJ.
+// JASS: SetSoundVolume, SetSoundVolumeBJ
 func (s Sound) SetVolume(v float64) {
 	if !s.valid("Sound.SetVolume") {
 		return
@@ -149,6 +152,7 @@ func (s Sound) SetVolume(v float64) {
 
 // SetPitch sets the sound's pitch multiplier (clamped to (0, 4]; 1 = normal).
 // No-op on an invalid handle. JASS: SetSoundPitch.
+// JASS: SetSoundPitch, SetSoundPitchBJ
 func (s Sound) SetPitch(p float64) {
 	if !s.valid("Sound.SetPitch") {
 		return

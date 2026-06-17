@@ -94,6 +94,7 @@ func (f FogModifier) Valid() bool {
 // NewFogModifier creates a fog-state modifier over an area for a player and
 // returns its handle. Created stopped unless Started() is passed. Returns the
 // zero (invalid) handle on a bad player/area or a full modifier pool.
+// JASS: CreateFogModifierRadius, CreateFogModifierRadiusLoc, CreateFogModifierRadiusLocBJ, CreateFogModifierRadiusLocSimple, CreateFogModifierRect, CreateFogModifierRectBJ, CreateFogModifierRectSimple
 func (g *Game) NewFogModifier(p Player, state FogState, area Area, opts ...FogOption) FogModifier {
 	if g == nil || g.w == nil || !p.Valid() || area == nil {
 		return FogModifier{}
@@ -117,6 +118,7 @@ func (g *Game) NewFogModifier(p Player, state FogState, area Area, opts ...FogOp
 }
 
 // Start activates the modifier (FogModifierStart).
+// JASS: FogModifierStart
 func (f FogModifier) Start() {
 	if f.g != nil && f.g.w != nil {
 		f.g.w.StartFogModifier(f.id)
@@ -125,6 +127,7 @@ func (f FogModifier) Start() {
 
 // Stop deactivates the modifier (FogModifierStop). The grid reverts to
 // computed vision at the next update.
+// JASS: FogModifierStop
 func (f FogModifier) Stop() {
 	if f.g != nil && f.g.w != nil {
 		f.g.w.StopFogModifier(f.id)
@@ -132,6 +135,7 @@ func (f FogModifier) Stop() {
 }
 
 // Destroy frees the modifier (DestroyFogModifier). The handle becomes invalid.
+// JASS: DestroyFogModifier
 func (f FogModifier) Destroy() {
 	if f.g != nil && f.g.w != nil {
 		f.g.w.DestroyFogModifier(f.id)
@@ -141,6 +145,7 @@ func (f FogModifier) Destroy() {
 // SetFogState stamps a fog state over an area immediately, with no modifier
 // lifetime (SetFogStateRect/Radius). It is overwritten at the next vision
 // update. No-op on a bad player/area.
+// JASS: SetFogStateRadius, SetFogStateRadiusLoc, SetFogStateRect
 func (g *Game) SetFogState(p Player, state FogState, area Area, sharedVision bool) {
 	if g == nil || g.w == nil || !p.Valid() || area == nil {
 		return
@@ -155,6 +160,7 @@ func (g *Game) SetFogState(p Player, state FogState, area Area, sharedVision boo
 
 // FogStateAt returns a point's visibility to a player (IsVisible/IsFogged/
 // IsMasked collapsed). Reads FogMasked for an invalid player.
+// JASS: IsFoggedToPlayer, IsLocationFoggedToPlayer, IsLocationMaskedToPlayer, IsMaskedToPlayer
 func (g *Game) FogStateAt(p Player, pos Vec2) FogState {
 	if g == nil || g.w == nil || !p.Valid() {
 		return FogMasked
@@ -164,12 +170,14 @@ func (g *Game) FogStateAt(p Player, pos Vec2) FogState {
 
 // IsVisibleTo reports whether a point is currently visible to a player
 // (IsVisibleToPlayer / IsLocationVisibleToPlayer).
+// JASS: IsLocationVisibleToPlayer, IsVisibleToPlayer
 func (g *Game) IsVisibleTo(p Player, pos Vec2) bool {
 	return g.FogStateAt(p, pos) == FogVisible
 }
 
 // SetFogEnabled turns fog of war on or off globally (FogEnable). Off reveals
 // the whole map to every player.
+// JASS: FogEnable, FogEnableOff, FogEnableOn
 func (g *Game) SetFogEnabled(on bool) {
 	if g != nil && g.w != nil {
 		g.w.SetFogEnabled(on)
@@ -177,10 +185,12 @@ func (g *Game) SetFogEnabled(on bool) {
 }
 
 // FogEnabled reports whether fog of war is on (IsFogEnabled).
+// JASS: IsFogEnabled
 func (g *Game) FogEnabled() bool { return g != nil && g.w != nil && g.w.FogEnabled() }
 
 // SetFogMaskEnabled turns the black mask on or off (FogMaskEnable). Off makes
 // never-seen terrain read as explored instead of masked.
+// JASS: FogMaskEnable, FogMaskEnableOff, FogMaskEnableOn
 func (g *Game) SetFogMaskEnabled(on bool) {
 	if g != nil && g.w != nil {
 		g.w.SetFogMaskEnabled(on)
@@ -188,10 +198,12 @@ func (g *Game) SetFogMaskEnabled(on bool) {
 }
 
 // FogMaskEnabled reports whether the black mask is on (IsFogMaskEnabled).
+// JASS: IsFogMaskEnabled
 func (g *Game) FogMaskEnabled() bool { return g != nil && g.w != nil && g.w.FogMaskEnabled() }
 
 // ShareVision grants or revokes sharing of this unit's sight with a player
 // (UnitShareVision). No-op on an invalid unit.
+// JASS: UnitShareVision, UnitShareVisionBJ
 func (u Unit) ShareVision(p Player, share bool) {
 	if !u.Valid() || !p.Valid() {
 		return

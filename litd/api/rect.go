@@ -17,6 +17,7 @@ package litd
 // NewRect builds a rectangle spanning the two corner points. The corners
 // may be given in any order. JASS: Rect (the (minx,miny,maxx,maxy)
 // constructor, coordinates collapsed to Vec2 per R-API-2).
+// JASS: Rect, RectFromLoc
 func NewRect(a, b Vec2) Rect {
 	return Rect{MinX: a.X, MinY: a.Y, MaxX: b.X, MaxY: b.Y}.normalized()
 }
@@ -24,6 +25,7 @@ func NewRect(a, b Vec2) Rect {
 // RectAround builds a rectangle of width w and height h centered on c.
 // Negative sizes are treated as their magnitudes. JASS:
 // RectFromCenterSizeBJ (center+size constructor, D2).
+// JASS: GetRectFromCircleBJ, RectFromCenterSizeBJ
 func RectAround(c Vec2, w, h float64) Rect {
 	if w < 0 {
 		w = -w
@@ -50,12 +52,14 @@ func (r Rect) normalized() Rect {
 
 // Min returns the lower-left corner. JASS: GetRectMinX/GetRectMinY
 // collapsed to one Vec2 getter (D3/D5: per-axis getters become fields).
+// JASS: GetRectMinX, GetRectMinY
 func (r Rect) Min() Vec2 {
 	r = r.normalized()
 	return Vec2{X: r.MinX, Y: r.MinY}
 }
 
 // Max returns the upper-right corner. JASS: GetRectMaxX/GetRectMaxY.
+// JASS: GetRectMaxX, GetRectMaxY
 func (r Rect) Max() Vec2 {
 	r = r.normalized()
 	return Vec2{X: r.MaxX, Y: r.MaxY}
@@ -63,11 +67,13 @@ func (r Rect) Max() Vec2 {
 
 // Center returns the midpoint. JASS: GetRectCenterX/GetRectCenterY and
 // the GetRectCenter location BJ, collapsed to one Vec2 getter.
+// JASS: GetRectCenter, GetRectCenterX, GetRectCenterY
 func (r Rect) Center() Vec2 {
 	return Vec2{X: (r.MinX + r.MaxX) / 2, Y: (r.MinY + r.MaxY) / 2}
 }
 
 // Width returns the horizontal extent. JASS: GetRectWidthBJ.
+// JASS: GetRectWidthBJ
 func (r Rect) Width() float64 {
 	if r.MaxX >= r.MinX {
 		return r.MaxX - r.MinX
@@ -76,6 +82,7 @@ func (r Rect) Width() float64 {
 }
 
 // Height returns the vertical extent. JASS: GetRectHeightBJ.
+// JASS: GetRectHeightBJ
 func (r Rect) Height() float64 {
 	if r.MaxY >= r.MinY {
 		return r.MaxY - r.MinY
@@ -84,7 +91,7 @@ func (r Rect) Height() float64 {
 }
 
 // Contains reports whether p lies within the rectangle, edges inclusive.
-// JASS: RectContainsCoords (and RectContainsLoc, the location variant).
+// JASS: RectContainsCoords, RectContainsLoc
 func (r Rect) Contains(p Vec2) bool {
 	r = r.normalized()
 	return p.X >= r.MinX && p.X <= r.MaxX && p.Y >= r.MinY && p.Y <= r.MaxY
@@ -94,6 +101,7 @@ func (r Rect) Contains(p Vec2) bool {
 // MoveRectToLoc family — because a Rect is a value with no identity,
 // "moving" a rect re-issues a translated value rather than mutating a
 // handle (regions-rects-locations.md hazard 4).
+// JASS: MoveRectTo, MoveRectToLoc, OffsetRectBJ
 func (r Rect) Offset(d Vec2) Rect {
 	return Rect{
 		MinX: r.MinX + d.X, MinY: r.MinY + d.Y,

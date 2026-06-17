@@ -82,7 +82,7 @@ func (u Unit) ApplyBuff(typ BuffType, opts ...BuffOption) Buff {
 }
 
 // HasBuff reports whether the unit carries a live instance of the buff type.
-// JASS: UnitHasBuffBJ.
+// JASS: UnitHasBuffBJ, UnitHasBuffsEx
 func (u Unit) HasBuff(typ BuffType) bool {
 	if !u.Valid() || typ.IsZero() {
 		return false
@@ -92,6 +92,7 @@ func (u Unit) HasBuff(typ BuffType) bool {
 
 // BuffCount returns the number of live buff instances on the unit. JASS:
 // UnitCountBuffsEx (the count form).
+// JASS: UnitCountBuffsEx, UnitCountBuffsExBJ
 func (u Unit) BuffCount() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.BuffCount")
@@ -102,6 +103,7 @@ func (u Unit) BuffCount() int {
 
 // RemoveBuff removes every instance of the buff type from the unit, returning
 // true if any were removed. JASS: UnitRemoveBuffBJ.
+// JASS: UnitRemoveBuffBJ
 func (u Unit) RemoveBuff(typ BuffType) bool {
 	if !u.Valid() || typ.IsZero() {
 		if u.g != nil {
@@ -113,7 +115,7 @@ func (u Unit) RemoveBuff(typ BuffType) bool {
 }
 
 // RemoveAllBuffs strips every buff from the unit, returning the count removed.
-// JASS: UnitRemoveBuffsEx (the remove-all form).
+// JASS: UnitRemoveBuffs, UnitRemoveBuffsBJ, UnitRemoveBuffsEx, UnitRemoveBuffsExBJ
 func (u Unit) RemoveAllBuffs() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.RemoveAllBuffs")

@@ -34,6 +34,7 @@ func (g *Game) ItemType(code string) ItemType {
 // or the entity cap reached). JASS: CreateItem, CreateItemLoc collapse here;
 // the returned handle replaces the bj_lastCreatedItem side channel
 // (GetLastCreatedItem tombstoned).
+// JASS: CreateItem, CreateItemLoc
 func (g *Game) CreateItem(typ ItemType, pos Vec2) Item {
 	if g == nil || g.w == nil {
 		return Item{}
@@ -52,6 +53,7 @@ func (g *Game) CreateItem(typ ItemType, pos Vec2) Item {
 
 // Type returns the item's type handle, or the null ItemType on an invalid
 // handle. JASS: GetItemTypeId.
+// JASS: GetItemTypeId
 func (i Item) Type() ItemType {
 	if !i.Valid() {
 		i.g.reportInvalid("Item.Type")
@@ -64,7 +66,7 @@ func (i Item) Type() ItemType {
 }
 
 // Charges returns the item's current charge count, or 0 on an invalid handle.
-// JASS: GetItemCharges.
+// JASS: GetItemCharges
 func (i Item) Charges() int {
 	if !i.Valid() {
 		i.g.reportInvalid("Item.Charges")
@@ -77,6 +79,7 @@ func (i Item) Charges() int {
 // SetCharges sets the item's charge count (clamped to the uint16 range).
 // Setting 0 does not destroy the item — consumable removal happens through
 // Unit.UseItem. No-op on an invalid handle. JASS: SetItemCharges.
+// JASS: SetItemCharges
 func (i Item) SetCharges(n int) {
 	if !i.Valid() {
 		i.g.reportInvalid("Item.SetCharges")
@@ -115,6 +118,7 @@ func (i Item) Carrier() Unit {
 // Position returns a ground item's world position, or the zero Vec2 if the
 // item is carried (no ground position) or the handle is invalid. JASS:
 // GetItemX/GetItemY/GetItemLoc collapse here.
+// JASS: GetItemLoc, GetItemX, GetItemY
 func (i Item) Position() Vec2 {
 	if !i.Valid() {
 		i.g.reportInvalid("Item.Position")
@@ -129,6 +133,7 @@ func (i Item) Position() Vec2 {
 // Remove destroys the item, taking it out of play. A carried item is removed
 // from its carrier's inventory first. No-op on an invalid handle. JASS:
 // RemoveItem.
+// JASS: RemoveItem
 func (i Item) Remove() {
 	if !i.Valid() {
 		i.g.reportInvalid("Item.Remove")

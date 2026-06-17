@@ -10,7 +10,7 @@ package litd
 // vectors (recorded as an ADR alongside this commit). Callers needing a
 // stable string→int key get one; nobody depends on WC3 bit-compat.
 //
-// JASS: StringHash, StringHashBJ (D1).
+// JASS: StringHash, StringHashBJ
 func StringHash(s string) int32 {
 	const (
 		offset uint32 = 2166136261 // FNV-1a 32-bit offset basis

@@ -41,6 +41,7 @@ type Storage struct {
 // Storage returns the game's campaign store, creating it on first use.
 // Nil-safe (returns nil on a nil game). JASS: InitGameCache / the
 // bj_lastCreatedGameCache singleton.
+// JASS: InitGameCache
 func (g *Game) Storage() *Storage {
 	if g == nil {
 		return nil
@@ -62,6 +63,7 @@ func newStorage() *Storage {
 
 // SetInt / GetInt store and read an integer. JASS: StoreInteger /
 // GetStoredInteger + HaveStoredInteger (comma-ok).
+// JASS: StoreInteger
 func (s *Storage) SetInt(category, key string, v int) {
 	if s != nil {
 		s.ints[storageKey{category, key}] = int64(v)
@@ -70,6 +72,7 @@ func (s *Storage) SetInt(category, key string, v int) {
 
 // GetInt reads a stored integer; ok is false if absent (see SetInt). JASS:
 // GetStoredInteger + HaveStoredInteger.
+// JASS: GetStoredInteger
 func (s *Storage) GetInt(category, key string) (int, bool) {
 	if s == nil {
 		return 0, false
@@ -130,6 +133,7 @@ func (s *Storage) GetBool(category, key string) (bool, bool) {
 }
 
 // Clear empties the whole store. JASS: FlushGameCache.
+// JASS: FlushGameCache
 func (s *Storage) Clear() {
 	if s == nil {
 		return

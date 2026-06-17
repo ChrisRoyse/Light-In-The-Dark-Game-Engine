@@ -25,6 +25,8 @@ func main() {
 	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
 	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
 	revClosure := flag.Bool("revclosure", false, "reverse-closure gate: fail if any exported litd/api verb traces to neither a manifest goMapping nor new-capabilities.txt")
+	provenance := flag.Bool("provenance", false, "inject manifest-generated `// JASS:` provenance lines into litd/api doc comments (G-2, #259)")
+	provenanceCheck := flag.Bool("provenance-check", false, "provenance staleness gate: fail if any committed `// JASS:` line drifts from the manifest")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
 	flag.Parse()
 	overridesFilePath = *overridesPath
@@ -52,8 +54,12 @@ func main() {
 		runCheck()
 	case *revClosure:
 		runRevClosure()
+	case *provenance:
+		runProvenance(true)
+	case *provenanceCheck:
+		runProvenance(false)
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check | -revclosure")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check | -revclosure | -provenance | -provenance-check")
 		os.Exit(2)
 	}
 }

@@ -60,6 +60,7 @@ type timerEntry struct {
 // for Pause/Resume/Stop and the elapsed/remaining/timeout queries.
 // d quantizes up to whole ticks with a one-tick floor; d<=0 fires next
 // tick. A nil f or nil game yields the zero-value Timer (no-op).
+// JASS: CreateTimer, CreateTimerBJ, StartTimerBJ, TimerStart
 func (g *Game) After(d time.Duration, f func()) Timer {
 	if g == nil || f == nil {
 		return Timer{}
@@ -204,6 +205,7 @@ func (t Timer) entry() *timerEntry {
 // The outstanding scheduler record is left in place; it is ignored if
 // it fires while paused, and Resume arms a fresh record for the frozen
 // remainder. No-op on an already-paused or invalid timer.
+// JASS: PauseTimer
 func (t Timer) Pause() {
 	e := t.entry()
 	if e == nil {
@@ -226,6 +228,7 @@ func (t Timer) Pause() {
 // arms a fresh record (bumping epoch), so any record left pending from
 // before the pause is recognized as stale when it fires. No-op on a
 // running or invalid timer.
+// JASS: ResumeTimer
 func (t Timer) Resume() {
 	e := t.entry()
 	if e == nil {
@@ -249,6 +252,7 @@ func (t Timer) Resume() {
 // pending record goes stale via the generation bump. Idempotent: Stop
 // on an already-stopped or zero-value timer is a silent no-op, so a
 // callback may Stop its own periodic timer safely.
+// JASS: DestroyTimer, DestroyTimerBJ
 func (t Timer) Stop() {
 	if t.entry() == nil {
 		return
@@ -258,6 +262,7 @@ func (t Timer) Stop() {
 
 // Timeout returns the timer's configured period (TimerGetTimeout), or 0
 // on an invalid timer.
+// JASS: TimerGetTimeout
 func (t Timer) Timeout() time.Duration {
 	e := t.entry()
 	if e == nil {
@@ -269,6 +274,7 @@ func (t Timer) Timeout() time.Duration {
 // Remaining returns the game time until the timer next fires
 // (TimerGetRemaining), 0 on an invalid timer. While paused it is the
 // frozen remainder.
+// JASS: TimerGetRemaining
 func (t Timer) Remaining() time.Duration {
 	e := t.entry()
 	if e == nil {
@@ -286,6 +292,7 @@ func (t Timer) Remaining() time.Duration {
 
 // Elapsed returns the game time since the current cycle started
 // (TimerGetElapsed) = Timeout - Remaining, 0 on an invalid timer.
+// JASS: TimerGetElapsed
 func (t Timer) Elapsed() time.Duration {
 	e := t.entry()
 	if e == nil {

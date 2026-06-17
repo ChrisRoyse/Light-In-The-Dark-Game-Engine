@@ -125,6 +125,7 @@ func (c Camera) emit(ev CameraEvent) {
 // Pan moves the camera target to pos. Options set a transition duration and a
 // height. A non-local-player camera records the request without moving the
 // local view. JASS: PanCameraTo/Timed/WithZ and SmartCameraPan collapse here.
+// JASS: PanCameraTo, PanCameraToForPlayer, PanCameraToLocForPlayer, PanCameraToTimed, PanCameraToTimedForPlayer, PanCameraToTimedLocForPlayer, PanCameraToTimedLocWithZForPlayer, PanCameraToTimedWithZ, PanCameraToWithZ, SetCameraPosition, SetCameraPositionForPlayer, SetCameraPositionLocForPlayer, SetCameraQuickPosition, SetCameraQuickPositionForPlayer, SetCameraQuickPositionLoc, SetCameraQuickPositionLocForPlayer, SmartCameraPanBJ
 func (c Camera) Pan(pos Vec2, opts ...PanOption) {
 	if !c.valid("Camera.Pan") || !c.isLocal() {
 		return
@@ -159,6 +160,7 @@ func PanHeight(z float64) PanOption { return func(c *panConfig) { c.z = z } }
 // Field returns the camera's last applied value for f (0 if never set). This
 // reads the api's per-player applied-value cache, never the sim. JASS:
 // GetCameraField.
+// JASS: CameraSetupGetField, CameraSetupGetFieldSwap, GetCameraField
 func (c Camera) Field(f CameraField) float64 {
 	if !c.valid("Camera.Field") || f >= cameraFieldCount {
 		return 0
@@ -169,7 +171,7 @@ func (c Camera) Field(f CameraField) float64 {
 // SetField sets a camera field. In gameplay mode the value is clamped per
 // R-RND-1; inside a cinematic (BeginCinematic) it is applied verbatim. A
 // non-local-player camera records the request without changing the local view.
-// JASS: SetCameraField and the per-field BJ setters collapse here.
+// JASS: AdjustCameraField, CameraSetupSetField, SetCameraField, SetCameraFieldForPlayer
 func (c Camera) SetField(f CameraField, v float64) {
 	if !c.valid("Camera.SetField") || f >= cameraFieldCount {
 		return
@@ -198,6 +200,7 @@ func (c Camera) SetZoom(distance float64) { c.SetField(CameraTargetDistance, dis
 
 // SetBounds restricts the camera to an axis-aligned rectangle. (WC3's
 // non-axis-aligned quad bounds are tombstoned.) JASS: SetCameraBounds.
+// JASS: AdjustCameraBoundsBJ, AdjustCameraBoundsForPlayerBJ, SetCameraBounds, SetCameraBoundsToRect, SetCameraBoundsToRectForPlayerBJ
 func (c Camera) SetBounds(r Rect) {
 	if !c.valid("Camera.SetBounds") || !c.isLocal() {
 		return
@@ -207,6 +210,7 @@ func (c Camera) SetBounds(r Rect) {
 
 // Follow locks the camera onto a unit. Following a dead/invalid unit releases
 // the lock (no panic). JASS: SetCameraTargetController, the camera-follow BJs.
+// JASS: SetCameraTargetController, SetCameraTargetControllerNoZForPlayer
 func (c Camera) Follow(u Unit) {
 	if !c.valid("Camera.Follow") || !c.isLocal() {
 		return
@@ -235,6 +239,7 @@ func (c Camera) Following() Unit {
 }
 
 // StopFollow releases any follow lock.
+// JASS: StopCamera, StopCameraForPlayerBJ
 func (c Camera) StopFollow() {
 	if !c.valid("Camera.StopFollow") || !c.isLocal() {
 		return
@@ -245,6 +250,7 @@ func (c Camera) StopFollow() {
 
 // Shake applies a screen shake of the given magnitude (0 stops it). JASS:
 // CameraSetSourceNoiseEx / the earthquake BJs collapse here.
+// JASS: CameraClearNoiseForPlayer, CameraSetEQNoiseForPlayer, CameraSetSourceNoise, CameraSetSourceNoiseEx, CameraSetSourceNoiseForPlayer, CameraSetTargetNoise, CameraSetTargetNoiseEx, CameraSetTargetNoiseForPlayer
 func (c Camera) Shake(magnitude float64) {
 	if !c.valid("Camera.Shake") || !c.isLocal() {
 		return

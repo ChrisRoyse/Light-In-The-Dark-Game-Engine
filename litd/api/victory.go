@@ -42,6 +42,7 @@ func (p Player) Result() MatchResult {
 // second-winner requests are ignored by that store. No-op for an
 // invalid player. JASS: CustomVictoryBJ/CachePlayerHeroData +
 // RemovePlayer(PLAYER_GAME_RESULT_VICTORY).
+// JASS: CustomVictoryBJ, CustomVictoryOkBJ, CustomVictoryQuitBJ, CustomVictorySkipBJ
 func (g *Game) Victory(p Player) {
 	if !g.ownsPlayer(p) {
 		g.reportInvalid("Game.Victory")
@@ -54,6 +55,7 @@ func (g *Game) Victory(p Player) {
 // does not enter sim state, hashes, or saves; until UI defeat dialogs
 // exist, accepted non-empty messages are routed to the process log.
 // No-op for an invalid player. JASS: CustomDefeatBJ.
+// JASS: CustomDefeatBJ, CustomDefeatLoadBJ, CustomDefeatQuitBJ, CustomDefeatReduceDifficultyBJ, CustomDefeatRestartBJ
 func (g *Game) Defeat(p Player, msg string) {
 	if !g.ownsPlayer(p) {
 		g.reportInvalid("Game.Defeat")
@@ -71,6 +73,7 @@ func (g *Game) Defeat(p Player, msg string) {
 // pending terminal results are left intact by the sim's latch rules.
 // The score-screen/dialog presentation of WC3 EndGame is handled by UI
 // code later; this method only writes deterministic match state.
+// JASS: EndGame
 func (g *Game) EndMatch() {
 	if g == nil || g.w == nil {
 		return

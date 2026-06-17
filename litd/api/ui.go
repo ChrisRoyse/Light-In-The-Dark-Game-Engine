@@ -78,6 +78,7 @@ func At(pos Vec2) PrintOption {
 // resolved UIMessageEvent on the sink. JASS: DisplayText{To,Timed}{Player,Force}
 // and BlzDisplayChatMessage collapse here (force/player/all targets → []Player,
 // dedup D2/D3).
+// JASS: BlzDisplayChatMessage, DisplayTextToForce, DisplayTextToPlayer, DisplayTimedTextFromPlayer, DisplayTimedTextToForce, DisplayTimedTextToPlayer
 func (g *Game) Print(to []Player, msg string, opts ...PrintOption) {
 	if g == nil || g.w == nil || len(to) == 0 {
 		return
@@ -103,6 +104,7 @@ func (g *Game) Print(to []Player, msg string, opts ...PrintOption) {
 
 // ClearMessages clears the text-message area for each player in to. JASS:
 // ClearTextMessages / ClearTextMessagesBJ collapse here.
+// JASS: ClearTextMessages, ClearTextMessagesBJ
 func (g *Game) ClearMessages(to []Player) {
 	if g == nil || g.w == nil || len(to) == 0 {
 		return

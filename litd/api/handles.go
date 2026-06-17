@@ -275,6 +275,7 @@ type Vec2 struct {
 
 // Add returns the component-wise sum. Vector math is value-in,
 // value-out — no aliasing, no allocation.
+// JASS: OffsetLocation
 func (v Vec2) Add(o Vec2) Vec2 { return Vec2{X: v.X + o.X, Y: v.Y + o.Y} }
 
 // Sub returns the component-wise difference.
@@ -301,12 +302,14 @@ type Angle struct {
 }
 
 // Deg constructs an Angle from a degree measure.
+// JASS: Deg2Rad
 func Deg(d float64) Angle { return Angle{rad: d * math.Pi / 180} }
 
 // Rad constructs an Angle from a radian measure.
 func Rad(r float64) Angle { return Angle{rad: r} }
 
 // Degrees returns the angle in degrees.
+// JASS: Rad2Deg
 func (a Angle) Degrees() float64 { return a.rad * 180 / math.Pi }
 
 // Radians returns the angle in radians.

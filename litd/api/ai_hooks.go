@@ -84,6 +84,7 @@ type AIController interface {
 //
 // No-op on an invalid player or a player who has already lost/left the match
 // (a defeated slot gets no computer player).
+// JASS: SetCampaignAI, SetMeleeAI, StartCampaignAI, StartMeleeAI
 func (g *Game) AttachAI(p Player, ctrl AIController, d Difficulty) {
 	if !p.Valid() {
 		g.reportInvalid("Game.AttachAI")
@@ -125,6 +126,7 @@ func (g *Game) DetachAI(p Player) {
 
 // PauseAI suspends or resumes player p's computer control (PauseCompAI).
 // No-op on an invalid player.
+// JASS: PauseCompAI
 func (g *Game) PauseAI(p Player, paused bool) {
 	if !p.Valid() {
 		g.reportInvalid("Game.PauseAI")
@@ -139,6 +141,7 @@ func (g *Game) IsAIPlayer(p Player) bool {
 }
 
 // AIDifficulty returns player p's AI difficulty (GetAIDifficulty).
+// JASS: GetAIDifficulty
 func (g *Game) AIDifficulty(p Player) Difficulty {
 	if !p.Valid() {
 		return DifficultyEasy
@@ -149,6 +152,7 @@ func (g *Game) AIDifficulty(p Player) Difficulty {
 // CommandAI pushes a command/data pair onto player p's AI command stack
 // (CommandAI). The AI domain drains it at M5.5. No-op on an invalid player or
 // a full stack. JASS returns nothing; this mirrors that.
+// JASS: CommandAI
 func (g *Game) CommandAI(p Player, command, data int) {
 	if !p.Valid() {
 		g.reportInvalid("Game.CommandAI")

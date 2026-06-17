@@ -74,12 +74,14 @@ func (g *Game) AppendUnitsInRange(dst []Unit, pos Vec2, r float64, filter UnitFi
 // ascending entity-id order. The slice is a snapshot — killing units
 // during iteration leaves it unchanged (the handles just go invalid).
 // Always non-nil (empty slice on no match). JASS: GroupEnumUnitsInRect.
+// JASS: GetUnitsInRectAll, GetUnitsInRectMatching, GetUnitsInRectOfPlayer, GetUnitsInRectOfPlayerFilter, GroupEnumUnitsInRect, GroupEnumUnitsInRectCounted
 func (g *Game) UnitsIn(rect Rect, filter UnitFilter) []Unit {
 	return g.AppendUnitsIn(make([]Unit, 0), rect, filter)
 }
 
 // UnitsInRange returns the units within r of pos passing filter, ascending
 // entity-id order, non-nil. JASS: GroupEnumUnitsInRange.
+// JASS: GetUnitsInRangeOfLocAll, GetUnitsInRangeOfLocMatching, GroupEnumUnitsInRange, GroupEnumUnitsInRangeCounted, GroupEnumUnitsInRangeOfLoc, GroupEnumUnitsInRangeOfLocCounted
 func (g *Game) UnitsInRange(pos Vec2, r float64, filter UnitFilter) []Unit {
 	return g.AppendUnitsInRange(make([]Unit, 0), pos, r, filter)
 }
@@ -87,6 +89,7 @@ func (g *Game) UnitsInRange(pos Vec2, r float64, filter UnitFilter) []Unit {
 // AllUnits returns every unit passing filter, ascending entity-id order,
 // non-nil. JASS: GroupEnumUnitsOfPlayer with an all-players walk / the
 // CountUnitsBJ family.
+// JASS: GetUnitsOfPlayerAll, GetUnitsOfPlayerAndTypeId, GetUnitsOfPlayerAndTypeIdFilter, GetUnitsOfPlayerMatching, GetUnitsOfTypeIdAll, GetUnitsOfTypeIdAllFilter, GroupEnumUnitsOfPlayer, GroupEnumUnitsOfType, GroupEnumUnitsOfTypeCounted
 func (g *Game) AllUnits(filter UnitFilter) []Unit {
 	if g == nil || g.w == nil {
 		return make([]Unit, 0)

@@ -15,6 +15,7 @@ package litd
 
 // NewRegion creates an empty region. JASS: CreateRegion. Returns the
 // zero-value Region (no-op) on a nil game.
+// JASS: CreateRegion
 func (g *Game) NewRegion() Region {
 	if g == nil || g.w == nil {
 		return Region{}
@@ -25,6 +26,7 @@ func (g *Game) NewRegion() Region {
 
 // WorldBounds returns the playable world rectangle. JASS: GetWorldBounds.
 // Zero rect on a nil game.
+// JASS: GetEntireMapRect, GetPlayableMapRect, GetWorldBounds
 func (g *Game) WorldBounds() Rect {
 	if g == nil || g.w == nil {
 		return Rect{}
@@ -37,6 +39,7 @@ func (g *Game) WorldBounds() Rect {
 // from the sim PRNG (so it is deterministic and replay-stable, never
 // math/rand). The rect's own corners are returned as-is on a degenerate
 // axis. JASS: GetRandomLocInRect. Zero Vec2 on a nil game.
+// JASS: GetRandomLocInRect
 func (g *Game) RandomPointIn(rc Rect) Vec2 {
 	if g == nil || g.w == nil {
 		return Vec2{}
@@ -51,6 +54,7 @@ func (g *Game) RandomPointIn(rc Rect) Vec2 {
 // terrain, not a placeholder. JASS: GetLocationZ (which in WC3 reads the
 // render mesh; this is the headless, replay-stable equivalent — see #371).
 // 0 on a nil game.
+// JASS: GetLocationZ
 func (g *Game) TerrainHeight(p Vec2) float64 {
 	if g == nil || g.w == nil {
 		return 0
@@ -61,6 +65,7 @@ func (g *Game) TerrainHeight(p Vec2) float64 {
 // Remove destroys the region and frees its slot (RemoveRegion). The
 // handle goes invalid. Idempotent no-op on an already-removed or
 // zero-value region.
+// JASS: RemoveRegion
 func (r Region) Remove() {
 	if !r.Valid() {
 		return
@@ -69,7 +74,7 @@ func (r Region) Remove() {
 }
 
 // AddRect adds every grid cell overlapping rc to the region.
-// JASS: RegionAddRect. No-op on an invalid region.
+// JASS: RegionAddRect
 func (r Region) AddRect(rc Rect) {
 	if !r.Valid() {
 		r.g.reportInvalid("Region.AddRect")
@@ -80,7 +85,7 @@ func (r Region) AddRect(rc Rect) {
 }
 
 // RemoveRect clears every grid cell overlapping rc from the region.
-// JASS: RegionClearRect. No-op on an invalid region.
+// JASS: RegionClearRect
 func (r Region) RemoveRect(rc Rect) {
 	if !r.Valid() {
 		r.g.reportInvalid("Region.RemoveRect")
@@ -91,7 +96,7 @@ func (r Region) RemoveRect(rc Rect) {
 }
 
 // AddCell adds the single grid cell containing p to the region.
-// JASS: RegionAddCell (and the RegionAddCellAtLoc location variant).
+// JASS: RegionAddCell, RegionAddCellAtLoc
 // No-op on an invalid region.
 func (r Region) AddCell(p Vec2) {
 	if !r.Valid() {
@@ -102,7 +107,7 @@ func (r Region) AddCell(p Vec2) {
 }
 
 // RemoveCell clears the single grid cell containing p from the region.
-// JASS: RegionClearCell. No-op on an invalid region.
+// JASS: RegionClearCell, RegionClearCellAtLoc
 func (r Region) RemoveCell(p Vec2) {
 	if !r.Valid() {
 		r.g.reportInvalid("Region.RemoveCell")
@@ -113,6 +118,7 @@ func (r Region) RemoveCell(p Vec2) {
 
 // Contains reports whether p falls in a region cell. JASS:
 // IsPointInRegion (and IsLocationInRegion). False on an invalid region.
+// JASS: IsLocationInRegion, IsPointInRegion
 func (r Region) Contains(p Vec2) bool {
 	if !r.Valid() {
 		r.g.reportInvalid("Region.Contains")
@@ -123,6 +129,7 @@ func (r Region) Contains(p Vec2) bool {
 
 // ContainsUnit reports whether u's position falls in the region. JASS:
 // IsUnitInRegion. False on an invalid region or unit.
+// JASS: IsUnitInRegion
 func (r Region) ContainsUnit(u Unit) bool {
 	if !r.Valid() {
 		r.g.reportInvalid("Region.ContainsUnit")

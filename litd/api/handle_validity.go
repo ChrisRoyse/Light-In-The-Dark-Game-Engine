@@ -95,7 +95,7 @@ func (g *Game) reportInvalid(verb string) {
 // game-state surface is built on the same substrate.
 
 // Life returns the unit's current life, or 0 on an invalid handle.
-// JASS: GetUnitState(UNIT_STATE_LIFE).
+// JASS: GetUnitState, GetUnitStateSwap
 func (u Unit) Life() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Life")
@@ -109,7 +109,7 @@ func (u Unit) Life() float64 {
 }
 
 // MaxLife returns the unit's maximum life, or 0 on an invalid handle.
-// JASS: GetUnitState(UNIT_STATE_MAX_LIFE).
+// JASS: BlzGetUnitMaxHP
 func (u Unit) MaxLife() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.MaxLife")
@@ -127,6 +127,7 @@ func (u Unit) MaxLife() float64 {
 // a unit always has at least one max HP (WC3 semantics). Current life is left
 // where it is, except it is clamped down when the new max drops below it.
 // No-op on an invalid handle or a unit without a Health component.
+// JASS: BlzSetUnitMaxHP
 func (u Unit) SetMaxLife(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetMaxLife")
@@ -150,6 +151,7 @@ func (u Unit) SetMaxLife(v float64) {
 // maximum, in [0,100]. Returns 0 on an invalid handle or a unit with no
 // max life (mirrors the BJ's divide-by-zero guard). D4: GetUnitLifePercent,
 // GetUnitStatePercent(LIFE, MAX_LIFE) = 100*Life/MaxLife.
+// JASS: GetUnitLifePercent, GetUnitStatePercent
 func (u Unit) LifePercent() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.LifePercent")
@@ -174,7 +176,7 @@ func (u Unit) LifePercent() float64 {
 // values above MaxLife clamp to MaxLife. Setting life to 0 (or below) is
 // lethal — the unit is killed, firing the death event in the sim step, just
 // as SetUnitState(UNIT_STATE_LIFE, 0) kills in WC3.
-// JASS: SetUnitState(UNIT_STATE_LIFE), SetUnitLifeBJ.
+// JASS: SetUnitLifeBJ, SetUnitLifePercentBJ, SetUnitManaBJ, SetUnitManaPercentBJ, SetUnitState
 func (u Unit) SetLife(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetLife")
@@ -202,6 +204,7 @@ func (u Unit) SetLife(v float64) {
 // Owner returns the unit's owning player, or the zero-value Player on
 // an invalid handle (so a chain off an environmental death degrades to
 // a no-op, not a crash). JASS: GetOwningPlayer(u).
+// JASS: GetOwningPlayer
 func (u Unit) Owner() Player {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Owner")
@@ -221,6 +224,7 @@ func (u Unit) Owner() Player {
 // refreshes visibility through the sim's ChangeOwner primitive (#362), so the
 // derived per-player state moves with the unit. Team defaults to p's own slot
 // (FFA, #361) until the alliance model lands (#218). JASS: SetUnitOwner.
+// JASS: SetUnitOwner
 func (u Unit) SetOwner(p Player, changeColor bool) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetOwner")
@@ -237,7 +241,7 @@ func (u Unit) SetOwner(p Player, changeColor bool) {
 // OwnedBy reports whether p owns this unit. Returns false on an invalid
 // unit handle, an invalid/foreign player, or when the owner slot does
 // not match p — never panics. SoT: the unit's Owners.Player slot.
-// JASS: IsUnitOwnedByPlayer(whichUnit, whichPlayer).
+// JASS: IsUnitOwnedByPlayer
 func (u Unit) OwnedBy(p Player) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.OwnedBy")
@@ -259,7 +263,7 @@ func (u Unit) OwnedBy(p Player) bool {
 // active sight (and not hidden by undetected invisibility). Returns
 // false on an invalid unit handle or an invalid/foreign player — never
 // panics. SoT: the sim visibility system (CanSeeEntity / fog state).
-// JASS: IsUnitVisible(whichUnit, whichPlayer).
+// JASS: IsUnitVisible
 func (u Unit) VisibleTo(p Player) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.VisibleTo")
@@ -275,7 +279,7 @@ func (u Unit) VisibleTo(p Player) bool {
 // Name returns the player's display name, or "" on an invalid handle —
 // the tail that lets Unit{}.Owner().Name() degrade to "" rather than
 // panic. With no name assigned, returns the slot-derived default.
-// JASS: GetPlayerName(p).
+// JASS: GetPlayerName
 func (p Player) Name() string {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.Name")

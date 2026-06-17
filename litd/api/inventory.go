@@ -24,6 +24,7 @@ func (u Unit) EnableInventory() bool {
 // slot, regardless of distance (UnitAddItem semantics). Returns true on
 // success; false if the inventory is full, the item is already carried, the
 // unit has no inventory, or either handle is invalid. JASS: UnitAddItem.
+// JASS: UnitAddItem, UnitAddItemSwapped
 func (u Unit) AddItem(it Item) bool {
 	if !u.Valid() || !it.Valid() {
 		if u.g != nil {
@@ -53,6 +54,7 @@ func WithSlot(n int) SlotOption {
 // type, entity cap, full inventory, or an occupied requested slot). The
 // convenience form of CreateItem + AddItem. JASS: UnitAddItemById /
 // UnitAddItemToSlotById (with WithSlot).
+// JASS: UnitAddItemById, UnitAddItemByIdSwapped, UnitAddItemToSlotById
 func (u Unit) AddItemByType(typ ItemType, opts ...SlotOption) Item {
 	if !u.Valid() {
 		if u.g != nil {
@@ -92,6 +94,7 @@ func (u Unit) AddItemByType(typ ItemType, opts ...SlotOption) Item {
 // ItemInSlot returns the item in the unit's slot n, or the zero Item if the
 // slot is empty, out of range, or the unit has no inventory. JASS:
 // UnitItemInSlot.
+// JASS: UnitItemInSlot, UnitItemInSlotBJ
 func (u Unit) ItemInSlot(n int) Item {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.ItemInSlot")
@@ -106,6 +109,7 @@ func (u Unit) ItemInSlot(n int) Item {
 
 // ItemCount returns the number of items the unit is carrying. Zero on an
 // invalid handle or a unit without an inventory. JASS: UnitInventoryCount.
+// JASS: UnitInventoryCount
 func (u Unit) ItemCount() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.ItemCount")
@@ -124,6 +128,7 @@ func (u Unit) ItemCount() int {
 // Returns true on success; false on an empty/out-of-range slot, no free
 // ground cell, no inventory, or an invalid handle. JASS: UnitDropItemSlot /
 // UnitDropItemPoint collapse here (drop position is deterministic).
+// JASS: UnitDropItem, UnitDropItemPoint, UnitDropItemPointBJ, UnitDropItemPointLoc, UnitDropItemSlot, UnitDropItemSlotBJ, UnitRemoveItem, UnitRemoveItemFromSlot, UnitRemoveItemFromSlotSwapped, UnitRemoveItemSwapped, WidgetDropItem
 func (u Unit) DropItem(n int) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.DropItem")
@@ -136,6 +141,7 @@ func (u Unit) DropItem(n int) bool {
 // Returns true on success; false if out of range, the recipient is full or a
 // foreign player's, the slot is empty, or a handle is invalid. JASS:
 // UnitDropItemTarget.
+// JASS: UnitDropItemTarget, UnitDropItemTargetBJ
 func (u Unit) GiveItemTo(n int, to Unit) bool {
 	if !u.Valid() || !to.Valid() {
 		if u.g != nil {
@@ -183,6 +189,7 @@ func UseAt(point Vec2) UseOption {
 // cooldown, the slot is empty, a required target is missing/out-of-range, or
 // the handle is invalid. JASS: UnitUseItem / UnitUseItemTarget /
 // UnitUseItemPoint collapse here via UseOn/UseAt.
+// JASS: UnitUseItem, UnitUseItemPoint, UnitUseItemPointLoc, UnitUseItemTarget
 func (u Unit) UseItem(n int, opts ...UseOption) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.UseItem")

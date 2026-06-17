@@ -23,6 +23,7 @@ func (g *Game) RegisterEffectModel(model string, id uint16) {
 // AddSpecialEffect creates a persistent special effect at pos and
 // returns its handle, or the zero Effect on an unknown model or pool
 // exhaustion. JASS: AddSpecialEffect/AddSpecialEffectLoc.
+// JASS: AddSpecialEffect, AddSpecialEffectLoc, AddSpecialEffectLocBJ
 func (g *Game) AddSpecialEffect(model string, pos Vec2) Effect {
 	if g == nil || g.w == nil {
 		return Effect{}
@@ -47,6 +48,7 @@ func (g *Game) AddSpecialEffect(model string, pos Vec2) Effect {
 
 // Destroy removes the effect. It emits the sim-side end cue before the
 // row is freed, matching WC3 DestroyEffect's presentation lifetime.
+// JASS: DestroyEffect, DestroyEffectBJ
 func (e Effect) Destroy() {
 	if !e.Valid() {
 		e.g.reportInvalid("Effect.Destroy")
@@ -57,6 +59,7 @@ func (e Effect) Destroy() {
 
 // SetScale changes the effect's presentation scale. No-op on an
 // invalid handle.
+// JASS: BlzSetSpecialEffectMatrixScale, BlzSetSpecialEffectScale
 func (e Effect) SetScale(scale float64) {
 	if !e.Valid() {
 		e.g.reportInvalid("Effect.SetScale")
@@ -68,6 +71,7 @@ func (e Effect) SetScale(scale float64) {
 // SetColor changes the effect's RGB tint and keeps it fully opaque.
 // The sim store layout is RGBA, so SetColor(0xaa,0xbb,0xcc) writes
 // 0xaabbccff.
+// JASS: BlzSetSpecialEffectAlpha, BlzSetSpecialEffectColor, BlzSetSpecialEffectColorByPlayer
 func (e Effect) SetColor(r, g, b uint8) {
 	if !e.Valid() {
 		e.g.reportInvalid("Effect.SetColor")
@@ -77,6 +81,7 @@ func (e Effect) SetColor(r, g, b uint8) {
 }
 
 // SetPosition moves the effect to pos. No-op on an invalid handle.
+// JASS: BlzSetSpecialEffectHeight, BlzSetSpecialEffectPosition, BlzSetSpecialEffectPositionLoc, BlzSetSpecialEffectX, BlzSetSpecialEffectY, BlzSetSpecialEffectZ
 func (e Effect) SetPosition(pos Vec2) {
 	if !e.Valid() {
 		e.g.reportInvalid("Effect.SetPosition")

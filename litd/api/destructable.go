@@ -22,6 +22,7 @@ type DestructableOptions struct {
 
 // CreateDestructable spawns a destructable. It returns the zero (invalid)
 // handle on pool/entity exhaustion (R-API-5) — never a silent partial spawn.
+// JASS: CreateDestructable, CreateDestructableLoc, CreateDestructableZ
 func (g *Game) CreateDestructable(o DestructableOptions) Destructable {
 	if g == nil || g.w == nil {
 		return Destructable{}
@@ -42,6 +43,7 @@ func (g *Game) CreateDestructable(o DestructableOptions) Destructable {
 }
 
 // Life returns the destructable's current life, or 0 for an invalid handle.
+// JASS: GetDestructableLife
 func (d Destructable) Life() int {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.Life")
@@ -51,6 +53,7 @@ func (d Destructable) Life() int {
 }
 
 // MaxLife returns the destructable's maximum life, or 0 for an invalid handle.
+// JASS: GetDestructableMaxLife
 func (d Destructable) MaxLife() int {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.MaxLife")
@@ -62,6 +65,7 @@ func (d Destructable) MaxLife() int {
 // SetLife sets current life, clamped to [0, MaxLife]. Setting life to 0 does
 // not kill — death (and the pathing release) is the explicit Kill verb.
 // No-op on an invalid handle.
+// JASS: SetDestructableLife
 func (d Destructable) SetLife(v int) {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.SetLife")
@@ -73,6 +77,7 @@ func (d Destructable) SetLife(v int) {
 // Kill kills the destructable: life drops to 0 and, if it was blocking, its
 // pathing footprint is freed the same tick. No-op on an invalid or already-dead
 // handle.
+// JASS: KillDestructable, RemoveDestructable
 func (d Destructable) Kill() {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.Kill")
@@ -83,6 +88,7 @@ func (d Destructable) Kill() {
 
 // Resurrect revives a dead destructable to full life, re-stamping its pathing
 // footprint. No-op on an invalid or still-living handle.
+// JASS: DestructableRestoreLife
 func (d Destructable) Resurrect() {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.Resurrect")
@@ -92,16 +98,19 @@ func (d Destructable) Resurrect() {
 }
 
 // Dead reports whether the destructable has been killed.
+// JASS: IsDestructableAliveBJ, IsDestructableDeadBJ
 func (d Destructable) Dead() bool {
 	return d.Valid() && d.g.w.DestructableDead(d.id)
 }
 
 // Invulnerable reports the invulnerable flag.
+// JASS: IsDestructableInvulnerable, IsDestructableInvulnerableBJ
 func (d Destructable) Invulnerable() bool {
 	return d.Valid() && d.g.w.DestructableInvulnerable(d.id)
 }
 
 // SetInvulnerable sets the invulnerable flag. No-op on an invalid handle.
+// JASS: SetDestructableInvulnerable, SetDestructableInvulnerableBJ
 func (d Destructable) SetInvulnerable(b bool) {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.SetInvulnerable")
@@ -114,6 +123,7 @@ func (d Destructable) SetInvulnerable(b bool) {
 // cosmetic (render-only) and carries no deterministic sim state, so this is a
 // render-domain forward — included for surface completeness; it never affects
 // the state hash. No-op on an invalid handle.
+// JASS: QueueDestructableAnimation, QueueDestructableAnimationBJ, SetDestructableAnimation, SetDestructableAnimationBJ
 func (d Destructable) PlayAnimation(name string) {
 	if !d.Valid() {
 		d.g.reportInvalid("Destructable.PlayAnimation")

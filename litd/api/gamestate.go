@@ -60,6 +60,7 @@ type matchConfig struct {
 // Pause stops the driver from feeding ticks to the sim. Render can keep
 // drawing with the driver's frozen interpolation alpha. No-op when no
 // driver hook is attached; debug mode reports that setup error.
+// JASS: PauseGame, PauseGameOff, PauseGameOn
 func (g *Game) Pause() {
 	if g == nil || g.driver == nil {
 		g.reportInvalid("Game.Pause")
@@ -81,6 +82,7 @@ func (g *Game) Resume() {
 // SetSpeed sets the driver's real-time-to-tick scale. The fixed sim
 // tick remains 20 Hz and tick content is unchanged; bad speeds are
 // refused by the driver and reported in debug mode. JASS: SetGameSpeed.
+// JASS: SetGameSpeed
 func (g *Game) SetSpeed(s GameSpeed) {
 	if g == nil || g.driver == nil {
 		g.reportInvalid("Game.SetSpeed")
@@ -93,6 +95,7 @@ func (g *Game) SetSpeed(s GameSpeed) {
 
 // MapFlag reports whether f is set in the static match config. Nil
 // games and the zero flag fail closed to false. JASS: IsMapFlagSet.
+// JASS: IsMapFlagSet
 func (g *Game) MapFlag(f MapFlag) bool {
 	if g == nil || f == 0 {
 		return false
@@ -103,6 +106,7 @@ func (g *Game) MapFlag(f MapFlag) bool {
 // StartLocation returns the configured start location for index i, or
 // the zero vector when i is outside the fixed player-slot range. JASS:
 // GetStartLocationX/Y.
+// JASS: GetStartLocationLoc, GetStartLocationX, GetStartLocationY
 func (g *Game) StartLocation(i int) Vec2 {
 	if g == nil || i < 0 || i >= sim.MaxPlayers {
 		if g != nil {
@@ -115,6 +119,7 @@ func (g *Game) StartLocation(i int) Vec2 {
 
 // Teams returns the configured team count, or 0 before map metadata is
 // loaded. JASS: SetTeams readback for the public melee helper surface.
+// JASS: GetTeams
 func (g *Game) Teams() int {
 	if g == nil {
 		return 0

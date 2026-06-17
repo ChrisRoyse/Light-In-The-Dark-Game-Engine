@@ -176,11 +176,11 @@ func (e Event) Missile() Missile {
 
 // Unit returns the event's primary unit (the dying unit, the damaged
 // unit, the ordered unit, …), or the zero Unit on an unrelated kind.
-// JASS: GetTriggerUnit.
+// JASS: GetBuyingUnit, GetChangingUnit, GetConstructedStructure, GetConstructingStructure, GetDyingUnit, GetEnteringUnit, GetEnumUnit, GetFilterUnit, GetLearningUnit, GetLeavingUnit, GetLevelingUnit, GetOrderedUnit, GetResearchingUnit, GetRevivableUnit, GetSellingUnit, GetSpellAbilityUnit, GetSummoningUnit, GetTrainedUnit, GetTransportUnit, GetTriggerUnit
 func (e Event) Unit() Unit { return Unit{id: e.primary(), g: e.g} }
 
 // KillingUnit returns the killer on a death event, else the zero Unit.
-// JASS: GetKillingUnit.
+// JASS: GetKillingUnit
 func (e Event) KillingUnit() Unit {
 	if e.kind != EventUnitDeath {
 		return Unit{}
@@ -189,7 +189,7 @@ func (e Event) KillingUnit() Unit {
 }
 
 // Source returns the attacker on a damage event, else the zero Unit.
-// JASS: GetEventDamageSource.
+// JASS: GetAttacker, GetEventDamageSource
 func (e Event) Source() Unit {
 	if e.kind != EventUnitDamaged {
 		return Unit{}
@@ -199,6 +199,7 @@ func (e Event) Source() Unit {
 
 // Target returns the order target on an order event, else the zero
 // Unit. JASS: GetOrderTargetUnit.
+// JASS: GetEventTargetUnit, GetOrderTargetUnit, GetSpellTargetUnit
 func (e Event) Target() Unit {
 	if e.kind != EventOrderIssued {
 		return Unit{}
@@ -208,6 +209,7 @@ func (e Event) Target() Unit {
 
 // Damage returns the damage amount on a damage event, else 0. JASS:
 // GetEventDamage.
+// JASS: GetEventDamage
 func (e Event) Damage() float64 {
 	if e.kind != EventUnitDamaged {
 		return 0
@@ -219,6 +221,7 @@ func (e Event) Damage() float64 {
 // Region. The handle is rebuilt from the packed (id, generation) arg, so
 // it is Valid only while the region still exists. JASS:
 // GetTriggeringRegion.
+// JASS: GetTriggeringRegion
 func (e Event) Region() Region {
 	switch e.kind {
 	case EventRegionEnter, EventRegionLeave:
@@ -231,11 +234,13 @@ func (e Event) Region() Region {
 // handler — the capability behind JASS GetTriggeringTrigger, letting a
 // handler cancel itself (e.Subscription().Cancel()) or pass its own
 // registration on. Zero-value Subscription outside a dispatch.
+// JASS: GetTriggeringTrigger
 func (e Event) Subscription() Subscription { return Subscription{s: e.sub} }
 
 // Player returns the player carried by a player-scoped event, else the
 // zero Player on an unrelated kind. JASS: GetTriggerPlayer for the
 // victory/defeat collapse.
+// JASS: GetTriggerPlayer
 func (e Event) Player() Player {
 	if e.playerSlot() < 0 {
 		return Player{}

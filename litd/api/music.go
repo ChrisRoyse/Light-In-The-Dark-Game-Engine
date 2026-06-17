@@ -10,6 +10,7 @@ import "hash/fnv"
 // PlayMusic starts a music cue (looping by default at the render layer). An
 // empty cue is a no-op. JASS: PlayMusic, PlayMusicExBJ, PlayThematicMusic
 // collapse here (loop/offset/fade are render-layer concerns).
+// JASS: PlayMusic, PlayMusicBJ, PlayMusicEx, PlayMusicExBJ, PlayThematicMusic, PlayThematicMusicBJ, PlayThematicMusicEx, PlayThematicMusicExBJ, ResumeMusic, ResumeMusicBJ
 func (g *Game) PlayMusic(cue string) {
 	if g == nil || cue == "" {
 		return
@@ -21,6 +22,7 @@ func (g *Game) PlayMusic(cue string) {
 
 // StopMusic stops the current music stream. JASS: StopMusic,
 // EndThematicMusic collapse here.
+// JASS: EndThematicMusic, EndThematicMusicBJ, StopMusic, StopMusicBJ
 func (g *Game) StopMusic() {
 	if g == nil {
 		return
@@ -30,6 +32,7 @@ func (g *Game) StopMusic() {
 
 // SetMusicVolume sets the music stream volume on a 0..1 scale (clamped). JASS:
 // SetMusicVolume, SetMusicVolumeBJ (0..100 percent) collapse onto the float.
+// JASS: SetMusicVolume, SetMusicVolumeBJ, SetThematicMusicVolume, SetThematicMusicVolumeBJ
 func (g *Game) SetMusicVolume(v float64) {
 	if g == nil {
 		return
@@ -40,6 +43,7 @@ func (g *Game) SetMusicVolume(v float64) {
 // SetChannelVolume sets a mix channel's master volume on a 0..1 scale
 // (clamped). JASS: SetSoundChannelVolume and the per-group volume BJs collapse
 // onto this enum-keyed setter (dedup §6).
+// JASS: VolumeGroupSetVolume, VolumeGroupSetVolumeBJ, VolumeGroupSetVolumeForPlayerBJ
 func (g *Game) SetChannelVolume(ch SoundChannel, v float64) {
 	if g == nil {
 		return

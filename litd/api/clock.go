@@ -9,6 +9,7 @@ const (
 
 // TimeOfDay returns the current game clock hour in [0, 24), or 0 for
 // a nil Game. JASS: GetTimeOfDay / GetFloatGameState time-of-day.
+// JASS: GetFloatGameState, GetTimeOfDay
 func (g *Game) TimeOfDay() float64 {
 	if g == nil || g.w == nil {
 		return 0
@@ -18,6 +19,7 @@ func (g *Game) TimeOfDay() float64 {
 
 // SetTimeOfDay sets the game clock hour, following the sim wrap rule
 // for values outside [0, 24). No-op for a nil Game. JASS: SetTimeOfDay.
+// JASS: SetFloatGameState, SetTimeOfDay
 func (g *Game) SetTimeOfDay(h float64) {
 	if g == nil || g.w == nil {
 		return
@@ -28,6 +30,7 @@ func (g *Game) SetTimeOfDay(h float64) {
 // TimeOfDayScale returns the day/night progression scale, or 0 for a
 // nil Game. The scale changes game-clock progression only; it never
 // changes the fixed 20 Hz sim tick rate.
+// JASS: GetTimeOfDayScale, GetTimeOfDayScalePercentBJ
 func (g *Game) TimeOfDayScale() float64 {
 	if g == nil || g.w == nil {
 		return 0
@@ -38,6 +41,7 @@ func (g *Game) TimeOfDayScale() float64 {
 // SetTimeOfDayScale sets the day/night progression scale. Negative
 // scales are rejected by the sim and leave the current scale unchanged.
 // No-op for a nil Game. JASS: SetTimeOfDayScale.
+// JASS: SetTimeOfDayScale, SetTimeOfDayScalePercentBJ
 func (g *Game) SetTimeOfDayScale(s float64) {
 	if g == nil || g.w == nil {
 		return
@@ -48,6 +52,7 @@ func (g *Game) SetTimeOfDayScale(s float64) {
 // SuspendTimeOfDay freezes or resumes day/night progression without
 // changing the sim tick rate. No-op for a nil Game. JASS:
 // SuspendTimeOfDay.
+// JASS: SuspendTimeOfDay, UseTimeOfDayBJ
 func (g *Game) SuspendTimeOfDay(suspended bool) {
 	if g == nil || g.w == nil {
 		return

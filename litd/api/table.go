@@ -24,12 +24,14 @@ type Table[V any] struct {
 
 // NewTable returns an empty Table[V]. The whole Save*/Load* hashtable
 // matrix collapses onto this one generic type. JASS: InitHashtable.
+// JASS: InitHashtable
 func NewTable[V any]() *Table[V] {
 	return &Table[V]{m: make(map[tableKey]V)}
 }
 
 // Set stores v under (parent, child). JASS: SaveInteger/SaveReal/
 // Save*Handle/… — all one method here. No-op on a nil table.
+// JASS: SaveInteger
 func (t *Table[V]) Set(parent, child int, v V) {
 	if t == nil || t.m == nil {
 		return
@@ -40,6 +42,7 @@ func (t *Table[V]) Set(parent, child int, v V) {
 // Get returns the value at (parent, child) and whether it was present —
 // the comma-ok D5 collapse of the LoadX + HaveSavedX pair. The zero V and
 // false on a missing key or a nil table. JASS: LoadInteger + HaveSavedInteger.
+// JASS: LoadInteger
 func (t *Table[V]) Get(parent, child int) (V, bool) {
 	var zero V
 	if t == nil || t.m == nil {
@@ -50,6 +53,7 @@ func (t *Table[V]) Get(parent, child int) (V, bool) {
 }
 
 // Has reports whether (parent, child) is set. JASS: HaveSavedX.
+// JASS: HaveSavedInteger
 func (t *Table[V]) Has(parent, child int) bool {
 	if t == nil || t.m == nil {
 		return false
@@ -59,6 +63,7 @@ func (t *Table[V]) Has(parent, child int) bool {
 }
 
 // Remove deletes (parent, child). JASS: RemoveSavedX. No-op if absent.
+// JASS: RemoveSavedInteger
 func (t *Table[V]) Remove(parent, child int) {
 	if t == nil || t.m == nil {
 		return
@@ -67,6 +72,7 @@ func (t *Table[V]) Remove(parent, child int) {
 }
 
 // RemoveParent deletes every child under parent. JASS: FlushChildHashtable.
+// JASS: FlushChildHashtable
 func (t *Table[V]) RemoveParent(parent int) {
 	if t == nil || t.m == nil {
 		return
@@ -80,6 +86,7 @@ func (t *Table[V]) RemoveParent(parent int) {
 }
 
 // Clear empties the table. JASS: FlushParentHashtable.
+// JASS: FlushParentHashtable
 func (t *Table[V]) Clear() {
 	if t == nil || t.m == nil {
 		return

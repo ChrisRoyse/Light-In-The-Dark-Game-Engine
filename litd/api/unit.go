@@ -49,6 +49,7 @@ func (g *Game) UnitType(code string) UnitType {
 //
 // Team currently defaults to the owner's player slot (FFA); alliance/team
 // assignment lands with players-and-forces (#218), per the #361 decision.
+// JASS: CreateUnit, CreateUnitAtLoc, CreateUnitAtLocByName, CreateUnitAtLocSaveLast, CreateUnitByName
 func (g *Game) CreateUnit(owner Player, typ UnitType, pos Vec2, facing Angle) Unit {
 	if g == nil || g.w == nil {
 		return Unit{}
@@ -79,6 +80,7 @@ func (g *Game) CreateUnit(owner Player, typ UnitType, pos Vec2, facing Angle) Un
 // returned value round-trips with Game.CreateUnit and Game.UnitType. JASS:
 // GetUnitTypeId returns the raw integer code; here it surfaces as the opaque
 // UnitType (the integer rawcode never leaks into the public surface, #361).
+// JASS: GetUnitTypeId
 func (u Unit) Type() UnitType {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Type")
@@ -94,6 +96,7 @@ func (u Unit) Type() UnitType {
 // UserData returns the unit's custom value — an arbitrary integer scripts
 // attach for their own bookkeeping (the sim never reads it). Zero on an invalid
 // handle or a unit that was never assigned one. JASS: GetUnitUserData.
+// JASS: GetUnitUserData
 func (u Unit) UserData() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.UserData")
@@ -103,7 +106,7 @@ func (u Unit) UserData() int {
 }
 
 // SetUserData assigns the unit's custom value. No-op on an invalid handle.
-// JASS: SetUnitUserData.
+// JASS: SetUnitUserData
 func (u Unit) SetUserData(v int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetUserData")
@@ -115,6 +118,7 @@ func (u Unit) SetUserData(v int) {
 // PointValue returns the unit type's score/bounty weight — a static data-table
 // property, not per-unit state. Zero on an invalid handle, an untyped unit, or
 // a type with no point value. JASS: GetUnitPointValue.
+// JASS: GetUnitPointValue
 func (u Unit) PointValue() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.PointValue")
@@ -126,7 +130,7 @@ func (u Unit) PointValue() int {
 // Level returns the unit's level: a hero's current level for heroes,
 // otherwise the type's configured design level. Zero on an invalid
 // handle, an untyped unit, or a non-hero type with no level set.
-// JASS: GetUnitLevel.
+// JASS: GetUnitLevel
 func (u Unit) Level() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Level")
@@ -138,6 +142,7 @@ func (u Unit) Level() int {
 // Invulnerable reports whether the unit currently ignores all incoming damage,
 // false on an invalid handle or a unit with no health row. JASS:
 // BlzIsUnitInvulnerable.
+// JASS: BlzIsUnitInvulnerable
 func (u Unit) Invulnerable() bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Invulnerable")
@@ -154,6 +159,7 @@ func (u Unit) Invulnerable() bool {
 // damage packet is skipped at the damage step — the unit takes no damage, is
 // not killed by damage, and grants no kill XP. No-op on an invalid handle or a
 // unit with no health row. JASS: SetUnitInvulnerable.
+// JASS: SetUnitInvulnerable
 func (u Unit) SetInvulnerable(on bool) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetInvulnerable")
@@ -169,6 +175,7 @@ func (u Unit) SetInvulnerable(on bool) {
 // Armor returns the unit's effective armor — the base armor value plus any
 // active buff/debuff modifiers (the displayed armor), or 0 on an invalid handle
 // or a unit with no health row. JASS: BlzGetUnitArmor.
+// JASS: BlzGetUnitArmor
 func (u Unit) Armor() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Armor")
@@ -185,6 +192,7 @@ func (u Unit) Armor() float64 {
 // A corpse (life 0, awaiting decay) and an invalid/removed handle are both not
 // alive. This is the WC3 life-based definition (UNIT_STATE_LIFE > 0); the
 // dead-check is its complement (!Alive). JASS: IsUnitAliveBJ, IsUnitDeadBJ.
+// JASS: IsUnitAliveBJ, IsUnitDeadBJ, UnitAlive
 func (u Unit) Alive() bool {
 	if !u.Valid() {
 		return false
@@ -198,6 +206,7 @@ func (u Unit) Alive() bool {
 
 // Position returns the unit's current world position, or the zero Vec2 on an
 // invalid handle. JASS: GetUnitX/GetUnitY, GetUnitLoc (D3 → one Vec2).
+// JASS: GetUnitLoc, GetUnitX, GetUnitY
 func (u Unit) Position() Vec2 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Position")
@@ -233,6 +242,7 @@ func Teleport() PositionOption {
 // coordinates. With Teleport() it places raw (the SetUnitX/SetUnitY teleport
 // semantics). No-op on an invalid handle. JASS: SetUnitX, SetUnitY,
 // SetUnitPosition, SetUnitPositionLoc all collapse here (D3).
+// JASS: SetUnitPosition, SetUnitPositionLoc, SetUnitX, SetUnitY
 func (u Unit) SetPosition(pos Vec2, opts ...PositionOption) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetPosition")
@@ -247,6 +257,7 @@ func (u Unit) SetPosition(pos Vec2, opts ...PositionOption) {
 
 // Facing returns the unit's facing angle, or the zero Angle on an invalid
 // handle. JASS: GetUnitFacing.
+// JASS: GetUnitFacing
 func (u Unit) Facing() Angle {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Facing")
@@ -263,6 +274,7 @@ func (u Unit) Facing() Angle {
 // (SetUnitFacing); the gradual turn-to-face is an order, issued separately.
 // No-op on an invalid handle. JASS: SetUnitFacing, SetUnitFacingTimed (the
 // timed variant's instant endpoint).
+// JASS: BlzSetUnitFacingEx, SetUnitFacing
 func (u Unit) SetFacing(a Angle) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetFacing")
@@ -292,6 +304,7 @@ func (u Unit) Mana() float64 {
 
 // MaxMana returns the unit's maximum mana, or 0 on an invalid handle / a unit
 // with no mana pool. D5: GetUnitState(UNIT_STATE_MAX_MANA).
+// JASS: BlzGetUnitMaxMana
 func (u Unit) MaxMana() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.MaxMana")
@@ -309,6 +322,7 @@ func (u Unit) MaxMana() float64 {
 // a non-caster legitimately has zero max mana. Current mana is left where it is,
 // except it is clamped down when the new max drops below it. No-op on an invalid
 // handle or a unit without an Ability (mana) component.
+// JASS: BlzSetUnitMaxMana
 func (u Unit) SetMaxMana(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetMaxMana")
@@ -332,6 +346,7 @@ func (u Unit) SetMaxMana(v float64) {
 // maximum, in [0,100]. Returns 0 on an invalid handle or a unit with no
 // mana pool (non-casters: MaxMana==0). D4: GetUnitManaPercent,
 // GetUnitStatePercent(MANA, MAX_MANA) = 100*Mana/MaxMana.
+// JASS: GetUnitManaPercent
 func (u Unit) ManaPercent() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.ManaPercent")
@@ -372,7 +387,7 @@ func (u Unit) SetMana(v float64) {
 // MoveSpeed returns the unit's movement speed in world units per second, or 0
 // on an invalid handle / a unit with no movement. The sim stores a per-tick
 // rate; this is the per-second value modders set in the data tables.
-// JASS: GetUnitMoveSpeed.
+// JASS: GetUnitMoveSpeed
 func (u Unit) MoveSpeed() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.MoveSpeed")
@@ -388,6 +403,7 @@ func (u Unit) MoveSpeed() float64 {
 // SetMoveSpeed sets the unit's movement speed in world units per second
 // (quantized to the per-tick rate). Negative values clamp to 0. No-op on an
 // invalid handle or a unit with no movement. JASS: SetUnitMoveSpeed.
+// JASS: SetUnitMoveSpeed
 func (u Unit) SetMoveSpeed(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetMoveSpeed")
@@ -407,6 +423,7 @@ func (u Unit) SetMoveSpeed(v float64) {
 // an invalid handle / a unit with no movement. The sim stores a per-tick brad
 // delta; this surfaces it as the per-second radian rate modders set in the data
 // tables. JASS: GetUnitTurnSpeed.
+// JASS: GetUnitTurnSpeed
 func (u Unit) TurnSpeed() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.TurnSpeed")
@@ -422,6 +439,7 @@ func (u Unit) TurnSpeed() float64 {
 // SetTurnSpeed sets the unit's maximum turn rate in radians per second
 // (quantized to the per-tick brad delta). Negative values clamp to 0. No-op on
 // an invalid handle or a unit with no movement. JASS: SetUnitTurnSpeed.
+// JASS: SetUnitTurnSpeed, SetUnitTurnSpeedBJ
 func (u Unit) SetTurnSpeed(radPerSec float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetTurnSpeed")
@@ -440,6 +458,7 @@ func (u Unit) SetTurnSpeed(radPerSec float64) {
 // FlyHeight returns the unit's current flight height (its z) in world
 // units — the animated value once SetFlyHeight has run, otherwise the
 // unit type's default. 0 on an invalid handle. JASS: GetUnitFlyHeight.
+// JASS: GetUnitFlyHeight
 func (u Unit) FlyHeight() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.FlyHeight")
@@ -452,6 +471,7 @@ func (u Unit) FlyHeight() float64 {
 // units), climbing/descending at ratePerSec world units per second; a
 // rate <= 0 snaps instantly. Negative heights clamp to 0. No-op on an
 // invalid handle or a unit without a position. JASS: SetUnitFlyHeight.
+// JASS: SetUnitFlyHeight, SetUnitFlyHeightBJ
 func (u Unit) SetFlyHeight(newHeight, ratePerSec float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetFlyHeight")
@@ -469,7 +489,7 @@ func (u Unit) SetFlyHeight(newHeight, ratePerSec float64) {
 
 // DefaultFlyHeight returns the unit type's base flight height in world
 // units (the data-table value), 0 on an invalid handle / an untyped unit.
-// JASS: GetUnitDefaultFlyHeight.
+// JASS: GetUnitDefaultFlyHeight
 func (u Unit) DefaultFlyHeight() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.DefaultFlyHeight")
@@ -481,7 +501,7 @@ func (u Unit) DefaultFlyHeight() float64 {
 // PropWindow returns the unit's propulsion window in radians — the
 // facing-vs-move-direction tolerance within which it may translate; wider
 // (toward pi) means it turns less before moving. 0 on an invalid handle.
-// JASS: GetUnitPropWindow.
+// JASS: GetUnitPropWindow, GetUnitPropWindowBJ
 func (u Unit) PropWindow() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.PropWindow")
@@ -494,6 +514,7 @@ func (u Unit) PropWindow() float64 {
 // [0, pi]). A narrow window makes the unit turn in place before
 // translating; pi disables the gate. No-op on an invalid handle or a unit
 // without a position. JASS: SetUnitPropWindow.
+// JASS: SetUnitPropWindow, SetUnitPropWindowBJ
 func (u Unit) SetPropWindow(radians float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetPropWindow")
@@ -508,6 +529,7 @@ func (u Unit) SetPropWindow(radians float64) {
 // DefaultPropWindow returns the unit type's base propulsion window in
 // radians (the data-table value), 0 on an invalid handle / an untyped
 // unit. JASS: GetUnitDefaultPropWindow.
+// JASS: GetUnitDefaultPropWindow, GetUnitDefaultPropWindowBJ
 func (u Unit) DefaultPropWindow() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.DefaultPropWindow")
@@ -519,6 +541,7 @@ func (u Unit) DefaultPropWindow() float64 {
 // AcquireRange returns the unit's auto-acquisition range in world units (the
 // radius within which it auto-targets hostiles), or 0 on an invalid handle / a
 // unit with no combat row. JASS: GetUnitAcquireRange.
+// JASS: GetUnitAcquireRange
 func (u Unit) AcquireRange() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.AcquireRange")
@@ -534,6 +557,7 @@ func (u Unit) AcquireRange() float64 {
 // SetAcquireRange sets the unit's auto-acquisition range in world units.
 // Negative values clamp to 0 (no acquisition). No-op on an invalid handle or a
 // unit with no combat row. JASS: SetUnitAcquireRange.
+// JASS: SetUnitAcquireRange, SetUnitAcquireRangeBJ
 func (u Unit) SetAcquireRange(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetAcquireRange")
@@ -552,6 +576,7 @@ func (u Unit) SetAcquireRange(v float64) {
 // DefaultMoveSpeed returns the unit type's base movement speed in world
 // units/second — the value the unit spawned with, before any SetMoveSpeed.
 // Zero on an invalid handle or an untyped unit. JASS: GetUnitDefaultMoveSpeed.
+// JASS: GetUnitDefaultMoveSpeed
 func (u Unit) DefaultMoveSpeed() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.DefaultMoveSpeed")
@@ -563,6 +588,7 @@ func (u Unit) DefaultMoveSpeed() float64 {
 // DefaultAcquireRange returns the unit type's base auto-acquisition range in
 // world units. Zero on an invalid handle or an untyped unit. JASS:
 // GetUnitDefaultAcquireRange.
+// JASS: GetUnitDefaultAcquireRange
 func (u Unit) DefaultAcquireRange() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.DefaultAcquireRange")
@@ -573,6 +599,7 @@ func (u Unit) DefaultAcquireRange() float64 {
 
 // DefaultTurnSpeed returns the unit type's base turn rate in radians/second.
 // Zero on an invalid handle or an untyped unit. JASS: GetUnitDefaultTurnSpeed.
+// JASS: GetUnitDefaultTurnSpeed
 func (u Unit) DefaultTurnSpeed() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.DefaultTurnSpeed")
@@ -585,6 +612,7 @@ func (u Unit) DefaultTurnSpeed() float64 {
 // an invalid handle or an untyped unit. This is immutable unit-type data (the
 // spawn footprint), distinct from any per-instance state. JASS:
 // BlzGetUnitCollisionSize.
+// JASS: BlzGetUnitCollisionSize
 func (u Unit) CollisionSize() float64 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.CollisionSize")
@@ -606,6 +634,7 @@ func (u Unit) IsHero() bool {
 
 // HeroLevel returns the unit's hero level, or 0 if it is not a hero. JASS:
 // GetHeroLevel.
+// JASS: GetHeroLevel
 func (u Unit) HeroLevel() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.HeroLevel")
@@ -616,6 +645,7 @@ func (u Unit) HeroLevel() int {
 
 // HeroXP returns the unit's accumulated hero experience, or 0 if it is not a
 // hero. JASS: GetHeroXP.
+// JASS: GetHeroXP
 func (u Unit) HeroXP() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.HeroXP")
@@ -627,6 +657,7 @@ func (u Unit) HeroXP() int {
 // Strength returns the hero's strength attribute (integer part), or 0 if the
 // unit is not a hero. The engine has no separate attribute-bonus layer, so the
 // JASS includeBonuses parameter is dropped. JASS: GetHeroStr.
+// JASS: GetHeroStr
 func (u Unit) Strength() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Strength")
@@ -637,6 +668,7 @@ func (u Unit) Strength() int {
 
 // Agility returns the hero's agility attribute (integer part), or 0 if the unit
 // is not a hero. JASS: GetHeroAgi (includeBonuses dropped; see Strength).
+// JASS: GetHeroAgi
 func (u Unit) Agility() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Agility")
@@ -648,6 +680,7 @@ func (u Unit) Agility() int {
 // Intelligence returns the hero's intelligence attribute (integer part), or 0
 // if the unit is not a hero. JASS: GetHeroInt (includeBonuses dropped; see
 // Strength).
+// JASS: GetHeroInt
 func (u Unit) Intelligence() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Intelligence")
@@ -659,7 +692,7 @@ func (u Unit) Intelligence() int {
 // AddExperience grants the hero experience, leveling it up at the curve
 // boundaries (capped at the curve top). No-op on an invalid handle, a non-hero,
 // or a non-positive amount. The JASS showEyeCandy flag is dropped (cosmetic).
-// JASS: AddHeroXP.
+// JASS: AddHeroXP, AddHeroXPSwapped
 func (u Unit) AddExperience(xp int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.AddExperience")
@@ -670,6 +703,7 @@ func (u Unit) AddExperience(xp int) {
 
 // ExperienceSuspended reports whether the hero's experience gain is currently
 // suspended. False on an invalid handle or a non-hero. JASS: IsSuspendedXP.
+// JASS: IsSuspendedXP
 func (u Unit) ExperienceSuspended() bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.ExperienceSuspended")
@@ -681,6 +715,7 @@ func (u Unit) ExperienceSuspended() bool {
 // SuspendExperience turns the hero's experience gain off (suspend=true) or back
 // on (false). While suspended the hero gains no XP and cannot level. No-op on an
 // invalid handle or a non-hero. JASS: SuspendHeroXP.
+// JASS: SuspendHeroXP, SuspendHeroXPBJ
 func (u Unit) SuspendExperience(suspend bool) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SuspendExperience")
@@ -693,6 +728,7 @@ func (u Unit) SuspendExperience(suspend bool) {
 // needed. Experience never decreases (WC3 heroes do not de-level), and an
 // explicit set applies even while experience is suspended. No-op on an invalid
 // handle or a non-hero. JASS: SetHeroXP (showEyeCandy dropped — cosmetic).
+// JASS: SetHeroXP
 func (u Unit) SetHeroXP(xp int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetHeroXP")
@@ -704,6 +740,7 @@ func (u Unit) SetHeroXP(xp int) {
 // SetHeroLevel raises the hero to the given level, granting the experience
 // needed to reach it (clamped to [1, max]; never lowers). No-op on an invalid
 // handle or a non-hero. JASS: SetHeroLevel (showEyeCandy dropped — cosmetic).
+// JASS: SetHeroLevel, SetHeroLevelBJ
 func (u Unit) SetHeroLevel(level int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetHeroLevel")
@@ -713,7 +750,7 @@ func (u Unit) SetHeroLevel(level int) {
 }
 
 // SkillPoints returns the hero's unspent skill points, or 0 if not a hero.
-// JASS: GetHeroSkillPoints.
+// JASS: GetHeroSkillPoints
 func (u Unit) SkillPoints() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SkillPoints")
@@ -725,6 +762,7 @@ func (u Unit) SkillPoints() int {
 // ModifySkillPoints adds delta to the hero's unspent skill points (clamped to
 // [0, 255]), returning true on success and false on an invalid handle or a
 // non-hero. JASS: UnitModifySkillPoints.
+// JASS: ModifyHeroSkillPoints, UnitModifySkillPoints
 func (u Unit) ModifySkillPoints(delta int) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.ModifySkillPoints")
@@ -737,6 +775,7 @@ func (u Unit) ModifySkillPoints(delta int) bool {
 // the given index, returning true on success. It is a no-op returning false on
 // an invalid handle, a non-hero, an unknown skill index, no available skill
 // points, a maxed skill, or a hero-level-locked tier. JASS: SelectHeroSkill.
+// JASS: SelectHeroSkill
 func (u Unit) LearnSkill(skill int) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.LearnSkill")
@@ -748,7 +787,7 @@ func (u Unit) LearnSkill(skill int) bool {
 // SetStrength sets the hero's strength, updating its max life and regen
 // accordingly. No-op on an invalid handle or a non-hero. The JASS `permanent`
 // parameter is dropped — the engine has no temporary attribute layer (#366).
-// JASS: SetHeroStr.
+// JASS: ModifyHeroStat, SetHeroStat, SetHeroStr
 func (u Unit) SetStrength(v int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetStrength")
@@ -760,6 +799,7 @@ func (u Unit) SetStrength(v int) {
 // SetAgility sets the hero's agility, refolding its agility-derived stats
 // (armor, attack cooldown). No-op on an invalid handle or a non-hero. JASS:
 // SetHeroAgi (permanent dropped; see SetStrength).
+// JASS: SetHeroAgi
 func (u Unit) SetAgility(v int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetAgility")
@@ -771,6 +811,7 @@ func (u Unit) SetAgility(v int) {
 // SetIntelligence sets the hero's intelligence, updating its max mana and regen.
 // No-op on an invalid handle or a non-hero. JASS: SetHeroInt (permanent dropped;
 // see SetStrength).
+// JASS: SetHeroInt
 func (u Unit) SetIntelligence(v int) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetIntelligence")
@@ -782,6 +823,7 @@ func (u Unit) SetIntelligence(v int) {
 // InventorySize returns the number of item slots the unit can carry — six for
 // a unit with an inventory, zero otherwise. Zero on an invalid handle. JASS:
 // UnitInventorySize.
+// JASS: UnitInventorySize, UnitInventorySizeBJ
 func (u Unit) InventorySize() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.InventorySize")
@@ -812,6 +854,7 @@ const (
 // IsType reports whether the unit belongs to the given structural class.
 // False on an invalid handle or an unrecognized class. JASS: IsUnitType (the
 // structural UNIT_TYPE_* subset; see UnitClass).
+// JASS: IsUnitType
 func (u Unit) IsType(class UnitClass) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.IsType")
@@ -858,6 +901,7 @@ const (
 
 // Race returns the unit type's race, or RaceNone on an invalid handle, an
 // untyped unit, or a type with no race configured. JASS: GetUnitRace.
+// JASS: GetUnitRace
 func (u Unit) Race() Race {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Race")
@@ -868,7 +912,7 @@ func (u Unit) Race() Race {
 
 // IsRace reports whether the unit's race equals r. False on an invalid handle.
 // Note a unit with no configured race (RaceNone) only matches IsRace(RaceNone).
-// JASS: IsUnitRace.
+// JASS: IsUnitRace
 func (u Unit) IsRace(r Race) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.IsRace")
@@ -880,6 +924,7 @@ func (u Unit) IsRace(r Race) bool {
 // InRange reports whether this unit is within distance world units of other
 // (center-to-center, inclusive). False on an invalid handle, an invalid other,
 // or a negative distance. JASS: IsUnitInRange.
+// JASS: IsUnitInRange
 func (u Unit) InRange(other Unit, distance float64) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.InRange")
@@ -894,6 +939,7 @@ func (u Unit) InRange(other Unit, distance float64) bool {
 // InRangeOf reports whether this unit is within distance world units of point
 // (center-to-center, inclusive). False on an invalid handle or a negative
 // distance. JASS: IsUnitInRangeXY, IsUnitInRangeLoc (D3 → one Vec2 overload).
+// JASS: IsUnitInRangeLoc, IsUnitInRangeXY
 func (u Unit) InRangeOf(point Vec2, distance float64) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.InRangeOf")
@@ -906,6 +952,7 @@ func (u Unit) InRangeOf(point Vec2, distance float64) bool {
 // gather. For a point rally it is the set point; for a unit rally it is the
 // rally target's current position. The zero Vec2 when the unit has no rally,
 // no produce capability, or an invalid handle. JASS: GetUnitRallyPoint.
+// JASS: GetUnitRallyPoint
 func (u Unit) RallyPoint() Vec2 {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.RallyPoint")
@@ -917,7 +964,7 @@ func (u Unit) RallyPoint() Vec2 {
 
 // RallyUnit returns the unit this building is rallied to, or the zero Unit
 // when the rally is a point (not a unit), absent, or the handle is invalid.
-// JASS: GetUnitRallyUnit.
+// JASS: GetUnitRallyUnit
 func (u Unit) RallyUnit() Unit {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.RallyUnit")
@@ -933,6 +980,7 @@ func (u Unit) RallyUnit() Unit {
 // Name returns the unit's display name. Currently this is the unit type's
 // proper name (per-instance rename via BlzSetUnitName is deferred). Empty string
 // on an invalid handle or an unnamed/untyped unit. JASS: GetUnitName.
+// JASS: GetUnitName
 func (u Unit) Name() string {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Name")
@@ -943,7 +991,7 @@ func (u Unit) Name() string {
 
 // SetName sets a per-instance display name override, shadowing the unit type's
 // proper name (subsequent Name calls return it). No-op on an invalid handle.
-// JASS: BlzSetUnitName.
+// JASS: BlzSetUnitName
 func (u Unit) SetName(name string) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetName")
@@ -955,6 +1003,7 @@ func (u Unit) SetName(name string) {
 // FoodUsed returns the food (upkeep) the unit's type consumes from its owner's
 // food total. Zero on an invalid handle or an untyped unit. JASS:
 // GetUnitFoodUsed.
+// JASS: GetUnitFoodUsed
 func (u Unit) FoodUsed() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.FoodUsed")
@@ -966,6 +1015,7 @@ func (u Unit) FoodUsed() int {
 // FoodMade returns the food the unit's type provides (raising its owner's food
 // cap, e.g. a farm). Zero on an invalid handle or an untyped unit. JASS:
 // GetUnitFoodMade.
+// JASS: GetUnitFoodMade
 func (u Unit) FoodMade() int {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.FoodMade")
@@ -976,7 +1026,7 @@ func (u Unit) FoodMade() int {
 
 // IsHidden reports whether the unit is suppressed from rendering and
 // selection (it still exists in the simulation). False on an invalid handle.
-// JASS: IsUnitHidden.
+// JASS: IsUnitHidden, IsUnitHiddenBJ
 func (u Unit) IsHidden() bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.IsHidden")
@@ -988,6 +1038,7 @@ func (u Unit) IsHidden() bool {
 // Show reveals (show=true) or hides (show=false) the unit. Hiding suppresses it
 // from rendering and selection without removing it from the simulation. No-op
 // on an invalid handle. JASS: ShowUnit.
+// JASS: ShowUnit, ShowUnitHide, ShowUnitShow
 func (u Unit) Show(show bool) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Show")
@@ -1000,6 +1051,7 @@ func (u Unit) Show(show bool) {
 // exists (life/position/owner persist) but does not advance orders, move,
 // acquire targets, or attack. False on an invalid handle. JASS: IsUnitPaused
 // (collapses IsUnitPausedBJ, D1).
+// JASS: IsUnitPaused, IsUnitPausedBJ
 func (u Unit) Paused() bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Paused")
@@ -1013,6 +1065,7 @@ func (u Unit) Paused() bool {
 // holds its current state until resumed. No-op on an invalid handle. The bit is
 // deterministic state and persists across save/load. JASS: PauseUnit
 // (collapses PauseUnitBJ, D1).
+// JASS: BlzPauseUnitEx, PauseUnit, PauseUnitBJ
 func (u Unit) SetPaused(paused bool) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetPaused")
@@ -1024,6 +1077,7 @@ func (u Unit) SetPaused(paused bool) {
 // Kill kills the unit (marked this tick; resolved in the sim step, firing the
 // death event). A unit already dead or invalid is a no-op. JASS: KillUnit,
 // KillUnitBJ (D1 passthrough collapses here).
+// JASS: KillUnit
 func (u Unit) Kill() {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Kill")
@@ -1036,6 +1090,7 @@ func (u Unit) Kill() {
 // death event — the unit simply ceases to exist (corpse, selection, and
 // orders all released). No-op on an invalid handle. JASS: RemoveUnit,
 // RemoveUnitBJ.
+// JASS: RemoveUnit
 func (u Unit) Remove() {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Remove")

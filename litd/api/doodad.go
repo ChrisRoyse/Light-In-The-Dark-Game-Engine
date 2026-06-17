@@ -57,6 +57,7 @@ func (d Doodad) Hide() { d.Show(false) }
 
 // SetAnimation promotes the doodad and installs an animation override. No-op on
 // an invalid handle or pool exhaustion.
+// JASS: SetDoodadAnimation, SetDoodadAnimationBJ, SetDoodadAnimationRect, SetDoodadAnimationRectBJ
 func (d Doodad) SetAnimation(anim int) {
 	if !d.Valid() {
 		if d.g != nil {

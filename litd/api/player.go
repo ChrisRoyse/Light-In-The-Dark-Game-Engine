@@ -93,6 +93,7 @@ func controllerFromSim(c uint8) Controller {
 
 // Player returns the handle for player slot, or the zero-value Player
 // (no-op) when slot is outside the fixed range. JASS: Player(n).
+// JASS: Player
 func (g *Game) Player(slot int) Player {
 	if g == nil || g.w == nil || slot < 0 || slot >= sim.MaxPlayers {
 		return Player{}
@@ -102,6 +103,7 @@ func (g *Game) Player(slot int) Player {
 
 // Neutral player slots (porting hazard 3): the four fixed high slots.
 // In the 16-slot model these are the top four.
+// JASS: GetPlayerNeutralAggressive
 func (g *Game) NeutralHostile() Player { return g.Player(sim.MaxPlayers - 4) } // aggressive
 
 // NeutralVictim returns the second-from-top fixed neutral slot (porting hazard 3).
@@ -112,9 +114,11 @@ func (g *Game) NeutralExtra() Player { return g.Player(sim.MaxPlayers - 2) }
 
 // NeutralPassive returns the top fixed neutral slot — the passive owner of
 // shops and critters (porting hazard 3).
+// JASS: GetPlayerNeutralPassive
 func (g *Game) NeutralPassive() Player { return g.Player(sim.MaxPlayers - 1) }
 
 // Slot returns the player's slot index, or -1 on an invalid handle.
+// JASS: GetPlayerId
 func (p Player) Slot() int {
 	if !p.Valid() {
 		return -1
@@ -125,6 +129,7 @@ func (p Player) Slot() int {
 // SetName sets the player's display name. JASS: there is no SetPlayerName
 // native; this is the writable companion to GetPlayerName for the
 // world-builder surface.
+// JASS: SetPlayerName
 func (p Player) SetName(s string) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetName")
@@ -136,6 +141,7 @@ func (p Player) SetName(s string) {
 // ---- D5 player-state accessors ----
 
 // Gold / SetGold read and write PLAYER_STATE_RESOURCE_GOLD.
+// JASS: GetPlayerState, GetPlayerStateBJ
 func (p Player) Gold() int {
 	if !p.Valid() {
 		return 0
@@ -144,6 +150,7 @@ func (p Player) Gold() int {
 }
 
 // SetGold writes PLAYER_STATE_RESOURCE_GOLD (see Gold). No-op on an invalid handle.
+// JASS: SetPlayerState, SetPlayerStateBJ
 func (p Player) SetGold(v int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetGold")
@@ -197,6 +204,7 @@ func (p Player) SetFoodCap(v int) {
 
 // Race / SetRace read and write the player's race. JASS: GetPlayerRace /
 // SetPlayerRacePreference (the preference collapses to the race).
+// JASS: GetPlayerRace
 func (p Player) Race() Race {
 	if !p.Valid() {
 		return RaceNone
@@ -206,6 +214,7 @@ func (p Player) Race() Race {
 
 // SetRace writes the player's race (see Race). JASS: SetPlayerRacePreference.
 // No-op on an invalid handle.
+// JASS: SetPlayerRacePreference, SetPlayerRaceSelectable
 func (p Player) SetRace(r Race) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetRace")
@@ -216,6 +225,7 @@ func (p Player) SetRace(r Race) {
 
 // Color / SetColor read and write the player's color slot (0..23). JASS:
 // GetPlayerColor / SetPlayerColor.
+// JASS: GetPlayerColor
 func (p Player) Color() int {
 	if !p.Valid() {
 		return 0
@@ -224,7 +234,7 @@ func (p Player) Color() int {
 }
 
 // SetColor writes the player's color slot, clamped to >= 0 (see Color).
-// JASS: SetPlayerColor. No-op on an invalid handle.
+// JASS: SetPlayerColor, SetPlayerColorBJ
 func (p Player) SetColor(c int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetColor")
@@ -239,6 +249,7 @@ func (p Player) SetColor(c int) {
 // Team / SetTeam read and write the player's roster team (FFA/scoring
 // metadata; does not re-team already-spawned units). JASS: GetPlayerTeam
 // / SetPlayerTeam.
+// JASS: GetPlayerTeam
 func (p Player) Team() int {
 	if !p.Valid() {
 		return 0
@@ -249,6 +260,7 @@ func (p Player) Team() int {
 // SetTeam writes the player's roster team, clamped to >= 0 (see Team). Roster
 // metadata only — does not re-team already-spawned units. JASS: SetPlayerTeam.
 // No-op on an invalid handle.
+// JASS: SetPlayerTeam
 func (p Player) SetTeam(t int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetTeam")
@@ -261,7 +273,7 @@ func (p Player) SetTeam(t int) {
 }
 
 // Controller / SetController read and write how the slot is driven.
-// JASS: GetPlayerController / SetPlayerController (via mapcontrol).
+// JASS: GetPlayerController
 func (p Player) Controller() Controller {
 	if !p.Valid() {
 		return ControllerNone
@@ -271,6 +283,7 @@ func (p Player) Controller() Controller {
 
 // SetController writes how the slot is driven (see Controller). JASS:
 // SetPlayerController. No-op on an invalid handle.
+// JASS: SetPlayerController
 func (p Player) SetController(c Controller) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetController")
@@ -281,6 +294,7 @@ func (p Player) SetController(c Controller) {
 
 // StartLocation / SetStartLocation read and write the player's start
 // point. JASS: GetPlayerStartLocation / start-location coords.
+// JASS: GetPlayerStartLocation, GetPlayerStartLocationLoc, GetPlayerStartLocationX, GetPlayerStartLocationY
 func (p Player) StartLocation() Vec2 {
 	if !p.Valid() {
 		return Vec2{}
@@ -291,6 +305,7 @@ func (p Player) StartLocation() Vec2 {
 
 // SetStartLocation writes the player's start point (see StartLocation). No-op
 // on an invalid handle.
+// JASS: ForcePlayerStartLocation, SetPlayerStartLocation
 func (p Player) SetStartLocation(loc Vec2) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetStartLocation")
@@ -338,6 +353,7 @@ func (p Player) SetAlliance(other Player, flags AllianceFlags) {
 
 // SetAllianceFlag sets or clears a single alliance bit toward other,
 // leaving the rest intact. JASS: SetPlayerAlliance(p, other, type, bool).
+// JASS: SetForceAllianceStateBJ, SetPlayerAlliance, SetPlayerAllianceBJ, SetPlayerAllianceStateAllyBJ, SetPlayerAllianceStateBJ, SetPlayerAllianceStateControlBJ, SetPlayerAllianceStateFullControlBJ, SetPlayerAllianceStateVisionBJ
 func (p Player) SetAllianceFlag(other Player, flag AllianceFlags, on bool) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetAllianceFlag")
@@ -352,6 +368,7 @@ func (p Player) SetAllianceFlag(other Player, flag AllianceFlags, on bool) {
 
 // AllianceWith returns this player's raw alliance bitset toward other
 // (0 for self/foreign/invalid). JASS: GetPlayerAlliance readback.
+// JASS: GetPlayerAlliance
 func (p Player) AllianceWith(other Player) AllianceFlags {
 	if !p.Valid() || other.g != p.g || !other.Valid() {
 		return 0
@@ -361,6 +378,7 @@ func (p Player) AllianceWith(other Player) AllianceFlags {
 
 // IsAlly reports whether this player is passive (not at war) toward
 // other. JASS: IsPlayerAlly.
+// JASS: IsPlayerAlly, PlayersAreCoAllied
 func (p Player) IsAlly(other Player) bool {
 	if !p.Valid() || other.g != p.g || !other.Valid() {
 		return false
@@ -370,6 +388,7 @@ func (p Player) IsAlly(other Player) bool {
 
 // IsEnemy reports whether this player is at war with other. JASS:
 // IsPlayerEnemy.
+// JASS: IsPlayerEnemy
 func (p Player) IsEnemy(other Player) bool {
 	if !p.Valid() || other.g != p.g || !other.Valid() {
 		return false
@@ -387,6 +406,7 @@ func (p Player) IsEnemy(other Player) bool {
 
 // Handicap / SetHandicap is the damage-TAKEN multiplier for this player's
 // units. JASS: GetPlayerHandicap / SetPlayerHandicap.
+// JASS: GetPlayerHandicap, GetPlayerHandicapBJ
 func (p Player) Handicap() float64 {
 	if !p.Valid() {
 		return 1
@@ -396,6 +416,7 @@ func (p Player) Handicap() float64 {
 
 // SetHandicap writes the damage-taken multiplier (see Handicap). 1.0 = no
 // effect; negative inputs clamp to 0. No-op on an invalid handle.
+// JASS: SetPlayerHandicap, SetPlayerHandicapBJ
 func (p Player) SetHandicap(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicap")
@@ -406,6 +427,7 @@ func (p Player) SetHandicap(v float64) {
 
 // HandicapDamage / SetHandicapDamage is the damage-DEALT multiplier for
 // this player's units. JASS: GetPlayerHandicapDamage / SetPlayerHandicapDamage.
+// JASS: GetPlayerHandicapDamage, GetPlayerHandicapDamageBJ
 func (p Player) HandicapDamage() float64 {
 	if !p.Valid() {
 		return 1
@@ -415,6 +437,7 @@ func (p Player) HandicapDamage() float64 {
 
 // SetHandicapDamage writes the damage-dealt multiplier (see HandicapDamage).
 // 1.0 = no effect; negative inputs clamp to 0. No-op on an invalid handle.
+// JASS: SetPlayerHandicapDamage, SetPlayerHandicapDamageBJ
 func (p Player) SetHandicapDamage(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicapDamage")
@@ -425,6 +448,7 @@ func (p Player) SetHandicapDamage(v float64) {
 
 // HandicapXP / SetHandicapXP is the kill-XP multiplier for this player's
 // heroes. JASS: GetPlayerHandicapXP / SetPlayerHandicapXP.
+// JASS: GetPlayerHandicapXP, GetPlayerHandicapXPBJ
 func (p Player) HandicapXP() float64 {
 	if !p.Valid() {
 		return 1
@@ -434,6 +458,7 @@ func (p Player) HandicapXP() float64 {
 
 // SetHandicapXP writes the hero kill-XP multiplier (see HandicapXP). 1.0 = no
 // effect; negative inputs clamp to 0. No-op on an invalid handle.
+// JASS: SetPlayerHandicapXP, SetPlayerHandicapXPBJ
 func (p Player) SetHandicapXP(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicapXP")
@@ -445,6 +470,7 @@ func (p Player) SetHandicapXP(v float64) {
 // HandicapReviveTime / SetHandicapReviveTime is the hero-revive-time
 // multiplier for this player. JASS: GetPlayerHandicapReviveTime /
 // SetPlayerHandicapReviveTime.
+// JASS: GetPlayerHandicapReviveTime, GetPlayerHandicapReviveTimeBJ
 func (p Player) HandicapReviveTime() float64 {
 	if !p.Valid() {
 		return 1
@@ -455,6 +481,7 @@ func (p Player) HandicapReviveTime() float64 {
 // SetHandicapReviveTime writes the hero-revive-time multiplier (see
 // HandicapReviveTime). 1.0 = no effect; negative inputs clamp to 0. No-op on an
 // invalid handle.
+// JASS: SetPlayerHandicapReviveTime, SetPlayerHandicapReviveTimeBJ
 func (p Player) SetHandicapReviveTime(v float64) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetHandicapReviveTime")
@@ -530,6 +557,7 @@ func (p Player) LumberLostToUpkeep() int { return p.LostToUpkeep(resLumber) }
 // toward another player for one resource (GetPlayerTaxRate / SetPlayerTaxRate).
 // The tax is withheld in Game.TransferResource. A player has no tax toward
 // itself. Rate clamps to [0,1].
+// JASS: GetPlayerTaxRate, GetPlayerTaxRateBJ
 func (p Player) TaxRate(other Player, resource int) float64 {
 	if !p.Valid() || !other.Valid() {
 		return 0
@@ -540,6 +568,7 @@ func (p Player) TaxRate(other Player, resource int) float64 {
 // SetTaxRate writes this player's transfer-tax fraction toward other for one
 // resource (see TaxRate). Rate clamps to [0,1]; no tax toward itself. JASS:
 // SetPlayerTaxRate. No-op on an invalid handle.
+// JASS: SetPlayerTaxRate, SetPlayerTaxRateBJ
 func (p Player) SetTaxRate(other Player, resource int, rate float64) {
 	if !p.Valid() || !other.Valid() {
 		p.g.reportInvalid("Player.SetTaxRate")

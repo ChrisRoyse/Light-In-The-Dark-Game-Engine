@@ -26,6 +26,7 @@ func (a Angle) Normalized() Angle {
 
 // DistanceTo returns the Euclidean distance between two points. JASS:
 // DistanceBetweenPoints.
+// JASS: DistanceBetweenPoints
 func (v Vec2) DistanceTo(o Vec2) float64 {
 	dx, dy := o.X-v.X, o.Y-v.Y
 	return math.Sqrt(dx*dx + dy*dy)
@@ -33,6 +34,7 @@ func (v Vec2) DistanceTo(o Vec2) float64 {
 
 // AngleTo returns the heading from v toward o, via the deterministic
 // fixed-point arctangent. JASS: AngleBetweenPoints.
+// JASS: AngleBetweenPoints
 func (v Vec2) AngleTo(o Vec2) Angle {
 	return angleFromBrad(fixed.Atan2(fromFloat(o.Y-v.Y), fromFloat(o.X-v.X)))
 }
@@ -40,6 +42,7 @@ func (v Vec2) AngleTo(o Vec2) Angle {
 // Polar returns the point dist world units from v along heading a, via
 // the deterministic fixed-point sine/cosine. JASS:
 // PolarProjectionBJ.
+// JASS: PolarProjectionBJ
 func (v Vec2) Polar(a Angle, dist float64) Vec2 {
 	b := angleToBrad(a)
 	return Vec2{
