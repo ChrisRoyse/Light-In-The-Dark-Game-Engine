@@ -207,25 +207,90 @@ func TestSaveLoadThreadClosureSharedUpvalue(t *testing.T) {
 	t.Logf("FSV closure shared upvalue: cold resume = %v", vals)
 }
 
-// TestSaveThreadRejectsThreadRegister — a value still outside the persistable
-// set (a nested coroutine/thread in a register) must be rejected loudly rather
-// than emit an unrestorable save.
-func TestSaveThreadRejectsThreadRegister(t *testing.T) {
+// TestSaveLoadThreadNestedCoroutine — a parent coroutine holding a SUSPENDED
+// child coroutine (with its own captured state) must round-trip: the child is
+// serialized recursively as a nested ThreadImage and reconstructed resumable.
+// SoT = the parent's cold-resumed value, which depends on resuming the child.
+func TestSaveLoadThreadNestedCoroutine(t *testing.T) {
+	const nestedSrc = `
+		local child = coroutine.create(function()
+			local s = 100
+			coroutine.yield()
+			return s + 11          -- 111
+		end)
+		coroutine.resume(child)    -- child runs to its yield (s=100 live)
+		coroutine.yield()          -- parent yields holding the suspended child
+		local ok, v = coroutine.resume(child)
+		return v
+	`
+	regHot := NewChunkRegistry()
+	defer regHot.Close()
+	co, _ := runToYield(t, regHot, nestedSrc)
+	img, err := SaveThread(regHot, co)
+	if err != nil {
+		t.Fatalf("SaveThread: %v", err)
+	}
+	blob, _ := json.Marshal(img)
+	if !strings.Contains(string(blob), `"threads"`) {
+		t.Fatalf("artifact lacks the nested thread image: %s", blob)
+	}
+
+	var img2 ThreadImage
+	if err := json.Unmarshal(blob, &img2); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	regCold := NewChunkRegistry()
+	defer regCold.Close()
+	if _, err := regCold.Register("world", nestedSrc); err != nil {
+		t.Fatalf("cold register: %v", err)
+	}
+	rtCold := lua.NewState()
+	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	if err != nil {
+		t.Fatalf("LoadThread: %v", err)
+	}
+	st, rerr, vals := rtCold.Resume(th, topFn)
+	if st != lua.ResumeOK || rerr != nil {
+		t.Fatalf("cold resume failed: state=%v err=%v", st, rerr)
+	}
+	if len(vals) != 1 || vals[0] != lua.LNumber(111) {
+		t.Fatalf("nested coroutine not preserved: got %v, want [111] (child 100+11)", vals)
+	}
+	t.Logf("FSV nested coroutine: cold resume = %v", vals)
+}
+
+// TestSaveThreadRejectsUserdataRegister — userdata (a host object) in a register
+// is the remaining unpersistable value and must be rejected loudly until the
+// handle-rebind step lands.
+func TestSaveThreadRejectsUserdataRegister(t *testing.T) {
 	reg := NewChunkRegistry()
 	defer reg.Close()
-	co, _ := runToYield(t, reg, `
-		local inner = coroutine.create(function() end)
+	cid, err := reg.Register("world", `
+		local u = injected_userdata
 		coroutine.yield()
-		return type(inner)
+		return type(u)
 	`)
-	_, err := SaveThread(reg, co)
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	proto, err := reg.ResolveProto(cid, "")
+	if err != nil {
+		t.Fatalf("resolve: %v", err)
+	}
+	rt := lua.NewState()
+	rt.SetGlobal("injected_userdata", rt.NewUserData()) // a host object in a local
+	co, _ := rt.NewThread()
+	if st, _, _ := rt.Resume(co, rt.NewFunctionFromProto(proto)); st != lua.ResumeYield {
+		t.Fatalf("expected yield, got %v", st)
+	}
+	_, err = SaveThread(reg, co)
 	if err == nil {
-		t.Fatal("expected SaveThread to reject a thread register, got nil")
+		t.Fatal("expected SaveThread to reject a userdata register, got nil")
 	}
-	if !strings.Contains(err.Error(), "thread") {
-		t.Fatalf("error did not name the thread value: %v", err)
+	if !strings.Contains(err.Error(), "userdata") {
+		t.Fatalf("error did not name the userdata value: %v", err)
 	}
-	t.Logf("FSV thread reject: %v", err)
+	t.Logf("FSV userdata reject: %v", err)
 }
 
 // TestSaveThreadRejectsFrameWithUpvalues — yielding INSIDE a closure that has

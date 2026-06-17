@@ -27,11 +27,11 @@ import (
 
 // sval tags one serialized value. T selects which payload field is live.
 type sval struct {
-	T   string  `json:"t"`             // "nil" | "bool" | "num" | "str" | "table" | "func"
+	T   string  `json:"t"`             // "nil" | "bool" | "num" | "str" | "table" | "func" | "thread"
 	B   bool    `json:"b,omitempty"`   // T=="bool"
 	N   float64 `json:"n,omitempty"`   // T=="num"
 	S   string  `json:"s,omitempty"`   // T=="str"
-	Ref int     `json:"ref,omitempty"` // T=="table": index into Tables; T=="func": index into Funcs
+	Ref int     `json:"ref,omitempty"` // index into Tables / Funcs / Threads per T
 }
 
 // supval is one serialized upvalue of a closure: OPEN (aliases the owning
@@ -72,9 +72,10 @@ type valueBlob struct {
 // register slots aliasing the same table, or two closures sharing an upvalue)
 // round-trips as a single shared object rather than independent copies.
 type valuesBlob struct {
-	Roots  []sval   `json:"roots"`
-	Tables []stable `json:"tables"`
-	Funcs  []sfunc  `json:"funcs,omitempty"`
+	Roots   []sval         `json:"roots"`
+	Tables  []stable       `json:"tables"`
+	Funcs   []sfunc        `json:"funcs,omitempty"`
+	Threads []*ThreadImage `json:"threads,omitempty"`
 }
 
 // vEncoder interns tables (and, when reg+owner are set, closures) by pointer
@@ -85,10 +86,12 @@ type vEncoder struct {
 	ids    map[*lua.LTable]int
 	tables []stable
 
-	reg   *ChunkRegistry
-	owner *lua.LState
-	fnIDs map[*lua.LFunction]int
-	funcs []sfunc
+	reg       *ChunkRegistry
+	owner     *lua.LState
+	fnIDs     map[*lua.LFunction]int
+	funcs     []sfunc
+	threadIDs map[*lua.LState]int
+	threads   []*ThreadImage
 }
 
 // SerializeValue encodes a data-subset LValue graph to a deterministic blob.
@@ -117,9 +120,33 @@ func (e *vEncoder) encode(v lua.LValue) (sval, error) {
 		return e.encodeTable(x)
 	case *lua.LFunction:
 		return e.encodeFunc(x)
+	case *lua.LState:
+		return e.encodeThread(x)
 	default:
-		return sval{}, fmt.Errorf("luabind: cannot serialize value of type %s in the data graph (threads/userdata are handled by later persister steps)", v.Type())
+		return sval{}, fmt.Errorf("luabind: cannot serialize value of type %s in the data graph (userdata is handled by a later persister step)", v.Type())
 	}
+}
+
+// encodeThread interns a nested coroutine and serializes it recursively as its
+// own ThreadImage (its registers/closures live in a separate pool — cross-
+// thread upvalue capture is rejected at the fork boundary). Only available with
+// a registry (the thread persister).
+func (e *vEncoder) encodeThread(co *lua.LState) (sval, error) {
+	if e.reg == nil {
+		return sval{}, fmt.Errorf("luabind: cannot serialize a thread in the data graph (no chunk registry — use the thread persister)")
+	}
+	if id, ok := e.threadIDs[co]; ok {
+		return sval{T: "thread", Ref: id}, nil
+	}
+	id := len(e.threads)
+	e.threadIDs[co] = id
+	e.threads = append(e.threads, nil) // reserve before recursing
+	img, err := SaveThread(e.reg, co)
+	if err != nil {
+		return sval{}, fmt.Errorf("luabind: nested coroutine: %w", err)
+	}
+	e.threads[id] = img
+	return sval{T: "thread", Ref: id}, nil
 }
 
 // encodeFunc interns a closure as a proto reference plus its upvalues. Only
@@ -168,7 +195,13 @@ func (e *vEncoder) encodeFunc(fn *lua.LFunction) (sval, error) {
 // owner (the thread being saved). Loud error on any value that cannot be
 // persisted.
 func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue) ([]byte, error) {
-	e := &vEncoder{ids: map[*lua.LTable]int{}, fnIDs: map[*lua.LFunction]int{}, reg: reg, owner: owner}
+	e := &vEncoder{
+		ids:       map[*lua.LTable]int{},
+		fnIDs:     map[*lua.LFunction]int{},
+		threadIDs: map[*lua.LState]int{},
+		reg:       reg,
+		owner:     owner,
+	}
 	roots := make([]sval, len(vs))
 	for i, v := range vs {
 		r, err := e.encode(v)
@@ -177,7 +210,7 @@ func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue) 
 		}
 		roots[i] = r
 	}
-	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs})
+	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs, Threads: e.threads})
 }
 
 func (e *vEncoder) encodeTable(t *lua.LTable) (sval, error) {
@@ -287,10 +320,11 @@ func decodeTables(L *lua.LState, tables []stable) (func(sval) (lua.LValue, error
 // refs and cycles resolve; closure upvalues are wired separately, after the
 // owning thread exists, via wireUpvalues.
 type graphDecoder struct {
-	parent    *lua.LState
-	blob      *valuesBlob
-	tablePool []*lua.LTable
-	fnPool    []*lua.LFunction
+	parent     *lua.LState
+	blob       *valuesBlob
+	tablePool  []*lua.LTable
+	fnPool     []*lua.LFunction
+	threadPool []*lua.LState
 }
 
 func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob) (*graphDecoder, error) {
@@ -306,6 +340,16 @@ func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob) (
 			return nil, fmt.Errorf("luabind: closure %d: %w", i, err)
 		}
 		d.fnPool[i] = parent.LitdMakeClosure(proto)
+	}
+	// Nested coroutines are fully reconstructed up front (recursively), so a
+	// table/register can reference one.
+	d.threadPool = make([]*lua.LState, len(blob.Threads))
+	for i, ti := range blob.Threads {
+		th, _, err := LoadThread(reg, parent, ti)
+		if err != nil {
+			return nil, fmt.Errorf("luabind: nested coroutine %d: %w", i, err)
+		}
+		d.threadPool[i] = th
 	}
 	// Wire table entries now (closures may be stored but their upvalues wait).
 	for i, st := range blob.Tables {
@@ -355,6 +399,11 @@ func (d *graphDecoder) decode(s sval) (lua.LValue, error) {
 			return nil, fmt.Errorf("luabind: func ref %d out of range (%d funcs)", s.Ref, len(d.fnPool))
 		}
 		return d.fnPool[s.Ref], nil
+	case "thread":
+		if s.Ref < 0 || s.Ref >= len(d.threadPool) {
+			return nil, fmt.Errorf("luabind: thread ref %d out of range (%d threads)", s.Ref, len(d.threadPool))
+		}
+		return d.threadPool[s.Ref], nil
 	default:
 		return nil, fmt.Errorf("luabind: unknown serialized value tag %q", s.T)
 	}
