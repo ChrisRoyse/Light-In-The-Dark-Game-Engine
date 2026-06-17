@@ -130,6 +130,41 @@ func TestGeneratedPlayerBindingsFSV(t *testing.T) {
 	t.Logf("FSV Player param: Unit_SetOwner via Lua -> sim ownership reassigned, Lua OwnedBy=true")
 }
 
+func TestGeneratedEnumBindingFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 11})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	L := lua.NewState()
+	defer L.Close()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	p1 := L.NewUserData()
+	p1.Value = g.Player(1)
+	L.SetGlobal("p1", p1)
+
+	// Enum param: Player_SetRace(p1, 2) from Lua converts the int to api.Race(2)
+	// and mutates the sim (read back via Go) — strong, not just parity.
+	if g.Player(1).Race() == 2 {
+		t.Fatal("precondition: race should not start at 2")
+	}
+	if err := L.DoString(`Player_SetRace(p1, 2)`); err != nil {
+		t.Fatalf("Player_SetRace: %v", err)
+	}
+	if got := g.Player(1).Race(); got != 2 {
+		t.Fatalf("Player_SetRace(2): sim Race=%d, want 2 (Lua did not mutate sim)", got)
+	}
+	// Enum return: Player_Race(p1) marshals api.Race back to a number == 2.
+	if err := L.DoString(`r = Player_Race(p1)`); err != nil {
+		t.Fatalf("Player_Race: %v", err)
+	}
+	if got := luaNum(t, L, "r"); got != 2 {
+		t.Fatalf("Player_Race via Lua=%v, want 2", got)
+	}
+	t.Logf("FSV enum: Player_SetRace(2) from Lua -> sim Race=2; Player_Race returns 2")
+}
+
 func TestGeneratedTimerBindingFSV(t *testing.T) {
 	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 9})
 	if err != nil {

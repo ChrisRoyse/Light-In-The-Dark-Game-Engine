@@ -85,6 +85,22 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("L.CheckBool(%d)", idx), true
 	case "time.Duration":
 		return fmt.Sprintf("argDuration(L, %d)", idx), true
+	case "Race":
+		return fmt.Sprintf("argRace(L, %d)", idx), true
+	case "Difficulty":
+		return fmt.Sprintf("argDifficulty(L, %d)", idx), true
+	case "FogState":
+		return fmt.Sprintf("argFogState(L, %d)", idx), true
+	case "Controller":
+		return fmt.Sprintf("argController(L, %d)", idx), true
+	case "AllianceFlags":
+		return fmt.Sprintf("argAllianceFlags(L, %d)", idx), true
+	case "AbilityField":
+		return fmt.Sprintf("argAbilityField(L, %d)", idx), true
+	case "CameraField":
+		return fmt.Sprintf("argCameraField(L, %d)", idx), true
+	case "AbilityRef":
+		return fmt.Sprintf("argAbilityRef(L, %d)", idx), true
 	default:
 		return "", false
 	}
@@ -102,7 +118,11 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
 	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer":
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
-	case "float64", "int", "int32", "int64", "uint32", "uint8":
+	case "float64", "int", "int32", "int64", "uint32", "uint8",
+		"Race", "Difficulty", "FogState", "Controller", "AllianceFlags",
+		"AbilityField", "CameraField", "AbilityRef":
+		// Plain + integer-enum returns push as a number (LNumber converts any
+		// numeric value; the enum type name is never referenced here).
 		return fmt.Sprintf("L.Push(lua.LNumber(%s))", expr), true
 	case "string":
 		return fmt.Sprintf("L.Push(lua.LString(%s))", expr), true
