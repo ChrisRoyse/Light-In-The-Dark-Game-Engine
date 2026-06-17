@@ -31,18 +31,15 @@ func loaderGame(t *testing.T, seed int64) *api.Game {
 	return g
 }
 
-// boundState returns an LState with the api surface bound to g and the world's
-// data-table binding (`footman` UnitType) injected — the seam the asset layer
-// will fill for a real world.
+// boundState returns an LState with the api surface bound to g. Worlds resolve
+// the types they spawn from their own Lua via Game_UnitType (#393) — no
+// host-injected type globals.
 func boundState(t *testing.T, g *api.Game) *lua.LState {
 	t.Helper()
 	L := lua.NewState()
 	if err := Register(L, g); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
-	ud := L.NewUserData()
-	ud.Value = g.UnitType("hfoo")
-	L.SetGlobal("footman", ud)
 	return L
 }
 
@@ -163,7 +160,7 @@ func TestLoadWorldMissingEntryFailsLoudFSV(t *testing.T) {
 // on (#264/#270).
 func TestLoadWorldDeterministicFSV(t *testing.T) {
 	dir := writeWorld(t, map[string]string{
-		"main.lua": "Game_SetTimeOfDay(9.0)\nGame_CreateUnit(Game_Player(0), footman, { x = 100, y = 100 }, 0)\n",
+		"main.lua": "Game_SetTimeOfDay(9.0)\nGame_CreateUnit(Game_Player(0), Game_UnitType(\"hfoo\"), { x = 100, y = 100 }, 0)\n",
 	})
 	load := func() (string, uint64) {
 		g := loaderGame(t, 7)

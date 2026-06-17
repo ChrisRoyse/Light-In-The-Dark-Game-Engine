@@ -38,6 +38,7 @@ func Register(L *lua.LState, g *api.Game) error {
 	registerGenerated(L) // value/handle/Player verbs (no game needed)
 	if g != nil {
 		registerGameBound(L, gameBinder{g: g}) // Game-receiver verbs, bound to g
+		registerCatalog(L, gameBinder{g: g})   // hand-written type-catalog resolvers (#393)
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
 	}
@@ -104,14 +105,16 @@ func stringSliceToLua(L *lua.LState, s []string) *lua.LTable {
 // (WC3-style: bj_RACE_*, etc.); the binding converts it to the typed enum. A
 // non-number raises. Enum RETURNS go back as plain numbers (lua.LNumber), so no
 // reader is needed for those.
-func argRace(L *lua.LState, i int) api.Race                   { return api.Race(L.CheckInt(i)) }
-func argDifficulty(L *lua.LState, i int) api.Difficulty       { return api.Difficulty(L.CheckInt(i)) }
-func argFogState(L *lua.LState, i int) api.FogState           { return api.FogState(L.CheckInt(i)) }
-func argController(L *lua.LState, i int) api.Controller       { return api.Controller(L.CheckInt(i)) }
-func argAllianceFlags(L *lua.LState, i int) api.AllianceFlags { return api.AllianceFlags(L.CheckInt(i)) }
-func argAbilityField(L *lua.LState, i int) api.AbilityField   { return api.AbilityField(L.CheckInt(i)) }
-func argCameraField(L *lua.LState, i int) api.CameraField     { return api.CameraField(L.CheckInt(i)) }
-func argAbilityRef(L *lua.LState, i int) api.AbilityRef       { return api.AbilityRef(L.CheckInt(i)) }
+func argRace(L *lua.LState, i int) api.Race             { return api.Race(L.CheckInt(i)) }
+func argDifficulty(L *lua.LState, i int) api.Difficulty { return api.Difficulty(L.CheckInt(i)) }
+func argFogState(L *lua.LState, i int) api.FogState     { return api.FogState(L.CheckInt(i)) }
+func argController(L *lua.LState, i int) api.Controller { return api.Controller(L.CheckInt(i)) }
+func argAllianceFlags(L *lua.LState, i int) api.AllianceFlags {
+	return api.AllianceFlags(L.CheckInt(i))
+}
+func argAbilityField(L *lua.LState, i int) api.AbilityField { return api.AbilityField(L.CheckInt(i)) }
+func argCameraField(L *lua.LState, i int) api.CameraField   { return api.CameraField(L.CheckInt(i)) }
+func argAbilityRef(L *lua.LState, i int) api.AbilityRef     { return api.AbilityRef(L.CheckInt(i)) }
 
 // argDuration reads argument i as a time.Duration expressed in SECONDS (the Lua
 // surface uses seconds: PolledWait(0.5)), raising on a non-number.
