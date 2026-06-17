@@ -1,0 +1,29 @@
+# _fixture — the canonical reference map for the skirmish data format (#173).
+# Smallest map that exercises every table: dimensions, start locations,
+# neutral + owned beacons, and all four terrain.grid layers. Kept flat and
+# uniformly buildable so the format — not terrain pathing — is what is under
+# test. Documented in docs/specs/map-format.md.
+version = 1
+width = 8
+height = 8
+biome = "vigil-lowlands"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [4, 4]
+
+[[start]]
+player = 1
+cell = [28, 28]
+
+# Neutral control point at map centre: [owner] omitted => BeaconNeutral (-1).
+[[beacon]]
+id = 1
+cell = [16, 16]
+
+# Pre-owned beacon: a player may start holding a control point.
+[[beacon]]
+id = 2
+cell = [16, 8]
+owner = 0

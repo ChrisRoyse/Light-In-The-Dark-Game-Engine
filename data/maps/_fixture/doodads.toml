@@ -1,0 +1,10 @@
+# No doodads. The fixture deliberately omits render props so it has no
+# dependency on the (gitignored) assets/ binaries — it validates standalone.
+# A doodad entry would look like:
+#   [[doodad]]
+#   id = 1
+#   asset = "pack/model.glb"   # must resolve under assets/
+#   cell = [12, 12]
+#   rotation = 0               # BAM, [0,65535]
+#   destructible = true
+#   footprint = [2, 2]         # optional, defaults [1,1]

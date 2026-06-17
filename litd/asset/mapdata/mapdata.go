@@ -49,6 +49,20 @@ type StartLocation struct {
 	Y      int   `json:"y"`
 }
 
+// BeaconNeutral is the Owner value for a beacon that starts uncontrolled.
+const BeaconNeutral = -1
+
+// Beacon is a capturable control point (identity.md §3: holding map control is
+// the light/territory win lever; the beacon-hold victory in #200 reads these).
+// Coordinates are pathing-grid cells, like StartLocation. Owner is the initial
+// controller: BeaconNeutral (-1) for uncontrolled, else a player index [0,15].
+type Beacon struct {
+	ID    uint32 `json:"id"`
+	X     int    `json:"x"`
+	Y     int    `json:"y"`
+	Owner int    `json:"owner"`
+}
+
 type Doodad struct {
 	ID           uint32 `json:"id"`
 	Asset        string `json:"asset"`
@@ -74,21 +88,29 @@ type Map struct {
 	heights []int32
 	splats  []SplatWeight
 	starts  []StartLocation
+	beacons []Beacon
 	doodads []Doodad
 }
 
 type rawTerrain struct {
-	Version      int        `toml:"version"`
-	Width        int        `toml:"width"`
-	Height       int        `toml:"height"`
-	Biome        string     `toml:"biome"`
-	PathingScale int        `toml:"pathing-scale"`
-	Start        []rawStart `toml:"start"`
+	Version      int         `toml:"version"`
+	Width        int         `toml:"width"`
+	Height       int         `toml:"height"`
+	Biome        string      `toml:"biome"`
+	PathingScale int         `toml:"pathing-scale"`
+	Start        []rawStart  `toml:"start"`
+	Beacon       []rawBeacon `toml:"beacon"`
 }
 
 type rawStart struct {
 	Player int   `toml:"player"`
 	Cell   []int `toml:"cell"`
+}
+
+type rawBeacon struct {
+	ID    uint32 `toml:"id"`
+	Cell  []int  `toml:"cell"`
+	Owner *int   `toml:"owner"` // optional; omitted = neutral (a pointer so owner=0 is distinguishable from "unset")
 }
 
 type rawDoodadFile struct {
@@ -159,6 +181,10 @@ func Load(fsys fs.FS, dir string) (*Map, error) {
 	if err != nil {
 		return nil, err
 	}
+	m.beacons, err = compileBeacons(terrainFile, raw.Beacon, m)
+	if err != nil {
+		return nil, err
+	}
 	m.doodads, err = loadDoodads(fsys, dir, m)
 	if err != nil {
 		return nil, err
@@ -202,6 +228,10 @@ func (m *Map) Starts() []StartLocation {
 	return append([]StartLocation(nil), m.starts...)
 }
 
+func (m *Map) Beacons() []Beacon {
+	return append([]Beacon(nil), m.beacons...)
+}
+
 func (m *Map) Doodads() []Doodad {
 	return append([]Doodad(nil), m.doodads...)
 }
@@ -216,6 +246,7 @@ func (m *Map) MarshalJSON() ([]byte, error) {
 		Biome         string          `json:"biome"`
 		Fingerprint   uint64          `json:"fingerprint"`
 		Starts        []StartLocation `json:"starts"`
+		Beacons       []Beacon        `json:"beacons"`
 		Doodads       []Doodad        `json:"doodads"`
 	}
 	return json.Marshal(alias{
@@ -227,6 +258,7 @@ func (m *Map) MarshalJSON() ([]byte, error) {
 		Biome:         m.Biome,
 		Fingerprint:   m.Fingerprint,
 		Starts:        m.Starts(),
+		Beacons:       m.Beacons(),
 		Doodads:       m.Doodads(),
 	})
 }
@@ -425,6 +457,39 @@ func compileStarts(file string, raw []rawStart, m *Map) ([]StartLocation, error)
 	return out, nil
 }
 
+// compileBeacons validates the [[beacon]] table from terrain.toml: unique ids,
+// coordinates inside the pathing grid, and an initial owner of either
+// BeaconNeutral (the default when [owner] is omitted) or a player index in
+// [0,15]. Out-of-bounds or out-of-range owners are hard errors, never silently
+// clamped — a misplaced control point would silently change who wins.
+func compileBeacons(file string, raw []rawBeacon, m *Map) ([]Beacon, error) {
+	out := make([]Beacon, 0, len(raw))
+	seen := map[uint32]bool{}
+	for _, r := range raw {
+		if seen[r.ID] {
+			return nil, fmt.Errorf("mapdata: %s: duplicate beacon id %d", file, r.ID)
+		}
+		seen[r.ID] = true
+		x, y, err := cell2(r.Cell)
+		if err != nil {
+			return nil, fmt.Errorf("mapdata: %s: beacon %d: %w", file, r.ID, err)
+		}
+		if !m.inPathingBounds(x, y) {
+			return nil, fmt.Errorf("mapdata: %s: beacon %d cell (%d,%d) out of bounds", file, r.ID, x, y)
+		}
+		owner := BeaconNeutral
+		if r.Owner != nil {
+			owner = *r.Owner
+			if owner < 0 || owner > 15 {
+				return nil, fmt.Errorf("mapdata: %s: beacon %d owner %d out of range [0,15]", file, r.ID, owner)
+			}
+		}
+		out = append(out, Beacon{ID: r.ID, X: x, Y: y, Owner: owner})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
 func loadDoodads(fsys fs.FS, dir string, m *Map) ([]Doodad, error) {
 	file := path.Join(dir, "doodads.toml")
 	var raw rawDoodadFile
@@ -556,6 +621,13 @@ func (m *Map) fingerprint() uint64 {
 		h.WriteU8(s.Player)
 		h.WriteU32(uint32(s.X))
 		h.WriteU32(uint32(s.Y))
+	}
+	h.WriteU32(uint32(len(m.beacons)))
+	for _, b := range m.beacons {
+		h.WriteU32(b.ID)
+		h.WriteU32(uint32(b.X))
+		h.WriteU32(uint32(b.Y))
+		h.WriteI64(int64(b.Owner))
 	}
 	h.WriteU32(uint32(len(m.doodads)))
 	for _, d := range m.doodads {

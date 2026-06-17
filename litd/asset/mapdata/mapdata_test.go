@@ -106,6 +106,167 @@ func TestMapDataFingerprintSensitivityFSV(t *testing.T) {
 	}
 }
 
+func TestLoadFixtureBeaconsFSV(t *testing.T) {
+	m, err := Load(os.DirFS("../../.."), "data/maps/_fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beacons := m.Beacons()
+	t.Logf("FSV _fixture dims=%dx%d pathing=%dx%d starts=%+v beacons=%+v",
+		m.Width, m.Height, m.PathingWidth, m.PathingHeight, m.Starts(), beacons)
+	if m.Width != 8 || m.Height != 8 || m.PathingWidth != 32 || m.PathingHeight != 32 {
+		t.Fatalf("fixture dimensions wrong: %+v", m)
+	}
+	// Authored: id 1 neutral @ (16,16), id 2 owner 0 @ (16,8); returned sorted by id.
+	want := []Beacon{
+		{ID: 1, X: 16, Y: 16, Owner: BeaconNeutral},
+		{ID: 2, X: 16, Y: 8, Owner: 0},
+	}
+	if len(beacons) != len(want) {
+		t.Fatalf("beacon count=%d want %d: %+v", len(beacons), len(want), beacons)
+	}
+	for i, w := range want {
+		if beacons[i] != w {
+			t.Fatalf("beacon[%d]=%+v want %+v", i, beacons[i], w)
+		}
+	}
+}
+
+func TestMapDataBeaconNeutralDefaultFSV(t *testing.T) {
+	fsys := tinyMapFS()
+	fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [0, 0]
+
+[[beacon]]
+id = 7
+cell = [2, 3]
+`)}
+	m, err := Load(fsys, "data/maps/tiny")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := m.Beacons()
+	t.Logf("FSV beacon neutral-default beacons=%+v BeaconNeutral=%d", b, BeaconNeutral)
+	if len(b) != 1 || b[0] != (Beacon{ID: 7, X: 2, Y: 3, Owner: BeaconNeutral}) {
+		t.Fatalf("omitted owner must default to BeaconNeutral: %+v", b)
+	}
+}
+
+func TestMapDataRejectsOutOfBoundsBeaconFSV(t *testing.T) {
+	fsys := tinyMapFS()
+	// 1x1 tiles => 4x4 pathing grid, valid cell indices [0,3]; (4,4) is off-grid.
+	fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [0, 0]
+
+[[beacon]]
+id = 1
+cell = [4, 4]
+`)}
+	_, err := Load(fsys, "data/maps/tiny")
+	t.Logf("FSV out-of-bounds beacon err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "beacon 1") || !strings.Contains(err.Error(), "out of bounds") {
+		t.Fatalf("out-of-bounds beacon error must name beacon and bounds: %v", err)
+	}
+}
+
+func TestMapDataRejectsBadBeaconOwnerFSV(t *testing.T) {
+	fsys := tinyMapFS()
+	fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [0, 0]
+
+[[beacon]]
+id = 1
+cell = [1, 1]
+owner = 16
+`)}
+	_, err := Load(fsys, "data/maps/tiny")
+	t.Logf("FSV bad beacon owner err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "beacon 1") || !strings.Contains(err.Error(), "owner 16 out of range [0,15]") {
+		t.Fatalf("bad owner error must name beacon and range: %v", err)
+	}
+}
+
+func TestMapDataRejectsDuplicateBeaconFSV(t *testing.T) {
+	fsys := tinyMapFS()
+	fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [0, 0]
+
+[[beacon]]
+id = 1
+cell = [0, 0]
+
+[[beacon]]
+id = 1
+cell = [1, 1]
+`)}
+	_, err := Load(fsys, "data/maps/tiny")
+	t.Logf("FSV duplicate beacon err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "duplicate beacon id 1") {
+		t.Fatalf("duplicate beacon error must name id: %v", err)
+	}
+}
+
+func TestMapDataBeaconFingerprintSensitivityFSV(t *testing.T) {
+	withBeacon := func(owner string) fstest.MapFS {
+		fsys := tinyMapFS()
+		fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [0, 0]
+
+[[beacon]]
+id = 1
+cell = [1, 1]
+` + owner)}
+		return fsys
+	}
+	neutral, err := Load(withBeacon(""), "data/maps/tiny")
+	if err != nil {
+		t.Fatal(err)
+	}
+	owned, err := Load(withBeacon("owner = 0\n"), "data/maps/tiny")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV beacon fingerprint neutral=%016x owned=%016x", neutral.Fingerprint, owned.Fingerprint)
+	if neutral.Fingerprint == owned.Fingerprint {
+		t.Fatalf("beacon owner change did not change fingerprint (beacons absent from map identity hash)")
+	}
+}
+
 func checkFlag(t *testing.T, m *Map, x, y int, want PathFlags) {
 	t.Helper()
 	got, ok := m.PathingAt(x, y)
