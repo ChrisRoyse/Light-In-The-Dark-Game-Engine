@@ -93,6 +93,48 @@ func TestSaveLoadThreadColdRoundTrip(t *testing.T) {
 	t.Logf("FSV cold round-trip: artifact bytecode-free, cold resume = %v", vals)
 }
 
+// TestSaveLoadThreadPreservesRegisterAliasing — two registers aliasing one
+// table must round-trip as a single shared object, not two copies. SoT = a
+// mutation through one alias being visible through the other after a cold
+// reload (42, not 0).
+func TestSaveLoadThreadPreservesRegisterAliasing(t *testing.T) {
+	const aliasSrc = `
+		local a = { n = 0 }
+		local b = a
+		coroutine.yield()
+		a.n = 42
+		return b.n
+	`
+	regHot := NewChunkRegistry()
+	defer regHot.Close()
+	co, _ := runToYield(t, regHot, aliasSrc)
+	img, err := SaveThread(regHot, co)
+	if err != nil {
+		t.Fatalf("SaveThread: %v", err)
+	}
+	blob, _ := json.Marshal(img)
+
+	var img2 ThreadImage
+	if err := json.Unmarshal(blob, &img2); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	regCold := NewChunkRegistry()
+	defer regCold.Close()
+	if _, err := regCold.Register("world", aliasSrc); err != nil {
+		t.Fatalf("cold register: %v", err)
+	}
+	rtCold := lua.NewState()
+	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	if err != nil {
+		t.Fatalf("LoadThread: %v", err)
+	}
+	_, _, vals := rtCold.Resume(th, topFn)
+	if len(vals) != 1 || vals[0] != lua.LNumber(42) {
+		t.Fatalf("alias not preserved: got %v, want [42] (mutation via one alias unseen by the other => duplicated tables)", vals)
+	}
+	t.Logf("FSV register aliasing: cold resume = %v (shared table preserved)", vals)
+}
+
 // TestLoadThreadContentMismatch — loading against a registry whose content
 // hashes differently must fail loudly (fail-closed), not silently mis-resume.
 func TestLoadThreadContentMismatch(t *testing.T) {

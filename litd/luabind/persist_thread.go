@@ -45,23 +45,21 @@ type FrameImage struct {
 	TailCall   int    `json:"tailcall"`
 }
 
-// slotImage is one register slot. A Go-nil slot (uninitialized register) is
-// distinct from an LNil value and is preserved as such.
-type slotImage struct {
-	Nil bool            `json:"nil,omitempty"`
-	Val json.RawMessage `json:"val,omitempty"`
-}
-
-// ThreadImage is the serializable form of a suspended LState.
+// ThreadImage is the serializable form of a suspended LState. The whole
+// register stack is encoded as ONE shared value graph (Stack) so a table
+// aliased across distinct registers round-trips as a single object; StackNil
+// marks slots that were Go-nil (uninitialized register) so they restore as
+// Go-nil rather than LNil.
 type ThreadImage struct {
-	Dead         bool         `json:"dead"`
-	Wrapped      bool         `json:"wrapped"`
-	InstrLimited bool         `json:"instrLimited"`
-	InstrLeft    int64        `json:"instrLeft"`
-	MemLimited   bool         `json:"memLimited"`
-	MemLeft      int64        `json:"memLeft"`
-	Frames       []FrameImage `json:"frames"`
-	Stack        []slotImage  `json:"stack"`
+	Dead         bool            `json:"dead"`
+	Wrapped      bool            `json:"wrapped"`
+	InstrLimited bool            `json:"instrLimited"`
+	InstrLeft    int64           `json:"instrLeft"`
+	MemLimited   bool            `json:"memLimited"`
+	MemLeft      int64           `json:"memLeft"`
+	Frames       []FrameImage    `json:"frames"`
+	Stack        json.RawMessage `json:"stack"`
+	StackNil     []bool          `json:"stackNil,omitempty"`
 }
 
 // SaveThread serializes a suspended coroutine th into a ThreadImage, mapping
@@ -92,18 +90,28 @@ func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 			ReturnBase: f.ReturnBase, NArgs: f.NArgs, NRet: f.NRet, TailCall: f.TailCall,
 		})
 	}
-	img.Stack = make([]slotImage, len(v.Stack))
+	// Encode the whole register stack as one shared graph; Go-nil slots are
+	// sent as LNil and recorded in StackNil so they restore as Go-nil.
+	vals := make([]lua.LValue, len(v.Stack))
+	img.StackNil = make([]bool, len(v.Stack))
+	anyNil := false
 	for i, sv := range v.Stack {
 		if sv == nil {
-			img.Stack[i] = slotImage{Nil: true}
+			vals[i] = lua.LNil
+			img.StackNil[i] = true
+			anyNil = true
 			continue
 		}
-		b, err := SerializeValue(sv)
-		if err != nil {
-			return nil, fmt.Errorf("luabind: register slot %d: %w", i, err)
-		}
-		img.Stack[i] = slotImage{Val: b}
+		vals[i] = sv
 	}
+	if !anyNil {
+		img.StackNil = nil
+	}
+	blob, err := SerializeValues(vals)
+	if err != nil {
+		return nil, fmt.Errorf("luabind: register stack: %w", err)
+	}
+	img.Stack = blob
 	return img, nil
 }
 
@@ -134,15 +142,15 @@ func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage) (*lua.
 			ReturnBase: fi.ReturnBase, NArgs: fi.NArgs, NRet: fi.NRet, TailCall: fi.TailCall,
 		})
 	}
-	v.Stack = make([]lua.LValue, len(img.Stack))
-	for i, si := range img.Stack {
-		if si.Nil {
-			v.Stack[i] = nil
+	vals, err := DeserializeValues(parent, img.Stack)
+	if err != nil {
+		return nil, nil, fmt.Errorf("luabind: register stack: %w", err)
+	}
+	v.Stack = make([]lua.LValue, len(vals))
+	for i, val := range vals {
+		if i < len(img.StackNil) && img.StackNil[i] {
+			v.Stack[i] = nil // restore Go-nil register
 			continue
-		}
-		val, err := DeserializeValue(parent, si.Val)
-		if err != nil {
-			return nil, nil, fmt.Errorf("luabind: register slot %d: %w", i, err)
 		}
 		v.Stack[i] = val
 	}

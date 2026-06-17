@@ -50,6 +50,15 @@ type valueBlob struct {
 	Tables []stable `json:"tables"`
 }
 
+// valuesBlob is the multi-root form: several values sharing ONE interned table
+// pool, so a table referenced by more than one root (e.g. two register slots
+// aliasing the same table) round-trips as a single shared object rather than
+// independent copies.
+type valuesBlob struct {
+	Roots  []sval   `json:"roots"`
+	Tables []stable `json:"tables"`
+}
+
 // vEncoder interns tables by pointer identity while walking the graph.
 type vEncoder struct {
 	ids    map[*lua.LTable]int
@@ -66,6 +75,22 @@ func SerializeValue(v lua.LValue) ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(valueBlob{Root: root, Tables: e.tables})
+}
+
+// SerializeValues encodes several LValues sharing one interned table pool, so
+// identity shared ACROSS the values (not just within one) survives the round
+// trip. Loud error (naming the value index) on any non-data value.
+func SerializeValues(vs []lua.LValue) ([]byte, error) {
+	e := &vEncoder{ids: map[*lua.LTable]int{}}
+	roots := make([]sval, len(vs))
+	for i, v := range vs {
+		r, err := e.encode(v)
+		if err != nil {
+			return nil, fmt.Errorf("luabind: value %d: %w", i, err)
+		}
+		roots[i] = r
+	}
+	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables})
 }
 
 func (e *vEncoder) encode(v lua.LValue) (sval, error) {
@@ -132,17 +157,13 @@ func (e *vEncoder) encodeTable(t *lua.LTable) (sval, error) {
 	return sval{T: "table", Ref: id}, nil
 }
 
-// DeserializeValue reconstructs a data graph (produced by SerializeValue) into
-// fresh tables on L. Sharing and cycles are restored by allocating every table
-// first, then wiring entries — so a ref always points at the same object.
-func DeserializeValue(L *lua.LState, data []byte) (lua.LValue, error) {
-	var b valueBlob
-	if err := json.Unmarshal(data, &b); err != nil {
-		return nil, fmt.Errorf("luabind: malformed value blob: %w", err)
-	}
-	// Pass 1: allocate every table so refs resolve during pass 2 (handles cycles).
-	pool := make([]*lua.LTable, len(b.Tables))
-	for i := range b.Tables {
+// decodeTables allocates and wires the interned table pool, returning the pool
+// and a decoder closure over it. Sharing and cycles are restored by allocating
+// every table first (pass 1), then wiring entries (pass 2) — so a ref always
+// resolves to the same object.
+func decodeTables(L *lua.LState, tables []stable) (func(sval) (lua.LValue, error), error) {
+	pool := make([]*lua.LTable, len(tables))
+	for i := range tables {
 		pool[i] = L.NewTable()
 	}
 	decode := func(s sval) (lua.LValue, error) {
@@ -164,8 +185,7 @@ func DeserializeValue(L *lua.LState, data []byte) (lua.LValue, error) {
 			return nil, fmt.Errorf("luabind: unknown serialized value tag %q", s.T)
 		}
 	}
-	// Pass 2: fill entries and metatables.
-	for i, st := range b.Tables {
+	for i, st := range tables {
 		if len(st.Keys) != len(st.Vals) {
 			return nil, fmt.Errorf("luabind: table %d has %d keys but %d vals", i, len(st.Keys), len(st.Vals))
 		}
@@ -189,5 +209,42 @@ func DeserializeValue(L *lua.LState, data []byte) (lua.LValue, error) {
 			tbl.Metatable = mv
 		}
 	}
+	return decode, nil
+}
+
+// DeserializeValue reconstructs a data graph (produced by SerializeValue) into
+// fresh tables on L.
+func DeserializeValue(L *lua.LState, data []byte) (lua.LValue, error) {
+	var b valueBlob
+	if err := json.Unmarshal(data, &b); err != nil {
+		return nil, fmt.Errorf("luabind: malformed value blob: %w", err)
+	}
+	decode, err := decodeTables(L, b.Tables)
+	if err != nil {
+		return nil, err
+	}
 	return decode(b.Root)
+}
+
+// DeserializeValues reconstructs a multi-root graph (produced by
+// SerializeValues) into fresh tables on L, preserving identity shared across
+// the roots.
+func DeserializeValues(L *lua.LState, data []byte) ([]lua.LValue, error) {
+	var b valuesBlob
+	if err := json.Unmarshal(data, &b); err != nil {
+		return nil, fmt.Errorf("luabind: malformed values blob: %w", err)
+	}
+	decode, err := decodeTables(L, b.Tables)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]lua.LValue, len(b.Roots))
+	for i, r := range b.Roots {
+		v, err := decode(r)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = v
+	}
+	return out, nil
 }
