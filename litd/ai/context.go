@@ -41,23 +41,9 @@ type AIView interface {
 
 // CommandKind tags a typed AI command. The integer-pair operands (A, B) carry
 // the command-specific payload, exactly as WC3's integer-pair command stack did
-// — but typed, so the boundary is checkable rather than a bag of ints.
+// — but typed, so the boundary is checkable rather than a bag of ints. The
+// concrete command set and the ordered stream live in commands.go (#273).
 type CommandKind uint16
-
-const (
-	// CmdNone is the zero value — an unset command, never issued.
-	CmdNone CommandKind = iota
-	// CmdTrain: A = unitTypeID to train, B = producing structure id.
-	CmdTrain
-	// CmdBuild: A = structure typeID, B = packed build location.
-	CmdBuild
-	// CmdAttack: A = attacking group/unit id, B = target id.
-	CmdAttack
-	// CmdGather: A = worker id, B = resource node id.
-	CmdGather
-	// CmdRetreat: A = group id, B = rally point.
-	CmdRetreat
-)
 
 // AICommand is one typed command an AI enqueues onto the ordered command stream
 // — the typed-Go descendant of WC3's integer-pair command stack (R-EXEC-3). It
