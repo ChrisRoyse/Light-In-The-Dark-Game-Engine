@@ -128,6 +128,59 @@ func TestLuaThreadErrorIsSurfacedFSV(t *testing.T) {
 	t.Logf("FSV resume-error surfaced after Advance: %q", got[0])
 }
 
+func TestLuaThreadsDeterministicFSV(t *testing.T) {
+	// Spawn several threads with different and identical wait durations, all
+	// mutating sim state, then advance. Two runs of the identical scenario must
+	// produce the same authoritative-state digest — cooperative scheduling and
+	// same-tick resume order are deterministic (the scheduler's (wakeTick, seq)
+	// total order), independent of goroutine scheduling.
+	run := func() uint64 {
+		g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 29})
+		if err != nil {
+			t.Fatalf("NewGame: %v", err)
+		}
+		if err := g.DefineUnits([]data.Unit{
+			{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+		}); err != nil {
+			t.Fatalf("DefineUnits: %v", err)
+		}
+		L := lua.NewState()
+		defer L.Close()
+		if err := Register(L, g); err != nil {
+			t.Fatalf("Register: %v", err)
+		}
+		set := func(name string, u api.Unit) {
+			ud := L.NewUserData()
+			ud.Value = u
+			L.SetGlobal(name, ud)
+		}
+		set("u1", g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 10, Y: 0}, api.Deg(0)))
+		set("u2", g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 20, Y: 0}, api.Deg(0)))
+		set("u3", g.CreateUnit(g.Player(2), g.UnitType("hfoo"), api.Vec2{X: 30, Y: 0}, api.Deg(0)))
+
+		// u1 and u3 both wait 0.05 (same wake tick -> resume in spawn/seq order);
+		// u2 waits 0.1.
+		if err := L.DoString(`
+			Run(function() Unit_SetLife(u1, 11); PolledWait(0.05); Unit_SetLife(u1, 21) end)
+			Run(function() Unit_SetLife(u2, 12); PolledWait(0.1);  Unit_SetLife(u2, 22) end)
+			Run(function() Unit_SetPosition(u3, {x=5,y=5}); PolledWait(0.05); Unit_SetPosition(u3, {x=9,y=9}) end)
+		`); err != nil {
+			t.Fatalf("DoString multi-thread: %v", err)
+		}
+		g.Advance(4)
+		if n := g.SuspendedThreadCount(); n != 0 {
+			t.Fatalf("all threads should have finished after Advance(4), suspended=%d", n)
+		}
+		return g.StateHash()
+	}
+
+	h1, h2 := run(), run()
+	t.Logf("FSV determinism: run1=%#x run2=%#x", h1, h2)
+	if h1 != h2 {
+		t.Fatalf("identical multi-thread scenario produced different state: %#x != %#x", h1, h2)
+	}
+}
+
 func TestLuaThreadNoWaitRunsToCompletionFSV(t *testing.T) {
 	g, u := scriptGame(t)
 	L := lua.NewState()
