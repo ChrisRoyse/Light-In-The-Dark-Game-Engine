@@ -117,6 +117,89 @@ func (w *World) IssueBuild(worker EntityID, typeID uint16, site fixed.Vec2) bool
 	return w.IssueOrder(worker, Order{Kind: OrderBuild, Point: site, Data: typeID}, false)
 }
 
+// buildSearchRings bounds the deterministic outward placement scan.
+const buildSearchRings = 24
+
+// PlaceBuildingNear runs a deterministic outward ring scan from center for a
+// buildable site for typeID and, finding one, picks the lowest-entity-id idle
+// builder owned by player and issues the build. Returns the builder, the chosen
+// site, and ok. ok=false — a recorded no-op the AI observes — when no buildable
+// site is found within the scan or no idle builder is available. The sim owns
+// site + builder selection (R-EXEC-3): the AI names a structure type only, never
+// raw coordinates.
+func (w *World) PlaceBuildingNear(player uint8, typeID uint16, center fixed.Vec2) (EntityID, fixed.Vec2, bool) {
+	if w.buildDef(typeID) == nil {
+		return 0, fixed.Vec2{}, false
+	}
+	site, ok := w.findBuildSite(typeID, center)
+	if !ok {
+		return 0, fixed.Vec2{}, false
+	}
+	worker, ok := w.idleBuilder(player)
+	if !ok {
+		return 0, fixed.Vec2{}, false
+	}
+	if !w.IssueBuild(worker, typeID, site) {
+		return 0, fixed.Vec2{}, false
+	}
+	return worker, site, true
+}
+
+// findBuildSite scans cells in expanding square rings around center's cell, in a
+// fixed (row-major per ring) order, and returns the first cell-centred site that
+// passes ValidatePlacement. Deterministic and grid-driven.
+func (w *World) findBuildSite(typeID uint16, center fixed.Vec2) (fixed.Vec2, bool) {
+	if w.Grid == nil {
+		return fixed.Vec2{}, false
+	}
+	cx := int32(center.X.Floor() >> 5) // cell = 32 world units
+	cy := int32(center.Y.Floor() >> 5)
+	for ring := int32(0); ring <= buildSearchRings; ring++ {
+		for dy := -ring; dy <= ring; dy++ {
+			for dx := -ring; dx <= ring; dx++ {
+				if ring > 0 && dx > -ring && dx < ring && dy > -ring && dy < ring {
+					continue // interior cells already covered by a smaller ring
+				}
+				x, y := cx+dx, cy+dy
+				if !path.InBounds(x, y) {
+					continue
+				}
+				site := CellCenter(y*path.GridSize + x)
+				if w.ValidatePlacement(typeID, site) {
+					return site, true
+				}
+			}
+		}
+	}
+	return fixed.Vec2{}, false
+}
+
+// idleBuilder returns the lowest-entity-id mobile, idle (Stop-stance) unit owned
+// by player that is not itself a producer structure — a builder candidate.
+func (w *World) idleBuilder(player uint8) (EntityID, bool) {
+	o := w.Owners
+	var pick EntityID
+	pickIdx := int64(1) << 62
+	found := false
+	for r := int32(0); r < o.count; r++ {
+		if o.Player[r] != player {
+			continue
+		}
+		id := o.Entity[r]
+		or := w.Orders.Row(id)
+		if or == -1 || w.Movements.Row(id) == -1 || w.Produce.Row(id) != -1 {
+			continue
+		}
+		if w.Orders.Kind[or] != OrderStop {
+			continue // busy (harvesting / building / moving)
+		}
+		if idx := int64(id.Index()); idx < pickIdx {
+			pick, pickIdx, found = id, idx, true
+		}
+	}
+	return pick, found
+}
+
 // buildReach is the worker-to-site distance at which construction may
 // start: the footprint half-extent plus a worker arm's length.
 func buildReach(side int32) fixed.F64 {

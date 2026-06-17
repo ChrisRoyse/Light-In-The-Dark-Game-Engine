@@ -381,6 +381,121 @@ func (w *World) CanAddFood(player uint8, cost uint8) bool {
 	return w.foodUsed[player]+int32(cost) <= w.foodCap[player]
 }
 
+// HarvestersOn counts player's workers currently assigned to gather the given
+// resource index — a harvester whose live target node carries that resource.
+// The economy source of truth for "workers on gold / lumber".
+func (w *World) HarvestersOn(player uint8, resource int) int {
+	h := w.Harvests
+	n := 0
+	for hr := int32(0); hr < h.count; hr++ {
+		id := h.Entity[hr]
+		or := w.Owners.Row(id)
+		if or == -1 || w.Owners.Player[or] != player {
+			continue
+		}
+		node := h.Node[hr]
+		nr := w.Nodes.Row(node)
+		if nr == -1 || !w.Ents.Alive(node) {
+			continue
+		}
+		if int(w.Nodes.Resource[nr]) == resource {
+			n++
+		}
+	}
+	return n
+}
+
+// HarvestAssign assigns up to count of player's harvester workers to gather the
+// given resource, INCREMENTALLY: workers already on that resource are kept, and
+// only the shortfall (count - current) is newly assigned — no churn. Selection
+// is deterministic: candidate workers in ascending entity-id order, each sent to
+// the nearest node carrying the resource (squared distance, ties to the lowest
+// node entity id). Returns the number newly assigned (a partial assignment when
+// workers or nodes run short — counts stay honest). The sim owns worker + node
+// selection (R-EXEC-3); the AI names a resource and a worker count only.
+func (w *World) HarvestAssign(player uint8, resource int, count int) int {
+	if player >= MaxPlayers || count <= 0 {
+		return 0
+	}
+	need := count - w.HarvestersOn(player, resource)
+	if need <= 0 {
+		return 0
+	}
+	h := w.Harvests
+	assigned := 0
+	fromIdx := int64(-1) // pick workers with Index() strictly greater than this (ascending)
+	for assigned < need {
+		var pick EntityID
+		pickIdx := int64(1) << 62
+		found := false
+		for hr := int32(0); hr < h.count; hr++ {
+			id := h.Entity[hr]
+			idx := int64(id.Index())
+			if idx <= fromIdx || idx >= pickIdx {
+				continue
+			}
+			or := w.Owners.Row(id)
+			if or == -1 || w.Owners.Player[or] != player {
+				continue
+			}
+			if h.Mask[hr]&(1<<uint(resource)) == 0 {
+				continue // cannot gather this resource
+			}
+			// Only IDLE workers are recruited — never steal a builder or churn a
+			// worker already gathering another resource (incremental assignment).
+			if orow := w.Orders.Row(id); orow == -1 || w.Orders.Kind[orow] != OrderStop {
+				continue
+			}
+			pick, pickIdx, found = id, idx, true
+		}
+		if !found {
+			break // no more eligible workers — honest partial assignment
+		}
+		fromIdx = pickIdx
+		node, ok := w.nearestNode(pick, resource)
+		if !ok {
+			break // no node carrying the resource — honest partial assignment
+		}
+		if w.IssueOrder(pick, Order{Kind: OrderHarvest, Target: node}, false) {
+			assigned++
+		}
+	}
+	return assigned
+}
+
+// nearestNode returns the live, non-exhausted node carrying resource closest to
+// worker (squared distance, ties to the lowest node entity id), ok=false if none.
+func (w *World) nearestNode(worker EntityID, resource int) (EntityID, bool) {
+	tr := w.Transforms.Row(worker)
+	if tr == -1 {
+		return 0, false
+	}
+	pos := w.Transforms.Pos[tr]
+	var best EntityID
+	var bestHi, bestLo uint64
+	var bestIdx uint32
+	found := false
+	for nr := int32(0); nr < w.Nodes.count; nr++ {
+		if int(w.Nodes.Resource[nr]) != resource || w.Nodes.Remaining[nr] <= 0 {
+			continue
+		}
+		node := w.Nodes.Entity[nr]
+		ntr := w.Transforms.Row(node)
+		if ntr == -1 || !w.Ents.Alive(node) {
+			continue
+		}
+		dHi, dLo := fixed.DistSq(pos, w.Transforms.Pos[ntr])
+		idx := node.Index()
+		better := !found || dHi < bestHi ||
+			(dHi == bestHi && dLo < bestLo) ||
+			(dHi == bestHi && dLo == bestLo && idx < bestIdx)
+		if better {
+			best, bestHi, bestLo, bestIdx, found = node, dHi, dLo, idx, true
+		}
+	}
+	return best, found
+}
+
 // ---- the cycle (driven from ordersSystem, phase 3) ----
 
 // driveHarvest advances one worker's OrderHarvest. Order row r,
