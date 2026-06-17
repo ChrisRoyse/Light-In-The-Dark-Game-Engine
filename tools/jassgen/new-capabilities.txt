@@ -98,6 +98,11 @@ exact   Game.DefineUnits
 # Structural, no JASS equivalent (a leak-free uint64, no sim types exposed).
 exact   Game.StateHash
 
+# host-loop primitive (#268/#269): advance the deterministic sim by N ticks,
+# resuming scheduled threads/timers at their wake tick. The world loader and Lua
+# execution track drive game time through it. Structural, no single JASS verb.
+exact   Game.Advance
+
 # value-math (R-API-2 value types; no JASS native)
 exact   Angle.Normalized
 exact   Angle.Radians
