@@ -16422,6 +16422,36 @@
       }
     },
     {
+      "name": "SetUnitManaBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "newValue",
+            "jassType": "real",
+            "tsType": "number"
+          }
+        ],
+        "returns": "nothing"
+      },
+      "classification": "D5",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.SetMana",
+        "package": "litd/api",
+        "goSignature": "(v float64)",
+        "collapsesWith": [
+          "SetUnitManaPercentBJ"
+        ]
+      }
+    },
+    {
       "name": "SetUnitPositionLocFacingBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -52146,9 +52176,7 @@
         "goSignature": "(v float64)",
         "collapsesWith": [
           "SetUnitLifeBJ",
-          "SetUnitLifePercentBJ",
-          "SetUnitManaBJ",
-          "SetUnitManaPercentBJ"
+          "SetUnitLifePercentBJ"
         ]
       }
     },

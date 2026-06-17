@@ -365,6 +365,7 @@ func (u Unit) ManaPercent() float64 {
 
 // SetMana sets the unit's current mana, clamped to [0, MaxMana]. No-op on an
 // invalid handle or a unit with no mana pool. D5: SetUnitState(UNIT_STATE_MANA).
+// JASS: SetUnitManaBJ, SetUnitManaPercentBJ
 func (u Unit) SetMana(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetMana")

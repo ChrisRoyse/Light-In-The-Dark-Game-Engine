@@ -1893,9 +1893,9 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SelectUnitAddForPlayer | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface. |
 | SelectUnitRemoveForPlayer | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #217: unit selection is per-player UI/render state (like the camera local view); the deterministic sim never reads or branches on it, so it has no sim API surface. |
 | SetUnitLifeBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
-| SetUnitManaBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
+| SetUnitManaBJ | blizzard.j | D5 | `litd/api.Unit.SetMana` |
 | SetUnitLifePercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
-| SetUnitManaPercentBJ | blizzard.j | D5 | `litd/api.Unit.SetLife` (D3 collapse → SetUnitState) |
+| SetUnitManaPercentBJ | blizzard.j | D5 | `litd/api.Unit.SetMana` (D3 collapse → SetUnitManaBJ) |
 | IsUnitDeadBJ | blizzard.j | D3 | `litd/api.Unit.Alive` (D3 collapse → IsUnitAliveBJ) |
 | IsUnitAliveBJ | blizzard.j | D3 | `litd/api.Unit.Alive` |
 | IsUnitGroupDeadBJEnum | blizzard.j | D1 | **tombstoned** (superseded): all-dead enum superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |

@@ -56,9 +56,18 @@ name = "SetUnitState"
 class = "D5"
 goMapping = "Unit.SetLife"
 goSignature = "(v float64)"
-collapsesWith = ["SetUnitLifeBJ", "SetUnitLifePercentBJ", "SetUnitManaBJ", "SetUnitManaPercentBJ"]
+collapsesWith = ["SetUnitLifeBJ", "SetUnitLifePercentBJ"]
 package = "litd/api"
-reason = "enum-keyed state setter collapses onto typed accessors (dedup §6 ex.1); already hand-implemented in M5 — generator must skip. The whole state-setter BJ family folds here onto the typed Unit.Set{Life,Mana} accessors over the one state table: SetUnitLifeBJ (clamp-on-set life), SetUnitLifePercentBJ/SetUnitManaPercentBJ (percent forms), SetUnitManaBJ (mana) — one canonical target avoids the duplicateTargets gate"
+reason = "enum-keyed state setter collapses onto the typed LIFE accessor (dedup §6 ex.1); already hand-implemented in M5 — generator must skip. The life-state BJ family folds here: SetUnitLifeBJ (clamp-on-set life), SetUnitLifePercentBJ (percent form). The MANA setters route to the typed Unit.SetMana instead (see the SetUnitManaBJ override) — collapsing them here mislabelled the mana port as Unit.SetLife (#390)"
+
+[[override]]
+name = "SetUnitManaBJ"
+class = "D5"
+goMapping = "Unit.SetMana"
+goSignature = "(v float64)"
+collapsesWith = ["SetUnitManaPercentBJ"]
+package = "litd/api"
+reason = "mana-state setter — the mana half of the SetUnitState BJ family, mapped to the typed Unit.SetMana accessor (mirrors SetUnitLifeBJ -> Unit.SetLife). SetUnitManaPercentBJ (percent form) folds here. Split out of SetUnitState's collapse, where the mana natives had been mis-mapped onto Unit.SetLife (#390)"
 
 [[override]]
 name = "GetUnitCount"

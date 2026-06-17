@@ -93,6 +93,14 @@ exact   Game.Resolve
 # (supersedes JASS slk/data-table loading) — structural, no single JASS verb.
 exact   Game.DefineUnits
 
+# runtime world-loader seam (#268): the api stays Lua-agnostic — a backend
+# (litd/luabind) registers via SetWorldLoader, and LoadWorld delegates to it to
+# load a world directory at runtime. HasWorldLoader reports whether a backend is
+# installed. Structural plumbing (a LitD original), no JASS equivalent.
+exact   Game.LoadWorld
+exact   Game.SetWorldLoader
+exact   Game.HasWorldLoader
+
 # verification seam (#267/#271): a deterministic uint64 digest of authoritative
 # sim state, for Go-vs-Lua binding conformance and run-to-run determinism.
 # Structural, no JASS equivalent (a leak-free uint64, no sim types exposed).

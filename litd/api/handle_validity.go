@@ -176,7 +176,7 @@ func (u Unit) LifePercent() float64 {
 // values above MaxLife clamp to MaxLife. Setting life to 0 (or below) is
 // lethal — the unit is killed, firing the death event in the sim step, just
 // as SetUnitState(UNIT_STATE_LIFE, 0) kills in WC3.
-// JASS: SetUnitLifeBJ, SetUnitLifePercentBJ, SetUnitManaBJ, SetUnitManaPercentBJ, SetUnitState
+// JASS: SetUnitLifeBJ, SetUnitLifePercentBJ, SetUnitState
 func (u Unit) SetLife(v float64) {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.SetLife")

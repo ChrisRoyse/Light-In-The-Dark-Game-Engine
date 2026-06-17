@@ -59,12 +59,15 @@ var setupAllowlist = map[string]bool{
 //     match runs. Game.DefineUnits (#387) seeds unit definitions (the method
 //     analog of the NewGame/LoadMap free-func setup allowlist) and returns error
 //     on invalid/conflicting defs — a load-time failure, never mid-match.
+//     Game.LoadWorld (#268) loads a world directory at runtime and MUST fail
+//     loudly at load (broken data table / Lua syntax / quota), never mid-match.
 //
 // Keyed "Type.Method".
 var methodErrAllowlist = map[string]bool{
 	"Storage.Save":     true,
 	"Storage.Load":     true,
 	"Game.DefineUnits": true,
+	"Game.LoadWorld":   true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the
