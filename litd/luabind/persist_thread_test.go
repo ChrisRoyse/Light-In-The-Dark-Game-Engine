@@ -160,23 +160,92 @@ func TestLoadThreadContentMismatch(t *testing.T) {
 	t.Logf("FSV mismatch fail-closed: %v", err)
 }
 
-// TestSaveThreadRejectsNonDataRegister — a function/closure sitting in a
-// register cannot be serialized in the step-4 data graph; SaveThread must
-// reject it loudly rather than emit a save that cannot be restored.
-func TestSaveThreadRejectsNonDataRegister(t *testing.T) {
+// TestSaveLoadThreadClosureSharedUpvalue — two closures in registers sharing
+// one OPEN upvalue over a local must round-trip as two closures sharing one
+// cell that aliases the restored register. SoT = the cold-resumed value, which
+// is 2 only if a post-resume write through one closure is seen by the other.
+func TestSaveLoadThreadClosureSharedUpvalue(t *testing.T) {
+	const closureSrc = `
+		local x = 0
+		local inc = function() x = x + 1 end
+		local get = function() return x end
+		inc()                 -- x = 1
+		coroutine.yield()
+		inc()                 -- x = 2 if inc/get share x; 1 if duplicated
+		return get()
+	`
+	regHot := NewChunkRegistry()
+	defer regHot.Close()
+	co, _ := runToYield(t, regHot, closureSrc)
+	img, err := SaveThread(regHot, co)
+	if err != nil {
+		t.Fatalf("SaveThread: %v", err)
+	}
+	blob, _ := json.Marshal(img)
+	if strings.Contains(string(blob), "OP_") {
+		t.Fatalf("closure artifact embeds bytecode: %s", blob)
+	}
+
+	var img2 ThreadImage
+	if err := json.Unmarshal(blob, &img2); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	regCold := NewChunkRegistry()
+	defer regCold.Close()
+	if _, err := regCold.Register("world", closureSrc); err != nil {
+		t.Fatalf("cold register: %v", err)
+	}
+	rtCold := lua.NewState()
+	th, topFn, err := LoadThread(regCold, rtCold, &img2)
+	if err != nil {
+		t.Fatalf("LoadThread: %v", err)
+	}
+	_, _, vals := rtCold.Resume(th, topFn)
+	if len(vals) != 1 || vals[0] != lua.LNumber(2) {
+		t.Fatalf("shared open upvalue not preserved: got %v, want [2] (1 => duplicated closures)", vals)
+	}
+	t.Logf("FSV closure shared upvalue: cold resume = %v", vals)
+}
+
+// TestSaveThreadRejectsThreadRegister — a value still outside the persistable
+// set (a nested coroutine/thread in a register) must be rejected loudly rather
+// than emit an unrestorable save.
+func TestSaveThreadRejectsThreadRegister(t *testing.T) {
 	reg := NewChunkRegistry()
 	defer reg.Close()
 	co, _ := runToYield(t, reg, `
-		local f = function() return 1 end
+		local inner = coroutine.create(function() end)
 		coroutine.yield()
+		return type(inner)
+	`)
+	_, err := SaveThread(reg, co)
+	if err == nil {
+		t.Fatal("expected SaveThread to reject a thread register, got nil")
+	}
+	if !strings.Contains(err.Error(), "thread") {
+		t.Fatalf("error did not name the thread value: %v", err)
+	}
+	t.Logf("FSV thread reject: %v", err)
+}
+
+// TestSaveThreadRejectsFrameWithUpvalues — yielding INSIDE a closure that has
+// upvalues makes the suspended frame's function carry upvalues; the restore
+// path rebuilds an upvalue-less frame closure, so SaveThread must reject this
+// rather than silently break it.
+func TestSaveThreadRejectsFrameWithUpvalues(t *testing.T) {
+	reg := NewChunkRegistry()
+	defer reg.Close()
+	co, _ := runToYield(t, reg, `
+		local x = 5
+		local f = function() coroutine.yield(); return x end
 		return f()
 	`)
 	_, err := SaveThread(reg, co)
 	if err == nil {
-		t.Fatal("expected SaveThread to reject a closure register, got nil")
+		t.Fatal("expected SaveThread to reject a frame closure with upvalues, got nil")
 	}
-	if !strings.Contains(err.Error(), "type function") {
-		t.Fatalf("error did not name the function value: %v", err)
+	if !strings.Contains(err.Error(), "upvalue") {
+		t.Fatalf("error did not name the upvalue limitation: %v", err)
 	}
-	t.Logf("FSV non-data reject: %v", err)
+	t.Logf("FSV frame-upvalue reject: %v", err)
 }

@@ -80,6 +80,12 @@ func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 		if f.Fn == nil || f.Fn.IsG || f.Fn.Proto == nil {
 			return nil, fmt.Errorf("luabind: frame %d is a Go-function frame — cannot persist (step 5)", i)
 		}
+		if len(f.Fn.Upvalues) > 0 {
+			// A frame whose executing closure has upvalues would need those
+			// upvalues rebuilt too; the restore path makes a fresh upvalue-less
+			// closure from the proto. Reject rather than silently break it.
+			return nil, fmt.Errorf("luabind: frame %d executes a closure with %d upvalue(s) — not yet supported (yield inside a closure-with-upvalues)", i, len(f.Fn.Upvalues))
+		}
 		cid, path, err := reg.PathOf(f.Fn.Proto)
 		if err != nil {
 			return nil, fmt.Errorf("luabind: frame %d: %w", i, err)
@@ -107,7 +113,7 @@ func SaveThread(reg *ChunkRegistry, th *lua.LState) (*ThreadImage, error) {
 	if !anyNil {
 		img.StackNil = nil
 	}
-	blob, err := SerializeValues(vals)
+	blob, err := serializeRegisters(reg, th, vals)
 	if err != nil {
 		return nil, fmt.Errorf("luabind: register stack: %w", err)
 	}
@@ -142,17 +148,34 @@ func LoadThread(reg *ChunkRegistry, parent *lua.LState, img *ThreadImage) (*lua.
 			ReturnBase: fi.ReturnBase, NArgs: fi.NArgs, NRet: fi.NRet, TailCall: fi.TailCall,
 		})
 	}
-	vals, err := DeserializeValues(parent, img.Stack)
-	if err != nil {
-		return nil, nil, fmt.Errorf("luabind: register stack: %w", err)
+
+	// Decode the register graph (tables + closures share interned pools).
+	var blob valuesBlob
+	if err := json.Unmarshal(img.Stack, &blob); err != nil {
+		return nil, nil, fmt.Errorf("luabind: register stack: malformed graph: %w", err)
 	}
-	v.Stack = make([]lua.LValue, len(vals))
-	for i, val := range vals {
+	d, err := newGraphDecoder(parent, reg, &blob)
+	if err != nil {
+		return nil, nil, err
+	}
+	roots, err := d.roots()
+	if err != nil {
+		return nil, nil, err
+	}
+	v.Stack = make([]lua.LValue, len(roots))
+	for i, val := range roots {
 		if i < len(img.StackNil) && img.StackNil[i] {
 			v.Stack[i] = nil // restore Go-nil register
 			continue
 		}
 		v.Stack[i] = val
 	}
-	return parent.LitdRestoreThread(v), topFn, nil
+
+	th := parent.LitdRestoreThread(v)
+	// Wire closure upvalues AFTER restore, so open upvalues bind into th's live
+	// register file (and shared cells alias the same register).
+	if err := d.wireUpvalues(th); err != nil {
+		return nil, nil, err
+	}
+	return th, topFn, nil
 }
