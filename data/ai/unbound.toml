@@ -1,0 +1,25 @@
+# Unbound melee strategy (#282; faction per D-2026-06-11-32).
+# Unbound is the aggressive rush faction: a leaner economy and a smaller army
+# that strikes in earlier, smaller waves. Same unit type ids as Vigil
+# (0=worker, 1=soldier, 3=barracks); same Controller code, different table.
+
+name = "Unbound"
+
+[economy]
+gold_workers = 3
+wood_workers = 0
+easy_pct = 60
+normal_pct = 100
+insane_pct = 140
+
+[army]
+soldier_type = 1
+maintain = 6
+
+[waves]
+# strike as soon as a small striking force is ready (early aggression).
+size = 4
+
+[[build]]
+type = 3
+count = 1

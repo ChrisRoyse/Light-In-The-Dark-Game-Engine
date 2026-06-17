@@ -1,0 +1,30 @@
+# Vigil melee strategy (#282; faction per D-2026-06-11-32).
+# Vigil is the steady, economy-first faction: a wider worker base and a larger
+# standing army that commits in bigger, later waves. All unit references are
+# integer type ids registered by the match (0=worker, 1=soldier, 3=barracks).
+#
+# This table is consumed by the one melee Controller — switching to Unbound
+# changes these values, not a line of Go.
+
+name = "Vigil"
+
+[economy]
+gold_workers = 5
+wood_workers = 0
+# difficulty knob: economy/army targets scale by these percentages.
+easy_pct = 60
+normal_pct = 100
+insane_pct = 140
+
+[army]
+soldier_type = 1
+maintain = 8
+
+[waves]
+# launch once this many soldiers are ready (bigger, later commitment).
+size = 6
+
+# build order, priority top-down: one barracks to unlock soldier production.
+[[build]]
+type = 3
+count = 1
