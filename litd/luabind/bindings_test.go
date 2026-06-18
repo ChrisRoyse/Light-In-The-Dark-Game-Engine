@@ -97,6 +97,49 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestForceBindingFSV — #267: the Force noun binds — Game_CreateForce (mapped,
+// now that Force marshals as a return) yields a player-group handle, and the
+// generated Force_* verbs mutate/query it. SoT = readable membership: an added
+// player is Contained, a removed one is not; cross-checked through a Go Force
+// handle pulled back out of the Lua userdata.
+func TestForceBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	p0, p1 := g.Player(0), g.Player(1)
+	ud0 := L.NewUserData()
+	ud0.Value = p0
+	L.SetGlobal("p0", ud0)
+	ud1 := L.NewUserData()
+	ud1.Value = p1
+	L.SetGlobal("p1", ud1)
+	if err := L.DoString(`
+		f = Game_CreateForce()
+		Force_AddPlayer(f, p0)
+		c0 = Force_Contains(f, p0)
+		c1 = Force_Contains(f, p1)
+		Force_RemovePlayer(f, p0)
+		c0b = Force_Contains(f, p0)
+	`); err != nil {
+		t.Fatalf("Force verbs must bind (argForce + Force return, #267): %v", err)
+	}
+	if !lua.LVAsBool(L.GetGlobal("c0")) {
+		t.Fatal("Force_Contains after AddPlayer(p0) = false (add didn't reach membership)")
+	}
+	if lua.LVAsBool(L.GetGlobal("c1")) {
+		t.Fatal("Force_Contains(p1) = true but p1 was never added")
+	}
+	if lua.LVAsBool(L.GetGlobal("c0b")) {
+		t.Fatal("Force_Contains after RemovePlayer(p0) = true (remove didn't reach membership)")
+	}
+	// SoT cross-check: pull the Force back out of Lua, query it from Go.
+	f := L.GetGlobal("f").(*lua.LUserData).Value.(api.Force)
+	if f.Contains(p0) {
+		t.Fatal("Go Force.Contains(p0) = true after Lua remove (state divergence)")
+	}
+	t.Logf("FSV #267 Force: Lua Add(p0)->Contains true, Contains(p1) false, Remove(p0)->Contains false; Go handle agrees")
+}
+
 // TestCameraBindingFSV — #267: the Camera noun binds — Game_Camera (hand-written
 // resolver) yields the per-player handle, and the generated Camera_* verbs drive
 // it. SoT: Follow's target is read back by the Go handle (Following), and a Lua

@@ -202,6 +202,14 @@ func argCamera(L *lua.LState, i int) api.Camera {
 	return c
 }
 
+func argForce(L *lua.LState, i int) api.Force {
+	f, ok := handleArg(L, i).(api.Force)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Force userdata (from Game_CreateForce), got %T", handleArg(L, i)))
+	}
+	return f
+}
+
 func argItem(L *lua.LState, i int) api.Item {
 	v, ok := handleArg(L, i).(api.Item)
 	if !ok {

@@ -67,6 +67,8 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argAbility(L, %d)", idx), true
 	case "Camera":
 		return fmt.Sprintf("argCamera(L, %d)", idx), true
+	case "Force":
+		return fmt.Sprintf("argForce(L, %d)", idx), true
 	case "Player":
 		return fmt.Sprintf("argPlayer(L, %d)", idx), true
 	case "Timer":
@@ -150,7 +152,7 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
 	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer",
 		"UnitType", "ItemType", "BuffType", "Order", "Event", "Region", "Subscription",
-		"Ability", "Camera":
+		"Ability", "Camera", "Force":
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
 	case "float64", "int", "int32", "int64", "uint32", "uint8",
 		"Race", "Difficulty", "FogState", "Controller", "AllianceFlags",
