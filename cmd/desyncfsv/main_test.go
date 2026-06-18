@@ -125,11 +125,39 @@ func TestDesyncFSV_ControlNoFalsePositive(t *testing.T) {
 	t.Logf("FSV control: %d comparisons, 0 desync events (no false positive)", res.comparisons)
 }
 
+func TestDesyncFSV_TransformsInjectionBisected(t *testing.T) {
+	cfg := baseCfg(t.TempDir())
+	cfg.injectSystem = "transforms" // a divergent move order on one client
+	cfg.injectTick = 405
+	res, err := runHarness(cfg)
+	if err != nil {
+		t.Fatalf("runHarness: %v", err)
+	}
+	if len(res.events) == 0 {
+		t.Fatal("transforms divergence never detected (timeout)")
+	}
+	first := res.events[0]
+	delta := first.turn - res.injectTurn
+	if delta > uint64(cfg.K) {
+		t.Fatalf("detection lag %d turns exceeds K=%d", delta, cfg.K)
+	}
+	if first.system != "transforms" {
+		t.Fatalf("bisected to %q, want transforms (a move order moves the unit's position)", first.system)
+	}
+	d0 := loadDump(t, first.dumps[0])
+	d1 := loadDump(t, first.dumps[1])
+	diff := divergingSystems(d0, d1)
+	if len(diff) == 0 || diff[0] != "transforms" {
+		t.Fatalf("transforms injection: first diverging system %v, want transforms first", diff)
+	}
+	t.Logf("FSV transforms: detected turn %d (Δ=%d ≤K=%d), bisected to transforms; dump diverging set %v", first.turn, delta, cfg.K, diff)
+}
+
 func TestDesyncFSV_UnsupportedSystemRefused(t *testing.T) {
 	cfg := baseCfg(t.TempDir())
-	cfg.injectSystem = "movement" // not injectable until order application (#144/#146)
+	cfg.injectSystem = "combat" // not yet wired (needs opposing units)
 	if _, err := runHarness(cfg); err == nil {
-		t.Fatal("movement injection accepted; should be refused until #144/#146")
+		t.Fatal("combat injection accepted; not wired yet")
 	}
-	t.Log("FSV: movement injection refused (gated on order application #144/#146)")
+	t.Log("FSV: unsupported injection system refused")
 }

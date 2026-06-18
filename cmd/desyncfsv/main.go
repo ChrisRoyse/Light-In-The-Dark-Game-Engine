@@ -8,12 +8,19 @@
 // timeout / 3 wrong bisection).
 //
 // Fault injection lives ENTIRELY here (a harness concern), never in litd/sim or
-// litd/net production paths. Because order-component application is still pending
-// (#144/#146), gameplay orders cannot yet perturb movement/combat state; the
-// injectable divergences that are real and cleanly bisectable today are
-// state-level: "prng" (an extra PRNG draw → isolates the prng sub-hash) and
-// "entities" (an extra unit → isolates the entities sub-hash). Both produce a
-// genuine, persistent state divergence on one client.
+// litd/net production paths. Three real, cleanly bisectable divergences are
+// supported, named by the system the bisection actually reports (the earliest
+// diverging in registration order):
+//   - "transforms": a divergent move order on one client (order application is
+//     live since #144/#146) → that unit's POSITION moves, diverging the
+//     transforms sub-hash first (movement/orders follow, but transforms registers
+//     earlier — there is no gameplay path that moves a unit without changing its
+//     position, so transforms is the honest first-diverging system).
+//   - "prng": an extra PRNG draw → isolates the prng sub-hash.
+//   - "entities": an extra unit → diverges the entities sub-hash first.
+// Each produces a genuine, persistent state divergence on one client. ("combat" —
+// a one-sided attack — is a straightforward future extension once the harness
+// seeds opposing units.)
 package main
 
 import (
@@ -54,34 +61,42 @@ type result struct {
 
 // supportedInjections are the systems the harness can perturb today. See the
 // package doc for why movement/combat are not yet injectable.
-var supportedInjections = map[string]bool{"prng": true, "entities": true}
+var supportedInjections = map[string]bool{"transforms": true, "prng": true, "entities": true}
 
-func newClient(cfg config) (*api.Game, error) {
+func newClient(cfg config) (*api.Game, api.Unit, error) {
 	g, err := api.NewGame(api.GameOptions{MaxUnits: 64, Seed: int64(cfg.seed)})
 	if err != nil {
-		return nil, err
+		return nil, api.Unit{}, err
 	}
 	if err := g.DefineUnits([]data.Unit{
 		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 4 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
 	}); err != nil {
-		return nil, err
+		return nil, api.Unit{}, err
 	}
 	// Identical baseline so every client's state is byte-identical pre-injection.
-	if u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 100, Y: 100}, api.Deg(0)); u.ID() == 0 {
-		return nil, fmt.Errorf("baseline CreateUnit failed")
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 100, Y: 100}, api.Deg(0))
+	if u.ID() == 0 {
+		return nil, api.Unit{}, fmt.Errorf("baseline CreateUnit failed")
 	}
-	return g, nil
+	return g, u, nil
 }
 
 // perturb applies the system-targeted divergence to a single client.
-func perturb(g *api.Game, system string) error {
+func perturb(g *api.Game, u api.Unit, system string) error {
 	switch system {
+	case "transforms":
+		// A move order on this client only → its unit's position moves, others
+		// don't, diverging the transforms sub-hash first (movement/orders follow,
+		// but transforms registers earlier).
+		if !u.Order(g.Order("move"), api.TargetPoint(api.Vec2{X: 500, Y: 100})) {
+			return fmt.Errorf("transforms injection: move order refused")
+		}
 	case "prng":
 		_ = g.RandomInt(0, 1<<30) // advances only this client's PRNG cursor
 	case "entities":
 		g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
 	default:
-		return fmt.Errorf("unsupported -inject-system %q (supported: prng, entities; movement/combat await order-application #144/#146)", system)
+		return fmt.Errorf("unsupported -inject-system %q (supported: transforms, prng, entities)", system)
 	}
 	return nil
 }
@@ -92,7 +107,7 @@ func runHarness(cfg config) (result, error) {
 		return res, fmt.Errorf("need ≥2 clients, got %d", cfg.clients)
 	}
 	if cfg.injectSystem != "" && !supportedInjections[cfg.injectSystem] {
-		return res, fmt.Errorf("unsupported -inject-system %q (supported: prng, entities)", cfg.injectSystem)
+		return res, fmt.Errorf("unsupported -inject-system %q (supported: transforms, prng, entities)", cfg.injectSystem)
 	}
 	cadence := net.HashCadenceTurns(cfg.turnLen) // ≈ once/sec at 20 Hz
 	if cfg.K < cadence {
@@ -103,13 +118,15 @@ func runHarness(cfg config) (result, error) {
 	cadenceTicks := uint32(cadence * cfg.turnLen)
 
 	games := make([]*api.Game, cfg.clients)
+	units := make([]api.Unit, cfg.clients)
 	ids := make([]uint8, cfg.clients)
 	for i := range games {
-		g, err := newClient(cfg)
+		g, u, err := newClient(cfg)
 		if err != nil {
 			return res, fmt.Errorf("client %d setup: %w", i, err)
 		}
 		games[i] = g
+		units[i] = u
 		ids[i] = uint8(i)
 	}
 
@@ -126,7 +143,7 @@ func runHarness(cfg config) (result, error) {
 		// injection tick is simulated, so the divergence is live for every
 		// subsequent hash.
 		if cfg.injectSystem != "" && tick == cfg.injectTick {
-			if err := perturb(games[1], cfg.injectSystem); err != nil {
+			if err := perturb(games[1], units[1], cfg.injectSystem); err != nil {
 				return res, err
 			}
 		}
