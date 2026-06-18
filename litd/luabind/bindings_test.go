@@ -97,6 +97,45 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestUnitSetBindingFSV — #267: the *UnitSet noun binds (pointer handle):
+// Game_NewUnitSet yields the set, and the pointer-receiver UnitSet_* verbs
+// mutate it in place. SoT = readable membership/count, cross-checked through the
+// same *UnitSet pulled back out of the Lua userdata.
+func TestUnitSetBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	uud := L.NewUserData()
+	uud.Value = u
+	L.SetGlobal("u", uud)
+	if err := L.DoString(`
+		s = Game_NewUnitSet()
+		UnitSet_Add(s, u)
+		n1 = UnitSet_Count(s)
+		has = UnitSet_Contains(s, u)
+		UnitSet_Remove(s, u)
+		n0 = UnitSet_Count(s)
+	`); err != nil {
+		t.Fatalf("UnitSet verbs must bind (argUnitSet pointer handle, #267): %v", err)
+	}
+	if n1 := int(lua.LVAsNumber(L.GetGlobal("n1"))); n1 != 1 {
+		t.Fatalf("UnitSet_Count after Add = %d, want 1 (add didn't reach the set)", n1)
+	}
+	if !lua.LVAsBool(L.GetGlobal("has")) {
+		t.Fatal("UnitSet_Contains(u) = false after Add")
+	}
+	if n0 := int(lua.LVAsNumber(L.GetGlobal("n0"))); n0 != 0 {
+		t.Fatalf("UnitSet_Count after Remove = %d, want 0", n0)
+	}
+	// SoT cross-check: same *UnitSet, queried from Go.
+	s := L.GetGlobal("s").(*lua.LUserData).Value.(*api.UnitSet)
+	if s.Count() != 0 || s.Contains(u) {
+		t.Fatalf("Go *UnitSet disagrees: Count=%d Contains=%v after Lua remove", s.Count(), s.Contains(u))
+	}
+	t.Logf("FSV #267 UnitSet: Lua Add->Count 1/Contains true, Remove->Count 0; Go pointer agrees (in-place mutation)")
+}
+
 // TestSoundBindingFSV — #267: the Sound noun binds — Game_CreateSound (mapped,
 // now that Sound marshals as a return) yields a cue handle, and the generated
 // Sound_* verbs emit audio operations. SoT = the AudioEvents captured by a Go

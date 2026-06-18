@@ -218,6 +218,14 @@ func argSound(L *lua.LState, i int) api.Sound {
 	return s
 }
 
+func argUnitSet(L *lua.LState, i int) *api.UnitSet {
+	s, ok := handleArg(L, i).(*api.UnitSet)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected UnitSet userdata (from Game_NewUnitSet), got %T", handleArg(L, i)))
+	}
+	return s
+}
+
 func argItem(L *lua.LState, i int) api.Item {
 	v, ok := handleArg(L, i).(api.Item)
 	if !ok {
