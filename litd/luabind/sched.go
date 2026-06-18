@@ -31,6 +31,7 @@ package luabind
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"sync"
 	"time"
 
@@ -47,7 +48,18 @@ type scriptScheduler struct {
 	g       *api.Game
 	errH    func(error)
 	pending int
+	// handleCaches caches, per comparable handle type, the userdata wrapping each
+	// live handle (#407). The value for type T is a map[T]*lua.LUserData; pushHandle
+	// reaches it by reflect.Type key. Reuse makes a per-tick re-marshal of the same
+	// handle zero-alloc (R-GC-1) — the only box is the one-time ud.Value assignment
+	// on first sight. Single-threaded on the sim goroutine, so no lock.
+	handleCaches map[reflect.Type]any
 }
+
+// handleCacheCap bounds each per-type sub-cache before a wholesale clear, so
+// distinct-handle churn (entity recycle = new generation = new key) over a long
+// match cannot leak. Sized above any realistic live working set.
+const handleCacheCap = 8192
 
 // schedulers maps an LState to its scriptScheduler (installed by Register).
 var schedulers sync.Map // *lua.LState -> *scriptScheduler
@@ -90,7 +102,7 @@ func (s *scriptScheduler) reportError(err error) {
 // registerScriptThreads installs Run/PolledWait on L, bound to g. Called by
 // Register when g != nil (the threads need a game to schedule on).
 func registerScriptThreads(L *lua.LState, g *api.Game) {
-	s := &scriptScheduler{L: L, g: g}
+	s := &scriptScheduler{L: L, g: g, handleCaches: make(map[reflect.Type]any)}
 	schedulers.Store(L, s)
 	L.SetGlobal("PolledWait", L.NewFunction(bindScriptPolledWait))
 	L.SetGlobal("Run", L.NewFunction(func(L *lua.LState) int {

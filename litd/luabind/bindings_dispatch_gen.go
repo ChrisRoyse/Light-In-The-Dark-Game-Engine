@@ -517,7 +517,7 @@ func bindEventDamage(L *lua.LState) int {
 func bindEventKillingUnit(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.KillingUnit()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -525,7 +525,7 @@ func bindEventKillingUnit(L *lua.LState) int {
 func bindEventPlayer(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.Player()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -533,7 +533,7 @@ func bindEventPlayer(L *lua.LState) int {
 func bindEventRegion(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.Region()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -541,7 +541,7 @@ func bindEventRegion(L *lua.LState) int {
 func bindEventSource(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.Source()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -549,7 +549,7 @@ func bindEventSource(L *lua.LState) int {
 func bindEventSubscription(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.Subscription()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -557,7 +557,7 @@ func bindEventSubscription(L *lua.LState) int {
 func bindEventTarget(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.Target()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -565,7 +565,7 @@ func bindEventTarget(L *lua.LState) int {
 func bindEventUnit(L *lua.LState) int {
 	recv := argEvent(L, 1)
 	res := recv.Unit()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -629,7 +629,7 @@ func (b gameBinder) bindGameAddSpecialEffect(L *lua.LState) int {
 	a0 := L.CheckString(1)
 	a1 := argVec2(L, 2)
 	res := b.g.AddSpecialEffect(a0, a1)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -653,7 +653,7 @@ func (b gameBinder) bindGameCommandAI(L *lua.LState) int {
 // Game_CreateForce -> Game.CreateForce() Force
 func (b gameBinder) bindGameCreateForce(L *lua.LState) int {
 	res := b.g.CreateForce()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -662,7 +662,7 @@ func (b gameBinder) bindGameCreateItem(L *lua.LState) int {
 	a0 := argItemType(L, 1)
 	a1 := argVec2(L, 2)
 	res := b.g.CreateItem(a0, a1)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -670,7 +670,7 @@ func (b gameBinder) bindGameCreateItem(L *lua.LState) int {
 func (b gameBinder) bindGameCreateSound(L *lua.LState) int {
 	a0 := L.CheckString(1)
 	res := b.g.CreateSound(a0)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -681,7 +681,7 @@ func (b gameBinder) bindGameCreateUnit(L *lua.LState) int {
 	a2 := argVec2(L, 3)
 	a3 := argAngle(L, 4)
 	res := b.g.CreateUnit(a0, a1, a2, a3)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -750,21 +750,21 @@ func (b gameBinder) bindGameMapFlag(L *lua.LState) int {
 // Game_NeutralHostile -> Game.NeutralHostile() Player
 func (b gameBinder) bindGameNeutralHostile(L *lua.LState) int {
 	res := b.g.NeutralHostile()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
 // Game_NeutralPassive -> Game.NeutralPassive() Player
 func (b gameBinder) bindGameNeutralPassive(L *lua.LState) int {
 	res := b.g.NeutralPassive()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
 // Game_NewRegion -> Game.NewRegion() Region
 func (b gameBinder) bindGameNewRegion(L *lua.LState) int {
 	res := b.g.NewRegion()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -800,7 +800,7 @@ func (b gameBinder) bindGamePlayMusic(L *lua.LState) int {
 func (b gameBinder) bindGamePlayer(L *lua.LState) int {
 	a0 := L.CheckInt(1)
 	res := b.g.Player(a0)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -998,7 +998,7 @@ func bindItemSetCharges(L *lua.LState) int {
 func bindItemType(L *lua.LState) int {
 	recv := argItem(L, 1)
 	res := recv.Type()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -1528,7 +1528,7 @@ func bindUnitAddAbility(L *lua.LState) int {
 	recv := argUnit(L, 1)
 	a0 := argAbilityRef(L, 2)
 	res := recv.AddAbility(a0)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -1558,7 +1558,7 @@ func bindUnitAddItemByType(L *lua.LState) int {
 	}
 	a0 := argItemType(L, 2)
 	res := recv.AddItemByType(a0)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -1606,7 +1606,7 @@ func bindUnitCollisionSize(L *lua.LState) int {
 func bindUnitCurrentOrder(L *lua.LState) int {
 	recv := argUnit(L, 1)
 	res := recv.CurrentOrder()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -1839,7 +1839,7 @@ func bindUnitItemInSlot(L *lua.LState) int {
 	recv := argUnit(L, 1)
 	a0 := L.CheckInt(2)
 	res := recv.ItemInSlot(a0)
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -1955,7 +1955,7 @@ func bindUnitOwnedBy(L *lua.LState) int {
 func bindUnitOwner(L *lua.LState) int {
 	recv := argUnit(L, 1)
 	res := recv.Owner()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -2011,7 +2011,7 @@ func bindUnitRallyPoint(L *lua.LState) int {
 func bindUnitRallyUnit(L *lua.LState) int {
 	recv := argUnit(L, 1)
 	res := recv.RallyUnit()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 
@@ -2271,7 +2271,7 @@ func bindUnitTurnSpeed(L *lua.LState) int {
 func bindUnitType(L *lua.LState) int {
 	recv := argUnit(L, 1)
 	res := recv.Type()
-	L.Push(handleToLua(L, res))
+	L.Push(pushHandle(L, res))
 	return 1
 }
 

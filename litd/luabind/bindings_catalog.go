@@ -21,26 +21,26 @@ import (
 
 // bindGameUnitType binds Game.UnitType(code string) UnitType.
 func (b gameBinder) bindGameUnitType(L *lua.LState) int {
-	L.Push(handleToLua(L, b.g.UnitType(L.CheckString(1))))
+	L.Push(pushHandle(L, b.g.UnitType(L.CheckString(1))))
 	return 1
 }
 
 // bindGameItemType binds Game.ItemType(code string) ItemType.
 func (b gameBinder) bindGameItemType(L *lua.LState) int {
-	L.Push(handleToLua(L, b.g.ItemType(L.CheckString(1))))
+	L.Push(pushHandle(L, b.g.ItemType(L.CheckString(1))))
 	return 1
 }
 
 // bindGameBuffType binds Game.BuffType(code string) BuffType.
 func (b gameBinder) bindGameBuffType(L *lua.LState) int {
-	L.Push(handleToLua(L, b.g.BuffType(L.CheckString(1))))
+	L.Push(pushHandle(L, b.g.BuffType(L.CheckString(1))))
 	return 1
 }
 
 // bindGameResourceNodeType binds Game.ResourceNodeType(code string)
 // ResourceNodeType (#401) — resolves a node code a loaded world spawns.
 func (b gameBinder) bindGameResourceNodeType(L *lua.LState) int {
-	L.Push(handleToLua(L, b.g.ResourceNodeType(L.CheckString(1))))
+	L.Push(pushHandle(L, b.g.ResourceNodeType(L.CheckString(1))))
 	return 1
 }
 
@@ -53,7 +53,7 @@ func (b gameBinder) bindGameCreateResourceNode(L *lua.LState) int {
 	if !ok {
 		L.ArgError(1, "expected ResourceNodeType userdata (from Game_ResourceNodeType)")
 	}
-	L.Push(handleToLua(L, b.g.CreateResourceNode(typ, argVec2(L, 2))))
+	L.Push(pushHandle(L, b.g.CreateResourceNode(typ, argVec2(L, 2))))
 	return 1
 }
 
@@ -62,7 +62,7 @@ func (b gameBinder) bindGameCreateResourceNode(L *lua.LState) int {
 // analogue of Game_UnitType for the order catalog. Pairs with the generated
 // Unit_Order (which now marshals its OrderTarget arg).
 func (b gameBinder) bindGameOrder(L *lua.LState) int {
-	L.Push(handleToLua(L, b.g.Order(L.CheckString(1))))
+	L.Push(pushHandle(L, b.g.Order(L.CheckString(1))))
 	return 1
 }
 
@@ -72,7 +72,7 @@ func (b gameBinder) bindGameOrder(L *lua.LState) int {
 // unreachable without it — a script needs this resolver to obtain the per-player
 // Camera handle. Same hand-written shape as the type resolvers above.
 func (b gameBinder) bindGameCamera(L *lua.LState) int {
-	L.Push(handleToLua(L, b.g.Camera(argPlayer(L, 1))))
+	L.Push(pushHandle(L, b.g.Camera(argPlayer(L, 1))))
 	return 1
 }
 
@@ -99,7 +99,7 @@ func (b gameBinder) bindWeightedChoice(L *lua.LState) int {
 // bindRandomItemType binds helpers.RandomItemType(g, codes []string) ItemType
 // (#267): a deterministic random pick among the given item-type codes.
 func (b gameBinder) bindRandomItemType(L *lua.LState) int {
-	L.Push(handleToLua(L, helpers.RandomItemType(b.g, argStringSlice(L, 1))))
+	L.Push(pushHandle(L, helpers.RandomItemType(b.g, argStringSlice(L, 1))))
 	return 1
 }
 

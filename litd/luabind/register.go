@@ -25,6 +25,7 @@ package luabind
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -65,10 +66,49 @@ func argRect(L *lua.LState, i int) api.Rect {
 // handleToLua wraps an api handle or Player in a fresh userdata carrying the
 // value (which self-carries its *Game). The script receives an opaque handle it
 // can pass to other verbs; GameHandles persists noun handles across a save
-// (#264/#267).
+// (#264/#267). Used for non-comparable handle returns (pointer/slice-bearing
+// handles like *UnitSet/*Storage) that cannot key the pushHandle cache.
 func handleToLua(L *lua.LState, h any) *lua.LUserData {
 	ud := L.NewUserData()
 	ud.Value = h
+	return ud
+}
+
+// pushHandle is the zero-alloc handle-return marshaler (#407): it caches the
+// userdata wrapping each live handle per comparable type T, so re-marshaling the
+// same handle (e.g. a per-tick query result) reuses one userdata and allocates
+// nothing after the first sight (R-GC-1). The typed param T avoids the any-box
+// that handleToLua incurs at the call boundary; the typed sub-map avoids it on
+// lookup; the only box is the one-time ud.Value assignment on a cache miss.
+//
+// Reuse also gives a handle a stable Lua identity (two marshals of the same unit
+// are the same userdata) — sim-irrelevant (StateHash is sim-side) and an
+// improvement for scripts. Without a scheduler (g == nil) it falls back to a
+// fresh userdata, identical to handleToLua.
+func pushHandle[T comparable](L *lua.LState, h T) *lua.LUserData {
+	s := getScheduler(L)
+	if s == nil || s.handleCaches == nil {
+		ud := L.NewUserData()
+		ud.Value = h
+		return ud
+	}
+	rt := reflect.TypeFor[T]()
+	sub, _ := s.handleCaches[rt].(map[T]*lua.LUserData)
+	if sub == nil {
+		sub = make(map[T]*lua.LUserData)
+		s.handleCaches[rt] = sub
+	} else if ud, ok := sub[h]; ok {
+		return ud
+	}
+	if len(sub) >= handleCacheCap {
+		// Bounded: drop this type's sub-cache wholesale. Already-handed-out
+		// userdata stay valid (Lua may hold them); we just mint fresh ones until
+		// it refills — so long-match handle churn can't leak.
+		clear(sub)
+	}
+	ud := L.NewUserData()
+	ud.Value = h
+	sub[h] = ud
 	return ud
 }
 

@@ -160,7 +160,13 @@ func supportedRet(typ, expr string) (string, bool) {
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
 	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer",
 		"UnitType", "ItemType", "BuffType", "Order", "Event", "Region", "Subscription",
-		"Ability", "Camera", "Force", "Sound", "*UnitSet", "*Storage":
+		"Ability", "Camera", "Force", "Sound":
+		// Comparable value handles: route through the zero-alloc pooling marshaler
+		// (#407) — its typed cache reuses one userdata per live handle.
+		return fmt.Sprintf("L.Push(pushHandle(L, %s))", expr), true
+	case "*UnitSet", "*Storage":
+		// Pointer handles wrap non-comparable state (slice/maps) and are fresh per
+		// query, so they cannot/should not key the pushHandle cache.
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
 	case "float64", "int", "int32", "int64", "uint32", "uint8",
 		"Race", "Difficulty", "FogState", "Controller", "AllianceFlags",

@@ -29,7 +29,7 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		sub := g.OnEvent(kind, func(ev api.Event) {
 			callEventHandler(L, fn, ev)
 		})
-		L.Push(handleToLua(L, sub)) // Subscription handle (pass to Cancel)
+		L.Push(pushHandle(L, sub)) // Subscription handle (pass to Cancel)
 		return 1
 	}))
 	L.SetGlobal("Cancel", L.NewFunction(func(L *lua.LState) int {
@@ -68,11 +68,11 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		return 1
 	}))
 	L.SetGlobal("DamageEvent_Unit", L.NewFunction(func(L *lua.LState) int {
-		L.Push(handleToLua(L, argDamageEvent(L, 1).Unit()))
+		L.Push(pushHandle(L, argDamageEvent(L, 1).Unit()))
 		return 1
 	}))
 	L.SetGlobal("DamageEvent_Source", L.NewFunction(func(L *lua.LState) int {
-		L.Push(handleToLua(L, argDamageEvent(L, 1).Source()))
+		L.Push(pushHandle(L, argDamageEvent(L, 1).Source()))
 		return 1
 	}))
 }
