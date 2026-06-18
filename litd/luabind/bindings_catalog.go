@@ -349,6 +349,21 @@ func bindBuffRemove(L *lua.LState) int {
 	return 0
 }
 
+// bindGameElapsedTime binds Game.ElapsedTime() — elapsed game seconds since
+// start, for script timing logic. SoT: g.ElapsedTime() (sim ElapsedTicks/20).
+func (b gameBinder) bindGameElapsedTime(L *lua.LState) int {
+	L.Push(lua.LNumber(b.g.ElapsedTime()))
+	return 1
+}
+
+// bindPlayerSetAlliance sets ALL of one player's alliance flags toward another
+// at once (the bulk companion to the already-bound single-flag SetAllianceFlag).
+// Flags are an AllianceFlags bitmask — use the Alliance_* constants.
+func bindPlayerSetAlliance(L *lua.LState) int {
+	argPlayer(L, 1).SetAlliance(argPlayer(L, 2), argAllianceFlags(L, 3))
+	return 0
+}
+
 func bindPlayerAlliedVictory(L *lua.LState) int {
 	L.Push(lua.LBool(argPlayer(L, 1).AlliedVictory()))
 	return 1
@@ -465,4 +480,19 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Buff_Present", L.NewFunction(bindBuffPresent))
 	L.SetGlobal("Buff_RemainingSeconds", L.NewFunction(bindBuffRemainingSeconds))
 	L.SetGlobal("Buff_Remove", L.NewFunction(bindBuffRemove))
+	L.SetGlobal("Game_ElapsedTime", L.NewFunction(b.bindGameElapsedTime))
+	L.SetGlobal("Player_SetAlliance", L.NewFunction(bindPlayerSetAlliance))
+	// AllianceFlags bitmask constants (mirror api.Ally*) so scripts using
+	// Player_SetAlliance / SetAllianceFlag / AllianceWith don't hardcode bit
+	// values. Combine with Lua arithmetic (a + b) since these are disjoint bits.
+	L.SetGlobal("Alliance_Passive", lua.LNumber(api.AllyPassive))
+	L.SetGlobal("Alliance_HelpRequest", lua.LNumber(api.AllyHelpRequest))
+	L.SetGlobal("Alliance_HelpResponse", lua.LNumber(api.AllyHelpResponse))
+	L.SetGlobal("Alliance_SharedXP", lua.LNumber(api.AllySharedXP))
+	L.SetGlobal("Alliance_SharedSpells", lua.LNumber(api.AllySharedSpells))
+	L.SetGlobal("Alliance_SharedVision", lua.LNumber(api.AllySharedVision))
+	L.SetGlobal("Alliance_SharedControl", lua.LNumber(api.AllySharedControl))
+	L.SetGlobal("Alliance_SharedAdvControl", lua.LNumber(api.AllySharedAdvControl))
+	L.SetGlobal("Alliance_Rescuable", lua.LNumber(api.AllyRescuable))
+	L.SetGlobal("Alliance_SharedVisionForce", lua.LNumber(api.AllySharedVisionForce))
 }
