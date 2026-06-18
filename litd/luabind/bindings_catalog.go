@@ -159,6 +159,17 @@ func (b gameBinder) bindGameClearMessages(L *lua.LState) int {
 	return 0
 }
 
+// bindStorageGetInt binds Storage.GetInt(category, key string) (int, bool)
+// (#267): the generated dispatch defers it for its two-value return, but Lua
+// takes multiple returns natively — push the value then the found-flag. Pairs
+// with the generated Storage_SetInt for a full Lua round-trip of saved ints.
+func bindStorageGetInt(L *lua.LState) int {
+	v, ok := argStorage(L, 1).GetInt(L.CheckString(2), L.CheckString(3))
+	L.Push(lua.LNumber(v))
+	L.Push(lua.LBool(ok))
+	return 2
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
@@ -179,4 +190,5 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_UnitsIn", L.NewFunction(b.bindGameUnitsIn))
 	L.SetGlobal("Game_Print", L.NewFunction(b.bindGamePrint))
 	L.SetGlobal("Game_ClearMessages", L.NewFunction(b.bindGameClearMessages))
+	L.SetGlobal("Storage_GetInt", L.NewFunction(bindStorageGetInt))
 }
