@@ -9,6 +9,8 @@ package luabind
 
 import (
 	"bytes"
+	"io"
+	"os"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -198,6 +200,114 @@ func restoreHash(t *testing.T, chunkSrc string, sim, scr []byte, more int) uint6
 	}
 	g.Advance(more)
 	return g.StateHash()
+}
+
+// TestSaveLoad100CoroutinesFSV — the issue's headline edge: save while 100 Lua
+// coroutines wait on 100 DIFFERENT ticks, restore through real on-disk save
+// files in a fresh runtime, and prove (a) the wake schedule survives (pending
+// count at save == post-restore), (b) the state hash AT the save tick is
+// identical (the surviving wake records round-tripped byte-exactly), and (c) the
+// final hash after every coroutine wakes is identical to the unbroken run.
+func TestSaveLoad100CoroutinesFSV(t *testing.T) {
+	const fp = uint64(0xC0DEF00D)
+	// 100 coroutines: coroutine i parks for i ticks, so at tick 50 exactly the
+	// first 50 have woken/finished and 50 remain parked.
+	const script = `
+		for i = 1, 100 do
+			Run((function(n) return function() PolledWait(n * 0.05) end end)(i))
+		end`
+	const saveTick = 50
+
+	// --- Unbroken reference: capture the hash at the save tick AND at the end. ---
+	gR, LR, regR := newScriptGame(t)
+	defer LR.Close()
+	defer regR.Close()
+	runRegisteredChunk(t, LR, regR, script)
+	if got := PendingScriptWaits(LR); got != 100 {
+		t.Fatalf("after spawn: pending=%d, want 100", got)
+	}
+	gR.Advance(saveTick)
+	refMidHash := gR.StateHash()
+	refMidPending := PendingScriptWaits(LR)
+	gR.Advance(100 - saveTick + 1)
+	refFinalHash := gR.StateHash()
+	if got := PendingScriptWaits(LR); got != 0 {
+		t.Fatalf("unbroken end: pending=%d, want 0 (all woke)", got)
+	}
+	t.Logf("FSV ref: tick%d pending=%d hash=%#x ; final pending=0 hash=%#x", saveTick, refMidPending, refMidHash, refFinalHash)
+
+	// --- Save run: advance to the save tick, write sim + scripts to real files. ---
+	gA, LA, regA := newScriptGame(t)
+	defer LA.Close()
+	defer regA.Close()
+	runRegisteredChunk(t, LA, regA, script)
+	gA.Advance(saveTick)
+	if got := PendingScriptWaits(LA); got != refMidPending {
+		t.Fatalf("save run pending=%d, want %d", got, refMidPending)
+	}
+	dir := t.TempDir()
+	simPath := dir + "/state.sav"
+	scrPath := dir + "/scripts.sav"
+	writeSave(t, simPath, func(w io.Writer) error { return gA.SaveState(w, fp) })
+	writeSave(t, scrPath, func(w io.Writer) error { return SaveScripts(LA, regA, w) })
+
+	// --- Restore in a fresh runtime by READING the files back. ---
+	gB, LB, regB := newScriptGame(t)
+	defer LB.Close()
+	defer regB.Close()
+	if _, err := regB.Register("world", script); err != nil {
+		t.Fatalf("re-register: %v", err)
+	}
+	readLoad(t, simPath, func(r io.Reader) error { return gB.LoadState(r, fp) })
+	readLoad(t, scrPath, func(r io.Reader) error { return LoadScripts(LB, regB, r) })
+
+	// SoT (a): wake schedule survived — same number parked.
+	if got := PendingScriptWaits(LB); got != refMidPending {
+		t.Fatalf("post-restore pending=%d, want %d (wake schedule lost)", got, refMidPending)
+	}
+	// SoT (b): hash AT the save tick is byte-identical (surviving records intact).
+	if got := gB.StateHash(); got != refMidHash {
+		t.Fatalf("post-restore tick%d HASH MISMATCH: %#x != %#x", saveTick, got, refMidHash)
+	}
+	// SoT (c): run the rest — every remaining coroutine wakes, final hash matches.
+	gB.Advance(100 - saveTick + 1)
+	if got := PendingScriptWaits(LB); got != 0 {
+		t.Fatalf("restored end: pending=%d, want 0 (not all woke)", got)
+	}
+	if got := gB.StateHash(); got != refFinalHash {
+		t.Fatalf("restored final HASH MISMATCH: %#x != %#x", got, refFinalHash)
+	}
+	t.Logf("FSV #270 100-coroutine on-disk round-trip: save@%d (pending %d → restore %d → final 0), tick%d hash %#x, final hash %#x — all == unbroken",
+		saveTick, refMidPending, refMidPending, saveTick, refMidHash, refFinalHash)
+}
+
+// writeSave / readLoad round-trip a save section through a real file on disk, so
+// the test exercises the on-disk save format, not just an in-memory buffer.
+func writeSave(t *testing.T, path string, fn func(io.Writer) error) {
+	t.Helper()
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := fn(f); err != nil {
+		f.Close()
+		t.Fatalf("write %s: %v", path, err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("close %s: %v", path, err)
+	}
+}
+
+func readLoad(t *testing.T, path string, fn func(io.Reader) error) {
+	t.Helper()
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("open %s: %v", path, err)
+	}
+	defer f.Close()
+	if err := fn(f); err != nil {
+		t.Fatalf("load %s: %v", path, err)
+	}
 }
 
 // TestSaveLoadMultiCoroutineFSV — three coroutines parked on DIFFERENT wake
