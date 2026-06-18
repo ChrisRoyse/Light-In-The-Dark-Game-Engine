@@ -214,6 +214,20 @@ func (b gameBinder) bindGameCreateDestructable(L *lua.LState) int {
 	return 1
 }
 
+// Player economy + Unit vitals (#267): LitD split/convenience accessors with no
+// 1:1 JASS native left to map (the canonical GetPlayerState/GetUnitState mapped
+// to the bound Gold/Life siblings), so the generator never emitted them — leaving
+// the surface lopsided: Gold bound but not Lumber/Food; SetMana/MaxMana bound but
+// not the Mana getter. Game scripts (#200 melee upkeep, any caster/economy logic)
+// need the full set. Player/Unit method verbs — receiver from arg 1.
+func bindPlayerLumber(L *lua.LState) int     { L.Push(lua.LNumber(argPlayer(L, 1).Lumber())); return 1 }
+func bindPlayerSetLumber(L *lua.LState) int  { argPlayer(L, 1).SetLumber(L.CheckInt(2)); return 0 }
+func bindPlayerFoodCap(L *lua.LState) int    { L.Push(lua.LNumber(argPlayer(L, 1).FoodCap())); return 1 }
+func bindPlayerSetFoodCap(L *lua.LState) int { argPlayer(L, 1).SetFoodCap(L.CheckInt(2)); return 0 }
+func bindPlayerFoodUsed(L *lua.LState) int   { L.Push(lua.LNumber(argPlayer(L, 1).FoodUsed())); return 1 }
+func bindUnitMana(L *lua.LState) int         { L.Push(lua.LNumber(argUnit(L, 1).Mana())); return 1 }
+func bindUnitIsHero(L *lua.LState) int       { L.Push(lua.LBool(argUnit(L, 1).IsHero())); return 1 }
+
 // bindGameNewFogModifier binds Game.NewFogModifier(p, state, area) FogModifier
 // (#267). The generated dispatch defers the whole FogModifier type: its
 // constructor takes the api.Area interface (no generatable arg marshaler) and
@@ -282,4 +296,11 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Storage_GetString", L.NewFunction(bindStorageGetString))
 	L.SetGlobal("Storage_SetBool", L.NewFunction(bindStorageSetBool))
 	L.SetGlobal("Storage_GetBool", L.NewFunction(bindStorageGetBool))
+	L.SetGlobal("Player_Lumber", L.NewFunction(bindPlayerLumber))
+	L.SetGlobal("Player_SetLumber", L.NewFunction(bindPlayerSetLumber))
+	L.SetGlobal("Player_FoodCap", L.NewFunction(bindPlayerFoodCap))
+	L.SetGlobal("Player_SetFoodCap", L.NewFunction(bindPlayerSetFoodCap))
+	L.SetGlobal("Player_FoodUsed", L.NewFunction(bindPlayerFoodUsed))
+	L.SetGlobal("Unit_Mana", L.NewFunction(bindUnitMana))
+	L.SetGlobal("Unit_IsHero", L.NewFunction(bindUnitIsHero))
 }
