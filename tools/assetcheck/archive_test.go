@@ -174,11 +174,53 @@ func hasRule(findings []finding, rule string) bool {
 
 func runArchive(t *testing.T, path string) []finding {
 	t.Helper()
-	findings, _, err := checkArchive(path)
+	findings, _, err := checkArchive(path, "")
 	if err != nil {
 		t.Fatalf("checkArchive: %v", err)
 	}
 	return findings
+}
+
+func runArchiveVersion(t *testing.T, path, engineVersion string) []finding {
+	t.Helper()
+	findings, _, err := checkArchive(path, engineVersion)
+	if err != nil {
+		t.Fatalf("checkArchive: %v", err)
+	}
+	return findings
+}
+
+// TestArchiveEngineRangeSatisfaction — #205 edge 2: an archive declaring
+// engine-range ">=99.0.0" is refused for a current engine like 1.0.0 (out of
+// range), while an in-range engine passes. The parsed range is named in the
+// error.
+func TestArchiveEngineRangeSatisfaction(t *testing.T) {
+	files := map[string]string{"world.toml": "name = \"v\"\n"}
+	arc := buildArchive(t, files, ">=99.0.0", nil, false)
+
+	// Current engine 1.0.0 is below the floor → refusal.
+	got := runArchiveVersion(t, arc, "1.0.0")
+	if !hasRule(got, "ARCHIVE-VERSION") {
+		t.Fatalf("engine 1.0.0 vs range >=99.0.0 not refused: findings=%v", got)
+	}
+	t.Logf("FSV #205 edge2: engine 1.0.0 vs range >=99.0.0 → ARCHIVE-VERSION: %v", got)
+
+	// A future engine 99.1.0 satisfies it → no version finding.
+	got = runArchiveVersion(t, arc, "99.1.0")
+	if hasRule(got, "ARCHIVE-VERSION") {
+		t.Fatalf("engine 99.1.0 wrongly refused for range >=99.0.0: %v", got)
+	}
+	t.Logf("FSV #205 edge2: engine 99.1.0 satisfies >=99.0.0 → accepted")
+
+	// Bounded range admits the middle, refuses the upper-exclusive bound.
+	arc2 := buildArchive(t, files, ">=0.1.0 <0.2.0", nil, false)
+	if got := runArchiveVersion(t, arc2, "0.1.5"); hasRule(got, "ARCHIVE-VERSION") {
+		t.Fatalf("0.1.5 should satisfy >=0.1.0 <0.2.0: %v", got)
+	}
+	if got := runArchiveVersion(t, arc2, "0.2.0"); !hasRule(got, "ARCHIVE-VERSION") {
+		t.Fatalf("0.2.0 should violate <0.2.0: %v", got)
+	}
+	t.Logf("FSV #205 edge2: >=0.1.0 <0.2.0 admits 0.1.5, refuses 0.2.0")
 }
 
 // TestArchiveValidPasses — a well-formed archive with matching hashes, a valid
