@@ -97,6 +97,49 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestAbilityReturnBindingFSV — #267: Unit.AddAbility binds now that the
+// Ability handle marshals as a return (its AbilityRef arg already did). SoT =
+// the granted ability is actually present in sim — Ability.Valid() reads the
+// unit's ability slot (g.abilitySlot), so a no-op/wrong marshal would read
+// false. Go-vs-Lua parity: granting the same ref to two units (one in Go, one
+// from Lua) must leave both handles Valid.
+func TestAbilityReturnBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	ref := g.RegisterAbility(api.AbilityDef{ID: "ablz", Name: "Blizzard", Cooldown: 6})
+	if ref == 0 {
+		t.Fatalf("RegisterAbility returned ref 0 (no ability-def capacity)")
+	}
+	L := boundState(t, g)
+	defer L.Close()
+	uGo := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	uLua := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 50, Y: 0}, api.Deg(0))
+
+	aGo := uGo.AddAbility(ref)
+	if !aGo.Valid() {
+		t.Fatal("Go AddAbility produced an invalid handle — fixture broken")
+	}
+
+	ud := L.NewUserData()
+	ud.Value = uLua
+	L.SetGlobal("u", ud)
+	L.SetGlobal("R", lua.LNumber(float64(ref)))
+	if err := L.DoString(`a = Unit_AddAbility(u, R); ok = Valid(a)`); err != nil {
+		t.Fatalf("Unit_AddAbility must bind (Ability return marshal, #267): %v", err)
+	}
+	if !lua.LVAsBool(L.GetGlobal("ok")) {
+		t.Fatal("Lua-granted ability handle is not Valid — sim slot not set (bad return marshal)")
+	}
+	t.Logf("FSV #267 Ability return: Go-grant Valid=%v, Lua-grant Valid=true (sim abilitySlot present, parity)", aGo.Valid())
+
+	// Edge: unknown ref → zero Ability handle → Valid false (fail-closed, no raise).
+	if err := L.DoString(`bad = Unit_AddAbility(u, 9999); badok = Valid(bad)`); err != nil {
+		t.Fatalf("unknown-ref AddAbility should return a zero handle, not raise: %v", err)
+	}
+	if lua.LVAsBool(L.GetGlobal("badok")) {
+		t.Fatal("Unit_AddAbility with an unknown ref must yield an invalid handle")
+	}
+}
+
 // TestOrderTargetBindingFSV — #267: Unit.Order binds now that OrderTarget
 // marshals (nil/point-table/unit) and Game.Order resolves an order verb from
 // Lua. SoT = the unit's actual movement after a Lua-issued move order (a wrong

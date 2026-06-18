@@ -145,7 +145,8 @@ func supportedRet(typ, expr string) (string, bool) {
 	case "Rect":
 		return fmt.Sprintf("L.Push(rectToLua(L, %s))", expr), true
 	case "Unit", "Item", "Destructable", "Missile", "Effect", "Player", "Timer",
-		"UnitType", "ItemType", "BuffType", "Order", "Event", "Region", "Subscription":
+		"UnitType", "ItemType", "BuffType", "Order", "Event", "Region", "Subscription",
+		"Ability":
 		return fmt.Sprintf("L.Push(handleToLua(L, %s))", expr), true
 	case "float64", "int", "int32", "int64", "uint32", "uint8",
 		"Race", "Difficulty", "FogState", "Controller", "AllianceFlags",
