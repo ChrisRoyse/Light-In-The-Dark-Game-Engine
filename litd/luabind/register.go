@@ -167,6 +167,20 @@ func argFogModifier(L *lua.LState, i int) api.FogModifier {
 	return f
 }
 
+func argBuff(L *lua.LState, i int) api.Buff {
+	ud, ok := L.Get(i).(*lua.LUserData)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Buff userdata, got %s", L.Get(i).Type()))
+		return api.Buff{}
+	}
+	b, ok := ud.Value.(api.Buff)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected a Buff (got %T)", ud.Value))
+		return api.Buff{}
+	}
+	return b
+}
+
 // argArea reads a fog Area table into the api.Area sum type (#267): a circle
 // {cx, cy, radius} or a rect {minx, miny, maxx, maxy}. `cx` present selects the
 // circle form (radius required); otherwise `minx` selects the rect form. Lua

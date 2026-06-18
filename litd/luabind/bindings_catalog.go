@@ -317,6 +317,38 @@ func bindPlayerLostToUpkeep(L *lua.LState) int {
 	return 1
 }
 
+// Buff application + handle lifecycle (#267). The query/remove-by-type verbs
+// (Unit_HasBuff/BuffCount/RemoveBuff/RemoveAllBuffs) are already generated, but
+// ApplyBuff (variadic functional options → not generatable) and the Buff handle
+// methods (the generator has no Buff arg reader without a producer) were
+// unreachable: a script could remove buffs but not apply one and hold its
+// handle. Catalog binds the no-options apply form + the handle getters. SoT:
+// Unit.HasBuff / the buff instance's Present/Stacks/RemainingSeconds.
+func bindUnitApplyBuff(L *lua.LState) int {
+	L.Push(pushHandle(L, argUnit(L, 1).ApplyBuff(argBuffType(L, 2))))
+	return 1
+}
+func bindBuffType(L *lua.LState) int {
+	L.Push(pushHandle(L, argBuff(L, 1).Type()))
+	return 1
+}
+func bindBuffStacks(L *lua.LState) int {
+	L.Push(lua.LNumber(argBuff(L, 1).Stacks()))
+	return 1
+}
+func bindBuffPresent(L *lua.LState) int {
+	L.Push(lua.LBool(argBuff(L, 1).Present()))
+	return 1
+}
+func bindBuffRemainingSeconds(L *lua.LState) int {
+	L.Push(lua.LNumber(argBuff(L, 1).RemainingSeconds()))
+	return 1
+}
+func bindBuffRemove(L *lua.LState) int {
+	argBuff(L, 1).Remove()
+	return 0
+}
+
 func bindPlayerAlliedVictory(L *lua.LState) int {
 	L.Push(lua.LBool(argPlayer(L, 1).AlliedVictory()))
 	return 1
@@ -427,4 +459,10 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	// take. Convenience globals only; no new api surface.
 	L.SetGlobal("Resource_Gold", lua.LNumber(0))
 	L.SetGlobal("Resource_Lumber", lua.LNumber(1))
+	L.SetGlobal("Unit_ApplyBuff", L.NewFunction(bindUnitApplyBuff))
+	L.SetGlobal("Buff_Type", L.NewFunction(bindBuffType))
+	L.SetGlobal("Buff_Stacks", L.NewFunction(bindBuffStacks))
+	L.SetGlobal("Buff_Present", L.NewFunction(bindBuffPresent))
+	L.SetGlobal("Buff_RemainingSeconds", L.NewFunction(bindBuffRemainingSeconds))
+	L.SetGlobal("Buff_Remove", L.NewFunction(bindBuffRemove))
 }
