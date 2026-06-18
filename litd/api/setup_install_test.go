@@ -96,6 +96,52 @@ func TestDefineNonUnitTablesInstallFSV(t *testing.T) {
 	t.Logf("FSV upgrades: stored len=1 confirmed via rebind-length guard")
 }
 
+// TestDefineEconomyEnablesResourcesFSV — #396 economy seam, and the explicit
+// path for #388: SetGold no-ops until the economy is bound, then writes. SoT =
+// the sim per-player resource ledger (w.Resources), read directly.
+func TestDefineEconomyEnablesResourcesFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 4})
+	g := newGame(w)
+	p := g.Player(0)
+
+	// BEFORE economy: SetGold is a no-op (the #388 behaviour).
+	p.SetGold(500)
+	if got := p.Gold(); got != 0 {
+		t.Fatalf("Gold BEFORE DefineEconomy = %d, want 0 (no-op until bound)", got)
+	}
+	if got := w.Resources(0, 0); got != 0 {
+		t.Fatalf("sim resource[0][0] BEFORE = %d, want 0", got)
+	}
+
+	if err := g.DefineEconomy(2); err != nil {
+		t.Fatalf("DefineEconomy(2): %v", err)
+	}
+
+	// AFTER: SetGold writes; verify against the sim ledger, not Gold()'s return.
+	p.SetGold(500)
+	if got := w.Resources(0, 0); got != 500 {
+		t.Fatalf("sim resource[0][0] AFTER = %d, want 500", got)
+	}
+	if got := p.Gold(); got != 500 {
+		t.Fatalf("Gold AFTER = %d, want 500", got)
+	}
+	t.Logf("FSV economy: SetGold no-op (ledger 0) before DefineEconomy; writes (ledger 500) after")
+
+	// Edges.
+	if err := (*Game)(nil).DefineEconomy(2); err == nil {
+		t.Error("DefineEconomy on nil game must error")
+	}
+	if err := g.DefineEconomy(0); err == nil {
+		t.Error("DefineEconomy(0) must error (non-positive)")
+	}
+	if err := g.DefineEconomy(3); err == nil {
+		t.Error("DefineEconomy(3) after (2) must fail the conflicting-rebind guard")
+	}
+	if err := g.DefineEconomy(2); err != nil {
+		t.Errorf("DefineEconomy(2) idempotent rebind: %v", err)
+	}
+}
+
 // TestDefineSeamsFailClosedFSV — edge audit: every seam fails closed (errors,
 // installs nothing) on invalid input, rather than silently no-opping.
 func TestDefineSeamsFailClosedFSV(t *testing.T) {

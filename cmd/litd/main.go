@@ -83,6 +83,11 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("new game: %w", err)
 	}
+	if len(tables.ResourceTypes) > 0 {
+		if err := g.DefineEconomy(len(tables.ResourceTypes)); err != nil {
+			return nil, nil, fmt.Errorf("define economy: %w", err)
+		}
+	}
 	if len(tables.Effects) > 0 {
 		if err := g.DefineEffects(tables.Effects); err != nil {
 			return nil, nil, fmt.Errorf("define effects: %w", err)

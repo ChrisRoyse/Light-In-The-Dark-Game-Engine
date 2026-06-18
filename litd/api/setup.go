@@ -81,6 +81,22 @@ func (g *Game) DefineUnits(defs []data.Unit) error {
 	return nil
 }
 
+// DefineEconomy initialises the economy with resourceTypes per-player resource
+// counters (#396) — e.g. 2 for the gold/lumber pair. A setup verb (R-API-5): it
+// returns an error and fails closed on a non-positive or over-ceiling count, or
+// a rebind to a different count. Until it is called the per-player resource
+// ledger is unallocated, so Player.SetGold/SetLumber/SetResource are no-ops and
+// Gold/Lumber read zero; after it they read and write.
+func (g *Game) DefineEconomy(resourceTypes int) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineEconomy: nil game")
+	}
+	if !g.w.BindEconomy(resourceTypes) {
+		return fmt.Errorf("api: DefineEconomy: rejected %d resource types (must be 1..%d and not conflict with an existing binding)", resourceTypes, data.MaxResourceTypes)
+	}
+	return nil
+}
+
 // DefineEffects installs the compiled effect-composition arena that abilities
 // and items reference by index (#394). A setup verb (R-API-5): it fails closed
 // — propagating the validation error — when an entry names an unknown effect

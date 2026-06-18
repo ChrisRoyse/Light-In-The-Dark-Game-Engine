@@ -104,6 +104,11 @@ exact   Game.DefineItems
 exact   Game.DefineBuffTypes
 exact   Game.DefineUpgrades
 
+# economy install seam (#396): initialises the per-player resource ledger that
+# the SetGold/SetLumber/SetResource verbs write into. Wraps the sim's
+# BindEconomy; structural setup, supersedes JASS slk economy config.
+exact   Game.DefineEconomy
+
 # runtime world-loader seam (#268): the api stays Lua-agnostic — a backend
 # (litd/luabind) registers via SetWorldLoader, and LoadWorld delegates to it to
 # load a world directory at runtime. HasWorldLoader reports whether a backend is
