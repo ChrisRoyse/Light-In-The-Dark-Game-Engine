@@ -202,20 +202,37 @@ func emitDispatch(symbol, sig string) (dispatchBind, bool) {
 		callRecv = "recv"
 	}
 
-	var body strings.Builder
+	luaName := luaBindingName(symbol)
+	var argReads strings.Builder
 	args := make([]string, 0, len(gs.Params))
+	hasVariadic := false
 	for i, p := range gs.Params {
 		if p.Variadic {
-			return dispatchBind{}, false
+			// Variadic (options) is always the final Go param. Bind the no-options
+			// form: read the fixed prefix and call with zero options. An attempt to
+			// supply options from Lua (extra args) fails closed below — never a
+			// silent drop (decisions ADR #402 / doctrine §1.3). Per-option-table
+			// marshaling is deferred.
+			hasVariadic = true
+			break
 		}
 		expr, ok := supportedArg(p.Type, i+argStart)
 		if !ok {
 			return dispatchBind{}, false
 		}
 		name := fmt.Sprintf("a%d", i)
-		fmt.Fprintf(&body, "\t%s := %s\n", name, expr)
+		fmt.Fprintf(&argReads, "\t%s := %s\n", name, expr)
 		args = append(args, name)
 	}
+	var body strings.Builder
+	if hasVariadic {
+		// maxTop = the last fixed Lua arg index; more than that means the script
+		// passed options, which are not yet bound.
+		maxTop := argStart + len(args) - 1
+		fmt.Fprintf(&body, "\tif L.GetTop() > %d {\n\t\tL.RaiseError(%q)\n\t\treturn 0\n\t}\n",
+			maxTop, luaName+": options arguments are not yet bound from Lua (#267)")
+	}
+	body.WriteString(argReads.String())
 	call := fmt.Sprintf("%s.%s(%s)", callRecv, method, strings.Join(args, ", "))
 	var tail string
 	if len(gs.Returns) == 0 {
@@ -229,7 +246,6 @@ func emitDispatch(symbol, sig string) (dispatchBind, bool) {
 	}
 
 	fnName := "bind" + strings.ReplaceAll(symbol, ".", "")
-	luaName := luaBindingName(symbol)
 	var b strings.Builder
 	fmt.Fprintf(&b, "// %s -> %s%s\n", luaName, symbol, sig)
 	if gameBound {

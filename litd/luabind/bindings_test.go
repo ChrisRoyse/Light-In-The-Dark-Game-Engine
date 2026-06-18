@@ -48,6 +48,38 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestVariadicNoOptionsBindingFSV — #267 ADR #402: variadic-options verbs bind in
+// their no-options form, and passing options from Lua fails closed (raises),
+// never silently drops them. SoT = (a) Go↔Lua parity for the no-options call,
+// (b) a non-nil error when an extra (option) arg is passed.
+func TestVariadicNoOptionsBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 64, Y: 64}, api.Deg(0))
+	ud := L.NewUserData()
+	ud.Value = u
+	L.SetGlobal("u", ud)
+
+	// No-options form binds and matches the Go call (no item in slot 0 → false).
+	goRes := u.UseItem(0)
+	if err := L.DoString(`r = Unit_UseItem(u, 0)`); err != nil {
+		t.Fatalf("Unit_UseItem no-options form must be callable (#267): %v", err)
+	}
+	luaRes := lua.LVAsBool(L.GetGlobal("r"))
+	t.Logf("FSV #267 variadic no-opts: Unit_UseItem(u,0) Go=%v Lua=%v", goRes, luaRes)
+	if goRes != luaRes {
+		t.Fatalf("Unit_UseItem parity broken: Go=%v Lua=%v", goRes, luaRes)
+	}
+
+	// Fail-closed: an extra (option) arg must raise, not silently drop (§1.3).
+	err := L.DoString(`Unit_UseItem(u, 0, 1)`)
+	t.Logf("FSV #267 variadic guard: extra-arg -> %v", oneLineErr(err))
+	if err == nil {
+		t.Fatal("passing an option arg to a variadic verb must raise (fail-closed), not silently drop")
+	}
+}
+
 // TestGoVsLuaIdenticalHashFSV — edge 4: an identical CreateUnit/SetPosition/Kill
 // sequence, once via direct Go api and once via the generated Lua bindings,
 // against two same-seed games, produces a bit-identical state hash after 200
