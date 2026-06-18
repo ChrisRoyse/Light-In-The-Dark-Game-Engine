@@ -142,6 +142,54 @@ func TestDefineEconomyEnablesResourcesFSV(t *testing.T) {
 	}
 }
 
+// TestDefineHeroesInstallFSV — #396 item 2. A minimal valid hero rule set
+// installs (one unit, two-level XP curve, matching bounty table); the install is
+// proven by the BindHeroes rebind-refusal guard (a second bind fails only
+// because the first was stored), and each fail-closed reason is isolated on its
+// own fresh game.
+func TestDefineHeroesInstallFSV(t *testing.T) {
+	mkGame := func(withUnit bool) *Game {
+		w := sim.NewWorld(sim.Caps{Units: 4})
+		g := newGame(w)
+		if withUnit {
+			if err := g.DefineUnits(hfooDefs()); err != nil {
+				t.Fatalf("DefineUnits: %v", err)
+			}
+		}
+		return g
+	}
+	valid := func() *data.HeroTables {
+		return &data.HeroTables{Curve: []int64{0, 100}, Bounty: []int64{0}} // 1 unit → 1 bounty entry
+	}
+
+	// Happy path + rebind-refusal SoT.
+	g := mkGame(true)
+	if err := g.DefineHeroes(valid()); err != nil {
+		t.Fatalf("DefineHeroes(valid): %v", err)
+	}
+	if err := g.DefineHeroes(valid()); err == nil {
+		t.Fatal("second DefineHeroes must fail (rebind refused) — proves the first was stored")
+	}
+	t.Logf("FSV heroes: install confirmed via rebind-refusal guard")
+
+	// Fail-closed edges, each on a fresh game so the failure reason is isolated.
+	if err := (*Game)(nil).DefineHeroes(valid()); err == nil {
+		t.Error("DefineHeroes on nil game must error")
+	}
+	if err := mkGame(true).DefineHeroes(nil); err == nil {
+		t.Error("DefineHeroes(nil tables) must error")
+	}
+	if err := mkGame(false).DefineHeroes(valid()); err == nil {
+		t.Error("DefineHeroes before DefineUnits must error (units not defined)")
+	}
+	if err := mkGame(true).DefineHeroes(&data.HeroTables{Curve: []int64{0}, Bounty: []int64{0}}); err == nil {
+		t.Error("DefineHeroes with a one-level XP curve must error")
+	}
+	if err := mkGame(true).DefineHeroes(&data.HeroTables{Curve: []int64{0, 100}, Bounty: []int64{0, 0}}); err == nil {
+		t.Error("DefineHeroes with bounty length != unit count must error")
+	}
+}
+
 // TestDefineSeamsFailClosedFSV — edge audit: every seam fails closed (errors,
 // installs nothing) on invalid input, rather than silently no-opping.
 func TestDefineSeamsFailClosedFSV(t *testing.T) {

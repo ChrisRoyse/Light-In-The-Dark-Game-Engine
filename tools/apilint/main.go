@@ -74,6 +74,7 @@ var methodErrAllowlist = map[string]bool{
 	"Game.DefineBuffTypes": true,
 	"Game.DefineUpgrades":  true,
 	"Game.DefineEconomy":   true,
+	"Game.DefineHeroes":    true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the

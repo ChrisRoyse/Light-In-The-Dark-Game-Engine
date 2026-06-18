@@ -97,6 +97,24 @@ func (g *Game) DefineEconomy(resourceTypes int) error {
 	return nil
 }
 
+// DefineHeroes installs the hero rule set — XP curve, per-unit bounty table,
+// hero definitions with skill trees, attribute coefficients, and revive costs
+// (#396). A setup verb (R-API-5): it returns an error and fails closed when
+// units are not yet defined, the XP curve is shorter than two levels, the bounty
+// table length does not match the unit table, a hero references an unknown unit
+// or skill ability, revive costs do not match the resource count, or heroes are
+// already bound. Call DefineUnits (and DefineAbilities for any hero skills, and
+// DefineEconomy for any revive costs) first.
+func (g *Game) DefineHeroes(h *data.HeroTables) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineHeroes: nil game")
+	}
+	if !g.w.BindHeroes(h) {
+		return fmt.Errorf("api: DefineHeroes: rejected hero rule set (nil, units not defined, XP curve shorter than two levels, bounty length mismatch, unknown hero unit or skill ability, revive-cost/resource-count mismatch, or already bound)")
+	}
+	return nil
+}
+
 // DefineEffects installs the compiled effect-composition arena that abilities
 // and items reference by index (#394). A setup verb (R-API-5): it fails closed
 // — propagating the validation error — when an entry names an unknown effect

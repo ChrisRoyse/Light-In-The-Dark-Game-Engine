@@ -109,6 +109,11 @@ exact   Game.DefineUpgrades
 # BindEconomy; structural setup, supersedes JASS slk economy config.
 exact   Game.DefineEconomy
 
+# hero rule-set install seam (#396): installs the XP curve, bounty table, hero
+# defs + skill trees, attribute coefficients, and revive costs. Wraps the sim's
+# BindHeroes; structural setup, supersedes JASS slk hero config.
+exact   Game.DefineHeroes
+
 # runtime world-loader seam (#268): the api stays Lua-agnostic — a backend
 # (litd/luabind) registers via SetWorldLoader, and LoadWorld delegates to it to
 # load a world directory at runtime. HasWorldLoader reports whether a backend is
