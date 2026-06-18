@@ -97,6 +97,34 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestStorageBindingFSV — #267: the *Storage noun binds (pointer handle):
+// Game_Storage yields the store, Storage_SetInt/Clear mutate it. GetInt is
+// (int,bool) multi-return and stays unbound (single-return codegen), so the SoT
+// reader is the Go *Storage pulled back from the Lua userdata: it must read the
+// Lua-written value, and read nothing after a Lua Clear.
+func TestStorageBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	if err := L.DoString(`
+		st = Game_Storage()
+		Storage_SetInt(st, "scores", "p1", 42)
+	`); err != nil {
+		t.Fatalf("Storage verbs must bind (argStorage pointer handle, #267): %v", err)
+	}
+	st := L.GetGlobal("st").(*lua.LUserData).Value.(*api.Storage)
+	if v, ok := st.GetInt("scores", "p1"); !ok || v != 42 {
+		t.Fatalf("Go Storage.GetInt after Lua SetInt = (%d,%v), want (42,true) — write didn't reach the store", v, ok)
+	}
+	if err := L.DoString(`Storage_Clear(st)`); err != nil {
+		t.Fatalf("Storage_Clear: %v", err)
+	}
+	if v, ok := st.GetInt("scores", "p1"); ok {
+		t.Fatalf("Go Storage.GetInt after Lua Clear = (%d,true), want absent", v)
+	}
+	t.Logf("FSV #267 Storage: Lua SetInt(42) -> Go reads 42, Lua Clear -> Go reads absent (pointer store mutated in place)")
+}
+
 // TestUnitSetBindingFSV — #267: the *UnitSet noun binds (pointer handle):
 // Game_NewUnitSet yields the set, and the pointer-receiver UnitSet_* verbs
 // mutate it in place. SoT = readable membership/count, cross-checked through the

@@ -226,6 +226,14 @@ func argUnitSet(L *lua.LState, i int) *api.UnitSet {
 	return s
 }
 
+func argStorage(L *lua.LState, i int) *api.Storage {
+	s, ok := handleArg(L, i).(*api.Storage)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Storage userdata (from Game_Storage), got %T", handleArg(L, i)))
+	}
+	return s
+}
+
 func argItem(L *lua.LState, i int) api.Item {
 	v, ok := handleArg(L, i).(api.Item)
 	if !ok {
