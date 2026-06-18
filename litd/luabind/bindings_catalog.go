@@ -296,6 +296,27 @@ func (b gameBinder) bindGameNeutralExtra(L *lua.LState) int {
 	L.Push(pushHandle(L, b.g.NeutralExtra()))
 	return 1
 }
+// bindGameTransferResource binds Game.TransferResource(from, to, resource, amount)
+// int (#267). A *Game method taking TWO Player args + ints — the generator skips
+// multi-Player *Game methods, so it lives in the catalog. Returns the net amount
+// delivered after the giver's transfer tax. SoT: the players' resource ledgers.
+func (b gameBinder) bindGameTransferResource(L *lua.LState) int {
+	net := b.g.TransferResource(argPlayer(L, 1), argPlayer(L, 2), L.CheckInt(3), L.CheckInt(4))
+	L.Push(lua.LNumber(net))
+	return 1
+}
+
+// Generic upkeep getters keyed by resource index, completing the Gold/Lumber-
+// specific forms already bound. SoT: the player's upkeep ledger.
+func bindPlayerUpkeepRate(L *lua.LState) int {
+	L.Push(lua.LNumber(argPlayer(L, 1).UpkeepRate(L.CheckInt(2))))
+	return 1
+}
+func bindPlayerLostToUpkeep(L *lua.LState) int {
+	L.Push(lua.LNumber(argPlayer(L, 1).LostToUpkeep(L.CheckInt(2))))
+	return 1
+}
+
 func bindPlayerAlliedVictory(L *lua.LState) int {
 	L.Push(lua.LBool(argPlayer(L, 1).AlliedVictory()))
 	return 1
@@ -398,4 +419,12 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Player_AlliedVictory", L.NewFunction(bindPlayerAlliedVictory))
 	L.SetGlobal("Player_SetAlliedVictory", L.NewFunction(bindPlayerSetAlliedVictory))
 	L.SetGlobal("Game_SetUpkeep", L.NewFunction(b.bindGameSetUpkeep))
+	L.SetGlobal("Game_TransferResource", L.NewFunction(b.bindGameTransferResource))
+	L.SetGlobal("Player_UpkeepRate", L.NewFunction(bindPlayerUpkeepRate))
+	L.SetGlobal("Player_LostToUpkeep", L.NewFunction(bindPlayerLostToUpkeep))
+	// Resource-kind constants mirroring the sim's resource indices — the same
+	// ints Player_SetTaxRate/TaxRate/UpkeepRate and Game_TransferResource already
+	// take. Convenience globals only; no new api surface.
+	L.SetGlobal("Resource_Gold", lua.LNumber(0))
+	L.SetGlobal("Resource_Lumber", lua.LNumber(1))
 }
