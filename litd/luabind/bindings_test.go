@@ -97,6 +97,35 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestStringHashBindingFSV — #267: a free function (no receiver) binds via the
+// catalog seam without a generator change. SoT = the binding returns the exact
+// canonical api.StringHash value for the same input (deterministic), and
+// distinct inputs hash distinctly.
+func TestStringHashBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	if err := L.DoString(`
+		h1 = StringHash("Hpal")
+		h1b = StringHash("Hpal")
+		h2 = StringHash("Hmkg")
+	`); err != nil {
+		t.Fatalf("StringHash must bind from Lua (#267): %v", err)
+	}
+	want := int32(api.StringHash("Hpal"))
+	got := int32(lua.LVAsNumber(L.GetGlobal("h1")))
+	if got != want {
+		t.Fatalf("Lua StringHash(\"Hpal\") = %d, want canonical %d (binding diverges from api)", got, want)
+	}
+	if int32(lua.LVAsNumber(L.GetGlobal("h1b"))) != want {
+		t.Fatal("StringHash not deterministic across calls")
+	}
+	if int32(lua.LVAsNumber(L.GetGlobal("h2"))) == want {
+		t.Fatal("distinct inputs hashed identically")
+	}
+	t.Logf("FSV #267 StringHash: Lua \"Hpal\"->%d == canonical api.StringHash; deterministic; distinct inputs differ", got)
+}
+
 // TestStorageBindingFSV — #267: the *Storage noun binds (pointer handle):
 // Game_Storage yields the store, Storage_SetInt/Clear mutate it. GetInt is
 // (int,bool) multi-return and stays unbound (single-return codegen), so the SoT

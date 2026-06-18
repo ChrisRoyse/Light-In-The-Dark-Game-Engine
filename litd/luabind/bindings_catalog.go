@@ -75,10 +75,23 @@ func (b gameBinder) bindGameCamera(L *lua.LState) int {
 	return 1
 }
 
+// bindStringHash binds the free function StringHash(s string) int32 (#267).
+// A package-level func (no receiver, no game) — the generated dispatch defers
+// free functions ("need a *Game / other types — later"), but the catalog seam
+// binds them without a generator change or an api import in the generated file:
+// the call is package-qualified here, in hand-written luabind code. StringHash
+// is the deterministic WC3-style string hash a world script needs for stable
+// data-table/gamecache keys; not reachable any other way from Lua.
+func bindStringHash(L *lua.LState) int {
+	L.Push(lua.LNumber(float64(api.StringHash(L.CheckString(1)))))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_Camera", L.NewFunction(b.bindGameCamera))
+	L.SetGlobal("StringHash", L.NewFunction(bindStringHash))
 	L.SetGlobal("Game_UnitType", L.NewFunction(b.bindGameUnitType))
 	L.SetGlobal("Game_ItemType", L.NewFunction(b.bindGameItemType))
 	L.SetGlobal("Game_BuffType", L.NewFunction(b.bindGameBuffType))
