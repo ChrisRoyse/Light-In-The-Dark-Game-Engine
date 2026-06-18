@@ -101,6 +101,34 @@ func TestUninstallableTablesGate(t *testing.T) {
 	}
 }
 
+// TestLoadWorldMathRandomBoundFSV: #400 — a world using math.random must load
+// (RandomSource bound to the sim PRNG) and be deterministic, not raise "no
+// deterministic source bound". SoT = the unit position math.random computed,
+// read back over two same-seed loads.
+func TestLoadWorldMathRandomBoundFSV(t *testing.T) {
+	lua := "Game_SetTimeOfDay(9.0)\n" +
+		"local x = math.random() * 1000\n" +
+		"Game_CreateUnit(Game_Player(0), Game_UnitType(\"hfoo\"), { x = x, y = 50 }, 0)\n"
+	w := writeWorld(t, tomlDamageTable, lua)
+	readX := func() float64 {
+		g, cleanup, err := loadWorld(w, 7, 50_000_000)
+		if err != nil {
+			t.Fatalf("math.random world must load (#400): %v", err)
+		}
+		defer cleanup()
+		us := g.UnitsInRange(api.Vec2{X: 500, Y: 50}, 2000, nil)
+		if len(us) != 1 {
+			t.Fatalf("want 1 unit placed by math.random, got %d", len(us))
+		}
+		return us[0].Position().X
+	}
+	x1, x2 := readX(), readX()
+	t.Logf("FSV #400: math.random world loaded; unit x run1=%.4f run2=%.4f (seed 7)", x1, x2)
+	if x1 != x2 {
+		t.Fatalf("math.random not deterministic across same-seed loads: %v != %v", x1, x2)
+	}
+}
+
 // TestLoadWorldMissingDamageTableFailsLoud: edge 4 — a missing data table is a
 // loud load-time failure.
 func TestLoadWorldMissingDamageTableFailsLoud(t *testing.T) {

@@ -119,7 +119,10 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 
 	// 4. Sandbox + bindings + world-loader seam, then run the world's scripts
 	//    through the public g.LoadWorld verb.
-	interp := luabind.NewSandbox(luabind.SandboxOptions{InstructionBudget: budget})
+	// RandomSource wires Lua math.random to the sim PRNG (#400/#263): a loaded
+	// world's math.random draws deterministically from sim state (R-SIM-2), not
+	// a raise. The game exists here (built above), so its draw is bindable.
+	interp := luabind.NewSandbox(luabind.SandboxOptions{InstructionBudget: budget, RandomSource: g.RandomFloat})
 	reg := luabind.NewChunkRegistry()
 	cleanup := func() { reg.Close(); interp.Close() }
 	if err := luabind.Register(interp.L, g); err != nil {
