@@ -22,3 +22,25 @@ func (g *Game) StateHash() uint64 {
 	reg := sim.NewHashRegistry()
 	return g.w.HashState(reg, &statehash.Snapshot{}).Top
 }
+
+// HashSnapshot returns the full state digest broken out by system: top is the
+// same value as StateHash, and subs is the per-system sub-hash vector indexed by
+// the canonical system order (HashSystemNames). It is the seam the desync FSV
+// harness (#82) and the netplay desync detector (#77) use to bisect a divergence
+// to a named system. Like StateHash it allocates a fresh registry — not for the
+// hot path. A nil/uninitialized game returns (0, nil).
+func (g *Game) HashSnapshot() (top uint64, subs []uint64) {
+	if g == nil || g.w == nil {
+		return 0, nil
+	}
+	reg := sim.NewHashRegistry()
+	var snap statehash.Snapshot
+	g.w.HashState(reg, &snap)
+	return snap.Top, append([]uint64(nil), snap.Subs...)
+}
+
+// HashSystemNames returns the canonical state-hash system vocabulary in sub-hash
+// index order: subs[i] from HashSnapshot is the digest of system HashSystemNames()[i].
+func HashSystemNames() []string {
+	return append([]string(nil), sim.HashSystems...)
+}
