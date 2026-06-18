@@ -97,6 +97,59 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestHelperFreeFuncsBindingFSV — #267: the helper free funcs (which inject the
+// game receiver) bind via the catalog seam. SoT is deterministic structure:
+// WeightedChoice with a single positive weight is PRNG-independent; a single-
+// code RandomItemType equals the Go resolve; CreateUnits leaves N valid units in
+// sim.
+func TestHelperFreeFuncsBindingFSV(t *testing.T) {
+	g := loaderGame(t, 7)
+	L := boundState(t, g)
+	defer L.Close()
+	p0 := g.Player(0)
+	pud := L.NewUserData()
+	pud.Value = p0
+	L.SetGlobal("p0", pud)
+	tud := L.NewUserData()
+	tud.Value = g.UnitType("hfoo")
+	L.SetGlobal("hfoo", tud)
+
+	if err := L.DoString(`
+		wc_one = WeightedChoice({0, 7, 0})  -- only Go index 1 has positive weight
+		wc_empty = WeightedChoice({})
+		it = RandomItemType({"ride"})       -- single code -> deterministic
+		itEmpty = RandomItemType({})
+		units = CreateUnits(3, p0, hfoo, {x = 100, y = 100}, 0)
+		ucount = #units
+	`); err != nil {
+		t.Fatalf("helper free funcs must bind via catalog seam (#267): %v", err)
+	}
+	if wc := int(lua.LVAsNumber(L.GetGlobal("wc_one"))); wc != 1 {
+		t.Fatalf("WeightedChoice({0,7,0}) = %d, want 1 (only positive weight)", wc)
+	}
+	if wc := int(lua.LVAsNumber(L.GetGlobal("wc_empty"))); wc != -1 {
+		t.Fatalf("WeightedChoice({}) = %d, want -1 (no selectable)", wc)
+	}
+	if it := L.GetGlobal("it").(*lua.LUserData).Value.(api.ItemType); it != g.ItemType("ride") {
+		t.Fatal("RandomItemType({\"ride\"}) != g.ItemType(\"ride\") (single-code must be deterministic)")
+	}
+	if !L.GetGlobal("itEmpty").(*lua.LUserData).Value.(api.ItemType).IsZero() {
+		t.Fatal("RandomItemType({}) must be the zero ItemType")
+	}
+	if n := int(lua.LVAsNumber(L.GetGlobal("ucount"))); n != 3 {
+		t.Fatalf("CreateUnits returned %d units, want 3", n)
+	}
+	// SoT: the created units exist in sim and are valid.
+	ut := L.GetGlobal("units").(*lua.LTable)
+	for i := 1; i <= 3; i++ {
+		u := ut.RawGetInt(i).(*lua.LUserData).Value.(api.Unit)
+		if !u.Valid() {
+			t.Fatalf("CreateUnits unit %d not Valid in sim", i)
+		}
+	}
+	t.Logf("FSV #267 helper free funcs: WeightedChoice {0,7,0}->1 / {}->-1; RandomItemType single-code == Go resolve; CreateUnits made 3 valid units")
+}
+
 // TestStringHashBindingFSV — #267: a free function (no receiver) binds via the
 // catalog seam without a generator change. SoT = the binding returns the exact
 // canonical api.StringHash value for the same input (deterministic), and

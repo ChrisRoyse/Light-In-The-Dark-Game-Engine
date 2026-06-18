@@ -15,6 +15,7 @@ package luabind
 
 import (
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	helpers "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api/helpers"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -87,11 +88,38 @@ func bindStringHash(L *lua.LState) int {
 	return 1
 }
 
+// bindWeightedChoice binds helpers.WeightedChoice(g, weights []int) int (#267):
+// a deterministic weighted index draw off the sim PRNG (g injected from b.g).
+// The script passes the weights array; -1 means no positive-weight entry.
+func (b gameBinder) bindWeightedChoice(L *lua.LState) int {
+	L.Push(lua.LNumber(float64(helpers.WeightedChoice(b.g, argIntSlice(L, 1)))))
+	return 1
+}
+
+// bindRandomItemType binds helpers.RandomItemType(g, codes []string) ItemType
+// (#267): a deterministic random pick among the given item-type codes.
+func (b gameBinder) bindRandomItemType(L *lua.LState) int {
+	L.Push(handleToLua(L, helpers.RandomItemType(b.g, argStringSlice(L, 1))))
+	return 1
+}
+
+// bindCreateUnits binds helpers.CreateUnits(g, n, owner, typ, pos, facing)
+// []Unit (#267): bulk unit creation, returning the created units as a 1-based
+// array. The game receiver is injected; the script passes the five params.
+func (b gameBinder) bindCreateUnits(L *lua.LState) int {
+	units := helpers.CreateUnits(b.g, L.CheckInt(1), argPlayer(L, 2), argUnitType(L, 3), argVec2(L, 4), argAngle(L, 5))
+	L.Push(handleSliceToLua(L, units))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_Camera", L.NewFunction(b.bindGameCamera))
 	L.SetGlobal("StringHash", L.NewFunction(bindStringHash))
+	L.SetGlobal("WeightedChoice", L.NewFunction(b.bindWeightedChoice))
+	L.SetGlobal("RandomItemType", L.NewFunction(b.bindRandomItemType))
+	L.SetGlobal("CreateUnits", L.NewFunction(b.bindCreateUnits))
 	L.SetGlobal("Game_UnitType", L.NewFunction(b.bindGameUnitType))
 	L.SetGlobal("Game_ItemType", L.NewFunction(b.bindGameItemType))
 	L.SetGlobal("Game_BuffType", L.NewFunction(b.bindGameBuffType))

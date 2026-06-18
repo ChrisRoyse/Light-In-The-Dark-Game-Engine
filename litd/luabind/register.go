@@ -218,6 +218,35 @@ func argSound(L *lua.LState, i int) api.Sound {
 	return s
 }
 
+// argIntSlice reads a 1-based Lua array table of integers into a []int (for the
+// helper free funcs, e.g. WeightedChoice weights). A non-table raises.
+func argIntSlice(L *lua.LState, i int) []int {
+	t, ok := L.Get(i).(*lua.LTable)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected an array table of integers, got %s", L.Get(i).Type()))
+		return nil
+	}
+	out := make([]int, 0, t.Len())
+	for j := 1; j <= t.Len(); j++ {
+		out = append(out, int(lua.LVAsNumber(t.RawGetInt(j))))
+	}
+	return out
+}
+
+// argStringSlice reads a 1-based Lua array table of strings into a []string.
+func argStringSlice(L *lua.LState, i int) []string {
+	t, ok := L.Get(i).(*lua.LTable)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected an array table of strings, got %s", L.Get(i).Type()))
+		return nil
+	}
+	out := make([]string, 0, t.Len())
+	for j := 1; j <= t.Len(); j++ {
+		out = append(out, lua.LVAsString(t.RawGetInt(j)))
+	}
+	return out
+}
+
 func argUnitSet(L *lua.LState, i int) *api.UnitSet {
 	s, ok := handleArg(L, i).(*api.UnitSet)
 	if !ok {
