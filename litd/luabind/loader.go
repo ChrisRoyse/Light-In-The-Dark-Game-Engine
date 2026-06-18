@@ -93,6 +93,7 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 
 	info := &WorldInfo{Dir: label, Entry: WorldEntry}
 	haveEntry := false
+	modules := make(map[string]string, len(rels)) // rel -> source, for require (#412)
 	for _, rel := range rels {
 		src, err := fs.ReadFile(fsys, rel)
 		if err != nil {
@@ -105,6 +106,7 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 			return nil, fmt.Errorf("luabind: world %q: %w", label, err)
 		}
 		info.Chunks = append(info.Chunks, WorldChunk{Rel: rel, ID: id})
+		modules[rel] = string(src)
 		if rel == WorldEntry {
 			haveEntry = true
 		}
@@ -112,6 +114,11 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 	if !haveEntry {
 		return nil, fmt.Errorf("luabind: world %q has no %s entry point", label, WorldEntry)
 	}
+
+	// Install the composition shim so main.lua can pull in sibling chunks (#412):
+	// a sandbox-safe require resolving ONLY against this world's compiled chunks
+	// (no filesystem, no arbitrary load — the stripped stdlib require stays gone).
+	installRequire(L, modules)
 
 	// Execute the entry on L. L.Load is the Go-side compile API (NOT the Lua
 	// `load` global, which the sandbox strips); the "@" chunkname makes runtime
@@ -129,6 +136,73 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 		return nil, fmt.Errorf("luabind: world %q entry run: %w", label, err)
 	}
 	return info, nil
+}
+
+// installRequire adds a host require(name) to L that composes a world from its
+// sibling chunks (#412). It resolves name against modules (this world's compiled
+// chunks only — no filesystem, no Lua `load`, so R-SEC-1 is preserved), runs each
+// chunk AT MOST ONCE into the shared environment, caches its return value, and
+// detects cycles. Accepted name forms: the exact rel ("scripts/beacon.lua"), the
+// rel without extension ("scripts/beacon"), or Lua dotted form ("scripts.beacon").
+func installRequire(L *lua.LState, modules map[string]string) {
+	loaded := map[string]lua.LValue{} // rel -> module value (run-once cache)
+	loading := map[string]bool{}      // rel currently on the require stack (cycle guard)
+
+	L.SetGlobal("require", L.NewFunction(func(L *lua.LState) int {
+		name := L.CheckString(1)
+		rel, ok := resolveModule(name, modules)
+		if !ok {
+			L.RaiseError("require: no module %q in this world (worlds compose only sibling chunks)", name)
+			return 0
+		}
+		if v, ok := loaded[rel]; ok {
+			L.Push(v)
+			return 1
+		}
+		if loading[rel] {
+			L.RaiseError("require: cyclic dependency through %q", rel)
+			return 0
+		}
+		loading[rel] = true
+		fn, err := L.Load(strings.NewReader(modules[rel]), "@"+rel)
+		if err != nil {
+			delete(loading, rel)
+			L.RaiseError("require %q: %v", rel, err)
+			return 0
+		}
+		L.Push(fn)
+		if err := L.PCall(0, 1, nil); err != nil {
+			delete(loading, rel)
+			L.RaiseError("require %q: %v", rel, err)
+			return 0
+		}
+		ret := L.Get(-1)
+		L.Pop(1)
+		if ret == lua.LNil {
+			ret = lua.LTrue // module with no explicit return → true (Lua convention)
+		}
+		loaded[rel] = ret
+		delete(loading, rel)
+		L.Push(ret)
+		return 1
+	}))
+}
+
+// resolveModule maps a require name to a registered chunk rel, trying the exact
+// name, the name with ".lua", and the Lua dotted form (dots → slashes) with
+// ".lua". Returns the matched rel and whether one was found.
+func resolveModule(name string, modules map[string]string) (string, bool) {
+	candidates := []string{
+		name,
+		name + ".lua",
+		strings.ReplaceAll(name, ".", "/") + ".lua",
+	}
+	for _, c := range candidates {
+		if _, ok := modules[c]; ok {
+			return c, true
+		}
+	}
+	return "", false
 }
 
 // InstallWorldLoader wires the luabind loader as g's LoadWorld backend (#268),
