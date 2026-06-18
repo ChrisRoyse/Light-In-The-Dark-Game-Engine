@@ -214,6 +214,27 @@ func TestArchiveMissingHostingFieldRefused(t *testing.T) {
 	}
 }
 
+// TestArchiveSandboxLintRefused — defense in depth (#205 'not a validator bypass
+// at load'): a hash-valid archive whose Lua references a sandbox-forbidden global
+// is refused at Open, even though every content hash matches.
+func TestArchiveSandboxLintRefused(t *testing.T) {
+	stage := stageFirstFlame(t)
+	// Replace the benign script with sandbox-violating Lua BEFORE packing, so the
+	// manifest hashes are all correct — only the lint must catch it.
+	os.WriteFile(filepath.Join(stage, "scripts", "main.lua"),
+		[]byte("local f = io.open('/etc/passwd')\n"), 0o644)
+	arcPath := filepath.Join(t.TempDir(), "evil.litdworld")
+	packDir(t, stage, arcPath, "*", "")
+
+	if _, err := Open(arcPath, ""); err == nil {
+		t.Fatal("archive with io.open Lua opened (must refuse on lint)")
+	} else if !strings.Contains(err.Error(), "sandbox lint") {
+		t.Fatalf("expected sandbox-lint refusal, got: %v", err)
+	} else {
+		t.Logf("FSV defense-in-depth: hash-valid archive with forbidden Lua refused — %v", err)
+	}
+}
+
 // rewriteEntry copies src→dst, applying mut to the named entry's bytes.
 func rewriteEntry(t *testing.T, src, dst, name string, mut func([]byte) []byte) {
 	t.Helper()

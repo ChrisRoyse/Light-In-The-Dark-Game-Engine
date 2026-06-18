@@ -23,6 +23,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	lualint "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/lualint"
 )
 
 // runArchiveCmd handles `assetcheck archive [--json] <file>`.
@@ -187,7 +189,7 @@ func checkArchiveEntry(name string, data []byte, add func(p, rule, msg string)) 
 			}
 		}
 	case strings.HasSuffix(lower, ".lua"):
-		for _, v := range luaSandboxLint(data) {
+		for _, v := range lualint.SandboxLint(data) {
 			add(name, "ARCHIVE-LUA", v)
 		}
 	}

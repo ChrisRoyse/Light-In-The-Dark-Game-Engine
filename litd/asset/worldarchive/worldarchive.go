@@ -25,6 +25,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	lualint "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/lualint"
 )
 
 // manifestName is the reserved archive entry holding the content-hash TOC.
@@ -117,6 +119,14 @@ func verify(fsys fs.FS, engineVersion string) (Manifest, error) {
 		sum := sha256.Sum256(data)
 		if got := hex.EncodeToString(sum[:]); got != want.Hash {
 			return fmt.Errorf("entry %q content hash %s does not match manifest %s", p, got, want.Hash)
+		}
+		// Defense in depth (R-SEC-1, §2.5): the packaging+CI path sandbox-lints
+		// Lua, but a hash-valid hand-crafted archive could carry unlinted Lua, so
+		// the loader re-lints — an archive is not a validator bypass at load.
+		if strings.HasSuffix(strings.ToLower(p), ".lua") {
+			if hits := lualint.SandboxLint(data); len(hits) > 0 {
+				return fmt.Errorf("entry %q fails sandbox lint: %s", p, hits[0])
+			}
 		}
 		seen[p] = true
 		return nil

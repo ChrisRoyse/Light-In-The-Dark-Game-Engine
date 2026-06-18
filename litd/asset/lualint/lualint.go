@@ -1,18 +1,20 @@
-package main
-
-// Lua sandbox-safety lint (#37; M6 D-20). A minimal Lua lexer that walks the
-// source skipping comments and string literals, then flags any reference to a
-// sandbox-forbidden global (io, os, net) or a code-loading function
-// (require, loadfile, dofile). Because strings and comments are skipped, a
-// literal like "ghost" (containing "os") is never a false positive, and a
-// field access like t.os (preceded by '.'/':') is not the global os.
+// Package lualint is the static Lua sandbox-safety lint (#37; M6 D-20), shared
+// by the archive validator (tools/assetcheck) and the in-engine archive read
+// path (litd/asset/worldarchive) so both enforce the SAME rule with one
+// implementation. A minimal Lua lexer walks the source skipping comments and
+// string literals, then flags any reference to a sandbox-forbidden global
+// (io, os, net) or a code-loading function (require, loadfile, dofile). Because
+// strings and comments are skipped, a literal like "ghost" (containing "os") is
+// never a false positive, and a field access like t.os (preceded by '.'/':')
+// is not the global os.
+package lualint
 
 import (
 	"fmt"
 	"sort"
 )
 
-var forbiddenLua = map[string]string{
+var forbidden = map[string]string{
 	"io":       "sandbox-forbidden global",
 	"os":       "sandbox-forbidden global",
 	"net":      "sandbox-forbidden global",
@@ -21,8 +23,9 @@ var forbiddenLua = map[string]string{
 	"dofile":   "code-loading function",
 }
 
-// luaSandboxLint returns one message per forbidden reference, sorted by line.
-func luaSandboxLint(src []byte) []string {
+// SandboxLint returns one message per forbidden reference, sorted by line. An
+// empty slice means the source is sandbox-safe by this static check.
+func SandboxLint(src []byte) []string {
 	type hit struct {
 		line int
 		msg  string
@@ -115,7 +118,7 @@ func luaSandboxLint(src []byte) []string {
 				i++
 			}
 			word := string(src[start:i])
-			if reason, bad := forbiddenLua[word]; bad && !precededByField(src, start) {
+			if reason, bad := forbidden[word]; bad && !precededByField(src, start) {
 				hits = append(hits, hit{line, fmt.Sprintf("%q (%s) referenced at line %d", word, reason, line)})
 			}
 		default:
