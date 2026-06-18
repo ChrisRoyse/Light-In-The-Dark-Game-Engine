@@ -33,50 +33,95 @@ type Session struct {
 // RemoteAddr is the peer's address, for logging/diagnostics.
 func (s *Session) RemoteAddr() string { return s.remote }
 
-// SendTurn writes one command turn as a length-prefixed frame (u32 little-endian
-// length, then the bytes). A turn larger than MaxTurnBytes is rejected before
-// anything is written, and the session stays usable for the next turn. A
-// zero-length turn is a valid empty frame. A transport write error is returned
-// verbatim (wrapped) — never swallowed.
-func (s *Session) SendTurn(turn []byte) error {
-	if len(turn) > MaxTurnBytes {
-		return fmt.Errorf("net: turn too large: %d bytes > %d cap (nothing sent)", len(turn), MaxTurnBytes)
+// Frame kinds multiplexed on the one reliable stream. The command-turn stream
+// (KindTurn) and the out-of-band chat stream (KindChat, #316) share the wire but
+// are TYPE-TAGGED so the receiver dispatches them apart — chat never enters the
+// command/replay/hash path. New kinds append; the kind byte makes the protocol
+// self-describing and forward-evolvable.
+const (
+	KindTurn byte = 0
+	KindChat byte = 1
+)
+
+// Frame is one typed message read off the reliable stream.
+type Frame struct {
+	Kind    byte
+	Payload []byte
+}
+
+// sendFrame writes [kind u8][u32 LE len][payload]. The payload is bounded by
+// MaxTurnBytes (the hard wire cap); per-kind caps (e.g. MaxChatBytes) are
+// enforced by the typed senders above this. Rejected before any byte is written.
+func (s *Session) sendFrame(kind byte, payload []byte) error {
+	if len(payload) > MaxTurnBytes {
+		return fmt.Errorf("net: frame too large: %d bytes > %d cap (nothing sent)", len(payload), MaxTurnBytes)
 	}
-	var hdr [4]byte
-	binary.LittleEndian.PutUint32(hdr[:], uint32(len(turn)))
+	var hdr [5]byte
+	hdr[0] = kind
+	binary.LittleEndian.PutUint32(hdr[1:], uint32(len(payload)))
 	if _, err := s.stream.Write(hdr[:]); err != nil {
-		return fmt.Errorf("net: send turn header: %w", err)
+		return fmt.Errorf("net: send frame header: %w", err)
 	}
-	if len(turn) > 0 {
-		if _, err := s.stream.Write(turn); err != nil {
-			return fmt.Errorf("net: send turn body: %w", err)
+	if len(payload) > 0 {
+		if _, err := s.stream.Write(payload); err != nil {
+			return fmt.Errorf("net: send frame body: %w", err)
 		}
 	}
 	return nil
 }
 
-// RecvTurn reads the next command turn in send order. If the peer closes or the
-// stream breaks, it returns an error and NEVER a partial turn (a half-read frame
-// surfaces as an error, not truncated bytes). A framed length exceeding
-// MaxTurnBytes is a protocol violation and is refused (fail-closed) rather than
-// allocated.
-func (s *Session) RecvTurn() ([]byte, error) {
-	var hdr [4]byte
+// RecvFrame reads the next typed frame in send order. The caller dispatches on
+// Kind (turn → lockstep, chat → chat handler). A peer close or broken stream
+// returns an error and NEVER a partial frame; a framed length over MaxTurnBytes
+// is refused (fail-closed) rather than allocated.
+func (s *Session) RecvFrame() (Frame, error) {
+	var hdr [5]byte
 	if _, err := io.ReadFull(s.stream, hdr[:]); err != nil {
-		return nil, fmt.Errorf("net: recv turn header: %w", err)
+		return Frame{}, fmt.Errorf("net: recv frame header: %w", err)
 	}
-	n := binary.LittleEndian.Uint32(hdr[:])
+	kind := hdr[0]
+	n := binary.LittleEndian.Uint32(hdr[1:])
 	if n > MaxTurnBytes {
-		return nil, fmt.Errorf("net: recv turn: framed length %d exceeds %d cap", n, MaxTurnBytes)
+		return Frame{}, fmt.Errorf("net: recv frame: framed length %d exceeds %d cap", n, MaxTurnBytes)
 	}
 	if n == 0 {
-		return []byte{}, nil
+		return Frame{Kind: kind, Payload: []byte{}}, nil
 	}
 	buf := make([]byte, n)
 	if _, err := io.ReadFull(s.stream, buf); err != nil {
-		return nil, fmt.Errorf("net: recv turn body (%d bytes): %w", n, err)
+		return Frame{}, fmt.Errorf("net: recv frame body (%d bytes): %w", n, err)
 	}
-	return buf, nil
+	return Frame{Kind: kind, Payload: buf}, nil
+}
+
+// SendTurn writes one command turn as a KindTurn frame. A turn larger than
+// MaxTurnBytes is rejected before anything is written, and the session stays
+// usable for the next frame. A zero-length turn is a valid empty frame.
+func (s *Session) SendTurn(turn []byte) error {
+	if len(turn) > MaxTurnBytes {
+		return fmt.Errorf("net: turn too large: %d bytes > %d cap (nothing sent)", len(turn), MaxTurnBytes)
+	}
+	return s.sendFrame(KindTurn, turn)
+}
+
+// RecvTurn reads the next frame and requires it to be a command turn. A chat (or
+// any non-turn) frame arriving where a turn is expected is a protocol error — the
+// real game loop uses RecvFrame and dispatches by kind instead.
+func (s *Session) RecvTurn() ([]byte, error) {
+	f, err := s.RecvFrame()
+	if err != nil {
+		return nil, err
+	}
+	if f.Kind != KindTurn {
+		return nil, fmt.Errorf("net: expected turn frame, got kind %d", f.Kind)
+	}
+	return f.Payload, nil
+}
+
+// SendChat writes one encoded chat frame (EncodeChat) as a KindChat frame —
+// out-of-band from the command stream. Bounded by MaxChatBytes at encode time.
+func (s *Session) SendChat(frame []byte) error {
+	return s.sendFrame(KindChat, frame)
 }
 
 // Close tears down the stream and the underlying connection. Idempotent-ish: a
