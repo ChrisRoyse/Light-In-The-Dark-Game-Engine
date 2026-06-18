@@ -228,6 +228,16 @@ func bindPlayerFoodUsed(L *lua.LState) int   { L.Push(lua.LNumber(argPlayer(L, 1
 func bindUnitMana(L *lua.LState) int         { L.Push(lua.LNumber(argUnit(L, 1).Mana())); return 1 }
 func bindUnitIsHero(L *lua.LState) int       { L.Push(lua.LBool(argUnit(L, 1).IsHero())); return 1 }
 
+// Handle-getter completeness (#267): getters whose siblings are bound but which
+// the generator left out — Ability_Level/SetLevel bound but not Cooldown/ManaCost;
+// Item_Charges bound but not Carried/Carrier; Force_AddPlayer bound but not Count.
+// All arg readers already exist; trivial forwards.
+func bindAbilityCooldown(L *lua.LState) int { L.Push(lua.LNumber(argAbility(L, 1).Cooldown())); return 1 }
+func bindAbilityManaCost(L *lua.LState) int { L.Push(lua.LNumber(argAbility(L, 1).ManaCost())); return 1 }
+func bindItemCarried(L *lua.LState) int     { L.Push(lua.LBool(argItem(L, 1).Carried())); return 1 }
+func bindItemCarrier(L *lua.LState) int     { L.Push(pushHandle(L, argItem(L, 1).Carrier())); return 1 }
+func bindForceCount(L *lua.LState) int      { L.Push(lua.LNumber(argForce(L, 1).Count())); return 1 }
+
 // bindGameNewFogModifier binds Game.NewFogModifier(p, state, area) FogModifier
 // (#267). The generated dispatch defers the whole FogModifier type: its
 // constructor takes the api.Area interface (no generatable arg marshaler) and
@@ -303,4 +313,9 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Player_FoodUsed", L.NewFunction(bindPlayerFoodUsed))
 	L.SetGlobal("Unit_Mana", L.NewFunction(bindUnitMana))
 	L.SetGlobal("Unit_IsHero", L.NewFunction(bindUnitIsHero))
+	L.SetGlobal("Ability_Cooldown", L.NewFunction(bindAbilityCooldown))
+	L.SetGlobal("Ability_ManaCost", L.NewFunction(bindAbilityManaCost))
+	L.SetGlobal("Item_Carried", L.NewFunction(bindItemCarried))
+	L.SetGlobal("Item_Carrier", L.NewFunction(bindItemCarrier))
+	L.SetGlobal("Force_Count", L.NewFunction(bindForceCount))
 }
