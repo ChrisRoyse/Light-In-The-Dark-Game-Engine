@@ -116,6 +116,14 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 			return nil, nil, fmt.Errorf("define upgrades: %w", err)
 		}
 	}
+	// Heroes last: BindHeroes consults the unit defs (always), the ability defs
+	// (if a hero has skills), and the resource count (if revive costs are set) —
+	// all bound above by this point (#396).
+	if tables.Hero != nil {
+		if err := g.DefineHeroes(tables.Hero); err != nil {
+			return nil, nil, fmt.Errorf("define heroes: %w", err)
+		}
+	}
 
 	// 4. Sandbox + bindings + world-loader seam, then run the world's scripts
 	//    through the public g.LoadWorld verb.
@@ -138,18 +146,17 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 }
 
 // uninstallableTables names any content table present that still has no api
-// install seam (so the caller can fail closed). After #394, units, effects,
-// abilities, items, buff types, and upgrades all install; only resource-node
-// and hero tables remain seamless. The combat vocabulary
-// (AttackTypes/ArmorTypes/Coeff) is always present because data.Load requires a
-// damage table; it is not itself installed, but a unit-only world that does no
-// combat never exercises it, so it is not treated as uninstallable content.
+// install seam (so the caller can fail closed). After #394 + #396, units,
+// effects, abilities, items, buff types, upgrades, and heroes all install; only
+// resource-node TYPES remain seamless — the sim consumes a *ResourceNodeType
+// inline at CreateResourceNode and has no type registry to bind a table into,
+// so installing them is a sim feature, not an api wrapper (tracked separately).
+// The combat vocabulary (AttackTypes/ArmorTypes/Coeff) is always present because
+// data.Load requires a damage table; it is not itself installed, but a unit-only
+// world that does no combat never exercises it, so it is not uninstallable.
 func uninstallableTables(t *data.Tables) string {
-	switch {
-	case len(t.Nodes) > 0:
+	if len(t.Nodes) > 0 {
 		return fmt.Sprintf("%d resource-node type(s)", len(t.Nodes))
-	case t.Hero != nil:
-		return "hero tables"
 	}
 	return ""
 }

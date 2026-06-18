@@ -87,18 +87,45 @@ func TestLoadWorldInstallsAbilities(t *testing.T) {
 	}
 }
 
-// TestUninstallableTablesGate: the fail-closed gate now passes the #394-installable
-// tables and still refuses the two that remain seamless (resource nodes, heroes).
+// TestUninstallableTablesGate: the fail-closed gate now passes every table with
+// an install seam (abilities/items per #394, heroes per #396) and refuses only
+// resource-node types, which have no sim type registry to bind into.
 func TestUninstallableTablesGate(t *testing.T) {
 	if got := uninstallableTables(&data.Tables{Abilities: []data.Ability{{ID: "x"}}, Items: []data.Item{{ID: "y"}}}); got != "" {
 		t.Errorf("abilities+items must be installable now, gate said %q", got)
 	}
-	if got := uninstallableTables(&data.Tables{Hero: &data.HeroTables{}}); !strings.Contains(got, "hero") {
-		t.Errorf("hero tables must still be refused, got %q", got)
+	if got := uninstallableTables(&data.Tables{Hero: &data.HeroTables{}}); got != "" {
+		t.Errorf("hero tables must be installable now (#396), gate said %q", got)
 	}
 	if got := uninstallableTables(&data.Tables{Nodes: []data.ResourceNodeType{{}}}); !strings.Contains(got, "resource-node") {
 		t.Errorf("resource-node tables must still be refused, got %q", got)
 	}
+}
+
+// TestLoadWorldInstallsHeroes: #396 — a world shipping a hero table now loads
+// (DefineHeroes wired into loadWorld), and the heroes are genuinely installed —
+// proven by the BindHeroes rebind-refusal guard (a second, otherwise-valid bind
+// fails ONLY because the first was stored), not by trusting the load's nil error.
+func TestLoadWorldInstallsHeroes(t *testing.T) {
+	w := writeWorld(t, tomlDamageTable, "Game_SetTimeOfDay(12.0)\n")
+	mk(t, filepath.Join(w, "data", "abilities", "core.toml"), "[[ability]]\nid = \"holy-light\"\nname = \"Holy Light\"\n")
+	mk(t, filepath.Join(w, "data", "heroes", "heroes.toml"),
+		"xp-curve = [0, 100]\n\n[[bounty]]\nunit = \"hfoo\"\nxp = 25\n\n"+
+			"[[hero]]\nunit = \"hfoo\"\nstr = 10.0\nagi = 10.0\nint = 10.0\n\n"+
+			"[[hero.skill]]\nability = \"holy-light\"\nmin-hero-level = [1, 2]\n\n"+
+			"[revive]\nbase-seconds = 10.0\nseconds-per-level = 5.0\n") // no costs → no economy needed
+	g, cleanup, err := loadWorld(w, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("world with heroes must now load (#396): %v", err)
+	}
+	defer cleanup()
+	// SoT: a fresh, valid hero rule set (1 unit → 1 bounty, 2-level curve) would
+	// bind on an unbound game; here it must be REFUSED, proving the world's heroes
+	// already occupy the registry.
+	if err := g.DefineHeroes(&data.HeroTables{Curve: []int64{0, 100}, Bounty: []int64{0}}); err == nil {
+		t.Fatal("DefineHeroes after world install must fail (rebind refused) — heroes were not installed")
+	}
+	t.Logf("FSV #396: hero world loaded; rebind refused — heroes occupy the sim registry")
 }
 
 // goldenDetLua is the committed 10k-tick state hash of worlds/determinism-lua
