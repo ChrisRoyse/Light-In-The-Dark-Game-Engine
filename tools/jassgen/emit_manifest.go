@@ -44,7 +44,6 @@ type FunctionEntry struct {
 	Disposition    string      `json:"disposition"`
 	GoMapping      *GoMapping  `json:"goMapping,omitempty"`
 	Tombstone      *TombstoneT `json:"tombstone,omitempty"`
-	FeatureTags    []string    `json:"featureTags,omitempty"`
 }
 
 // Signature is the param list + return type.

@@ -36,9 +36,15 @@ type AuditReport struct {
 	ExportedVerbs                int            `json:"exportedVerbs"`                // litd/api exported funcs+methods (reverse-closure universe)
 	UnaccountedExports           []string       `json:"unaccountedExports"`           // reverse-closure gate: must be empty
 	UnimplementedCanonicals      []string       `json:"unimplementedCanonicals"`      // mapped symbols still on a panic stub body: must be empty
-	FeatureTags                  map[string]int `json:"featureTags"`                  // R4 census rollup
 	Violations                   []string       `json:"violations"`                   // M2 gate breaches
 }
+
+// NOTE (#395): the R4 engine-feature census is NOT a dedicated field. It is
+// TombstonesByReason["deferred-v2"] — every deferred-v2 tombstone's detail text
+// names the awaited engine feature (e.g. "until the render cutscene pipeline
+// lands"). That is the single, populated source of truth. A parallel per-
+// function FeatureTags field once existed here but was never assigned, so it
+// was removed rather than kept as a dead second mechanism.
 
 // ComputeAudit derives the counter block from the full classification universe
 // (all source symbols) and the emitted manifest (resolved entries only).
@@ -46,7 +52,6 @@ func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 	r := AuditReport{
 		ByRule:                  map[string]int{},
 		TombstonesByReason:      map[string]int{},
-		FeatureTags:             map[string]int{},
 		DuplicateTargets:        []string{},
 		HelperShadowsCore:       []string{},
 		UnaccountedExports:      []string{},
@@ -81,9 +86,6 @@ func ComputeAudit(cs []Classification, m Manifest) AuditReport {
 			if f.Origin == "commonai" {
 				r.CommonaiCapabilityTombstones++
 			}
-		}
-		for _, tag := range f.FeatureTags {
-			r.FeatureTags[tag]++
 		}
 	}
 

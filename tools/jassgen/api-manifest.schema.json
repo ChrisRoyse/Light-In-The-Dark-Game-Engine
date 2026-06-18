@@ -68,11 +68,6 @@
             "reason": { "enum": ["deprecated", "gameplay-irrelevant", "superseded", "deferred-v2"] },
             "detail": { "type": "string" }
           }
-        },
-        "featureTags": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Engine capabilities implied (fog-of-war, minimap, weather, cinematics, ...)"
         }
       },
       "allOf": [
