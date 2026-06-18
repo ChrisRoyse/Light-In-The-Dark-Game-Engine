@@ -189,6 +189,7 @@ func parseArchiveManifest(body string) (engineRange string, byPath map[string]st
 	sc := bufio.NewScanner(strings.NewReader(body))
 	header := true
 	sawVersion := false
+	sawAuthor, sawTitle, sawDesc := false, false, false
 	for sc.Scan() {
 		line := sc.Text()
 		if header {
@@ -198,6 +199,15 @@ func parseArchiveManifest(body string) (engineRange string, byPath map[string]st
 				continue
 			case strings.HasPrefix(line, "engine-range:"):
 				engineRange = strings.TrimSpace(strings.TrimPrefix(line, "engine-range:"))
+				continue
+			case strings.HasPrefix(line, "author:"):
+				sawAuthor = true
+				continue
+			case strings.HasPrefix(line, "title:"):
+				sawTitle = true
+				continue
+			case strings.HasPrefix(line, "description:"):
+				sawDesc = true
 				continue
 			case strings.HasPrefix(line, "files:"):
 				header = false
@@ -220,6 +230,16 @@ func parseArchiveManifest(body string) (engineRange string, byPath map[string]st
 	}
 	if !sawVersion {
 		return "", nil, fmt.Errorf("manifest missing litdworld-version header")
+	}
+	// Hosting metadata (D-23) must be present from day one — values may be empty,
+	// but the FIELDS are mandatory so hosting tooling can rely on them.
+	switch {
+	case !sawAuthor:
+		return "", nil, fmt.Errorf("manifest missing hosting-metadata field: author")
+	case !sawTitle:
+		return "", nil, fmt.Errorf("manifest missing hosting-metadata field: title")
+	case !sawDesc:
+		return "", nil, fmt.Errorf("manifest missing hosting-metadata field: description")
 	}
 	return engineRange, byPath, nil
 }

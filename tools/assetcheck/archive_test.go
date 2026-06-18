@@ -33,6 +33,10 @@ func buildArchive(t *testing.T, files map[string]string, engineRange string, has
 		man.WriteString("litdworld-version: 1\n")
 	}
 	fmt.Fprintf(&man, "engine-range: %s\n", engineRange)
+	// Hosting metadata (D-23) — required fields, values may be empty.
+	man.WriteString("author: test-author\n")
+	man.WriteString("title: Test World\n")
+	man.WriteString("description: \n")
 	fmt.Fprintf(&man, "files: %d\n", len(names))
 	for _, name := range names {
 		sum := sha256.Sum256([]byte(files[name]))
@@ -67,6 +71,64 @@ func buildArchive(t *testing.T, files map[string]string, engineRange string, has
 	}
 	out.Close()
 	return path
+}
+
+// buildArchiveRawManifest writes an archive with a caller-supplied manifest body
+// (for malformed/incomplete-header cases the normal builder can't express).
+func buildArchiveRawManifest(t *testing.T, manifest string, files map[string]string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "world.litdworld")
+	out, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(out)
+	w, _ := zw.Create(archiveManifestName)
+	w.Write([]byte(manifest))
+	for name, body := range files {
+		fw, _ := zw.Create(name)
+		fw.Write([]byte(body))
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	out.Close()
+	return path
+}
+
+// TestArchiveMissingHostingFieldRejected — D-23 / #205 edge 4: a manifest missing
+// a hosting-metadata FIELD (not just an empty value) is an ARCHIVE-SCHEMA refusal;
+// present-but-empty values pass.
+func TestArchiveMissingHostingFieldRejected(t *testing.T) {
+	body := "ok\n"
+	sum := sha256.Sum256([]byte(body))
+	row := fmt.Sprintf("%s %d world.toml\n", hex.EncodeToString(sum[:]), len(body))
+
+	// Missing `description:` field entirely → schema error.
+	missing := "litdworld-version: 1\nengine-range: *\nauthor: a\ntitle: t\nfiles: 1\n" + row
+	got := runArchive(t, buildArchiveRawManifest(t, missing, map[string]string{"world.toml": body}))
+	if !hasRule(got, "ARCHIVE-SCHEMA") {
+		t.Fatalf("missing hosting field 'description' not rejected: findings=%v", got)
+	}
+	t.Logf("FSV #205 edge4: manifest missing 'description' → ARCHIVE-SCHEMA (rejected)")
+
+	// All fields present but EMPTY → passes (no schema finding).
+	empty := "litdworld-version: 1\nengine-range: *\nauthor: \ntitle: \ndescription: \nfiles: 1\n" + row
+	got = runArchive(t, buildArchiveRawManifest(t, empty, map[string]string{"world.toml": body}))
+	if hasRule(got, "ARCHIVE-SCHEMA") {
+		t.Fatalf("empty-but-present hosting values wrongly rejected: findings=%v", got)
+	}
+	t.Logf("FSV #205 edge4: empty hosting values present → accepted")
+}
+
+// hasRule reports whether any finding carries the given rule code.
+func hasRule(findings []finding, rule string) bool {
+	for _, f := range findings {
+		if f.Rule == rule {
+			return true
+		}
+	}
+	return false
 }
 
 func runArchive(t *testing.T, path string) []finding {

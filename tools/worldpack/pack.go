@@ -93,11 +93,33 @@ func hashFiles(srcDir string, rels []string) ([]fileEntry, error) {
 	return entries, nil
 }
 
-// buildManifest renders the deterministic content-hash TOC.
-func buildManifest(engineRange string, entries []fileEntry) string {
+// Hosting carries the world's hosting metadata (D-23): present in every archive
+// from day one, values may be empty pre-M9. Single-line each (newlines are
+// stripped — the manifest is a line format).
+type Hosting struct {
+	Author      string
+	Title       string
+	Description string
+}
+
+// oneLine collapses any newlines so a metadata value can't break the line-based
+// manifest format (and trims surrounding space).
+func oneLine(s string) string {
+	s = strings.ReplaceAll(s, "\r", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	return strings.TrimSpace(s)
+}
+
+// buildManifest renders the deterministic content-hash TOC. Header order is
+// fixed (version, engine-range, hosting metadata, files) so the archive is
+// byte-stable across runs.
+func buildManifest(engineRange string, host Hosting, entries []fileEntry) string {
 	var b strings.Builder
 	b.WriteString("litdworld-version: 1\n")
 	fmt.Fprintf(&b, "engine-range: %s\n", engineRange)
+	fmt.Fprintf(&b, "author: %s\n", oneLine(host.Author))
+	fmt.Fprintf(&b, "title: %s\n", oneLine(host.Title))
+	fmt.Fprintf(&b, "description: %s\n", oneLine(host.Description))
 	fmt.Fprintf(&b, "files: %d\n", len(entries))
 	for _, e := range entries {
 		fmt.Fprintf(&b, "%s %d %s\n", e.Hash, e.Size, e.Rel)
@@ -106,7 +128,7 @@ func buildManifest(engineRange string, entries []fileEntry) string {
 }
 
 // Pack writes a deterministic archive of srcDir to outPath.
-func Pack(srcDir, outPath, engineRange string) error {
+func Pack(srcDir, outPath, engineRange string, host Hosting) error {
 	st, err := os.Stat(srcDir)
 	if err != nil || !st.IsDir() {
 		return fmt.Errorf("source %q is not a directory", srcDir)
@@ -119,7 +141,7 @@ func Pack(srcDir, outPath, engineRange string) error {
 	if err != nil {
 		return err
 	}
-	manifest := buildManifest(engineRange, entries)
+	manifest := buildManifest(engineRange, host, entries)
 
 	// Sort all entry names (manifest included) for a stable archive layout.
 	names := make([]string, 0, len(rels)+1)

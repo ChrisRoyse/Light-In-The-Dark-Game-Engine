@@ -18,12 +18,15 @@ func main() {
 	case "pack":
 		fs := flag.NewFlagSet("pack", flag.ExitOnError)
 		engine := fs.String("engine", "", "engine-version range to record in the manifest (e.g. \">=0.1.0 <0.2.0\")")
+		author := fs.String("author", "", "hosting metadata: world author (may be empty)")
+		title := fs.String("title", "", "hosting metadata: world title (may be empty)")
+		desc := fs.String("description", "", "hosting metadata: world description (may be empty)")
 		fs.Parse(os.Args[2:])
 		if fs.NArg() != 2 {
-			fmt.Fprintln(os.Stderr, "usage: worldpack pack [--engine RANGE] <src-dir> <out.litdworld>")
+			fmt.Fprintln(os.Stderr, "usage: worldpack pack [--engine RANGE] [--author A] [--title T] [--description D] <src-dir> <out.litdworld>")
 			os.Exit(2)
 		}
-		if err := Pack(fs.Arg(0), fs.Arg(1), *engine); err != nil {
+		if err := Pack(fs.Arg(0), fs.Arg(1), *engine, Hosting{Author: *author, Title: *title, Description: *desc}); err != nil {
 			fmt.Fprintln(os.Stderr, "worldpack: pack:", err)
 			os.Exit(1)
 		}

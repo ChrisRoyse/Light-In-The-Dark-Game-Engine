@@ -34,6 +34,11 @@ func parseManifest(body string) (engineRange string, byPath map[string]manifestE
 			case strings.HasPrefix(line, "engine-range:"):
 				engineRange = strings.TrimSpace(strings.TrimPrefix(line, "engine-range:"))
 				continue
+			case strings.HasPrefix(line, "author:"),
+				strings.HasPrefix(line, "title:"),
+				strings.HasPrefix(line, "description:"):
+				// Hosting metadata (D-23) — accepted; not needed to restore files.
+				continue
 			case strings.HasPrefix(line, "files:"):
 				header = false
 				continue

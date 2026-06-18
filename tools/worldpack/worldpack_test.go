@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -48,10 +49,10 @@ func TestDeterministicArchive(t *testing.T) {
 	})
 	out1 := filepath.Join(t.TempDir(), "a.litdworld")
 	out2 := filepath.Join(t.TempDir(), "b.litdworld")
-	if err := Pack(src, out1, ">=0.1.0 <0.2.0"); err != nil {
+	if err := Pack(src, out1, ">=0.1.0 <0.2.0", Hosting{Author: "ann", Title: "Test World", Description: "fixture"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := Pack(src, out2, ">=0.1.0 <0.2.0"); err != nil {
+	if err := Pack(src, out2, ">=0.1.0 <0.2.0", Hosting{Author: "ann", Title: "Test World", Description: "fixture"}); err != nil {
 		t.Fatal(err)
 	}
 	h1, h2 := sha256File(t, out1), sha256File(t, out2)
@@ -74,7 +75,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 	writeTree(t, src, files)
 	arc := filepath.Join(t.TempDir(), "w.litdworld")
-	if err := Pack(src, arc, ""); err != nil {
+	if err := Pack(src, arc, "", Hosting{}); err != nil {
 		t.Fatal(err)
 	}
 	dest := t.TempDir()
@@ -102,7 +103,7 @@ func TestRoundTrip(t *testing.T) {
 func TestEmptySource(t *testing.T) {
 	src := t.TempDir()
 	arc := filepath.Join(t.TempDir(), "empty.litdworld")
-	if err := Pack(src, arc, ""); err != nil {
+	if err := Pack(src, arc, "", Hosting{}); err != nil {
 		t.Fatalf("pack empty: %v", err)
 	}
 	h := sha256File(t, arc)
@@ -123,7 +124,7 @@ func TestCaseCollisionErrors(t *testing.T) {
 	src := t.TempDir()
 	writeTree(t, src, map[string]string{"Foo.txt": "a", "foo.txt": "b"})
 	arc := filepath.Join(t.TempDir(), "c.litdworld")
-	err := Pack(src, arc, "")
+	err := Pack(src, arc, "", Hosting{})
 	t.Logf("FSV case collision: err=%v", err)
 	if err == nil {
 		t.Fatal("case collision should error")
@@ -135,7 +136,7 @@ func TestTamperDetected(t *testing.T) {
 	src := t.TempDir()
 	writeTree(t, src, map[string]string{"data.bin": "original payload"})
 	arc := filepath.Join(t.TempDir(), "t.litdworld")
-	if err := Pack(src, arc, ""); err != nil {
+	if err := Pack(src, arc, "", Hosting{}); err != nil {
 		t.Fatal(err)
 	}
 	// Corrupt the middle half of the archive — this reliably lands in verified
@@ -167,7 +168,7 @@ func TestManifestContents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	man := buildManifest(">=1.0", entries)
+	man := buildManifest(">=1.0", Hosting{Author: "ann", Title: "T", Description: "d"}, entries)
 	t.Logf("FSV manifest body:\n%s", man)
 	rng, byPath, perr := parseManifest(man)
 	if perr != nil {
@@ -175,6 +176,12 @@ func TestManifestContents(t *testing.T) {
 	}
 	if rng != ">=1.0" {
 		t.Fatalf("engine range round-trip failed: %q", rng)
+	}
+	// Hosting metadata (D-23) appears in the manifest body verbatim.
+	for _, want := range []string{"author: ann", "title: T", "description: d"} {
+		if !strings.Contains(man, want) {
+			t.Fatalf("manifest missing hosting line %q in:\n%s", want, man)
+		}
 	}
 	// independent hash of x.txt
 	hx := sha256.Sum256([]byte("hello"))
