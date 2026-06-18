@@ -125,6 +125,8 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argUnitClass(L, %d)", idx), true
 	case "SoundChannel":
 		return fmt.Sprintf("argSoundChannel(L, %d)", idx), true
+	case "Widget":
+		return fmt.Sprintf("argWidget(L, %d)", idx), true
 	default:
 		return "", false
 	}

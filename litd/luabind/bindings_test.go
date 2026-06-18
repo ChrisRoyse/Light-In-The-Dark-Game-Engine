@@ -48,6 +48,42 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestWidgetArgBindingFSV — #267: the combat verb Unit.Damage binds now that
+// Widget (a Unit/Destructable handle-interface) marshals. SoT = the target's
+// Life dropping after a Lua-driven Unit_Damage.
+func TestWidgetArgBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	atk := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	tgtGo := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 32, Y: 0}, api.Deg(0))
+	tgtLua := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 64, Y: 0}, api.Deg(0))
+	a := L.NewUserData()
+	a.Value = atk
+	L.SetGlobal("atk", a)
+	d := L.NewUserData()
+	d.Value = tgtLua
+	L.SetGlobal("tgt", d)
+
+	// Same damage, once via Go and once via the Lua Widget-arg binding. SoT =
+	// parity of the two targets' Life after the queued damage resolves (combat
+	// semantics are identical, so a faithful binding produces an equal result).
+	goQueued := atk.Damage(tgtGo, 30)
+	if err := L.DoString(`ok = Unit_Damage(atk, tgt, 30)`); err != nil {
+		t.Fatalf("Unit_Damage must bind via the Widget arg (#267): %v", err)
+	}
+	luaQueued := lua.LVAsBool(L.GetGlobal("ok"))
+	g.Advance(1) // resolve the queued DamagePackets
+	lifeGo, lifeLua := tgtGo.Life(), tgtLua.Life()
+	t.Logf("FSV #267 Widget-arg: queued Go=%v Lua=%v; resolved Life Go=%.1f Lua=%.1f", goQueued, luaQueued, lifeGo, lifeLua)
+	if !luaQueued {
+		t.Fatal("Unit_Damage via Lua returned false — the Widget userdata was not resolved to the target")
+	}
+	if goQueued != luaQueued || lifeGo != lifeLua {
+		t.Fatalf("Go vs Lua Unit_Damage diverged: queued %v/%v, Life %.1f/%.1f — Widget marshalled wrong", goQueued, luaQueued, lifeGo, lifeLua)
+	}
+}
+
 // TestVariadicNoOptionsBindingFSV — #267 ADR #402: variadic-options verbs bind in
 // their no-options form, and passing options from Lua fails closed (raises),
 // never silently drops them. SoT = (a) Go↔Lua parity for the no-options call,

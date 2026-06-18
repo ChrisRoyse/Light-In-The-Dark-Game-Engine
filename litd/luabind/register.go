@@ -118,6 +118,16 @@ func argGameSpeed(L *lua.LState, i int) api.GameSpeed       { return api.GameSpe
 func argMapFlag(L *lua.LState, i int) api.MapFlag           { return api.MapFlag(L.CheckInt(i)) }
 func argUnitClass(L *lua.LState, i int) api.UnitClass       { return api.UnitClass(L.CheckInt(i)) }
 func argSoundChannel(L *lua.LState, i int) api.SoundChannel { return api.SoundChannel(L.CheckInt(i)) }
+
+// argWidget reads a damageable target — a Unit or Destructable userdata, both of
+// which satisfy api.Widget. Wrong type raises, never a Go panic (#267).
+func argWidget(L *lua.LState, i int) api.Widget {
+	w, ok := handleArg(L, i).(api.Widget)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Widget (unit/destructable) userdata, got %T", handleArg(L, i)))
+	}
+	return w
+}
 func argAllianceFlags(L *lua.LState, i int) api.AllianceFlags {
 	return api.AllianceFlags(L.CheckInt(i))
 }
