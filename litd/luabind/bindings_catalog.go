@@ -65,9 +65,20 @@ func (b gameBinder) bindGameOrder(L *lua.LState) int {
 	return 1
 }
 
+// bindGameCamera binds Game.Camera(p Player) Camera (#267). Game.Camera is a
+// LitD new-capability (no manifest entry, so the generator does not emit it),
+// but the generated Camera_* method verbs (Field/SetField/Follow/...) are
+// unreachable without it — a script needs this resolver to obtain the per-player
+// Camera handle. Same hand-written shape as the type resolvers above.
+func (b gameBinder) bindGameCamera(L *lua.LState) int {
+	L.Push(handleToLua(L, b.g.Camera(argPlayer(L, 1))))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
+	L.SetGlobal("Game_Camera", L.NewFunction(b.bindGameCamera))
 	L.SetGlobal("Game_UnitType", L.NewFunction(b.bindGameUnitType))
 	L.SetGlobal("Game_ItemType", L.NewFunction(b.bindGameItemType))
 	L.SetGlobal("Game_BuffType", L.NewFunction(b.bindGameBuffType))

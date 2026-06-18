@@ -194,6 +194,14 @@ func argAbility(L *lua.LState, i int) api.Ability {
 	return a
 }
 
+func argCamera(L *lua.LState, i int) api.Camera {
+	c, ok := handleArg(L, i).(api.Camera)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Camera userdata (from Game_Camera), got %T", handleArg(L, i)))
+	}
+	return c
+}
+
 func argItem(L *lua.LState, i int) api.Item {
 	v, ok := handleArg(L, i).(api.Item)
 	if !ok {

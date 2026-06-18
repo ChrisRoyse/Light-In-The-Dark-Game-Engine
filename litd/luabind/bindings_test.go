@@ -97,6 +97,44 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestCameraBindingFSV — #267: the Camera noun binds — Game_Camera (hand-written
+// resolver) yields the per-player handle, and the generated Camera_* verbs drive
+// it. SoT: Follow's target is read back by the Go handle (Following), and a Lua
+// SetField is read back by the Go handle's Field (clamp-agnostic parity — both
+// read the same camera state cell).
+func TestCameraBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	p0 := g.Player(0)
+	g.SetLocalPlayer(p0) // Follow/StopFollow/Shake act only on the local player's camera
+	u := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 10, Y: 20}, api.Deg(0))
+	pud := L.NewUserData()
+	pud.Value = p0
+	L.SetGlobal("p", pud)
+	uud := L.NewUserData()
+	uud.Value = u
+	L.SetGlobal("u", uud)
+
+	if err := L.DoString(`
+		cam = Game_Camera(p)
+		Camera_Follow(cam, u)
+		Camera_SetField(cam, 0, 1500.0)
+		f = Camera_Field(cam, 0)
+	`); err != nil {
+		t.Fatalf("Camera verbs must bind (argCamera + Game_Camera, #267): %v", err)
+	}
+	goCam := g.Camera(p0)
+	if got := goCam.Following(); got != u {
+		t.Fatalf("Camera_Follow(u) from Lua: Go handle Following()=%v, want the unit %v (follow didn't reach state)", got, u)
+	}
+	luaF := float64(lua.LVAsNumber(L.GetGlobal("f")))
+	if goCam.Field(0) != luaF {
+		t.Fatalf("Camera_SetField parity: Lua Field=%v but Go Field=%v (write didn't reach the same state)", luaF, goCam.Field(0))
+	}
+	t.Logf("FSV #267 Camera: Lua Follow -> Go Following matches unit; Lua SetField(0,1500)->Field=%v == Go Field: state cells match", luaF)
+}
+
 // TestAbilityReturnBindingFSV — #267: Unit.AddAbility binds now that the
 // Ability handle marshals as a return (its AbilityRef arg already did). SoT =
 // the granted ability is actually present in sim — Ability.Valid() reads the
