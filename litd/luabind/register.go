@@ -314,6 +314,50 @@ func argPlayerSlice(L *lua.LState, i int) []api.Player {
 	return out
 }
 
+// argDestructableOptions reads a Lua options table into api.DestructableOptions
+// (#267): {type=, x=, y=, facing=, life=, footprint=, blocksPathing=}. `type`
+// (a number) is required and raises if absent/non-number; the rest default to
+// the zero option (Pos {0,0}, no life override, etc.). Mirrors the named-field
+// options-table convention (R-API marshaling).
+func argDestructableOptions(L *lua.LState, i int) api.DestructableOptions {
+	t, ok := L.Get(i).(*lua.LTable)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected a DestructableOptions table, got %s", L.Get(i).Type()))
+		return api.DestructableOptions{}
+	}
+	num := func(key string) (float64, bool) {
+		if n, ok := t.RawGetString(key).(lua.LNumber); ok {
+			return float64(n), true
+		}
+		return 0, false
+	}
+	typ, ok := num("type")
+	if !ok {
+		L.ArgError(i, "DestructableOptions.type (number) is required")
+		return api.DestructableOptions{}
+	}
+	o := api.DestructableOptions{Type: uint16(typ)}
+	if x, ok := num("x"); ok {
+		o.Pos.X = x
+	}
+	if y, ok := num("y"); ok {
+		o.Pos.Y = y
+	}
+	if f, ok := num("facing"); ok {
+		o.Facing = api.Deg(f)
+	}
+	if l, ok := num("life"); ok {
+		o.Life = int(l)
+	}
+	if fp, ok := num("footprint"); ok {
+		o.Footprint = int(fp)
+	}
+	if bp, ok := t.RawGetString("blocksPathing").(lua.LBool); ok {
+		o.BlocksPathing = bool(bp)
+	}
+	return o
+}
+
 func argDamageEvent(L *lua.LState, i int) *api.DamageEvent {
 	e, ok := handleArg(L, i).(*api.DamageEvent)
 	if !ok {

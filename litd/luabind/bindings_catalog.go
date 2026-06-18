@@ -170,6 +170,14 @@ func bindStorageGetInt(L *lua.LState) int {
 	return 2
 }
 
+// bindGameCreateDestructable binds Game.CreateDestructable(o DestructableOptions)
+// Destructable (#267): the generated dispatch defers it for its options-struct
+// argument; this reads the named-field options table and pushes the handle.
+func (b gameBinder) bindGameCreateDestructable(L *lua.LState) int {
+	L.Push(pushHandle(L, b.g.CreateDestructable(argDestructableOptions(L, 1))))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
@@ -191,4 +199,5 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_Print", L.NewFunction(b.bindGamePrint))
 	L.SetGlobal("Game_ClearMessages", L.NewFunction(b.bindGameClearMessages))
 	L.SetGlobal("Storage_GetInt", L.NewFunction(bindStorageGetInt))
+	L.SetGlobal("Game_CreateDestructable", L.NewFunction(b.bindGameCreateDestructable))
 }
