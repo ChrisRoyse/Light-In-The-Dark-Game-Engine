@@ -186,6 +186,14 @@ func argUnit(L *lua.LState, i int) api.Unit {
 	return u
 }
 
+func argAbility(L *lua.LState, i int) api.Ability {
+	a, ok := handleArg(L, i).(api.Ability)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Ability userdata (from Unit_AddAbility), got %T", handleArg(L, i)))
+	}
+	return a
+}
+
 func argItem(L *lua.LState, i int) api.Item {
 	v, ok := handleArg(L, i).(api.Item)
 	if !ok {

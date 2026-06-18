@@ -63,6 +63,8 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argMissile(L, %d)", idx), true
 	case "Effect":
 		return fmt.Sprintf("argEffect(L, %d)", idx), true
+	case "Ability":
+		return fmt.Sprintf("argAbility(L, %d)", idx), true
 	case "Player":
 		return fmt.Sprintf("argPlayer(L, %d)", idx), true
 	case "Timer":

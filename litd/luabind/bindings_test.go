@@ -140,6 +140,54 @@ func TestAbilityReturnBindingFSV(t *testing.T) {
 	}
 }
 
+// TestAbilityMethodsBindingFSV — #267: the Ability noun's verbs (Level/SetLevel/
+// Inc/DecLevel/Field/SetField) bind now that an Ability receiver marshals
+// (argAbility), and the handle is reachable from Lua via Unit_AddAbility's
+// return. SoT = the sim ability-slot cells (w.Abilities.Level/...): Lua mutates,
+// and a Go Ability handle on the SAME unit+ref reads the same cell back.
+func TestAbilityMethodsBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	ref := g.RegisterAbility(api.AbilityDef{ID: "ablz", Name: "Blizzard", Cooldown: 6})
+	if ref == 0 {
+		t.Fatalf("RegisterAbility returned ref 0")
+	}
+	L := boundState(t, g)
+	defer L.Close()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	goHandle := u.AddAbility(ref) // same unit+ref → reads the same sim slot Lua writes
+
+	ud := L.NewUserData()
+	ud.Value = u
+	L.SetGlobal("u", ud)
+	L.SetGlobal("R", lua.LNumber(float64(ref)))
+	// Grant in Lua (returns the same per-unit handle), then drive its level.
+	if err := L.DoString(`
+		a = Unit_AddAbility(u, R)
+		Ability_SetLevel(a, 3)
+		lvl = Ability_Level(a)
+		up = Ability_IncLevel(a)
+		cd = Ability_Field(a, 0)        -- AbilityFieldCooldown (sim units; not asserted)
+		Ability_SetField(a, 0, 42.0)    -- round-trip: Go handle must read 42 back
+	`); err != nil {
+		t.Fatalf("Ability methods must bind (argAbility receiver, #267): %v", err)
+	}
+	if got := int(lua.LVAsNumber(L.GetGlobal("lvl"))); got != 3 {
+		t.Fatalf("Lua Ability_Level after SetLevel(3) = %d, want 3", got)
+	}
+	if got := int(lua.LVAsNumber(L.GetGlobal("up"))); got != 4 {
+		t.Fatalf("Lua Ability_IncLevel returned %d, want 4", got)
+	}
+	// SoT: read sim through the Go handle on the same unit/ref.
+	if goHandle.Level() != 4 {
+		t.Fatalf("sim ability level via Go handle = %d, want 4 (Lua write didn't reach sim)", goHandle.Level())
+	}
+	cd := float64(lua.LVAsNumber(L.GetGlobal("cd"))) // Lua read a real sim value (units unimportant)
+	if goHandle.Field(api.AbilityFieldCooldown) != 42 {
+		t.Fatalf("sim Cooldown after Lua SetField(42) = %v, want 42 (Lua write didn't reach sim)", goHandle.Field(api.AbilityFieldCooldown))
+	}
+	t.Logf("FSV #267 Ability methods: Lua SetLevel(3)->Inc->4 (Go-handle reads 4), Field read=%v then SetField(42) (Go reads 42): sim cells match", cd)
+}
+
 // TestOrderTargetBindingFSV — #267: Unit.Order binds now that OrderTarget
 // marshals (nil/point-table/unit) and Game.Order resolves an order verb from
 // Lua. SoT = the unit's actual movement after a Lua-issued move order (a wrong
