@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -45,23 +44,19 @@ type WorldInfo struct {
 	Chunks []WorldChunk
 }
 
-// collectLuaFiles returns every .lua file under dir, as slash-separated paths
-// relative to dir, in lexical order (so registration + load order are
+// collectLuaFilesFS returns every .lua file in fsys, as slash-separated paths
+// relative to the fsys root, in lexical order (so registration + load order are
 // deterministic across machines and runs).
-func collectLuaFiles(dir string) ([]string, error) {
+func collectLuaFilesFS(fsys fs.FS) ([]string, error) {
 	var rels []string
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.IsDir() || !strings.HasSuffix(d.Name(), ".lua") {
 			return nil
 		}
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-		rels = append(rels, filepath.ToSlash(rel))
+		rels = append(rels, p) // fs.WalkDir paths are already slash-separated
 		return nil
 	})
 	if err != nil {
@@ -75,27 +70,39 @@ func collectLuaFiles(dir string) ([]string, error) {
 // entry point (main.lua) on L. L must already be sandboxed and game-bound. It
 // returns a WorldInfo describing what was loaded, or a loud error on the first
 // failure (no partial-load: a world either loads whole or not at all).
+//
+// LoadWorld is the dev (directory) path; it is a thin wrapper over LoadWorldFS
+// so a packaged world archive loads through the identical code (#205/#209).
 func LoadWorld(L *lua.LState, reg *ChunkRegistry, dir string) (*WorldInfo, error) {
-	rels, err := collectLuaFiles(dir)
+	return LoadWorldFS(L, reg, os.DirFS(dir), dir)
+}
+
+// LoadWorldFS is the filesystem-source-agnostic world loader: fsys may be a
+// directory (os.DirFS) or a verified world archive (worldarchive.FS). label is
+// used only for error messages and WorldInfo.Dir (e.g. the dir path or the
+// archive filename). The entry point main.lua must sit at the fsys root — for
+// an archive whose Lua lives under scripts/, pass fs.Sub(archive.FS(), "scripts").
+func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*WorldInfo, error) {
+	rels, err := collectLuaFilesFS(fsys)
 	if err != nil {
-		return nil, fmt.Errorf("luabind: load world %q: %w", dir, err)
+		return nil, fmt.Errorf("luabind: load world %q: %w", label, err)
 	}
 	if len(rels) == 0 {
-		return nil, fmt.Errorf("luabind: world %q has no .lua files", dir)
+		return nil, fmt.Errorf("luabind: world %q has no .lua files", label)
 	}
 
-	info := &WorldInfo{Dir: dir, Entry: WorldEntry}
+	info := &WorldInfo{Dir: label, Entry: WorldEntry}
 	haveEntry := false
 	for _, rel := range rels {
-		src, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(rel)))
+		src, err := fs.ReadFile(fsys, rel)
 		if err != nil {
-			return nil, fmt.Errorf("luabind: world %q read %s: %w", dir, rel, err)
+			return nil, fmt.Errorf("luabind: world %q read %s: %w", label, rel, err)
 		}
 		// Register compiles the chunk; a syntax error is returned loudly here,
 		// already naming the chunk and the offending line.
 		id, err := reg.Register(rel, string(src))
 		if err != nil {
-			return nil, fmt.Errorf("luabind: world %q: %w", dir, err)
+			return nil, fmt.Errorf("luabind: world %q: %w", label, err)
 		}
 		info.Chunks = append(info.Chunks, WorldChunk{Rel: rel, ID: id})
 		if rel == WorldEntry {
@@ -103,23 +110,23 @@ func LoadWorld(L *lua.LState, reg *ChunkRegistry, dir string) (*WorldInfo, error
 		}
 	}
 	if !haveEntry {
-		return nil, fmt.Errorf("luabind: world %q has no %s entry point", dir, WorldEntry)
+		return nil, fmt.Errorf("luabind: world %q has no %s entry point", label, WorldEntry)
 	}
 
 	// Execute the entry on L. L.Load is the Go-side compile API (NOT the Lua
 	// `load` global, which the sandbox strips); the "@" chunkname makes runtime
 	// errors carry main.lua:line.
-	entrySrc, err := os.ReadFile(filepath.Join(dir, WorldEntry))
+	entrySrc, err := fs.ReadFile(fsys, WorldEntry)
 	if err != nil {
-		return nil, fmt.Errorf("luabind: world %q read entry: %w", dir, err)
+		return nil, fmt.Errorf("luabind: world %q read entry: %w", label, err)
 	}
 	fn, err := L.Load(strings.NewReader(string(entrySrc)), "@"+WorldEntry)
 	if err != nil {
-		return nil, fmt.Errorf("luabind: world %q entry compile: %w", dir, err)
+		return nil, fmt.Errorf("luabind: world %q entry compile: %w", label, err)
 	}
 	L.Push(fn)
 	if err := L.PCall(0, 0, nil); err != nil {
-		return nil, fmt.Errorf("luabind: world %q entry run: %w", dir, err)
+		return nil, fmt.Errorf("luabind: world %q entry run: %w", label, err)
 	}
 	return info, nil
 }
