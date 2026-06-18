@@ -97,6 +97,44 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestSoundBindingFSV — #267: the Sound noun binds — Game_CreateSound (mapped,
+// now that Sound marshals as a return) yields a cue handle, and the generated
+// Sound_* verbs emit audio operations. SoT = the AudioEvents captured by a Go
+// OnAudio sink: a Lua Play then Stop must surface as AudioPlay+AudioStop for the
+// same cue (the verbs are presentation, so the emitted event stream is truth).
+func TestSoundBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	var events []api.AudioEvent
+	g.OnAudio(func(e api.AudioEvent) { events = append(events, e) })
+	L := boundState(t, g)
+	defer L.Close()
+	if err := L.DoString(`
+		s = Game_CreateSound("war3:Abilities/blizzard.flac")
+		Sound_SetVolume(s, 0.5)
+		Sound_Play(s)
+		Sound_Stop(s)
+	`); err != nil {
+		t.Fatalf("Sound verbs must bind (argSound + Sound return, #267): %v", err)
+	}
+	// Find the Play and Stop events; assert presence + same cue.
+	var play, stop *api.AudioEvent
+	for i := range events {
+		switch events[i].Kind {
+		case api.AudioPlay:
+			play = &events[i]
+		case api.AudioStop:
+			stop = &events[i]
+		}
+	}
+	if play == nil || stop == nil {
+		t.Fatalf("Lua Play/Stop did not emit AudioPlay+AudioStop; got %d events: %+v", len(events), events)
+	}
+	if play.Cue != stop.Cue || play.Cue == 0 {
+		t.Fatalf("Play/Stop cue mismatch or zero: play=%d stop=%d", play.Cue, stop.Cue)
+	}
+	t.Logf("FSV #267 Sound: Lua CreateSound->SetVolume->Play->Stop emitted %d audio events incl AudioPlay+AudioStop for cue %d", len(events), play.Cue)
+}
+
 // TestForceBindingFSV — #267: the Force noun binds — Game_CreateForce (mapped,
 // now that Force marshals as a return) yields a player-group handle, and the
 // generated Force_* verbs mutate/query it. SoT = readable membership: an added

@@ -210,6 +210,14 @@ func argForce(L *lua.LState, i int) api.Force {
 	return f
 }
 
+func argSound(L *lua.LState, i int) api.Sound {
+	s, ok := handleArg(L, i).(api.Sound)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected Sound userdata (from Game_CreateSound), got %T", handleArg(L, i)))
+	}
+	return s
+}
+
 func argItem(L *lua.LState, i int) api.Item {
 	v, ok := handleArg(L, i).(api.Item)
 	if !ok {
