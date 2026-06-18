@@ -19,6 +19,8 @@ local BASE_INTERVAL = 60 -- ticks between waves at one dark beacon
 local STEP = 15          -- interval shrinks this much per additional dark beacon
 local MIN_INTERVAL = 20
 local JITTER = 40        -- spawn scatter (sim units) around a beacon
+local LIGHT_RADIUS = 250 -- a lit beacon's safe radius; the Dark NEVER spawns inside one
+local MAX_REROLL = 8     -- bounded sim-PRNG re-rolls to keep a jittered spawn out of light
 
 local dark = Game_NeutralHostile()
 local store = Game_Storage()
@@ -38,6 +40,27 @@ local function darkBeacons()
 		end
 	end
 	return out
+end
+
+local function litCenters()
+	local out = {}
+	for i, b in ipairs(BEACONS) do
+		if Storage_GetInt(store, "beacon", "lit_" .. i) == 1 then
+			out[#out + 1] = b
+		end
+	end
+	return out
+end
+
+-- insideLit reports whether (x,y) falls within any lit beacon's safe radius.
+local function insideLit(x, y, lits)
+	for _, c in ipairs(lits) do
+		local dx, dy = x - c.x, y - c.y
+		if dx * dx + dy * dy <= LIGHT_RADIUS * LIGHT_RADIUS then
+			return true
+		end
+	end
+	return false
 end
 
 local function intervalFor(n)
@@ -76,14 +99,25 @@ Game_Every(0.05, function()
 	if t - lastWave >= interval then
 		lastWave = t
 		waves = waves + 1
+		local lits = litCenters()
 		for _, b in ipairs(db) do
 			local count = tier + Game_RandomInt(0, 1) -- composition jitter (sim PRNG)
 			for _ = 1, count do
-				local sx = b.x + Game_RandomInt(-JITTER, JITTER)
-				local sy = b.y + Game_RandomInt(-JITTER, JITTER)
-				Game_CreateUnit(dark, Game_UnitType(TIERS[tier]), { x = sx, y = sy }, 0)
-				totalSpawned = totalSpawned + 1
-				lastX, lastY, lastBeaconX = sx, sy, b.x
+				-- Re-roll the scatter until it lands outside every lit radius
+				-- (defense in depth: spawn origin is a dark beacon, but on a tight
+				-- map the jitter could reach into a neighbouring lit radius).
+				local sx, sy
+				for _ = 0, MAX_REROLL do
+					sx = b.x + Game_RandomInt(-JITTER, JITTER)
+					sy = b.y + Game_RandomInt(-JITTER, JITTER)
+					if not insideLit(sx, sy, lits) then break end
+				end
+				if not insideLit(sx, sy, lits) then
+					Game_CreateUnit(dark, Game_UnitType(TIERS[tier]), { x = sx, y = sy }, 0)
+					totalSpawned = totalSpawned + 1
+					lastX, lastY, lastBeaconX = sx, sy, b.x
+				end
+				-- else fail-closed: skip a spawn that cannot be placed in darkness.
 			end
 		end
 	end

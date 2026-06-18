@@ -49,6 +49,44 @@ func darkWorldGame(t *testing.T, seed int64, lit [3]int) *api.Game {
 
 func darkInt(g *api.Game, key string) int { v, _ := g.Storage().GetInt("dark", key); return v }
 
+// TestDarkSpawnNeverInLightFSV verifies #172's hard invariant geometrically: with
+// a mix of lit and dark beacons, NO spawned Dark unit's REAL coordinate lies
+// inside any lit beacon's safe radius. SoT = every neutral-hostile unit's actual
+// position (not the world's own bookkeeping). The lit-radius re-roll guard in
+// worlds/the-dark/main.lua is what makes this hold on any beacon spacing.
+func TestDarkSpawnNeverInLightFSV(t *testing.T) {
+	const lightRadius = 250.0
+	centers := [3][2]float64{{500, 500}, {1500, 500}, {1000, 1500}}
+	lit := [3]int{1, 0, 0} // beacon 1 lit; 2 & 3 dark
+
+	g := darkWorldGame(t, 5, lit)
+	g.Advance(240)
+
+	nh := g.NeutralHostile().Slot()
+	checked := 0
+	for _, u := range g.AllUnits(nil) {
+		if u.Owner().Slot() != nh {
+			continue
+		}
+		p := u.Position()
+		checked++
+		for i, c := range centers {
+			if lit[i] == 0 {
+				continue
+			}
+			dx, dy := p.X-c[0], p.Y-c[1]
+			if dx*dx+dy*dy <= lightRadius*lightRadius {
+				t.Fatalf("Dark unit at (%.0f,%.0f) is INSIDE lit beacon %d (center %.0f,%.0f r=%.0f) — invariant violated",
+					p.X, p.Y, i+1, c[0], c[1], lightRadius)
+			}
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no Dark units spawned from the 2 dark beacons — nothing to validate")
+	}
+	t.Logf("FSV #172 spawn-validity: %d Dark units checked, none inside the lit beacon's %.0f radius", checked, lightRadius)
+}
+
 func TestDarkEscalatingSpawnsFSV(t *testing.T) {
 	// --- Edge 1: all beacons lit → zero pressure over a long span. ---
 	gLit := darkWorldGame(t, 5, [3]int{1, 1, 1})
