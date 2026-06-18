@@ -247,6 +247,14 @@ func argStringSlice(L *lua.LState, i int) []string {
 	return out
 }
 
+func argDamageEvent(L *lua.LState, i int) *api.DamageEvent {
+	e, ok := handleArg(L, i).(*api.DamageEvent)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected DamageEvent userdata (from an OnDamage handler), got %T", handleArg(L, i)))
+	}
+	return e
+}
+
 func argUnitSet(L *lua.LState, i int) *api.UnitSet {
 	s, ok := handleArg(L, i).(*api.UnitSet)
 	if !ok {

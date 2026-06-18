@@ -75,6 +75,8 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argUnitSet(L, %d)", idx), true
 	case "Storage": // *Storage handle (Game.Storage); pointer methods mutate in place
 		return fmt.Sprintf("argStorage(L, %d)", idx), true
+	case "DamageEvent": // *DamageEvent passed to an OnDamage handler (events.go bridge)
+		return fmt.Sprintf("argDamageEvent(L, %d)", idx), true
 	case "Player":
 		return fmt.Sprintf("argPlayer(L, %d)", idx), true
 	case "Timer":

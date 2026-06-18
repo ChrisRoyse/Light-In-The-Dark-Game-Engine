@@ -104,6 +104,13 @@ exact   Game.DefineItems
 exact   Game.DefineBuffTypes
 exact   Game.DefineUpgrades
 
+# combat install seam (#406): the damage-coefficient matrix (coeff[attackType]
+# [armorType], thousandths) combat resolution multiplies each hit by. Wraps the
+# sim's BindDamageMatrix; structural setup like DefineEconomy, supersedes JASS
+# slk gameplay-constant config. Until bound, every hit is dropped — so a world
+# that wants damage seeds it here.
+exact   Game.DefineCombat
+
 # economy install seam (#396): initialises the per-player resource ledger that
 # the SetGold/SetLumber/SetResource verbs write into. Wraps the sim's
 # BindEconomy; structural setup, supersedes JASS slk economy config.

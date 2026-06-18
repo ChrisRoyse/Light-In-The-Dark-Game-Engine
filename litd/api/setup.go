@@ -132,6 +132,31 @@ func (g *Game) DefineResourceNodes(nodes []data.ResourceNodeType) error {
 	return nil
 }
 
+// DefineCombat installs the damage-coefficient matrix — coeff[attackType]
+// [armorType] in thousandths (1000 = 100%) — that combat resolution multiplies
+// each hit by (#406). The install-seam companion to DefineUnits for combat
+// constants; a world that ships custom attack/armor types seeds them here, and
+// until it is bound every queued hit is dropped (counted, never guessed —
+// damage.go), so no unit can take damage. A setup verb (R-API-5): it fails
+// closed on an empty or ragged matrix. The api takes [][]int so no sim integer
+// width leaks across the boundary.
+func (g *Game) DefineCombat(matrix [][]int) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineCombat: nil game")
+	}
+	coeff := make([][]int32, len(matrix))
+	for i, row := range matrix {
+		coeff[i] = make([]int32, len(row))
+		for j, v := range row {
+			coeff[i][j] = int32(v)
+		}
+	}
+	if err := g.w.BindDamageMatrix(coeff); err != nil {
+		return fmt.Errorf("api: DefineCombat: %w", err)
+	}
+	return nil
+}
+
 // DefineEffects installs the compiled effect-composition arena that abilities
 // and items reference by index (#394). A setup verb (R-API-5): it fails closed
 // — propagating the validation error — when an entry names an unknown effect

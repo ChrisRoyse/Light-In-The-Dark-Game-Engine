@@ -150,6 +150,70 @@ func TestHelperFreeFuncsBindingFSV(t *testing.T) {
 	t.Logf("FSV #267 helper free funcs: WeightedChoice {0,7,0}->1 / {}->-1; RandomItemType single-code == Go resolve; CreateUnits made 3 valid units")
 }
 
+// TestDefineCombatResolvesFSV — #406: Game.DefineCombat installs the damage
+// matrix; until it is bound every hit is dropped, so this is what lets a unit
+// take damage at all. SoT = the victim's sim Life drops by the coefficient-
+// scaled amount (a 500/1000 = 0.5x matrix halves a 40-damage hit to 20).
+func TestDefineCombatResolvesFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	if err := g.DefineCombat([][]int{{500}}); err != nil { // 0.5x coefficient
+		t.Fatalf("DefineCombat: %v", err)
+	}
+	src := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	tgt := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 5, Y: 0}, api.Deg(0))
+	before := tgt.Life()
+	if !src.Damage(tgt, 40) {
+		t.Fatal("Unit.Damage did not queue")
+	}
+	g.Advance(2)
+	drop := before - tgt.Life()
+	t.Logf("FSV #406 DefineCombat: 0.5x matrix, 40 damage -> Life dropped %.1f (want 20)", drop)
+	if drop != 20 {
+		t.Fatalf("Life dropped %.1f, want 20 (coefficient not applied — matrix unbound or wrong scale)", drop)
+	}
+}
+
+// TestDamageEventBindingFSV — #406/#267: the DamageEvent payload surface binds
+// via an OnDamage->Lua bridge + argDamageEvent. With a matrix bound (so hits
+// resolve), a Lua pre-apply modifier forces a fixed amount; SoT = the victim's
+// sim Life reflects the MODIFIED damage exactly (armor/coefficient-independent),
+// proving the handle round-trips through combat resolution.
+func TestDamageEventBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	if err := g.DefineCombat([][]int{{1000}}); err != nil {
+		t.Fatalf("DefineCombat: %v", err)
+	}
+	L := boundState(t, g)
+	defer L.Close()
+	if err := L.DoString(`
+		seen_amount = -1
+		seen_unit = false
+		OnDamage(function(de)
+			seen_amount = DamageEvent_Amount(de)
+			seen_unit = Valid(DamageEvent_Unit(de))
+			DamageEvent_SetAmount(de, 7)   -- force exactly 7 damage to land
+		end)
+	`); err != nil {
+		t.Fatalf("OnDamage bridge + DamageEvent verbs must bind (#406): %v", err)
+	}
+	src := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	tgt := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 5, Y: 0}, api.Deg(0))
+	before := tgt.Life()
+	src.Damage(tgt, 50) // dealt 50, but the Lua modifier forces 7
+	g.Advance(2)
+	drop := before - tgt.Life()
+	t.Logf("FSV #406 DamageEvent: dealt 50, Lua modifier forced 7; Life dropped %.1f (seen amount=%v)", drop, lua.LVAsNumber(L.GetGlobal("seen_amount")))
+	if drop != 7 {
+		t.Fatalf("Life dropped by %.1f, want exactly 7 (Lua SetAmount didn't reach combat resolution)", drop)
+	}
+	if !lua.LVAsBool(L.GetGlobal("seen_unit")) {
+		t.Fatal("DamageEvent_Unit was not a valid unit inside the handler")
+	}
+	if amt := float64(lua.LVAsNumber(L.GetGlobal("seen_amount"))); amt <= 0 {
+		t.Fatalf("DamageEvent_Amount inside handler = %v, want the positive incoming damage", amt)
+	}
+}
+
 // TestStringHashBindingFSV — #267: a free function (no receiver) binds via the
 // catalog seam without a generator change. SoT = the binding returns the exact
 // canonical api.StringHash value for the same input (deterministic), and

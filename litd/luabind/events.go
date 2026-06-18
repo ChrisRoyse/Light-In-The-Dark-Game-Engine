@@ -40,6 +40,41 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		sub.Cancel()
 		return 0
 	}))
+
+	// OnDamage bridges the typed pre-apply damage-modifier sink (#406). Unlike
+	// OnEvent (which observes a landed hit), an OnDamage handler runs DURING
+	// combat resolution and receives a *DamageEvent it may read (Amount/Source/
+	// Unit) and mutate (DamageEvent_SetAmount) to change the damage that lands.
+	// The handle is live only inside the callback (DamageEvent.Valid), matching
+	// the userdata lifetime here.
+	L.SetGlobal("OnDamage", L.NewFunction(func(L *lua.LState) int {
+		fn := L.CheckFunction(1)
+		g.OnDamage(func(de *api.DamageEvent) {
+			ud := L.NewUserData()
+			ud.Value = de
+			if err := L.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true}, ud); err != nil {
+				if s := getScheduler(L); s != nil {
+					s.reportError(err)
+				}
+			}
+		})
+		return 0
+	}))
+	// DamageEvent payload readers (Amount/Source/Unit are LitD new-capabilities,
+	// so hand-written here; the mapped DamageEvent.SetAmount mutator is generated
+	// via argDamageEvent).
+	L.SetGlobal("DamageEvent_Amount", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LNumber(argDamageEvent(L, 1).Amount()))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_Unit", L.NewFunction(func(L *lua.LState) int {
+		L.Push(handleToLua(L, argDamageEvent(L, 1).Unit()))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_Source", L.NewFunction(func(L *lua.LState) int {
+		L.Push(handleToLua(L, argDamageEvent(L, 1).Source()))
+		return 1
+	}))
 }
 
 // callEventHandler invokes the Lua handler fn with the firing Event as a
