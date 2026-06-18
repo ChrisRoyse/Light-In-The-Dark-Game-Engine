@@ -119,6 +119,27 @@ func argMapFlag(L *lua.LState, i int) api.MapFlag           { return api.MapFlag
 func argUnitClass(L *lua.LState, i int) api.UnitClass       { return api.UnitClass(L.CheckInt(i)) }
 func argSoundChannel(L *lua.LState, i int) api.SoundChannel { return api.SoundChannel(L.CheckInt(i)) }
 
+// argOrderTarget reads an OrderTarget sum from Lua (#267): nil → no target, a
+// {x,y} table → point target, a Unit userdata → unit target. Any other value
+// raises (fail-closed), never a silent zero target.
+func argOrderTarget(L *lua.LState, i int) api.OrderTarget {
+	lv := L.Get(i)
+	if lv == lua.LNil {
+		return api.TargetNone()
+	}
+	if _, ok := lv.(*lua.LTable); ok {
+		return api.TargetPoint(argVec2(L, i))
+	}
+	if ud, ok := lv.(*lua.LUserData); ok {
+		if u, ok := ud.Value.(api.Unit); ok {
+			return api.TargetUnit(u)
+		}
+		L.ArgError(i, fmt.Sprintf("OrderTarget unit must be a Unit userdata, got %T", ud.Value))
+	}
+	L.ArgError(i, fmt.Sprintf("OrderTarget must be nil, a {x,y} point table, or a Unit, got %s", lv.Type()))
+	return api.OrderTarget{}
+}
+
 // argWidget reads a damageable target — a Unit or Destructable userdata, both of
 // which satisfy api.Widget. Wrong type raises, never a Go panic (#267).
 func argWidget(L *lua.LState, i int) api.Widget {

@@ -56,6 +56,15 @@ func (b gameBinder) bindGameCreateResourceNode(L *lua.LState) int {
 	return 1
 }
 
+// bindGameOrder binds Game.Order(name string) Order (#267) — the Game-bound
+// resolver a script uses to obtain an order verb (no ambient globals), the
+// analogue of Game_UnitType for the order catalog. Pairs with the generated
+// Unit_Order (which now marshals its OrderTarget arg).
+func (b gameBinder) bindGameOrder(L *lua.LState) int {
+	L.Push(handleToLua(L, b.g.Order(L.CheckString(1))))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
@@ -64,4 +73,5 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_BuffType", L.NewFunction(b.bindGameBuffType))
 	L.SetGlobal("Game_ResourceNodeType", L.NewFunction(b.bindGameResourceNodeType))
 	L.SetGlobal("Game_CreateResourceNode", L.NewFunction(b.bindGameCreateResourceNode))
+	L.SetGlobal("Game_Order", L.NewFunction(b.bindGameOrder))
 }

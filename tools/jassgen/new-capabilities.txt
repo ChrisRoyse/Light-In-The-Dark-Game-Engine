@@ -123,6 +123,13 @@ exact   Game.DefineResourceNodes
 exact   Game.ResourceNodeType
 exact   Game.CreateResourceNode
 
+# order-verb resolver (#267): the Game-bound way a script obtains an order verb
+# from the catalog (OrderMove/Attack/…) without ambient globals — analogue of
+# Game.UnitType. Pairs with the generated Unit.Order (D3 collapse of the JASS
+# IssueXxxOrder families). No single JASS native — the order catalog is a LitD
+# dedup landing point.
+exact   Game.Order
+
 # runtime world-loader seam (#268): the api stays Lua-agnostic — a backend
 # (litd/luabind) registers via SetWorldLoader, and LoadWorld delegates to it to
 # load a world directory at runtime. HasWorldLoader reports whether a backend is

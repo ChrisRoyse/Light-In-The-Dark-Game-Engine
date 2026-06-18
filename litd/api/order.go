@@ -42,6 +42,33 @@ var (
 	OrderFollow = Order{id: uint16(sim.OrderFollow) + 1}
 )
 
+// Order resolves a named order verb from the catalog to its Order value, the
+// Game-bound way a script (Lua, #267) obtains an order without ambient globals —
+// the analogue of Game.UnitType for the order catalog. Names match the catalog:
+// "stop", "move", "attack", "smart", "hold", "patrol", "follow". An unknown name
+// returns the zero Order (IsZero), which Unit.Order rejects as an unset order —
+// fail-closed, never a silent wrong order.
+func (g *Game) Order(name string) Order {
+	switch name {
+	case "stop":
+		return OrderStop
+	case "move":
+		return OrderMove
+	case "attack":
+		return OrderAttack
+	case "smart":
+		return OrderSmart
+	case "hold":
+		return OrderHold
+	case "patrol":
+		return OrderPatrol
+	case "follow":
+		return OrderFollow
+	default:
+		return Order{}
+	}
+}
+
 // targetKind tags the OrderTarget variant.
 type targetKind uint8
 

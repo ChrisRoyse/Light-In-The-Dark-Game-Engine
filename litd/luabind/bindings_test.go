@@ -97,6 +97,60 @@ func TestNumericEnumArgBindingFSV(t *testing.T) {
 	}
 }
 
+// TestOrderTargetBindingFSV — #267: Unit.Order binds now that OrderTarget
+// marshals (nil/point-table/unit) and Game.Order resolves an order verb from
+// Lua. SoT = the unit's actual movement after a Lua-issued move order (a wrong
+// marshal or a no-op binding would leave it parked), plus the union edges.
+func TestOrderTargetBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	u2 := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 200, Y: 0}, api.Deg(0))
+	ud := L.NewUserData()
+	ud.Value = u
+	L.SetGlobal("u", ud)
+	ud2 := L.NewUserData()
+	ud2.Value = u2
+	L.SetGlobal("u2", ud2)
+
+	startX := u.Position().X
+	if err := L.DoString(`ok = Unit_Order(u, Game_Order("move"), {x = 500, y = 0})`); err != nil {
+		t.Fatalf("Unit_Order must bind via OrderTarget + Game_Order (#267): %v", err)
+	}
+	if !lua.LVAsBool(L.GetGlobal("ok")) {
+		t.Fatal("Unit_Order(move, point) returned false on a valid move")
+	}
+	g.Advance(40)
+	movedX := u.Position().X
+	t.Logf("FSV #267 OrderTarget: Lua move order, x %.1f -> %.1f (target 500)", startX, movedX)
+	if movedX <= startX {
+		t.Fatalf("unit did not move toward the ordered point: x %.1f -> %.1f", startX, movedX)
+	}
+
+	// Unit-target branch (userdata → TargetUnit): a smart order onto a unit installs.
+	if err := L.DoString(`okU = Unit_Order(u, Game_Order("smart"), u2)`); err != nil {
+		t.Fatalf("Unit_Order with a unit target must marshal: %v", err)
+	}
+	if !lua.LVAsBool(L.GetGlobal("okU")) {
+		t.Fatal("Unit_Order(smart, unit) returned false")
+	}
+
+	// Edge: unknown order name → null Order → Unit.Order rejects (false), no raise.
+	if err := L.DoString(`bad = Unit_Order(u, Game_Order("bogus"), {x = -500, y = 0})`); err != nil {
+		t.Fatalf("unknown-order call should return false, not raise: %v", err)
+	}
+	if lua.LVAsBool(L.GetGlobal("bad")) {
+		t.Fatal("Unit_Order with an unknown order name must return false (unset order)")
+	}
+	// Edge: wrong OrderTarget type (a bare number) raises (fail-closed).
+	errWrong := L.DoString(`Unit_Order(u, Game_Order("move"), 42)`)
+	t.Logf("FSV #267 OrderTarget edges: unknown-order=false; wrong-target -> %v", oneLineErr(errWrong))
+	if errWrong == nil {
+		t.Fatal("OrderTarget of a wrong type (number) must raise, not silently no-op")
+	}
+}
+
 // TestWidgetArgBindingFSV — #267: the combat verb Unit.Damage binds now that
 // Widget (a Unit/Destructable handle-interface) marshals. SoT = the target's
 // Life dropping after a Lua-driven Unit_Damage.
