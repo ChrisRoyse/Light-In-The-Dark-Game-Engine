@@ -170,6 +170,42 @@ func bindStorageGetInt(L *lua.LState) int {
 	return 2
 }
 
+// Storage typed accessors (#267): the generated dispatch bound only SetInt; the
+// Real/String/Bool round-trips were never mapped, leaving the save-data surface
+// inconsistent (a script could persist ints but not floats/strings/flags). These
+// mirror the Storage_SetInt/GetInt pattern — Set* return nothing, Get* push the
+// value then the found-flag (Lua takes the two-value return natively).
+func bindStorageSetReal(L *lua.LState) int {
+	argStorage(L, 1).SetReal(L.CheckString(2), L.CheckString(3), float64(L.CheckNumber(4)))
+	return 0
+}
+func bindStorageGetReal(L *lua.LState) int {
+	v, ok := argStorage(L, 1).GetReal(L.CheckString(2), L.CheckString(3))
+	L.Push(lua.LNumber(v))
+	L.Push(lua.LBool(ok))
+	return 2
+}
+func bindStorageSetString(L *lua.LState) int {
+	argStorage(L, 1).SetString(L.CheckString(2), L.CheckString(3), L.CheckString(4))
+	return 0
+}
+func bindStorageGetString(L *lua.LState) int {
+	v, ok := argStorage(L, 1).GetString(L.CheckString(2), L.CheckString(3))
+	L.Push(lua.LString(v))
+	L.Push(lua.LBool(ok))
+	return 2
+}
+func bindStorageSetBool(L *lua.LState) int {
+	argStorage(L, 1).SetBool(L.CheckString(2), L.CheckString(3), L.CheckBool(4))
+	return 0
+}
+func bindStorageGetBool(L *lua.LState) int {
+	v, ok := argStorage(L, 1).GetBool(L.CheckString(2), L.CheckString(3))
+	L.Push(lua.LBool(v))
+	L.Push(lua.LBool(ok))
+	return 2
+}
+
 // bindGameCreateDestructable binds Game.CreateDestructable(o DestructableOptions)
 // Destructable (#267): the generated dispatch defers it for its options-struct
 // argument; this reads the named-field options table and pushes the handle.
@@ -240,4 +276,10 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("FogModifier_Stop", L.NewFunction(bindFogModifierStop))
 	L.SetGlobal("FogModifier_Destroy", L.NewFunction(bindFogModifierDestroy))
 	L.SetGlobal("Player_Result", L.NewFunction(bindPlayerResult))
+	L.SetGlobal("Storage_SetReal", L.NewFunction(bindStorageSetReal))
+	L.SetGlobal("Storage_GetReal", L.NewFunction(bindStorageGetReal))
+	L.SetGlobal("Storage_SetString", L.NewFunction(bindStorageSetString))
+	L.SetGlobal("Storage_GetString", L.NewFunction(bindStorageGetString))
+	L.SetGlobal("Storage_SetBool", L.NewFunction(bindStorageSetBool))
+	L.SetGlobal("Storage_GetBool", L.NewFunction(bindStorageGetBool))
 }
