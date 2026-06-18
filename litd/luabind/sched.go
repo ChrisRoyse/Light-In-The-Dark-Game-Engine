@@ -43,11 +43,32 @@ import (
 // optional error handler, and a count of coroutines currently parked on a wait
 // (for the save guard / introspection). One runs at a time on the sim goroutine,
 // so its fields need no locking.
+// scriptResumeCont is the script-owned scheduler ContID (low-numbered; the api
+// reserves >=1<<30 for its own timers/threads) under which suspended Lua
+// coroutines re-wake. Its State carries the coroutine's (slot, gen) by value, so
+// the wake record is fully descriptive and serializes for a mid-wait save (#270).
+const scriptResumeCont uint32 = 1
+
+// scriptThread is one slot in the per-LState coroutine table. gen is bumped on
+// retire so a wake record queued for a finished/recycled coroutine is detected
+// as stale (mirrors api/thread.go's Go-thread table).
+type scriptThread struct {
+	co      *lua.LState
+	fn      *lua.LFunction
+	gen     uint32
+	alive   bool
+	waiting bool // parked on a scheduler record (drives PendingScriptWaits)
+}
+
 type scriptScheduler struct {
 	L       *lua.LState
 	g       *api.Game
 	errH    func(error)
 	pending int
+	// threads is the coroutine table; a wake record refers back to a coroutine
+	// by slot+gen (value-typed State), never by a Go closure — so it serializes.
+	threads    []scriptThread
+	threadFree []uint32
 	// handleCaches caches, per comparable handle type, the userdata wrapping each
 	// live handle (#407). The value for type T is a map[T]*lua.LUserData; pushHandle
 	// reaches it by reflect.Type key. Reuse makes a per-tick re-marshal of the same
@@ -104,13 +125,60 @@ func (s *scriptScheduler) reportError(err error) {
 func registerScriptThreads(L *lua.LState, g *api.Game) {
 	s := &scriptScheduler{L: L, g: g, handleCaches: make(map[reflect.Type]any)}
 	schedulers.Store(L, s)
+	// Register the resume continuation once on this game's scheduler. On a save
+	// load the scheduler rebuilds its registry from this call (it runs at
+	// Register time, before any LoadState), so serialized wake records resolve.
+	g.RegisterScriptCont(scriptResumeCont, s.onWake)
 	L.SetGlobal("PolledWait", L.NewFunction(bindScriptPolledWait))
 	L.SetGlobal("Run", L.NewFunction(func(L *lua.LState) int {
 		fn := L.CheckFunction(1)
 		co, _ := L.NewThread()
-		s.resume(co, fn)
+		s.resume(s.alloc(co, fn))
 		return 0
 	}))
+}
+
+// alloc reserves a coroutine slot (recycling a retired one when available),
+// fresh generations starting at 1 so a zero State never matches a live slot 0.
+func (s *scriptScheduler) alloc(co *lua.LState, fn *lua.LFunction) uint32 {
+	if n := len(s.threadFree); n > 0 {
+		slot := s.threadFree[n-1]
+		s.threadFree = s.threadFree[:n-1]
+		e := &s.threads[slot]
+		e.co, e.fn, e.alive, e.waiting = co, fn, true, false
+		return slot
+	}
+	s.threads = append(s.threads, scriptThread{co: co, fn: fn, gen: 1, alive: true})
+	return uint32(len(s.threads) - 1)
+}
+
+// retire frees a slot and bumps its generation so any outstanding wake record
+// for the old identity is recognized as stale.
+func (s *scriptScheduler) retire(slot uint32) {
+	e := &s.threads[slot]
+	e.alive, e.waiting, e.co, e.fn = false, false, nil, nil
+	e.gen++
+	if e.gen == 0 {
+		e.gen = 1
+	}
+	s.threadFree = append(s.threadFree, slot)
+}
+
+// onWake is the scheduler callback when a parked coroutine's wake tick arrives.
+// It validates the (slot, gen) against the table — the coroutine may have been
+// retired and its slot reused — before resuming.
+func (s *scriptScheduler) onWake(a, b int64) {
+	slot, gen := uint32(a), uint32(b)
+	if int(slot) >= len(s.threads) {
+		return
+	}
+	e := &s.threads[slot]
+	if !e.alive || e.gen != gen || !e.waiting {
+		return // retired, reused, or superseded — stale record
+	}
+	e.waiting = false
+	s.pending--
+	s.resume(slot)
 }
 
 // bindScriptPolledWait is the in-coroutine suspend native. PolledWait(d<=0)
@@ -131,22 +199,29 @@ func bindScriptPolledWait(L *lua.LState) int {
 // again at the wake tick. G.CurrentThread is restored to the host main thread
 // after each resume (the VM does this for opcode-driven resume; a Go-driven
 // Resume must do it explicitly) so the host is current whenever control returns.
-func (s *scriptScheduler) resume(co *lua.LState, fn *lua.LFunction) {
+func (s *scriptScheduler) resume(slot uint32) {
+	co, fn := s.threads[slot].co, s.threads[slot].fn
 	st, err, rets := s.L.Resume(co, fn)
 	s.L.G.CurrentThread = s.L.G.MainThread
 	if st != lua.ResumeYield {
 		if st == lua.ResumeError && err != nil {
 			s.reportError(err)
 		}
+		s.retire(slot) // done or errored — free the slot, invalidate stale records
 		return
 	}
 	secs := 0.0
 	if len(rets) > 0 {
 		secs = float64(lua.LVAsNumber(rets[0]))
 	}
+	// Re-fetch AFTER Resume: a nested Run() in the coroutine body may have
+	// grown s.threads and reallocated its backing array, so any pointer taken
+	// before the resume would now be stale.
+	e := &s.threads[slot]
+	e.waiting = true
 	s.pending++
-	s.g.After(time.Duration(secs*float64(time.Second)), func() {
-		s.pending--
-		s.resume(co, fn)
-	})
+	// Descriptive wake record: (scriptResumeCont, {slot, gen}) on the shared
+	// stackless queue — same wake tick a Game.After(secs) timer would land on
+	// (AfterScript quantizes identically), but serializable, not a Go closure.
+	s.g.AfterScript(time.Duration(secs*float64(time.Second)), scriptResumeCont, int64(slot), int64(e.gen))
 }
