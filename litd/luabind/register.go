@@ -151,6 +151,59 @@ func argDifficulty(L *lua.LState, i int) api.Difficulty { return api.Difficulty(
 func argFogState(L *lua.LState, i int) api.FogState     { return api.FogState(L.CheckInt(i)) }
 func argController(L *lua.LState, i int) api.Controller { return api.Controller(L.CheckInt(i)) }
 
+// argFogModifier reads a FogModifier handle (from Game_NewFogModifier) from the
+// stack, raising if the slot is not a FogModifier userdata (fail-closed).
+func argFogModifier(L *lua.LState, i int) api.FogModifier {
+	ud, ok := L.Get(i).(*lua.LUserData)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected FogModifier userdata, got %s", L.Get(i).Type()))
+		return api.FogModifier{}
+	}
+	f, ok := ud.Value.(api.FogModifier)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected a FogModifier (got %T)", ud.Value))
+		return api.FogModifier{}
+	}
+	return f
+}
+
+// argArea reads a fog Area table into the api.Area sum type (#267): a circle
+// {cx, cy, radius} or a rect {minx, miny, maxx, maxy}. `cx` present selects the
+// circle form (radius required); otherwise `minx` selects the rect form. Lua
+// cannot implement the api.Area interface (unexported method), so the concrete
+// shape is built here. Raises if neither shape's keys are present (fail-closed).
+func argArea(L *lua.LState, i int) api.Area {
+	t, ok := L.Get(i).(*lua.LTable)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected an Area table (rect {minx,miny,maxx,maxy} or circle {cx,cy,radius}), got %s", L.Get(i).Type()))
+		return nil
+	}
+	num := func(k string) (float64, bool) {
+		if n, ok := t.RawGetString(k).(lua.LNumber); ok {
+			return float64(n), true
+		}
+		return 0, false
+	}
+	if cx, ok := num("cx"); ok {
+		cy, _ := num("cy")
+		r, hasR := num("radius")
+		if !hasR {
+			L.ArgError(i, "circle Area requires `radius`")
+			return nil
+		}
+		return api.Circle{Center: api.Vec2{X: cx, Y: cy}, Radius: r}
+	}
+	minx, ok := num("minx")
+	if !ok {
+		L.ArgError(i, "Area table needs a rect {minx,miny,maxx,maxy} or circle {cx,cy,radius}")
+		return nil
+	}
+	miny, _ := num("miny")
+	maxx, _ := num("maxx")
+	maxy, _ := num("maxy")
+	return api.Rect{MinX: minx, MinY: miny, MaxX: maxx, MaxY: maxy}
+}
+
 // Numeric-enum readers (#267): scalar named types marshalled from a Lua number,
 // same shape as argRace/argDifficulty. GameSpeed is float64-based (CheckNumber);
 // the rest are integer-based (CheckInt).

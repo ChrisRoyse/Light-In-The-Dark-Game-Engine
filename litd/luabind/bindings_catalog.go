@@ -178,6 +178,28 @@ func (b gameBinder) bindGameCreateDestructable(L *lua.LState) int {
 	return 1
 }
 
+// bindGameNewFogModifier binds Game.NewFogModifier(p, state, area) FogModifier
+// (#267). The generated dispatch defers the whole FogModifier type: its
+// constructor takes the api.Area interface (no generatable arg marshaler) and
+// its return type is not in the generator's pushHandle set, so the method verbs
+// have no arg reader either. The catalog binds the no-options form (created
+// stopped — call FogModifier_Start) and the methods below. SoT: Game_FogStateAt.
+func (b gameBinder) bindGameNewFogModifier(L *lua.LState) int {
+	L.Push(pushHandle(L, b.g.NewFogModifier(argPlayer(L, 1), argFogState(L, 2), argArea(L, 3))))
+	return 1
+}
+
+// bindGameSetFogState binds Game.SetFogState(p, state, area, sharedVision)
+// (#267): stamp a fog state over an area immediately (no modifier lifetime).
+func (b gameBinder) bindGameSetFogState(L *lua.LState) int {
+	b.g.SetFogState(argPlayer(L, 1), argFogState(L, 2), argArea(L, 3), L.ToBool(4))
+	return 0
+}
+
+func bindFogModifierStart(L *lua.LState) int   { argFogModifier(L, 1).Start(); return 0 }
+func bindFogModifierStop(L *lua.LState) int    { argFogModifier(L, 1).Stop(); return 0 }
+func bindFogModifierDestroy(L *lua.LState) int { argFogModifier(L, 1).Destroy(); return 0 }
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
@@ -200,4 +222,9 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_ClearMessages", L.NewFunction(b.bindGameClearMessages))
 	L.SetGlobal("Storage_GetInt", L.NewFunction(bindStorageGetInt))
 	L.SetGlobal("Game_CreateDestructable", L.NewFunction(b.bindGameCreateDestructable))
+	L.SetGlobal("Game_NewFogModifier", L.NewFunction(b.bindGameNewFogModifier))
+	L.SetGlobal("Game_SetFogState", L.NewFunction(b.bindGameSetFogState))
+	L.SetGlobal("FogModifier_Start", L.NewFunction(bindFogModifierStart))
+	L.SetGlobal("FogModifier_Stop", L.NewFunction(bindFogModifierStop))
+	L.SetGlobal("FogModifier_Destroy", L.NewFunction(bindFogModifierDestroy))
 }
