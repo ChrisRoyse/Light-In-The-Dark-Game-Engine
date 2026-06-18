@@ -45,14 +45,23 @@ const (
 // Volumes are already clamped to [0,1]; positions/targets are populated only
 // for the spatial variants. It carries no sim state.
 type AudioEvent struct {
-	Kind    AudioEventKind
-	Cue     uint32 // Sound.id / music cue hash; 0 for channel/stop-music
-	Volume  float64
-	Pitch   float64
-	HasPos  bool
-	Pos     Vec2
-	Z       float64
-	Target  Unit
+	// Kind selects which audio action this event describes (play/stop/channel/music).
+	Kind AudioEventKind
+	Cue  uint32 // Sound.id / music cue hash; 0 for channel/stop-music
+	// Volume is the playback volume in [0,1].
+	Volume float64
+	// Pitch is the playback pitch multiplier (1.0 = unshifted).
+	Pitch float64
+	// HasPos reports whether Pos and Z carry a world position (a 3D sound)
+	// rather than a positionless 2D UI sound.
+	HasPos bool
+	// Pos is the world position of a 3D sound (valid when HasPos).
+	Pos Vec2
+	// Z is the world height of a 3D sound (valid when HasPos).
+	Z float64
+	// Target is the unit the sound is attached to, if any (zero handle = none).
+	Target Unit
+	// Channel is the mixer channel/domain the sound plays on.
 	Channel SoundChannel
 }
 

@@ -270,6 +270,7 @@ func (f Frame) IsZero() bool { return f == Frame{} }
 // row 15): JASS's heap-allocated location and every (real x, real y)
 // pair collapse to this value, ending the RemoveLocation leak hazard.
 type Vec2 struct {
+	// X and Y are the horizontal and vertical world-coordinate components.
 	X, Y float64
 }
 
@@ -287,6 +288,8 @@ func (v Vec2) IsZero() bool { return v == Vec2{} }
 // Rect is an axis-aligned world rectangle (public-api-design.md §2 row
 // 14), the value form of JASS rect.
 type Rect struct {
+	// MinX, MinY, MaxX, MaxY are the axis-aligned world-coordinate bounds — the
+	// inclusive minimum and maximum corners of the rectangle.
 	MinX, MinY, MaxX, MaxY float64
 }
 

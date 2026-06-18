@@ -26,6 +26,7 @@ const (
 // render layer (and tests) see an already-resolved, per-player stream. It
 // carries no sim state.
 type UIMessageEvent struct {
+	// Kind selects which UI message action this event describes.
 	Kind     UIMessageEventKind
 	Player   int     // recipient slot
 	Text     string  // message text (empty for UIClear)

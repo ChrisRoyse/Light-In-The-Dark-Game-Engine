@@ -12,12 +12,19 @@ package litd
 // Life seeds both current and max life. Footprint is the square pathing
 // footprint side in cells and is only stamped when BlocksPathing is set.
 type DestructableOptions struct {
-	Type          uint16
-	Pos           Vec2
-	Facing        Angle
-	Life          int
+	// Type is the destructable type id to spawn.
+	Type uint16
+	// Pos is the world spawn position.
+	Pos Vec2
+	// Facing is the initial facing angle.
+	Facing Angle
+	// Life is the starting hit points; zero means the type's default.
+	Life int
+	// BlocksPathing reports whether the object occupies its footprint on the
+	// pathing grid.
 	BlocksPathing bool
-	Footprint     int
+	// Footprint is the square side, in pathing cells, the object occupies.
+	Footprint int
 }
 
 // CreateDestructable spawns a destructable. It returns the zero (invalid)

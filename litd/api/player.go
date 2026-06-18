@@ -498,7 +498,10 @@ func (p Player) SetHandicapReviveTime(v float64) {
 // a short or nil slice taxes the omitted resources at 0. Tiers passed to
 // Game.SetUpkeep must be in ascending Food order.
 type UpkeepTier struct {
+	// Food is the supply count at or above which this upkeep tier applies.
 	Food int
+	// Rate is the per-resource income tax fraction charged in this tier
+	// (indexed by resource).
 	Rate []float64
 }
 

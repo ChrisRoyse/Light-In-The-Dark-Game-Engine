@@ -49,7 +49,9 @@ func (r Rect) fogBounds() (uint8, float64, float64, float64, float64) {
 
 // Circle is a world-space disc, the radius form of a fog Area.
 type Circle struct {
+	// Center is the world-space centre of the circle.
 	Center Vec2
+	// Radius is the circle radius in world units.
 	Radius float64
 }
 

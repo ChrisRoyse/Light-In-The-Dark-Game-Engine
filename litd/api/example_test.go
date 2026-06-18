@@ -259,3 +259,24 @@ func Example_contractFiltersAreReadOnly() {
 	fmt.Println("units inspected by filter:", inspected)
 	// Output: units inspected by filter: 1
 }
+
+// Modder contract rule 5: don't loop forever without waiting. A recurring task
+// re-arms itself with a wait (g.After) between iterations instead of spinning,
+// so it yields the tick each cycle. An unbounded loop with no wait would hang
+// the tick — in debug mode the engine reports where (the Lua sandbox's
+// instruction budget, R-SEC-1).
+func Example_contractDontLoopForever() {
+	g := exampleGame()
+	iterations := 0
+	var step func()
+	step = func() {
+		iterations++
+		if iterations < 3 {
+			g.After(50*time.Millisecond, step) // wait, then continue — never spin
+		}
+	}
+	g.After(50*time.Millisecond, step)
+	g.Advance(3)
+	fmt.Println("iterations via wait-and-reschedule:", iterations)
+	// Output: iterations via wait-and-reschedule: 3
+}

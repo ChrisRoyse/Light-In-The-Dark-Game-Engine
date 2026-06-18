@@ -22,12 +22,15 @@ import (
 // GameOptions configures NewGame. The zero value is valid: it builds a headless
 // game with engine-default capacities and seed 0.
 type GameOptions struct {
-	// MaxUnits, MaxProjectiles, MaxEffects, MaxDestructables cap the entity
-	// pools. Zero means "engine default" (the sim resolves unset caps). These
-	// are plain ints so no sim.Caps type leaks across the public boundary.
-	MaxUnits         int
-	MaxProjectiles   int
-	MaxEffects       int
+	// MaxUnits caps the unit entity pool. Zero means the engine default (unset
+	// caps are resolved internally). A plain int so no internal cap type leaks
+	// across the public boundary.
+	MaxUnits int
+	// MaxProjectiles caps the in-flight missile/projectile pool; zero = default.
+	MaxProjectiles int
+	// MaxEffects caps the transient visual-effect pool; zero = default.
+	MaxEffects int
+	// MaxDestructables caps the destructable-object pool; zero = default.
 	MaxDestructables int
 
 	// Seed is the deterministic PRNG seed (R-SIM-2). The same seed and command

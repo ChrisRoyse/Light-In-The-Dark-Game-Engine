@@ -64,15 +64,25 @@ const (
 // CameraEvent is one resolved view request handed to the render sink. Field
 // values are already clamped (in gameplay mode). It carries no sim state.
 type CameraEvent struct {
-	Kind      CameraEventKind
-	Player    int
-	Pos       Vec2
-	Z         float64
-	Duration  float64
-	Field     CameraField
-	Value     float64
-	Target    Unit
-	Bounds    Rect
+	// Kind selects which camera action this event describes.
+	Kind CameraEventKind
+	// Player is the recipient player slot (camera is per-player presentation).
+	Player int
+	// Pos is the target world position (pan/jump destinations).
+	Pos Vec2
+	// Z is the target world height, where applicable.
+	Z float64
+	// Duration is the move/transition time in seconds (0 = instant).
+	Duration float64
+	// Field is the camera parameter addressed by a field-set event.
+	Field CameraField
+	// Value is the new value for the addressed Field.
+	Value float64
+	// Target is the unit the camera locks to, if any.
+	Target Unit
+	// Bounds is the camera movement bounding rectangle for a bounds event.
+	Bounds Rect
+	// Magnitude is the shake/noise amplitude for an effect event.
 	Magnitude float64
 }
 

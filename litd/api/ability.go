@@ -40,15 +40,23 @@ const (
 // on registration. CastRange is in world units; zero means self/no
 // target for abilities without an effect composition.
 type AbilityDef struct {
-	ID   string
+	// ID is the ability's stable string identifier.
+	ID string
+	// Name is the display name.
 	Name string
 
+	// ManaCost is the mana consumed per cast.
 	ManaCost int
 
-	Cooldown  float64
+	// Cooldown is the recharge time in seconds before the ability can recast.
+	Cooldown float64
+	// CastPoint is the pre-cast wind-up delay in seconds before the effect fires.
 	CastPoint float64
+	// Backswing is the post-cast recovery delay in seconds.
 	Backswing float64
-	Channel   float64
+	// Channel is the channelling duration in seconds (0 = instant, non-channelled).
+	Channel float64
+	// CastRange is the maximum target distance in world units (0 = self/no target).
 	CastRange float64
 }
 

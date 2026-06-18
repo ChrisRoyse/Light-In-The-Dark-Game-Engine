@@ -36,8 +36,10 @@ const (
 // generation). Plain types only, so it marshals to a Lua userdata payload or a
 // save record verbatim.
 type HandleRef struct {
+	// Kind is the handle's noun type (unit, item, …), for typed re-resolution.
 	Kind HandleKind `json:"kind"`
-	Raw  uint32     `json:"raw"`
+	// Raw is the packed id+generation the handle marshals to.
+	Raw uint32 `json:"raw"`
 }
 
 // IsZero reports the null ref (no entity).

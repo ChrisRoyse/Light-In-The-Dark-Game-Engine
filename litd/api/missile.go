@@ -68,6 +68,8 @@ type MissileOptions struct {
 	Source Unit // the launcher (its team scopes a linear skillshot's foes)
 	Origin Vec2 // spawn position
 
+	// Guidance selects the missile's steering mode; the mode-specific fields
+	// below (Target/Point/Direction/Range/Pierce) apply per the chosen mode.
 	Guidance         Guidance
 	GuidanceID       string // optional built-in registry ID: homing|point|linear
 	ImpactBehaviorID string // optional built-in registry ID: deliver|detonate|pierce|expire
@@ -80,7 +82,8 @@ type MissileOptions struct {
 	Acceleration float64 // non-negative world units per tick^2
 	Arc          float64 // presentation arc height (render-only)
 	Damage       float64 // payload: damage delivered on impact
-	HitMask      MissileHitMask
+	// HitMask selects which target categories the missile may strike.
+	HitMask MissileHitMask
 
 	Range  float64 // GuidanceLinear: travel before expiry (> 0)
 	Pierce int     // GuidanceLinear: max hits (>= 1)
