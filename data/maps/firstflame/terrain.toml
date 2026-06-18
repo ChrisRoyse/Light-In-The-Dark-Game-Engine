@@ -1,0 +1,46 @@
+# firstflame — the First Flame skirmish map (#174), v0.1 data layer.
+#
+# A symmetric 2-player Beacon/Flicker map (identity.md §3): Vigil (player 0, west)
+# vs Unbound (player 1, east), with three neutral Beacon control points — a central
+# prize and two contested flanks — that the beacon mechanic (#169,
+# worlds/beacon-capture) captures, the Flicker cycles (#170), and the Dark spawns
+# from when extinguished (#172).
+#
+# Terrain is intentionally flat and uniformly buildable for v0.1: this commits the
+# loadable DATA layer (dimensions, start locations, beacon placements) that the
+# game mechanics run on, with no dependency on the (gitignored) art binaries.
+# Elevation/chokepoint terrain design and doodad props are a later pass; the 3D
+# look and the per-state screenshot FSV are the render/asset half of #174.
+#
+# 64x64 tiles, pathing-scale 4 => a 256x256 pathing grid; all cell coords below
+# are in pathing-grid units. Validated by `go run ./tools/assetcheck --json
+# data/maps/firstflame/` and by mapdata.Load (see luabind/api map tests).
+version = 1
+width = 64
+height = 64
+biome = "ashen-veil"
+pathing-scale = 4
+
+# Symmetric start locations (west vs east, same latitude).
+[[start]]
+player = 0
+cell = [40, 128]
+
+[[start]]
+player = 1
+cell = [216, 128]
+
+# Central beacon — the contested prize, neutral at match start.
+[[beacon]]
+id = 1
+cell = [128, 128]
+
+# North-west flank beacon, neutral.
+[[beacon]]
+id = 2
+cell = [88, 88]
+
+# South-east flank beacon, neutral.
+[[beacon]]
+id = 3
+cell = [168, 168]

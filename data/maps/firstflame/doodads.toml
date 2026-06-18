@@ -1,0 +1,2 @@
+# firstflame v0.1 — no doodads yet (render props are a later pass and would pull
+# in the gitignored assets/ binaries). The map validates and loads standalone.
