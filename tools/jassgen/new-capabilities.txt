@@ -93,6 +93,17 @@ exact   Game.Resolve
 # (supersedes JASS slk/data-table loading) — structural, no single JASS verb.
 exact   Game.DefineUnits
 
+# non-unit data-table install seams (#394): the bulk companions to DefineUnits,
+# seeding the rest of a world's data set (effect arena, abilities, items, buffs,
+# tech upgrades) from outside the api package. Each wraps the sim's existing
+# Bind* method; like DefineUnits these supersede JASS slk/data-table loading and
+# have no single JASS verb — structural setup plumbing.
+exact   Game.DefineEffects
+exact   Game.DefineAbilities
+exact   Game.DefineItems
+exact   Game.DefineBuffTypes
+exact   Game.DefineUpgrades
+
 # runtime world-loader seam (#268): the api stays Lua-agnostic — a backend
 # (litd/luabind) registers via SetWorldLoader, and LoadWorld delegates to it to
 # load a world directory at runtime. HasWorldLoader reports whether a backend is

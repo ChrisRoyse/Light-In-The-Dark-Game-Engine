@@ -66,22 +66,50 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		return nil, nil, fmt.Errorf("load data tables: %w", err)
 	}
 
-	// 2. Fail-closed: only unit definitions have an api install seam today
-	//    (g.DefineUnits). A world that ships content tables we cannot install
-	//    (items/abilities/buffs/upgrades/resource-nodes/heroes) must fail
-	//    loudly rather than load a partial world that silently drops them.
+	// 2. Fail-closed: units + the non-unit content tables now have api install
+	//    seams (#394). Resource-node and hero tables still lack a seam, so a
+	//    world shipping those must fail loudly rather than load a partial world
+	//    that silently drops them.
 	if missing := uninstallableTables(tables); missing != "" {
-		return nil, nil, fmt.Errorf("world ships %s, but only unit tables are installable today "+
-			"(no api seam yet — see #394); refusing to load a partial world", missing)
+		return nil, nil, fmt.Errorf("world ships %s, but that table has no api install seam yet "+
+			"(see #394); refusing to load a partial world", missing)
 	}
 
-	// 3. New game + install the unit defs.
+	// 3. New game, then install the data tables in dependency order: effects
+	//    (referenced by items/abilities) → units (referenced by upgrades) →
+	//    abilities/items/buffs → upgrades. Empty optional tables are skipped —
+	//    the item/upgrade seams reject an empty table by design.
 	g, err := api.NewGame(api.GameOptions{Seed: seed, MaxUnits: 256})
 	if err != nil {
 		return nil, nil, fmt.Errorf("new game: %w", err)
 	}
+	if len(tables.Effects) > 0 {
+		if err := g.DefineEffects(tables.Effects); err != nil {
+			return nil, nil, fmt.Errorf("define effects: %w", err)
+		}
+	}
 	if err := g.DefineUnits(tables.Units); err != nil {
 		return nil, nil, fmt.Errorf("define units: %w", err)
+	}
+	if len(tables.Abilities) > 0 {
+		if err := g.DefineAbilities(tables.Abilities); err != nil {
+			return nil, nil, fmt.Errorf("define abilities: %w", err)
+		}
+	}
+	if len(tables.Items) > 0 {
+		if err := g.DefineItems(tables.Items); err != nil {
+			return nil, nil, fmt.Errorf("define items: %w", err)
+		}
+	}
+	if len(tables.BuffTypes) > 0 {
+		if err := g.DefineBuffTypes(tables.BuffTypes); err != nil {
+			return nil, nil, fmt.Errorf("define buff types: %w", err)
+		}
+	}
+	if len(tables.Upgrades) > 0 {
+		if err := g.DefineUpgrades(tables.Upgrades, tables.Requires); err != nil {
+			return nil, nil, fmt.Errorf("define upgrades: %w", err)
+		}
 	}
 
 	// 4. Sandbox + bindings + world-loader seam, then run the world's scripts
@@ -101,21 +129,15 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	return g, cleanup, nil
 }
 
-// uninstallableTables names any content table present that has no api install
-// seam yet (so the caller can fail closed). The combat vocabulary
+// uninstallableTables names any content table present that still has no api
+// install seam (so the caller can fail closed). After #394, units, effects,
+// abilities, items, buff types, and upgrades all install; only resource-node
+// and hero tables remain seamless. The combat vocabulary
 // (AttackTypes/ArmorTypes/Coeff) is always present because data.Load requires a
 // damage table; it is not itself installed, but a unit-only world that does no
 // combat never exercises it, so it is not treated as uninstallable content.
 func uninstallableTables(t *data.Tables) string {
 	switch {
-	case len(t.Items) > 0:
-		return fmt.Sprintf("%d item type(s)", len(t.Items))
-	case len(t.Abilities) > 0:
-		return fmt.Sprintf("%d ability(ies)", len(t.Abilities))
-	case len(t.BuffTypes) > 0:
-		return fmt.Sprintf("%d buff type(s)", len(t.BuffTypes))
-	case len(t.Upgrades) > 0:
-		return fmt.Sprintf("%d upgrade(s)", len(t.Upgrades))
 	case len(t.Nodes) > 0:
 		return fmt.Sprintf("%d resource-node type(s)", len(t.Nodes))
 	case t.Hero != nil:

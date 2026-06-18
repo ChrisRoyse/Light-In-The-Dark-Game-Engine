@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 )
 
 const (
@@ -66,18 +67,37 @@ func TestLoadWorldDevSandboxFSV(t *testing.T) {
 	}
 }
 
-// TestLoadWorldFailsClosedOnAbilities: a world shipping a table with no install
-// seam is refused loudly — never partially loaded.
-func TestLoadWorldFailsClosedOnAbilities(t *testing.T) {
+// TestLoadWorldInstallsAbilities: a world shipping an abilities table now loads
+// (#394 install seam), and the ability is genuinely installed — proven by
+// granting it to a freshly created unit through the public api (SoT = the unit's
+// ability handle), not by trusting the load's nil error.
+func TestLoadWorldInstallsAbilities(t *testing.T) {
 	w := writeWorld(t, tomlDamageTable, "Game_SetTimeOfDay(12.0)\n")
 	mk(t, filepath.Join(w, "data", "abilities", "core.toml"), "[[ability]]\nid = \"defend\"\nname = \"Defend\"\n")
-	_, _, err := loadWorld(w, 1, 50_000_000)
-	if err == nil {
-		t.Fatal("world with abilities must be refused (fail-closed), got nil")
+	g, cleanup, err := loadWorld(w, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("world with abilities must now load (#394): %v", err)
 	}
-	t.Logf("FSV fail-closed: %v", err)
-	if !strings.Contains(err.Error(), "ability") {
-		t.Errorf("error %q should name the uninstallable table", err)
+	defer cleanup()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 64, Y: 64}, api.Deg(0))
+	a := u.AddAbility(api.AbilityRef(1))
+	t.Logf("FSV install: world loaded; AbilityRef(1).Valid=%v", a.Valid())
+	if !a.Valid() {
+		t.Fatal("AbilityRef(1) not grantable — ability table was not installed")
+	}
+}
+
+// TestUninstallableTablesGate: the fail-closed gate now passes the #394-installable
+// tables and still refuses the two that remain seamless (resource nodes, heroes).
+func TestUninstallableTablesGate(t *testing.T) {
+	if got := uninstallableTables(&data.Tables{Abilities: []data.Ability{{ID: "x"}}, Items: []data.Item{{ID: "y"}}}); got != "" {
+		t.Errorf("abilities+items must be installable now, gate said %q", got)
+	}
+	if got := uninstallableTables(&data.Tables{Hero: &data.HeroTables{}}); !strings.Contains(got, "hero") {
+		t.Errorf("hero tables must still be refused, got %q", got)
+	}
+	if got := uninstallableTables(&data.Tables{Nodes: []data.ResourceNodeType{{}}}); !strings.Contains(got, "resource-node") {
+		t.Errorf("resource-node tables must still be refused, got %q", got)
 	}
 }
 

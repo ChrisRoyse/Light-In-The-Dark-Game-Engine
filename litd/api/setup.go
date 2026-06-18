@@ -80,3 +80,79 @@ func (g *Game) DefineUnits(defs []data.Unit) error {
 	}
 	return nil
 }
+
+// DefineEffects installs the compiled effect-composition arena that abilities
+// and items reference by index (#394). A setup verb (R-API-5): it fails closed
+// — propagating the validation error — when an entry names an unknown effect
+// primitive or one with no registered executor, rather than binding a malformed
+// arena that would fault mid-match. Call this before DefineAbilities/DefineItems
+// for any world whose abilities or items carry an effect composition, since
+// those tables validate their effect ranges against this arena.
+func (g *Game) DefineEffects(arena []data.CompiledEffect) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineEffects: nil game")
+	}
+	if err := g.w.BindEffects(arena); err != nil {
+		return fmt.Errorf("api: DefineEffects: %w", err)
+	}
+	return nil
+}
+
+// DefineAbilities installs the ability definitions this game can grant and cast
+// (#394) — the bulk companion to RegisterAbility, seeding a whole table at once.
+// A setup verb (R-API-5): it returns an error and fails closed when the table is
+// already bound or exceeds the ability-definition ceiling, rather than silently
+// dropping the data. AbilityRef lookups resolve against these defs.
+func (g *Game) DefineAbilities(defs []data.Ability) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineAbilities: nil game")
+	}
+	if !g.w.BindAbilityDefs(defs) {
+		return fmt.Errorf("api: DefineAbilities: rejected %d definitions (already bound, or exceeds the ability-definition ceiling)", len(defs))
+	}
+	return nil
+}
+
+// DefineItems installs the item-type definitions this game can spawn and carry
+// (#394). A setup verb (R-API-5): it returns an error and fails closed on an
+// empty or oversized table, a conflicting rebind, or an item whose effect
+// composition points outside the bound effect arena — call DefineEffects first
+// when items carry effects.
+func (g *Game) DefineItems(defs []data.Item) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineItems: nil game")
+	}
+	if !g.w.BindItemDefs(defs) {
+		return fmt.Errorf("api: DefineItems: rejected %d definitions (empty, exceeds the 65536 type-id space, conflicts with an existing binding, or references the effect arena out of range)", len(defs))
+	}
+	return nil
+}
+
+// DefineBuffTypes installs the buff/debuff type definitions this game can apply
+// (#394). A setup verb (R-API-5): it returns an error and fails closed when the
+// table exceeds the 65536 type-id space. Buff codes resolve against these types.
+func (g *Game) DefineBuffTypes(types []data.BuffType) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineBuffTypes: nil game")
+	}
+	if !g.w.BindBuffTypes(types) {
+		return fmt.Errorf("api: DefineBuffTypes: rejected %d definitions (exceeds the 65536 type-id space)", len(types))
+	}
+	return nil
+}
+
+// DefineUpgrades installs the tech-upgrade definitions and their admission
+// requirements (#394). A setup verb (R-API-5): it returns an error and fails
+// closed on an empty or oversized table, a conflicting rebind, or a requirement
+// or AppliesTo index that points outside the known unit/upgrade tables. Call
+// DefineUnits first — upgrade definitions validate their target units against
+// the bound unit table.
+func (g *Game) DefineUpgrades(upgrades []data.Upgrade, requires []data.Require) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineUpgrades: nil game")
+	}
+	if !g.w.BindTech(upgrades, requires) {
+		return fmt.Errorf("api: DefineUpgrades: rejected %d upgrades / %d requirements (empty, oversized, units not yet defined, or an out-of-range AppliesTo/requirement target)", len(upgrades), len(requires))
+	}
+	return nil
+}

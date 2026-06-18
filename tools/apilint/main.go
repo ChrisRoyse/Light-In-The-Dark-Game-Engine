@@ -66,8 +66,13 @@ var setupAllowlist = map[string]bool{
 var methodErrAllowlist = map[string]bool{
 	"Storage.Save":     true,
 	"Storage.Load":     true,
-	"Game.DefineUnits": true,
-	"Game.LoadWorld":   true,
+	"Game.DefineUnits":     true,
+	"Game.LoadWorld":       true,
+	"Game.DefineEffects":   true,
+	"Game.DefineAbilities": true,
+	"Game.DefineItems":     true,
+	"Game.DefineBuffTypes": true,
+	"Game.DefineUpgrades":  true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the
