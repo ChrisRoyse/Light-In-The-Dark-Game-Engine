@@ -238,6 +238,36 @@ func bindItemCarried(L *lua.LState) int     { L.Push(lua.LBool(argItem(L, 1).Car
 func bindItemCarrier(L *lua.LState) int     { L.Push(pushHandle(L, argItem(L, 1).Carrier())); return 1 }
 func bindForceCount(L *lua.LState) int      { L.Push(lua.LNumber(argForce(L, 1).Count())); return 1 }
 
+// Inventory action + upkeep getters (#267): Unit_AddItem/ItemInSlot were bound
+// but not EnableInventory (its prerequisite) or SwapItems; and the no-arg upkeep
+// getters (Gold/Lumber rate + lost) had no binding. The generic UpkeepRate(res)/
+// LostToUpkeep(res) take the unexported resource enum, so only the Gold/Lumber
+// convenience forms are exposed.
+func bindUnitEnableInventory(L *lua.LState) int {
+	L.Push(lua.LBool(argUnit(L, 1).EnableInventory()))
+	return 1
+}
+func bindUnitSwapItems(L *lua.LState) int {
+	L.Push(lua.LBool(argUnit(L, 1).SwapItems(L.CheckInt(2), L.CheckInt(3))))
+	return 1
+}
+func bindPlayerGoldUpkeepRate(L *lua.LState) int {
+	L.Push(lua.LNumber(argPlayer(L, 1).GoldUpkeepRate()))
+	return 1
+}
+func bindPlayerLumberUpkeepRate(L *lua.LState) int {
+	L.Push(lua.LNumber(argPlayer(L, 1).LumberUpkeepRate()))
+	return 1
+}
+func bindPlayerGoldLostToUpkeep(L *lua.LState) int {
+	L.Push(lua.LNumber(float64(argPlayer(L, 1).GoldLostToUpkeep())))
+	return 1
+}
+func bindPlayerLumberLostToUpkeep(L *lua.LState) int {
+	L.Push(lua.LNumber(float64(argPlayer(L, 1).LumberLostToUpkeep())))
+	return 1
+}
+
 // bindGameNewFogModifier binds Game.NewFogModifier(p, state, area) FogModifier
 // (#267). The generated dispatch defers the whole FogModifier type: its
 // constructor takes the api.Area interface (no generatable arg marshaler) and
@@ -318,4 +348,10 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Item_Carried", L.NewFunction(bindItemCarried))
 	L.SetGlobal("Item_Carrier", L.NewFunction(bindItemCarrier))
 	L.SetGlobal("Force_Count", L.NewFunction(bindForceCount))
+	L.SetGlobal("Unit_EnableInventory", L.NewFunction(bindUnitEnableInventory))
+	L.SetGlobal("Unit_SwapItems", L.NewFunction(bindUnitSwapItems))
+	L.SetGlobal("Player_GoldUpkeepRate", L.NewFunction(bindPlayerGoldUpkeepRate))
+	L.SetGlobal("Player_LumberUpkeepRate", L.NewFunction(bindPlayerLumberUpkeepRate))
+	L.SetGlobal("Player_GoldLostToUpkeep", L.NewFunction(bindPlayerGoldLostToUpkeep))
+	L.SetGlobal("Player_LumberLostToUpkeep", L.NewFunction(bindPlayerLumberLostToUpkeep))
 }
