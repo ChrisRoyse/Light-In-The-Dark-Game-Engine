@@ -5,7 +5,15 @@ go 1.26.1
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/g3n/engine v0.2.1-0.20260109204552-11eb4fd38acd
+	github.com/quic-go/quic-go v0.60.0
 	golang.org/x/tools v0.46.0
+)
+
+require (
+	github.com/kr/text v0.2.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 )
 
 require (
