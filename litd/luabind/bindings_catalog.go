@@ -196,6 +196,18 @@ func (b gameBinder) bindGameSetFogState(L *lua.LState) int {
 	return 0
 }
 
+// bindPlayerResult binds Player.Result() MatchResult (#200/#346) — the READ side
+// of the match-result surface. Game_Victory/Defeat/EndMatch (write) are generated
+// and the terminal events dispatch via OnEvent(EventVictory/EventDefeat), but
+// Player.Result carries no manifest entry (a LitD convenience getter, like
+// Game.Camera), so the generator never bound it — a script could stage results
+// yet not read them, which #200's victory.lua / #201 match flow require. Returns
+// the MatchResult enum as a number: Playing=0, Won=1, Lost=2, Left=3.
+func bindPlayerResult(L *lua.LState) int {
+	L.Push(lua.LNumber(float64(argPlayer(L, 1).Result())))
+	return 1
+}
+
 func bindFogModifierStart(L *lua.LState) int   { argFogModifier(L, 1).Start(); return 0 }
 func bindFogModifierStop(L *lua.LState) int    { argFogModifier(L, 1).Stop(); return 0 }
 func bindFogModifierDestroy(L *lua.LState) int { argFogModifier(L, 1).Destroy(); return 0 }
@@ -227,4 +239,5 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("FogModifier_Start", L.NewFunction(bindFogModifierStart))
 	L.SetGlobal("FogModifier_Stop", L.NewFunction(bindFogModifierStop))
 	L.SetGlobal("FogModifier_Destroy", L.NewFunction(bindFogModifierDestroy))
+	L.SetGlobal("Player_Result", L.NewFunction(bindPlayerResult))
 }
