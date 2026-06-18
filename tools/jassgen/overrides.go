@@ -43,10 +43,11 @@ var tombstoneReasons = map[string]bool{
 
 // validPackages bounds the goMapping package field.
 var validPackages = map[string]bool{
-	"litd/api":         true,
-	"litd/api/helpers": true,
-	"litd/ai":          true,
-	"":                 true, // allowed when no goMapping (e.g. tombstone)
+	"litd/api":               true,
+	"litd/api/helpers":       true,
+	"litd/api/helpers/melee": true, // data-driven melee setup library (#258 D4)
+	"litd/ai":                true,
+	"":                       true, // allowed when no goMapping (e.g. tombstone)
 }
 
 // LoadOverrides parses overrides.toml. A missing file is not an error (no
@@ -100,7 +101,7 @@ func ApplyOverrides(cs []Classification, ovs []Override) ([]Classification, erro
 			return nil, fmt.Errorf("override for %q tombstones without a class — every tombstone must carry the D1-D5 class it would have had, else the audit silently miscounts it as unmapped", o.Name)
 		}
 		if !validPackages[o.Package] {
-			return nil, fmt.Errorf("override for %q has package %q outside [litd/api litd/api/helpers litd/ai]", o.Name, o.Package)
+			return nil, fmt.Errorf("override for %q has package %q outside [litd/api litd/api/helpers litd/api/helpers/melee litd/ai]", o.Name, o.Package)
 		}
 		if o.Class != "" && !validClass(o.Class) {
 			return nil, fmt.Errorf("override for %q has class %q outside D1-D5", o.Name, o.Class)

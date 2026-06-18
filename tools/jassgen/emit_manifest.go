@@ -179,7 +179,7 @@ func ValidateManifest(m Manifest) error {
 	originOK := map[string]bool{"common.j": true, "blizzard.j": true, "commonai": true}
 	classOK := map[string]bool{"D1": true, "D2": true, "D3": true, "D4": true, "D5": true}
 	byOK := map[string]bool{"heuristic": true, "override": true}
-	pkgOK := map[string]bool{"litd/api": true, "litd/api/helpers": true, "litd/ai": true}
+	pkgOK := map[string]bool{"litd/api": true, "litd/api/helpers": true, "litd/api/helpers/melee": true, "litd/ai": true}
 	dispOK := map[string]bool{"mapped": true, "tombstoned": true}
 	reasonOK := tombstoneReasons
 

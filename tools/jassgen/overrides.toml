@@ -12860,35 +12860,35 @@ reason = "#game-state: the custom-defeat family (load/quit/restart/reduce-diffic
 name = "MeleeStartingUnits"
 class = "D4"
 goMapping = "melee.StartingUnits"
-goSignature = "(g *litd.Game)"
+goSignature = "(g *litd.Game, p litd.Player, f *Faction) ([]litd.Unit, error)"
 collapsesWith = ["MeleeStartingUnitsForPlayer", "MeleeStartingUnitsHuman", "MeleeStartingUnitsNightElf", "MeleeStartingUnitsOrc", "MeleeStartingUnitsUndead", "MeleeStartingUnitsUnknownRace"]
-package = "litd/api"
+package = "litd/api/helpers/melee"
 reason = "#258 D4: the per-race + per-player melee starting-unit placement collapses onto the data-driven melee.StartingUnits (no five hard-coded race funcs; reads data/ tables). Spec game-state-and-melee.md / #258."
 
 [[override]]
 name = "MeleeStartingResources"
 class = "D4"
 goMapping = "melee.StartingResources"
-goSignature = "(g *litd.Game)"
-package = "litd/api"
+goSignature = "(g *litd.Game, p litd.Player, f *Faction)"
+package = "litd/api/helpers/melee"
 reason = "#258 D4: melee starting gold/lumber by map size, kept once as melee.StartingResources."
 
 [[override]]
 name = "MeleeInitVictoryDefeat"
 class = "D4"
 goMapping = "melee.VictoryDefeatConditions"
-goSignature = "(g *litd.Game)"
+goSignature = "(g *litd.Game, players []litd.Player)"
 collapsesWith = ["MeleeCheckForCrippledPlayers", "MeleeCheckForLosersAndVictors", "MeleeCheckForVictors", "MeleeCrippledPlayerTimeout", "MeleeDoDefeat", "MeleeDoDefeatEnum", "MeleeDoDrawEnum", "MeleeDoLeave", "MeleeDoVictoryEnum", "MeleeExposeAllPlayers", "MeleeExposePlayer", "MeleeGetCrippledRevealedMessage", "MeleeGetCrippledTimerMessage", "MeleeGetCrippledWarningMessage", "MeleePlayerIsCrippled", "MeleeTriggerActionPlayerDefeated", "MeleeTriggerActionPlayerLeft", "MeleeTournamentFinishNowRuleA", "MeleeTriggerTournamentFinishNow", "MeleeTriggerTournamentFinishSoon", "MeleeWasUserPlayer", "MeleeRemoveObservers", "MeleeTriggerActionAllianceChange"]
-package = "litd/api"
+package = "litd/api/helpers/melee"
 reason = "#258 D4: the whole melee victory/defeat/crippling/observer/tournament subsystem collapses onto melee.VictoryDefeatConditions (one composable conditions installer)."
 
 [[override]]
 name = "MeleeCheckAddedUnit"
 class = "D4"
 goMapping = "melee.Standard"
-goSignature = "(g *litd.Game)"
+goSignature = "(g *litd.Game, setups []Setup) error"
 collapsesWith = ["MeleeCheckLostUnit", "MeleeClearExcessUnit", "MeleeClearExcessUnits", "MeleeClearNearbyUnits", "MeleeDifficulty", "MeleeEnumFindNearestMine", "MeleeFindNearestMine", "MeleeGetAllyCount", "MeleeGetAllyKeyStructureCount", "MeleeGetAllyStructureCount", "MeleeGetLocWithinRect", "MeleeGetNearestValueWithin", "MeleeGetProjectedLoc", "MeleeGrantHeroItems", "MeleeGrantItemsToHero", "MeleeGrantItemsToHiredHero", "MeleeGrantItemsToTrainedHero", "MeleeInitPlayerSlots", "MeleePlayerIsOpponent", "MeleeRandomHeroLoc", "MeleeStartingAI", "MeleeStartingVisibility", "MeleeTrainedUnitIsHeroBJFilter", "MeleeTriggerActionConstructCancel", "MeleeTriggerActionUnitConstructionStart", "MeleeTriggerActionUnitDeath"]
-package = "litd/api"
+package = "litd/api/helpers/melee"
 reason = "#258 D4: the standard melee mode composition (visibility, AI attach, starting setup, nearest-mine/projection/hero-item helpers, unit add/lost tracking) collapses onto melee.Standard built only on public litd/api exports. Spec #258 / D-2026-06-11-6 (AI via g.AttachAI at M5.5)."
 
 [[override]]

@@ -2398,71 +2398,71 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | SetBlightRectBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | SetBlightRadiusLocBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #253: terrain type/variance/cliff/pathability and blight are deterministic sim grid state, but the v1 sim exposes no runtime terrain-mutation surface (the grid is load-time fixed); deferred to v2 when the editor/runtime terrain-edit path lands. |
 | GetAbilityName | blizzard.j | D3 | **tombstoned** (gameplay-irrelevant): #234: ability/hero command-card cosmetics (tooltip/icon/position/sound/name/research-button); UI/render domain, no deterministic sim state. |
-| MeleeStartingVisibility | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeStartingResources | blizzard.j | D4 | `litd/api.melee.StartingResources` |
+| MeleeStartingVisibility | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeStartingResources | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingResources` |
 | ReducePlayerTechMaxAllowed | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | MeleeStartingHeroLimit | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: altar-driven hero revive (LitD uses a dead-pool + altar model, not in-place ReviveHero), hero-type predicate, level-strip, cached hero data, and per-player hero limits deferred to v2. |
-| MeleeTrainedUnitIsHeroBJFilter | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGrantItemsToHero | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGrantItemsToTrainedHero | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGrantItemsToHiredHero | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGrantHeroItems | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeClearExcessUnit | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeClearNearbyUnits | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeClearExcessUnits | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeEnumFindNearestMine | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeFindNearestMine | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeRandomHeroLoc | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGetProjectedLoc | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGetNearestValueWithin | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGetLocWithinRect | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeStartingUnitsHuman | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
-| MeleeStartingUnitsOrc | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
-| MeleeStartingUnitsUndead | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
-| MeleeStartingUnitsNightElf | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
-| MeleeStartingUnitsUnknownRace | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
-| MeleeStartingUnits | blizzard.j | D4 | `litd/api.melee.StartingUnits` |
-| MeleeStartingUnitsForPlayer | blizzard.j | D4 | `litd/api.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeTrainedUnitIsHeroBJFilter | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantItemsToHero | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantItemsToTrainedHero | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantItemsToHiredHero | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGrantHeroItems | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeClearExcessUnit | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeClearNearbyUnits | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeClearExcessUnits | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeEnumFindNearestMine | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeFindNearestMine | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeRandomHeroLoc | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetProjectedLoc | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetNearestValueWithin | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetLocWithinRect | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeStartingUnitsHuman | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsOrc | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsUndead | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsNightElf | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnitsUnknownRace | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
+| MeleeStartingUnits | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` |
+| MeleeStartingUnitsForPlayer | blizzard.j | D4 | `litd/api/helpers/melee.melee.StartingUnits` (D3 collapse → MeleeStartingUnits) |
 | PickMeleeAI | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: bulk pause-all / player-cripple / shop-stock-update / melee-AI-pick orchestration; deferred to v2 (shop stock + AI domain). |
-| MeleeStartingAI | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeStartingAI | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
 | LockGuardPosition | blizzard.j | D3 | **tombstoned** (deferred-v2): #217: creep-camp guard-position behavior (cross-linked from #257 as unit-level, not AI-domain); no v1 guard-position sim component, deferred to v2. |
-| MeleePlayerIsOpponent | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGetAllyStructureCount | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGetAllyCount | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeGetAllyKeyStructureCount | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeDoDrawEnum | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeDoVictoryEnum | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeDoDefeat | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeDoDefeatEnum | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeDoLeave | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeRemoveObservers | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeCheckForVictors | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeCheckForLosersAndVictors | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeGetCrippledWarningMessage | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeGetCrippledTimerMessage | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeGetCrippledRevealedMessage | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeExposePlayer | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeExposeAllPlayers | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeCrippledPlayerTimeout | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleePlayerIsCrippled | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeCheckForCrippledPlayers | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeCheckLostUnit | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeCheckAddedUnit | blizzard.j | D4 | `litd/api.melee.Standard` |
-| MeleeTriggerActionConstructCancel | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeTriggerActionUnitDeath | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeTriggerActionUnitConstructionStart | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
-| MeleeTriggerActionPlayerDefeated | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeTriggerActionPlayerLeft | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeTriggerActionAllianceChange | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeTriggerTournamentFinishSoon | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeWasUserPlayer | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeTournamentFinishNowRuleA | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeTriggerTournamentFinishNow | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
-| MeleeInitVictoryDefeat | blizzard.j | D4 | `litd/api.melee.VictoryDefeatConditions` |
+| MeleePlayerIsOpponent | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetAllyStructureCount | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetAllyCount | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeGetAllyKeyStructureCount | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeDoDrawEnum | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoVictoryEnum | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoDefeat | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoDefeatEnum | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeDoLeave | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeRemoveObservers | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckForVictors | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckForLosersAndVictors | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeGetCrippledWarningMessage | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeGetCrippledTimerMessage | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeGetCrippledRevealedMessage | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeExposePlayer | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeExposeAllPlayers | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCrippledPlayerTimeout | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleePlayerIsCrippled | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckForCrippledPlayers | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeCheckLostUnit | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeCheckAddedUnit | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` |
+| MeleeTriggerActionConstructCancel | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeTriggerActionUnitDeath | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeTriggerActionUnitConstructionStart | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeTriggerActionPlayerDefeated | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerActionPlayerLeft | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerActionAllianceChange | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerTournamentFinishSoon | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeWasUserPlayer | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTournamentFinishNowRuleA | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeTriggerTournamentFinishNow | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` (D3 collapse → MeleeInitVictoryDefeat) |
+| MeleeInitVictoryDefeat | blizzard.j | D4 | `litd/api/helpers/melee.melee.VictoryDefeatConditions` |
 | CheckInitPlayerSlotAvailability | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | SetPlayerSlotAvailable | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | TeamInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
-| MeleeInitPlayerSlots | blizzard.j | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeInitPlayerSlots | blizzard.j | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
 | FFAInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | OneOnOneInitPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
 | InitGenericPlayerSlots | blizzard.j | D3 | **tombstoned** (deferred-v2): #game-state: player-slot/lobby initialization and slot-state queries belong to the match-setup/lobby layer; deferred to the v2 lobby/match-config API. |
@@ -2647,4 +2647,4 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | GetLastCommand | commonai | D2 | `litd/api.AICommander.LastCommand` |
 | GetLastData | commonai | D2 | `litd/api.AICommander.LastData` |
 | PopLastCommand | commonai | D2 | `litd/api.AICommander.PopCommand` |
-| MeleeDifficulty | commonai | D4 | `litd/api.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |
+| MeleeDifficulty | commonai | D4 | `litd/api/helpers/melee.melee.Standard` (D3 collapse → MeleeCheckAddedUnit) |

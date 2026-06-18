@@ -9829,8 +9829,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "melee.Standard",
-        "package": "litd/api",
-        "goSignature": "(g *litd.Game)",
+        "package": "litd/api/helpers/melee",
+        "goSignature": "(g *litd.Game, setups []Setup) error",
         "collapsesWith": [
           "MeleeCheckLostUnit",
           "MeleeClearExcessUnit",
@@ -9899,8 +9899,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "melee.VictoryDefeatConditions",
-        "package": "litd/api",
-        "goSignature": "(g *litd.Game)",
+        "package": "litd/api/helpers/melee",
+        "goSignature": "(g *litd.Game, players []litd.Player)",
         "collapsesWith": [
           "MeleeCheckForCrippledPlayers",
           "MeleeCheckForLosersAndVictors",
@@ -9955,8 +9955,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "melee.StartingResources",
-        "package": "litd/api",
-        "goSignature": "(g *litd.Game)"
+        "package": "litd/api/helpers/melee",
+        "goSignature": "(g *litd.Game, p litd.Player, f *Faction)"
       }
     },
     {
@@ -9971,8 +9971,8 @@
       "disposition": "mapped",
       "goMapping": {
         "symbol": "melee.StartingUnits",
-        "package": "litd/api",
-        "goSignature": "(g *litd.Game)",
+        "package": "litd/api/helpers/melee",
+        "goSignature": "(g *litd.Game, p litd.Player, f *Faction) ([]litd.Unit, error)",
         "collapsesWith": [
           "MeleeStartingUnitsForPlayer",
           "MeleeStartingUnitsHuman",

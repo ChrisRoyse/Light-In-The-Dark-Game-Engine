@@ -418,10 +418,10 @@ var Bindings = []Binding{
 	{LuaName: "Vec2_DistanceTo", Package: "litd/api", Symbol: "Vec2.DistanceTo", GoSignature: "(o Vec2) float64"},
 	{LuaName: "Vec2_Polar", Package: "litd/api", Symbol: "Vec2.Polar", GoSignature: "(a Angle, dist float64) Vec2"},
 	{LuaName: "WeightedChoice", Package: "litd/api/helpers", Symbol: "WeightedChoice", GoSignature: "(g *Game, weights []int) int"},
-	{LuaName: "melee_Standard", Package: "litd/api", Symbol: "melee.Standard", GoSignature: "(g *litd.Game)"},
-	{LuaName: "melee_StartingResources", Package: "litd/api", Symbol: "melee.StartingResources", GoSignature: "(g *litd.Game)"},
-	{LuaName: "melee_StartingUnits", Package: "litd/api", Symbol: "melee.StartingUnits", GoSignature: "(g *litd.Game)"},
-	{LuaName: "melee_VictoryDefeatConditions", Package: "litd/api", Symbol: "melee.VictoryDefeatConditions", GoSignature: "(g *litd.Game)"},
+	{LuaName: "melee_Standard", Package: "litd/api/helpers/melee", Symbol: "melee.Standard", GoSignature: "(g *litd.Game, setups []Setup) error"},
+	{LuaName: "melee_StartingResources", Package: "litd/api/helpers/melee", Symbol: "melee.StartingResources", GoSignature: "(g *litd.Game, p litd.Player, f *Faction)"},
+	{LuaName: "melee_StartingUnits", Package: "litd/api/helpers/melee", Symbol: "melee.StartingUnits", GoSignature: "(g *litd.Game, p litd.Player, f *Faction) ([]litd.Unit, error)"},
+	{LuaName: "melee_VictoryDefeatConditions", Package: "litd/api/helpers/melee", Symbol: "melee.VictoryDefeatConditions", GoSignature: "(g *litd.Game, players []litd.Player)"},
 }
 
 // AIBindings is the AI-domain surface (litd/ai, R-EXEC-3 isolated).
