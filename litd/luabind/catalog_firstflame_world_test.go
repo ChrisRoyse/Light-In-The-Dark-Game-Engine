@@ -1,0 +1,149 @@
+package luabind
+
+// Headless FSV of the canonical First Flame beacon world (#169 — the state-JSON
+// SoT; the screenshot SoT is render/asset-gated). Exercises three #169 edge
+// cases against the REAL map's three beacons: simultaneous capture of two
+// beacons in the same tick window, a contested beacon staying frozen, and
+// determinism (run twice → identical published state). SoT = the per-beacon
+// owner/progress/state the world publishes to Storage, cross-checked against the
+// Go sim.
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+	lua "github.com/yuin/gopher-lua"
+)
+
+type beaconState struct{ id, owner, progress, state int }
+
+// runFirstFlame loads the map + the canonical world, places units, advances, and
+// returns the published state of all three beacons (keyed by storage index).
+func runFirstFlame(t *testing.T) map[int]beaconState {
+	t.Helper()
+	m, err := mapdata.Load(os.DirFS("../.."), "data/maps/firstflame")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 5})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+	// Make players 1 and 2 mutual enemies so the shared beacon is contested.
+	if g.Player(1).IsAlly(g.Player(2)) {
+		g.Player(1).SetAlliance(g.Player(2), 0)
+		g.Player(2).SetAlliance(g.Player(1), 0)
+	}
+
+	L := lua.NewState()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	RegisterMap(L, m)
+	reg := NewChunkRegistry()
+	defer reg.Close()
+
+	// Beacon world coords (cell*32+16): id1 (4112,4112), id2 (2832,2832),
+	// id3 (5392,5392). Place P1 alone on id1 & id2 (→ both capture), and P1+P2
+	// together on id3 (→ contested, frozen).
+	at := func(cx, cy int) api.Vec2 { return api.Vec2{X: float64(cx*32 + 16), Y: float64(cy*32 + 16)} }
+	mk := func(p, cx, cy int) {
+		if !g.CreateUnit(g.Player(p), g.UnitType("hfoo"), at(cx, cy), api.Deg(0)).Valid() {
+			t.Fatalf("unit P%d at (%d,%d) invalid", p, cx, cy)
+		}
+	}
+	mk(1, 128, 128) // id1 central
+	mk(1, 88, 88)   // id2 flank
+	mk(1, 168, 168) // id3 — P1
+	mk(2, 168, 168) // id3 — P2 (enemy) → contested
+
+	if _, err := LoadWorld(L, reg, filepath.Join("..", "..", "worlds", "firstflame")); err != nil {
+		L.Close()
+		t.Fatalf("LoadWorld(firstflame): %v", err)
+	}
+	g.Advance(60) // > CAPTURE_STEPS*5 ticks
+	defer L.Close()
+
+	out := map[int]beaconState{}
+	for i := 1; i <= 3; i++ {
+		key := "beacon" + itoa(i)
+		id, _ := g.Storage().GetInt(key, "id")
+		owner, _ := g.Storage().GetInt(key, "owner")
+		prog, _ := g.Storage().GetInt(key, "progress")
+		st, _ := g.Storage().GetInt(key, "state")
+		out[i] = beaconState{id: id, owner: owner, progress: prog, state: st}
+	}
+	return out
+}
+
+func TestFirstFlameBeaconWorldFSV(t *testing.T) {
+	got := runFirstFlame(t)
+
+	// Find the storage slots for ids 1,2,3 (id-sorted, so slot i == id i).
+	b1, b2, b3 := got[1], got[2], got[3]
+	if b1.id != 1 || b2.id != 2 || b3.id != 3 {
+		t.Fatalf("beacon id order unexpected: %+v", got)
+	}
+
+	// Edge — simultaneous capture: id1 and id2 both lit for player 1.
+	if b1.owner != 1 || b1.state != 1 {
+		t.Fatalf("beacon1 not captured by P1: %+v", b1)
+	}
+	if b2.owner != 1 || b2.state != 1 {
+		t.Fatalf("beacon2 not captured by P1: %+v", b2)
+	}
+	t.Logf("FSV #169 simultaneous: beacon1 + beacon2 both lit owner=1 in the same run")
+
+	// Edge — contested: id3 has P1 and P2 enemies in radius → frozen neutral.
+	if b3.owner != -1 || b3.state != 0 || b3.progress != 0 {
+		t.Fatalf("contested beacon3 not frozen-neutral: %+v (want owner=-1 state=0 progress=0)", b3)
+	}
+	t.Logf("FSV #169 contested: beacon3 (P1 vs P2 in radius) frozen — owner=-1 progress=0 over 60 ticks")
+
+	// Edge — determinism: a second identical run yields identical published state.
+	again := runFirstFlame(t)
+	for i := 1; i <= 3; i++ {
+		if got[i] != again[i] {
+			t.Fatalf("non-deterministic beacon %d: run1=%+v run2=%+v", i, got[i], again[i])
+		}
+	}
+	t.Logf("FSV #169 determinism: double-run beacon state identical for all 3 beacons %v", got)
+
+	// Vision: the captured central beacon reveals its radius for player 1.
+	// (Re-load a fresh run to read the sim fog at the central beacon.)
+	if fs := freshFogAtCentral(t); fs != api.FogVisible {
+		t.Fatalf("captured central beacon did not reveal: FogStateAt=%d", int(fs))
+	}
+	t.Logf("FSV #169 vision: captured central beacon stamps FogVisible for P1")
+}
+
+// freshFogAtCentral reproduces a run and reads the sim fog at the central beacon.
+func freshFogAtCentral(t *testing.T) api.FogState {
+	t.Helper()
+	m, _ := mapdata.Load(os.DirFS("../.."), "data/maps/firstflame")
+	g, _ := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 5})
+	g.DefineUnits([]data.Unit{{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16}})
+	L := lua.NewState()
+	defer L.Close()
+	Register(L, g)
+	RegisterMap(L, m)
+	reg := NewChunkRegistry()
+	defer reg.Close()
+	central := api.Vec2{X: 128*32 + 16, Y: 128*32 + 16}
+	g.CreateUnit(g.Player(1), g.UnitType("hfoo"), central, api.Deg(0))
+	if _, err := LoadWorld(L, reg, filepath.Join("..", "..", "worlds", "firstflame")); err != nil {
+		t.Fatalf("LoadWorld: %v", err)
+	}
+	g.Advance(60)
+	return g.FogStateAt(g.Player(1), central)
+}
