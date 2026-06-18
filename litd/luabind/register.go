@@ -43,6 +43,7 @@ func Register(L *lua.LState, g *api.Game) error {
 		registerCatalog(L, gameBinder{g: g})   // hand-written type-catalog resolvers (#393)
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
+		RegisterMap(L, g.MapData())            // Game_MapStarts/MapBeacons from the game's map (#410)
 	}
 	return nil
 }

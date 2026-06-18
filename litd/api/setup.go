@@ -3,7 +3,9 @@ package litd
 import (
 	"fmt"
 
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
@@ -36,6 +38,13 @@ type GameOptions struct {
 	// Seed is the deterministic PRNG seed (R-SIM-2). The same seed and command
 	// stream reproduce a run bit-for-bit; a different seed diverges.
 	Seed int64
+
+	// Map is the loaded skirmish map (#410), or nil for a mapless programmatic
+	// game. The CALLER loads + validates it (mapdata.Load) and passes it in, so
+	// NewGame still reads no filesystem. When set, NewGame seeds each player's
+	// start location from the map; MapStarts/MapBeacons expose the placements,
+	// and the script-binding layer surfaces them to Lua worlds.
+	Map *mapdata.Map
 }
 
 // NewGame builds a headless, seeded game from opts. It fails closed on an
@@ -62,7 +71,22 @@ func NewGame(opts GameOptions) (*Game, error) {
 		Destructables: opts.MaxDestructables,
 	})
 	w.SetSeed(uint64(opts.Seed))
-	return newGame(w), nil
+	g := newGame(w)
+	if opts.Map != nil {
+		g.mapData = opts.Map
+		// Seed start locations: the map's per-player start cell becomes both the
+		// indexed start-location table (StartLocation(i)) and the player's sim
+		// start point (Player.StartLocation). Cells convert to world centers
+		// (sim.CellCenter convention).
+		for _, s := range opts.Map.Starts() {
+			if int(s.Player) >= sim.MaxPlayers {
+				continue
+			}
+			g.match.startLocations[s.Player] = mapCellCenter(s.X, s.Y)
+			g.w.SetPlayerStart(s.Player, fixed.FromInt(int32(s.X*32+16)), fixed.FromInt(int32(s.Y*32+16)))
+		}
+	}
+	return g, nil
 }
 
 // DefineUnits installs the unit-type definitions this game can spawn — the

@@ -18,6 +18,7 @@ package litd
 
 import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
@@ -40,6 +41,12 @@ type Game struct {
 	// Tests seed it directly; production construction will fill it from
 	// map assets.
 	match matchConfig
+
+	// mapData is the loaded skirmish map (GameOptions.Map, #410), or nil for a
+	// mapless programmatic game. NewGame seeds player starts from it; MapData/
+	// MapStarts/MapBeacons expose its placements, and luabind.Register surfaces
+	// them to Lua worlds via RegisterMap.
+	mapData *mapdata.Map
 
 	// effectModels is the setup-time asset table projection used by
 	// AddSpecialEffect: public model keys resolve to sim/render model
