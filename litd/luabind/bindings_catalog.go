@@ -268,6 +268,35 @@ func bindPlayerLumberLostToUpkeep(L *lua.LState) int {
 	return 1
 }
 
+// Misc game/player getters (#267): trivial accessors with no manifest entry.
+// NeutralVictim/Extra resolve the reserved neutral players a spawn/creep script
+// needs; IsReplay/TimeOfDaySuspended are simple state reads; AlliedVictory is the
+// alliance-victory flag get/set pair.
+func (b gameBinder) bindGameIsReplay(L *lua.LState) int {
+	L.Push(lua.LBool(b.g.IsReplay()))
+	return 1
+}
+func (b gameBinder) bindGameTimeOfDaySuspended(L *lua.LState) int {
+	L.Push(lua.LBool(b.g.TimeOfDaySuspended()))
+	return 1
+}
+func (b gameBinder) bindGameNeutralVictim(L *lua.LState) int {
+	L.Push(pushHandle(L, b.g.NeutralVictim()))
+	return 1
+}
+func (b gameBinder) bindGameNeutralExtra(L *lua.LState) int {
+	L.Push(pushHandle(L, b.g.NeutralExtra()))
+	return 1
+}
+func bindPlayerAlliedVictory(L *lua.LState) int {
+	L.Push(lua.LBool(argPlayer(L, 1).AlliedVictory()))
+	return 1
+}
+func bindPlayerSetAlliedVictory(L *lua.LState) int {
+	argPlayer(L, 1).SetAlliedVictory(L.CheckBool(2))
+	return 0
+}
+
 // bindGameNewFogModifier binds Game.NewFogModifier(p, state, area) FogModifier
 // (#267). The generated dispatch defers the whole FogModifier type: its
 // constructor takes the api.Area interface (no generatable arg marshaler) and
@@ -354,4 +383,10 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Player_LumberUpkeepRate", L.NewFunction(bindPlayerLumberUpkeepRate))
 	L.SetGlobal("Player_GoldLostToUpkeep", L.NewFunction(bindPlayerGoldLostToUpkeep))
 	L.SetGlobal("Player_LumberLostToUpkeep", L.NewFunction(bindPlayerLumberLostToUpkeep))
+	L.SetGlobal("Game_IsReplay", L.NewFunction(b.bindGameIsReplay))
+	L.SetGlobal("Game_TimeOfDaySuspended", L.NewFunction(b.bindGameTimeOfDaySuspended))
+	L.SetGlobal("Game_NeutralVictim", L.NewFunction(b.bindGameNeutralVictim))
+	L.SetGlobal("Game_NeutralExtra", L.NewFunction(b.bindGameNeutralExtra))
+	L.SetGlobal("Player_AlliedVictory", L.NewFunction(bindPlayerAlliedVictory))
+	L.SetGlobal("Player_SetAlliedVictory", L.NewFunction(bindPlayerSetAlliedVictory))
 }

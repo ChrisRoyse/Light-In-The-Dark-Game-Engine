@@ -53,6 +53,25 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		L.Push(pushHandle(L, timer))
 		return 1
 	}))
+	// Game_Every(secs, fn) runs fn every secs of GAME time until stopped (#267) —
+	// the repeating companion to Game_After. The api callback receives the Timer
+	// (so the script can stop itself); the binding forwards it as the handler's
+	// single argument. Same scheduler + error-routing posture as Game_After.
+	L.SetGlobal("Game_Every", L.NewFunction(func(L *lua.LState) int {
+		secs := float64(L.CheckNumber(1))
+		fn := L.CheckFunction(2)
+		timer := g.Every(time.Duration(secs*float64(time.Second)), func(t api.Timer) {
+			L.Push(fn)
+			L.Push(pushHandle(L, t))
+			if err := L.PCall(1, 0, nil); err != nil {
+				if s := getScheduler(L); s != nil {
+					s.reportError(err)
+				}
+			}
+		})
+		L.Push(pushHandle(L, timer))
+		return 1
+	}))
 	L.SetGlobal("Cancel", L.NewFunction(func(L *lua.LState) int {
 		sub, ok := handleArg(L, 1).(api.Subscription)
 		if !ok {
