@@ -16,6 +16,8 @@ package luabind
 // routed through OnScriptError, never swallowed.
 
 import (
+	"time"
+
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -30,6 +32,25 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 			callEventHandler(L, fn, ev)
 		})
 		L.Push(pushHandle(L, sub)) // Subscription handle (pass to Cancel)
+		return 1
+	}))
+	// Game_After(secs, fn) schedules fn to run once after secs of GAME time
+	// (#267). The generated dispatch defers Game.After for its func() callback;
+	// this binds it through the same scheduler the coroutine bridge uses
+	// (g.After), with the callback's errors routed to OnScriptError — exactly the
+	// OnEvent posture. Returns the Timer handle (Timer_Pause/Stop/... are bound).
+	// Pending callbacks are not yet save-serializable (same #270 limit as Run).
+	L.SetGlobal("Game_After", L.NewFunction(func(L *lua.LState) int {
+		secs := float64(L.CheckNumber(1))
+		fn := L.CheckFunction(2)
+		timer := g.After(time.Duration(secs*float64(time.Second)), func() {
+			if err := L.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true}); err != nil {
+				if s := getScheduler(L); s != nil {
+					s.reportError(err)
+				}
+			}
+		})
+		L.Push(pushHandle(L, timer))
 		return 1
 	}))
 	L.SetGlobal("Cancel", L.NewFunction(func(L *lua.LState) int {
