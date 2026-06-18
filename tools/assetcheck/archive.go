@@ -83,7 +83,7 @@ func checkArchive(path string) ([]finding, int, error) {
 		return sortFindings(findings), len(zr.File), nil
 	}
 
-	engineRange, want, schemaErr := parseArchiveManifest(manBody)
+	engineRange, aggregate, want, schemaErr := parseArchiveManifest(manBody)
 	if schemaErr != nil {
 		add(archiveManifestName, "ARCHIVE-SCHEMA", schemaErr.Error())
 		return sortFindings(findings), len(zr.File), nil
@@ -92,6 +92,12 @@ func checkArchive(path string) ([]finding, int, error) {
 		add(archiveManifestName, "ARCHIVE-VERSION", "manifest has no engine-version range")
 	} else if !validEngineRange(engineRange) {
 		add(archiveManifestName, "ARCHIVE-VERSION", fmt.Sprintf("engine-version range %q is not well-formed", engineRange))
+	}
+	// Aggregate hash: the declared whole-archive fingerprint must equal the value
+	// recomputed from the per-entry rows (D-14 "aggregate"). A mismatch means the
+	// row set or the aggregate field was altered after pack.
+	if got := recomputeAggregate(want); got != aggregate {
+		add(archiveManifestName, "ARCHIVE-HASH", fmt.Sprintf("aggregate hash %s… does not match manifest %s…", short(got), short(aggregate)))
 	}
 
 	// Per-entry hash + asset/Lua checks.
@@ -184,12 +190,12 @@ func checkArchiveEntry(name string, data []byte, add func(p, rule, msg string)) 
 
 // parseArchiveManifest parses the worldpack content-hash TOC independently of
 // the writer (so a writer bug cannot mask a verification bug).
-func parseArchiveManifest(body string) (engineRange string, byPath map[string]string, err error) {
+func parseArchiveManifest(body string) (engineRange, aggregate string, byPath map[string]string, err error) {
 	byPath = map[string]string{}
 	sc := bufio.NewScanner(strings.NewReader(body))
 	header := true
 	sawVersion := false
-	sawAuthor, sawTitle, sawDesc := false, false, false
+	sawAuthor, sawTitle, sawDesc, sawAggregate := false, false, false, false
 	for sc.Scan() {
 		line := sc.Text()
 		if header {
@@ -209,39 +215,63 @@ func parseArchiveManifest(body string) (engineRange string, byPath map[string]st
 			case strings.HasPrefix(line, "description:"):
 				sawDesc = true
 				continue
+			case strings.HasPrefix(line, "aggregate-sha256:"):
+				aggregate = strings.TrimSpace(strings.TrimPrefix(line, "aggregate-sha256:"))
+				sawAggregate = true
+				continue
 			case strings.HasPrefix(line, "files:"):
 				header = false
 				continue
 			default:
-				return "", nil, fmt.Errorf("malformed manifest header line: %q", line)
+				return "", "", nil, fmt.Errorf("malformed manifest header line: %q", line)
 			}
 		}
 		parts := strings.SplitN(line, " ", 3)
 		if len(parts) != 3 {
-			return "", nil, fmt.Errorf("malformed manifest row: %q", line)
+			return "", "", nil, fmt.Errorf("malformed manifest row: %q", line)
 		}
 		if _, perr := strconv.ParseInt(parts[1], 10, 64); perr != nil {
-			return "", nil, fmt.Errorf("malformed size in manifest row: %q", line)
+			return "", "", nil, fmt.Errorf("malformed size in manifest row: %q", line)
 		}
 		byPath[parts[2]] = parts[0]
 	}
 	if err := sc.Err(); err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 	if !sawVersion {
-		return "", nil, fmt.Errorf("manifest missing litdworld-version header")
+		return "", "", nil, fmt.Errorf("manifest missing litdworld-version header")
 	}
 	// Hosting metadata (D-23) must be present from day one — values may be empty,
 	// but the FIELDS are mandatory so hosting tooling can rely on them.
 	switch {
 	case !sawAuthor:
-		return "", nil, fmt.Errorf("manifest missing hosting-metadata field: author")
+		return "", "", nil, fmt.Errorf("manifest missing hosting-metadata field: author")
 	case !sawTitle:
-		return "", nil, fmt.Errorf("manifest missing hosting-metadata field: title")
+		return "", "", nil, fmt.Errorf("manifest missing hosting-metadata field: title")
 	case !sawDesc:
-		return "", nil, fmt.Errorf("manifest missing hosting-metadata field: description")
+		return "", "", nil, fmt.Errorf("manifest missing hosting-metadata field: description")
+	case !sawAggregate:
+		return "", "", nil, fmt.Errorf("manifest missing aggregate-sha256 header")
 	}
-	return engineRange, byPath, nil
+	return engineRange, aggregate, byPath, nil
+}
+
+// recomputeAggregate rebuilds the whole-archive fingerprint from the parsed
+// manifest rows (Rel-sorted SHA-256 of each per-entry hash) — the same formula
+// worldpack.AggregateHash uses, reimplemented here so a writer bug cannot mask a
+// verification bug.
+func recomputeAggregate(byPath map[string]string) string {
+	rels := make([]string, 0, len(byPath))
+	for rel := range byPath {
+		rels = append(rels, rel)
+	}
+	sort.Strings(rels)
+	h := sha256.New()
+	for _, rel := range rels {
+		io.WriteString(h, byPath[rel])
+		io.WriteString(h, "\n")
+	}
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // validEngineRange accepts a space-separated list of semver comparators, e.g.

@@ -110,9 +110,27 @@ func oneLine(s string) string {
 	return strings.TrimSpace(s)
 }
 
+// AggregateHash is the whole-archive fingerprint: SHA-256 over each entry's
+// per-file hash, taken in Rel-sorted order (so it is independent of pack order
+// and of the zip layout). A single declared value lets a loader detect any
+// added/removed/rehashed entry with one comparison (D-14: "SHA-256 per entry +
+// aggregate"). It is computed from the per-entry hashes alone — the validator
+// recomputes it from the manifest rows without re-reading file bytes.
+func AggregateHash(entries []fileEntry) string {
+	sorted := make([]fileEntry, len(entries))
+	copy(sorted, entries)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Rel < sorted[j].Rel })
+	h := sha256.New()
+	for _, e := range sorted {
+		io.WriteString(h, e.Hash)
+		io.WriteString(h, "\n")
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 // buildManifest renders the deterministic content-hash TOC. Header order is
-// fixed (version, engine-range, hosting metadata, files) so the archive is
-// byte-stable across runs.
+// fixed (version, engine-range, hosting metadata, aggregate, files) so the
+// archive is byte-stable across runs.
 func buildManifest(engineRange string, host Hosting, entries []fileEntry) string {
 	var b strings.Builder
 	b.WriteString("litdworld-version: 1\n")
@@ -120,6 +138,7 @@ func buildManifest(engineRange string, host Hosting, entries []fileEntry) string
 	fmt.Fprintf(&b, "author: %s\n", oneLine(host.Author))
 	fmt.Fprintf(&b, "title: %s\n", oneLine(host.Title))
 	fmt.Fprintf(&b, "description: %s\n", oneLine(host.Description))
+	fmt.Fprintf(&b, "aggregate-sha256: %s\n", AggregateHash(entries))
 	fmt.Fprintf(&b, "files: %d\n", len(entries))
 	for _, e := range entries {
 		fmt.Fprintf(&b, "%s %d %s\n", e.Hash, e.Size, e.Rel)

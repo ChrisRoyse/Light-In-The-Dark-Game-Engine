@@ -37,14 +37,26 @@ func buildArchive(t *testing.T, files map[string]string, engineRange string, has
 	man.WriteString("author: test-author\n")
 	man.WriteString("title: Test World\n")
 	man.WriteString("description: \n")
-	fmt.Fprintf(&man, "files: %d\n", len(names))
+	// Per-entry hashes (post-override), then the aggregate over them in sorted
+	// order — kept self-consistent so a hash-override case exercises the per-entry
+	// path, not the aggregate path.
+	rowHash := make(map[string]string, len(names))
 	for _, name := range names {
 		sum := sha256.Sum256([]byte(files[name]))
 		h := hex.EncodeToString(sum[:])
 		if ov, ok := hashOverride[name]; ok {
 			h = ov
 		}
-		fmt.Fprintf(&man, "%s %d %s\n", h, len(files[name]), name)
+		rowHash[name] = h
+	}
+	agg := sha256.New()
+	for _, name := range names { // names is already sorted
+		agg.Write([]byte(rowHash[name] + "\n"))
+	}
+	fmt.Fprintf(&man, "aggregate-sha256: %s\n", hex.EncodeToString(agg.Sum(nil)))
+	fmt.Fprintf(&man, "files: %d\n", len(names))
+	for _, name := range names {
+		fmt.Fprintf(&man, "%s %d %s\n", rowHash[name], len(files[name]), name)
 	}
 
 	path := filepath.Join(t.TempDir(), "world.litdworld")
@@ -102,10 +114,14 @@ func buildArchiveRawManifest(t *testing.T, manifest string, files map[string]str
 func TestArchiveMissingHostingFieldRejected(t *testing.T) {
 	body := "ok\n"
 	sum := sha256.Sum256([]byte(body))
-	row := fmt.Sprintf("%s %d world.toml\n", hex.EncodeToString(sum[:]), len(body))
+	entryHash := hex.EncodeToString(sum[:])
+	row := fmt.Sprintf("%s %d world.toml\n", entryHash, len(body))
+	// Correct aggregate over the single row's hash (sorted order, trivially one).
+	a := sha256.Sum256([]byte(entryHash + "\n"))
+	aggLine := "aggregate-sha256: " + hex.EncodeToString(a[:]) + "\n"
 
 	// Missing `description:` field entirely → schema error.
-	missing := "litdworld-version: 1\nengine-range: *\nauthor: a\ntitle: t\nfiles: 1\n" + row
+	missing := "litdworld-version: 1\nengine-range: *\nauthor: a\ntitle: t\n" + aggLine + "files: 1\n" + row
 	got := runArchive(t, buildArchiveRawManifest(t, missing, map[string]string{"world.toml": body}))
 	if !hasRule(got, "ARCHIVE-SCHEMA") {
 		t.Fatalf("missing hosting field 'description' not rejected: findings=%v", got)
@@ -113,12 +129,37 @@ func TestArchiveMissingHostingFieldRejected(t *testing.T) {
 	t.Logf("FSV #205 edge4: manifest missing 'description' → ARCHIVE-SCHEMA (rejected)")
 
 	// All fields present but EMPTY → passes (no schema finding).
-	empty := "litdworld-version: 1\nengine-range: *\nauthor: \ntitle: \ndescription: \nfiles: 1\n" + row
+	empty := "litdworld-version: 1\nengine-range: *\nauthor: \ntitle: \ndescription: \n" + aggLine + "files: 1\n" + row
 	got = runArchive(t, buildArchiveRawManifest(t, empty, map[string]string{"world.toml": body}))
 	if hasRule(got, "ARCHIVE-SCHEMA") {
 		t.Fatalf("empty-but-present hosting values wrongly rejected: findings=%v", got)
 	}
 	t.Logf("FSV #205 edge4: empty hosting values present → accepted")
+}
+
+// TestArchiveAggregateMismatch — D-14: the declared aggregate-sha256 must equal
+// the value recomputed from the per-entry rows. Correct rows but a tampered
+// aggregate field is an ARCHIVE-HASH refusal (distinct from the per-entry path).
+func TestArchiveAggregateMismatch(t *testing.T) {
+	body := "ok\n"
+	sum := sha256.Sum256([]byte(body))
+	row := fmt.Sprintf("%s %d world.toml\n", hex.EncodeToString(sum[:]), len(body))
+	// Deliberately wrong aggregate; every per-entry row is correct.
+	bad := "litdworld-version: 1\nengine-range: *\nauthor: \ntitle: \ndescription: \n" +
+		"aggregate-sha256: " + strings.Repeat("0", 64) + "\nfiles: 1\n" + row
+	got := runArchive(t, buildArchiveRawManifest(t, bad, map[string]string{"world.toml": body}))
+	if !hasRule(got, "ARCHIVE-HASH") {
+		t.Fatalf("tampered aggregate not rejected: findings=%v", got)
+	}
+	t.Logf("FSV #205 D-14: rows valid but aggregate-sha256 tampered → ARCHIVE-HASH (rejected): %v", got)
+
+	// Missing aggregate header entirely → schema error.
+	noAgg := "litdworld-version: 1\nengine-range: *\nauthor: \ntitle: \ndescription: \nfiles: 1\n" + row
+	got = runArchive(t, buildArchiveRawManifest(t, noAgg, map[string]string{"world.toml": body}))
+	if !hasRule(got, "ARCHIVE-SCHEMA") {
+		t.Fatalf("missing aggregate header not rejected: findings=%v", got)
+	}
+	t.Logf("FSV #205 D-14: manifest missing aggregate-sha256 → ARCHIVE-SCHEMA (rejected)")
 }
 
 // hasRule reports whether any finding carries the given rule code.

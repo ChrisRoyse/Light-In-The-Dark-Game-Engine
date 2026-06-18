@@ -36,8 +36,10 @@ func parseManifest(body string) (engineRange string, byPath map[string]manifestE
 				continue
 			case strings.HasPrefix(line, "author:"),
 				strings.HasPrefix(line, "title:"),
-				strings.HasPrefix(line, "description:"):
-				// Hosting metadata (D-23) — accepted; not needed to restore files.
+				strings.HasPrefix(line, "description:"),
+				strings.HasPrefix(line, "aggregate-sha256:"):
+				// Hosting metadata (D-23) + aggregate fingerprint — accepted; the
+				// per-entry hashes drive restore, so neither is needed here.
 				continue
 			case strings.HasPrefix(line, "files:"):
 				header = false
