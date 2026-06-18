@@ -142,6 +142,23 @@ func (b gameBinder) bindGameUnitsIn(L *lua.LState) int {
 	return 1
 }
 
+// bindGamePrint binds Game.Print(to []Player, msg string) (#267): emit a UIPrint
+// message to the given players. The generated dispatch defers Print for its
+// variadic ...PrintOption; this binding exposes the common no-options form (a
+// script passes the player array + text). emits a UIMessageEvent observable via
+// OnUI.
+func (b gameBinder) bindGamePrint(L *lua.LState) int {
+	b.g.Print(argPlayerSlice(L, 1), L.CheckString(2))
+	return 0
+}
+
+// bindGameClearMessages binds Game.ClearMessages(to []Player) (#267): clear the
+// given players' on-screen messages (emits a UIClear event).
+func (b gameBinder) bindGameClearMessages(L *lua.LState) int {
+	b.g.ClearMessages(argPlayerSlice(L, 1))
+	return 0
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
@@ -160,4 +177,6 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_Players", L.NewFunction(b.bindGamePlayers))
 	L.SetGlobal("Game_UnitsInRange", L.NewFunction(b.bindGameUnitsInRange))
 	L.SetGlobal("Game_UnitsIn", L.NewFunction(b.bindGameUnitsIn))
+	L.SetGlobal("Game_Print", L.NewFunction(b.bindGamePrint))
+	L.SetGlobal("Game_ClearMessages", L.NewFunction(b.bindGameClearMessages))
 }

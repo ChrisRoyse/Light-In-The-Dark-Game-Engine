@@ -287,6 +287,33 @@ func argStringSlice(L *lua.LState, i int) []string {
 	return out
 }
 
+// argPlayerSlice reads a 1-based Lua array table of Player userdata into a
+// []api.Player (e.g. the array Game_Players returns). A non-table, or an element
+// that is not a Player userdata, raises a Lua arg error (fail-closed, never a
+// silent skip).
+func argPlayerSlice(L *lua.LState, i int) []api.Player {
+	t, ok := L.Get(i).(*lua.LTable)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected an array table of Player, got %s", L.Get(i).Type()))
+		return nil
+	}
+	out := make([]api.Player, 0, t.Len())
+	for j := 1; j <= t.Len(); j++ {
+		ud, ok := t.RawGetInt(j).(*lua.LUserData)
+		if !ok {
+			L.ArgError(i, fmt.Sprintf("Player array element %d is not userdata", j))
+			return nil
+		}
+		p, ok := ud.Value.(api.Player)
+		if !ok {
+			L.ArgError(i, fmt.Sprintf("Player array element %d is not a Player (got %T)", j, ud.Value))
+			return nil
+		}
+		out = append(out, p)
+	}
+	return out
+}
+
 func argDamageEvent(L *lua.LState, i int) *api.DamageEvent {
 	e, ok := handleArg(L, i).(*api.DamageEvent)
 	if !ok {
