@@ -174,6 +174,12 @@ type World struct {
 	// code (data.Unit.ID, e.g. "hfoo") -> typeID, built by BindUnitDefs.
 	// Lookup only, never iterated (the API UnitType resolver, #217).
 	unitDefByCode map[string]uint16
+	// loaded resource-node type rows (#401); BindResourceNodeDefs installs,
+	// read-only thereafter. CreateResourceNodeByID indexes this slice.
+	nodeDefs []data.ResourceNodeType
+	// code (data.ResourceNodeType.ID) -> node typeID, built by
+	// BindResourceNodeDefs. Lookup only, never iterated (the API resolver).
+	nodeDefByCode map[string]uint16
 	// tech-requirement admission hook (#303); nil = allow (documented
 	// canonical default while no requirement table is bound)
 	techGate func(player uint8, typeID uint16) bool

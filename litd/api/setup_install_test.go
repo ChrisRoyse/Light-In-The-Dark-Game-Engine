@@ -226,3 +226,38 @@ func TestDefineSeamsFailClosedFSV(t *testing.T) {
 	}
 	t.Logf("FSV fail-closed: nil-game, upgrades-before-units, empty-items, bad-effect-range, bad-primitive all errored; 0 items installed")
 }
+
+// TestDefineResourceNodesInstallFSV — #401: the DefineResourceNodes seam installs
+// the node table and Game.CreateResourceNode spawns from it. SoT = the sim's own
+// Nodes component (the spawned entity's Remaining amount) read AFTER the call,
+// not the returned handle's mere non-nil-ness; plus the null-type fail-closed.
+func TestDefineResourceNodesInstallFSV(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 8})
+	g := newGame(w)
+	if err := g.DefineEconomy(2); err != nil { // a node's Resource index needs the economy
+		t.Fatalf("DefineEconomy: %v", err)
+	}
+	if err := g.DefineResourceNodes([]data.ResourceNodeType{{ID: "goldmine", Resource: 0, Amount: 500}}); err != nil {
+		t.Fatalf("DefineResourceNodes: %v", err)
+	}
+	typ := g.ResourceNodeType("goldmine")
+	if typ.IsZero() {
+		t.Fatal("ResourceNodeType(goldmine) did not resolve — table not installed")
+	}
+	node := g.CreateResourceNode(typ, Vec2{X: 200, Y: 200})
+	if !node.Valid() {
+		t.Fatal("CreateResourceNode returned an invalid Unit")
+	}
+	nr := w.Nodes.Row(node.id)
+	if nr == -1 {
+		t.Fatal("spawned node carries no Nodes component in the sim")
+	}
+	t.Logf("FSV #401 api-seam: node entity=%d Nodes.Remaining=%d (want 500)", node.id, w.Nodes.Remaining[nr])
+	if w.Nodes.Remaining[nr] != 500 {
+		t.Fatalf("node remaining=%d, want 500 — table data not carried through", w.Nodes.Remaining[nr])
+	}
+	// Null type (unknown code) fails closed: an invalid Unit, never a panic.
+	if g.CreateResourceNode(g.ResourceNodeType("nope"), Vec2{}).Valid() {
+		t.Fatal("CreateResourceNode with an unknown type must return an invalid Unit")
+	}
+}

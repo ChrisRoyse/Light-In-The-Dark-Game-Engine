@@ -66,13 +66,14 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		return nil, nil, fmt.Errorf("load data tables: %w", err)
 	}
 
-	// 2. Fail-closed: units + the non-unit content tables now have api install
-	//    seams (#394). Resource-node and hero tables still lack a seam, so a
-	//    world shipping those must fail loudly rather than load a partial world
-	//    that silently drops them.
+	// 2. Fail-closed scaffold: every content table now has an api install seam
+	//    (units/effects/abilities/items/buffs/upgrades #394, heroes #396,
+	//    resource nodes #401). uninstallableTables stays as the registration
+	//    point — if a future table type ships without a seam it is refused here
+	//    rather than silently dropped.
 	if missing := uninstallableTables(tables); missing != "" {
-		return nil, nil, fmt.Errorf("world ships %s, but that table has no api install seam yet "+
-			"(see #394); refusing to load a partial world", missing)
+		return nil, nil, fmt.Errorf("world ships %s, but that table has no api install seam yet; "+
+			"refusing to load a partial world", missing)
 	}
 
 	// 3. New game, then install the data tables in dependency order: effects
@@ -86,6 +87,13 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	if len(tables.ResourceTypes) > 0 {
 		if err := g.DefineEconomy(len(tables.ResourceTypes)); err != nil {
 			return nil, nil, fmt.Errorf("define economy: %w", err)
+		}
+	}
+	// Resource-node types after the economy (a node's Resource index is checked
+	// against the resource count at spawn) (#401).
+	if len(tables.Nodes) > 0 {
+		if err := g.DefineResourceNodes(tables.Nodes); err != nil {
+			return nil, nil, fmt.Errorf("define resource nodes: %w", err)
 		}
 	}
 	if len(tables.Effects) > 0 {
@@ -146,18 +154,16 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 }
 
 // uninstallableTables names any content table present that still has no api
-// install seam (so the caller can fail closed). After #394 + #396, units,
-// effects, abilities, items, buff types, upgrades, and heroes all install; only
-// resource-node TYPES remain seamless — the sim consumes a *ResourceNodeType
-// inline at CreateResourceNode and has no type registry to bind a table into,
-// so installing them is a sim feature, not an api wrapper (tracked separately).
+// install seam (so the caller can fail closed). After #394 + #396 + #401 every
+// content table installs — units, effects, abilities, items, buff types,
+// upgrades, heroes, and resource-node types — so this returns "" today. It is
+// kept as the fail-closed registration point: a new table type added to
+// data.Tables without an install seam should be named here until it has one.
 // The combat vocabulary (AttackTypes/ArmorTypes/Coeff) is always present because
 // data.Load requires a damage table; it is not itself installed, but a unit-only
 // world that does no combat never exercises it, so it is not uninstallable.
 func uninstallableTables(t *data.Tables) string {
-	if len(t.Nodes) > 0 {
-		return fmt.Sprintf("%d resource-node type(s)", len(t.Nodes))
-	}
+	_ = t
 	return ""
 }
 

@@ -74,6 +74,53 @@ func hstate(w *World, id EntityID) string {
 
 // Happy path: full cycles accumulate exact amounts; the trace shows
 // the MOVE_TO_NODE → GATHER → RETURN → DEPOSIT loop.
+
+// TestBindResourceNodeDefsFSV — #401: the node-type registry resolves codes to
+// ids and spawns nodes by id that carry the table's exact Resource/Amount. SoT =
+// the stored Nodes component (Remaining/Resource), not the create bool, plus the
+// fail-closed guards (unknown code, out-of-range id, length-mismatch rebind).
+func TestBindResourceNodeDefsFSV(t *testing.T) {
+	w := econWorld(t) // BindEconomy(2): resources 0 and 1 valid
+	defs := []data.ResourceNodeType{
+		{ID: "goldmine", Resource: 0, Amount: 500},
+		{ID: "tree", Resource: 1, Amount: 200, Exclusive: true},
+	}
+	if !w.BindResourceNodeDefs(defs) {
+		t.Fatal("BindResourceNodeDefs rejected a valid table")
+	}
+	gid, ok := w.ResourceNodeTypeID("goldmine")
+	if !ok || gid != 0 {
+		t.Fatalf("goldmine id = %d,%v want 0,true", gid, ok)
+	}
+	if tid, ok := w.ResourceNodeTypeID("tree"); !ok || tid != 1 {
+		t.Fatalf("tree id = %d,%v want 1,true", tid, ok)
+	}
+	if _, ok := w.ResourceNodeTypeID("nope"); ok {
+		t.Fatal("unknown code resolved — must be ok=false")
+	}
+
+	id, ok := w.CreateResourceNodeByID(pt2(140, 100), gid)
+	if !ok {
+		t.Fatal("CreateResourceNodeByID(goldmine) failed")
+	}
+	nr := w.Nodes.Row(id)
+	if nr == -1 {
+		t.Fatal("spawned node has no Nodes component")
+	}
+	t.Logf("FSV #401: goldmine node entity=%d Remaining=%d Resource=%d (want 500,0)",
+		id, w.Nodes.Remaining[nr], w.Nodes.Resource[nr])
+	if w.Nodes.Remaining[nr] != 500 || w.Nodes.Resource[nr] != 0 {
+		t.Fatalf("node state wrong: Remaining=%d Resource=%d, want 500,0", w.Nodes.Remaining[nr], w.Nodes.Resource[nr])
+	}
+	// Fail-closed: an out-of-range id and a length-mismatch rebind both refuse.
+	if _, ok := w.CreateResourceNodeByID(pt2(0, 0), 99); ok {
+		t.Fatal("out-of-range node id must fail, got ok=true")
+	}
+	if w.BindResourceNodeDefs(defs[:1]) {
+		t.Fatal("rebind to a different length must fail")
+	}
+}
+
 func TestHarvestCycle(t *testing.T) {
 	w := econWorld(t)
 	worker := addWorker(t, w, pt2(100, 100))

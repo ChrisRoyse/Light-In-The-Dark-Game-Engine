@@ -87,9 +87,9 @@ func TestLoadWorldInstallsAbilities(t *testing.T) {
 	}
 }
 
-// TestUninstallableTablesGate: the fail-closed gate now passes every table with
-// an install seam (abilities/items per #394, heroes per #396) and refuses only
-// resource-node types, which have no sim type registry to bind into.
+// TestUninstallableTablesGate: every content table now has an install seam —
+// abilities/items (#394), heroes (#396), resource-node types (#401) — so the
+// fail-closed gate refuses nothing today.
 func TestUninstallableTablesGate(t *testing.T) {
 	if got := uninstallableTables(&data.Tables{Abilities: []data.Ability{{ID: "x"}}, Items: []data.Item{{ID: "y"}}}); got != "" {
 		t.Errorf("abilities+items must be installable now, gate said %q", got)
@@ -97,8 +97,8 @@ func TestUninstallableTablesGate(t *testing.T) {
 	if got := uninstallableTables(&data.Tables{Hero: &data.HeroTables{}}); got != "" {
 		t.Errorf("hero tables must be installable now (#396), gate said %q", got)
 	}
-	if got := uninstallableTables(&data.Tables{Nodes: []data.ResourceNodeType{{}}}); !strings.Contains(got, "resource-node") {
-		t.Errorf("resource-node tables must still be refused, got %q", got)
+	if got := uninstallableTables(&data.Tables{Nodes: []data.ResourceNodeType{{}}}); got != "" {
+		t.Errorf("resource-node tables must be installable now (#401), gate said %q", got)
 	}
 }
 
@@ -126,6 +126,31 @@ func TestLoadWorldInstallsHeroes(t *testing.T) {
 		t.Fatal("DefineHeroes after world install must fail (rebind refused) — heroes were not installed")
 	}
 	t.Logf("FSV #396: hero world loaded; rebind refused — heroes occupy the sim registry")
+}
+
+// TestLoadWorldInstallsResourceNodes: #401 — a world shipping an economy table
+// with resource nodes now loads (DefineResourceNodes wired into loadWorld; was
+// refused by the uninstallable gate), and the node type is genuinely usable —
+// proven by resolving it and spawning a live node through the public api, not by
+// trusting the load's nil error.
+func TestLoadWorldInstallsResourceNodes(t *testing.T) {
+	w := writeWorld(t, tomlDamageTable, "Game_SetTimeOfDay(12.0)\n")
+	mk(t, filepath.Join(w, "data", "economy", "resources.toml"),
+		"resource-types = [\"gold\", \"lumber\"]\n\n[[node]]\nid = \"goldmine\"\nresource = \"gold\"\namount = 500\n")
+	g, cleanup, err := loadWorld(w, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("world shipping a resource-node table must now load (#401): %v", err)
+	}
+	defer cleanup()
+	typ := g.ResourceNodeType("goldmine")
+	if typ.IsZero() {
+		t.Fatal("goldmine node type not installed after world load")
+	}
+	node := g.CreateResourceNode(typ, api.Vec2{X: 300, Y: 300})
+	if !node.Valid() {
+		t.Fatal("CreateResourceNode failed after world load — node table not usable")
+	}
+	t.Logf("FSV #401 world-load: node-shipping world loaded; goldmine resolved + spawned a live node")
 }
 
 // goldenDetLua is the committed 10k-tick state hash of worlds/determinism-lua

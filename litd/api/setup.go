@@ -115,6 +115,23 @@ func (g *Game) DefineHeroes(h *data.HeroTables) error {
 	return nil
 }
 
+// DefineResourceNodes installs the resource-node type table this game can spawn
+// (#401) — the install seam that lets a world ship gold mines / harvestable
+// nodes. A setup verb (R-API-5): it fails closed on an empty or oversized table
+// or a length-mismatch rebind. ResourceNodeType(code) resolves against these
+// defs and Game.CreateResourceNode spawns from them. Spawning also needs
+// DefineEconomy bound (a node's Resource index is checked against the resource
+// count), so call DefineEconomy first for any world that ships nodes.
+func (g *Game) DefineResourceNodes(nodes []data.ResourceNodeType) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineResourceNodes: nil game")
+	}
+	if !g.w.BindResourceNodeDefs(nodes) {
+		return fmt.Errorf("api: DefineResourceNodes: rejected %d node type(s) (empty, exceeds the 65536 type-id space, or conflicts with an existing binding)", len(nodes))
+	}
+	return nil
+}
+
 // DefineEffects installs the compiled effect-composition arena that abilities
 // and items reference by index (#394). A setup verb (R-API-5): it fails closed
 // — propagating the validation error — when an entry names an unknown effect

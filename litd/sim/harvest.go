@@ -313,6 +313,52 @@ func (w *World) BindEconomy(resourceTypes int) bool {
 	return true
 }
 
+// BindResourceNodeDefs installs the resource-node type table the world can
+// spawn (#401), mirroring BindUnitDefs: it fails closed on an empty or oversized
+// table and on a rebind to a different length, and builds the code -> nodeTypeID
+// index used by ResourceNodeTypeID. Read-only thereafter. Returns false on
+// rejection. Spawning a node still requires the economy bound (DefineEconomy):
+// CreateResourceNodeByID checks the node's Resource index against resourceCount.
+func (w *World) BindResourceNodeDefs(defs []data.ResourceNodeType) bool {
+	if len(defs) == 0 || len(defs) > 1<<16 {
+		return false
+	}
+	if w.nodeDefs != nil && len(w.nodeDefs) != len(defs) {
+		return false
+	}
+	w.nodeDefs = defs
+	idx := make(map[string]uint16, len(defs))
+	for i := range defs {
+		if defs[i].ID == "" {
+			continue
+		}
+		if _, ok := idx[defs[i].ID]; !ok {
+			idx[defs[i].ID] = uint16(i)
+		}
+	}
+	w.nodeDefByCode = idx
+	return true
+}
+
+// ResourceNodeTypeID resolves a node code (data.ResourceNodeType.ID) to its
+// bound nodeTypeID. Returns ok=false for an unknown code or before
+// BindResourceNodeDefs. A deterministic map lookup, never an iteration.
+func (w *World) ResourceNodeTypeID(code string) (uint16, bool) {
+	id, ok := w.nodeDefByCode[code]
+	return id, ok
+}
+
+// CreateResourceNodeByID spawns a node from a bound node type (#401). It
+// bounds-checks id against the table and delegates to CreateResourceNode, so the
+// same economy/Resource-index guards apply. Returns ok=false for an out-of-range
+// id or a failed spawn.
+func (w *World) CreateResourceNodeByID(pos fixed.Vec2, id uint16) (EntityID, bool) {
+	if int(id) >= len(w.nodeDefs) {
+		return 0, false
+	}
+	return w.CreateResourceNode(pos, &w.nodeDefs[id])
+}
+
 // CreateResourceNode spawns a node entity from its table row.
 func (w *World) CreateResourceNode(pos fixed.Vec2, nt *data.ResourceNodeType) (EntityID, bool) {
 	if w.resourceCount == 0 || int(nt.Resource) >= w.resourceCount {
