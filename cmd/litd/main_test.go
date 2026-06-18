@@ -158,6 +158,33 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // intentional sim/Lua change, with justification (SimVersion discipline).
 const goldenDetLua uint64 = 0xbf6367e3b9e444f4
 
+// TestLoadWorldInstallsCombatMatrix — #406: the world's required damage table
+// (data/combat, parsed to tables.Coeff) is now installed by loadWorld via
+// Game.DefineCombat. SoT = damage actually resolves after load — before this
+// wiring the matrix was unbound and every hit dropped (victim Life unchanged).
+// The shipped table is 1.0x (normal=[1000]) against unarmored, so a 40-damage
+// hit drops Life by exactly 40.
+func TestLoadWorldInstallsCombatMatrix(t *testing.T) {
+	w := writeWorld(t, tomlDamageTable, "Game_SetTimeOfDay(12.0)\n")
+	g, cleanup, err := loadWorld(w, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("loadWorld: %v", err)
+	}
+	defer cleanup()
+	src := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 0, Y: 0}, api.Deg(0))
+	tgt := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 5, Y: 0}, api.Deg(0))
+	before := tgt.Life()
+	if !src.Damage(tgt, 40) {
+		t.Fatal("Unit.Damage did not queue")
+	}
+	g.Advance(2)
+	drop := before - tgt.Life()
+	t.Logf("FSV #406 world-load combat: data/combat 1.0x matrix installed; 40 damage dropped Life %.1f (want 40)", drop)
+	if drop != 40 {
+		t.Fatalf("Life dropped %.1f, want 40 — combat matrix not installed by loadWorld (every hit would drop)", drop)
+	}
+}
+
 // TestLoadWorldDeterminismLuaFSV: #271 — the committed determinism-lua scenario
 // (math.random + pairs + string.format + coroutines + OnEvent) runs 10k ticks
 // headless and produces a bit-identical state hash across same-seed runs, and a

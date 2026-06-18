@@ -84,6 +84,22 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("new game: %w", err)
 	}
+	// Combat coefficient matrix first (#406): the world's required damage table
+	// (data/combat) parses to tables.Coeff; until it is installed combat
+	// resolution drops every hit, so a loaded world's units could not take
+	// damage. The api takes [][]int, so widen the sim's [][]int32.
+	if len(tables.Coeff) > 0 {
+		coeff := make([][]int, len(tables.Coeff))
+		for i, row := range tables.Coeff {
+			coeff[i] = make([]int, len(row))
+			for j, v := range row {
+				coeff[i][j] = int(v)
+			}
+		}
+		if err := g.DefineCombat(coeff); err != nil {
+			return nil, nil, fmt.Errorf("define combat: %w", err)
+		}
+	}
 	if len(tables.ResourceTypes) > 0 {
 		if err := g.DefineEconomy(len(tables.ResourceTypes)); err != nil {
 			return nil, nil, fmt.Errorf("define economy: %w", err)
