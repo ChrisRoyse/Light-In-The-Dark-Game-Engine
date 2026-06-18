@@ -6,6 +6,7 @@ package main
 // state) and the loud-failure contract.
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -157,6 +158,45 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // (#271 G5.7). Re-derive from the TestLoadWorldDeterminismLuaFSV log after an
 // intentional sim/Lua change, with justification (SimVersion discipline).
 const goldenDetLua uint64 = 0xbf6367e3b9e444f4
+
+// TestLoadWorldPlacementSpawnsEntities — #403: a world ships a placement table
+// (data/placement) and the loader spawns those entities after the type tables
+// install and before main.lua runs. SoT = the sim holds exactly the placed
+// units at their declared coordinates, with NO main.lua spawn calls.
+func TestLoadWorldPlacementSpawnsEntities(t *testing.T) {
+	w := writeWorld(t, tomlDamageTable, "Game_SetTimeOfDay(12.0)\n") // main.lua spawns nothing
+	mk(t, filepath.Join(w, "data", "economy", "resources.toml"),
+		"resource-types = [\"gold\"]\n\n[[node]]\nid = \"goldmine\"\nresource = \"gold\"\namount = 500\n")
+	mk(t, filepath.Join(w, "data", "placement", "place.toml"),
+		"[[unit]]\ntype = \"hfoo\"\nowner = 1\nx = 100\ny = 200\nfacing = 0\n\n"+
+			"[[unit]]\ntype = \"hfoo\"\nowner = 1\nx = 300\ny = 400\n\n"+
+			"[[node]]\ntype = \"goldmine\"\nx = 500\ny = 600\n")
+	g, cleanup, err := loadWorld(w, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("world shipping a placement table must load + spawn (#403): %v", err)
+	}
+	defer cleanup()
+
+	// SoT: query the sim for the placed units (main.lua spawned none).
+	units := g.UnitsInRange(api.Vec2{X: 200, Y: 300}, 1000, nil)
+	if len(units) != 2 {
+		t.Fatalf("placement spawned %d units, want exactly 2 (the two placed rows)", len(units))
+	}
+	got := map[string]bool{}
+	for _, u := range units {
+		if !u.Valid() {
+			t.Fatal("placed unit is not Valid in sim")
+		}
+		p := u.Position()
+		got[fmt.Sprintf("%.0f,%.0f", p.X, p.Y)] = true
+	}
+	for _, want := range []string{"100,200", "300,400"} {
+		if !got[want] {
+			t.Fatalf("no placed unit at (%s); positions found: %v", want, got)
+		}
+	}
+	t.Logf("FSV #403 placement: 2 units spawned at their declared coords %v + 1 node (load succeeded => node spawned), no main.lua spawns", got)
+}
 
 // TestLoadWorldInstallsCombatMatrix — #406: the world's required damage table
 // (data/combat, parsed to tables.Coeff) is now installed by loadWorld via

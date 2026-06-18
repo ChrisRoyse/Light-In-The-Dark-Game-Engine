@@ -149,6 +149,31 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		}
 	}
 
+	// 3b. Declarative placement (#403): spawn the world's placement rows after the
+	//     type tables are installed and before main.lua runs. Rows are in a
+	//     canonical order (data layer), so entity-id assignment is deterministic;
+	//     an unknown code or a failed spawn fails the load loudly.
+	if tables.Placement != nil {
+		for _, pu := range tables.Placement.Units {
+			typ := g.UnitType(pu.Type)
+			if typ.IsZero() {
+				return nil, nil, fmt.Errorf("placement: unknown unit type %q", pu.Type)
+			}
+			if !g.CreateUnit(g.Player(pu.Owner), typ, api.Vec2{X: pu.X, Y: pu.Y}, api.Deg(pu.Facing)).Valid() {
+				return nil, nil, fmt.Errorf("placement: failed to spawn unit %q at (%g,%g)", pu.Type, pu.X, pu.Y)
+			}
+		}
+		for _, pn := range tables.Placement.Nodes {
+			typ := g.ResourceNodeType(pn.Type)
+			if typ.IsZero() {
+				return nil, nil, fmt.Errorf("placement: unknown node type %q", pn.Type)
+			}
+			if !g.CreateResourceNode(typ, api.Vec2{X: pn.X, Y: pn.Y}).Valid() {
+				return nil, nil, fmt.Errorf("placement: failed to spawn node %q at (%g,%g)", pn.Type, pn.X, pn.Y)
+			}
+		}
+	}
+
 	// 4. Sandbox + bindings + world-loader seam, then run the world's scripts
 	//    through the public g.LoadWorld verb.
 	// RandomSource wires Lua math.random to the sim PRNG (#400/#263): a loaded

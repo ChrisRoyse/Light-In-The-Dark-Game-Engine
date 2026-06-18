@@ -91,7 +91,35 @@ type Tables struct {
 	Requires      []Require          // admission requirements, sorted (#303)
 	Hero          *HeroTables        // hero rule set; nil when heroes/ absent (#304)
 	Items         []Item             // item types, sorted by ID (#305)
+	Placement     *PlacementTable    // declarative load-time entity placement; nil when placement/ absent (#403)
 	Fingerprint   uint64             // canonical content hash (state-hash preamble)
+}
+
+// PlacementTable is a world's declarative load-time entity placement (#403): the
+// units and resource nodes the loader spawns after the type tables are installed
+// and before main.lua runs. Rows are stored in a canonical order (sorted, so
+// spawn order — and thus entity-id assignment and the resulting state hash — is
+// independent of file enumeration / row order).
+type PlacementTable struct {
+	Units []PlacedUnit
+	Nodes []PlacedNode
+}
+
+// PlacedUnit is one unit to spawn: Type is a unit-type code (resolved against
+// Tables.Units at load), Owner a player slot, position in world units, Facing in
+// degrees.
+type PlacedUnit struct {
+	Type   string
+	Owner  int
+	X, Y   float64
+	Facing float64
+}
+
+// PlacedNode is one resource node to spawn: Type is a node-type code (resolved
+// against Tables.Nodes), position in world units.
+type PlacedNode struct {
+	Type string
+	X, Y float64
 }
 
 // Ability is one ability row. Behavior is the compiled effect
@@ -546,6 +574,10 @@ func Load(fsys fs.FS) (*Tables, error) {
 		t.Smart = smart
 	}
 
+	if err := t.loadPlacement(fsys); err != nil {
+		return nil, err
+	}
+
 	t.Fingerprint = t.fingerprint()
 	return t, nil
 }
@@ -848,6 +880,97 @@ func (t *Tables) convertAttack(file, unitID string, r *rawAttack) (Attack, error
 	return a, nil
 }
 
+// ---- placement (#403) ----
+
+type rawPlacementFile struct {
+	Unit []rawPlacedUnit `toml:"unit" json:"unit"`
+	Node []rawPlacedNode `toml:"node" json:"node"`
+}
+
+type rawPlacedUnit struct {
+	Type   string  `toml:"type" json:"type"`
+	Owner  int     `toml:"owner" json:"owner"`
+	X      float64 `toml:"x" json:"x"`
+	Y      float64 `toml:"y" json:"y"`
+	Facing float64 `toml:"facing" json:"facing"`
+}
+
+type rawPlacedNode struct {
+	Type string  `toml:"type" json:"type"`
+	X    float64 `toml:"x" json:"x"`
+	Y    float64 `toml:"y" json:"y"`
+}
+
+// loadPlacement reads the optional placement/ table (#403). An absent directory
+// (or one with no rows) leaves t.Placement nil — a world may place everything
+// from main.lua. Rows fail closed on an empty type code and are sorted into a
+// canonical spawn order so entity-id assignment (and the state hash) does not
+// depend on file enumeration or row order.
+func (t *Tables) loadPlacement(fsys fs.FS) error {
+	files, _ := listTables(fsys, "placement")
+	if len(files) == 0 {
+		return nil
+	}
+	var pt PlacementTable
+	for _, f := range files {
+		blob, err := fs.ReadFile(fsys, f)
+		if err != nil {
+			return fmt.Errorf("data: %s: %w", f, err)
+		}
+		var raw rawPlacementFile
+		if err := decodeStrict(f, blob, &raw); err != nil {
+			return err
+		}
+		for i := range raw.Unit {
+			r := raw.Unit[i]
+			if r.Type == "" {
+				return fmt.Errorf("data: %s: placement unit with empty type", f)
+			}
+			pt.Units = append(pt.Units, PlacedUnit{Type: r.Type, Owner: r.Owner, X: r.X, Y: r.Y, Facing: r.Facing})
+		}
+		for i := range raw.Node {
+			r := raw.Node[i]
+			if r.Type == "" {
+				return fmt.Errorf("data: %s: placement node with empty type", f)
+			}
+			pt.Nodes = append(pt.Nodes, PlacedNode{Type: r.Type, X: r.X, Y: r.Y})
+		}
+	}
+	if len(pt.Units) == 0 && len(pt.Nodes) == 0 {
+		return nil
+	}
+	sort.Slice(pt.Units, func(i, j int) bool { return lessPlacedUnit(pt.Units[i], pt.Units[j]) })
+	sort.Slice(pt.Nodes, func(i, j int) bool { return lessPlacedNode(pt.Nodes[i], pt.Nodes[j]) })
+	t.Placement = &pt
+	return nil
+}
+
+func lessPlacedUnit(a, b PlacedUnit) bool {
+	if a.Type != b.Type {
+		return a.Type < b.Type
+	}
+	if a.X != b.X {
+		return a.X < b.X
+	}
+	if a.Y != b.Y {
+		return a.Y < b.Y
+	}
+	if a.Facing != b.Facing {
+		return a.Facing < b.Facing
+	}
+	return a.Owner < b.Owner
+}
+
+func lessPlacedNode(a, b PlacedNode) bool {
+	if a.Type != b.Type {
+		return a.Type < b.Type
+	}
+	if a.X != b.X {
+		return a.X < b.X
+	}
+	return a.Y < b.Y
+}
+
 // ---- fingerprint ----
 
 func writeString(h *statehash.Hasher, s string) {
@@ -957,7 +1080,34 @@ func (t *Tables) fingerprint() uint64 {
 	if t.Smart != nil {
 		t.Smart.hashInto(h)
 	}
+	t.hashPlacement(h)
 	return h.Sum64()
+}
+
+// hashPlacement folds the declarative placement table into the fingerprint
+// (#403): a world differing only in placed entities gets a distinct content
+// hash. Coords hash by IEEE-754 bit pattern (canonical, order already sorted).
+func (t *Tables) hashPlacement(h *statehash.Hasher) {
+	if t.Placement == nil {
+		// Write nothing: a placement-less world (the prior universe) keeps its
+		// exact fingerprint, so existing world goldens are unchanged. Only a
+		// world that actually ships placement rows hashes differently.
+		return
+	}
+	h.WriteU32(uint32(len(t.Placement.Units)))
+	for _, u := range t.Placement.Units {
+		writeString(h, u.Type)
+		h.WriteI64(int64(u.Owner))
+		h.WriteU64(math.Float64bits(u.X))
+		h.WriteU64(math.Float64bits(u.Y))
+		h.WriteU64(math.Float64bits(u.Facing))
+	}
+	h.WriteU32(uint32(len(t.Placement.Nodes)))
+	for _, n := range t.Placement.Nodes {
+		writeString(h, n.Type)
+		h.WriteU64(math.Float64bits(n.X))
+		h.WriteU64(math.Float64bits(n.Y))
+	}
 }
 
 // String renders a unit row for FSV dumps — raw integer values only.
