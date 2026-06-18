@@ -101,6 +101,49 @@ func TestUninstallableTablesGate(t *testing.T) {
 	}
 }
 
+// goldenDetLua is the committed 10k-tick state hash of worlds/determinism-lua
+// (#271 G5.7). Re-derive from the TestLoadWorldDeterminismLuaFSV log after an
+// intentional sim/Lua change, with justification (SimVersion discipline).
+const goldenDetLua uint64 = 0xbf6367e3b9e444f4
+
+// TestLoadWorldDeterminismLuaFSV: #271 — the committed determinism-lua scenario
+// (math.random + pairs + string.format + coroutines + OnEvent) runs 10k ticks
+// headless and produces a bit-identical state hash across same-seed runs, and a
+// DIFFERENT hash under a different seed (teeth). SoT = g.StateHash() + the live
+// unit count (the scenario kills exactly one of four).
+func TestLoadWorldDeterminismLuaFSV(t *testing.T) {
+	if testing.Short() {
+		t.Skip("10k-tick determinism scenario is slow; run without -short")
+	}
+	const world = "../../worlds/determinism-lua"
+	run := func(seed int64) (uint64, int) {
+		g, cleanup, err := loadWorld(world, seed, 50_000_000)
+		if err != nil {
+			t.Fatalf("determinism-lua must load: %v", err)
+		}
+		defer cleanup()
+		g.Advance(10000)
+		alive := len(g.UnitsInRange(api.Vec2{X: 300, Y: 300}, 5000, nil))
+		return g.StateHash(), alive
+	}
+	h1, alive1 := run(7)
+	h2, alive2 := run(7)
+	hOther, _ := run(9)
+	t.Logf("FSV determinism-lua: seed7 run1=%#x run2=%#x | seed9=%#x | alive=%d (golden=%#x)", h1, h2, hOther, alive1, goldenDetLua)
+	if h1 != h2 {
+		t.Fatalf("NOT deterministic across same-seed runs: %#x != %#x", h1, h2)
+	}
+	if alive1 != alive2 {
+		t.Fatalf("alive count not deterministic: %d != %d", alive1, alive2)
+	}
+	if hOther == h1 {
+		t.Fatal("different seed produced the same hash — math.random not feeding the scenario (gate is blind)")
+	}
+	if goldenDetLua != 0 && h1 != goldenDetLua {
+		t.Fatalf("golden mismatch: got %#x want %#x (intentional? update goldenDetLua)", h1, goldenDetLua)
+	}
+}
+
 // TestLoadWorldMathRandomBoundFSV: #400 — a world using math.random must load
 // (RandomSource bound to the sim PRNG) and be deterministic, not raise "no
 // deterministic source bound". SoT = the unit position math.random computed,

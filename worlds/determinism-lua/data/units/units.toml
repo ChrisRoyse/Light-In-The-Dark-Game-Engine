@@ -1,0 +1,8 @@
+[[unit]]
+id = "hfoo"
+life = 100
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
