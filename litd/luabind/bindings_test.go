@@ -65,6 +65,47 @@ Unit_Kill(u2)
 	}
 }
 
+// TestBindingTypeConfusionFSV — #267 edge 2 / #319 "binding-layer type
+// confusion". Feeding a binding the wrong argument type (a primitive where a
+// handle is expected, or a valid handle of the WRONG noun type) must raise a
+// loud, located Lua error — never silently no-op and never panic the host
+// process. SoT = a non-nil error from each attempt with the host still alive.
+func TestBindingTypeConfusionFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	if err := L.DoString(`u = Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=0, y=0}, 0)`); err != nil {
+		t.Fatalf("setup unit: %v", err)
+	}
+	cases := []struct{ name, src string }{
+		{"string where Player expected", `Game_CreateUnit("nope", Game_UnitType("hfoo"), {x=0,y=0}, 0)`},
+		{"string where Unit expected", `Unit_Kill("nope")`},
+		{"nil where Unit expected", `Unit_Kill(nil)`},
+		{"number where Vec2 table expected", `Unit_SetPosition(u, 42)`},
+		{"wrong noun handle (Player passed as Unit)", `Unit_Kill(Game_Player(0))`},
+	}
+	for _, c := range cases {
+		err := L.DoString(c.src)
+		t.Logf("FSV #267/#319 type-confusion %-42s -> %v", c.name, oneLineErr(err))
+		if err == nil {
+			t.Fatalf("type confusion NOT caught: %q returned without error", c.src)
+		}
+	}
+}
+
+func oneLineErr(err error) string {
+	if err == nil {
+		return "<nil>"
+	}
+	s := err.Error()
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\n' {
+			return s[:i]
+		}
+	}
+	return s
+}
+
 // TestVec2RoundTripFSV — edge 3: a Vec2 written from Lua as {x=,y=} and read
 // back through Unit_Position must compare field-equal. SoT = the values Lua sees
 // after the Go sim stored them.

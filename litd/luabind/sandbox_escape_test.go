@@ -48,6 +48,7 @@ var blockedVectors = []struct {
 	{"newproxy (userdata escalation)", `return newproxy(true)`},
 	{"coroutine.create (budget-dodge via child LState)", `return coroutine.create(function() end)`},
 	{"channel.make (goroutine concurrency)", `return channel.make()`},
+	{"string.dump (bytecode emit)", `return string.dump(function() end)`},
 }
 
 func TestSandboxEscapeBlockedVectors(t *testing.T) {
@@ -187,6 +188,56 @@ func TestSandboxInstructionBudget(t *testing.T) {
 	t.Logf("FSV infinite loop under budget -> err=%v", oneLine(err))
 	if err == nil || !strings.Contains(err.Error(), "instruction budget exceeded") {
 		t.Fatalf("infinite loop not bounded by instruction budget: %v", err)
+	}
+}
+
+// TestSandboxBytecodeRejected — #319 edge 2 "bytecode chunk". A chunk beginning
+// with the Lua bytecode signature (ESC "Lua") must be rejected by the compiler,
+// never undumped — the fork ships no bytecode loader, so precompiled bytecode
+// cannot smuggle past the source-level sandbox. Paired with string.dump being
+// absent (blockedVectors), a script can neither emit nor load bytecode.
+func TestSandboxBytecodeRejected(t *testing.T) {
+	i := newTestSandbox()
+	defer i.Close()
+	// The 4-byte Lua bytecode header. A real .luac begins with this.
+	_, err := i.Eval("\x1bLua\x53\x00\x19\x93\r\n\x1a\n")
+	t.Logf("FSV bytecode chunk -> %v", oneLine(err))
+	if err == nil {
+		t.Fatal("a bytecode-signature chunk was accepted — the fork must compile source only")
+	}
+}
+
+// TestSandboxQuotaDodgePcall — #319 vector "instruction-quota busting (pcall
+// loops)". Wrapping a hot loop in pcall must NOT reset or evade the instruction
+// budget: pcall catches Lua errors, but the budget is enforced by the VM below
+// the error layer, so the whole script still halts loudly at the ceiling.
+func TestSandboxQuotaDodgePcall(t *testing.T) {
+	i := luabind.NewSandbox(luabind.SandboxOptions{InstructionBudget: 200_000})
+	defer i.Close()
+	// Each pcall does real work; the loop never terminates on its own. If pcall
+	// reset the counter, this would run forever.
+	_, err := i.Eval(`while true do pcall(function() local x = 0; for k = 1, 50 do x = x + k end end) end`)
+	t.Logf("FSV pcall quota-dodge -> err=%v", oneLine(err))
+	if err == nil || !strings.Contains(err.Error(), "instruction budget exceeded") {
+		t.Fatalf("pcall-wrapped infinite loop evaded the instruction budget: %v", err)
+	}
+}
+
+// TestSandboxTableBomb — #319 vector "memory bombs" via unbounded table growth
+// (the non-string variant). Appending forever must trip the memory budget, not
+// OOM the host.
+func TestSandboxTableBomb(t *testing.T) {
+	i := luabind.NewSandbox(luabind.SandboxOptions{InstructionBudget: 50_000_000, MemoryBudget: 1 << 20})
+	defer i.Close()
+	_, err := i.Eval(`local t = {}; local k = 1; while true do t[k] = k; k = k + 1 end`)
+	t.Logf("FSV table bomb -> remaining=%d err=%v", i.RemainingMemory(), oneLine(err))
+	if err == nil {
+		t.Fatal("unbounded table growth was not bounded by a budget")
+	}
+	// Either the memory ceiling or the instruction ceiling must catch it — both
+	// are loud; neither is an OOM.
+	if !strings.Contains(err.Error(), "memory budget exceeded") && !strings.Contains(err.Error(), "instruction budget exceeded") {
+		t.Fatalf("table bomb stopped for the wrong reason: %v", err)
 	}
 }
 
