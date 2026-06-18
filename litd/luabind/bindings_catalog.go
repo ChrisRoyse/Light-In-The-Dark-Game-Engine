@@ -272,6 +272,14 @@ func bindPlayerLumberLostToUpkeep(L *lua.LState) int {
 // NeutralVictim/Extra resolve the reserved neutral players a spawn/creep script
 // needs; IsReplay/TimeOfDaySuspended are simple state reads; AlliedVictory is the
 // alliance-victory flag get/set pair.
+// bindGameSetUpkeep binds Game.SetUpkeep([]UpkeepTier) bool (#267): configures
+// the food-tiered income tax that Player_GoldUpkeepRate/LumberUpkeepRate/
+// *LostToUpkeep read back. Completes the upkeep mechanic end-to-end from Lua.
+func (b gameBinder) bindGameSetUpkeep(L *lua.LState) int {
+	L.Push(lua.LBool(b.g.SetUpkeep(argUpkeepTiers(L, 1))))
+	return 1
+}
+
 func (b gameBinder) bindGameIsReplay(L *lua.LState) int {
 	L.Push(lua.LBool(b.g.IsReplay()))
 	return 1
@@ -389,4 +397,5 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_NeutralExtra", L.NewFunction(b.bindGameNeutralExtra))
 	L.SetGlobal("Player_AlliedVictory", L.NewFunction(bindPlayerAlliedVictory))
 	L.SetGlobal("Player_SetAlliedVictory", L.NewFunction(bindPlayerSetAlliedVictory))
+	L.SetGlobal("Game_SetUpkeep", L.NewFunction(b.bindGameSetUpkeep))
 }

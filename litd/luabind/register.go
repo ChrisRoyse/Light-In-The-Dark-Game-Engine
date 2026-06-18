@@ -367,6 +367,35 @@ func argPlayerSlice(L *lua.LState, i int) []api.Player {
 	return out
 }
 
+// argUpkeepTiers reads a Lua array of upkeep-tier tables into []api.UpkeepTier
+// (#267): each {food = <supply threshold>, rate = {<goldFrac>, <lumberFrac>, ...}}.
+// `rate` is positional by resource (index 0 = gold, 1 = lumber), matching the
+// api's resource ordering. A non-table at either level raises (fail-closed); an
+// empty array clears upkeep (api SetUpkeep(nil) semantics).
+func argUpkeepTiers(L *lua.LState, i int) []api.UpkeepTier {
+	t, ok := L.Get(i).(*lua.LTable)
+	if !ok {
+		L.ArgError(i, fmt.Sprintf("expected an array of UpkeepTier tables, got %s", L.Get(i).Type()))
+		return nil
+	}
+	out := make([]api.UpkeepTier, 0, t.Len())
+	for j := 1; j <= t.Len(); j++ {
+		row, ok := t.RawGetInt(j).(*lua.LTable)
+		if !ok {
+			L.ArgError(i, fmt.Sprintf("upkeep tier %d is not a table", j))
+			return nil
+		}
+		tier := api.UpkeepTier{Food: int(lua.LVAsNumber(row.RawGetString("food")))}
+		if rt, ok := row.RawGetString("rate").(*lua.LTable); ok {
+			for k := 1; k <= rt.Len(); k++ {
+				tier.Rate = append(tier.Rate, float64(lua.LVAsNumber(rt.RawGetInt(k))))
+			}
+		}
+		out = append(out, tier)
+	}
+	return out
+}
+
 // argDestructableOptions reads a Lua options table into api.DestructableOptions
 // (#267): {type=, x=, y=, facing=, life=, footprint=, blocksPathing=}. `type`
 // (a number) is required and raises if absent/non-number; the rest default to
