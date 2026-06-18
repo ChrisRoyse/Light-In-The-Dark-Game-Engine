@@ -140,7 +140,10 @@ func (p Player) SetName(s string) {
 
 // ---- D5 player-state accessors ----
 
-// Gold / SetGold read and write PLAYER_STATE_RESOURCE_GOLD.
+// Gold / SetGold read and write PLAYER_STATE_RESOURCE_GOLD. The resource ledger
+// is unallocated until Game.DefineEconomy is called (#388/#396): before that,
+// Gold reads 0 and SetGold is a no-op — by design, not a bug. A game that uses
+// resources must call DefineEconomy during setup.
 // JASS: GetPlayerState, GetPlayerStateBJ
 func (p Player) Gold() int {
 	if !p.Valid() {
@@ -149,7 +152,8 @@ func (p Player) Gold() int {
 	return int(p.g.w.Resources(uint8(p.idx), resGold))
 }
 
-// SetGold writes PLAYER_STATE_RESOURCE_GOLD (see Gold). No-op on an invalid handle.
+// SetGold writes PLAYER_STATE_RESOURCE_GOLD (see Gold). No-op on an invalid
+// handle, or until Game.DefineEconomy initialises the resource ledger (#388).
 // JASS: SetPlayerState, SetPlayerStateBJ
 func (p Player) SetGold(v int) {
 	if !p.Valid() {
@@ -167,7 +171,8 @@ func (p Player) Lumber() int {
 	return int(p.g.w.Resources(uint8(p.idx), resLumber))
 }
 
-// SetLumber writes PLAYER_STATE_RESOURCE_LUMBER (see Lumber). No-op on an invalid handle.
+// SetLumber writes PLAYER_STATE_RESOURCE_LUMBER (see Lumber). No-op on an
+// invalid handle, or until Game.DefineEconomy initialises the resource ledger (#388).
 func (p Player) SetLumber(v int) {
 	if !p.Valid() {
 		p.g.reportInvalid("Player.SetLumber")
