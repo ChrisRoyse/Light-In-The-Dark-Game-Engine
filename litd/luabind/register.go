@@ -110,6 +110,14 @@ func argRace(L *lua.LState, i int) api.Race             { return api.Race(L.Chec
 func argDifficulty(L *lua.LState, i int) api.Difficulty { return api.Difficulty(L.CheckInt(i)) }
 func argFogState(L *lua.LState, i int) api.FogState     { return api.FogState(L.CheckInt(i)) }
 func argController(L *lua.LState, i int) api.Controller { return api.Controller(L.CheckInt(i)) }
+
+// Numeric-enum readers (#267): scalar named types marshalled from a Lua number,
+// same shape as argRace/argDifficulty. GameSpeed is float64-based (CheckNumber);
+// the rest are integer-based (CheckInt).
+func argGameSpeed(L *lua.LState, i int) api.GameSpeed       { return api.GameSpeed(L.CheckNumber(i)) }
+func argMapFlag(L *lua.LState, i int) api.MapFlag           { return api.MapFlag(L.CheckInt(i)) }
+func argUnitClass(L *lua.LState, i int) api.UnitClass       { return api.UnitClass(L.CheckInt(i)) }
+func argSoundChannel(L *lua.LState, i int) api.SoundChannel { return api.SoundChannel(L.CheckInt(i)) }
 func argAllianceFlags(L *lua.LState, i int) api.AllianceFlags {
 	return api.AllianceFlags(L.CheckInt(i))
 }

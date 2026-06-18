@@ -117,6 +117,14 @@ func supportedArg(typ string, idx int) (string, bool) {
 		return fmt.Sprintf("argCameraField(L, %d)", idx), true
 	case "AbilityRef":
 		return fmt.Sprintf("argAbilityRef(L, %d)", idx), true
+	case "GameSpeed":
+		return fmt.Sprintf("argGameSpeed(L, %d)", idx), true
+	case "MapFlag":
+		return fmt.Sprintf("argMapFlag(L, %d)", idx), true
+	case "UnitClass":
+		return fmt.Sprintf("argUnitClass(L, %d)", idx), true
+	case "SoundChannel":
+		return fmt.Sprintf("argSoundChannel(L, %d)", idx), true
 	default:
 		return "", false
 	}

@@ -12,10 +12,41 @@ package luabind
 // — pooled userdata is gated on LState pooling (#265).
 
 import (
+	"fmt"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	lua "github.com/yuin/gopher-lua"
 )
+
+// TestNumericEnumArgBindingFSV — #267 generator coverage: the numeric-enum arg
+// types (UnitClass here) now marshal from a Lua number, so Unit_IsType binds.
+// SoT = parity between the Go call u.IsType(class) and the bound Lua call
+// Unit_IsType(u, int(class)) across several classes — a wrong marshal would flip
+// a result.
+func TestNumericEnumArgBindingFSV(t *testing.T) {
+	g := loaderGame(t, 1)
+	L := boundState(t, g)
+	defer L.Close()
+	u := g.CreateUnit(g.Player(0), g.UnitType("hfoo"), api.Vec2{X: 64, Y: 64}, api.Deg(0))
+	ud := L.NewUserData()
+	ud.Value = u
+	L.SetGlobal("u", ud)
+	for _, cl := range []struct {
+		name string
+		c    api.UnitClass
+	}{{"hero", api.ClassHero}, {"structure", api.ClassStructure}, {"ground", api.ClassGround}} {
+		goRes := u.IsType(cl.c)
+		if err := L.DoString(fmt.Sprintf("res = Unit_IsType(u, %d)", int(cl.c))); err != nil {
+			t.Fatalf("Unit_IsType(%s) must be bound + callable (#267): %v", cl.name, err)
+		}
+		luaRes := lua.LVAsBool(L.GetGlobal("res"))
+		t.Logf("FSV #267 enum-arg: IsType(%-9s) Go=%v Lua=%v", cl.name, goRes, luaRes)
+		if goRes != luaRes {
+			t.Fatalf("Unit_IsType(%s) Go=%v != Lua=%v — UnitClass marshalled wrong", cl.name, goRes, luaRes)
+		}
+	}
+}
 
 // TestGoVsLuaIdenticalHashFSV — edge 4: an identical CreateUnit/SetPosition/Kill
 // sequence, once via direct Go api and once via the generated Lua bindings,
