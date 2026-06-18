@@ -14,6 +14,7 @@ package luabind
 // unaffected.
 
 import (
+	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -35,10 +36,32 @@ func (b gameBinder) bindGameBuffType(L *lua.LState) int {
 	return 1
 }
 
+// bindGameResourceNodeType binds Game.ResourceNodeType(code string)
+// ResourceNodeType (#401) — resolves a node code a loaded world spawns.
+func (b gameBinder) bindGameResourceNodeType(L *lua.LState) int {
+	L.Push(handleToLua(L, b.g.ResourceNodeType(L.CheckString(1))))
+	return 1
+}
+
+// bindGameCreateResourceNode binds Game.CreateResourceNode(typ ResourceNodeType,
+// pos Vec2) Unit (#401), so a world's main.lua can place harvestable nodes. Like
+// the resolvers it is a Go-API convenience, not a JASS native (WC3 places mines
+// via map data), so it carries no manifest entry. A wrong arg-1 type raises.
+func (b gameBinder) bindGameCreateResourceNode(L *lua.LState) int {
+	typ, ok := L.CheckUserData(1).Value.(api.ResourceNodeType)
+	if !ok {
+		L.ArgError(1, "expected ResourceNodeType userdata (from Game_ResourceNodeType)")
+	}
+	L.Push(handleToLua(L, b.g.CreateResourceNode(typ, argVec2(L, 2))))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_UnitType", L.NewFunction(b.bindGameUnitType))
 	L.SetGlobal("Game_ItemType", L.NewFunction(b.bindGameItemType))
 	L.SetGlobal("Game_BuffType", L.NewFunction(b.bindGameBuffType))
+	L.SetGlobal("Game_ResourceNodeType", L.NewFunction(b.bindGameResourceNodeType))
+	L.SetGlobal("Game_CreateResourceNode", L.NewFunction(b.bindGameCreateResourceNode))
 }

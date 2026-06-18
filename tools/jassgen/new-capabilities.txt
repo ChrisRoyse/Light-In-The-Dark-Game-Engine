@@ -114,6 +114,15 @@ exact   Game.DefineEconomy
 # BindHeroes; structural setup, supersedes JASS slk hero config.
 exact   Game.DefineHeroes
 
+# resource-node install + spawn seam (#401): the node-type registry companion to
+# DefineUnits (so a world can ship gold mines / harvestable nodes), the code
+# resolver (mirrors Game.UnitType), and the spawn verb. Wraps the sim's
+# BindResourceNodeDefs/CreateResourceNodeByID. Spawning resource nodes is a LitD
+# capability — WC3 places mines via map data, not a script native.
+exact   Game.DefineResourceNodes
+exact   Game.ResourceNodeType
+exact   Game.CreateResourceNode
+
 # runtime world-loader seam (#268): the api stays Lua-agnostic — a backend
 # (litd/luabind) registers via SetWorldLoader, and LoadWorld delegates to it to
 # load a world directory at runtime. HasWorldLoader reports whether a backend is

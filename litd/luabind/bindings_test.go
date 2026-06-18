@@ -16,8 +16,57 @@ import (
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	lua "github.com/yuin/gopher-lua"
 )
+
+// TestResourceNodeLuaSpawnFSV — #401: a world's main.lua can resolve and spawn a
+// harvestable resource node through the hand-written catalog bindings
+// (Game_ResourceNodeType + Game_CreateResourceNode). SoT = the sim spatial query
+// finding the spawned node entity at its position via the public api — not the
+// Lua call's return value.
+func TestResourceNodeLuaSpawnFSV(t *testing.T) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 1})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineEconomy(2); err != nil {
+		t.Fatalf("DefineEconomy: %v", err)
+	}
+	if err := g.DefineResourceNodes([]data.ResourceNodeType{{ID: "goldmine", Resource: 0, Amount: 500}}); err != nil {
+		t.Fatalf("DefineResourceNodes: %v", err)
+	}
+	L := boundState(t, g)
+	defer L.Close()
+
+	// SoT: the returned handle resolves to a LIVE sim entity (Valid reads
+	// g.alive(id)) positioned where the script asked (real transform state) —
+	// read back through the bindings, not the create call's value.
+	script := `
+node = Game_CreateResourceNode(Game_ResourceNodeType("goldmine"), {x = 300, y = 300})
+valid = Valid(node)
+local p = Unit_Position(node)
+px, py = p.x, p.y
+-- unknown code -> null type -> invalid handle (fail-closed, no entity)
+badValid = Valid(Game_CreateResourceNode(Game_ResourceNodeType("nope"), {x = 900, y = 900}))
+`
+	if err := L.DoString(script); err != nil {
+		t.Fatalf("Lua node spawn must run (#401): %v", err)
+	}
+	valid := lua.LVAsBool(L.GetGlobal("valid"))
+	px, py := luaNum(t, L, "px"), luaNum(t, L, "py")
+	badValid := lua.LVAsBool(L.GetGlobal("badValid"))
+	t.Logf("FSV #401 lua: spawned node valid=%v at (%.0f,%.0f); unknown-code node valid=%v", valid, px, py, badValid)
+	if !valid {
+		t.Fatal("Lua-spawned node is not a live sim entity")
+	}
+	if px != 300 || py != 300 {
+		t.Fatalf("Lua-spawned node at (%v,%v), want (300,300) — pos did not reach the sim", px, py)
+	}
+	if badValid {
+		t.Fatal("unknown node code must produce an invalid handle (fail-closed), got a live entity")
+	}
+}
 
 // TestNumericEnumArgBindingFSV — #267 generator coverage: the numeric-enum arg
 // types (UnitClass here) now marshal from a Lua number, so Unit_IsType binds.
