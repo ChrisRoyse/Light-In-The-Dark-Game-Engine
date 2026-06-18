@@ -16,26 +16,100 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
 
 // ReplayMagic opens every replay file.
 const ReplayMagic = "LITDRPL\x01"
 
-// ReplayFormatVersion bumps on any layout change.
-const ReplayFormatVersion uint32 = 1
+// ReplayFormatVersion bumps on any layout change. v2 (#404) widened
+// ReplayCommand from move-only to the full order vocabulary (Target +
+// Data fields).
+const ReplayFormatVersion uint32 = 2
 
 // DefaultCheckpointInterval is the §6 checkpoint cadence in ticks.
 const DefaultCheckpointInterval uint32 = 100
 
-// ReplayCommand is one recorded input: spawn-roster index addressing
-// (stable across runs), point in raw 32.32 bits.
+// Replay command kinds (#404). A STABLE enum — deliberately NOT the sim
+// OrderKind values — so a recorded stream keeps its meaning across engine
+// changes; append-only, Move stays 0 (the v1 sole kind). ToOrder maps each to
+// a sim Order. Train/production is a queue command, not a unit Order, so it is
+// not representable here yet (tracked on #404).
+const (
+	ReplayMove    uint8 = 0 // Point
+	ReplayStop    uint8 = 1
+	ReplayHold    uint8 = 2
+	ReplayPatrol  uint8 = 3 // Point
+	ReplayAttack  uint8 = 4 // Point; optional Target unit (focus-fire) else attack-move-by-point
+	ReplayHarvest uint8 = 5 // Target node
+	ReplayFollow  uint8 = 6 // Target unit
+	ReplayBuild   uint8 = 7 // Point = site, Data = unit-type id
+	ReplayMaxKind uint8 = ReplayBuild
+)
+
+// NoRosterRef is the ReplayCommand.Target value meaning "no target unit" — used
+// by point/none orders and by attack-move (attack with a point, no focus unit).
+const NoRosterRef = ^uint32(0)
+
+// ReplayCommand is one recorded input: spawn-roster index addressing (stable
+// across runs). Kind is a Replay* constant. Unit is the ordered unit; Target a
+// second roster index for target-taking orders (NoRosterRef = none); Data a
+// typed payload (ReplayBuild: unit-type id); X,Y a point in raw 32.32 bits.
 type ReplayCommand struct {
 	Tick   uint32
 	Player uint8
 	Kind   uint8
 	Unit   uint32 // spawn-order index into the roster
+	Target uint32 // target unit roster index, or NoRosterRef
+	Data   uint16 // typed payload (build: unit-type id); 0 = none
 	X, Y   int64  // fixed.F64 bits
+}
+
+// ToOrder translates a replay command into a sim Order, resolving roster
+// indices to live entities via resolve (ok=false for an out-of-range or dead
+// index). Returns ok=false when the command cannot be applied — a
+// target-taking order whose target is missing — so the caller skips it exactly
+// as it already skips a dead orderer. Decode/loadCommands reject unknown kinds
+// at the boundary, so the default case is defensive only.
+func (c *ReplayCommand) ToOrder(resolve func(idx uint32) (EntityID, bool)) (Order, bool) {
+	pt := fixed.Vec2{X: fixed.F64(c.X), Y: fixed.F64(c.Y)}
+	switch c.Kind {
+	case ReplayMove:
+		return Order{Kind: OrderMove, Point: pt}, true
+	case ReplayStop:
+		return Order{Kind: OrderStop}, true
+	case ReplayHold:
+		return Order{Kind: OrderHold}, true
+	case ReplayPatrol:
+		return Order{Kind: OrderPatrol, Point: pt}, true
+	case ReplayAttack:
+		ord := Order{Kind: OrderAttack, Point: pt}
+		if c.Target != NoRosterRef {
+			tgt, ok := resolve(c.Target)
+			if !ok {
+				return Order{}, false
+			}
+			ord.Target = tgt
+		}
+		return ord, true
+	case ReplayHarvest:
+		tgt, ok := resolve(c.Target)
+		if !ok {
+			return Order{}, false
+		}
+		return Order{Kind: OrderHarvest, Target: tgt}, true
+	case ReplayFollow:
+		tgt, ok := resolve(c.Target)
+		if !ok {
+			return Order{}, false
+		}
+		return Order{Kind: OrderFollow, Target: tgt}, true
+	case ReplayBuild:
+		return Order{Kind: OrderBuild, Point: pt, Data: c.Data}, true
+	default:
+		return Order{}, false
+	}
 }
 
 // ReplayCheckpoint is one hash-trace entry: the top hash plus every
@@ -87,6 +161,11 @@ func (r *Replay) Encode(w io.Writer) error {
 				if _, err := w.Write(scratch[:1]); err != nil {
 					return err
 				}
+			case uint16:
+				le.PutUint16(scratch[:2], x)
+				if _, err := w.Write(scratch[:2]); err != nil {
+					return err
+				}
 			case int64:
 				le.PutUint64(scratch[:8], uint64(x))
 				if _, err := w.Write(scratch[:8]); err != nil {
@@ -109,7 +188,7 @@ func (r *Replay) Encode(w io.Writer) error {
 	}
 	for i := range r.Commands {
 		c := &r.Commands[i]
-		if err := put(c.Tick, c.Player, c.Kind, c.Unit, c.X, c.Y); err != nil {
+		if err := put(c.Tick, c.Player, c.Kind, c.Unit, c.Target, c.Data, c.X, c.Y); err != nil {
 			return err
 		}
 	}
@@ -164,6 +243,13 @@ func DecodeReplay(rd io.Reader) (*Replay, error) {
 			return 0, e
 		}
 		return scratch[0], nil
+	}
+	u16 := func(what string) (uint16, error) {
+		if _, err := io.ReadFull(rd, scratch[:2]); err != nil {
+			_, e := fail(what, err)
+			return 0, e
+		}
+		return le.Uint16(scratch[:2]), nil
 	}
 
 	magic := make([]byte, len(ReplayMagic))
@@ -227,7 +313,16 @@ func DecodeReplay(rd io.Reader) (*Replay, error) {
 		if c.Kind, err = u8("command kind"); err != nil {
 			return nil, err
 		}
+		if c.Kind > ReplayMaxKind {
+			return nil, fmt.Errorf("sim: replay: command %d has unknown kind %d (max %d)", i, c.Kind, ReplayMaxKind)
+		}
 		if c.Unit, err = u32("command unit"); err != nil {
+			return nil, err
+		}
+		if c.Target, err = u32("command target"); err != nil {
+			return nil, err
+		}
+		if c.Data, err = u16("command data"); err != nil {
 			return nil, err
 		}
 		var x, y uint64

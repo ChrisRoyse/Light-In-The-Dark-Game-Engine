@@ -14,6 +14,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,7 +36,7 @@ func main() {
 	mapPath := flag.String("map", "", "map file (map loading lands with M5; only the empty built-in world exists today)")
 	seed := flag.Uint64("seed", 1, "world seed: places the built-in unit layout")
 	ticks := flag.Int("ticks", 10000, "number of sim ticks to run")
-	cmdsPath := flag.String("cmds", "", "command stream file: lines of 'tick kind unitIdx x y' (kind 0 = move)")
+	cmdsPath := flag.String("cmds", "", "command stream file: lines of 'tick kind unitIdx x y [target] [data]' (kind: 0=move 1=stop 2=hold 3=patrol 4=attack 5=harvest 6=follow 7=build)")
 	units := flag.Int("units", 256, "units to spawn in the built-in layout")
 	dumpPath := flag.String("dump", "", "write the full state-dump JSON here at run end (R-FSV-2)")
 	eventLogPath := flag.String("eventlog", "", "stream the structured event log here as JSONL (R-FSV-3)")
@@ -251,6 +252,28 @@ func buildWorld(seed uint64, n int) (*sim.World, []sim.EntityID) {
 // boundary (the same deterministic driver position as a script; kind
 // 0 = move, anything else fails closed) and capturing the checkpoint
 // trace when asked.
+// applyReplayCommand issues one replay command's order to the world, mapping it
+// through sim.ReplayCommand.ToOrder. Shared by runWorld + verifyReplay so the
+// record and verify paths apply a command identically — a divergence there
+// would be a self-inflicted desync, not a real one. A command whose orderer is
+// dead/out-of-range, or a target-taking order whose target cannot be resolved,
+// is skipped (matching the prior move-only dead-orderer skip).
+func applyReplayCommand(w *sim.World, ids []sim.EntityID, c *sim.ReplayCommand) {
+	if int(c.Unit) >= len(ids) || !w.Ents.Alive(ids[c.Unit]) {
+		return
+	}
+	ord, ok := c.ToOrder(func(idx uint32) (sim.EntityID, bool) {
+		if int(idx) < len(ids) && w.Ents.Alive(ids[idx]) {
+			return ids[idx], true
+		}
+		return 0, false
+	})
+	if !ok {
+		return
+	}
+	w.IssueOrder(ids[c.Unit], ord, false)
+}
+
 func runWorld(w *sim.World, ids []sim.EntityID, cmds []sim.ReplayCommand, ticks int, trace bool, crashTest int, clog *obs.Logger) []sim.ReplayCheckpoint {
 	var cps []sim.ReplayCheckpoint
 	var reg *statehash.Registry
@@ -266,13 +289,7 @@ func runWorld(w *sim.World, ids []sim.EntityID, cmds []sim.ReplayCommand, ticks 
 	next := 0
 	for t := 1; t <= ticks; t++ {
 		for next < len(cmds) && cmds[next].Tick == uint32(t) {
-			c := &cmds[next]
-			if c.Kind != 0 {
-				fatalf("unknown command kind %d at tick %d", c.Kind, t)
-			}
-			if int(c.Unit) < len(ids) && w.Ents.Alive(ids[c.Unit]) {
-				w.IssueOrder(ids[c.Unit], sim.Order{Kind: sim.OrderMove, Point: fixed.Vec2{X: fixed.F64(c.X), Y: fixed.F64(c.Y)}}, false)
-			}
+			applyReplayCommand(w, ids, &cmds[next])
 			next++
 		}
 		w.Step()
@@ -324,13 +341,7 @@ func verifyReplay(path string) {
 	diverged := false
 	for t := uint32(1); t <= rep.Ticks; t++ {
 		for next < len(rep.Commands) && rep.Commands[next].Tick == t {
-			c := &rep.Commands[next]
-			if c.Kind != 0 {
-				fatalf("replay command kind %d at tick %d: unknown", c.Kind, t)
-			}
-			if int(c.Unit) < len(ids) && w.Ents.Alive(ids[c.Unit]) {
-				w.IssueOrder(ids[c.Unit], sim.Order{Kind: sim.OrderMove, Point: fixed.Vec2{X: fixed.F64(c.X), Y: fixed.F64(c.Y)}}, false)
-			}
+			applyReplayCommand(w, ids, &rep.Commands[next])
 			next++
 		}
 		w.Step()
@@ -364,8 +375,12 @@ func verifyReplay(path string) {
 }
 
 // loadCommands parses the -cmds stream: whitespace-separated lines of
-// `tick kind unitIdx x y` (unitIdx indexes the built-in spawn order).
-// Malformed lines are errors, not skips (fail closed).
+// `tick kind unitIdx x y [target] [data]` (unitIdx indexes the built-in spawn
+// order). kind is a sim.Replay* constant (0=move, 1=stop, 2=hold, 3=patrol,
+// 4=attack, 5=harvest, 6=follow, 7=build). target is a roster index for
+// target-taking orders (-1 or omitted = none); data is the build unit-type id.
+// Malformed lines — bad fields, unknown kind, out-of-range index, a harvest/
+// follow without a target — are errors, not skips (fail closed).
 func loadCommands(path string, roster int) ([]sim.ReplayCommand, error) {
 	if path == "" {
 		return nil, nil
@@ -382,30 +397,66 @@ func loadCommands(path string, roster int) ([]sim.ReplayCommand, error) {
 	lastTick := uint32(0)
 	for sc.Scan() {
 		line++
-		text := sc.Text()
-		if len(text) == 0 || text[0] == '#' {
+		text := strings.TrimSpace(sc.Text())
+		if text == "" || text[0] == '#' {
 			continue
 		}
-		var tick uint32
-		var kind uint8
-		var unitIdx int
-		var x, y int32
-		if _, err := fmt.Sscan(text, &tick, &kind, &unitIdx, &x, &y); err != nil {
-			return nil, fmt.Errorf("%s:%d: bad command line %q: %v", path, line, text, err)
+		flds := strings.Fields(text)
+		if len(flds) < 5 || len(flds) > 7 {
+			return nil, fmt.Errorf("%s:%d: want 5-7 fields `tick kind unitIdx x y [target] [data]`, got %d: %q", path, line, len(flds), text)
 		}
+		nums := make([]int, len(flds))
+		for i, s := range flds {
+			n, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, fmt.Errorf("%s:%d: field %d %q is not an integer: %v", path, line, i, s, err)
+			}
+			nums[i] = n
+		}
+		tickN, kindN, unitIdx, x, y := nums[0], nums[1], nums[2], nums[3], nums[4]
+		if tickN < 0 {
+			return nil, fmt.Errorf("%s:%d: negative tick %d", path, line, tickN)
+		}
+		tick := uint32(tickN)
 		if tick < lastTick {
 			return nil, fmt.Errorf("%s:%d: ticks must be non-decreasing (%d after %d)", path, line, tick, lastTick)
 		}
 		lastTick = tick
+		if kindN < 0 || uint8(kindN) > sim.ReplayMaxKind {
+			return nil, fmt.Errorf("%s:%d: unknown command kind %d (max %d)", path, line, kindN, sim.ReplayMaxKind)
+		}
+		kind := uint8(kindN)
 		if unitIdx < 0 || unitIdx >= roster {
 			return nil, fmt.Errorf("%s:%d: unit index %d out of range [0,%d)", path, line, unitIdx, roster)
 		}
+		target := sim.NoRosterRef
+		if len(flds) >= 6 {
+			if t := nums[5]; t >= 0 {
+				if t >= roster {
+					return nil, fmt.Errorf("%s:%d: target index %d out of range [0,%d)", path, line, t, roster)
+				}
+				target = uint32(t)
+			}
+		}
+		if (kind == sim.ReplayHarvest || kind == sim.ReplayFollow) && target == sim.NoRosterRef {
+			return nil, fmt.Errorf("%s:%d: kind %d requires a target unit index", path, line, kind)
+		}
+		var data uint16
+		if len(flds) == 7 {
+			if d := nums[6]; d < 0 || d > 0xFFFF {
+				return nil, fmt.Errorf("%s:%d: data %d out of range [0,65535]", path, line, d)
+			} else {
+				data = uint16(d)
+			}
+		}
 		out = append(out, sim.ReplayCommand{
-			Tick: tick,
-			Kind: kind,
-			Unit: uint32(unitIdx),
-			X:    int64(fixed.FromInt(x)),
-			Y:    int64(fixed.FromInt(y)),
+			Tick:   tick,
+			Kind:   kind,
+			Unit:   uint32(unitIdx),
+			Target: target,
+			Data:   data,
+			X:      int64(fixed.FromInt(int32(x))),
+			Y:      int64(fixed.FromInt(int32(y))),
 		})
 	}
 	if err := sc.Err(); err != nil {

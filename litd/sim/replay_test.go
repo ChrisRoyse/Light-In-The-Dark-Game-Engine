@@ -57,6 +57,61 @@ func TestReplayRoundTrip(t *testing.T) {
 	t.Logf("round-trip OK, %d bytes", buf.Len())
 }
 
+// Vocabulary round-trip (#404): a v2 replay carrying one command of every kind
+// — including the Target and Data fields and NoRosterRef — decodes field-for-
+// field identical. SoT = the decoded ReplayCommand structs vs the originals.
+func TestReplayVocabularyRoundTrip(t *testing.T) {
+	cmds := []ReplayCommand{
+		{Tick: 1, Player: 0, Kind: ReplayMove, Unit: 0, Target: NoRosterRef, X: 100 << 32, Y: 200 << 32},
+		{Tick: 2, Player: 0, Kind: ReplayStop, Unit: 1, Target: NoRosterRef},
+		{Tick: 3, Player: 0, Kind: ReplayHold, Unit: 2, Target: NoRosterRef},
+		{Tick: 4, Player: 1, Kind: ReplayPatrol, Unit: 3, Target: NoRosterRef, X: -50 << 32, Y: 7},
+		{Tick: 5, Player: 1, Kind: ReplayAttack, Unit: 4, Target: 9, X: 3 << 32, Y: 4 << 32},
+		{Tick: 6, Player: 1, Kind: ReplayHarvest, Unit: 5, Target: 12},
+		{Tick: 7, Player: 2, Kind: ReplayFollow, Unit: 6, Target: 13},
+		{Tick: 8, Player: 2, Kind: ReplayBuild, Unit: 7, Target: NoRosterRef, Data: 4242, X: 800 << 32, Y: 900 << 32},
+	}
+	r := sampleReplay()
+	r.Commands = cmds
+	var buf bytes.Buffer
+	if err := r.Encode(&buf); err != nil {
+		t.Fatal(err)
+	}
+	if r.Version != 2 {
+		t.Fatalf("expected format version 2, got %d", r.Version)
+	}
+	got, err := DecodeReplay(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Commands) != len(cmds) {
+		t.Fatalf("decoded %d commands, want %d", len(got.Commands), len(cmds))
+	}
+	for i := range cmds {
+		if got.Commands[i] != cmds[i] {
+			t.Fatalf("command %d round-trip mismatch:\n got %+v\nwant %+v", i, got.Commands[i], cmds[i])
+		}
+	}
+	t.Logf("FSV #404 round-trip: %d kinds, %d bytes; build.Data=%d attack.Target=%d harvest.Target=%d (all match)",
+		len(got.Commands), buf.Len(), got.Commands[7].Data, got.Commands[4].Target, got.Commands[5].Target)
+}
+
+// Fail-closed: a command kind past the known max is REFUSED at decode (#404),
+// never silently applied as some other order.
+func TestReplayUnknownKindRejected(t *testing.T) {
+	r := sampleReplay()
+	r.Commands = []ReplayCommand{{Tick: 1, Kind: ReplayMaxKind + 1, Unit: 0, Target: NoRosterRef}}
+	var buf bytes.Buffer
+	if err := r.Encode(&buf); err != nil {
+		t.Fatal(err)
+	}
+	_, err := DecodeReplay(bytes.NewReader(buf.Bytes()))
+	if err == nil || !strings.Contains(err.Error(), "unknown kind") {
+		t.Fatalf("expected unknown-kind rejection, got %v", err)
+	}
+	t.Logf("FSV #404 fail-closed: kind %d rejected: %v", ReplayMaxKind+1, err)
+}
+
 // Fail-closed decode: every malformation is a NAMED error, no panic.
 func TestReplayDecodeFailClosed(t *testing.T) {
 	r := sampleReplay()
