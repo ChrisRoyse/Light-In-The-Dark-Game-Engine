@@ -56,7 +56,7 @@ Faithfulness control (`TestGoVsLuaIdenticalHashFSV`): the same scenario via dire
 
 | Vector (from #319) | Why not yet testable | Blocked by |
 |---|---|---|
-| Malicious serialized **coroutine state** (tampered save file → load must refuse with a structured error) | Suspended-coroutine serialization is not built; `persist.go` is only the #264 foundation, the LState-graph serializer is unbuilt. There is no save format to attack yet. | **#270** |
+| Malicious serialized **coroutine state** (tampered save file → load must refuse with a structured error) | The LState-graph serializer **is** built and tested (#264 — `persist.go`/`persist_thread.go`, `SaveThread`/`LoadThread`, `TestSaveLoadThreadColdRoundTrip` cold-resumes a suspended coroutine; it already fails loud on chunk-hash mismatch). The gap is integration, not the serializer: the live scheduler bridge (`luabind/sched.go`) still parks Lua waits on a non-descriptive Go-closure `Game.After` rather than a descriptive `(ContID, State)` continuation, so suspended Lua jobs are not yet wired into the sim save format — there is no *live-coroutine* save blob to attack until that lands (#270). When #270 wires it, the tamper/chunk-mismatch case must be added here. | **#270** |
 | **Quota determinism across OS/arch** (same script, identical instruction-exhaustion point on linux/windows/macos × amd64/arm64) | No CI matrix — GitHub Actions disabled (billing). Single-platform determinism holds locally; cross-platform is unverified. | **#284** |
 
 D-20 sign-off is **withheld** until both are closed and their escape cases added to this corpus. The sharing features they gate (#176–#181, M9) must not ship before then.
