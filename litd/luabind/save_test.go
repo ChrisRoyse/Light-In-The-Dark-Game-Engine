@@ -149,6 +149,119 @@ func TestSaveLoadLuaCoroutineRoundTripFSV(t *testing.T) {
 	t.Logf("FSV #270 round-trip: save@1 → fresh restore → resume → life=77; final StateHash %#x == unbroken %#x", restoredHash, refHash)
 }
 
+// unbrokenHash runs script straight through totalTicks and returns the hash.
+func unbrokenHash(t *testing.T, script string, totalTicks int) uint64 {
+	t.Helper()
+	g, L, reg := newScriptGame(t)
+	defer L.Close()
+	defer reg.Close()
+	runRegisteredChunk(t, L, reg, script)
+	g.Advance(totalTicks)
+	return g.StateHash()
+}
+
+// saveAt runs script, advances saveTick, and returns the sim + script blobs.
+func saveAt(t *testing.T, script string, saveTick int) (sim, scr []byte) {
+	t.Helper()
+	const fp = uint64(0xC0DEF00D)
+	g, L, reg := newScriptGame(t)
+	defer L.Close()
+	defer reg.Close()
+	runRegisteredChunk(t, L, reg, script)
+	g.Advance(saveTick)
+	var sb, cb bytes.Buffer
+	if err := g.SaveState(&sb, fp); err != nil {
+		t.Fatalf("SaveState: %v", err)
+	}
+	if err := SaveScripts(L, reg, &cb); err != nil {
+		t.Fatalf("SaveScripts: %v", err)
+	}
+	return sb.Bytes(), cb.Bytes()
+}
+
+// restoreHash restores sim+scr into a fresh game with chunkSrc registered,
+// advances `more` ticks, and returns the final hash. A nil error is required.
+func restoreHash(t *testing.T, chunkSrc string, sim, scr []byte, more int) uint64 {
+	t.Helper()
+	const fp = uint64(0xC0DEF00D)
+	g, L, reg := newScriptGame(t)
+	defer L.Close()
+	defer reg.Close()
+	if _, err := reg.Register("world", chunkSrc); err != nil {
+		t.Fatalf("register chunk: %v", err)
+	}
+	if err := g.LoadState(bytes.NewReader(sim), fp); err != nil {
+		t.Fatalf("LoadState: %v", err)
+	}
+	if err := LoadScripts(L, reg, bytes.NewReader(scr)); err != nil {
+		t.Fatalf("LoadScripts: %v", err)
+	}
+	g.Advance(more)
+	return g.StateHash()
+}
+
+// TestSaveLoadMultiCoroutineFSV — three coroutines parked on DIFFERENT wake
+// ticks at save time all resume on their correct tick after restore, and the
+// final state is bit-identical to the unbroken run (#270 edge: many waiters).
+func TestSaveLoadMultiCoroutineFSV(t *testing.T) {
+	const script = `
+		local function worker(x, life1, life2, wait)
+			return function()
+				local u = Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=x, y=100}, 0)
+				Unit_SetLife(u, life1)
+				PolledWait(wait)
+				Unit_SetLife(u, life2)
+			end
+		end
+		Run(worker(100, 10, 60, 0.15))
+		Run(worker(300, 20, 70, 0.25))
+		Run(worker(500, 30, 80, 0.35))`
+
+	const total = 8 // > 7-tick longest wait
+	ref := unbrokenHash(t, script, total)
+	sim, scr := saveAt(t, script, 1) // tick 1: all three still parked (waits 3,5,7)
+	got := restoreHash(t, script, sim, scr, total-1)
+	if got != ref {
+		t.Fatalf("multi-coroutine HASH MISMATCH: restored %#x != unbroken %#x", got, ref)
+	}
+	t.Logf("FSV #270 multi-coroutine: 3 coroutines parked on ticks 3/5/7, saved@1, restored → final hash %#x == unbroken", got)
+}
+
+// TestSaveLoadChunkEditRefusedFSV — restoring against an EDITED world chunk is a
+// loud refusal: the saved coroutine's proto is content-addressed, so its
+// chunk-id is absent from the edited registry (#270 edge: modified world).
+func TestSaveLoadChunkEditRefusedFSV(t *testing.T) {
+	sim, scr := saveAt(t, coScript, 1)
+	_ = sim
+	// An edited script has a different content hash → different chunk id.
+	edited := coScript + "\n-- edited\n"
+	_, L, reg := newScriptGame(t)
+	defer L.Close()
+	defer reg.Close()
+	if _, err := reg.Register("world", edited); err != nil {
+		t.Fatalf("register edited: %v", err)
+	}
+	if err := LoadScripts(L, reg, bytes.NewReader(scr)); err == nil {
+		t.Fatal("LoadScripts accepted a coroutine against an edited chunk (must refuse)")
+	} else {
+		t.Logf("FSV #270 chunk-edit refusal: %v", err)
+	}
+}
+
+// TestSaveLoadDoubleRestorePureFSV — restoring the SAME blobs twice yields
+// identical final hashes: restore is pure, the blob is not consumed/mutated
+// (#270 edge: double restore).
+func TestSaveLoadDoubleRestorePureFSV(t *testing.T) {
+	ref := unbrokenHash(t, coScript, 5)
+	sim, scr := saveAt(t, coScript, 1)
+	h1 := restoreHash(t, coScript, sim, scr, 4)
+	h2 := restoreHash(t, coScript, sim, scr, 4)
+	if h1 != h2 || h1 != ref {
+		t.Fatalf("double-restore not pure/identical: h1=%#x h2=%#x ref=%#x", h1, h2, ref)
+	}
+	t.Logf("FSV #270 double-restore: two restores from one blob → identical %#x == unbroken", h1)
+}
+
 // TestSaveLoadCoroutineCorruptRefused — a truncated script blob is a loud
 // refusal, never a partial restore (#270 fail-closed).
 func TestSaveLoadCoroutineCorruptRefused(t *testing.T) {
