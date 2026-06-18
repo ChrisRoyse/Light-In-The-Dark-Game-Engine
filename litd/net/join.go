@@ -26,6 +26,7 @@ const (
 	joinAccept        uint8 = 0
 	joinBuildMismatch uint8 = 1
 	joinSeedMismatch  uint8 = 2
+	joinSessionFull   uint8 = 3
 )
 
 const (
@@ -41,6 +42,8 @@ func joinCodeName(code uint8) string {
 		return "build-mismatch"
 	case joinSeedMismatch:
 		return "seed-mismatch"
+	case joinSessionFull:
+		return "session-full"
 	default:
 		return fmt.Sprintf("unknown(%d)", code)
 	}
@@ -87,6 +90,39 @@ func (s *Session) HostJoinGuard(buildHash string, seed uint64) error {
 	}
 	if err := writeJoinResponse(s.stream, joinAccept, "ok"); err != nil {
 		return fmt.Errorf("net: join guard: accept reply: %w", err)
+	}
+	return nil
+}
+
+// HostAdmit is the capacity-aware join guard the in-process host (#62) and the
+// relay (#64) use: it runs the same build/seed checks as HostJoinGuard, then a
+// room check. A full session is refused with joinSessionFull BEFORE the client is
+// admitted — distinguished from a build/seed mismatch so the user sees exactly
+// why. room is the host's decision (computed under its roster lock) at the moment
+// the request arrives. On any refusal it returns an error and the caller closes
+// the session; the accept loop keeps running for other peers.
+func (s *Session) HostAdmit(buildHash string, seed uint64, room bool) error {
+	req, err := readJoinRequest(s.stream)
+	if err != nil {
+		return fmt.Errorf("net: admit: malformed join request: %w", err)
+	}
+	if req.build != buildHash {
+		msg := fmt.Sprintf("build-mismatch: host=%q client=%q", buildHash, req.build)
+		_ = writeJoinResponse(s.stream, joinBuildMismatch, msg)
+		return fmt.Errorf("net: join refused: %s", msg)
+	}
+	if req.seed != seed {
+		msg := fmt.Sprintf("seed-mismatch: host=%d client=%d", seed, req.seed)
+		_ = writeJoinResponse(s.stream, joinSeedMismatch, msg)
+		return fmt.Errorf("net: join refused: %s", msg)
+	}
+	if !room {
+		msg := "session-full"
+		_ = writeJoinResponse(s.stream, joinSessionFull, msg)
+		return fmt.Errorf("net: join refused: %s", msg)
+	}
+	if err := writeJoinResponse(s.stream, joinAccept, "ok"); err != nil {
+		return fmt.Errorf("net: admit: accept reply: %w", err)
 	}
 	return nil
 }
