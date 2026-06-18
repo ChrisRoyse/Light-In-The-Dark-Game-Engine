@@ -112,6 +112,36 @@ func (b gameBinder) bindCreateUnits(L *lua.LState) int {
 	return 1
 }
 
+// bindGameAllUnits binds Game.AllUnits(nil) []Unit (#267): every live unit. The
+// generated dispatch defers AllUnits because its UnitFilter argument is a Lua
+// predicate (callback-gated, #265); this catalog binding exposes the non-gated
+// nil-filter (return-all) variant — a script filters the returned array in Lua.
+func (b gameBinder) bindGameAllUnits(L *lua.LState) int {
+	L.Push(handleSliceToLua(L, b.g.AllUnits(nil)))
+	return 1
+}
+
+// bindGamePlayers binds Game.Players(nil) []Player (#267): all players. Same
+// nil-filter rationale as bindGameAllUnits.
+func (b gameBinder) bindGamePlayers(L *lua.LState) int {
+	L.Push(handleSliceToLua(L, b.g.Players(nil)))
+	return 1
+}
+
+// bindGameUnitsInRange binds Game.UnitsInRange(pos, r, nil) []Unit (#267): units
+// within r of pos. nil-filter variant (see bindGameAllUnits).
+func (b gameBinder) bindGameUnitsInRange(L *lua.LState) int {
+	L.Push(handleSliceToLua(L, b.g.UnitsInRange(argVec2(L, 1), float64(L.CheckNumber(2)), nil)))
+	return 1
+}
+
+// bindGameUnitsIn binds Game.UnitsIn(rect, nil) []Unit (#267): units inside a
+// rect. nil-filter variant (see bindGameAllUnits).
+func (b gameBinder) bindGameUnitsIn(L *lua.LState) int {
+	L.Push(handleSliceToLua(L, b.g.UnitsIn(argRect(L, 1), nil)))
+	return 1
+}
+
 // registerCatalog installs the hand-written catalog resolvers, bound to b.g.
 // Called from Register alongside the generated game-bound surface.
 func registerCatalog(L *lua.LState, b gameBinder) {
@@ -126,4 +156,8 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_ResourceNodeType", L.NewFunction(b.bindGameResourceNodeType))
 	L.SetGlobal("Game_CreateResourceNode", L.NewFunction(b.bindGameCreateResourceNode))
 	L.SetGlobal("Game_Order", L.NewFunction(b.bindGameOrder))
+	L.SetGlobal("Game_AllUnits", L.NewFunction(b.bindGameAllUnits))
+	L.SetGlobal("Game_Players", L.NewFunction(b.bindGamePlayers))
+	L.SetGlobal("Game_UnitsInRange", L.NewFunction(b.bindGameUnitsInRange))
+	L.SetGlobal("Game_UnitsIn", L.NewFunction(b.bindGameUnitsIn))
 }
