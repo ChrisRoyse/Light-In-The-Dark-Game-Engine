@@ -69,6 +69,60 @@ local function light(b, slot)
 	FogModifier_Start(b.fog)
 end
 
+-- Beacon-control victory (#200 path a): hold >= HOLD_THRESHOLD beacons for
+-- HOLD_STEPS continuous steps. The hold timer resets the instant a player drops
+-- below the threshold. The terminal result is emitted EXACTLY ONCE; a
+-- simultaneous tie is broken deterministically by lowest player slot.
+local HOLD_THRESHOLD = 2 -- beacons held simultaneously
+local HOLD_STEPS = 12 -- continuous steps (3.0s) to convert a hold into victory
+local PLAYERS = 2 -- competitors (slots 0..PLAYERS-1)
+
+local holdSteps = {} -- slot -> consecutive steps at/above threshold
+for s = 0, PLAYERS - 1 do
+	holdSteps[s] = 0
+end
+local decided = false
+
+local function publishFlow(winner)
+	Storage_SetInt(store, "match", "decided", decided and 1 or 0)
+	Storage_SetInt(store, "match", "winner", winner)
+	for s = 0, PLAYERS - 1 do
+		Storage_SetInt(store, "hold", "p" .. s, holdSteps[s])
+	end
+end
+publishFlow(NEUTRAL)
+
+local function ownedCount(slot)
+	local n = 0
+	for _, b in ipairs(beacons) do
+		if b.owner == slot then n = n + 1 end
+	end
+	return n
+end
+
+local function evalVictory()
+	if decided then return end
+	local winner = NEUTRAL
+	for s = 0, PLAYERS - 1 do -- ascending slot = deterministic tie-break
+		if ownedCount(s) >= HOLD_THRESHOLD then
+			holdSteps[s] = holdSteps[s] + 1
+		else
+			holdSteps[s] = 0
+		end
+		if winner == NEUTRAL and holdSteps[s] >= HOLD_STEPS then
+			winner = s
+		end
+	end
+	if winner ~= NEUTRAL then
+		decided = true
+		Game_Victory(Game_Player(winner))
+		for s = 0, PLAYERS - 1 do
+			if s ~= winner then Game_Defeat(Game_Player(s), "out-held at the beacons") end
+		end
+	end
+	publishFlow(winner)
+end
+
 Game_Every(0.25, function()
 	for i, b in ipairs(beacons) do
 		local claimant, contested = scan(b)
@@ -92,4 +146,5 @@ Game_Every(0.25, function()
 		end
 		publish(i, b)
 	end
+	evalVictory()
 end)
