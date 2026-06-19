@@ -46,6 +46,12 @@ func Write(w io.Writer, g *api.Game, L *lua.LState, reg *luabind.ChunkRegistry, 
 	if g == nil || L == nil || reg == nil {
 		return fmt.Errorf("savegame: Write requires non-nil game, LState, and registry")
 	}
+	// Fail closed (§2.4) on mutable state shared across independently-serialized
+	// graphs (two coroutines, or a coroutine and the handler set): it would not
+	// round-trip as one object and would silently diverge on restore (#440).
+	if err := luabind.DetectCrossThreadSharing(L, reg); err != nil {
+		return fmt.Errorf("savegame: refusing to write a save that would diverge on restore: %w", err)
+	}
 	var sim bytes.Buffer
 	if err := g.SaveState(&sim, fingerprint); err != nil {
 		return fmt.Errorf("savegame: sim state: %w", err)

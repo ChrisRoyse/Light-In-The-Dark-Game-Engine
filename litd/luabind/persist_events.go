@@ -152,3 +152,82 @@ func RestoreEventHandlers(L *lua.LState, reg *ChunkRegistry, g *api.Game, r io.R
 	}
 	return nil
 }
+
+// threadReachRoots returns the live values reachable from a suspended coroutine
+// (its register stack + each frame's executing function) — the same object set
+// SaveThread serializes, used for cross-thread sharing detection. Nil register
+// slots reach nothing and are skipped.
+func threadReachRoots(th *lua.LState) []lua.LValue {
+	v := th.LitdSnapshot()
+	roots := make([]lua.LValue, 0, len(v.Stack)+len(v.Frames))
+	for _, sv := range v.Stack {
+		if sv != nil {
+			roots = append(roots, sv)
+		}
+	}
+	for _, f := range v.Frames {
+		if f.Fn != nil {
+			roots = append(roots, f.Fn)
+		}
+	}
+	return roots
+}
+
+// DetectCrossThreadSharing fails closed (§2.4) if a mutable Lua object — a closed
+// upvalue cell or a table — is reachable from more than one independently
+// serialized graph: two coroutines, or a coroutine and the OnEvent handler set.
+// Such an object is serialized once per graph and reconstructed as independent
+// copies, so a mutation through one would be invisible to the other after a
+// restore — a SILENT determinism divergence (#440). Sharing WITHIN one graph (two
+// handlers, or closures inside one coroutine) round-trips fine and is allowed.
+//
+// Call it before writing a save. It is conservative: it refuses rather than emit
+// a container that would desync. The proper fix (one save-wide intern pool) is
+// tracked in #440; until then this turns the silent hole into a loud refusal.
+func DetectCrossThreadSharing(L *lua.LState, reg *ChunkRegistry) error {
+	s := getScheduler(L)
+	if s == nil {
+		return fmt.Errorf("luabind: DetectCrossThreadSharing: no scheduler bound to this LState")
+	}
+	handles := GameHandles{G: s.g}
+	cellGroup := map[*lua.Upvalue]string{}
+	tableGroup := map[*lua.LTable]string{}
+	check := func(group string, owner *lua.LState, roots []lua.LValue) error {
+		cells, tables, err := reachableMutables(reg, owner, roots, handles)
+		if err != nil {
+			return err // an unpersistable value the real save would also reject
+		}
+		for c := range cells {
+			if prev, ok := cellGroup[c]; ok && prev != group {
+				return fmt.Errorf("luabind: %s and %s share a mutable upvalue cell — shared mutable state across independently-saved graphs would diverge on restore (#440)", prev, group)
+			}
+			cellGroup[c] = group
+		}
+		for t := range tables {
+			if prev, ok := tableGroup[t]; ok && prev != group {
+				return fmt.Errorf("luabind: %s and %s share a mutable table — shared mutable state across independently-saved graphs would diverge on restore (#440)", prev, group)
+			}
+			tableGroup[t] = group
+		}
+		return nil
+	}
+	if len(s.eventHandlers) > 0 {
+		roots := make([]lua.LValue, len(s.eventHandlers))
+		for i, h := range s.eventHandlers {
+			roots[i] = h.fn
+		}
+		if err := check("the event-handler set", L, roots); err != nil {
+			return err
+		}
+	}
+	for i := range s.threads {
+		e := &s.threads[i]
+		if !e.alive || e.co == nil {
+			continue
+		}
+		if err := check(fmt.Sprintf("coroutine slot %d", i), e.co, threadReachRoots(e.co)); err != nil {
+			return err
+		}
+	}
+	return nil
+}

@@ -513,6 +513,53 @@ end)`
 	t.Logf("FSV #437: shared upvalue cell round-tripped — h2 saw h1's increment of the SAME cell, marker at x=%.1f (not 100); StateHash %#x == unbroken", gotX, refHash)
 }
 
+// #440 fail-closed (§2.4): a mutable cell shared across two SEPARATELY-serialized
+// coroutines does not round-trip (each coroutine is its own graph) — proven
+// elsewhere to silently diverge (survivor x=205 unbroken vs x=200 restored). The
+// save must REFUSE loudly rather than emit a desyncing container. A negative
+// control confirms independent coroutines still save.
+func TestCrossThreadSharingRefusedFSV(t *testing.T) {
+	// Two coroutines share `local n` (a closed cell reachable from both threads).
+	const shared = `local n = 0
+Run(function() PolledWait(50.0); n = n + 5 end)
+Run(function() PolledWait(60.0); Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=200+n, y=0}, 0) end)`
+	g, L := newGame(t)
+	defer L.Close()
+	reg := runChunk(t, L, "shared", shared)
+	defer reg.Close()
+	g.Advance(2) // both coroutines parked mid-wait, cell shared & closed
+
+	var buf bytes.Buffer
+	err := Write(&buf, g, L, reg, fp)
+	if err == nil {
+		t.Fatal("save of two coroutines sharing a cell must be refused, got nil error")
+	}
+	if !bytes.Contains([]byte(err.Error()), []byte("#440")) || !bytes.Contains([]byte(err.Error()), []byte("diverge")) {
+		t.Fatalf("expected a cross-thread-sharing (#440) refusal, got: %v", err)
+	}
+	if buf.Len() != 0 {
+		t.Fatalf("refused save wrote %d bytes — must write nothing", buf.Len())
+	}
+	t.Logf("FSV #440 fail-closed: cross-coroutine shared cell refused → %v", err)
+
+	// Negative control: two INDEPENDENT coroutines (no shared mutable state) save.
+	const indep = `Run(function() local a = 0; PolledWait(50.0); a = a + 1 end)
+Run(function() local b = 0; PolledWait(60.0); b = b + 1 end)`
+	g2, L2 := newGame(t)
+	defer L2.Close()
+	reg2 := runChunk(t, L2, "indep", indep)
+	defer reg2.Close()
+	g2.Advance(2)
+	var buf2 bytes.Buffer
+	if err := Write(&buf2, g2, L2, reg2, fp); err != nil {
+		t.Fatalf("independent coroutines must save fine, got: %v", err)
+	}
+	if buf2.Len() == 0 {
+		t.Fatal("control save wrote nothing")
+	}
+	t.Logf("FSV #440 control: independent coroutines saved (%d bytes), no false refusal", buf2.Len())
+}
+
 func withFreshCRC(body []byte) []byte {
 	out := make([]byte, len(body)+4)
 	copy(out, body)
