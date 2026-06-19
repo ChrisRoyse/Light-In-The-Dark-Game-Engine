@@ -1,9 +1,9 @@
 # Lua Sandbox Security Review (D-20 hard gate, #319)
 
-**Status:** IN PROGRESS — sign-off **withheld** (two vectors not yet verifiable; see §4).
-**Reviewer:** agent:opus (sole agent; delegated authority does NOT extend to clearing a D-20 hard gate that greenlights the sharing features #176–#181 while attack vectors remain untestable — that final sign-off needs the save/load and cross-platform vectors closed first).
+**Status:** IN PROGRESS — sign-off **withheld** (ONE vector remains unverifiable: cross-platform quota determinism, blocked by #284; see §4). The save/load tamper vector — the other former blocker — is now **closed** (§2, after #270 landed).
+**Reviewer:** agent:opus (initial sweep); agent:claude (save/load tamper corpus, after #270 wired live-coroutine saves). Sole agent; delegated authority does NOT extend to clearing a D-20 hard gate that greenlights the sharing features #176–#181 while *any* attack vector remains untestable — the cross-platform quota vector (#284) must close first.
 **Scope:** `litd/luabind` sandbox (`NewSandbox`/`Register`) as shipped today. R-SEC-1; D-20 (non-negotiable); milestones.md M9 hard gate.
-**Source of truth:** the escape-attempt corpus in `litd/luabind/sandbox_escape_test.go` + `bindings_test.go`. Every vector below is a permanent test asserting a *loud* failure (error text quoted), run and read manually — not trusted by exit code.
+**Source of truth:** the escape-attempt corpus in `litd/luabind/sandbox_escape_test.go`, `sandbox_save_escape_test.go`, + `bindings_test.go`. Every vector below is a permanent test asserting a *loud* failure (error text quoted), run and read manually — not trusted by exit code.
 
 ## 1. Threat model
 
@@ -49,17 +49,26 @@ Generated dispatch reads handle args via `CheckUserData` + an ok-checked concret
 
 Faithfulness control (`TestGoVsLuaIdenticalHashFSV`): the same scenario via direct Go calls and via the bindings yields a bit-identical `StateHash` (`0xda32a7d559477354`) — the Lua skin cannot diverge sim state from the Go surface.
 
+### Malicious serialized coroutine state — BLOCKED (`TestSandboxSaveLoadTamperRefusedFSV`, #319 edge 4)
+Now testable since #270 wired live suspended coroutines into the save format (`SaveScripts`/`LoadScripts`). A valid blob (one parked coroutine, 433 B) is corrupted five ways; each is refused **loudly and structurally**, and `PendingScriptWaits` is **0** after every rejection — the table is left cleared, never a partial restore that smuggles a forged coroutine in (the `LoadScripts` contract: `s.threads` is only assigned on full success):
+- **bad magic** → `LoadScripts: bad magic "XXXXXXXX"`;
+- **truncated mid-blob** → `LoadScripts: slot 0 body: unexpected EOF`;
+- **empty blob** → `LoadScripts: EOF`;
+- **bit-flipped coroutine image** → `LoadScripts: slot 0 unmarshal: invalid character … after object key:value pair`;
+- **unresolvable proto** (chunk swapped/absent) → `LoadScripts: slot 0 restore: … chunk-hash mismatch — world content changed since save` (the #264 content-addressed chunk check catches a world-content swap).
+
 ## 3. Positive controls (lockdown is not collateral)
 `TestSandboxLegitCodeWorks`: `math.floor`, `string.format`, `table.concat`, `pairs` iteration, and the deterministic `math.random` (bound source) all behave. Real worlds are not broken by the lockdown.
 
-## 4. Vectors NOT yet verifiable — sign-off blockers
+## 4. Vectors NOT yet verifiable — sign-off blocker (one remaining)
 
 | Vector (from #319) | Why not yet testable | Blocked by |
 |---|---|---|
-| Malicious serialized **coroutine state** (tampered save file → load must refuse with a structured error) | The LState-graph serializer **is** built and tested (#264 — `persist.go`/`persist_thread.go`, `SaveThread`/`LoadThread`, `TestSaveLoadThreadColdRoundTrip` cold-resumes a suspended coroutine; it already fails loud on chunk-hash mismatch). The gap is integration, not the serializer: the live scheduler bridge (`luabind/sched.go`) still parks Lua waits on a non-descriptive Go-closure `Game.After` rather than a descriptive `(ContID, State)` continuation, so suspended Lua jobs are not yet wired into the sim save format — there is no *live-coroutine* save blob to attack until that lands (#270). When #270 wires it, the tamper/chunk-mismatch case must be added here. | **#270** |
-| **Quota determinism across OS/arch** (same script, identical instruction-exhaustion point on linux/windows/macos × amd64/arm64) | No CI matrix — GitHub Actions disabled (billing). Single-platform determinism holds locally; cross-platform is unverified. | **#284** |
+| **Quota determinism across OS/arch** (same script, identical instruction-exhaustion point on linux/windows/macos × amd64/arm64) | No CI matrix — GitHub Actions disabled (billing). Single-platform determinism holds locally (a fixed instruction budget trips at the same point every run by construction); cross-platform identity is unverified without the matrix. | **#284** |
 
-D-20 sign-off is **withheld** until both are closed and their escape cases added to this corpus. The sharing features they gate (#176–#181, M9) must not ship before then.
+> *Resolved since the initial sweep:* the **malicious serialized coroutine state** vector — previously blocked on #270 (no live-coroutine save blob existed to attack) — is now closed; #270 landed, and `TestSandboxSaveLoadTamperRefusedFSV` exercises five tamper variants (§2). One blocker remains.
+
+D-20 sign-off is **withheld** until the cross-platform quota vector (#284) closes and its escape case is added to this corpus. The sharing features it gates (#176–#181, M9) must not ship before then.
 
 ## 5. Findings
-**None requiring a fix.** Every testable vector was already blocked loudly by the existing `#266`/`#262` sandbox + budget work; this review extended the corpus (bytecode emit/load, pcall quota-dodge, table bomb, binding type-confusion) and found no holes. When #270 and #284 land, re-open this review for the two §4 vectors before sign-off.
+**None requiring a fix.** Every testable vector is blocked loudly by the `#266`/`#262`/`#270` sandbox + budget + persistence work; the corpus now covers bytecode emit/load, pcall quota-dodge, table bomb, binding type-confusion, and (new) save/load tamper — no holes found. Only the cross-platform quota-determinism vector remains unverifiable (#284, CI billing); re-open this review to add it and sign off once the matrix runs.
