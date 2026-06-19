@@ -128,3 +128,43 @@ before the patch, passes at 0/op after).
 Lettered "4a": this is the steady-state-alloc slice of D-25 patch 4 (#265). The
 remaining patch-4 scope — cross-world LState pooling and the golden cross-arch CI
 matrix — is still open (the matrix is blocked on CI billing #284).
+
+### Patch T — small-table fast path (#416)
+
+Files: `value.go` (LTable field `skv []tableKV` + the `tableKV` type), `table.go`
+(`newLTable`, `RawSet*`/`RawGet*`, `RawSetH`, `ForEach`, `Next`, plus `smallFind`
+/`spill` helpers and the `smallTableMax` const). A pure string-keyed table — the
+engine's ubiquitous `{x=…, y=…}` vector and small config tables — previously
+allocated **four** heap objects on construction: the `LTable` struct, the
+`strdict` map, the `keys` slice, and the `k2i` map, plus an `LString` interface
+box per key. At 20 tps with many scripted units reading/writing positions every
+tick this was the dominant per-tick GC cost (issue #416, measured ~11 allocs per
+`{x,y}` table).
+
+The patch keeps a small string-keyed table's entries in one insertion-ordered
+slice `skv []tableKV{key string; val LValue}` — no maps, no `LString` boxing of
+keys. The table **spills** to the original `strdict`/`keys`/`k2i` representation
+(a permanent one-way transition) the moment a non-string (dict) key is added or
+`skv` would exceed `smallTableMax` (8). The array part (`tb.array`) is independent
+and coexists with either mode. All semantics are preserved exactly: insertion
+order, the LNil-tombstone-on-delete behaviour (a deleted key keeps its slot with
+`val == LNil`, skipped on iteration, re-set without duplication), and mixed
+array+string iteration. `spill()` migrates `skv` into the maps in order,
+reproducing tombstones, so post-spill behaviour is identical to a table that was
+never small.
+
+Encapsulation makes this safe: no code outside `table.go` touches the LTable
+internals, and the #264 save persister walks tables through `Next`/`ForEach`
+(public API), not fields.
+
+Result: a `{x,y}` literal drops from **11 → 3 allocs**; a per-tick
+`Unit_Position` read + `Unit_SetPosition` write handler from **23 → 9 allocs/op**.
+Verified: fork Go-level table tests (`TestTable*`) and Lua fixtures
+(`table.lua`/`vm.lua`/`closure.lua`) pass; the #271 determinism golden
+(`0xcb2b8f8681a2de23`) is byte-identical (pairs() order preserved); and
+`litd/luabind/table_smallmode_test.go` (`TestSmallTableSemanticsFSV` +
+`TestVectorTableAllocFSV`) locks behaviour across the spill/tombstone/mixed/array
+cases and the alloc bound.
+
+Lettered "T" (table): a performance patch on the LTable representation, not one of
+the four D-25 determinism patches.
