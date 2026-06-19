@@ -22,7 +22,7 @@ func TestGameOnAudioToManagerFSV(t *testing.T) {
 	g.OnAudio(m.Handle)  // wire the sim's audio sink to the manager
 
 	// Listener at origin; emit a positional sound at (PanWidth, 0) → full-right pan,
-	// quarter gain (dist=900 → 1-900/1200=0.25). Known input, known expected output.
+	// inverse-distance gain (dist=900 > ref 400 → 400/900). Known in, known out.
 	hashBefore := g.StateHash()
 	snd := g.CreateSound("Spells/footman-attack")
 	if !snd.Valid() {
@@ -37,7 +37,7 @@ func TestGameOnAudioToManagerFSV(t *testing.T) {
 		t.Fatalf("expected 1 voice after PlayAt, got %d (sink not wired?)", s.VoiceCount)
 	}
 	v := s.Voices[0]
-	wantGain := 1.0 - PanWidth/FalloffRadius
+	wantGain := ReferenceDistance / PanWidth
 	if !approx(v.Pan, 1.0) || !approx(v.Gain, wantGain) {
 		t.Fatalf("resolved voice wrong: want pan=1.0 gain=%v, got pan=%v gain=%v", wantGain, v.Pan, v.Gain)
 	}

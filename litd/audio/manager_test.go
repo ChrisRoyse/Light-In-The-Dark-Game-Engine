@@ -66,12 +66,13 @@ func TestPlayNonPositionalFSV(t *testing.T) {
 }
 
 // Positional play with known geometry: listener origin, source at (PanWidth,0,0).
-// pan = 900/900 = 1.0 (full right); dist=900 → atten = 1-900/1200 = 0.25; gain=0.25.
+// pan = 900/900 = 1.0 (full right); dist=900 > ReferenceDistance(400) → inverse-
+// distance atten = 400/900 ≈ 0.444; gain = 0.444 (domain model, #231).
 func TestPlayAtSpatialMathFSV(t *testing.T) {
 	m := NewManager(nil)
 	m.Handle(api.AudioEvent{Kind: api.AudioPlayAt, Cue: 1, Volume: 1, HasPos: true, Pos: api.Vec2{X: PanWidth, Y: 0}, Channel: api.ChannelEffects})
 	v, _ := voiceByCue(m.Dump(), 1)
-	wantGain := 1.0 - PanWidth/FalloffRadius // 0.25
+	wantGain := ReferenceDistance / PanWidth // inverse-distance clamped
 	if !approx(v.Pan, 1.0) {
 		t.Fatalf("source at +PanWidth must pan full right (1.0), got %v", v.Pan)
 	}
@@ -102,15 +103,19 @@ func TestListenerPanFlipFSV(t *testing.T) {
 	t.Logf("FSV #227 pan flip: emitter x=300; listener 0→pan %+.3f, listener 600→pan %+.3f (sign flipped)", before.Pan, after.Pan)
 }
 
-// Edge max+1 (out of falloff): source beyond FalloffRadius → gain clamps to 0.
+// Edge max+1 (out of falloff): source beyond MaxAudibleDistance is CULLED — it
+// never enters the voice table (#231 distance cull), and the culled counter ticks.
 func TestDistanceFalloffClampFSV(t *testing.T) {
 	m := NewManager(nil)
 	m.Handle(api.AudioEvent{Kind: api.AudioPlayAt, Cue: 9, Volume: 1, HasPos: true, Pos: api.Vec2{X: FalloffRadius + 800, Y: 0}})
-	v, _ := voiceByCue(m.Dump(), 9)
-	if !approx(v.Gain, 0) {
-		t.Fatalf("source beyond falloff must be silent (gain 0), got %v", v.Gain)
+	s := m.Dump()
+	if _, ok := voiceByCue(s, 9); ok {
+		t.Fatal("source beyond max audible must be culled (no voice), but a voice exists")
 	}
-	t.Logf("FSV #227 falloff: pos x=%v (> %v) → gain=%v (silent)", FalloffRadius+800, FalloffRadius, v.Gain)
+	if s.VoiceCount != 0 || s.Culled != 1 {
+		t.Fatalf("want 0 voices and culled=1, got voices=%d culled=%d", s.VoiceCount, s.Culled)
+	}
+	t.Logf("FSV #227 cull: pos x=%v (> %v) → culled (0 voices, culled=%d)", FalloffRadius+800, FalloffRadius, s.Culled)
 }
 
 // Stop removes every voice for a cue. SoT = voice count before/after.

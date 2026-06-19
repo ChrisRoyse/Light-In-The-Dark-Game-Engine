@@ -10,8 +10,10 @@ type Snapshot struct {
 	Listener   Vec3      `json:"listener"`   // current listener position
 	VoiceCount int       `json:"voiceCount"` // active voices
 	MaxVoices  int       `json:"maxVoices"`  // device source-pool size
+	Culled     int       `json:"culled"`     // world voices dropped by distance cull
 	Voices     []Voice   `json:"voices"`     // active voices with final gain/pan
 	ChannelVol []float64 `json:"channelVol"` // per-channel master volumes
+	GroupVol   []float64 `json:"groupVol"`   // World / UI / Music master groups
 }
 
 // Dump returns a deep copy of the current audio state. Callers may serialize or
@@ -21,12 +23,16 @@ func (m *Manager) Dump() Snapshot {
 	copy(voices, m.voices)
 	chans := make([]float64, len(m.channelVol))
 	copy(chans, m.channelVol[:])
+	groups := make([]float64, len(m.groupVol))
+	copy(groups, m.groupVol[:])
 	return Snapshot{
 		Backend:    m.backend.Name(),
 		Listener:   m.listener,
 		VoiceCount: len(m.voices),
 		MaxVoices:  MaxVoices,
+		Culled:     m.culled,
 		Voices:     voices,
 		ChannelVol: chans,
+		GroupVol:   groups,
 	}
 }
