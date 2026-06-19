@@ -22,6 +22,7 @@ package litd
 import (
 	"time"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/sched"
 )
 
@@ -50,6 +51,53 @@ func (g *Game) RegisterScriptCont(id uint32, fn func(a, b int64)) {
 	g.w.Sched.Register(sched.ContID(id), func(_ *sched.Scheduler, st sched.State) {
 		fn(st[0], st[1])
 	})
+}
+
+// scriptEventHandlerID is the reserved sim HandlerID under which the script VM's
+// single event-wake dispatcher registers (#413). Low-numbered, like the script
+// ContID range: the api allocates its own per-kind trampolines from 1<<30 up
+// (apiHandlerBase), so this never collides. Registered once at VM setup so a
+// restored kind→handler subscription resolves on load (the subscription list is
+// serialized sim state, validated against the handler registry on LoadState).
+const scriptEventHandlerID = sim.HandlerID(1)
+
+// RegisterScriptEventDispatcher registers fn as the script event-wake dispatcher
+// at the reserved script HandlerID, on this game. fn receives the SIM kind of
+// each fired event the dispatcher is subscribed to (via SubscribeScriptEvent).
+//
+// Call once at VM setup — BEFORE any LoadState — exactly like RegisterScriptCont:
+// the handler registry is code, not state, so the VM must re-register before a
+// load or the restored subscription list (which names this id) fails to resolve.
+// A nil game or fn is a no-op; a second registration on the same game panics
+// (one script VM per game, the RegisterScriptCont contract).
+func (g *Game) RegisterScriptEventDispatcher(fn func(simKind uint16)) {
+	if g == nil || fn == nil {
+		return
+	}
+	g.w.RegisterHandler(scriptEventHandlerID, func(_ *sim.World, e sim.Event) {
+		fn(e.Kind)
+	})
+}
+
+// SubscribeScriptEvent subscribes the reserved script dispatcher to pubKind, so a
+// coroutine parked on it (luabind WaitForEvent) wakes when it fires. It returns
+// the resolved sim kind and ok=false for an unknown pubKind (fail-closed — the
+// caller must surface it, never park forever silently). Idempotent: it consults
+// the live subscription list (IsSubscribed) before appending, so re-parking on a
+// kind — or doing so after a save/load that already restored the subscription —
+// never double-subscribes (which would double-wake and diverge the hash).
+func (g *Game) SubscribeScriptEvent(pubKind EventKind) (simKind uint16, ok bool) {
+	if g == nil {
+		return 0, false
+	}
+	sk, found := simKindOf[pubKind]
+	if !found {
+		return 0, false
+	}
+	if !g.w.IsSubscribed(sk, scriptEventHandlerID) {
+		g.w.Subscribe(sk, scriptEventHandlerID)
+	}
+	return sk, true
 }
 
 // AfterScript posts a descriptive wake record on script continuation id, firing

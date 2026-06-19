@@ -69,6 +69,24 @@ func (w *World) Subscribe(kind uint16, id HandlerID) {
 	w.subs[i].list = append(w.subs[i].list, id)
 }
 
+// IsSubscribed reports whether handler id is already in kind's dispatch list.
+// The subscription table is restored state (it serializes and hashes, R-SIM-6),
+// so this is the source of truth for an idempotent subscribe across a save/load
+// — a caller can re-park on a kind without appending a duplicate handler (which
+// would both double-fire and diverge the state hash).
+func (w *World) IsSubscribed(kind uint16, id HandlerID) bool {
+	i, ok := w.subIdx(kind)
+	if !ok {
+		return false
+	}
+	for _, h := range w.subs[i].list {
+		if h == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (w *World) subIdx(kind uint16) (int, bool) {
 	lo, hi := 0, len(w.subs)
 	for lo < hi {

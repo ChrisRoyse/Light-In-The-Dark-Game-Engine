@@ -28,8 +28,10 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// scriptSaveMagic tags the Lua save section and pins its format version.
-const scriptSaveMagic = "LITDLUA\x01"
+// scriptSaveMagic tags the Lua save section and pins its format version. v2
+// (#413) adds a per-slot waitKind (EventKind a coroutine is parked on, 0 for a
+// timer wait) after the flags byte; a v1 blob is rejected loudly on load.
+const scriptSaveMagic = "LITDLUA\x02"
 
 const (
 	flagAlive   = 1 << 0
@@ -60,6 +62,7 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 		}
 		bw.u32(e.gen)
 		bw.u8(flags)
+		bw.u16(e.waitKind) // #413: EventKind this slot is parked on (0 = timer/none)
 		if e.alive {
 			// A live slot at a tick boundary is a parked coroutine — serialize it.
 			img, err := SaveThread(reg, e.co, handles)
@@ -118,6 +121,7 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	for i := uint32(0); i < n; i++ {
 		gen := br.u32()
 		flags := br.u8()
+		waitKind := br.u16() // #413
 		if br.err != nil {
 			return fmt.Errorf("luabind: LoadScripts: slot %d header: %w", i, br.err)
 		}
@@ -125,6 +129,7 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 		e.gen = gen
 		e.alive = flags&flagAlive != 0
 		e.waiting = flags&flagWaiting != 0
+		e.waitKind = waitKind
 		if e.alive {
 			blobLen := br.u32()
 			blob := br.readRaw(int(blobLen))
@@ -162,6 +167,11 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	s.threads = threads
 	s.threadFree = free
 	s.pending = pending
+	// #413: an event-parked coroutine (waitKind != 0) needs no re-subscription here.
+	// The dispatcher handler is registered at VM setup (RegisterScriptEventDispatcher,
+	// before this LoadState), and the kind→handler subscription is serialized sim
+	// state that LoadState already restored — so a post-load event fires straight
+	// through to dispatchEvent, which finds the restored waiter by (slot, waitKind).
 	return nil
 }
 
@@ -181,6 +191,12 @@ func (b *errWriter) writeRaw(p []byte) {
 }
 
 func (b *errWriter) u8(v uint8) { b.writeRaw([]byte{v}) }
+
+func (b *errWriter) u16(v uint16) {
+	var s [2]byte
+	binary.LittleEndian.PutUint16(s[:], v)
+	b.writeRaw(s[:])
+}
 
 func (b *errWriter) u32(v uint32) {
 	var s [4]byte
@@ -210,6 +226,14 @@ func (b *errReader) u8() uint8 {
 		return 0
 	}
 	return p[0]
+}
+
+func (b *errReader) u16() uint16 {
+	p := b.readRaw(2)
+	if b.err != nil {
+		return 0
+	}
+	return binary.LittleEndian.Uint16(p)
 }
 
 func (b *errReader) u32() uint32 {

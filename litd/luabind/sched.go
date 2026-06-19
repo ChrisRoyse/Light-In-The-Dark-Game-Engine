@@ -57,7 +57,8 @@ type scriptThread struct {
 	fn      *lua.LFunction
 	gen     uint32
 	alive   bool
-	waiting bool // parked on a scheduler record (drives PendingScriptWaits)
+	waiting bool   // parked on a scheduler record (drives PendingScriptWaits)
+	waitKind uint16 // 0 = timer wait (or not parked); >0 = parked on this EventKind (#413)
 }
 
 type scriptScheduler struct {
@@ -76,6 +77,11 @@ type scriptScheduler struct {
 	// coroutine resumes at a time on the sim goroutine, so one field suffices —
 	// resume() resets it to 0 before each Resume and reads it immediately after.
 	pendingWaitSecs float64
+	// pendingWaitKind carries the public EventKind a coroutine asked to wait on,
+	// from the WaitForEvent native to resume(), the event-wait analogue of
+	// pendingWaitSecs (#413). 0 means "not an event wait" (timer wait or no wait).
+	// resume() resets it to 0 before each Resume and reads it immediately after.
+	pendingWaitKind uint16
 	// handleCaches caches, per comparable handle type, the userdata wrapping each
 	// live handle (#407). The value for type T is a map[T]*lua.LUserData; pushHandle
 	// reaches it by reflect.Type key. Reuse makes a per-tick re-marshal of the same
@@ -136,6 +142,10 @@ func registerScriptThreads(L *lua.LState, g *api.Game) {
 	// load the scheduler rebuilds its registry from this call (it runs at
 	// Register time, before any LoadState), so serialized wake records resolve.
 	g.RegisterScriptCont(scriptResumeCont, s.onWake)
+	// Register the single event-wake dispatcher at setup (before any LoadState),
+	// so a restored event-wait subscription (kind → this handler) resolves (#413).
+	// It receives the sim kind, which matches the sim kind stored in waitKind.
+	g.RegisterScriptEventDispatcher(func(simKind uint16) { s.dispatchEvent(simKind) })
 	// PolledWait(d<=0) returns without yielding (same-tick continue, matching the
 	// Go thread semantics and the JASS `if duration > 0` guard); otherwise it
 	// stashes the wait seconds on the scheduler and yields with NO value — the
@@ -154,6 +164,47 @@ func registerScriptThreads(L *lua.LState, g *api.Game) {
 		s.resume(s.alloc(co, fn))
 		return 0
 	}))
+	// WaitForEvent(kind), inside a Run body, suspends the coroutine until the next
+	// game event of EventKind kind fires, then resumes it (#413). Like PolledWait
+	// it stashes its parameter on the scheduler and yields with no Lua value; resume()
+	// reads s.pendingWaitKind and parks the slot on the kind instead of on a timer.
+	// The coroutine inspects game state on resume to decide whether the event was the
+	// one it cared about (a filter) — re-calling WaitForEvent to keep waiting. Resume
+	// is driven by a descriptive scheduler wake record (dispatchEvent), so a mid-wait
+	// save round-trips and the resume order stays deterministic.
+	L.SetGlobal("WaitForEvent", L.NewFunction(func(L *lua.LState) int {
+		kind := L.CheckInt(1)
+		if kind <= 0 || kind > int(^uint16(0)) {
+			L.ArgError(1, "event kind must be a positive EventKind constant")
+		}
+		s.pendingWaitKind = uint16(kind)
+		return L.Yield()
+	}))
+}
+
+// dispatchEvent wakes every coroutine parked on sim event kind, in ascending
+// slot order (#413). It does NOT resume inline: it posts a descriptive wake
+// record (scriptResumeCont, {slot, gen}) per waiter via AfterScript(0) — the
+// resume then fires one tick later through onWake, in the scheduler's
+// deterministic (wakeTick, seq) order, exactly as a PolledWait wake does. This
+// keeps a restored run (which re-subscribes the dispatcher at load, in a
+// different subscriber order) bit-identical to the unbroken run. A waiter's slot
+// is cleared here, before its resume, so a coroutine that re-parks on the same
+// kind during its resume waits for the NEXT event, never this one.
+func (s *scriptScheduler) dispatchEvent(kind uint16) {
+	for slot := range s.threads {
+		e := &s.threads[slot]
+		if !e.alive || !e.waiting || e.waitKind != kind {
+			continue
+		}
+		// Consume the event-park (waitKind=0) so a second event of this kind before
+		// the wake fires cannot re-post this slot. Leave waiting=true and pending
+		// untouched: onWake is the single point that clears them and resumes — the
+		// posted record converts an event-park into an ordinary 1-tick timer wake,
+		// which also makes the in-flight window serialize as a plain timer wait.
+		e.waitKind = 0
+		s.g.AfterScript(0, scriptResumeCont, int64(slot), int64(e.gen))
+	}
 }
 
 // alloc reserves a coroutine slot (recycling a retired one when available),
@@ -163,7 +214,7 @@ func (s *scriptScheduler) alloc(co *lua.LState, fn *lua.LFunction) uint32 {
 		slot := s.threadFree[n-1]
 		s.threadFree = s.threadFree[:n-1]
 		e := &s.threads[slot]
-		e.co, e.fn, e.alive, e.waiting = co, fn, true, false
+		e.co, e.fn, e.alive, e.waiting, e.waitKind = co, fn, true, false, 0
 		return slot
 	}
 	s.threads = append(s.threads, scriptThread{co: co, fn: fn, gen: 1, alive: true})
@@ -174,7 +225,7 @@ func (s *scriptScheduler) alloc(co *lua.LState, fn *lua.LFunction) uint32 {
 // for the old identity is recognized as stale.
 func (s *scriptScheduler) retire(slot uint32) {
 	e := &s.threads[slot]
-	e.alive, e.waiting, e.co, e.fn = false, false, nil, nil
+	e.alive, e.waiting, e.co, e.fn, e.waitKind = false, false, nil, nil, 0
 	e.gen++
 	if e.gen == 0 {
 		e.gen = 1
@@ -211,6 +262,7 @@ func (s *scriptScheduler) resume(slot uint32) {
 	// yield by any other means leaves it 0 (immediate re-wake) — matching the
 	// prior LVAsNumber(non-number)==0 behavior, now without a boxed value (#265).
 	s.pendingWaitSecs = 0
+	s.pendingWaitKind = 0
 	st, err, _ := s.L.Resume(co, fn)
 	s.L.G.CurrentThread = s.L.G.MainThread
 	if st != lua.ResumeYield {
@@ -221,12 +273,33 @@ func (s *scriptScheduler) resume(slot uint32) {
 		return
 	}
 	secs := s.pendingWaitSecs
+	kind := s.pendingWaitKind
 	// Re-fetch AFTER Resume: a nested Run() in the coroutine body may have
 	// grown s.threads and reallocated its backing array, so any pointer taken
 	// before the resume would now be stale.
 	e := &s.threads[slot]
 	e.waiting = true
 	s.pending++
+	if kind != 0 {
+		// Event wait (#413): subscribe the dispatcher to this public kind (idempotent;
+		// the sim subscription list is the source of truth, so it round-trips a
+		// save/load without double-subscribing) and park the slot on the resolved SIM
+		// kind. No timer record is posted — dispatchEvent posts the wake when an event
+		// of the kind fires. The parked (slot→simKind) state serializes in SaveScripts.
+		simKind, ok := s.g.SubscribeScriptEvent(api.EventKind(kind))
+		if !ok {
+			// Unknown event kind: fail closed — finish the coroutine with a loud error
+			// rather than parking it forever (no fallback that hides the bad kind).
+			s.pending--
+			e.waiting = false
+			s.reportError(fmt.Errorf("luabind: WaitForEvent(%d): unknown event kind", kind))
+			s.retire(slot)
+			return
+		}
+		e.waitKind = simKind
+		return
+	}
+	e.waitKind = 0
 	// Descriptive wake record: (scriptResumeCont, {slot, gen}) on the shared
 	// stackless queue — same wake tick a Game.After(secs) timer would land on
 	// (AfterScript quantizes identically), but serializable, not a Go closure.

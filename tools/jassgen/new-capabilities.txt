@@ -308,6 +308,16 @@ exact   Game.MapBeacons
 exact   Game.RegisterScriptCont
 exact   Game.AfterScript
 
+# Lua coroutine event-wait seam (#413): the api-side hooks the luabind WaitForEvent
+# binds — register the single reserved-HandlerID script event dispatcher (at VM
+# setup, before any load) and subscribe it to a kind so a coroutine can park on an
+# EVENT (unit death, order, region enter), not only a timer. The kind→handler
+# subscription is serialized sim state, so an event wait round-trips a save/load.
+# Structural plumbing for the green-thread model (execution-model.md §7), no JASS
+# equivalent (JASS waits are timer-only — TriggerSleepAction).
+exact   Game.RegisterScriptEventDispatcher
+exact   Game.SubscribeScriptEvent
+
 # determinism/verification seam (#271): the per-system hash breakdown behind
 # Game.StateHash — a snapshot of the top digest plus each subsystem's sub-digest,
 # and the matching ordered system names — for localizing a desync. Leak-free
