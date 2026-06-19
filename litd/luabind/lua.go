@@ -20,7 +20,9 @@ import (
 // state; the sandbox (#266) and quota patches (#262) will replace this
 // constructor with the locked-down one. Callers must Close it.
 func NewState() *lua.LState {
-	return lua.NewState()
+	L := lua.NewState()
+	L.SetMathBackend(detMathBackend) // deterministic math.* (#391, D-2026-06-19-1)
+	return L
 }
 
 // Eval runs src as a Lua chunk on a fresh state and returns its first return

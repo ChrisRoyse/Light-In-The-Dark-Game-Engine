@@ -450,6 +450,41 @@ R-GC-1 CI gate). Affected issues (#158, #160, #162, #234) updated to spec agains
 
 ---
 
+## D-2026-06-19-1 (#391) — Lua `math.*` transcendentals route through `litd/fixed` (deterministic, coarser than float64)
+
+**Decision.** The Lua scripting `math` library's transcendental functions —
+`sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh, exp, log, log10, pow, sqrt`
+— are computed through deterministic `litd/fixed` (32.32 fixed-point, committed
+integer tables), NOT Go's `math.*`. This extends D-2026-06-11-1 (sim math is
+fixed-point) to the *scripting* surface. Owner sign-off via #391 (2026-06-19).
+
+**Accepted trade-off.** Results are **coarser** than IEEE `float64` and differ from
+stock Lua: trig/inverse-trig carry the BAM angle resolution (1 turn / 65536 ≈
+1e-4 rad) plus the fixed-point value resolution (2^-32); `exp`/`pow` **saturate to
+±Inf** once the magnitude leaves the 32.32 range (|value| ≥ 2^31), matching IEEE
+overflow at the boundary. This is a deliberate determinism-over-precision choice:
+scripts must not rely on float64-grade transcendental precision. Domain errors
+reproduce the IEEE special-value bit patterns at the Lua boundary (`sqrt(-1)`,
+`log(0)`, `log(-x)`, `0^0`, `pow` of negative base to non-integer exponent).
+
+**Rationale.** Determinism is goal #1 (D-2026-06-11-1) and load-bearing for the
+multiplayer lockstep (D-2026-06-11-5) and the G5.7 cross-OS/arch hash gate (#271).
+Go's `math.*` is not bit-identical across architectures (golang/go#20319: platform
+asm + permitted FMA contraction); integer fixed-point is deterministic by
+construction on every OS/arch with no proof burden. The random half of the
+mathlib patch already routes `math.random` to the sim PRNG (#263); this closes the
+transcendental half. Must land as **one complete set** — a partial conversion
+would fail open (look deterministic while silently not being so on the
+un-converted functions).
+
+**Implementation.** `litd/fixed` gains `Exp2/Log2/Exp/Log/Pow` (+ `tan/asin/acos/
+atan/sinh/cosh/tanh` helpers) over committed tables (`go generate ./litd/fixed`,
+diff-must-be-empty); the gopher-lua `mathlib.go` routes the 15 functions through a
+deterministic bridge behind `// LITD-PATCH` (logged in `docs/lua-patch-log.md`).
+Golden bit-pattern table in `litd/luabind/mathlib_test.go`.
+
+---
+
 ## No remaining deferred decisions
 
 | Formerly open | Now |

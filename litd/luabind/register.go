@@ -36,8 +36,9 @@ import (
 // g may be nil for the pure value-math verbs (they need no game); handle and
 // free-function verbs require a non-nil g and are registered against it.
 func Register(L *lua.LState, g *api.Game) error {
-	registerGenerated(L)     // value/handle/Player verbs (no game needed)
-	registerIntrospection(L) // Valid(h)/IsZero(h) universal handle predicates (#392)
+	L.SetMathBackend(detMathBackend) // deterministic math.* (#391, D-2026-06-19-1)
+	registerGenerated(L)             // value/handle/Player verbs (no game needed)
+	registerIntrospection(L)         // Valid(h)/IsZero(h) universal handle predicates (#392)
 	if g != nil {
 		registerGameBound(L, gameBinder{g: g}) // Game-receiver verbs, bound to g
 		registerCatalog(L, gameBinder{g: g})   // hand-written type-catalog resolvers (#393)

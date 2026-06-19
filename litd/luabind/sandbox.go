@@ -80,6 +80,7 @@ func NewSandbox(opts SandboxOptions) *Interp {
 		L.Push(lua.LString(lib.name))
 		L.Call(1, 0)
 	}
+	L.SetMathBackend(detMathBackend) // deterministic math.* (#391, D-2026-06-19-1)
 
 	// Strip the dangerous base globals. Setting them to nil removes the name
 	// from _G entirely (so the census sees them gone, not merely shadowed).

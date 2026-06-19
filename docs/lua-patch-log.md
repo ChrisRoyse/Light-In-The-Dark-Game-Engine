@@ -203,3 +203,52 @@ restore.
 
 Lettered "U" (upvalue): a save/load fidelity patch, not one of the four D-25
 determinism patches.
+
+---
+
+## Patch V (#391): deterministic transcendental backend for `math.*`
+
+LITD-PATCH-2 (D-25, #263) made the random half of the mathlib deterministic
+(`math.random` → sim PRNG). This is the remaining half: the transcendental
+functions. Go's `math.Sin/Cos/Tan/Asin/Acos/Atan/Atan2/Sinh/Cosh/Tanh/Exp/Log/
+Log10/Pow` are not guaranteed bit-identical across OS/arch (platform asm +
+permitted FMA contraction, golang/go#20319), which would desync a lockstep match
+and break the G5.7 cross-arch hash gate (#271). Decision + accepted precision
+trade: `docs/prd/01-vision/decisions.md` D-2026-06-19-1 (owner sign-off via #391).
+
+Fork changes (host-bound hook, mirroring the `litdRand` pattern):
+
+- `repoes/gopher-lua/value.go` — `LState` gains `litdMath *LitdMathFns`.
+- `repoes/gopher-lua/litd_math.go` — `LitdMathFns` (the 15 implementations),
+  `SetMathBackend`/`MathBackendBound`, and `litdMathFn(name)` which fails CLOSED
+  (loud `RaiseError`) when no backend is bound — never a silent Go-math fallback.
+- `repoes/gopher-lua/mathlib.go` — the 15 transcendentals route through the bound
+  backend instead of calling `math.*`. The non-transcendental ops
+  (`ceil/floor/abs/fmod/modf/ldexp/frexp/deg/rad/max/min`) keep using `math.*`:
+  they are exact/bit-op functions, already deterministic.
+
+The deterministic implementations live in the MAIN module
+(`litd/luabind/mathdet.go`, bound by `Register`/`NewState`/`NewSandbox`) because
+the fork cannot import `litd/fixed` (module cycle). They compute the
+transcendental core through `litd/fixed`'s committed integer tables
+(`Exp2`/`Log2`/`Sin`/`Cos`/`Atan2`, new in `litd/fixed/exp.go` + `exptable.go`)
+and assemble the exponent/range with deterministic float64 bit-ops only
+(`Frexp`/`Ldexp`/`Floor`) and the IEEE-754-mandated correctly-rounded `math.Sqrt`.
+
+Results are COARSER than stock float64 (trig carries the 1/65536-turn BAM
+resolution; exp/pow the table accuracy ~1e-7..1e-4) — the deliberate
+determinism-over-precision trade (D-2026-06-19-1).
+
+Expected divergence from upstream: gopher-lua's own `mathlib` tests now fail when
+run inside the fork with no backend bound (they expect stock Go-math results /
+silent computation). That is intended — this is a LITD fork that deliberately
+replaces the transcendental path; the litd suite binds the backend and asserts
+the deterministic goldens (`litd/luabind/mathlib_test.go`).
+
+Verified: `go build ./...` + `go vet ./...` green; `litd/fixed` accuracy/
+determinism tests pass; `litd/luabind` golden-bit + edge-case + fail-closed tests
+pass; the #271 determinism golden (`0xcb2b8f8681a2de23`) is byte-identical (the
+determinism scenario uses no `math.*`).
+
+Lettered "V": a determinism patch in the LITD-PATCH-2 family, filed separately
+per #391 because the precision/semantics were an owner contract decision.
