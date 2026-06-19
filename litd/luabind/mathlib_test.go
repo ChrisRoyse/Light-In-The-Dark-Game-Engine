@@ -53,6 +53,9 @@ var mathGolden = map[string]uint64{
 	"math.sqrt(2)":     0x3ff6a09e667f3bcd, // 1.41421356237
 	"math.pow(2,10)":   0x4090000000000000, // 1024
 	"math.pow(2,0.5)":  0x3ff6a09e66800000, // 1.41421356238
+	"math.floor(3.7)":  0x4008000000000000, // 3
+	"math.fmod(7,3)":   0x3ff0000000000000, // 1
+	"math.fmod(-7,3)":  0xbff0000000000000, // -1 (sign of dividend — #263 fmod edge)
 }
 
 var mathGoldenExprs = []string{
@@ -61,6 +64,9 @@ var mathGoldenExprs = []string{
 	"math.sinh(1)", "math.cosh(1)", "math.tanh(1)",
 	"math.exp(2)", "math.log(10)", "math.log10(1000)",
 	"math.sqrt(2)", "math.pow(2,10)", "math.pow(2,0.5)",
+	// Non-routed exact ops, included for the #263 golden-table contract (they
+	// stay on Go's math.* — already bit-identical, but committed for coverage).
+	"math.floor(3.7)", "math.fmod(7,3)", "math.fmod(-7,3)",
 }
 
 // TestMathGoldenBitsAndDeterminism logs each result's bit pattern and asserts the
