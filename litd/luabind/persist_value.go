@@ -35,12 +35,14 @@ type sval struct {
 }
 
 // supval is one serialized upvalue of a closure: OPEN (aliases the owning
-// thread's register at Index) or CLOSED (owns Val, serialized through the same
-// graph and so able to reference shared tables/closures).
+// thread's register at Index) or CLOSED (references the interned cell pool at
+// Cell — #437). Interning closed cells by *Upvalue identity makes a cell shared
+// by two closures round-trip as ONE shared cell, not independent copies. Open is
+// the discriminator (Cell defaults to 0, a valid closed-cell index).
 type supval struct {
 	Open  bool `json:"open,omitempty"`
 	Index int  `json:"index,omitempty"`
-	Val   sval `json:"val,omitempty"`
+	Cell  int  `json:"cell,omitempty"`
 }
 
 // sfunc is one interned closure: a proto reference (chunk-id + proto-path,
@@ -75,6 +77,7 @@ type valuesBlob struct {
 	Roots    []sval            `json:"roots"`
 	Tables   []stable          `json:"tables"`
 	Funcs    []sfunc           `json:"funcs,omitempty"`
+	Cells    []sval            `json:"cells,omitempty"` // interned closed upvalue cells (#437)
 	Threads  []*ThreadImage    `json:"threads,omitempty"`
 	UserData []json.RawMessage `json:"userdata,omitempty"`
 }
@@ -91,6 +94,8 @@ type vEncoder struct {
 	owner     *lua.LState
 	fnIDs     map[*lua.LFunction]int
 	funcs     []sfunc
+	cellIDs   map[*lua.Upvalue]int // interned closed upvalue cells (#437)
+	cells     []sval
 	threadIDs map[*lua.LState]int
 	threads   []*ThreadImage
 	handles   HandleMarshaler
@@ -206,11 +211,24 @@ func (e *vEncoder) encodeFunc(fn *lua.LFunction) (sval, error) {
 	ups := make([]supval, len(views))
 	for i, vw := range views {
 		if vw.Closed {
-			ev, err := e.encode(vw.Value)
-			if err != nil {
-				return sval{}, err
+			// Intern the closed cell by *Upvalue identity (#437): a cell shared by
+			// two closures encodes once and rebinds to one shared cell on restore.
+			cell := fn.Upvalues[i]
+			cid, ok := e.cellIDs[cell]
+			if !ok {
+				cid = len(e.cells)
+				if e.cellIDs == nil {
+					e.cellIDs = map[*lua.Upvalue]int{}
+				}
+				e.cellIDs[cell] = cid
+				e.cells = append(e.cells, sval{}) // reserve before encoding (cycles)
+				ev, err := e.encode(vw.Value)
+				if err != nil {
+					return sval{}, err
+				}
+				e.cells[cid] = ev
 			}
-			ups[i] = supval{Val: ev}
+			ups[i] = supval{Cell: cid}
 			continue
 		}
 		ups[i] = supval{Open: true, Index: vw.Index}
@@ -227,6 +245,7 @@ func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue, 
 	e := &vEncoder{
 		ids:       map[*lua.LTable]int{},
 		fnIDs:     map[*lua.LFunction]int{},
+		cellIDs:   map[*lua.Upvalue]int{},
 		threadIDs: map[*lua.LState]int{},
 		udIDs:     map[*lua.LUserData]int{},
 		reg:       reg,
@@ -241,7 +260,7 @@ func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue, 
 		}
 		roots[i] = r
 	}
-	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs, Threads: e.threads, UserData: e.uds})
+	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs, Cells: e.cells, Threads: e.threads, UserData: e.uds})
 }
 
 func (e *vEncoder) encodeTable(t *lua.LTable) (sval, error) {
@@ -355,6 +374,7 @@ type graphDecoder struct {
 	blob       *valuesBlob
 	tablePool  []*lua.LTable
 	fnPool     []*lua.LFunction
+	cellPool   []*lua.Upvalue // interned closed upvalue cells (#437)
 	threadPool []*lua.LState
 	udPool     []*lua.LUserData
 }
@@ -372,6 +392,12 @@ func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob, h
 			return nil, fmt.Errorf("luabind: closure %d: %w", i, err)
 		}
 		d.fnPool[i] = parent.LitdMakeClosure(proto)
+	}
+	// Allocate interned closed cells up front (empty); values are decoded and the
+	// cells rebound into closures in wireUpvalues, after all pools exist (#437).
+	d.cellPool = make([]*lua.Upvalue, len(blob.Cells))
+	for i := range blob.Cells {
+		d.cellPool[i] = lua.NewClosedUpvalue(lua.LNil)
 	}
 	// Nested coroutines are fully reconstructed up front (recursively), so a
 	// table/register can reference one.
@@ -474,6 +500,16 @@ func (d *graphDecoder) roots() ([]lua.LValue, error) {
 // upvalues go through th.LitdBindOpenUpvalue (so they alias th's live registers
 // and shared cells coincide); closed upvalues take their decoded value.
 func (d *graphDecoder) wireUpvalues(th *lua.LState) error {
+	// First populate the interned closed cells (their values may reference tables
+	// and closures, now all allocated), so a cell shared by multiple closures
+	// carries one value object (#437).
+	for k := range d.blob.Cells {
+		val, err := d.decode(d.blob.Cells[k])
+		if err != nil {
+			return fmt.Errorf("luabind: upvalue cell %d: %w", k, err)
+		}
+		d.cellPool[k].SetValue(val)
+	}
 	for i, sf := range d.blob.Funcs {
 		fn := d.fnPool[i]
 		for j, up := range sf.Upvals {
@@ -481,11 +517,10 @@ func (d *graphDecoder) wireUpvalues(th *lua.LState) error {
 				th.LitdBindOpenUpvalue(fn, j, up.Index)
 				continue
 			}
-			val, err := d.decode(up.Val)
-			if err != nil {
-				return fmt.Errorf("luabind: closure %d upvalue %d: %w", i, j, err)
+			if up.Cell < 0 || up.Cell >= len(d.cellPool) {
+				return fmt.Errorf("luabind: closure %d upvalue %d: cell ref %d out of range (%d cells)", i, j, up.Cell, len(d.cellPool))
 			}
-			fn.LitdSetUpvalueClosed(j, val)
+			fn.LitdSetUpvalueCell(j, d.cellPool[up.Cell])
 		}
 	}
 	return nil

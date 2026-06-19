@@ -451,14 +451,14 @@ end)`
 	t.Logf("FSV #436: upvalue-capturing handler round-tripped — captured spawnX=300 survived save/load, marker spawned at x=%.1f; StateHash %#x == unbroken", gotX, refHash)
 }
 
-// #436 / #437 fail-closed edge (§2.4): two handlers that SHARE one upvalue cell
-// cannot round-trip (the closure persister does not intern upvalue cells), and
-// restoring them as independent cells would silently diverge the run. The save
-// must REFUSE loudly rather than produce a desyncing container. Verified ground
-// truth first: the unbroken run yields a survivor at x=101 (shared cell, h2 sees
-// h1's increment); a naive restore would yield x=100 — the exact divergence this
-// guard prevents.
-func TestSharedUpvalueHandlersRefusedFSV(t *testing.T) {
+// #437: two handlers that SHARE one closed upvalue cell must round-trip with the
+// cell's IDENTITY preserved — a mutation through one handler is seen by the other
+// after restore exactly as before. SoT = sim. h1 increments the shared cell; h2
+// spawns its marker at x = 100 + shared. One death fires both in order, so a
+// correct restore yields a survivor at x=101 (h2 sees h1's increment of the SAME
+// cell); independent cells would yield x=100 — the silent divergence #437 fixes.
+// (This scenario was the ground truth that exposed the bug; it now must PASS.)
+func TestSharedUpvalueHandlersSurviveSaveLoadFSV(t *testing.T) {
 	const src = `local shared = 0
 OnEvent(1, function() shared = shared + 1 end)
 OnEvent(1, function() Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=100+shared, y=0}, 0) end)
@@ -467,24 +467,50 @@ Run(function()
 	PolledWait(50.0)
 	Unit_Kill(u)
 end)`
-	g, L := newGame(t)
-	defer L.Close()
-	reg := runChunk(t, L, "shared", src)
-	defer reg.Close()
-	g.Advance(2) // coroutine parked; handlers registered, cell shared
+	const saveTick, total = 500, 1200
 
+	gR, LR := newGame(t)
+	regR := runChunk(t, LR, "shared", src)
+	gR.Advance(total)
+	refHash := gR.StateHash()
+	if n, x := liveUnits(gR); n != 1 || x < 100.5 || x > 101.5 {
+		t.Fatalf("unbroken final: want 1 unit at x≈101 (shared cell, h2 sees h1++), got %d units x=%.1f", n, x)
+	}
+	LR.Close()
+	regR.Close()
+
+	gA, LA := newGame(t)
+	regA := runChunk(t, LA, "shared", src)
+	gA.Advance(saveTick) // coroutine parked before the kill; cell shared, shared==0
 	var buf bytes.Buffer
-	err := Write(&buf, g, L, reg, fp)
-	if err == nil {
-		t.Fatal("save of handlers sharing an upvalue cell must be refused, got nil error")
+	if err := Write(&buf, gA, LA, regA, fp); err != nil {
+		t.Fatalf("Write@%d (shared-cell handlers must now persist): %v", saveTick, err)
 	}
-	if !bytes.Contains([]byte(err.Error()), []byte("share an upvalue cell")) {
-		t.Fatalf("expected a shared-cell rejection, got: %v", err)
+	LA.Close()
+	regA.Close()
+
+	gB, LB := newGame(t)
+	defer LB.Close()
+	regB := luabind.NewChunkRegistry()
+	defer regB.Close()
+	if _, err := regB.Register("shared", src); err != nil {
+		t.Fatalf("re-register: %v", err)
 	}
-	if buf.Len() != 0 {
-		t.Fatalf("refused save wrote %d bytes — must write nothing", buf.Len())
+	if err := Load(bytes.NewReader(buf.Bytes()), gB, LB, regB, fp); err != nil {
+		t.Fatalf("Load@%d: %v", saveTick, err)
 	}
-	t.Logf("FSV #437 fail-closed: handlers sharing an upvalue cell refused → %v", err)
+	gB.Advance(total - saveTick)
+	gotN, gotX := liveUnits(gB)
+	if gotN != 1 {
+		t.Fatalf("restored final: %d units, want 1", gotN)
+	}
+	if gotX < 100.5 || gotX > 101.5 {
+		t.Fatalf("restored survivor at x=%.1f, want x≈101 — shared upvalue cell did NOT round-trip (x≈100 = independent cells, the #437 bug)", gotX)
+	}
+	if gotHash := gB.StateHash(); gotHash != refHash {
+		t.Fatalf("HASH MISMATCH: restored %#x != unbroken %#x", gotHash, refHash)
+	}
+	t.Logf("FSV #437: shared upvalue cell round-tripped — h2 saw h1's increment of the SAME cell, marker at x=%.1f (not 100); StateHash %#x == unbroken", gotX, refHash)
 }
 
 func withFreshCRC(body []byte) []byte {

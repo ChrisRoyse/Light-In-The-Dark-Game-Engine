@@ -29,9 +29,12 @@ import (
 )
 
 // scriptSaveMagic tags the Lua save section and pins its format version. v2
-// (#413) adds a per-slot waitKind (EventKind a coroutine is parked on, 0 for a
-// timer wait) after the flags byte; a v1 blob is rejected loudly on load.
-const scriptSaveMagic = "LITDLUA\x02"
+// (#413) added a per-slot waitKind (EventKind a coroutine is parked on, 0 for a
+// timer wait) after the flags byte. v3 (#437) interns closed upvalue cells in the
+// value-graph blob (a Cells pool; supval references a cell by index instead of
+// inlining its value) so cells shared across closures round-trip. An older blob
+// is rejected loudly on load.
+const scriptSaveMagic = "LITDLUA\x03"
 
 const (
 	flagAlive   = 1 << 0

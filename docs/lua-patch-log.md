@@ -168,3 +168,38 @@ cases and the alloc bound.
 
 Lettered "T" (table): a performance patch on the LTable representation, not one of
 the four D-25 determinism patches.
+
+---
+
+## Patch U (#437): interned closed-upvalue cells for cross-closure sharing
+
+`repoes/gopher-lua/litd_persist.go` gains two small additive helpers so the
+luabind closure persister can preserve SHARED closed upvalue cells across a
+save/load:
+
+- `NewClosedUpvalue(v LValue) *Upvalue` — constructs a standalone closed cell
+  (the `closed`/`value` fields are unexported, so luabind cannot build one
+  directly).
+- `(*LFunction).LitdSetUpvalueCell(i int, cell *Upvalue)` — wires fn's i-th
+  upvalue slot to an existing cell, so N closures that shared one cell rebind to
+  the SAME reconstructed `*Upvalue`.
+
+Why: the persister already interns tables/functions/threads/userdata by pointer
+identity, but CLOSED upvalue cells were serialized by VALUE (one fresh cell per
+closure on restore). Two closures sharing a `local` therefore diverged after
+restore — a silent `StateHash` divergence (proven: two OnEvent handlers sharing a
+counter gave survivor x=101 unbroken vs x=100 restored). luabind now interns
+closed cells by `*Upvalue` identity and rebinds the shared cell into each closure
+via these helpers. OPEN upvalues already shared correctly (`findUpvalue` dedups by
+register index), so only the closed path needed this.
+
+Additive only (no behavioural change to existing code paths). Verified: fork
+build + tests pass; `litd/luabind` coroutine save/load tests pass; the #271
+determinism golden (`0xcb2b8f8681a2de23`) is byte-identical (the value semantics
+are unchanged — this only affects the save WIRE form, gated behind the bumped
+`scriptSaveMagic` `LITDLUA\x03`); shared-cell round-trip FSV in
+`litd/savegame` (handlers and coroutines) confirms x=101 == unbroken after
+restore.
+
+Lettered "U" (upvalue): a save/load fidelity patch, not one of the four D-25
+determinism patches.

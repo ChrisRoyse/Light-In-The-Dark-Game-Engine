@@ -17,12 +17,9 @@
 // Fail-closed (§2.4): a handler that is a Go function or belongs to no registered
 // chunk is a loud error from SaveEventHandlers — never a silent drop. Handler
 // closures are serialized through the same shared-graph value persister the
-// coroutine saver uses (serializeRegisters / graphDecoder), so a handler's OWN
-// captured upvalues round-trip (#436). A closed upvalue CELL shared between two
-// handlers is NOT preserved (the persister interns tables/funcs/userdata by
-// identity but not upvalue cells — #437), and restoring it as two independent
-// cells would silently diverge the run; SaveEventHandlers therefore REFUSES a
-// handler set that shares a cell, rather than break determinism.
+// coroutine saver uses (serializeRegisters / graphDecoder), so captured upvalues
+// round-trip (#436) — INCLUDING a closed cell shared between two handlers, now
+// that the persister interns closed upvalue cells by identity (#437).
 package luabind
 
 import (
@@ -76,26 +73,6 @@ func SaveEventHandlers(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 	if len(s.eventHandlers) == 0 {
 		return bw.err
 	}
-	// A closed upvalue CELL shared by two handlers cannot round-trip (the persister
-	// does not intern upvalue cells — #437); restoring it as two cells would
-	// silently diverge the run. Detect sharing by cell identity and fail closed.
-	cellOwner := map[*lua.Upvalue]int{}
-	for i := range s.eventHandlers {
-		fn := s.eventHandlers[i].fn
-		if fn == nil {
-			continue // serializeRegisters reports the bad value below
-		}
-		for _, uv := range fn.Upvalues {
-			if uv == nil {
-				continue
-			}
-			if prev, ok := cellOwner[uv]; ok && prev != i {
-				return fmt.Errorf("luabind: SaveEventHandlers: handlers %d and %d share an upvalue cell — shared mutable upvalue cells are not yet preserved across save/load and would diverge the run (#437)", prev, i)
-			}
-			cellOwner[uv] = i
-		}
-	}
-
 	fns := make([]lua.LValue, len(s.eventHandlers))
 	for i, h := range s.eventHandlers {
 		bw.u16(uint16(h.kind))
