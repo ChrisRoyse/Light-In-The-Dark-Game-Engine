@@ -14,13 +14,19 @@
 // The reserved WaitForEvent dispatcher (#413, fixed HandlerID 1) already survives
 // this way; this extends the same guarantee to script-registered handlers.
 //
-// Fail-closed (§2.4): a handler that is a Go function, belongs to no registered
-// chunk, or captures upvalues is a loud error from SaveEventHandlers — never a
-// silent drop. Upvalue-capturing handlers are not yet supported (a proto
-// reference alone cannot rebind captured cells); tracked as a follow-up.
+// Fail-closed (§2.4): a handler that is a Go function or belongs to no registered
+// chunk is a loud error from SaveEventHandlers — never a silent drop. Handler
+// closures are serialized through the same shared-graph value persister the
+// coroutine saver uses (serializeRegisters / graphDecoder), so a handler's OWN
+// captured upvalues round-trip (#436). A closed upvalue CELL shared between two
+// handlers is NOT preserved (the persister interns tables/funcs/userdata by
+// identity but not upvalue cells — #437), and restoring it as two independent
+// cells would silently diverge the run; SaveEventHandlers therefore REFUSES a
+// handler set that shares a cell, rather than break determinism.
 package luabind
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -30,7 +36,9 @@ import (
 
 // eventSaveMagic tags the OnEvent-handler save section and pins its format
 // version. A mismatched magic on load is a loud refusal, never a partial restore.
-const eventSaveMagic = "LITDEVT\x01"
+// v2 (#436) serializes each handler as a full closure (proto ref + upvalues) via
+// the shared-graph persister, replacing v1's proto-reference-only encoding.
+const eventSaveMagic = "LITDEVT\x02"
 
 // scriptEventReg records one OnEvent(kind, fn) registration in the order it was
 // made. The api side keeps only the Go trampoline closure (the originating Lua
@@ -52,10 +60,11 @@ func registerScriptHandler(L *lua.LState, g *api.Game, s *scriptScheduler, kind 
 	return sub
 }
 
-// SaveEventHandlers serializes the OnEvent handler table on L to w: for each
-// handler, in registration order, its public EventKind and a content-addressed
-// reference (chunk id + proto path, never bytecode) to its Lua function. Pair it
-// with SaveScripts and api.Game.SaveState at the same tick boundary.
+// SaveEventHandlers serializes the OnEvent handler table on L to w: the public
+// EventKind of each handler (in registration order) followed by one shared-graph
+// blob holding every handler closure — proto references (chunk id + proto path,
+// never bytecode) plus captured upvalues, with shared cells interned once. Pair
+// it with SaveScripts and api.Game.SaveState at the same tick boundary.
 func SaveEventHandlers(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 	s := getScheduler(L)
 	if s == nil {
@@ -64,30 +73,51 @@ func SaveEventHandlers(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 	bw := &errWriter{w: w}
 	bw.writeRaw([]byte(eventSaveMagic))
 	bw.u32(uint32(len(s.eventHandlers)))
-	for i, h := range s.eventHandlers {
-		fn := h.fn
-		if fn == nil || fn.IsG || fn.Proto == nil {
-			return fmt.Errorf("luabind: SaveEventHandlers: handler %d (kind %d) is not a Lua function — cannot persist", i, h.kind)
-		}
-		if len(fn.Upvalues) > 0 {
-			return fmt.Errorf("luabind: SaveEventHandlers: handler %d (kind %d) captures %d upvalue(s) — not yet save-serializable (see #433 follow-up)", i, h.kind, len(fn.Upvalues))
-		}
-		chunkID, protoPath, err := reg.PathOf(fn.Proto)
-		if err != nil {
-			return fmt.Errorf("luabind: SaveEventHandlers: handler %d (kind %d): %w", i, h.kind, err)
-		}
-		bw.u16(uint16(h.kind))
-		writeStr(bw, chunkID)
-		writeStr(bw, protoPath)
+	if len(s.eventHandlers) == 0 {
+		return bw.err
 	}
+	// A closed upvalue CELL shared by two handlers cannot round-trip (the persister
+	// does not intern upvalue cells — #437); restoring it as two cells would
+	// silently diverge the run. Detect sharing by cell identity and fail closed.
+	cellOwner := map[*lua.Upvalue]int{}
+	for i := range s.eventHandlers {
+		fn := s.eventHandlers[i].fn
+		if fn == nil {
+			continue // serializeRegisters reports the bad value below
+		}
+		for _, uv := range fn.Upvalues {
+			if uv == nil {
+				continue
+			}
+			if prev, ok := cellOwner[uv]; ok && prev != i {
+				return fmt.Errorf("luabind: SaveEventHandlers: handlers %d and %d share an upvalue cell — shared mutable upvalue cells are not yet preserved across save/load and would diverge the run (#437)", prev, i)
+			}
+			cellOwner[uv] = i
+		}
+	}
+
+	fns := make([]lua.LValue, len(s.eventHandlers))
+	for i, h := range s.eventHandlers {
+		bw.u16(uint16(h.kind))
+		fns[i] = h.fn
+	}
+	// One shared graph for all handlers. serializeRegisters fails closed on a Go
+	// function or a function from no registered chunk.
+	blob, err := serializeRegisters(reg, L, fns, GameHandles{G: s.g})
+	if err != nil {
+		return fmt.Errorf("luabind: SaveEventHandlers: %w", err)
+	}
+	bw.u32(uint32(len(blob)))
+	bw.writeRaw(blob)
 	return bw.err
 }
 
 // RestoreEventHandlers rebuilds the OnEvent handler table from r against reg and
 // re-binds each handler to g. It MUST run on a fresh game BEFORE g.LoadState —
 // see the package doc for why registration-order replay re-allocates matching
-// per-kind HandlerIDs. A nil scheduler, bad magic, truncated data, or
-// unresolvable proto is a loud error and no partial table is left.
+// per-kind HandlerIDs. A nil scheduler, bad magic, truncated data, an
+// unresolvable proto, or a root that is not a function is a loud error and no
+// partial table is left.
 func RestoreEventHandlers(L *lua.LState, reg *ChunkRegistry, g *api.Game, r io.Reader) error {
 	s := getScheduler(L)
 	if s == nil {
@@ -107,33 +137,41 @@ func RestoreEventHandlers(L *lua.LState, reg *ChunkRegistry, g *api.Game, r io.R
 	}
 	// Rebuild from scratch; a re-save after restore must reproduce this table.
 	s.eventHandlers = nil
-	for i := uint32(0); i < n; i++ {
-		kind := api.EventKind(br.u16())
-		chunkID := readStr(br)
-		protoPath := readStr(br)
-		if br.err != nil {
-			return fmt.Errorf("luabind: RestoreEventHandlers: handler %d: %w", i, br.err)
+	if n == 0 {
+		return nil
+	}
+	kinds := make([]api.EventKind, n)
+	for i := range kinds {
+		kinds[i] = api.EventKind(br.u16())
+	}
+	blobLen := br.u32()
+	blob := br.readRaw(int(blobLen))
+	if br.err != nil {
+		return fmt.Errorf("luabind: RestoreEventHandlers: %w", br.err)
+	}
+	var vb valuesBlob
+	if err := json.Unmarshal(blob, &vb); err != nil {
+		return fmt.Errorf("luabind: RestoreEventHandlers: malformed closure blob: %w", err)
+	}
+	d, err := newGraphDecoder(L, reg, &vb, GameHandles{G: s.g})
+	if err != nil {
+		return fmt.Errorf("luabind: RestoreEventHandlers: %w", err)
+	}
+	roots, err := d.roots()
+	if err != nil {
+		return fmt.Errorf("luabind: RestoreEventHandlers: %w", err)
+	}
+	// Wire closed upvalues (and any open ones, against L) AFTER the closures and
+	// tables exist, so shared cells coincide.
+	if err := d.wireUpvalues(L); err != nil {
+		return fmt.Errorf("luabind: RestoreEventHandlers: %w", err)
+	}
+	for i, root := range roots {
+		fn, ok := root.(*lua.LFunction)
+		if !ok {
+			return fmt.Errorf("luabind: RestoreEventHandlers: handler %d decoded to %s, not a function", i, root.Type())
 		}
-		proto, err := reg.ResolveProto(chunkID, protoPath)
-		if err != nil {
-			return fmt.Errorf("luabind: RestoreEventHandlers: handler %d (kind %d): %w", i, kind, err)
-		}
-		registerScriptHandler(L, g, s, kind, L.NewFunctionFromProto(proto))
+		registerScriptHandler(L, g, s, kinds[i], fn)
 	}
 	return nil
-}
-
-// writeStr frames a string as a u32 length prefix followed by its bytes.
-func writeStr(bw *errWriter, s string) {
-	bw.u32(uint32(len(s)))
-	bw.writeRaw([]byte(s))
-}
-
-// readStr reads a u32-length-prefixed string written by writeStr.
-func readStr(br *errReader) string {
-	n := br.u32()
-	if br.err != nil {
-		return ""
-	}
-	return string(br.readRaw(int(n)))
 }

@@ -386,31 +386,105 @@ end)`
 	t.Logf("FSV #433: OnEvent handler restored & fired — original (x=10) killed post-restore, handler's marker (x=%.1f) is sole survivor; StateHash %#x == unbroken", gotX, refHash)
 }
 
-// #433 fail-closed edge (§2.4): an OnEvent handler that captures an upvalue
-// cannot yet be persisted (a proto reference alone can't rebind the captured
-// cell). SaveEventHandlers must REFUSE loudly, not silently drop the handler.
-func TestUpvalueHandlerRejectedFSV(t *testing.T) {
-	// `n` is a local of the chunk → an UPVALUE of the handler closure.
-	const src = `local n = 0
-OnEvent(1, function() n = n + 1 end)`
+// #436: an OnEvent handler that CAPTURES AN UPVALUE must survive save/load — the
+// captured cell round-trips through the closure persister. SoT = sim: the handler
+// closes over a spawn coordinate (spawnX = 300, a chunk local = an upvalue) and,
+// on a unit death, spawns its marker at x=spawnX. The coroutine kills the original
+// (x=10) AFTER the save point, so the death — hence the handler's read of the
+// captured cell — happens only in the RESTORED runtime. If the upvalue did not
+// round-trip, the restored handler would spawn at the wrong x (or error on nil)
+// and the survivor's position would not be 300.
+func TestUpvalueHandlerSurvivesSaveLoadFSV(t *testing.T) {
+	const src = `local spawnX = 300
+OnEvent(1, function()
+	Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=spawnX, y=0}, 0)
+end)
+Run(function()
+	local u = Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=10, y=0}, 0)
+	PolledWait(50.0)
+	Unit_Kill(u)
+end)`
+	const saveTick, total = 500, 1200
+
+	gR, LR := newGame(t)
+	regR := runChunk(t, LR, "upval", src)
+	gR.Advance(total)
+	refHash := gR.StateHash()
+	if n, x := liveUnits(gR); n != 1 || x < 299 || x > 301 {
+		t.Fatalf("unbroken final: want 1 unit at x≈300 (captured spawnX), got %d units x=%.1f", n, x)
+	}
+	LR.Close()
+	regR.Close()
+
+	// Save mid-wait, BEFORE the kill (the upvalue cell holds 300, handler unfired).
+	gA, LA := newGame(t)
+	regA := runChunk(t, LA, "upval", src)
+	gA.Advance(saveTick)
+	var buf bytes.Buffer
+	if err := Write(&buf, gA, LA, regA, fp); err != nil {
+		t.Fatalf("Write@%d (upvalue handler must now persist): %v", saveTick, err)
+	}
+	LA.Close()
+	regA.Close()
+
+	gB, LB := newGame(t)
+	defer LB.Close()
+	regB := luabind.NewChunkRegistry()
+	defer regB.Close()
+	if _, err := regB.Register("upval", src); err != nil {
+		t.Fatalf("re-register: %v", err)
+	}
+	if err := Load(bytes.NewReader(buf.Bytes()), gB, LB, regB, fp); err != nil {
+		t.Fatalf("Load@%d: %v", saveTick, err)
+	}
+	gB.Advance(total - saveTick)
+	gotN, gotX := liveUnits(gB)
+	if gotN != 1 {
+		t.Fatalf("restored final: %d units — upvalue handler did not fire", gotN)
+	}
+	if gotX < 299 || gotX > 301 {
+		t.Fatalf("restored survivor at x=%.1f, want x≈300 — captured upvalue spawnX did NOT round-trip", gotX)
+	}
+	if gotHash := gB.StateHash(); gotHash != refHash {
+		t.Fatalf("HASH MISMATCH: restored %#x != unbroken %#x", gotHash, refHash)
+	}
+	t.Logf("FSV #436: upvalue-capturing handler round-tripped — captured spawnX=300 survived save/load, marker spawned at x=%.1f; StateHash %#x == unbroken", gotX, refHash)
+}
+
+// #436 / #437 fail-closed edge (§2.4): two handlers that SHARE one upvalue cell
+// cannot round-trip (the closure persister does not intern upvalue cells), and
+// restoring them as independent cells would silently diverge the run. The save
+// must REFUSE loudly rather than produce a desyncing container. Verified ground
+// truth first: the unbroken run yields a survivor at x=101 (shared cell, h2 sees
+// h1's increment); a naive restore would yield x=100 — the exact divergence this
+// guard prevents.
+func TestSharedUpvalueHandlersRefusedFSV(t *testing.T) {
+	const src = `local shared = 0
+OnEvent(1, function() shared = shared + 1 end)
+OnEvent(1, function() Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=100+shared, y=0}, 0) end)
+Run(function()
+	local u = Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=10, y=0}, 0)
+	PolledWait(50.0)
+	Unit_Kill(u)
+end)`
 	g, L := newGame(t)
 	defer L.Close()
-	reg := runChunk(t, L, "upval", src)
+	reg := runChunk(t, L, "shared", src)
 	defer reg.Close()
-	g.Advance(2)
+	g.Advance(2) // coroutine parked; handlers registered, cell shared
 
 	var buf bytes.Buffer
 	err := Write(&buf, g, L, reg, fp)
 	if err == nil {
-		t.Fatal("save of an upvalue-capturing handler must be refused, got nil error")
+		t.Fatal("save of handlers sharing an upvalue cell must be refused, got nil error")
 	}
-	if !bytes.Contains([]byte(err.Error()), []byte("upvalue")) {
-		t.Fatalf("expected an upvalue-rejection error, got: %v", err)
+	if !bytes.Contains([]byte(err.Error()), []byte("share an upvalue cell")) {
+		t.Fatalf("expected a shared-cell rejection, got: %v", err)
 	}
 	if buf.Len() != 0 {
-		t.Fatalf("refused save still wrote %d bytes — must write nothing", buf.Len())
+		t.Fatalf("refused save wrote %d bytes — must write nothing", buf.Len())
 	}
-	t.Logf("FSV #433 fail-closed: upvalue-capturing handler refused → %v", err)
+	t.Logf("FSV #437 fail-closed: handlers sharing an upvalue cell refused → %v", err)
 }
 
 func withFreshCRC(body []byte) []byte {
