@@ -51,30 +51,46 @@ var setupAllowlist = map[string]bool{
 }
 
 // methodErrAllowlist names methods permitted to return error despite R-API-5's
-// "gameplay verbs never error" rule. Two kinds qualify, neither a gameplay verb:
-//   - persistence-boundary IO: Storage.Save/Load read/write an external byte
-//     stream and MUST fail closed on bad magic / version / truncation
-//     (doctrine §9), expressible only as an error.
+// "gameplay verbs never error" rule. Three kinds qualify, none a gameplay verb
+// (public-api-design.md §3.5: "setup returns errors; gameplay verbs never do",
+// plus pipeline operations that can genuinely fail):
+//   - persistence-boundary IO: Storage.Save/Load and Game.SaveState/LoadState
+//     read/write an external byte stream and MUST fail closed on bad magic /
+//     version / truncation / fingerprint mismatch (doctrine §9), expressible only
+//     as an error. SaveState/LoadState (#204/#270) are called between ticks, never
+//     mid-Advance — an IO boundary, not a gameplay verb.
+//   - deserialization-boundary: Game.StageCommand (#68) decodes one encoded
+//     command record from the lockstep layer and MUST reject malformed bytes
+//     (fail-closed parse, doctrine §9). The lockstep driver stages records between
+//     ticks; the error reports un-decodable bytes, not a gameplay outcome.
 //   - SETUP methods: construction-time verbs that validate their inputs before a
 //     match runs. Game.DefineUnits (#387) seeds unit definitions (the method
 //     analog of the NewGame/LoadMap free-func setup allowlist) and returns error
 //     on invalid/conflicting defs — a load-time failure, never mid-match.
 //     Game.LoadWorld (#268) loads a world directory at runtime and MUST fail
 //     loudly at load (broken data table / Lua syntax / quota), never mid-match.
+//     DefineResourceNodes (#401) and DefineCombat (#406) are the same install-seam
+//     shape (each documents itself "A setup verb (R-API-5)"): they fail closed on
+//     an empty / oversized / ragged table at bind time, never during a tick.
 //
 // Keyed "Type.Method".
 var methodErrAllowlist = map[string]bool{
-	"Storage.Save":     true,
-	"Storage.Load":     true,
-	"Game.DefineUnits":     true,
-	"Game.LoadWorld":       true,
-	"Game.DefineEffects":   true,
-	"Game.DefineAbilities": true,
-	"Game.DefineItems":     true,
-	"Game.DefineBuffTypes": true,
-	"Game.DefineUpgrades":  true,
-	"Game.DefineEconomy":   true,
-	"Game.DefineHeroes":    true,
+	"Storage.Save":             true,
+	"Storage.Load":             true,
+	"Game.SaveState":           true,
+	"Game.LoadState":           true,
+	"Game.StageCommand":        true,
+	"Game.DefineUnits":         true,
+	"Game.LoadWorld":           true,
+	"Game.DefineEffects":       true,
+	"Game.DefineAbilities":     true,
+	"Game.DefineItems":         true,
+	"Game.DefineBuffTypes":     true,
+	"Game.DefineUpgrades":      true,
+	"Game.DefineEconomy":       true,
+	"Game.DefineHeroes":        true,
+	"Game.DefineResourceNodes": true,
+	"Game.DefineCombat":        true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the

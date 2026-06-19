@@ -275,3 +275,42 @@ exact   Unit.SetMana
 exact   Unit.SwapItems
 exact   UnitSet.AppendUnits
 exact   UnitSet.Compact
+
+# lockstep net seam (#68): the thin api the deterministic-network layer (litd/net)
+# drives — current tick, stage one encoded command record, ingest the staged
+# batch between ticks, and a per-record consumption hook for desync verification.
+# Records cross as encoded bytes (no sim types leak). LitD-original lockstep
+# plumbing; WC3 had no script-level command-staging surface.
+exact   Game.Tick
+exact   Game.StageCommand
+exact   Game.IngestCommands
+exact   Game.OnCommandRecord
+
+# mid-game save/load seam (#204/#270): write/read a deterministic match snapshot
+# (entity state + the stackless scheduler's suspension records) across an io byte
+# stream, fingerprint-tagged. Called between ticks. Supersedes JASS gamecache
+# (the typed Storage noun) — these persist the whole match, no JASS equivalent.
+exact   Game.SaveState
+exact   Game.LoadState
+
+# map-data exposure (#410): read the loaded map's authored placements — the map
+# handle, start locations, and beacon control-points — so worlds read the map
+# instead of hardcoding. WC3 exposes map data through the editor / map file, not
+# a script native; this is the LitD read seam.
+exact   Game.MapData
+exact   Game.MapStarts
+exact   Game.MapBeacons
+
+# Lua coroutine scheduler seam (#269/#270): the api-side hooks the luabind layer
+# binds — register a resume continuation id and post a descriptive (serializable)
+# script wake record on the stackless scheduler. Structural plumbing for the
+# deterministic green-thread model (execution-model.md §7), no JASS equivalent.
+exact   Game.RegisterScriptCont
+exact   Game.AfterScript
+
+# determinism/verification seam (#271): the per-system hash breakdown behind
+# Game.StateHash — a snapshot of the top digest plus each subsystem's sub-digest,
+# and the matching ordered system names — for localizing a desync. Leak-free
+# (uint64s + names, no sim types). LitD-original, no JASS equivalent.
+exact   Game.HashSnapshot
+exact   HashSystemNames
