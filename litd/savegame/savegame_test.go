@@ -258,6 +258,161 @@ func TestMidGameSaveLoad10kFSV(t *testing.T) {
 		parked, got, refHash)
 }
 
+// runChunk registers src as a named chunk and runs it through the registered
+// proto (so coroutine/handler protos resolve for save), returning the registry.
+func runChunk(t *testing.T, L *lua.LState, name, src string) *luabind.ChunkRegistry {
+	t.Helper()
+	reg := luabind.NewChunkRegistry()
+	cid, err := reg.Register(name, src)
+	if err != nil {
+		t.Fatalf("register %s: %v", name, err)
+	}
+	proto, err := reg.ResolveProto(cid, "")
+	if err != nil {
+		t.Fatalf("ResolveProto: %v", err)
+	}
+	L.Push(L.NewFunctionFromProto(proto))
+	if err := L.PCall(0, 0, nil); err != nil {
+		t.Fatalf("run chunk %s: %v", name, err)
+	}
+	return reg
+}
+
+// liveUnits returns (count, X-of-lone-unit) for the sole-survivor assertions
+// below; X is NaN-safe only in that we never call it with count != 1.
+func liveUnits(g *api.Game) (int, float64) {
+	us := g.AllUnits(nil)
+	if len(us) == 1 {
+		return 1, us[0].Position().X
+	}
+	return len(us), 0
+}
+
+// #433: an OnEvent handler registered by a world must survive save/load. Before
+// the fix, LoadState failed closed ("subscription for kind 1 references
+// unregistered HandlerID") because the kind→HandlerID subscription serialized but
+// the handler was never re-registered.
+//
+// SoT = the SIM (Game.StateHash + the live-unit set), NOT a Lua global: mid-game
+// save deliberately does not re-run the world chunk, so Lua DATA globals set at
+// top level are not persisted (separate limitation, filed). The handler is made
+// self-contained — on a unit death it CREATES a marker unit at x=20, referencing
+// only re-bound global FUNCTIONS, no captured data. This proves three things:
+//   (a) the container loads (no dangling-HandlerID refusal),
+//   (b) the restored handler actually FIRES — the coroutine kills the original
+//       unit (x=10) at tick 1,000 (after the save), the death event drives the
+//       handler, and the sole survivor is the handler's NEW unit at x=20 (X+X=Y:
+//       had the handler not fired, zero units would remain),
+//   (c) the final Game.StateHash equals the unbroken run, bit-for-bit.
+func TestEventHandlerSurvivesSaveLoadFSV(t *testing.T) {
+	// kind 1 = unit death. The handler creates a marker unit at x=20 (distinct
+	// from the original at x=10). The coroutine creates the original, waits 50s
+	// (1,000 ticks), then kills it — so a save at tick 500 parks the coroutine
+	// mid-wait and the death fires only in the restored run (tick 1,000).
+	const src = `OnEvent(1, function()
+	Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=20, y=0}, 0)
+end)
+Run(function()
+	local u = Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=10, y=0}, 0)
+	PolledWait(50.0)
+	Unit_Kill(u)
+end)`
+	const saveTick, total = 500, 1200 // kill at 1000; save before, finish after
+
+	// Unbroken reference (run twice for reproducibility) + final unit SoT.
+	gR, LR := newGame(t)
+	regR := runChunk(t, LR, "evt", src)
+	gR.Advance(total)
+	refHash := gR.StateHash()
+	refN, refX := liveUnits(gR)
+	LR.Close()
+	regR.Close()
+	if refN != 1 || refX < 19 || refX > 21 {
+		t.Fatalf("unbroken final: want 1 unit at x≈20 (handler's marker), got %d units x=%.1f", refN, refX)
+	}
+	gR2, LR2 := newGame(t)
+	regR2 := runChunk(t, LR2, "evt", src)
+	gR2.Advance(total)
+	if h := gR2.StateHash(); h != refHash {
+		t.Fatalf("unbroken not reproducible: %#x != %#x", h, refHash)
+	}
+	LR2.Close()
+	regR2.Close()
+
+	// Save mid-wait, BEFORE the kill: exactly the original unit (x=10) is alive.
+	gA, LA := newGame(t)
+	regA := runChunk(t, LA, "evt", src)
+	gA.Advance(saveTick)
+	if n, x := liveUnits(gA); n != 1 || x < 9 || x > 11 {
+		t.Fatalf("pre-save: want 1 unit at x≈10 (original, not yet killed), got %d units x=%.1f", n, x)
+	}
+	var buf bytes.Buffer
+	if err := Write(&buf, gA, LA, regA, fp); err != nil {
+		t.Fatalf("Write@%d: %v", saveTick, err)
+	}
+	LA.Close()
+	regA.Close()
+
+	// Restore into a fresh runtime — the registry must hold the world chunk, as
+	// the world loader would.
+	gB, LB := newGame(t)
+	defer LB.Close()
+	regB := luabind.NewChunkRegistry()
+	defer regB.Close()
+	if _, err := regB.Register("evt", src); err != nil {
+		t.Fatalf("re-register: %v", err)
+	}
+	if err := Load(bytes.NewReader(buf.Bytes()), gB, LB, regB, fp); err != nil {
+		t.Fatalf("Load@%d: %v (the #433 regression — handler subscription not restored)", saveTick, err)
+	}
+	// SoT right after restore: still the original unit at x≈10, coroutine parked.
+	if n, x := liveUnits(gB); n != 1 || x < 9 || x > 11 {
+		t.Fatalf("post-restore pre-advance: want 1 unit at x≈10, got %d units x=%.1f", n, x)
+	}
+
+	// Drive past the kill (tick 1000): the coroutine kills the original; the
+	// RESTORED handler must fire and leave its marker as the sole survivor.
+	gB.Advance(total - saveTick)
+	gotN, gotX := liveUnits(gB)
+	if gotN != 1 {
+		t.Fatalf("restored final: %d units — restored OnEvent handler did NOT fire (expected its marker as sole survivor)", gotN)
+	}
+	if gotX < 19 || gotX > 21 {
+		t.Fatalf("restored survivor at x=%.1f, want x≈20 (handler's marker) — wrong unit survived", gotX)
+	}
+	if gotHash := gB.StateHash(); gotHash != refHash {
+		t.Fatalf("HASH MISMATCH: restored %#x != unbroken %#x", gotHash, refHash)
+	}
+	t.Logf("FSV #433: OnEvent handler restored & fired — original (x=10) killed post-restore, handler's marker (x=%.1f) is sole survivor; StateHash %#x == unbroken", gotX, refHash)
+}
+
+// #433 fail-closed edge (§2.4): an OnEvent handler that captures an upvalue
+// cannot yet be persisted (a proto reference alone can't rebind the captured
+// cell). SaveEventHandlers must REFUSE loudly, not silently drop the handler.
+func TestUpvalueHandlerRejectedFSV(t *testing.T) {
+	// `n` is a local of the chunk → an UPVALUE of the handler closure.
+	const src = `local n = 0
+OnEvent(1, function() n = n + 1 end)`
+	g, L := newGame(t)
+	defer L.Close()
+	reg := runChunk(t, L, "upval", src)
+	defer reg.Close()
+	g.Advance(2)
+
+	var buf bytes.Buffer
+	err := Write(&buf, g, L, reg, fp)
+	if err == nil {
+		t.Fatal("save of an upvalue-capturing handler must be refused, got nil error")
+	}
+	if !bytes.Contains([]byte(err.Error()), []byte("upvalue")) {
+		t.Fatalf("expected an upvalue-rejection error, got: %v", err)
+	}
+	if buf.Len() != 0 {
+		t.Fatalf("refused save still wrote %d bytes — must write nothing", buf.Len())
+	}
+	t.Logf("FSV #433 fail-closed: upvalue-capturing handler refused → %v", err)
+}
+
 func withFreshCRC(body []byte) []byte {
 	out := make([]byte, len(body)+4)
 	copy(out, body)

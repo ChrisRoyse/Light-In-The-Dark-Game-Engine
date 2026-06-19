@@ -28,9 +28,16 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 	L.SetGlobal("OnEvent", L.NewFunction(func(L *lua.LState) int {
 		kind := api.EventKind(uint16(L.CheckInt(1)))
 		fn := L.CheckFunction(2)
-		sub := g.OnEvent(kind, func(ev api.Event) {
-			callEventHandler(L, fn, ev)
-		})
+		var sub api.Subscription
+		if s := getScheduler(L); s != nil {
+			// Route through the scheduler so the registration is recorded for
+			// save/load (#433); identical trampoline either way.
+			sub = registerScriptHandler(L, g, s, kind, fn)
+		} else {
+			sub = g.OnEvent(kind, func(ev api.Event) {
+				callEventHandler(L, fn, ev)
+			})
+		}
 		L.Push(pushHandle(L, sub)) // Subscription handle (pass to Cancel)
 		return 1
 	}))

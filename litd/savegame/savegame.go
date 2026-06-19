@@ -32,8 +32,11 @@ import (
 var magic = [8]byte{'L', 'I', 'T', 'D', 'S', 'A', 'V', 'E'}
 
 // FormatVersion is the container schema version. Load refuses any other version
-// (no silent migration); bump it when the container layout changes.
-const FormatVersion uint8 = 1
+// (no silent migration); bump it when the container layout changes. v2 (#433)
+// adds an OnEvent-handler section between the sim and script sections, restored
+// before the sim so its per-kind HandlerIDs are registered when LoadState
+// validates the sim's subscriptions.
+const FormatVersion uint8 = 2
 
 // Write serializes a full mid-game save to w: the sim state and the Lua scheduler
 // state under one versioned, CRC-protected envelope. fingerprint is the world's
@@ -47,6 +50,10 @@ func Write(w io.Writer, g *api.Game, L *lua.LState, reg *luabind.ChunkRegistry, 
 	if err := g.SaveState(&sim, fingerprint); err != nil {
 		return fmt.Errorf("savegame: sim state: %w", err)
 	}
+	var events bytes.Buffer
+	if err := luabind.SaveEventHandlers(L, reg, &events); err != nil {
+		return fmt.Errorf("savegame: event handlers: %w", err)
+	}
 	var scripts bytes.Buffer
 	if err := luabind.SaveScripts(L, reg, &scripts); err != nil {
 		return fmt.Errorf("savegame: script state: %w", err)
@@ -59,6 +66,8 @@ func Write(w io.Writer, g *api.Game, L *lua.LState, reg *luabind.ChunkRegistry, 
 	writeU64(&payload, fingerprint)
 	writeU64(&payload, uint64(sim.Len()))
 	payload.Write(sim.Bytes())
+	writeU64(&payload, uint64(events.Len()))
+	payload.Write(events.Bytes())
 	writeU64(&payload, uint64(scripts.Len()))
 	payload.Write(scripts.Bytes())
 
@@ -86,8 +95,8 @@ func Load(r io.Reader, g *api.Game, L *lua.LState, reg *luabind.ChunkRegistry, f
 	if err != nil {
 		return fmt.Errorf("savegame: read: %w", err)
 	}
-	// Minimum: magic(8)+version(1)+fp(8)+simLen(8)+scriptLen(8)+crc(4) = 37 bytes.
-	if len(all) < 37 {
+	// Minimum: magic(8)+version(1)+fp(8)+simLen(8)+evtLen(8)+scriptLen(8)+crc(4) = 45 bytes.
+	if len(all) < 45 {
 		return fmt.Errorf("savegame: file too short (%d bytes) — truncated or not a save", len(all))
 	}
 	body, want := all[:len(all)-4], binary.LittleEndian.Uint32(all[len(all)-4:])
@@ -109,6 +118,10 @@ func Load(r io.Reader, g *api.Game, L *lua.LState, reg *luabind.ChunkRegistry, f
 	if err != nil {
 		return err
 	}
+	eventBytes, off, err := readFramed(p, off, "events")
+	if err != nil {
+		return err
+	}
 	scriptBytes, off, err := readFramed(p, off, "script")
 	if err != nil {
 		return err
@@ -117,8 +130,16 @@ func Load(r io.Reader, g *api.Game, L *lua.LState, reg *luabind.ChunkRegistry, f
 		return fmt.Errorf("savegame: %d trailing bytes after framed sections — malformed", len(p)-off)
 	}
 
-	// Validation passed; only now mutate. Sim first, then scripts (the scheduler's
-	// suspension records reference sim handles the sim restore re-establishes).
+	// Validation passed; only now mutate. Order is load-bearing (#433):
+	//  1. Event handlers FIRST — re-registering them re-allocates the per-kind sim
+	//     HandlerIDs, so they exist when LoadState validates the sim's subscriptions
+	//     (else LoadState fails closed on a dangling HandlerID).
+	//  2. Sim — restores the world incl. the now-resolvable event subscriptions.
+	//  3. Scripts — the scheduler's coroutines reference sim handles the sim restore
+	//     re-established.
+	if err := luabind.RestoreEventHandlers(L, reg, g, bytes.NewReader(eventBytes)); err != nil {
+		return fmt.Errorf("savegame: restore event handlers: %w", err)
+	}
 	if err := g.LoadState(bytes.NewReader(simBytes), fingerprint); err != nil {
 		return fmt.Errorf("savegame: restore sim: %w", err)
 	}

@@ -70,6 +70,11 @@ type scriptScheduler struct {
 	// by slot+gen (value-typed State), never by a Go closure — so it serializes.
 	threads    []scriptThread
 	threadFree []uint32
+	// eventHandlers records every OnEvent(kind, fn) registration in order, so the
+	// handler table can be serialized (SaveEventHandlers) and reconstructed with
+	// matching per-kind HandlerIDs on load (RestoreEventHandlers, #433). The api
+	// side holds only the Go trampoline, from which the Lua fn is unrecoverable.
+	eventHandlers []scriptEventReg
 	// pendingWaitSecs carries the seconds a coroutine asked to wait, from the
 	// PolledWait native to resume(), WITHOUT pushing it through the Lua value
 	// stack (#265). Passing it as a Lua value forced an LNumber→interface box
