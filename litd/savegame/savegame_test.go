@@ -164,6 +164,100 @@ func TestResaveStableFSV(t *testing.T) {
 	t.Logf("FSV #204 resave: save→load→save→load reaches identical final hash %#x", g.StateHash())
 }
 
+// scenario10k exercises the scheduler-suspension save path at scale: six coroutines
+// each create + walk their own unit (in-Lua handles, so they marshal cleanly) over
+// 600 hops spaced 10 ticks apart = 6,000 ticks of activity — so at the tick-5,000
+// save point all six are PARKED mid-wait, and they complete before tick 10,000.
+// (api.OnEvent Lua-closure handlers are intentionally NOT used here — they do not
+// survive save/load; see the filed discovery. The reserved scheduler waits do.)
+const scenario10k = `for i=1,6 do
+	Run(function()
+		local u = Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=i*10, y=0}, 0)
+		for k=1,600 do
+			local p = Unit_Position(u)
+			Unit_SetPosition(u, {x = p.x + 1, y = p.y})
+			PolledWait(0.5)
+		end
+	end)
+end`
+
+func runScenario10k(t *testing.T) (*api.Game, *lua.LState, *luabind.ChunkRegistry) {
+	t.Helper()
+	g, L := newGame(t)
+	reg := luabind.NewChunkRegistry()
+	cid, err := reg.Register("world10k", scenario10k)
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	proto, err := reg.ResolveProto(cid, "")
+	if err != nil {
+		t.Fatalf("ResolveProto: %v", err)
+	}
+	L.Push(L.NewFunctionFromProto(proto))
+	if err := L.PCall(0, 0, nil); err != nil {
+		t.Fatalf("run scenario: %v", err)
+	}
+	return g, L, reg
+}
+
+// #430 / #271 edge: a mid-run save/restore at scale (tick 5,000 of 10,000) through
+// the real savegame container must reach a final hash bit-identical to the unbroken
+// 10k run. This is the determinism thesis on the actual save path, not a toy. It
+// uses its own self-consistent comparison (not #271's committed golden, which the
+// existing single-platform test guards), so the two tests stay independent.
+func TestMidGameSaveLoad10kFSV(t *testing.T) {
+	if testing.Short() {
+		t.Skip("10k-tick save/restore scenario is slow; run without -short")
+	}
+	// Unbroken reference, run twice to prove reproducibility.
+	gR, LR, regR := runScenario10k(t)
+	gR.Advance(10000)
+	refHash := gR.StateHash()
+	LR.Close()
+	regR.Close()
+	gR2, LR2, regR2 := runScenario10k(t)
+	gR2.Advance(10000)
+	if h2 := gR2.StateHash(); h2 != refHash {
+		t.Fatalf("unbroken 10k not reproducible: %#x != %#x", h2, refHash)
+	}
+	LR2.Close()
+	regR2.Close()
+
+	// Save at tick 5,000 through the container, restore into a fresh runtime, run
+	// the remaining 5,000.
+	gA, LA, regA := runScenario10k(t)
+	gA.Advance(5000)
+	var buf bytes.Buffer
+	if err := Write(&buf, gA, LA, regA, fp); err != nil {
+		t.Fatalf("Write@5000: %v", err)
+	}
+	parked := luabind.PendingScriptWaits(LA)
+	LA.Close()
+	regA.Close()
+	t.Logf("FSV #430 save@5000: container=%d bytes, %d coroutines parked", buf.Len(), parked)
+
+	gB, LB := newGame(t)
+	defer LB.Close()
+	regB := luabind.NewChunkRegistry()
+	defer regB.Close()
+	if _, err := regB.Register("world10k", scenario10k); err != nil {
+		t.Fatalf("re-register: %v", err)
+	}
+	if err := Load(bytes.NewReader(buf.Bytes()), gB, LB, regB, fp); err != nil {
+		t.Fatalf("Load@5000: %v", err)
+	}
+	if n := luabind.PendingScriptWaits(LB); n != parked {
+		t.Fatalf("post-restore parked=%d, want %d (wake schedule did not round-trip)", n, parked)
+	}
+	gB.Advance(5000)
+	got := gB.StateHash()
+	if got != refHash {
+		t.Fatalf("HASH MISMATCH at 10k: restored %#x != unbroken %#x — mid-run save/restore not bit-identical", got, refHash)
+	}
+	t.Logf("FSV #430 keystone: save@5000 (%d coroutines parked) → fresh restore → run to 10000 → StateHash %#x == unbroken %#x",
+		parked, got, refHash)
+}
+
 func withFreshCRC(body []byte) []byte {
 	out := make([]byte, len(body)+4)
 	copy(out, body)
