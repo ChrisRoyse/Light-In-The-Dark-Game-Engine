@@ -113,10 +113,125 @@ func rules(fs []finding) []string {
 	return r
 }
 
+// monoVorbisOgg builds a minimal valid mono Vorbis Ogg (identification header on a
+// BOS page + an EOS page carrying `frames` as the final granule). channels=1,
+// rate=44100 satisfies the world-SFX layout rule (#228).
+func monoVorbisOgg(channels byte, rate uint32, frames int64) []byte {
+	page := func(headerType byte, granule int64, seq uint32, packet []byte) []byte {
+		var segs []byte
+		n := len(packet)
+		for n >= 255 {
+			segs = append(segs, 255)
+			n -= 255
+		}
+		segs = append(segs, byte(n))
+		var b bytes.Buffer
+		b.WriteString("OggS")
+		b.WriteByte(0)
+		b.WriteByte(headerType)
+		binary.Write(&b, binary.LittleEndian, granule)
+		binary.Write(&b, binary.LittleEndian, uint32(0xCAFE))
+		binary.Write(&b, binary.LittleEndian, seq)
+		binary.Write(&b, binary.LittleEndian, uint32(0))
+		b.WriteByte(byte(len(segs)))
+		b.Write(segs)
+		b.Write(packet)
+		return b.Bytes()
+	}
+	var id bytes.Buffer
+	id.WriteByte(1)
+	id.WriteString("vorbis")
+	binary.Write(&id, binary.LittleEndian, uint32(0))
+	id.WriteByte(channels)
+	binary.Write(&id, binary.LittleEndian, rate)
+	binary.Write(&id, binary.LittleEndian, int32(0))
+	binary.Write(&id, binary.LittleEndian, int32(0))
+	binary.Write(&id, binary.LittleEndian, int32(0))
+	id.WriteByte(0xB8)
+	id.WriteByte(1)
+	return append(page(0x02, 0, 0, id.Bytes()), page(0x04, frames, 1, []byte{})...)
+}
+
+// opusInOgg builds an Ogg whose identification header is OpusHead (wrong codec).
+func opusInOgg(channels byte) []byte {
+	page := func(headerType byte, granule int64, seq uint32, packet []byte) []byte {
+		var b bytes.Buffer
+		b.WriteString("OggS")
+		b.WriteByte(0)
+		b.WriteByte(headerType)
+		binary.Write(&b, binary.LittleEndian, granule)
+		binary.Write(&b, binary.LittleEndian, uint32(0xBEEF))
+		binary.Write(&b, binary.LittleEndian, seq)
+		binary.Write(&b, binary.LittleEndian, uint32(0))
+		b.WriteByte(1)
+		b.WriteByte(byte(len(packet)))
+		b.Write(packet)
+		return b.Bytes()
+	}
+	var h bytes.Buffer
+	h.WriteString("OpusHead")
+	h.WriteByte(1)
+	h.WriteByte(channels)
+	binary.Write(&h, binary.LittleEndian, uint16(0))
+	binary.Write(&h, binary.LittleEndian, uint32(48000))
+	binary.Write(&h, binary.LittleEndian, uint16(0))
+	h.WriteByte(0)
+	return append(page(0x02, 0, 0, h.Bytes()), page(0x04, 48000, 1, []byte{})...)
+}
+
+func rulesContain(fs []finding, rule string) bool {
+	for _, f := range fs {
+		if f.Rule == rule {
+			return true
+		}
+	}
+	return false
+}
+
+// #228 FSV: each audio rule rejects its violation in a constructed fixture tree.
+func TestAudioStereoWorldSFXRejectedFSV(t *testing.T) {
+	f := newFixture(t)
+	f.add(t, "sfx/loud.ogg", monoVorbisOgg(2, 44100, 100), true) // stereo in a world dir
+	got := f.run(t)
+	if !rulesContain(got, "AUD-CHAN") {
+		t.Fatalf("stereo world SFX must yield AUD-CHAN, got %v", got)
+	}
+	t.Logf("FSV #228 assetcheck: stereo world SFX → AUD-CHAN")
+}
+
+func TestAudioOpusRejectedFSV(t *testing.T) {
+	f := newFixture(t)
+	f.add(t, "music/theme.ogg", opusInOgg(2), true) // Opus codec inside .ogg
+	got := f.run(t)
+	if !rulesContain(got, "AUD-CODEC") {
+		t.Fatalf("Opus-in-ogg must yield AUD-CODEC (codec check, not extension), got %v", got)
+	}
+	t.Logf("FSV #228 assetcheck: Opus-in-ogg → AUD-CODEC")
+}
+
+func TestAudioBudgetFSV(t *testing.T) {
+	const mb = 1024 * 1024
+	// Decoded bytes = frames × 1ch × 2. Choose granules straddling the 48 MB cap.
+	over := int64(49*mb/2 + 1)  // ~49 MB decoded
+	under := int64(47 * mb / 2) // ~47 MB decoded
+
+	fOver := newFixture(t)
+	fOver.add(t, "sfx/big.ogg", monoVorbisOgg(1, 44100, over), true)
+	if got := fOver.run(t); !rulesContain(got, "AUD-BUDGET") {
+		t.Fatalf("49 MB resident set must yield AUD-BUDGET, got %v", got)
+	}
+	fUnder := newFixture(t)
+	fUnder.add(t, "sfx/ok.ogg", monoVorbisOgg(1, 44100, under), true)
+	if got := fUnder.run(t); rulesContain(got, "AUD-BUDGET") {
+		t.Fatalf("47 MB resident set must pass the budget, got %v", got)
+	}
+	t.Logf("FSV #228 assetcheck: ~49 MB → AUD-BUDGET; ~47 MB → passes (cap 48 MB)")
+}
+
 func TestCleanAssetsPass(t *testing.T) {
 	f := newFixture(t)
 	f.add(t, "units/knight.glb", buildGLB(t, gltfDoc([]string{"KHR_materials_unlit"}, []string{"Idle", "Walk", "Attack", "Death", "Spell"})), true)
-	f.add(t, "sfx/click.ogg", []byte("OggS-synthetic"), true)
+	f.add(t, "sfx/click.ogg", monoVorbisOgg(1, 44100, 4410), true)
 	f.add(t, "atlas/vigil.png", []byte("PNG-synthetic"), true)
 	if got := f.run(t); len(got) != 0 {
 		t.Fatalf("clean fixture should pass, got %v", got)

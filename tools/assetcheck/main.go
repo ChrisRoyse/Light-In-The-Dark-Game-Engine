@@ -28,6 +28,7 @@ import (
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio/oggmeta"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/tools/assetcheck/manifest"
@@ -261,6 +262,7 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 	add := func(path, rule, msg string) { findings = append(findings, finding{path, rule, msg}) }
 	triangles := map[string]int{}
 	textures := map[string][]textureInfo{}
+	var residentAudio int64 // summed fully-decoded (resident) audio bytes (#228 §6)
 
 	for _, rel := range files {
 		ext := strings.ToLower(filepath.Ext(rel))
@@ -312,6 +314,32 @@ func check(dir string, files []string, prefix string, ws waiverSet) ([]finding, 
 				}
 			}
 		}
+
+		if ext == ".ogg" {
+			data, rerr := os.ReadFile(filepath.Join(dir, filepath.FromSlash(rel)))
+			if rerr != nil {
+				add(rel, "AUD-READ", rerr.Error())
+				continue
+			}
+			info, perr := oggmeta.Parse(data)
+			if perr != nil {
+				add(rel, "AUD-PARSE", perr.Error())
+				continue
+			}
+			fs, resident := oggmeta.CheckLayout(info, oggmeta.CategoryOf(rel))
+			for _, f := range fs {
+				add(rel, f.Rule, f.Msg)
+			}
+			if resident {
+				residentAudio += info.DecodedBytes()
+			}
+		}
+	}
+	// Per-map resident audio budget (#228 §6): the fully-decoded set (world SFX /
+	// UI / voice) must fit; streamed music is excluded. Fail closed when over.
+	if residentAudio > oggmeta.MaxDecodedSetBytes {
+		add("", "AUD-BUDGET", fmt.Sprintf("resident audio set %d bytes (%.1f MB) exceeds the %d MB per-map cap (R-AUD-1.6)",
+			residentAudio, float64(residentAudio)/(1024*1024), oggmeta.MaxDecodedSetBytes/(1024*1024)))
 	}
 	checkUIAtlas(files, add)
 	atlasFindings, atlasNotes := checkAtlas(textures)
