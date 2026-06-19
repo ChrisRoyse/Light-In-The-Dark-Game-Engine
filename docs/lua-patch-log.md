@@ -99,3 +99,32 @@ allocation, so a bomb is rejected without the process ever allocating it.
 Lettered "S" (sandbox) rather than numbered: it is the #266 deliverable, not one
 of the four D-25 patches. Verified in `litd/luabind/sandbox_escape_test.go`
 (`TestSandboxMemoryBomb` prints HeapAlloc before/after — heap does not balloon).
+
+### Patch 4a — zero-alloc coroutine resume (#265)
+
+Files: `value.go` (LState field `litdResumeRet []LValue`), `state.go`
+(`(*LState).Resume`). The Go-host resume API allocated a fresh
+`make([]LValue, …)` for the yield/return payload on **every** resume. A suspended
+Lua coroutine waking each sim tick (the hot Lua path) therefore cost one alloc
+per resume per tick — an R-GC-1 steady-state violation. The patch appends into a
+reused per-host buffer (`ls.litdResumeRet[:0]`) instead. **Contract:** the slice
+`Resume` returns aliases that buffer and is valid only until the next `Resume` on
+the same LState. The host resume API has a single sequential consumer on the sim
+goroutine (`litd/luabind/sched.go` reads the yielded value immediately and never
+retains it across a later resume), so the alias is safe. `coResume`
+(coroutine.resume in Lua) drives the VM through `threadRun` directly, not through
+`(*LState).Resume`, so it is unaffected. Pooling is invisible to VM semantics
+(values unchanged) — the #271 determinism golden (`0xcb2b8f8681a2de23`) is
+byte-identical before and after.
+
+The companion luabind-side change (no fork edit) is in `sched.go`: `PolledWait`
+now stashes its wait seconds on a scheduler field and yields with **no** value,
+instead of `L.Yield(lua.LNumber(secs))` — which boxed a float into an interface
+(the second per-tick alloc). Together they take a coroutine resuming every tick
+from **2 → 0 allocs/op** (steady state). Verified in
+`litd/luabind/sched_alloc_test.go` (`TestScriptResumeZeroAllocFSV` — fails at 2/op
+before the patch, passes at 0/op after).
+
+Lettered "4a": this is the steady-state-alloc slice of D-25 patch 4 (#265). The
+remaining patch-4 scope — cross-world LState pooling and the golden cross-arch CI
+matrix — is still open (the matrix is blocked on CI billing #284).

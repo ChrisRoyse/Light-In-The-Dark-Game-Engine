@@ -69,6 +69,13 @@ type scriptScheduler struct {
 	// by slot+gen (value-typed State), never by a Go closure — so it serializes.
 	threads    []scriptThread
 	threadFree []uint32
+	// pendingWaitSecs carries the seconds a coroutine asked to wait, from the
+	// PolledWait native to resume(), WITHOUT pushing it through the Lua value
+	// stack (#265). Passing it as a Lua value forced an LNumber→interface box
+	// every wait (1 alloc/tick/coroutine); a plain field is alloc-free. Single
+	// coroutine resumes at a time on the sim goroutine, so one field suffices —
+	// resume() resets it to 0 before each Resume and reads it immediately after.
+	pendingWaitSecs float64
 	// handleCaches caches, per comparable handle type, the userdata wrapping each
 	// live handle (#407). The value for type T is a map[T]*lua.LUserData; pushHandle
 	// reaches it by reflect.Type key. Reuse makes a per-tick re-marshal of the same
@@ -129,7 +136,18 @@ func registerScriptThreads(L *lua.LState, g *api.Game) {
 	// load the scheduler rebuilds its registry from this call (it runs at
 	// Register time, before any LoadState), so serialized wake records resolve.
 	g.RegisterScriptCont(scriptResumeCont, s.onWake)
-	L.SetGlobal("PolledWait", L.NewFunction(bindScriptPolledWait))
+	// PolledWait(d<=0) returns without yielding (same-tick continue, matching the
+	// Go thread semantics and the JASS `if duration > 0` guard); otherwise it
+	// stashes the wait seconds on the scheduler and yields with NO value — the
+	// host reads s.pendingWaitSecs, so nothing is boxed onto the Lua stack (#265).
+	L.SetGlobal("PolledWait", L.NewFunction(func(L *lua.LState) int {
+		secs := float64(L.CheckNumber(1))
+		if secs <= 0 {
+			return 0
+		}
+		s.pendingWaitSecs = secs
+		return L.Yield()
+	}))
 	L.SetGlobal("Run", L.NewFunction(func(L *lua.LState) int {
 		fn := L.CheckFunction(1)
 		co, _ := L.NewThread()
@@ -181,18 +199,6 @@ func (s *scriptScheduler) onWake(a, b int64) {
 	s.resume(slot)
 }
 
-// bindScriptPolledWait is the in-coroutine suspend native. PolledWait(d<=0)
-// returns without yielding (same-tick continue, matching the Go thread semantics
-// and the JASS `if duration > 0` guard); otherwise it yields the coroutine,
-// handing the wait seconds back to resume().
-func bindScriptPolledWait(L *lua.LState) int {
-	secs := float64(L.CheckNumber(1))
-	if secs <= 0 {
-		return 0
-	}
-	return L.Yield(lua.LNumber(secs))
-}
-
 // resume drives co one slice forward: it resumes the coroutine (on the sim
 // goroutine), and either finishes/errors or, on a PolledWait yield, registers a
 // descriptive wake record on the scheduler (Game.After) that will call resume
@@ -201,7 +207,11 @@ func bindScriptPolledWait(L *lua.LState) int {
 // Resume must do it explicitly) so the host is current whenever control returns.
 func (s *scriptScheduler) resume(slot uint32) {
 	co, fn := s.threads[slot].co, s.threads[slot].fn
-	st, err, rets := s.L.Resume(co, fn)
+	// Reset before resume; PolledWait sets it when the coroutine suspends. A
+	// yield by any other means leaves it 0 (immediate re-wake) — matching the
+	// prior LVAsNumber(non-number)==0 behavior, now without a boxed value (#265).
+	s.pendingWaitSecs = 0
+	st, err, _ := s.L.Resume(co, fn)
 	s.L.G.CurrentThread = s.L.G.MainThread
 	if st != lua.ResumeYield {
 		if st == lua.ResumeError && err != nil {
@@ -210,10 +220,7 @@ func (s *scriptScheduler) resume(slot uint32) {
 		s.retire(slot) // done or errored — free the slot, invalidate stale records
 		return
 	}
-	secs := 0.0
-	if len(rets) > 0 {
-		secs = float64(lua.LVAsNumber(rets[0]))
-	}
+	secs := s.pendingWaitSecs
 	// Re-fetch AFTER Resume: a nested Run() in the coroutine body may have
 	// grown s.threads and reallocated its backing array, so any pointer taken
 	// before the resume would now be stale.
