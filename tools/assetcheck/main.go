@@ -26,6 +26,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
@@ -51,11 +52,10 @@ var (
 	// fail-closed allowlist: model, audio, texture
 	allowedExts = map[string]bool{".glb": true, ".ogg": true, ".png": true}
 
-	allowedGLTFExtensions = map[string]bool{"KHR_materials_unlit": true}
-	compressionExtensions = map[string]string{
-		"KHR_draco_mesh_compression": "Draco",
-		"EXT_meshopt_compression":    "Meshopt",
-	}
+	// glTF extension allow/deny lists now live in the shared assetcatalog package
+	// (#411) so assetcheck and the in-engine archive loader use one source.
+	allowedGLTFExtensions = assetcatalog.AllowedGLTFExtensions
+	compressionExtensions = assetcatalog.CompressionExtensions
 
 	requiredUnitClips = []string{"Idle", "Walk", "Attack", "Death"}
 )
