@@ -147,3 +147,72 @@ func freshFogAtCentral(t *testing.T) api.FogState {
 	g.Advance(60)
 	return g.FogStateAt(g.Player(1), central)
 }
+
+// TestFirstFlameBeaconRecaptureRequiresFullDurationFSV (#169/#410 edge on the
+// canonical shipping world): a fresh enemy challenger must NOT instantly steal an
+// owned beacon. Bug: light() set progress = CAPTURE_STEPS on capture, so the next
+// non-owner claimant's first +ACCRUE step reached CAPTURE_STEPS+1 >= CAPTURE_STEPS
+// and flipped ownership in a single 0.25s scan; and the prior owner's fog modifier
+// was never stopped on transfer (vision leak). SoT = published beacon owner +
+// the sim fog grid (Game.FogStateAt).
+func TestFirstFlameBeaconRecaptureRequiresFullDurationFSV(t *testing.T) {
+	m, err := mapdata.Load(os.DirFS("../.."), "data/maps/firstflame")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 5})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+	if g.Player(1).IsAlly(g.Player(2)) { // P1 and P2 mutual enemies (a contest, then a steal attempt)
+		g.Player(1).SetAlliance(g.Player(2), 0)
+		g.Player(2).SetAlliance(g.Player(1), 0)
+	}
+	L := lua.NewState()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	RegisterMap(L, m)
+	reg := NewChunkRegistry()
+	t.Cleanup(func() { L.Close(); reg.Close() })
+
+	central := api.Vec2{X: 128*32 + 16, Y: 128*32 + 16} // map beacon id1 → "beacon1"
+	u1 := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), central, api.Deg(0))
+	if !u1.Valid() {
+		t.Fatal("p1 capturing unit invalid")
+	}
+	if _, err := LoadWorld(L, reg, filepath.Join("..", "..", "worlds", "firstflame")); err != nil {
+		t.Fatalf("LoadWorld(firstflame): %v", err)
+	}
+	owner := func() int { o, _ := g.Storage().GetInt("beacon1", "owner"); return o }
+
+	g.Advance(60) // P1 captures the central beacon over the full duration
+	if owner() != 1 {
+		t.Fatalf("precondition: P1 should own the central beacon, got owner=%d", owner())
+	}
+
+	u1.Kill() // P1 leaves; P2 becomes the sole contender
+	if !g.CreateUnit(g.Player(2), g.UnitType("hfoo"), central, api.Deg(0)).Valid() {
+		t.Fatal("p2 challenger unit invalid")
+	}
+
+	g.Advance(5) // ONE capture step: ownership must NOT flip
+	if owner() == 2 {
+		prog, _ := g.Storage().GetInt("beacon1", "progress")
+		t.Fatalf("INSTANT RE-CAPTURE BUG: P2 stole the central beacon in one step (owner=2 progress=%d) — light() clamped progress at CAPTURE_STEPS so the next non-owner claimant flips on its first +ACCRUE step; re-capture must take the full duration", prog)
+	}
+
+	g.Advance(40) // full capture duration → P2 legitimately captures
+	if owner() != 2 {
+		t.Fatalf("P2 never captured after the full duration: owner=%d", owner())
+	}
+	if fs := g.FogStateAt(g.Player(1), central); fs == api.FogVisible {
+		t.Fatalf("FOG LEAK: P1 still sees the re-captured central beacon (FogStateAt=Visible) — light() never stopped the prior owner's fog modifier on transfer")
+	}
+	t.Logf("FSV #169/#410 re-capture: a fresh challenger needs the full duration to flip an owned beacon; prior owner's vision moved, not leaked")
+}

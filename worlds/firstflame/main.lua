@@ -63,8 +63,18 @@ local function scan(b)
 end
 
 local function light(b, slot)
+	-- Ownership transfer. Stop the PREVIOUS owner's persistent vision first (else
+	-- its fog modifier leaks and the old owner keeps seeing the beacon forever),
+	-- then reset progress to 0 so a future challenger must earn the full capture
+	-- duration again. Leaving progress clamped at CAPTURE_STEPS would let the next
+	-- sole non-owner claimant accrue CAPTURE_STEPS+ACCRUE >= CAPTURE_STEPS and flip
+	-- ownership in a single 0.25 s step (a 2 s capture stolen in one scan).
+	if b.fog ~= nil then
+		FogModifier_Stop(b.fog)
+		FogModifier_Destroy(b.fog)
+	end
 	b.owner = slot
-	b.progress = CAPTURE_STEPS
+	b.progress = 0
 	b.fog = Game_NewFogModifier(Game_Player(slot), 2, { cx = b.x, cy = b.y, radius = LIGHT_RADIUS })
 	FogModifier_Start(b.fog)
 end
