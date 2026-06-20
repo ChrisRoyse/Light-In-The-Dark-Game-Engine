@@ -31,7 +31,14 @@ import (
 // goldenLuaDeterminism10k is the committed golden state hash for the scenario
 // below after 10,000 ticks. Bump only with an explicit justification when a sim
 // or bridge change legitimately alters simulation outcome (SimVersion discipline).
-const goldenLuaDeterminism10k = uint64(0xcb2b8f8681a2de23)
+//
+// Bumped 0xcb2b8f8681a2de23 → 0x1a07f91892d70515 (2026-06-20): the scenario now
+// also exercises pairs() iteration order and number→string formatting (#271
+// constraint), folding {k0..k5} order-sensitively and writing the result into
+// u1's Y. That legitimately changes u1's final position, hence the hash. Not a
+// regression — a coverage increase; run-to-run and GOMAXPROCS edges stay
+// identical, the injected-divergence edge still has teeth.
+const goldenLuaDeterminism10k = uint64(0x1a07f91892d70515)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change
@@ -68,6 +75,29 @@ func runDeterminismScenario(t *testing.T, moveStep int) uint64 {
 	}
 	// One coroutine kills u0 at t=1s (20 ticks), firing exactly one death event.
 	src.WriteString("Run(function() PolledWait(1.0); Unit_Kill(u0) end)\n")
+
+	// Determinism surfaces pairs()-iteration order and number→string formatting
+	// (both required by the #271 constraint and absent from the rest of the
+	// scenario). A string-keyed table is folded ORDER-SENSITIVELY (acc = acc*31+v)
+	// so the result depends on pairs() yielding a stable order — the fork guarantees
+	// insertion order (verified in repoes/gopher-lua/table.go Next: string keys walk
+	// the ordered skv/keys slices, never a Go map range). The fold is formatted via
+	// string.format("%d"), parsed back, and written into u1's Y so both surfaces
+	// enter the state hash; det_acc is asserted below as an observable cross-check.
+	src.WriteString("det_acc = 0\ndet_u1y = -1\n")
+	src.WriteString(`Run(function()
+  local steps = {}
+  for i = 0, 5 do steps["k" .. i] = i * 7 + 1 end
+  local acc = 0
+  for _, v in pairs(steps) do acc = acc * 31 + v end
+  det_acc = acc
+  local y = tonumber(string.format("%d", acc)) % 17
+  PolledWait(0.5)
+  local p = Unit_Position(u1)
+  Unit_SetPosition(u1, {x = p.x, y = y})
+  det_u1y = y
+end)
+`)
 	if err := L.DoString(src.String()); err != nil {
 		t.Fatalf("scenario script: %v", err)
 	}
@@ -77,6 +107,16 @@ func runDeterminismScenario(t *testing.T, moveStep int) uint64 {
 	// Observable cross-check: exactly one death fired and was dispatched to Lua.
 	if got := luaNum(t, L, "deaths"); got != 1 {
 		t.Fatalf("scenario deaths=%v, want 1 (event dispatch nondeterministic?)", got)
+	}
+	// Observable cross-check on the pairs()/format surfaces: the order-sensitive
+	// fold over {k0..k5}={1,8,15,22,29,36} in insertion order is
+	// (((((1)*31+8)*31+15)*31+22)*31+29)*31+36 = 36486261. A different pairs() order
+	// or a non-deterministic number format would yield a different acc — teeth.
+	if got := luaNum(t, L, "det_acc"); got != 36486261 {
+		t.Fatalf("pairs/format fold acc=%v, want 36486261 (pairs() order or number formatting nondeterministic?)", got)
+	}
+	if got := luaNum(t, L, "det_u1y"); got != 11 {
+		t.Fatalf("formatted-result y=%v, want 11 (36486261 %% 17)", got)
 	}
 	return g.StateHash()
 }

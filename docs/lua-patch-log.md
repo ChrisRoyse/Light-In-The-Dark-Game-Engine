@@ -161,7 +161,9 @@ Result: a `{x,y}` literal drops from **11 → 3 allocs**; a per-tick
 `Unit_Position` read + `Unit_SetPosition` write handler from **23 → 9 allocs/op**.
 Verified: fork Go-level table tests (`TestTable*`) and Lua fixtures
 (`table.lua`/`vm.lua`/`closure.lua`) pass; the #271 determinism golden
-(`0xcb2b8f8681a2de23`) is byte-identical (pairs() order preserved); and
+(`0x1a07f91892d70515` since the 2026-06-20 pairs()/number-format coverage bump;
+was `0xcb2b8f8681a2de23` when this patch landed) is byte-identical run-to-run
+(pairs() order preserved); and
 `litd/luabind/table_smallmode_test.go` (`TestSmallTableSemanticsFSV` +
 `TestVectorTableAllocFSV`) locks behaviour across the spill/tombstone/mixed/array
 cases and the alloc bound.
