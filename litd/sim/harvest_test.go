@@ -324,3 +324,33 @@ func TestHarvestTickAllocs(t *testing.T) {
 		t.Fatal("degenerate: no harvesting during alloc check")
 	}
 }
+
+// TestHarvestSharedNodeDepletesOnceFSV (#300 edge): a shared node drained to zero
+// by TWO workers gathering on the SAME tick must emit EvResourceDepleted exactly
+// ONCE. Bug: the second worker computes take=0 (node already at 0; its kill is
+// deferred to phase 7 so the row still resolves) yet still ran the `Remaining==0`
+// depletion branch — re-emitting EvResourceDepleted (KillUnit dedups, Emit did
+// not) and hauling an empty load that deposits 0. SoT = the EvResourceDepleted
+// event count + deposited gold.
+func TestHarvestSharedNodeDepletesOnceFSV(t *testing.T) {
+	w := econWorld(t)
+	wa := addWorker(t, w, pt2(100, 96))
+	wb := addWorker(t, w, pt2(100, 104))
+	mine := addMine(t, w, pt2(120, 100), 10, false) // shared; exactly one worker's capacity
+	addDepot(t, w, pt2(60, 100), 0)
+	depleteEvents := 0
+	w.RegisterHandler(31, func(w *World, e Event) {
+		depleteEvents++
+		t.Logf("t%d EvResourceDepleted node=%d res=%d (#%d)", w.Tick(), e.Src, e.Arg, depleteEvents)
+	})
+	w.Subscribe(EvResourceDepleted, 31)
+	w.IssueOrder(wa, Order{Kind: OrderHarvest, Target: mine}, false)
+	w.IssueOrder(wb, Order{Kind: OrderHarvest, Target: mine}, false)
+	for i := 0; i < 120 && w.Ents.Alive(mine); i++ {
+		w.Step()
+	}
+	t.Logf("FSV #300: node amount 10 drained by 2 shared gatherers → EvResourceDepleted fired %d time(s) (want 1); gold=%d", depleteEvents, w.Resources(0, 0))
+	if depleteEvents != 1 {
+		t.Fatalf("DUPLICATE-DEPLETED BUG: EvResourceDepleted fired %d times for one exhaustion (want 1) — a second same-tick gatherer with take=0 re-emitted it", depleteEvents)
+	}
+}

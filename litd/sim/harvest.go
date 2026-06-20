@@ -614,6 +614,16 @@ func (w *World) driveHarvest(r int32, id EntityID) {
 		if take > w.Nodes.Remaining[nr] {
 			take = w.Nodes.Remaining[nr]
 		}
+		if take == 0 {
+			// Another gatherer emptied this node earlier THIS tick (its kill is
+			// deferred to phase 7, so the row still resolves). Don't haul an empty
+			// load: that would re-emit EvResourceDepleted (the depletion branch
+			// below) and deposit 0. Re-select a live node, or finish if none.
+			if !w.retargetNode(hr, r, id) {
+				w.finishCycle(hr, r, id, true)
+			}
+			return
+		}
 		w.Nodes.Remaining[nr] -= take
 		h.Carried[hr] = int32(take)
 		h.CarriedRes[hr] = w.Nodes.Resource[nr]
