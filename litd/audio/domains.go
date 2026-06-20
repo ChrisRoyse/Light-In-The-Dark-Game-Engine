@@ -111,3 +111,13 @@ func GroupOf(ch api.SoundChannel) VolumeGroup {
 		return GroupWorld
 	}
 }
+
+// GroupForDomain maps a per-asset playback domain (the authoritative #428
+// classification) to its master volume group: UI→UI, World→World. This is the
+// data-driven counterpart to GroupOf's channel inference.
+func GroupForDomain(d Domain) VolumeGroup {
+	if d == DomainUI {
+		return GroupUI
+	}
+	return GroupWorld
+}

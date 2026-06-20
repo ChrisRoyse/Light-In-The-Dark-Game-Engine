@@ -100,13 +100,25 @@ func (g *Game) CreateSound(cue string) Sound {
 	if g == nil || cue == "" {
 		return Sound{}
 	}
+	return Sound{id: CueID(cue), g: g}
+}
+
+// CueID is the canonical cue-string → handle hash (FNV-32a). It is the single
+// source of truth shared by CreateSound and any consumer that must recover a
+// cue's identity from an AudioEvent.Cue — e.g. the audio sound-classification
+// table (#428) indexes its entries by this id so the Manager can look a playing
+// cue up by AudioEvent.Cue. Never returns 0 (the zero handle means "invalid").
+func CueID(cue string) uint32 {
+	if cue == "" {
+		return 0
+	}
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(cue))
 	id := h.Sum32()
 	if id == 0 {
 		id = 1 // keep the handle valid even on the (vanishing) zero hash
 	}
-	return Sound{id: id, g: g}
+	return id
 }
 
 // Play starts the sound on the effects channel (non-positional). No-op on an

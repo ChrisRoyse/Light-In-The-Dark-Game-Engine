@@ -19,7 +19,7 @@ duplicate canonical targets:    0 (M5 gate)
 
 ## Reverse closure (litd/api)
 
-Exported verbs ........... 509
+Exported verbs ........... 510
 Unaccounted exports ...... 0 (gate requires 0)
 Unimplemented canonicals . 0 (mapped symbols on a panic stub; gate requires 0)
 

@@ -35,13 +35,15 @@ func (v Vec3) length() float64 {
 // position) — the Backend plays them verbatim. This struct is the unit of audio
 // state the FSV dump inspects.
 type Voice struct {
-	Cue     uint32  `json:"cue"`     // Sound cue hash (api.AudioEvent.Cue)
-	Channel uint8   `json:"channel"` // mix group (api.SoundChannel)
-	Gain    float64 `json:"gain"`    // final playback gain in [0,1]
-	Pan     float64 `json:"pan"`     // stereo pan in [-1,1]; <0 left, >0 right, 0 center
-	Pitch   float64 `json:"pitch"`   // pitch multiplier (1.0 = unshifted)
-	Pos     Vec3    `json:"pos"`     // world position (zero for non-positional)
-	HasPos  bool    `json:"hasPos"`  // true for 3D positional voices
+	Cue     uint32      `json:"cue"`     // Sound cue hash (api.AudioEvent.Cue)
+	Channel uint8       `json:"channel"` // mix group (api.SoundChannel)
+	Domain  Domain      `json:"domain"`  // resolved playback domain (table-classified or channel-inferred; #428)
+	Group   VolumeGroup `json:"group"`   // resolved master volume group (matches Domain for SFX)
+	Gain    float64     `json:"gain"`    // final playback gain in [0,1]
+	Pan     float64     `json:"pan"`     // stereo pan in [-1,1]; <0 left, >0 right, 0 center
+	Pitch   float64     `json:"pitch"`   // pitch multiplier (1.0 = unshifted)
+	Pos     Vec3        `json:"pos"`     // world position (zero for non-positional)
+	HasPos  bool        `json:"hasPos"`  // true for 3D positional voices
 }
 
 // Backend is the device sink. The Manager hands it fully-resolved Voices and

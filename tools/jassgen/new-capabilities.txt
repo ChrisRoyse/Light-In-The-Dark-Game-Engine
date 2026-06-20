@@ -324,3 +324,10 @@ exact   Game.SubscribeScriptEvent
 # (uint64s + names, no sim types). LitD-original, no JASS equivalent.
 exact   Game.HashSnapshot
 exact   HashSystemNames
+
+# audio cue identity seam (#428): the canonical cue-string → handle hash (FNV-32a)
+# shared by Game.CreateSound and the audio sound-classification table, so the
+# Manager can recover a playing cue's domain/priority from an AudioEvent.Cue. A
+# pure deterministic hash, no sim types; LitD-original, no JASS equivalent (JASS
+# sound handles are opaque engine pointers).
+exact   CueID

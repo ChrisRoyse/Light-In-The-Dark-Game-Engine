@@ -33,6 +33,7 @@ type Manager struct {
 	channelVol [numChannels]float64
 	groupVol   [numGroups]float64 // World / UI / Music master groups (#231 §8)
 	culled     int                // world voices dropped by distance cull (observability)
+	table      *SoundTable        // per-asset domain/priority classifier (#428); nil → channel inference
 }
 
 // NewManager builds a manager over backend. A nil backend (no device present, or
@@ -55,6 +56,24 @@ func NewManager(backend Backend) *Manager {
 // Backend reports the active backend name ("null" / "openal") for the dump.
 func (m *Manager) Backend() string { return m.backend.Name() }
 
+// SetSoundTable installs the per-asset sound classification table (#428). Once
+// set, a cue present in the table is classified by its data entry (domain →
+// flat/3D + volume group), taking precedence over the mixer channel; a cue absent
+// from the table falls back to channel inference (the documented interim, valid
+// during the #313 content rollout). Pass nil to revert to pure channel inference.
+func (m *Manager) SetSoundTable(t *SoundTable) { m.table = t }
+
+// classify resolves a cue's playback domain and volume group: the data table
+// (authoritative, #428) when the cue is classified, else channel inference.
+func (m *Manager) classify(cue uint32, ch api.SoundChannel) (Domain, VolumeGroup) {
+	if m.table != nil {
+		if e, ok := m.table.LookupByID(cue); ok {
+			return e.Domain, GroupForDomain(e.Domain)
+		}
+	}
+	return DomainOf(ch), GroupOf(ch)
+}
+
 // channelMaster returns the fine-grained master for channel ch (1.0 if out of range).
 func (m *Manager) channelMaster(ch api.SoundChannel) float64 {
 	if int(ch) < 0 || int(ch) >= numChannels {
@@ -71,17 +90,18 @@ func (m *Manager) groupMaster(g VolumeGroup) float64 {
 	return m.groupVol[g]
 }
 
-// resolve computes a voice's (gain, pan, culled) for the given channel/position via
-// the domain model, folding in the channel master and the domain's volume group.
-func (m *Manager) resolve(ch api.SoundChannel, pos Vec3, hasPos bool, vol float64) Resolved {
+// resolve computes a voice's (gain, pan, culled) from its RESOLVED domain/group
+// (classify already chose table-or-channel), folding in the channel master and the
+// domain's volume-group master. A UI-domain sound is flat regardless of any
+// position it was played at — the crux of #428: classification, not coincidence of
+// channel or position, decides flatness.
+func (m *Manager) resolve(dom Domain, group VolumeGroup, ch api.SoundChannel, pos Vec3, hasPos bool, vol float64) Resolved {
 	effVol := vol * m.channelMaster(ch)
-	group := m.groupMaster(GroupOf(ch))
-	// UI sounds are flat regardless of any position; world sounds without a position
-	// (e.g. a global cue) are also flat; positioned world sounds get the 3D model.
-	if DomainOf(ch) == DomainUI || !hasPos {
-		return ResolveFlat(effVol, group)
+	gmaster := m.groupMaster(group)
+	if dom == DomainUI || !hasPos {
+		return ResolveFlat(effVol, gmaster)
 	}
-	return ResolveWorld(pos, m.listener, effVol, group)
+	return ResolveWorld(pos, m.listener, effVol, gmaster)
 }
 
 // SetListener binds the audio listener to pos (the camera focus point), updates the
@@ -105,7 +125,7 @@ func (m *Manager) SetGroupVolume(g VolumeGroup, vol float64) {
 	}
 	m.groupVol[g] = clamp(vol, 0, 1)
 	for i := range m.voices {
-		if GroupOf(api.SoundChannel(m.voices[i].Channel)) == g {
+		if m.voices[i].Group == g { // resolved group (table or channel), not re-inferred
 			m.reresolve(i)
 		}
 	}
@@ -115,7 +135,7 @@ func (m *Manager) SetGroupVolume(g VolumeGroup, vol float64) {
 // volume and the current listener/channel/group state, and re-issues it.
 func (m *Manager) reresolve(i int) {
 	v := &m.voices[i]
-	r := m.resolve(api.SoundChannel(v.Channel), v.Pos, v.HasPos, m.voiceVol[i])
+	r := m.resolve(v.Domain, v.Group, api.SoundChannel(v.Channel), v.Pos, v.HasPos, m.voiceVol[i])
 	if r.Culled {
 		v.Gain = 0 // moved out of audible range; silence (left in table, see note)
 	} else {
@@ -152,7 +172,8 @@ func (m *Manager) Handle(ev api.AudioEvent) {
 // distance-culled.
 func (m *Manager) add(ev api.AudioEvent, hasPos bool, pos Vec3) {
 	ch := api.SoundChannel(ev.Channel)
-	r := m.resolve(ch, pos, hasPos, ev.Volume)
+	dom, group := m.classify(ev.Cue, ch)
+	r := m.resolve(dom, group, ch, pos, hasPos, ev.Volume)
 	if r.Culled {
 		m.culled++
 		return // beyond max audible — never plays (R-AUD-1.3)
@@ -164,6 +185,8 @@ func (m *Manager) add(ev api.AudioEvent, hasPos bool, pos Vec3) {
 	v := Voice{
 		Cue:     ev.Cue,
 		Channel: uint8(ev.Channel),
+		Domain:  dom,
+		Group:   group,
 		Gain:    r.Gain,
 		Pan:     r.Pan,
 		Pitch:   pitch,

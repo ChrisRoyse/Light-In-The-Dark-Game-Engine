@@ -22,6 +22,8 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+
+	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 )
 
 // SoundEntry is one classified sound cue.
@@ -32,15 +34,25 @@ type SoundEntry struct {
 	Ogg      string
 }
 
-// SoundTable is the parsed, validated cue→classification map.
+// SoundTable is the parsed, validated cue→classification map. It is indexed both
+// by cue string and by the cue's runtime id (api.CueID) so the Manager can recover
+// a playing sound's classification from an AudioEvent.Cue.
 type SoundTable struct {
 	byCue map[string]SoundEntry
+	byID  map[uint32]SoundEntry
 	order []string // sorted cues — deterministic iteration
 }
 
 // Lookup returns the entry for cue and whether it is classified.
 func (t *SoundTable) Lookup(cue string) (SoundEntry, bool) {
 	e, ok := t.byCue[cue]
+	return e, ok
+}
+
+// LookupByID returns the entry for a cue's runtime id (api.CueID(cue), i.e. the
+// AudioEvent.Cue the Manager sees at play time) and whether it is classified.
+func (t *SoundTable) LookupByID(id uint32) (SoundEntry, bool) {
+	e, ok := t.byID[id]
 	return e, ok
 }
 
@@ -106,7 +118,10 @@ func LoadSoundTable(fsys fs.FS, p string) (*SoundTable, error) {
 	if err := toml.Unmarshal(body, &raw); err != nil {
 		return nil, fmt.Errorf("sound table %s: %w", p, err)
 	}
-	t := &SoundTable{byCue: make(map[string]SoundEntry, len(raw.Sound))}
+	t := &SoundTable{
+		byCue: make(map[string]SoundEntry, len(raw.Sound)),
+		byID:  make(map[uint32]SoundEntry, len(raw.Sound)),
+	}
 	for i, r := range raw.Sound {
 		cue := strings.TrimSpace(r.Cue)
 		if cue == "" {
@@ -114,6 +129,10 @@ func LoadSoundTable(fsys fs.FS, p string) (*SoundTable, error) {
 		}
 		if _, dup := t.byCue[cue]; dup {
 			return nil, fmt.Errorf("sound table %s: duplicate cue %q", p, cue)
+		}
+		id := api.CueID(cue)
+		if prev, clash := t.byID[id]; clash {
+			return nil, fmt.Errorf("sound table %s: cue %q and %q collide on id %d (FNV-32a) — rename one", p, cue, prev.Cue, id)
 		}
 		dom, ok := ParseDomain(r.Domain)
 		if !ok {
@@ -130,7 +149,9 @@ func LoadSoundTable(fsys fs.FS, p string) (*SoundTable, error) {
 		if !strings.HasSuffix(strings.ToLower(ogg), ".ogg") {
 			return nil, fmt.Errorf("sound table %s: sound %q ogg %q is not a .ogg (R-AUD-1)", p, cue, ogg)
 		}
-		t.byCue[cue] = SoundEntry{Cue: cue, Domain: dom, Priority: pri, Ogg: ogg}
+		e := SoundEntry{Cue: cue, Domain: dom, Priority: pri, Ogg: ogg}
+		t.byCue[cue] = e
+		t.byID[id] = e
 		t.order = append(t.order, cue)
 	}
 	sort.Strings(t.order)
