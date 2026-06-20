@@ -46,9 +46,17 @@ Game_Every(0.25, function()
 		end
 	end
 
-	-- Last competitor standing wins (deterministic single result via #344).
-	if #survivors == 1 then
-		Game_Victory(Game_Player(survivors[1]))
+	-- The match is decided once at most one competitor remains. Exactly one
+	-- survivor wins (deterministic single result via #344); zero survivors is a
+	-- draw — mutual elimination, where every competitor's last hall fell on the
+	-- same scan and all were Defeated above. Latch `resolved` in BOTH cases: a
+	-- draw is still a terminal outcome, so gating only on survivors==1 would leave
+	-- `resolved` false forever after a double-KO even though no one is still
+	-- playing. A draw declares no victor.
+	if #survivors <= 1 then
+		if #survivors == 1 then
+			Game_Victory(Game_Player(survivors[1]))
+		end
 		resolved = true
 	end
 	Storage_SetInt(store, "match", "resolved", resolved and 1 or 0)
