@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# pre-push — local pre-merge gate. With GitHub Actions removed (#284, 2026-06-19),
+# this is the enforcement point: a push to main runs the full preflight and is
+# rejected if any gate fails. Branch pushes run the FAST subset (quick inner loop;
+# run the full gate yourself before merging the branch to main).
+#
+# Enabled via: git config core.hooksPath .githooks   (tracked, so it ships with the repo)
+# Bypass once (emergencies only): git push --no-verify
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+remote="${1:-}"
+
+# Determine whether any pushed ref targets main; stdin gives "<local> <sha> <remote> <sha>".
+pushing_main=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main) pushing_main=1 ;;
+  esac
+done
+
+if [ "$pushing_main" -eq 1 ]; then
+  echo "pre-push: pushing to main → FULL preflight gate"
+  exec "$REPO_ROOT/scripts/preflight.sh"
+else
+  echo "pre-push: branch push → FAST preflight gate (run full gate before merging to main)"
+  exec "$REPO_ROOT/scripts/preflight.sh" --fast
+fi

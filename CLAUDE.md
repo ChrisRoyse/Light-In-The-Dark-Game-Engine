@@ -51,6 +51,26 @@ go test ./...
 ./bin/firstlight -autotest -shot artifacts/firstlight-autotest.png
 ```
 
+## Pre-merge gate (no CI — runs locally)
+
+There is no GitHub Actions / hosted CI. All workflows were removed (2026-06-19;
+Actions billing is unresolved per #284 and the policy is gate-locally). Every
+gate the old workflows ran is consolidated into one script — run it green
+before merging any branch to main:
+
+```bash
+scripts/preflight.sh            # FULL gate (vet, build, test, assetcheck, zero-alloc,
+                                # importcheck, determlint, apilint, license-scan, jassgen
+                                # audit, 10k determinism + -race, benchharness, world-archive)
+scripts/preflight.sh --fast     # quick inner-loop subset (skips -race, bench, world-archive)
+```
+
+Enforced automatically by a tracked `pre-push` hook (`.githooks/pre-push`, wired via
+`git config core.hooksPath .githooks`): pushing to `main` runs the FULL gate and is
+rejected on any failure; branch pushes run the FAST subset. Bypass in emergencies only
+with `git push --no-verify`. Fresh clones must run `git config core.hooksPath .githooks`
+once to arm the hook.
+
 Verification of any visual/behavioral change follows `prompts/fsv.md`: run the thing, then independently inspect the source of truth (screenshot file, state JSON, event log) — never trust exit codes alone. The demo's `-autotest` exists specifically so an agent can capture evidence: read the PNG to confirm what rendered, parse the `state:` JSON line to confirm sim coordinates.
 
 ## Known environment issues (WSL2/WSLg)
@@ -63,7 +83,7 @@ Verification of any visual/behavioral change follows `prompts/fsv.md`: run the t
 ## Architecture rules (PRD §4.1)
 
 - `litd/sim` (deterministic core) never imports `litd/render`; render reads sim state, never mutates.
-- Zero heap allocations per sim tick / render frame at steady state (R-GC-1, CI-enforced via `testing.AllocsPerRun`).
+- Zero heap allocations per sim tick / render frame at steady state (R-GC-1, gated by `scripts/preflight.sh` via `testing.AllocsPerRun`).
 - No `map` iteration in gameplay code; all gameplay randomness via the sim's seeded PRNG (R-SIM-2).
 - Script logic runs on the deterministic cooperative scheduler, never free goroutines (R-EXEC-1).
 - Public API: methods on nouns, value-type math (`Vec2`), options structs, no G3N types in signatures (R-API-1..6).
