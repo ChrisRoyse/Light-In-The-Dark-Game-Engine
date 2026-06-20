@@ -27,6 +27,7 @@ local TICK_PROGRESS = 5           -- progress per scan; 8 scans (2 s) → 40
 local NEUTRAL = -1
 local owner = NEUTRAL             -- player index currently lighting the beacon, or NEUTRAL
 local progress = 0
+local challenger = NEUTRAL        -- player currently accruing progress (per-challenger capture)
 local fogMod = nil                -- persistent vision modifier, created once on capture
 local store = Game_Storage()
 
@@ -63,6 +64,13 @@ Game_Every(TICK_SECONDS, function()
 	elseif who == owner then
 		-- already lit by the contender: nothing to do (modifier persists).
 	else
+		-- Per-challenger accrual: a claimant different from the one who built up the
+		-- current progress (e.g. after a contest froze a rival's charge and that
+		-- rival left) starts from zero instead of inheriting the lead.
+		if who ~= challenger then
+			challenger = who
+			progress = 0
+		end
 		progress = progress + TICK_PROGRESS
 		if progress >= CAPTURE_TICKS then
 			-- Ownership transfer. Stop the PREVIOUS owner's persistent vision first
@@ -77,6 +85,7 @@ Game_Every(TICK_SECONDS, function()
 			end
 			owner = who
 			progress = 0
+			challenger = NEUTRAL -- captured; next challenger accrues fresh
 			-- Light it: a persistent fog modifier reveals the radius to the owner
 			-- (survives vision recomputes, unlike a per-tick SetFogState stamp).
 			fogMod = Game_NewFogModifier(Game_Player(owner), 2, -- 2 = FogVisible

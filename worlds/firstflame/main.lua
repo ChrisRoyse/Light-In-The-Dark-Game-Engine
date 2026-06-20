@@ -23,6 +23,7 @@ for _, b in ipairs(Game_MapBeacons()) do
 	beacons[#beacons + 1] = {
 		id = b.id, x = b.x, y = b.y,
 		owner = NEUTRAL, progress = 0, fog = nil,
+		challenger = NEUTRAL, -- the player currently accruing capture progress
 	}
 end
 assert(#beacons > 0, "firstflame: map has no beacons")
@@ -75,6 +76,7 @@ local function light(b, slot)
 	end
 	b.owner = slot
 	b.progress = 0
+	b.challenger = NEUTRAL -- captured; the next challenger starts a fresh accrual
 	b.fog = Game_NewFogModifier(Game_Player(slot), 2, { cx = b.x, cy = b.y, radius = LIGHT_RADIUS })
 	FogModifier_Start(b.fog)
 end
@@ -148,7 +150,14 @@ Game_Every(0.25, function()
 		elseif claimant == b.owner then
 			-- owner present on its own lit beacon: nothing to do.
 		else
-			-- a single non-owner claimant accrues toward capture.
+			-- a single non-owner claimant accrues toward capture. Progress is
+			-- per-challenger: if this claimant differs from the one who built up the
+			-- current progress (e.g. a contest froze a rival's charge, then that rival
+			-- left), the newcomer starts from zero rather than inheriting the lead.
+			if claimant ~= b.challenger then
+				b.challenger = claimant
+				b.progress = 0
+			end
 			b.progress = b.progress + ACCRUE
 			if b.progress >= CAPTURE_STEPS then
 				light(b, claimant)

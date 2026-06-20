@@ -216,3 +216,76 @@ func TestFirstFlameBeaconRecaptureRequiresFullDurationFSV(t *testing.T) {
 	}
 	t.Logf("FSV #169/#410 re-capture: a fresh challenger needs the full duration to flip an owned beacon; prior owner's vision moved, not leaked")
 }
+
+// TestFirstFlameBeaconProgressIsPerChallengerFSV (#169 edge): capture progress
+// belongs to the player accruing it — a rival must not INHERIT a challenger's
+// partial charge via a contest hand-off. Bug: `progress` was a single shared
+// per-beacon var, so P1 charging a neutral beacon to 7/8, P2 contesting (freeze),
+// then P1 leaving handed P2 a 7-step lead — P2 captured on its first solo step
+// (1 step of work stealing 7). Reachable with the two shipping competitors. SoT =
+// beacon1 owner/progress in Storage.
+func TestFirstFlameBeaconProgressIsPerChallengerFSV(t *testing.T) {
+	m, err := mapdata.Load(os.DirFS("../.."), "data/maps/firstflame")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 5})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+	if g.Player(1).IsAlly(g.Player(2)) {
+		g.Player(1).SetAlliance(g.Player(2), 0)
+		g.Player(2).SetAlliance(g.Player(1), 0)
+	}
+	L := lua.NewState()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	RegisterMap(L, m)
+	reg := NewChunkRegistry()
+	t.Cleanup(func() { L.Close(); reg.Close() })
+
+	central := api.Vec2{X: 128*32 + 16, Y: 128*32 + 16} // map beacon id1 → "beacon1"
+	if _, err := LoadWorld(L, reg, filepath.Join("..", "..", "worlds", "firstflame")); err != nil {
+		t.Fatalf("LoadWorld(firstflame): %v", err)
+	}
+	owner := func() int { o, _ := g.Storage().GetInt("beacon1", "owner"); return o }
+	prog := func() int { p, _ := g.Storage().GetInt("beacon1", "progress"); return p }
+
+	// P1 charges the neutral central beacon alone: 7 steps (35 ticks), one short of
+	// the 8-step capture.
+	u1 := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), central, api.Deg(0))
+	if !u1.Valid() {
+		t.Fatal("p1 unit invalid")
+	}
+	g.Advance(35)
+	if owner() != -1 || prog() != 7 {
+		t.Fatalf("precondition: want neutral beacon at progress 7 after P1's 7 steps, got owner=%d progress=%d", owner(), prog())
+	}
+
+	// P2 contests for one step → capture freezes (progress held at 7).
+	u2 := g.CreateUnit(g.Player(2), g.UnitType("hfoo"), central, api.Deg(0))
+	if !u2.Valid() {
+		t.Fatal("p2 unit invalid")
+	}
+	g.Advance(5)
+	if prog() != 7 {
+		t.Fatalf("contested step should FREEZE progress at 7, got %d", prog())
+	}
+
+	// P1 leaves; P2 is the sole contender for ONE step. P2 must NOT inherit P1's 7.
+	u1.Kill()
+	g.Advance(5)
+	if owner() == 2 {
+		t.Fatalf("PROGRESS-THEFT BUG: P2 captured on its first solo step (owner=2, progress=%d) by inheriting P1's 7-step charge through the contest hand-off — capture progress must be per-challenger", prog())
+	}
+	if prog() != 1 {
+		t.Fatalf("after the hand-off P2 should accrue its OWN progress from zero (want 1), got %d", prog())
+	}
+	t.Logf("FSV #169 per-challenger: a contest hand-off does not let a rival inherit accrued progress; P2 restarts from zero (progress=%d, owner=%d)", prog(), owner())
+}

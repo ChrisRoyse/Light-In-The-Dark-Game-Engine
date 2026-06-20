@@ -16,6 +16,7 @@ local B = beacons[1] -- beacons are id-sorted; id 1 is the central prize
 
 local owner = NEUTRAL
 local progress = 0
+local challenger = NEUTRAL -- player currently accruing progress (per-challenger capture)
 local fogMod = nil
 local store = Game_Storage()
 
@@ -47,6 +48,13 @@ Game_Every(0.25, function()
 	if who == NEUTRAL then
 	elseif who == owner then
 	else
+		-- Per-challenger accrual: a claimant different from the one who built up the
+		-- current progress (after a contest froze a rival's charge and it left)
+		-- starts from zero rather than inheriting the lead.
+		if who ~= challenger then
+			challenger = who
+			progress = 0
+		end
 		progress = progress + TICK_PROGRESS
 		if progress >= CAPTURE_TICKS then
 			-- Ownership transfer: stop the previous owner's persistent vision (else
@@ -60,6 +68,7 @@ Game_Every(0.25, function()
 			end
 			owner = who
 			progress = 0
+			challenger = NEUTRAL -- captured; next challenger accrues fresh
 			fogMod = Game_NewFogModifier(Game_Player(owner), 2,
 				{ cx = B.x, cy = B.y, radius = LIGHT_RADIUS })
 			FogModifier_Start(fogMod)
