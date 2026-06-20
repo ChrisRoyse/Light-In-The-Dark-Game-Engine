@@ -354,3 +354,37 @@ func TestConstructTickAllocs(t *testing.T) {
 		t.Fatalf("construction tick allocates: %v", allocs)
 	}
 }
+
+// TestConstructDoubleCancelRefundsOnceFSV (#301-class economy guard): cancelling
+// the SAME unfinished building twice in one tick must refund only ONCE. Bug: the
+// cancel's KillUnit is deferred to phase 7, so the Build row still resolves the
+// rest of this tick; a second CancelConstruction passed the same guards
+// (Progress < BuildTicks) and refunded AGAIN — free resources. SoT = the player's
+// gold counter across the two calls.
+func TestConstructDoubleCancelRefundsOnceFSV(t *testing.T) {
+	w := conWorld(t)
+	worker := conWorker(t, w, pt2(1000, 950))
+	site := pt2(1000, 1000)
+	var started []EntityID
+	w.RegisterHandler(hA, func(_ *World, e Event) { started = append(started, e.Dst) })
+	w.Subscribe(EvConstructStarted, hA)
+	w.IssueBuild(worker, tcTower, site)
+	w.Step()
+	b := started[0]
+	br := w.Build.Row(b)
+	for w.Build.Progress[br] < 10 {
+		w.Step()
+	}
+	goldMid := w.Resources(0, 0) // 400 (after the 100 spend)
+	if !w.CancelConstruction(b) {
+		t.Fatal("first cancel of a rising building refused")
+	}
+	afterFirst := w.Resources(0, 0) // 475 = 400 + 75
+	second := w.CancelConstruction(b)
+	afterSecond := w.Resources(0, 0)
+	t.Logf("FSV: gold mid=%d afterFirst=%d second-cancel-returned=%v afterSecond=%d (want == afterFirst)",
+		goldMid, afterFirst, second, afterSecond)
+	if afterSecond != afterFirst {
+		t.Fatalf("DOUBLE-REFUND BUG: a second same-tick cancel refunded again (gold %d -> %d) — the deferred kill leaves the Build row resolvable; cancel must reject an already-cancelled building", afterFirst, afterSecond)
+	}
+}

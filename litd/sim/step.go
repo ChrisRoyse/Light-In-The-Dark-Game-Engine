@@ -39,6 +39,20 @@ func (w *World) EnqueueCommand(c WorldCommand) bool {
 // KillUnit marks a unit dead this tick. The entity stays alive (and
 // addressable by phase-6 event handlers) until phase 7 removes it.
 // Duplicate kills of the same entity in one tick collapse to one.
+// markedForDeath reports whether id is already in this tick's deferred-kill
+// buffer (removal pending phase 7). Entity rows stay live and resolvable between
+// KillUnit and cleanup, so any operation with a one-shot side effect (a resource
+// refund, a credit) must consult this to stay idempotent against a double
+// trigger in the same tick.
+func (w *World) markedForDeath(id EntityID) bool {
+	for i := range w.killed {
+		if w.killed[i] == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (w *World) KillUnit(id EntityID) bool {
 	if !w.Ents.Alive(id) {
 		return false

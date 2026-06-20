@@ -379,6 +379,12 @@ func (w *World) CancelConstruction(b EntityID) bool {
 	if def.BuildTicks == 0 || w.Build.Progress[br] >= def.BuildTicks {
 		return false // already complete: nothing to cancel
 	}
+	// Already cancelled or dying THIS tick? The kill is deferred to phase 7, so the
+	// Build row still resolves the rest of the tick — reject a second cancel rather
+	// than refund twice (a building dying from combat is likewise non-refundable).
+	if !w.Ents.Alive(b) || w.markedForDeath(b) {
+		return false
+	}
 	if or := w.Owners.Row(b); or != -1 {
 		if p := w.Owners.Player[or]; p < MaxPlayers {
 			for i := 0; i < len(def.Costs) && i < w.resourceCount; i++ {
