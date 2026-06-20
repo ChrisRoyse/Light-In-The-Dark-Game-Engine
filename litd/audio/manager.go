@@ -33,7 +33,10 @@ type Manager struct {
 	channelVol [numChannels]float64
 	groupVol   [numGroups]float64 // World / UI / Music master groups (#231 §8)
 	culled     int                // world voices dropped by distance cull (observability)
+	dropped    int                // voices dropped by admission (partition full, lost eviction; #230)
 	table      *SoundTable        // per-asset domain/priority classifier (#428); nil → channel inference
+	alloc      *Allocator         // 32-voice budget + admission control (#230)
+	seq        int64              // monotonic event sequence → retrigger ordering (no wall clock)
 }
 
 // NewManager builds a manager over backend. A nil backend (no device present, or
@@ -43,7 +46,7 @@ func NewManager(backend Backend) *Manager {
 	if backend == nil {
 		backend = nullBackend{}
 	}
-	m := &Manager{backend: backend}
+	m := &Manager{backend: backend, alloc: NewAllocator(FalloffRadius)}
 	for i := range m.channelVol {
 		m.channelVol[i] = 1.0
 	}
@@ -63,15 +66,32 @@ func (m *Manager) Backend() string { return m.backend.Name() }
 // during the #313 content rollout). Pass nil to revert to pure channel inference.
 func (m *Manager) SetSoundTable(t *SoundTable) { m.table = t }
 
-// classify resolves a cue's playback domain and volume group: the data table
-// (authoritative, #428) when the cue is classified, else channel inference.
-func (m *Manager) classify(cue uint32, ch api.SoundChannel) (Domain, VolumeGroup) {
+// classify resolves a cue's playback domain, volume group, and admission priority:
+// the data table (authoritative, #428) when the cue is classified, else channel
+// inference. An unclassified cue has no per-asset priority, so it defaults to the
+// lowest (PrioAmbient) — it can never evict a classified sound, only lose to one.
+func (m *Manager) classify(cue uint32, ch api.SoundChannel) (Domain, VolumeGroup, Priority) {
 	if m.table != nil {
 		if e, ok := m.table.LookupByID(cue); ok {
-			return e.Domain, GroupForDomain(e.Domain)
+			return e.Domain, GroupForDomain(e.Domain), e.Priority
 		}
 	}
-	return DomainOf(ch), GroupOf(ch)
+	return DomainOf(ch), GroupOf(ch), PrioAmbient
+}
+
+// partitionFor maps a voice to its fixed source pool: music/ambience streams to
+// the stream partition, UI-domain sounds to the UI partition, everything else to
+// world. The partition split is what keeps a 500-unit battle from starving UI
+// feedback (#230): a full world pool cannot evict a UI voice.
+func partitionFor(dom Domain, ch api.SoundChannel) Partition {
+	switch ch {
+	case api.ChannelMusic, api.ChannelAmbient:
+		return PartitionStream
+	}
+	if dom == DomainUI {
+		return PartitionUI
+	}
+	return PartitionWorld
 }
 
 // channelMaster returns the fine-grained master for channel ch (1.0 if out of range).
@@ -110,6 +130,9 @@ func (m *Manager) resolve(dom Domain, group VolumeGroup, ch api.SoundChannel, po
 func (m *Manager) SetListener(pos Vec3) {
 	m.listener = pos
 	m.backend.SetListener(pos)
+	if m.alloc != nil {
+		m.alloc.SetListener(pos) // keep the admission cull/closer-wins reference in sync
+	}
 	for i := range m.voices {
 		if m.voices[i].HasPos {
 			m.reresolve(i)
@@ -168,14 +191,58 @@ func (m *Manager) Handle(ev api.AudioEvent) {
 	}
 }
 
-// add resolves and appends a voice, or drops it if a positional world sound is
-// distance-culled.
+// add classifies, runs the #230 admission chain (distance cull → duplicate
+// coalescing → priority eviction → drop), and on admission resolves and appends
+// the voice. The Allocator is the budget authority; this mixer mirrors only the
+// admitted voices, linked one-to-one by slot index.
 func (m *Manager) add(ev api.AudioEvent, hasPos bool, pos Vec3) {
 	ch := api.SoundChannel(ev.Channel)
-	dom, group := m.classify(ev.Cue, ch)
+	dom, group, pri := m.classify(ev.Cue, ch)
+
+	slot := -1
+	if m.alloc != nil {
+		d := m.alloc.Admit(VoiceRequest{
+			Cue:       ev.Cue,
+			Asset:     ev.Cue, // cue identifies the asset for coalescing (no per-instance variants yet)
+			Partition: partitionFor(dom, ch),
+			Priority:  pri,
+			Pos:       pos,
+			HasPos:    hasPos,
+			Volume:    ev.Volume,
+			TimeMs:    m.seq,
+		})
+		m.seq++
+		switch d.Outcome {
+		case CulledDistance:
+			m.culled++
+			return
+		case Dropped:
+			m.dropped++
+			return
+		case Coalesced:
+			// Merge into the existing same-asset voice: bump its gain (already capped
+			// by the allocator), never restart it.
+			if i := m.voiceAtSlot(d.Slot); i >= 0 {
+				m.voices[i].Gain = clamp(m.voices[i].Gain+d.GainBump, 0, 1)
+				m.backend.Play(m.voices[i])
+			}
+			return
+		case Stolen:
+			// The allocator already reassigned slot d.Victim to this request; evict the
+			// old voice occupying it before we append the new one at the same slot.
+			m.evictVoiceAtSlot(d.Victim)
+		}
+		slot = d.Slot
+	}
+
 	r := m.resolve(dom, group, ch, pos, hasPos, ev.Volume)
 	if r.Culled {
+		// Defensive: the allocator already culls at the same radius, so an admitted
+		// voice should never resolve as culled. Free the slot to keep the invariant.
 		m.culled++
+		if slot >= 0 {
+			m.alloc.Release(slot)
+		}
 		return // beyond max audible — never plays (R-AUD-1.3)
 	}
 	pitch := ev.Pitch
@@ -192,18 +259,56 @@ func (m *Manager) add(ev api.AudioEvent, hasPos bool, pos Vec3) {
 		Pitch:   pitch,
 		Pos:     pos,
 		HasPos:  hasPos,
+		Slot:    slot,
 	}
 	m.voices = append(m.voices, v)
 	m.voiceVol = append(m.voiceVol, ev.Volume)
 	m.backend.Play(v)
 }
 
-// stopCue removes (and silences) every active voice for cue.
+// voiceAtSlot returns the index of the active voice occupying allocator slot, or
+// -1. The slot↔voice link is 1:1, so the first match is the only match.
+func (m *Manager) voiceAtSlot(slot int) int {
+	for i := range m.voices {
+		if m.voices[i].Slot == slot {
+			return i
+		}
+	}
+	return -1
+}
+
+// evictVoiceAtSlot silences and removes the mixer voice occupying slot. The
+// allocator slot itself is NOT released here — the caller (a steal) has already
+// reassigned it to the incoming request.
+func (m *Manager) evictVoiceAtSlot(slot int) {
+	i := m.voiceAtSlot(slot)
+	if i < 0 {
+		return
+	}
+	m.backend.Stop(m.voices[i].Cue)
+	m.removeVoice(i)
+}
+
+// removeVoice swap-deletes the voice at index i (order-independent; the dump
+// sorts nothing, and determinism holds because admission order is deterministic).
+func (m *Manager) removeVoice(i int) {
+	last := len(m.voices) - 1
+	m.voices[i] = m.voices[last]
+	m.voiceVol[i] = m.voiceVol[last]
+	m.voices = m.voices[:last]
+	m.voiceVol = m.voiceVol[:last]
+}
+
+// stopCue removes (and silences) every active voice for cue, freeing each one's
+// allocator slot so the budget reflects the stop.
 func (m *Manager) stopCue(cue uint32) {
 	m.backend.Stop(cue)
 	dst := 0
 	for i := range m.voices {
 		if m.voices[i].Cue == cue {
+			if m.alloc != nil && m.voices[i].Slot >= 0 {
+				m.alloc.Release(m.voices[i].Slot)
+			}
 			continue
 		}
 		m.voices[dst] = m.voices[i]

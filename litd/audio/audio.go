@@ -44,6 +44,7 @@ type Voice struct {
 	Pitch   float64     `json:"pitch"`   // pitch multiplier (1.0 = unshifted)
 	Pos     Vec3        `json:"pos"`     // world position (zero for non-positional)
 	HasPos  bool        `json:"hasPos"`  // true for 3D positional voices
+	Slot    int         `json:"slot"`    // allocator source slot (#230); -1 if admission disabled
 }
 
 // Backend is the device sink. The Manager hands it fully-resolved Voices and
