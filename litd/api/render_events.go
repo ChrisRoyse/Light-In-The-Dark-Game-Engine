@@ -17,6 +17,8 @@ type RenderEventKind uint8
 const (
 	// RenderUnitDied — a unit died this tick. UnitType and Pos are valid.
 	RenderUnitDied RenderEventKind = iota + 1
+	// RenderUnitReady — a unit finished training this tick. UnitType valid.
+	RenderUnitReady
 )
 
 // RenderEvent is a value-type presentation cue for render-side consumers.
@@ -40,25 +42,31 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 	snap := g.w.Snaps.Curr()
 	for i := range snap.Events {
 		e := snap.Events[i]
+		var kind RenderEventKind
 		switch e.Kind {
 		case sim.RenderUnitDeath:
-			re := RenderEvent{
-				Kind:     RenderUnitDied,
-				UnitType: UnitType{ref: e.Data + 1}, // Data = unit-type id
-				UnitKey:  e.Ent.Index(),
-			}
-			// Position from the same snapshot — the dying unit still appears this
-			// tick (published in phase 7 before its phase-7 removal).
-			for j := range snap.Entries {
-				if snap.Entries[j].ID == e.Ent {
-					p := snap.Entries[j].Pos
-					re.Pos = Vec2{X: toFloat(p.X), Y: toFloat(p.Y)}
-					re.HasPos = true
-					break
-				}
-			}
-			buf = append(buf, re)
+			kind = RenderUnitDied
+		case sim.RenderUnitReady:
+			kind = RenderUnitReady
+		default:
+			continue
 		}
+		re := RenderEvent{
+			Kind:     kind,
+			UnitType: UnitType{ref: e.Data + 1}, // Data = unit-type id
+			UnitKey:  e.Ent.Index(),
+		}
+		// Position from the same snapshot — the unit appears this tick (a dying
+		// unit is published in phase 7 before its removal; a trained unit is live).
+		for j := range snap.Entries {
+			if snap.Entries[j].ID == e.Ent {
+				p := snap.Entries[j].Pos
+				re.Pos = Vec2{X: toFloat(p.X), Y: toFloat(p.Y)}
+				re.HasPos = true
+				break
+			}
+		}
+		buf = append(buf, re)
 	}
 	return buf
 }

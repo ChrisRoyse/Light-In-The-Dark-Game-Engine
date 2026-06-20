@@ -608,6 +608,9 @@ func (w *World) produceSystem() {
 		}
 		w.foodUsed[p] -= int32(def.FoodCost) // reservation → the unit's own econ row
 		w.Emit(Event{Kind: EvUnitTrained, Src: building, Dst: unit, Arg: int64(typeID)})
+		// Non-hashing "ready" presentation cue for render (#313): once per trained
+		// unit, low-frequency like death. Carries the unit-type id.
+		w.EmitRenderEvent(RenderUnitReady, unit, uint16(typeID))
 		w.issueRally(r, unit)
 		w.shiftQueue(r, 0)
 	}

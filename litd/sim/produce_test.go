@@ -112,6 +112,40 @@ func TestProduceHappyPath(t *testing.T) {
 	}
 }
 
+// A trained unit stages a non-hashing RenderUnitReady presentation cue (#313)
+// carrying its unit-type id, in the snapshot of the spawn tick. X+X=Y: train a
+// worker (type id 2) → exactly one RenderUnitReady with Data == 2, at the tick the
+// worker spawns; no cue on any other tick.
+func TestSnapshotUnitReadyRenderEventFSV(t *testing.T) {
+	w, hall := prodWorld(t)
+	if got := w.EnqueueTrain(hall, tWorker); got != TrainOK {
+		t.Fatalf("enqueue worker: reason %d", got)
+	}
+	var found []RenderEvent
+	var readyTick uint32
+	for i := 0; i < 25; i++ { // worker TrainTicks=20 → spawns at tick 20
+		w.Step()
+		for _, e := range w.Snaps.Curr().Events {
+			if e.Kind == RenderUnitReady {
+				found = append(found, e)
+				readyTick = w.Snaps.Curr().Tick
+			}
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("RenderUnitReady cues = %d, want exactly 1", len(found))
+	}
+	if found[0].Data != tWorker {
+		t.Fatalf("ready cue Data = %d, want tWorker (%d)", found[0].Data, tWorker)
+	}
+	// the cue's entity is a live, present unit (UI routing needs no position, but
+	// the snapshot still carries it).
+	if _, present := snapEntry(w.Snaps.Curr(), found[0].Ent); !present {
+		t.Fatalf("trained unit %d absent from snapshot", found[0].Ent.Index())
+	}
+	t.Logf("FSV #313 sim: trained worker → 1 RenderUnitReady{Data=typeID=%d} at spawn tick %d", tWorker, readyTick)
+}
+
 // Edge 1: queue cap — the 8th enqueue refuses with TrainQueueFull and
 // deducts nothing.
 func TestProduceQueueFullNoDeduction(t *testing.T) {

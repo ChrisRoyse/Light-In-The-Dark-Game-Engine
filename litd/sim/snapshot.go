@@ -58,6 +58,7 @@ const (
 	RenderEffectSpawn uint8 = 1 // Ent = effect, Data = ModelID
 	RenderEffectEnd   uint8 = 2 // Ent = effect, Data = ModelID
 	RenderUnitDeath   uint8 = 3 // Ent = dying unit, Data = unit-type id (#313 sound/anim cue)
+	RenderUnitReady   uint8 = 4 // Ent = trained unit, Data = unit-type id (#313 "ready" cue)
 )
 
 // Snapshot is one published frame of sim state plus that tick's
