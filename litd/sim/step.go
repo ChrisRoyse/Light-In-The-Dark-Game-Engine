@@ -159,6 +159,14 @@ func (w *World) phaseEvents() {
 			w.OnDeathEvent(w.tick, w.killed[i])
 		}
 		w.Emit(Event{Kind: EvUnitDeath, Src: w.killed[i]})
+		// Stage a non-hashing presentation cue for render (#313 sound trigger /
+		// #308 death anim). Carries the unit-type id so the consumer can key its
+		// per-type table; the dying unit still appears in this tick's snapshot
+		// (published in phase 7) so its position is recoverable. Render events are
+		// a render MIRROR — never part of the state hash.
+		if r := w.UnitTypes.Row(w.killed[i]); r >= 0 {
+			w.EmitRenderEvent(RenderUnitDeath, w.killed[i], w.UnitTypes.TypeID[r])
+		}
 	}
 	w.regionSystem() // region enter/leave (incl. death-inside leaves) before flush (#241)
 	w.resolveMatchResults()

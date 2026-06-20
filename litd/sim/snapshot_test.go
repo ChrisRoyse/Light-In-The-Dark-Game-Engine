@@ -88,6 +88,54 @@ func TestSnapshotDeathCue(t *testing.T) {
 	}
 }
 
+// A typed unit's death stages a RenderUnitDeath presentation cue (#313) carrying
+// its unit-type id, in the SAME snapshot where the dying unit still appears (so its
+// position is recoverable). The cue is on the non-hashing render channel — the #271
+// determinism golden (which kills a typed unit) proves it does not perturb the hash.
+func TestSnapshotUnitDeathRenderEventFSV(t *testing.T) {
+	countDeaths := func(s *Snapshot) int {
+		n := 0
+		for _, e := range s.Events {
+			if e.Kind == RenderUnitDeath {
+				n++
+			}
+		}
+		return n
+	}
+	w := NewWorld(Caps{})
+	id, _ := w.CreateUnit(fixed.Vec2{X: 3 * fixed.One, Y: 4 * fixed.One}, 0)
+	const typeID = uint16(7)
+	w.UnitTypes.Add(w.Ents, id, typeID)
+	w.Step() // spawn tick — no death cue
+	if n := countDeaths(w.Snaps.Curr()); n != 0 {
+		t.Fatalf("spawn tick staged %d death cues, want 0", n)
+	}
+	w.KillUnit(id)
+	w.Step() // death tick
+	cur := w.Snaps.Curr()
+	var found []RenderEvent
+	for _, e := range cur.Events {
+		if e.Kind == RenderUnitDeath {
+			found = append(found, e)
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("death tick: %d RenderUnitDeath cues, want exactly 1", len(found))
+	}
+	if found[0].Ent != id || found[0].Data != typeID {
+		t.Fatalf("death cue Ent=%v Data=%d, want id=%v typeID=%d", found[0].Ent, found[0].Data, id, typeID)
+	}
+	entry, present := snapEntry(cur, id)
+	if !present || entry.Pos.X != 3*fixed.One || entry.Pos.Y != 4*fixed.One {
+		t.Fatalf("dying unit position not recoverable from snapshot: present=%v pos=(%d,%d)", present, entry.Pos.X, entry.Pos.Y)
+	}
+	w.Step() // tick after — gone, no repeat cue
+	if n := countDeaths(w.Snaps.Curr()); n != 0 {
+		t.Fatalf("tick after death staged %d death cues, want 0 (no repeat)", n)
+	}
+	t.Logf("FSV #313 sim: typed unit death → 1 RenderUnitDeath{Ent, Data=typeID=%d}, pos (3,4) recoverable, no repeat next tick", typeID)
+}
+
 // Edge 4: buffers ping-pong with stable backing pointers.
 func TestSnapshotBuffersPingPong(t *testing.T) {
 	w := NewWorld(Caps{})
