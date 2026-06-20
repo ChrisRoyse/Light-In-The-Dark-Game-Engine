@@ -77,11 +77,13 @@ step "go vet"                go vet ./...
 step "go build"             go build ./...
 step "go test"              go test ./...
 
-# assetcheck is ADVISORY until #424 (MANIFEST per-asset `category` field) lands:
-# 627 BUDGET-UNCATEGORIZED findings are that tracked debt, and hosted CI never
-# enforced this (assets/ is gitignored there → step was a no-op). Promote to a
-# hard step() when #424 closes.
-softstep "assetcheck (#424 debt)" bash -c '
+# assetcheck is ADVISORY until #445 (author the per-asset MANIFEST `category`
+# field for 627 entries + decide the over-budget CC0-pack waiver policy) lands:
+# the 627 BUDGET-UNCATEGORIZED findings are that tracked debt, and hosted CI never
+# enforced this (assets/ is gitignored there → step was a no-op). The load-time
+# per-category gate (#424) is done; this stays advisory only for the directory
+# MANIFEST data gap. Promote to a hard step() when #445 closes.
+softstep "assetcheck (#445 debt)" bash -c '
   if ls assets/*/*.glb >/dev/null 2>&1; then
     go run ./tools/assetcheck ./assets
   else
