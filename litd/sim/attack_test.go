@@ -278,3 +278,32 @@ func TestAttackCycleAllocs(t *testing.T) {
 		t.Fatalf("Step with active attack cycle allocates %v/run, want 0 (R-GC-1)", allocs)
 	}
 }
+
+// An attacker's FIRE edge stages a non-hashing RenderUnitAttack presentation cue
+// (#313) carrying its unit-type id — once per attack cycle (cooldown-gated), not
+// per damage tick. X+X=Y: a single attacker (type id 3) firing once in the first
+// cycle → exactly one RenderUnitAttack{Ent=attacker, Data=3}, at the FIRE tick.
+func TestSnapshotUnitAttackRenderEventFSV(t *testing.T) {
+	w, a, _, _ := traceWorld(t, 0)
+	const typeID = uint16(3)
+	w.UnitTypes.Add(w.Ents, a, typeID)
+
+	var found []RenderEvent
+	var fireTick uint32
+	for i := 0; i < 12; i++ { // FIRE edge at tick 11; next cycle is tick 38
+		w.Step()
+		for _, e := range w.Snaps.Curr().Events {
+			if e.Kind == RenderUnitAttack {
+				found = append(found, e)
+				fireTick = w.Snaps.Curr().Tick
+			}
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("RenderUnitAttack cues in 12 ticks = %d, want exactly 1 (one FIRE edge)", len(found))
+	}
+	if found[0].Ent != a || found[0].Data != typeID {
+		t.Fatalf("attack cue Ent=%d Data=%d, want attacker=%d typeID=%d", found[0].Ent.Index(), found[0].Data, a.Index(), typeID)
+	}
+	t.Logf("FSV #313 sim: attacker FIRE edge → 1 RenderUnitAttack{Data=typeID=%d} at tick %d", typeID, fireTick)
+}

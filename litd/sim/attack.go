@@ -149,6 +149,11 @@ func (w *World) attackSystem() {
 				}
 				if CooldownReady(w.tick, c.PhaseEnd[cr][s]) {
 					w.fireWeapon(id, tgt, cr, s) // FIRE edge
+					// Non-hashing attack-swing cue for render (#313): once per attack
+					// cycle (cooldown-gated), carrying the attacker's unit-type id.
+					if ur := w.UnitTypes.Row(id); ur >= 0 {
+						w.EmitRenderEvent(RenderUnitAttack, id, w.UnitTypes.TypeID[ur])
+					}
 					c.ReadyAt[cr][s] = c.PhaseEnd[cr][s] - uint32(c.DamagePt[cr][s]) + w.BuffedCooldown(id, c.Cooldown[cr][s])
 					c.PhaseEnd[cr][s] = w.tick + uint32(c.Backswing[cr][s])
 					w.atkTransition(id, cr, s, AtkBackswing)

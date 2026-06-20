@@ -19,6 +19,8 @@ const (
 	RenderUnitDied RenderEventKind = iota + 1
 	// RenderUnitReady — a unit finished training this tick. UnitType valid.
 	RenderUnitReady
+	// RenderUnitAttack — a unit fired an attack this tick. UnitType and Pos valid.
+	RenderUnitAttack
 )
 
 // RenderEvent is a value-type presentation cue for render-side consumers.
@@ -48,6 +50,8 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 			kind = RenderUnitDied
 		case sim.RenderUnitReady:
 			kind = RenderUnitReady
+		case sim.RenderUnitAttack:
+			kind = RenderUnitAttack
 		default:
 			continue
 		}
