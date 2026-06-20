@@ -52,9 +52,12 @@ Game_Every(0.05, function()
 			end
 		end
 	elseif ph ~= lastPhase then
-		-- Just returned to bright: strip the empowerment.
+		-- Just returned to bright: strip ONLY the flicker's empowerment, not every
+		-- buff. Unit_RemoveAllBuffs would also nuke unrelated buffs (ability/item/
+		-- aura), so a unit's other buffs must survive the phase change — use the
+		-- targeted Unit_RemoveBuff(EMPWR).
 		for _, u in ipairs(Game_AllUnits()) do
-			Unit_RemoveAllBuffs(u)
+			Unit_RemoveBuff(u, EMPWR)
 		end
 	end
 	if ph ~= lastPhase then

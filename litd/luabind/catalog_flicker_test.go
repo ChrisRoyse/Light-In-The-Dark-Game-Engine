@@ -107,3 +107,62 @@ func TestFlickerCycleWorldFSV(t *testing.T) {
 	}
 	t.Logf("FSV #170 determinism: two seeded runs identical — phase=%d transitions=%d hash=%#x", p1v, t1v, g.StateHash())
 }
+
+// TestFlickerStripsOnlyItsOwnBuffFSV (#170 edge): the bright transition must
+// remove ONLY the flicker's empowerment, not every buff on the unit. Bug: the
+// return-to-bright branch called Unit_RemoveAllBuffs(u), nuking unrelated buffs
+// (ability/item/aura). A unit carrying a persistent non-flicker buff must keep it
+// across a dim->bright transition, while the flicker's dimpwr is stripped.
+// SoT = the unit's buff state (Go api) after a bright transition.
+func TestFlickerStripsOnlyItsOwnBuffFSV(t *testing.T) {
+	worldDir := filepath.Join("..", "..", "worlds", "flicker-cycle")
+
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 5})
+	if err != nil {
+		t.Fatalf("NewGame: %v", err)
+	}
+	if err := g.DefineUnits([]data.Unit{
+		{ID: "hfoo", Life: 100, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+	}); err != nil {
+		t.Fatalf("DefineUnits: %v", err)
+	}
+	// dimpwr = the flicker buff; anthem = a long-lived NON-flicker buff (think an
+	// aura/ability) the unit should retain regardless of the flicker phase.
+	if err := g.DefineBuffTypes([]data.BuffType{
+		{ID: "dimpwr", DurationTicks: 50, Stacking: data.StackRefresh, MaxStacks: 1},
+		{ID: "anthem", DurationTicks: 60000, Stacking: data.StackRefresh, MaxStacks: 1},
+	}); err != nil {
+		t.Fatalf("DefineBuffTypes: %v", err)
+	}
+	L := lua.NewState()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	reg := NewChunkRegistry()
+	t.Cleanup(func() { L.Close(); reg.Close() })
+
+	u := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 100, Y: 100}, api.Deg(0))
+	if !u.Valid() {
+		t.Fatal("unit invalid")
+	}
+	anthem, dimpwr := g.BuffType("anthem"), g.BuffType("dimpwr")
+	u.ApplyBuff(anthem) // a non-flicker buff present before the world runs
+
+	if _, err := LoadWorld(L, reg, worldDir); err != nil {
+		t.Fatalf("LoadWorld(flicker-cycle): %v", err)
+	}
+
+	// Cross one full dim->bright boundary. CYCLE=100 (bright 0..59, dim 60..99);
+	// the return-to-bright strip runs at tick 100. Advance to 110 (bright).
+	g.Advance(110)
+	if ph, _ := g.Storage().GetInt("flicker", "phase"); ph != 0 {
+		t.Fatalf("precondition: expected bright(0) at tick 110, got phase=%d", ph)
+	}
+	if u.HasBuff(dimpwr) {
+		t.Fatalf("flicker's dimpwr should be stripped at the bright transition, but it persists")
+	}
+	if !u.HasBuff(anthem) {
+		t.Fatalf("FLICKER STRIPPED A NON-FLICKER BUFF: the unit's anthem buff was removed at the bright transition — Unit_RemoveAllBuffs nukes EVERY buff, not just the flicker's empowerment; must use Unit_RemoveBuff(EMPWR)")
+	}
+	t.Logf("FSV #170 targeted-strip: bright transition removed dimpwr but kept the non-flicker anthem buff")
+}
