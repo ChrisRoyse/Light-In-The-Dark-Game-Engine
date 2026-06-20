@@ -175,16 +175,16 @@ func TestRunWorldFromArchiveFSV(t *testing.T) {
 	}
 
 	// SoT: the beacon the world published reads the archive-served map coords.
-	bx, _ := g.Storage().GetInt("beacon", "x")
-	by, _ := g.Storage().GetInt("beacon", "y")
+	bx, _ := g.Storage().GetInt("beacon1", "x")
+	by, _ := g.Storage().GetInt("beacon1", "y")
 	if bx != int(beaconWorld.X) || by != int(beaconWorld.Y) {
 		t.Fatalf("world beacon (%d,%d) != archive map central (%v,%v)", bx, by, beaconWorld.X, beaconWorld.Y)
 	}
 
 	// Advance past the capture threshold; SoT = beacon lit for player 1 + vision.
 	g.Advance(70)
-	lit, _ := g.Storage().GetInt("beacon", "lit")
-	owner, _ := g.Storage().GetInt("beacon", "owner")
+	lit, _ := g.Storage().GetInt("beacon1", "state")
+	owner, _ := g.Storage().GetInt("beacon1", "owner")
 	if lit != 1 || owner != 1 {
 		t.Fatalf("beacon not captured running from archive: lit=%d owner=%d", lit, owner)
 	}

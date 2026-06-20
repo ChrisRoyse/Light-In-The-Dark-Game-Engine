@@ -10,6 +10,7 @@ package luabind
 
 import (
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -31,9 +32,10 @@ func darkWorldGame(t *testing.T, seed int64, lit [3]int) *api.Game {
 	}); err != nil {
 		t.Fatalf("DefineUnits: %v", err)
 	}
-	// Scripted beacon control (the input the real map's beacon mechanic publishes).
+	// Scripted beacon control, published in the canonical beacon schema the real
+	// mechanic writes (key "beacon"..i, field "state"; #448).
 	for i, v := range lit {
-		g.Storage().SetInt("beacon", "lit_"+string(rune('1'+i)), v)
+		g.Storage().SetInt("beacon"+strconv.Itoa(i+1), "state", v)
 	}
 	L := lua.NewState()
 	if err := Register(L, g); err != nil {
@@ -142,7 +144,7 @@ func TestDarkEscalatingSpawnsFSV(t *testing.T) {
 	// --- Edge 2b (de-escalation): recapture all beacons mid-run → pressure stops. ---
 	wavesBefore := darkInt(g3, "waves")
 	for i := 0; i < 3; i++ {
-		g3.Storage().SetInt("beacon", "lit_"+string(rune('1'+i)), 1)
+		g3.Storage().SetInt("beacon"+strconv.Itoa(i+1), "state", 1)
 	}
 	g3.Advance(150)
 	if darkInt(g3, "waves") != wavesBefore {
@@ -187,7 +189,7 @@ func TestDarkReDarkenStartsFreshIntervalFSV(t *testing.T) {
 	}
 
 	// Lose beacon 1 → 1 dark beacon, interval 60 ticks.
-	g.Storage().SetInt("beacon", "lit_1", 0)
+	g.Storage().SetInt("beacon1", "state", 0)
 	g.Advance(5) // 5 ticks << interval(60): the Dark must NOT have manifested yet
 	if w, tot := darkInt(g, "waves"), darkInt(g, "total"); w != 0 || tot != 0 {
 		t.Fatalf("INSTANT-PUNISH BUG: a wave fired %d ticks after losing a beacon (waves=%d total=%d) — stale lastWave from the peace made the first wave instant; the Dark must take the full interval to manifest", 5, w, tot)
@@ -199,4 +201,63 @@ func TestDarkReDarkenStartsFreshIntervalFSV(t *testing.T) {
 		t.Fatalf("no wave after a full interval post-darkening: waves=%d (should manifest by now)", w)
 	}
 	t.Logf("FSV #172 re-darken: losing a beacon after peace starts a fresh interval — no instant punish, first wave ~60 ticks later")
+}
+
+// TestDarkConsumesCanonicalBeaconSchemaFSV is the #448 integration teeth: the Dark
+// (consumer) must read per-beacon lit state from the SAME Storage schema the
+// canonical producer (worlds/firstflame) writes — key "beacon"..i, field "state"
+// (1=lit/0=dark). If the consumer reads a different schema, a live firstflame run
+// leaves every GetInt at its default 0 → the Dark sees all beacons dark →
+// uncontrollable maximum pressure regardless of who holds them (the inverse of
+// "light = safety", identity.md §3). This test publishes ONLY the canonical schema
+// (no legacy keys) so it fails closed if the consumer drifts off it.
+func TestDarkConsumesCanonicalBeaconSchemaFSV(t *testing.T) {
+	build := func(state [3]int) *api.Game {
+		g, err := api.NewGame(api.GameOptions{MaxUnits: 1024, Seed: 7})
+		if err != nil {
+			t.Fatalf("NewGame: %v", err)
+		}
+		if err := g.DefineUnits([]data.Unit{
+			{ID: "gloam_whelp", Life: 50, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 12},
+			{ID: "gloam_stalker", Life: 120, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 16},
+			{ID: "gloam_horror", Life: 300, MoveSpeedPerTick: 8 * fixed.One, TurnRatePerTick: 65535, CollisionSize: 24},
+		}); err != nil {
+			t.Fatalf("DefineUnits: %v", err)
+		}
+		// Publish EXACTLY as worlds/firstflame's publish() does — canonical only.
+		for i, v := range state {
+			g.Storage().SetInt("beacon"+strconv.Itoa(i+1), "state", v)
+		}
+		L := lua.NewState()
+		if err := Register(L, g); err != nil {
+			t.Fatalf("Register: %v", err)
+		}
+		reg := NewChunkRegistry()
+		t.Cleanup(func() { L.Close(); reg.Close() })
+		if _, err := LoadWorld(L, reg, filepath.Join("..", "..", "worlds", "the-dark")); err != nil {
+			t.Fatalf("LoadWorld(the-dark): %v", err)
+		}
+		return g
+	}
+
+	// All three beacons LIT via the canonical schema → zero pressure, no waves.
+	gLit := build([3]int{1, 1, 1})
+	gLit.Advance(300) // five full BASE_INTERVAL (60-tick) windows
+	if w := darkInt(gLit, "waves"); w != 0 {
+		t.Fatalf("all beacons lit (canonical schema) but the Dark fired %d waves — consumer is NOT reading the producer's schema (#448)", w)
+	}
+	if dc := darkInt(gLit, "darkcount"); dc != 0 {
+		t.Fatalf("all beacons lit but darkcount=%d, want 0", dc)
+	}
+
+	// All three beacons DARK → maximum pressure → waves DO fire (3 dark beacons).
+	gDark := build([3]int{0, 0, 0})
+	gDark.Advance(300)
+	if w := darkInt(gDark, "waves"); w == 0 {
+		t.Fatalf("all beacons dark but the Dark fired 0 waves — escalation not firing")
+	}
+	if dc := darkInt(gDark, "darkcount"); dc != 3 {
+		t.Fatalf("all beacons dark but darkcount=%d, want 3", dc)
+	}
+	t.Logf("FSV #448: the-dark consumes the canonical beacon schema — all-lit → 0 waves/darkcount 0; all-dark → %d waves/darkcount 3", darkInt(gDark, "waves"))
 }

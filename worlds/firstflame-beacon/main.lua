@@ -21,11 +21,13 @@ local fogMod = nil
 local store = Game_Storage()
 
 local function publish()
-	Storage_SetInt(store, "beacon", "owner", owner)
-	Storage_SetInt(store, "beacon", "progress", progress)
-	Storage_SetInt(store, "beacon", "lit", owner ~= NEUTRAL and 1 or 0)
-	Storage_SetInt(store, "beacon", "x", B.x) -- map-sourced world coords (SoT proof)
-	Storage_SetInt(store, "beacon", "y", B.y)
+	-- Canonical beacon schema (key "beacon"..i, field "state"; #448). This proto
+	-- captures the central map beacon (id 1) → "beacon1".
+	Storage_SetInt(store, "beacon1", "owner", owner)
+	Storage_SetInt(store, "beacon1", "progress", progress)
+	Storage_SetInt(store, "beacon1", "state", owner ~= NEUTRAL and 1 or 0)
+	Storage_SetInt(store, "beacon1", "x", B.x) -- map-sourced world coords (SoT proof)
+	Storage_SetInt(store, "beacon1", "y", B.y)
 end
 publish()
 

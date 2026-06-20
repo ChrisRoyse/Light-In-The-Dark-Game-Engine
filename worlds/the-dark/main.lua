@@ -6,12 +6,12 @@
 -- beacons (never inside a lit radius). All spawn randomness draws from the sim
 -- PRNG (Game_RandomInt), so runs are deterministic per seed (R-SIM-2).
 --
--- Beacon control is the input: per-beacon lit state is read from Storage
--- ("beacon"/"lit_<i>", 1=lit/0=dark), which a real map (#174) publishes from the
--- beacon mechanic (#169, worlds/beacon-capture). Here the harness sets it to
--- script the escalation scenarios. Wave log is published to Storage (the headless
--- FSV's SoT). Creature models/tiers are the asset half (blocked), stubbed here as
--- three unit types.
+-- Beacon control is the input: per-beacon lit state is read from Storage under the
+-- canonical beacon schema (key "beacon"..i, field "state", 1=lit/0=dark) that the
+-- real beacon mechanic publishes (worlds/firstflame, #169/#174). Here the harness
+-- sets it to script the escalation scenarios. Wave log is published to Storage (the
+-- headless FSV's SoT). Creature models/tiers are the asset half (blocked), stubbed
+-- here as three unit types. (Schema convergence: #448.)
 
 local BEACONS = { { x = 500, y = 500 }, { x = 1500, y = 500 }, { x = 1000, y = 1500 } }
 local TIERS = { "gloam_whelp", "gloam_stalker", "gloam_horror" } -- tier 1..3
@@ -35,7 +35,7 @@ local lastBeaconX = -1 -- the dark beacon the last wave spawned at (validity SoT
 local function darkBeacons()
 	local out = {}
 	for i, b in ipairs(BEACONS) do
-		if Storage_GetInt(store, "beacon", "lit_" .. i) ~= 1 then
+		if Storage_GetInt(store, "beacon" .. i, "state") ~= 1 then
 			out[#out + 1] = b
 		end
 	end
@@ -45,7 +45,7 @@ end
 local function litCenters()
 	local out = {}
 	for i, b in ipairs(BEACONS) do
-		if Storage_GetInt(store, "beacon", "lit_" .. i) == 1 then
+		if Storage_GetInt(store, "beacon" .. i, "state") == 1 then
 			out[#out + 1] = b
 		end
 	end

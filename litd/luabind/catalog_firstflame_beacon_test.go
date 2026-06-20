@@ -60,16 +60,16 @@ func TestFirstFlameBeaconEndToEndFSV(t *testing.T) {
 	}
 
 	// The world must publish the MAP's beacon coords (proving it read them, not a literal).
-	bx, _ := g.Storage().GetInt("beacon", "x")
-	by, _ := g.Storage().GetInt("beacon", "y")
+	bx, _ := g.Storage().GetInt("beacon1", "x")
+	by, _ := g.Storage().GetInt("beacon1", "y")
 	if bx != int(beaconWorld.X) || by != int(beaconWorld.Y) {
 		t.Fatalf("world beacon coords (%d,%d) != map central beacon (%v,%v)", bx, by, beaconWorld.X, beaconWorld.Y)
 	}
 
 	// Capture: advance past the 2s threshold; SoT = beacon lit for player 1 + vision.
 	g.Advance(70)
-	lit, _ := g.Storage().GetInt("beacon", "lit")
-	owner, _ := g.Storage().GetInt("beacon", "owner")
+	lit, _ := g.Storage().GetInt("beacon1", "state")
+	owner, _ := g.Storage().GetInt("beacon1", "owner")
 	if lit != 1 || owner != 1 {
 		t.Fatalf("map beacon not captured: lit=%d owner=%d, want 1/1", lit, owner)
 	}

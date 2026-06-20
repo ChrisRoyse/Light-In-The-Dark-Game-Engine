@@ -12,8 +12,10 @@
 --     progress; a contested radius FREEZES progress; an empty radius holds.
 --   * At the capture threshold the beacon becomes lit for that player and stamps
 --     the owner's vision over the light radius (fog-of-war integration, API only).
---   * State (owner index, progress, lit) is published to Storage so a headless
---     FSV can read it as the source of truth.
+--   * State (owner index, progress, state) is published to Storage under the
+--     canonical beacon schema (key "beacon"..i, field "state" 1=lit/0=dark; #448)
+--     — this is beacon 1 — so a headless FSV (and the Dark consumer) reads it as
+--     the source of truth.
 --
 -- All times/radii are integer sim units; randomness, were any used, would route
 -- through the sim PRNG (R-SIM-2). No wall-clock, no map iteration.
@@ -33,9 +35,9 @@ local store = Game_Storage()
 
 -- publish() writes the beacon's state to Storage — the headless FSV's SoT.
 local function publish()
-	Storage_SetInt(store, "beacon", "owner", owner)
-	Storage_SetInt(store, "beacon", "progress", progress)
-	Storage_SetInt(store, "beacon", "lit", owner ~= NEUTRAL and 1 or 0)
+	Storage_SetInt(store, "beacon1", "owner", owner)
+	Storage_SetInt(store, "beacon1", "progress", progress)
+	Storage_SetInt(store, "beacon1", "state", owner ~= NEUTRAL and 1 or 0)
 end
 publish()
 

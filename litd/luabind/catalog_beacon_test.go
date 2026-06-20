@@ -35,9 +35,9 @@ func TestBeaconCaptureWorldFSV(t *testing.T) {
 		return g
 	}
 	beaconState := func(g *api.Game) (lit, owner, progress int) {
-		lit, _ = g.Storage().GetInt("beacon", "lit")
-		owner, _ = g.Storage().GetInt("beacon", "owner")
-		progress, _ = g.Storage().GetInt("beacon", "progress")
+		lit, _ = g.Storage().GetInt("beacon1", "state")
+		owner, _ = g.Storage().GetInt("beacon1", "owner")
+		progress, _ = g.Storage().GetInt("beacon1", "progress")
 		return
 	}
 
@@ -105,7 +105,7 @@ func TestBeaconRecaptureRequiresFullDurationFSV(t *testing.T) {
 	if _, err := LoadWorld(L, reg, worldDir); err != nil {
 		t.Fatalf("LoadWorld(beacon-capture): %v", err)
 	}
-	owner := func() int { o, _ := g.Storage().GetInt("beacon", "owner"); return o }
+	owner := func() int { o, _ := g.Storage().GetInt("beacon1", "owner"); return o }
 
 	// p1 captures over the full duration.
 	g.Advance(80)
@@ -122,8 +122,8 @@ func TestBeaconRecaptureRequiresFullDurationFSV(t *testing.T) {
 	// ONE capture scan (0.25s = 5 ticks): must not flip ownership.
 	g.Advance(5)
 	if owner() == 2 {
-		lit, _ := g.Storage().GetInt("beacon", "lit")
-		prog, _ := g.Storage().GetInt("beacon", "progress")
+		lit, _ := g.Storage().GetInt("beacon1", "state")
+		prog, _ := g.Storage().GetInt("beacon1", "progress")
 		t.Fatalf("INSTANT RE-CAPTURE BUG: p2 stole the beacon in one 0.25s scan (owner=2 lit=%d progress=%d) — progress was clamped at CAPTURE_TICKS so it flipped immediately; re-capture must require the full 2s", lit, prog)
 	}
 
