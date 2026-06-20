@@ -6,11 +6,14 @@
 # worlds/beacon-capture) captures, the Flicker cycles (#170), and the Dark spawns
 # from when extinguished (#172).
 #
-# Terrain is intentionally flat and uniformly buildable for v0.1: this commits the
-# loadable DATA layer (dimensions, start locations, beacon placements) that the
-# game mechanics run on, with no dependency on the (gitignored) art binaries.
-# Elevation/chokepoint terrain design and doodad props are a later pass; the 3D
-# look and the per-state screenshot FSV are the render/asset half of #174.
+# Terrain carries meaningful elevation (cliff.txt): each of the three beacons sits
+# on a level-1 plateau reachable only across a ramp chokepoint (central plateau via
+# west/east ramps, the two flanks via a centre-facing ramp), so map control is
+# defensible high ground per identity.md §3. The layout is exactly point-symmetric
+# about the map centre (fairness) and the low-ground starts remain mutually pathable
+# across the ramps — all verified headlessly on the sim pathing grid by
+# luabind.TestFirstFlameHighGroundTerrainFSV (#174). Height micro-relief, doodad
+# props and the per-state screenshot FSV are the render/asset half of #174.
 #
 # 64x64 tiles, pathing-scale 4 => a 256x256 pathing grid; all cell coords below
 # are in pathing-grid units. Validated by `go run ./tools/assetcheck --json
