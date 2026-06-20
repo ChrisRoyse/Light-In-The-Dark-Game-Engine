@@ -88,7 +88,13 @@ Game_Every(0.05, function()
 	local db = darkBeacons()
 	local n = #db
 	if n == 0 then
-		publish(0, 0, 0) -- all beacons lit → minimal pressure, no waves
+		-- All beacons lit → zero pressure. Reset the wave clock so a LATER dark
+		-- period starts a fresh interval countdown: without this, lastWave goes
+		-- stale during peace and (t - lastWave) already exceeds the interval, so
+		-- the first wave after re-darkening would fire instantly — and its timing
+		-- would wrongly depend on how long the peace lasted.
+		lastWave = t
+		publish(0, 0, 0)
 		return
 	end
 	local interval = intervalFor(n)

@@ -171,3 +171,32 @@ func TestDarkEscalatingSpawnsFSV(t *testing.T) {
 	}
 	t.Logf("FSV #172 determinism: seed 9 runs identical (total=%d hash=%#x); seed 99 differs (PRNG-fed jitter)", darkInt(da, "total"), da.StateHash())
 }
+
+// TestDarkReDarkenStartsFreshIntervalFSV (#172 edge): losing a beacon after a
+// period of peace must start a FRESH interval countdown — the Dark takes the full
+// interval to manifest, not an instant wave. Bug: while all beacons were lit
+// (n==0) the world returned without advancing `lastWave`, so it went stale; when
+// a beacon was then lost, `t - lastWave` already exceeded the interval and a wave
+// fired on the very first dark tick — and the first-wave timing wrongly depended
+// on how long peace had lasted. SoT = the wave/spawn counters in Storage.
+func TestDarkReDarkenStartsFreshIntervalFSV(t *testing.T) {
+	g := darkWorldGame(t, 5, [3]int{1, 1, 1}) // all beacons lit
+	g.Advance(500)                            // long peace — zero pressure
+	if w := darkInt(g, "waves"); w != 0 {
+		t.Fatalf("precondition: %d waves during all-lit peace, want 0", w)
+	}
+
+	// Lose beacon 1 → 1 dark beacon, interval 60 ticks.
+	g.Storage().SetInt("beacon", "lit_1", 0)
+	g.Advance(5) // 5 ticks << interval(60): the Dark must NOT have manifested yet
+	if w, tot := darkInt(g, "waves"), darkInt(g, "total"); w != 0 || tot != 0 {
+		t.Fatalf("INSTANT-PUNISH BUG: a wave fired %d ticks after losing a beacon (waves=%d total=%d) — stale lastWave from the peace made the first wave instant; the Dark must take the full interval to manifest", 5, w, tot)
+	}
+
+	// After the full interval the Dark legitimately manifests.
+	g.Advance(60)
+	if w := darkInt(g, "waves"); w == 0 {
+		t.Fatalf("no wave after a full interval post-darkening: waves=%d (should manifest by now)", w)
+	}
+	t.Logf("FSV #172 re-darken: losing a beacon after peace starts a fresh interval — no instant punish, first wave ~60 ticks later")
+}
