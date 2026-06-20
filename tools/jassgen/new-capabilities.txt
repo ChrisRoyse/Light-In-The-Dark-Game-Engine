@@ -331,3 +331,11 @@ exact   HashSystemNames
 # pure deterministic hash, no sim types; LitD-original, no JASS equivalent (JASS
 # sound handles are opaque engine pointers).
 exact   CueID
+
+# render presentation-cue stream (#313, #449): the per-tick render-event accessor
+# behind the audio sound trigger / death anim — drains one-shot cues (unit death,
+# …) from the published snapshot as value types (no sim/G3N leak). Read-only
+# against the NON-HASHING render channel, so a consumer cannot perturb determinism.
+# LitD-original, no JASS equivalent (JASS has no render-event surface — sounds are
+# fired imperatively from triggers).
+exact   Game.RenderEvents

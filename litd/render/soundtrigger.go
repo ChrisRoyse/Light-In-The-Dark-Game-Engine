@@ -107,3 +107,56 @@ func (t *SoundTrigger) Fire(c AudioCue) TriggerOutcome {
 	t.mgr.Handle(ev)
 	return CueRouted
 }
+
+// SoundDriver bridges the api render-event stream to the SoundTrigger: it maps each
+// render event's unit TYPE (resolved value) back to its sound-set code via a small
+// map built once, then fires the trigger. Per frame: call Drain after Advance. This
+// closes the #313 pipe — sim death cue → api render event → sound voice — entirely
+// off the non-hashing render channel (#449).
+type SoundDriver struct {
+	trig   *SoundTrigger
+	codeOf map[api.UnitType]string
+	buf    []api.RenderEvent
+}
+
+// NewSoundDriver resolves every sound-set unit-type code to its api.UnitType once
+// (the reverse of the render-event's resolved type), so Drain is allocation-free.
+func NewSoundDriver(g *api.Game, trig *SoundTrigger, sets *audio.SoundSetTable) *SoundDriver {
+	m := make(map[api.UnitType]string, sets.Len())
+	for _, code := range sets.Types() {
+		if ut := g.UnitType(code); !ut.IsZero() {
+			m[ut] = code
+		}
+	}
+	return &SoundDriver{trig: trig, codeOf: m}
+}
+
+// renderCategory maps a render-event kind to its sound category.
+func renderCategory(k api.RenderEventKind) (audio.SoundCategory, bool) {
+	switch k {
+	case api.RenderUnitDied:
+		return audio.CatDeath, true
+	}
+	return 0, false
+}
+
+// Drain processes this tick's render events into sound cues and returns how many
+// the trigger routed (the observable SoT for FSV).
+func (d *SoundDriver) Drain(g *api.Game) int {
+	d.buf = g.RenderEvents(d.buf)
+	routed := 0
+	for _, ev := range d.buf {
+		cat, ok := renderCategory(ev.Kind)
+		if !ok {
+			continue
+		}
+		code, ok := d.codeOf[ev.UnitType]
+		if !ok {
+			continue // no sound set for this unit type — silently skipped
+		}
+		if d.trig.Fire(AudioCue{Category: cat, UnitType: code, Unit: ev.UnitKey, Pos: ev.Pos, Tick: g.Tick()}) == CueRouted {
+			routed++
+		}
+	}
+	return routed
+}
