@@ -119,11 +119,11 @@ if [ $FAST -eq 0 ]; then
   # --- world archive (world-archive.yml) ------------------------------------
   step "world-archive pack + reproducibility" bash -c '
     set -e
-    scripts/pack-world.sh data/maps/firstflame worlds/firstflame-beacon \
+    scripts/pack-world.sh data/maps/firstflame worlds/firstflame \
       /tmp/preflight-a.litdworld ">=0.1.0 <0.2.0" \
       "Light in the Dark" "First Flame" \
       "Two-player beacon duel on the ashen veil"
-    scripts/pack-world.sh data/maps/firstflame worlds/firstflame-beacon \
+    scripts/pack-world.sh data/maps/firstflame worlds/firstflame \
       /tmp/preflight-b.litdworld ">=0.1.0 <0.2.0" \
       "Light in the Dark" "First Flame" \
       "Two-player beacon duel on the ashen veil"

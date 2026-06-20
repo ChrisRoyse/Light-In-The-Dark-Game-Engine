@@ -276,3 +276,62 @@ func readFull(t *testing.T, r interface{ Read([]byte) (int, error) }, b []byte) 
 		}
 	}
 }
+
+// TestArchiveServesFrozenContentAfterDirEdit — #209 FSV edge 2: once packed, the
+// archive is the source of truth. Editing the map in the (dev) directory WITHOUT
+// repacking must NOT change what the archive serves — the directory fingerprint
+// diverges while the archive's stays frozen.
+func TestArchiveServesFrozenContentAfterDirEdit(t *testing.T) {
+	stage := stageFirstFlame(t)
+	arcPath := filepath.Join(t.TempDir(), "firstflame.litdworld")
+	packDir(t, stage, arcPath, ">=0.1.0 <0.2.0", "")
+
+	// Fingerprint the map exactly as the archive packed it.
+	arc, err := Open(arcPath, "")
+	if err != nil {
+		t.Fatalf("Open archive: %v", err)
+	}
+	packed, err := mapdata.Load(arc.FS(), "data/maps/firstflame")
+	arc.Close()
+	if err != nil {
+		t.Fatalf("archive load: %v", err)
+	}
+
+	// Edit a fingerprinted field (biome) in the DIRECTORY only — no repack.
+	tomlPath := filepath.Join(stage, "data", "maps", "firstflame", "terrain.toml")
+	b, err := os.ReadFile(tomlPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edited := strings.Replace(string(b), `biome = "ashen-veil"`, `biome = "frostmere"`, 1)
+	if edited == string(b) {
+		t.Fatal("test setup: biome line not found to edit")
+	}
+	if err := os.WriteFile(tomlPath, []byte(edited), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// The directory now serves DIFFERENT content...
+	dirMap, err := mapdata.Load(os.DirFS(stage), "data/maps/firstflame")
+	if err != nil {
+		t.Fatalf("directory reload: %v", err)
+	}
+	if dirMap.Fingerprint == packed.Fingerprint {
+		t.Fatal("edit did not change the directory fingerprint — test is blind")
+	}
+
+	// ...but re-opening the UNCHANGED archive still serves the original bytes.
+	arc2, err := Open(arcPath, "")
+	if err != nil {
+		t.Fatalf("re-open archive: %v", err)
+	}
+	defer arc2.Close()
+	frozen, err := mapdata.Load(arc2.FS(), "data/maps/firstflame")
+	if err != nil {
+		t.Fatalf("archive reload: %v", err)
+	}
+	if frozen.Fingerprint != packed.Fingerprint {
+		t.Fatalf("archive content changed without a repack: %#x != %#x", frozen.Fingerprint, packed.Fingerprint)
+	}
+	t.Logf("FSV #209 edge: a dir edit moved the directory fp %#x→%#x, but the archive fp stayed %#x — the archive is the source of truth", packed.Fingerprint, dirMap.Fingerprint, frozen.Fingerprint)
+}
