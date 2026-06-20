@@ -587,3 +587,39 @@ func readRepoText(t *testing.T, path string) string {
 	}
 	return string(blob)
 }
+
+// TestSoundClassUnclassifiedRejectedFSV — #428 fail-closed gate: a sound entry
+// lacking domain/priority classification is a build error with a precise message,
+// same posture as the glTF catalog and map tables. A fully-classified table is
+// accepted (the gate is not blanket-blind). SoT = the findings assetcheck emits
+// over data/audio (the data-table validation pass).
+func TestSoundClassUnclassifiedRejectedFSV(t *testing.T) {
+	write := func(body string) []finding {
+		t.Helper()
+		root := t.TempDir()
+		data := filepath.Join(root, "data")
+		if err := os.MkdirAll(filepath.Join(data, "audio"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(data, "audio", "sounds.toml"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		files, err := listFiles(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return checkData(data, files, "audio")
+	}
+
+	// Valid: fully-classified entry → no SOUND-CLASS finding.
+	if got := write("[[sound]]\ncue=\"footman_attack\"\ndomain=\"world\"\npriority=\"attackimpact\"\nogg=\"sfx/a.ogg\"\n"); rulesContain(got, "SOUND-CLASS") {
+		t.Fatalf("classified sound table produced SOUND-CLASS findings: %+v", got)
+	}
+
+	// Invalid: entry with no domain → SOUND-CLASS build error, exact message.
+	got := write("[[sound]]\ncue=\"footman_attack\"\npriority=\"attackimpact\"\nogg=\"sfx/a.ogg\"\n")
+	if len(got) != 1 || got[0].Rule != "SOUND-CLASS" || !strings.Contains(got[0].Msg, `sound "footman_attack" has missing/invalid domain`) {
+		t.Fatalf("unclassified sound should be rejected with one SOUND-CLASS finding, got %+v", got)
+	}
+	t.Logf("FSV #428 assetcheck gate: unclassified sound rejected — [%s] %s", got[0].Rule, got[0].Msg)
+}

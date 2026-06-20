@@ -28,6 +28,7 @@ import (
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio/oggmeta"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
@@ -419,6 +420,9 @@ func checkData(dir string, files []string, prefix string) []finding {
 	if prefix == "" || prefix == "locale" || strings.HasPrefix(prefix, "locale/") {
 		checkLocaleTables(dir, files, add)
 	}
+	if prefix == "" || prefix == "audio" || strings.HasPrefix(prefix, "audio/") {
+		checkSoundDataTable(dir, files, add)
+	}
 	if prefix == "" {
 		checkHardcodedRenderLabels(filepath.Dir(dir), add)
 	}
@@ -483,6 +487,23 @@ func checkCommandCardTables(dir string, files []string, add func(path, rule, msg
 	}
 	if !have {
 		add(lithud.DefaultCommandCardPath, "COMMAND-CARD", "default command-card table is required")
+	}
+}
+
+// soundDataTablePath is the canonical location of the audio classification table
+// (#428). When present it must validate fail-closed: an unclassified or malformed
+// sound is a build error, the same posture as the glTF catalog and map tables.
+const soundDataTablePath = "audio/sounds.toml"
+
+func checkSoundDataTable(dir string, files []string, add func(path, rule, msg string)) {
+	for _, rel := range files {
+		if rel != soundDataTablePath {
+			continue
+		}
+		if _, err := litaudio.LoadSoundTable(os.DirFS(dir), rel); err != nil {
+			add(rel, "SOUND-CLASS", err.Error())
+		}
+		return
 	}
 }
 
