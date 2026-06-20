@@ -34,9 +34,11 @@ import (
 // the value-graph blob so cells shared across closures round-trip. v4 (#440)
 // replaces the per-coroutine value graphs with ONE shared graph for all alive
 // coroutines (schedBlob), so a table/cell shared across coroutines round-trips as
-// a single object instead of diverging copies. An older blob is rejected loudly
-// on load.
-const scriptSaveMagic = "LITDLUA\x04"
+// a single object instead of diverging copies. v5 (#435) folds the world's data
+// globals into that same shared graph, so a top-level global (counter/config)
+// survives a save/load — and a global whose value is also captured by a
+// coroutine round-trips as one object. An older blob is rejected loudly on load.
+const scriptSaveMagic = "LITDLUA\x05"
 
 const (
 	flagAlive   = 1 << 0
@@ -64,7 +66,7 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 			alive = append(alive, s.threads[i].co)
 		}
 	}
-	sb, err := serializeScheduler(reg, alive, handles)
+	sb, err := serializeScheduler(reg, L, alive, s.worldGlobals(), handles)
 	if err != nil {
 		return fmt.Errorf("luabind: SaveScripts: %w", err)
 	}
@@ -168,13 +170,20 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	if len(sb.Threads) != len(aliveSlots) {
 		return fmt.Errorf("luabind: LoadScripts: shared graph has %d coroutines but %d slots are alive", len(sb.Threads), len(aliveSlots))
 	}
-	restored, topFns, err := loadScheduler(reg, L, &sb, handles)
+	restored, topFns, globals, err := loadScheduler(reg, L, &sb, handles)
 	if err != nil {
 		return fmt.Errorf("luabind: LoadScripts: restore: %w", err)
 	}
 	for k, slot := range aliveSlots {
 		threads[slot].co = restored[k]
 		threads[slot].fn = topFns[k]
+	}
+	// Restore the world's data globals into the global table (#435). The world
+	// chunk is re-registered but never re-run, so without this a top-level
+	// `counter = 0` would read nil after load; the persister already unified any
+	// global shared with a coroutine to a single object.
+	for _, gv := range globals {
+		L.SetGlobal(gv.Key, gv.Val)
 	}
 
 	nFree := br.u32()

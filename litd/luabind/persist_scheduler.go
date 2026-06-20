@@ -55,10 +55,34 @@ type schedThread struct {
 }
 
 // schedBlob is the whole scheduler's suspended state: one shared value graph for
-// all alive coroutines, plus a per-alive-slot execution shape + root range.
+// all alive coroutines, plus a per-alive-slot execution shape + root range, plus
+// the world's data globals (#435), each a (key, root index) into the same graph
+// so a global whose value is also captured by a coroutine round-trips as one
+// object rather than diverging copies (the #440 hazard, avoided by one pool).
 type schedBlob struct {
 	Threads []schedThread `json:"threads"`
+	Globals []schedGlobal `json:"globals,omitempty"`
 	Graph   valuesBlob    `json:"graph"`
+}
+
+// schedGlobal is one persisted world data global: its name and the index of its
+// value in the shared graph's Roots.
+type schedGlobal struct {
+	Key  string `json:"key"`
+	Root int    `json:"root"`
+}
+
+// globalEntry is a world data global handed to the persister (key + live value).
+type globalEntry struct {
+	Key string
+	Val lua.LValue
+}
+
+// loadedGlobal is a restored world data global (key + decoded value), set back
+// into the global table by LoadScripts after the graph is wired.
+type loadedGlobal struct {
+	Key string
+	Val lua.LValue
 }
 
 // threadSnapshot extracts a parked coroutine's serializable value roots
@@ -111,7 +135,7 @@ func threadSnapshot(th *lua.LState) (vals []lua.LValue, meta threadMeta, err err
 // the right register file) and records its root range. A cross-thread
 // open-upvalue closure reached by a non-owner coroutine is refused loudly by the
 // encoder (LitdUpvalueViews), never silently mis-bound.
-func serializeScheduler(reg *ChunkRegistry, alive []*lua.LState, handles HandleMarshaler) (schedBlob, error) {
+func serializeScheduler(reg *ChunkRegistry, main *lua.LState, alive []*lua.LState, globals []globalEntry, handles HandleMarshaler) (schedBlob, error) {
 	e := &vEncoder{
 		ids:       map[*lua.LTable]int{},
 		fnIDs:     map[*lua.LFunction]int{},
@@ -140,6 +164,21 @@ func serializeScheduler(reg *ChunkRegistry, alive []*lua.LState, handles HandleM
 		}
 		sb.Threads = append(sb.Threads, schedThread{Meta: meta, RootStart: start})
 	}
+	// World data globals (#435) into the SAME pool, after the coroutines so a
+	// global already interned via a coroutine capture reuses that one object. A
+	// global is a top-level value: its functions have closed upvalues only, so
+	// the owner is the main state and curThread is -1 (an open upvalue here would
+	// be pathological and is rejected loudly — owner -1 is out of thread range).
+	e.owner = main
+	e.curThread = -1
+	for _, ge := range globals {
+		r, err := e.encode(ge.Val)
+		if err != nil {
+			return schedBlob{}, fmt.Errorf("luabind: global %q: %w", ge.Key, err)
+		}
+		sb.Globals = append(sb.Globals, schedGlobal{Key: ge.Key, Root: len(roots)})
+		roots = append(roots, r)
+	}
 	sb.Graph = valuesBlob{
 		Roots: roots, Tables: e.tables, Funcs: e.funcs,
 		Cells: e.cells, Threads: e.threads, UserData: e.uds,
@@ -153,14 +192,14 @@ func serializeScheduler(reg *ChunkRegistry, alive []*lua.LState, handles HandleM
 // owner thread, closed cells to the shared interned cells — so cross-coroutine
 // shared objects come back as one object. Returns the threads and their top-frame
 // functions, indexed as schedBlob.Threads (i.e. per alive slot, in order).
-func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handles HandleMarshaler) ([]*lua.LState, []*lua.LFunction, error) {
+func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handles HandleMarshaler) ([]*lua.LState, []*lua.LFunction, []loadedGlobal, error) {
 	d, err := newGraphDecoder(parent, reg, &sb.Graph, handles)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	roots, err := d.roots()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	threads := make([]*lua.LState, len(sb.Threads))
 	topFns := make([]*lua.LFunction, len(sb.Threads))
@@ -168,7 +207,7 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 		st := &sb.Threads[k]
 		nReg, nFrames, start := st.Meta.NumRegisters, len(st.Meta.Frames), st.RootStart
 		if nReg < 0 || start < 0 || start+nReg+nFrames > len(roots) {
-			return nil, nil, fmt.Errorf("luabind: coroutine %d root range [%d,%d) out of %d shared roots", k, start, start+nReg+nFrames, len(roots))
+			return nil, nil, nil, fmt.Errorf("luabind: coroutine %d root range [%d,%d) out of %d shared roots", k, start, start+nReg+nFrames, len(roots))
 		}
 		v := &lua.LitdThreadView{
 			Dead: st.Meta.Dead, Wrapped: st.Meta.Wrapped,
@@ -187,7 +226,7 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 		for fi, fim := range st.Meta.Frames {
 			fn, ok := roots[start+nReg+fi].(*lua.LFunction)
 			if !ok {
-				return nil, nil, fmt.Errorf("luabind: coroutine %d frame %d function root is %s, not a function", k, fi, roots[start+nReg+fi].Type())
+				return nil, nil, nil, fmt.Errorf("luabind: coroutine %d frame %d function root is %s, not a function", k, fi, roots[start+nReg+fi].Type())
 			}
 			topFn = fn
 			v.Frames = append(v.Frames, lua.LitdFrameView{
@@ -201,9 +240,20 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 	// All coroutine register files now exist; wire every closure's upvalues —
 	// open upvalues into their OWNER coroutine, closed cells to the shared pool.
 	if err := d.wireUpvaluesMulti(threads); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return threads, topFns, nil
+	// Extract the world data globals from the now-wired graph (#435). Their roots
+	// are fully reconstructed (closures wired, shared objects unified with any
+	// coroutine that also references them).
+	var globals []loadedGlobal
+	for k := range sb.Globals {
+		g := &sb.Globals[k]
+		if g.Root < 0 || g.Root >= len(roots) {
+			return nil, nil, nil, fmt.Errorf("luabind: global %q root %d out of %d shared roots", g.Key, g.Root, len(roots))
+		}
+		globals = append(globals, loadedGlobal{Key: g.Key, Val: roots[g.Root]})
+	}
+	return threads, topFns, globals, nil
 }
 
 // wireUpvaluesMulti is wireUpvalues for the shared scheduler pool: a closure's

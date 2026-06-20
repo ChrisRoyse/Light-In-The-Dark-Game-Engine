@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"sync"
 	"time"
 
@@ -93,6 +94,51 @@ type scriptScheduler struct {
 	// handle zero-alloc (R-GC-1) — the only box is the one-time ud.Value assignment
 	// on first sight. Single-threaded on the sim goroutine, so no lock.
 	handleCaches map[reflect.Type]any
+	// baseGlobals is the set of global keys present after Register installs all
+	// builtins (libs + API verbs), captured before the world chunk runs. A
+	// mid-game save persists only globals NOT in this set — the world's own data
+	// globals (counters, config) — and never the builtins (Go functions / library
+	// tables, which are unserializable and are rebuilt by Register on load). See
+	// #435. nil until captureBaseGlobals runs.
+	baseGlobals map[string]struct{}
+}
+
+// captureBaseGlobals snapshots the current global key set as the builtin
+// baseline (#435). Called at the end of Register, after every SetGlobal that
+// installs a runtime/API global and the sandbox libs are open, but before the
+// world chunk executes — so anything the chunk (or later gameplay) adds to the
+// global table is, by difference, world data to persist across a save.
+func (s *scriptScheduler) captureBaseGlobals() {
+	base := make(map[string]struct{})
+	s.L.G.Global.ForEach(func(k, _ lua.LValue) {
+		if ks, ok := k.(lua.LString); ok {
+			base[string(ks)] = struct{}{}
+		}
+	})
+	s.baseGlobals = base
+}
+
+// worldGlobals returns the world's data globals (global keys added since the
+// builtin baseline), sorted by key for deterministic save bytes. Builtins and
+// non-string keys are excluded. Each value is handed to the persister, which
+// fails closed on anything unserializable (#435).
+func (s *scriptScheduler) worldGlobals() []globalEntry {
+	if s.baseGlobals == nil {
+		return nil
+	}
+	var out []globalEntry
+	s.L.G.Global.ForEach(func(k, v lua.LValue) {
+		ks, ok := k.(lua.LString)
+		if !ok {
+			return
+		}
+		if _, builtin := s.baseGlobals[string(ks)]; builtin {
+			return
+		}
+		out = append(out, globalEntry{Key: string(ks), Val: v})
+	})
+	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
+	return out
 }
 
 // handleCacheCap bounds each per-type sub-cache before a wholesale clear, so
