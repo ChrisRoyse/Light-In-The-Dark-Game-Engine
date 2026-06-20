@@ -30,11 +30,13 @@ import (
 
 // scriptSaveMagic tags the Lua save section and pins its format version. v2
 // (#413) added a per-slot waitKind (EventKind a coroutine is parked on, 0 for a
-// timer wait) after the flags byte. v3 (#437) interns closed upvalue cells in the
-// value-graph blob (a Cells pool; supval references a cell by index instead of
-// inlining its value) so cells shared across closures round-trip. An older blob
-// is rejected loudly on load.
-const scriptSaveMagic = "LITDLUA\x03"
+// timer wait) after the flags byte. v3 (#437) interned closed upvalue cells in
+// the value-graph blob so cells shared across closures round-trip. v4 (#440)
+// replaces the per-coroutine value graphs with ONE shared graph for all alive
+// coroutines (schedBlob), so a table/cell shared across coroutines round-trips as
+// a single object instead of diverging copies. An older blob is rejected loudly
+// on load.
+const scriptSaveMagic = "LITDLUA\x04"
 
 const (
 	flagAlive   = 1 << 0
@@ -51,6 +53,26 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 		return fmt.Errorf("luabind: SaveScripts: no scheduler bound to this LState")
 	}
 	handles := GameHandles{G: s.g}
+
+	// Collect the alive coroutines in slot order and serialize them against ONE
+	// shared intern pool (#440), so an object shared across coroutines round-trips
+	// as a single object. schedBlob.Threads aligns 1:1 with the alive slots, in
+	// order.
+	alive := make([]*lua.LState, 0, len(s.threads))
+	for i := range s.threads {
+		if s.threads[i].alive {
+			alive = append(alive, s.threads[i].co)
+		}
+	}
+	sb, err := serializeScheduler(reg, alive, handles)
+	if err != nil {
+		return fmt.Errorf("luabind: SaveScripts: %w", err)
+	}
+	blob, err := json.Marshal(sb)
+	if err != nil {
+		return fmt.Errorf("luabind: SaveScripts: marshal shared graph: %w", err)
+	}
+
 	bw := &errWriter{w: w}
 	bw.writeRaw([]byte(scriptSaveMagic))
 	bw.u32(uint32(len(s.threads)))
@@ -66,20 +88,9 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 		bw.u32(e.gen)
 		bw.u8(flags)
 		bw.u16(e.waitKind) // #413: EventKind this slot is parked on (0 = timer/none)
-		if e.alive {
-			// A live slot at a tick boundary is a parked coroutine — serialize it.
-			img, err := SaveThread(reg, e.co, handles)
-			if err != nil {
-				return fmt.Errorf("luabind: SaveScripts: slot %d: %w", i, err)
-			}
-			blob, err := json.Marshal(img)
-			if err != nil {
-				return fmt.Errorf("luabind: SaveScripts: marshal slot %d: %w", i, err)
-			}
-			bw.u32(uint32(len(blob)))
-			bw.writeRaw(blob)
-		}
 	}
+	bw.u32(uint32(len(blob)))
+	bw.writeRaw(blob)
 	bw.u32(uint32(len(s.threadFree)))
 	for _, slot := range s.threadFree {
 		bw.u32(slot)
@@ -121,6 +132,9 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	}
 	threads := make([]scriptThread, n)
 	pending := 0
+	// Per-slot headers first (the alive slots, in order, map 1:1 to the shared
+	// blob's threads).
+	var aliveSlots []uint32
 	for i := uint32(0); i < n; i++ {
 		gen := br.u32()
 		flags := br.u8()
@@ -134,25 +148,33 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 		e.waiting = flags&flagWaiting != 0
 		e.waitKind = waitKind
 		if e.alive {
-			blobLen := br.u32()
-			blob := br.readRaw(int(blobLen))
-			if br.err != nil {
-				return fmt.Errorf("luabind: LoadScripts: slot %d body: %w", i, br.err)
-			}
-			var img ThreadImage
-			if err := json.Unmarshal(blob, &img); err != nil {
-				return fmt.Errorf("luabind: LoadScripts: slot %d unmarshal: %w", i, err)
-			}
-			th, topFn, err := LoadThread(reg, L, &img, handles)
-			if err != nil {
-				return fmt.Errorf("luabind: LoadScripts: slot %d restore: %w", i, err)
-			}
-			e.co = th
-			e.fn = topFn
+			aliveSlots = append(aliveSlots, i)
 			if e.waiting {
 				pending++
 			}
 		}
+	}
+
+	// One shared value graph for all alive coroutines (#440).
+	blobLen := br.u32()
+	blob := br.readRaw(int(blobLen))
+	if br.err != nil {
+		return fmt.Errorf("luabind: LoadScripts: shared graph: %w", br.err)
+	}
+	var sb schedBlob
+	if err := json.Unmarshal(blob, &sb); err != nil {
+		return fmt.Errorf("luabind: LoadScripts: shared graph unmarshal: %w", err)
+	}
+	if len(sb.Threads) != len(aliveSlots) {
+		return fmt.Errorf("luabind: LoadScripts: shared graph has %d coroutines but %d slots are alive", len(sb.Threads), len(aliveSlots))
+	}
+	restored, topFns, err := loadScheduler(reg, L, &sb, handles)
+	if err != nil {
+		return fmt.Errorf("luabind: LoadScripts: restore: %w", err)
+	}
+	for k, slot := range aliveSlots {
+		threads[slot].co = restored[k]
+		threads[slot].fn = topFns[k]
 	}
 
 	nFree := br.u32()

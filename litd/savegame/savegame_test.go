@@ -513,34 +513,65 @@ end)`
 	t.Logf("FSV #437: shared upvalue cell round-tripped — h2 saw h1's increment of the SAME cell, marker at x=%.1f (not 100); StateHash %#x == unbroken", gotX, refHash)
 }
 
-// #440 fail-closed (§2.4): a mutable cell shared across two SEPARATELY-serialized
-// coroutines does not round-trip (each coroutine is its own graph) — proven
-// elsewhere to silently diverge (survivor x=205 unbroken vs x=200 restored). The
-// save must REFUSE loudly rather than emit a desyncing container. A negative
-// control confirms independent coroutines still save.
-func TestCrossThreadSharingRefusedFSV(t *testing.T) {
-	// Two coroutines share `local n` (a closed cell reachable from both threads).
-	const shared = `local n = 0
+// #440 round-trip (R-FSV-2): a mutable cell shared across two SEPARATELY-scheduled
+// coroutines now round-trips as ONE object (the shared scheduler intern pool).
+// `local n` is closed over by both coroutines; co1 increments it, co2 spawns its
+// marker at x=200+n. Saved while BOTH are parked (n==0) and restored, co1's later
+// +5 must be visible to co2 → survivor at x=205. Independent cells (the old bug)
+// would yield x=200. SoT = the sim's unit position + StateHash vs the unbroken
+// run. The negative control confirms independent coroutines still save. (This was
+// the fail-closed-refusal case; #440's proper fix makes it round-trip.)
+func TestCrossThreadSharingRoundTripFSV(t *testing.T) {
+	const src = `local n = 0
 Run(function() PolledWait(50.0); n = n + 5 end)
 Run(function() PolledWait(60.0); Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=200+n, y=0}, 0) end)`
-	g, L := newGame(t)
-	defer L.Close()
-	reg := runChunk(t, L, "shared", shared)
-	defer reg.Close()
-	g.Advance(2) // both coroutines parked mid-wait, cell shared & closed
+	const saveTick, total = 500, 1500
 
+	// Unbroken reference: both coroutines fire, co2 reads co1's +5 → x=205.
+	gR, LR := newGame(t)
+	regR := runChunk(t, LR, "shared", src)
+	gR.Advance(total)
+	refHash := gR.StateHash()
+	if n, x := liveUnits(gR); n != 1 || x < 204.5 || x > 205.5 {
+		t.Fatalf("unbroken final: want 1 unit at x≈205 (co2 sees co1's n+=5), got %d units x=%.1f", n, x)
+	}
+	LR.Close()
+	regR.Close()
+
+	// Save while BOTH coroutines are parked and the shared cell still reads 0.
+	gA, LA := newGame(t)
+	regA := runChunk(t, LA, "shared", src)
+	gA.Advance(saveTick)
 	var buf bytes.Buffer
-	err := Write(&buf, g, L, reg, fp)
-	if err == nil {
-		t.Fatal("save of two coroutines sharing a cell must be refused, got nil error")
+	if err := Write(&buf, gA, LA, regA, fp); err != nil {
+		t.Fatalf("Write@%d — cross-coroutine shared cell must now persist (#440), got: %v", saveTick, err)
 	}
-	if !bytes.Contains([]byte(err.Error()), []byte("#440")) || !bytes.Contains([]byte(err.Error()), []byte("diverge")) {
-		t.Fatalf("expected a cross-thread-sharing (#440) refusal, got: %v", err)
+	LA.Close()
+	regA.Close()
+
+	// Restore into a cold process and finish the run.
+	gB, LB := newGame(t)
+	defer LB.Close()
+	regB := luabind.NewChunkRegistry()
+	defer regB.Close()
+	if _, err := regB.Register("shared", src); err != nil {
+		t.Fatalf("re-register: %v", err)
 	}
-	if buf.Len() != 0 {
-		t.Fatalf("refused save wrote %d bytes — must write nothing", buf.Len())
+	if err := Load(bytes.NewReader(buf.Bytes()), gB, LB, regB, fp); err != nil {
+		t.Fatalf("Load@%d: %v", saveTick, err)
 	}
-	t.Logf("FSV #440 fail-closed: cross-coroutine shared cell refused → %v", err)
+	gB.Advance(total - saveTick)
+	gotN, gotX := liveUnits(gB)
+	if gotN != 1 {
+		t.Fatalf("restored final: %d units, want 1", gotN)
+	}
+	if gotX < 204.5 || gotX > 205.5 {
+		t.Fatalf("restored survivor at x=%.1f, want x≈205 — cross-coroutine shared cell did NOT round-trip (x≈200 = independent cells, the #440 bug)", gotX)
+	}
+	if gotHash := gB.StateHash(); gotHash != refHash {
+		t.Fatalf("HASH MISMATCH: restored %#x != unbroken %#x", gotHash, refHash)
+	}
+	t.Logf("FSV #440: cross-coroutine shared cell round-tripped — co2 saw co1's +5 of the SAME cell, marker at x=%.1f (not 200); StateHash %#x == unbroken", gotX, refHash)
 
 	// Negative control: two INDEPENDENT coroutines (no shared mutable state) save.
 	const indep = `Run(function() local a = 0; PolledWait(50.0); a = a + 1 end)
@@ -558,6 +589,57 @@ Run(function() local b = 0; PolledWait(60.0); b = b + 1 end)`
 		t.Fatal("control save wrote nothing")
 	}
 	t.Logf("FSV #440 control: independent coroutines saved (%d bytes), no false refusal", buf2.Len())
+}
+
+// #440 round-trip, the TABLE case (the issue is "cells AND tables"): a table
+// shared across two coroutines must round-trip as one object. co1 mutates t.v;
+// co2 spawns at x=300+t.v. Saved while both parked, restored → x=307 (co2 sees
+// co1's +7 of the SAME table); independent tables would give x=300.
+func TestCrossThreadSharedTableRoundTripFSV(t *testing.T) {
+	const src = `local t = {v = 0}
+Run(function() PolledWait(50.0); t.v = t.v + 7 end)
+Run(function() PolledWait(60.0); Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), {x=300+t.v, y=0}, 0) end)`
+	const saveTick, total = 500, 1500
+
+	gR, LR := newGame(t)
+	regR := runChunk(t, LR, "shtab", src)
+	gR.Advance(total)
+	refHash := gR.StateHash()
+	if n, x := liveUnits(gR); n != 1 || x < 306.5 || x > 307.5 {
+		t.Fatalf("unbroken final: want 1 unit at x≈307, got %d units x=%.1f", n, x)
+	}
+	LR.Close()
+	regR.Close()
+
+	gA, LA := newGame(t)
+	regA := runChunk(t, LA, "shtab", src)
+	gA.Advance(saveTick)
+	var buf bytes.Buffer
+	if err := Write(&buf, gA, LA, regA, fp); err != nil {
+		t.Fatalf("Write@%d — cross-coroutine shared TABLE must persist (#440): %v", saveTick, err)
+	}
+	LA.Close()
+	regA.Close()
+
+	gB, LB := newGame(t)
+	defer LB.Close()
+	regB := luabind.NewChunkRegistry()
+	defer regB.Close()
+	if _, err := regB.Register("shtab", src); err != nil {
+		t.Fatalf("re-register: %v", err)
+	}
+	if err := Load(bytes.NewReader(buf.Bytes()), gB, LB, regB, fp); err != nil {
+		t.Fatalf("Load@%d: %v", saveTick, err)
+	}
+	gB.Advance(total - saveTick)
+	gotN, gotX := liveUnits(gB)
+	if gotN != 1 || gotX < 306.5 || gotX > 307.5 {
+		t.Fatalf("restored survivor at x=%.1f (n=%d), want x≈307 — shared TABLE did not round-trip (x≈300 = independent tables, #440)", gotX, gotN)
+	}
+	if gotHash := gB.StateHash(); gotHash != refHash {
+		t.Fatalf("HASH MISMATCH: restored %#x != unbroken %#x", gotHash, refHash)
+	}
+	t.Logf("FSV #440 table: cross-coroutine shared table round-tripped — marker at x=%.1f (not 300); StateHash %#x == unbroken", gotX, refHash)
 }
 
 func withFreshCRC(body []byte) []byte {

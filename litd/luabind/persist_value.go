@@ -46,11 +46,17 @@ type supval struct {
 }
 
 // sfunc is one interned closure: a proto reference (chunk-id + proto-path,
-// never bytecode) plus its upvalues.
+// never bytecode) plus its upvalues. Owner is the index of the thread whose
+// register file this closure's OPEN upvalues alias (#440 shared scheduler pool):
+// open upvalues are thread-local, so on restore they must bind to their owning
+// thread. It is 0 (and unused) for closed-upvalue-only closures and for the
+// single-thread paths (handlers, the data-only API), which wire against one
+// thread directly.
 type sfunc struct {
 	Chunk  string   `json:"chunk"`
 	Proto  string   `json:"proto"`
 	Upvals []supval `json:"upvals,omitempty"`
+	Owner  int      `json:"owner,omitempty"`
 }
 
 // stable is one interned table: its entries in deterministic ForEach order
@@ -92,6 +98,7 @@ type vEncoder struct {
 
 	reg       *ChunkRegistry
 	owner     *lua.LState
+	curThread int // index of the thread currently being encoded (shared scheduler pool, #440)
 	fnIDs     map[*lua.LFunction]int
 	funcs     []sfunc
 	cellIDs   map[*lua.Upvalue]int // interned closed upvalue cells (#437)
@@ -233,7 +240,7 @@ func (e *vEncoder) encodeFunc(fn *lua.LFunction) (sval, error) {
 		}
 		ups[i] = supval{Open: true, Index: vw.Index}
 	}
-	e.funcs[id] = sfunc{Chunk: chunk, Proto: path, Upvals: ups}
+	e.funcs[id] = sfunc{Chunk: chunk, Proto: path, Upvals: ups, Owner: e.curThread}
 	return sval{T: "func", Ref: id}, nil
 }
 

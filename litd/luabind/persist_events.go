@@ -174,59 +174,65 @@ func threadReachRoots(th *lua.LState) []lua.LValue {
 }
 
 // DetectCrossThreadSharing fails closed (§2.4) if a mutable Lua object — a closed
-// upvalue cell or a table — is reachable from more than one independently
-// serialized graph: two coroutines, or a coroutine and the OnEvent handler set.
-// Such an object is serialized once per graph and reconstructed as independent
-// copies, so a mutation through one would be invisible to the other after a
-// restore — a SILENT determinism divergence (#440). Sharing WITHIN one graph (two
-// handlers, or closures inside one coroutine) round-trips fine and is allowed.
+// upvalue cell or a table — is reachable from BOTH a scheduler coroutine AND the
+// OnEvent handler set. Those two serialize in SEPARATE save sections (the handler
+// set restores before the sim, coroutines after — savegame.go load-order
+// constraint), so a shared object is reconstructed as independent copies and a
+// mutation through one is invisible to the other after restore — a silent
+// determinism divergence (#440).
 //
-// Call it before writing a save. It is conservative: it refuses rather than emit
-// a container that would desync. The proper fix (one save-wide intern pool) is
-// tracked in #440; until then this turns the silent hole into a loud refusal.
+// Sharing ACROSS coroutines is NOT refused: as of #440 all alive coroutines
+// serialize against one shared intern pool (persist_scheduler.go), so a
+// table/cell shared between coroutines round-trips as a single object. Sharing
+// within one graph (two handlers; closures inside one coroutine) also round-trips.
+// A cross-thread OPEN-upvalue closure (pathological) is caught loudly by the
+// encoder itself (LitdUpvalueViews) at save time.
+//
+// Call it before writing a save. The remaining coroutine↔handler hole awaits a
+// unified script section (blocked on the handler-before-sim / scripts-after-sim
+// load order); until then this keeps it a loud refusal, never a silent desync.
 func DetectCrossThreadSharing(L *lua.LState, reg *ChunkRegistry) error {
 	s := getScheduler(L)
 	if s == nil {
 		return fmt.Errorf("luabind: DetectCrossThreadSharing: no scheduler bound to this LState")
 	}
 	handles := GameHandles{G: s.g}
-	cellGroup := map[*lua.Upvalue]string{}
-	tableGroup := map[*lua.LTable]string{}
-	check := func(group string, owner *lua.LState, roots []lua.LValue) error {
-		cells, tables, err := reachableMutables(reg, owner, roots, handles)
-		if err != nil {
-			return err // an unpersistable value the real save would also reject
-		}
-		for c := range cells {
-			if prev, ok := cellGroup[c]; ok && prev != group {
-				return fmt.Errorf("luabind: %s and %s share a mutable upvalue cell — shared mutable state across independently-saved graphs would diverge on restore (#440)", prev, group)
-			}
-			cellGroup[c] = group
-		}
-		for t := range tables {
-			if prev, ok := tableGroup[t]; ok && prev != group {
-				return fmt.Errorf("luabind: %s and %s share a mutable table — shared mutable state across independently-saved graphs would diverge on restore (#440)", prev, group)
-			}
-			tableGroup[t] = group
-		}
-		return nil
-	}
+
+	// The handler set's reachable mutable objects (one pool, one save section).
+	var handlerCells map[*lua.Upvalue]struct{}
+	var handlerTables map[*lua.LTable]struct{}
 	if len(s.eventHandlers) > 0 {
 		roots := make([]lua.LValue, len(s.eventHandlers))
 		for i, h := range s.eventHandlers {
 			roots[i] = h.fn
 		}
-		if err := check("the event-handler set", L, roots); err != nil {
-			return err
+		var err error
+		handlerCells, handlerTables, err = reachableMutables(reg, L, roots, handles)
+		if err != nil {
+			return err // an unpersistable value the real save would also reject
 		}
 	}
+
+	// Each coroutine: refuse only objects ALSO reachable from the handler set
+	// (cross-section). Coroutine↔coroutine sharing is fine (one shared pool).
 	for i := range s.threads {
 		e := &s.threads[i]
 		if !e.alive || e.co == nil {
 			continue
 		}
-		if err := check(fmt.Sprintf("coroutine slot %d", i), e.co, threadReachRoots(e.co)); err != nil {
+		cells, tables, err := reachableMutables(reg, e.co, threadReachRoots(e.co), handles)
+		if err != nil {
 			return err
+		}
+		for c := range cells {
+			if _, ok := handlerCells[c]; ok {
+				return fmt.Errorf("luabind: coroutine slot %d and the event-handler set share a mutable upvalue cell — shared across the separate coroutine and handler save sections, it would diverge on restore (#440)", i)
+			}
+		}
+		for t := range tables {
+			if _, ok := handlerTables[t]; ok {
+				return fmt.Errorf("luabind: coroutine slot %d and the event-handler set share a mutable table — shared across the separate coroutine and handler save sections, it would diverge on restore (#440)", i)
+			}
 		}
 	}
 	return nil
