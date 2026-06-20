@@ -33,10 +33,13 @@ import (
 // manifestName is the reserved archive entry holding the content-hash TOC.
 const manifestName = ".litdworld-manifest"
 
-// FileEntry is one verified payload file's manifest row.
+// FileEntry is one verified payload file's manifest row. Category is the
+// triangle-budget category for a .glb model (unit|building|other), "" for a
+// non-model file or a v1 archive that predates the category column (#424).
 type FileEntry struct {
-	Hash string
-	Size int64
+	Hash     string
+	Size     int64
+	Category string
 }
 
 // Manifest is the parsed, verified archive table of contents.
@@ -130,12 +133,13 @@ func verify(fsys fs.FS, engineVersion string) (Manifest, error) {
 				return fmt.Errorf("entry %q fails sandbox lint: %s", p, hits[0])
 			}
 		case strings.HasSuffix(lower, ".glb"):
-			// #411: an archive is not a validator bypass — re-run the glTF catalog
-			// (core profile, extension allowlist, no Draco/Meshopt, self-containment,
-			// absolute geometry ceiling) on embedded models at load, the same rules
-			// assetcheck enforces in CI. Per-category triangle budgets stay in CI
-			// (they need the MANIFEST category an archive entry does not carry).
-			if hits := assetcatalog.CheckGLB(data); len(hits) > 0 {
+			// #411 + #424: an archive is not a validator bypass — re-run the glTF
+			// catalog (core profile, extension allowlist, no Draco/Meshopt,
+			// self-containment, absolute geometry ceiling) AND the per-category
+			// triangle budget on embedded models at load, the same rules assetcheck
+			// enforces in CI. The category travels in the v2 manifest row (want.Category;
+			// "" for a v1 archive → only the absolute ceiling applies).
+			if hits := assetcatalog.CheckGLBCategory(data, want.Category); len(hits) > 0 {
 				return fmt.Errorf("entry %q fails asset catalog: %s", p, hits[0])
 			}
 		}
@@ -216,15 +220,27 @@ func parseManifest(body string) (Manifest, error) {
 				return Manifest{}, fmt.Errorf("malformed manifest header line: %q", line)
 			}
 		}
-		parts := strings.SplitN(line, " ", 3)
-		if len(parts) != 3 {
+		// v1 row: "<hash> <size> <rel>". v2 row: "<hash> <size> <category> <rel>".
+		// rel is the trailing field (may contain spaces). The version header
+		// (parsed above, before "files:") selects the field count (#424).
+		nFields := 3
+		if m.Version >= 2 {
+			nFields = 4
+		}
+		parts := strings.SplitN(line, " ", nFields)
+		if len(parts) != nFields {
 			return Manifest{}, fmt.Errorf("malformed manifest row: %q", line)
 		}
 		size, err := strconv.ParseInt(parts[1], 10, 64)
 		if err != nil {
 			return Manifest{}, fmt.Errorf("malformed size in manifest row: %q", line)
 		}
-		m.Files[parts[2]] = FileEntry{Hash: parts[0], Size: size}
+		cat := ""
+		if m.Version >= 2 {
+			cat = parts[2]
+		}
+		rel := parts[len(parts)-1]
+		m.Files[rel] = FileEntry{Hash: parts[0], Size: size, Category: cat}
 	}
 	switch {
 	case !sawVersion:

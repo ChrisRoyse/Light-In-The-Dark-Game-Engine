@@ -18,20 +18,56 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 )
 
 // manifestName is the reserved archive entry holding the content-hash TOC.
 const manifestName = ".litdworld-manifest"
 
+// noCategory is the manifest token for a payload file that carries no triangle
+// budget category (anything that is not a .glb model).
+const noCategory = "-"
+
 // fixedModTime pins every entry's timestamp to the ZIP epoch (1980-01-01 UTC),
 // removing filesystem mtime as a source of nondeterminism.
 var fixedModTime = time.Date(1980, 1, 1, 0, 0, 0, 0, time.UTC)
 
-// fileEntry is one packed file with its streamed content hash.
+// fileEntry is one packed file with its streamed content hash and (for models)
+// its triangle-budget category — recorded in the manifest so the load-time gate
+// can enforce per-category budgets without re-reading assets/MANIFEST (#424).
 type fileEntry struct {
-	Rel  string
-	Hash string
-	Size int64
+	Rel      string
+	Hash     string
+	Size     int64
+	Category string // "unit"|"building"|"other" for .glb; "-" otherwise
+}
+
+// isGLB reports whether rel names a glTF binary model (budgeted geometry).
+func isGLB(rel string) bool { return strings.HasSuffix(strings.ToLower(rel), ".glb") }
+
+// assignCategories stamps each entry's Category from the supplied rel→category
+// map. Fail-closed (R-FMT-2, doctrine §2.4): every embedded .glb MUST have a
+// known category (unit/building/other) so the load-time gate can enforce its
+// triangle budget — a model with no/unknown category aborts the pack rather than
+// shipping an unenforceable budget. Non-model files take "-".
+func assignCategories(entries []fileEntry, categories map[string]string) error {
+	for i := range entries {
+		rel := entries[i].Rel
+		if !isGLB(rel) {
+			entries[i].Category = noCategory
+			continue
+		}
+		cat, ok := categories[rel]
+		if !ok {
+			return fmt.Errorf("embedded model %q has no category; pass --categories with a %q line (unit|building|other) so the archive can enforce its triangle budget", rel, rel)
+		}
+		if !assetcatalog.CategoryKnown(cat) {
+			return fmt.Errorf("embedded model %q has unknown category %q; allowed: unit, building, other", rel, cat)
+		}
+		entries[i].Category = cat
+	}
+	return nil
 }
 
 // collect walks srcDir, returning the relative paths of all regular files in
@@ -130,10 +166,13 @@ func AggregateHash(entries []fileEntry) string {
 
 // buildManifest renders the deterministic content-hash TOC. Header order is
 // fixed (version, engine-range, hosting metadata, aggregate, files) so the
-// archive is byte-stable across runs.
+// archive is byte-stable across runs. Format version 2 adds a per-row category
+// column (`<hash> <size> <category> <rel>`); the rel path is the trailing field
+// so it may contain spaces. The aggregate is unchanged (over per-file hashes
+// only), so a v1→v2 bump does not alter the content fingerprint.
 func buildManifest(engineRange string, host Hosting, entries []fileEntry) string {
 	var b strings.Builder
-	b.WriteString("litdworld-version: 1\n")
+	b.WriteString("litdworld-version: 2\n")
 	fmt.Fprintf(&b, "engine-range: %s\n", engineRange)
 	fmt.Fprintf(&b, "author: %s\n", oneLine(host.Author))
 	fmt.Fprintf(&b, "title: %s\n", oneLine(host.Title))
@@ -141,13 +180,21 @@ func buildManifest(engineRange string, host Hosting, entries []fileEntry) string
 	fmt.Fprintf(&b, "aggregate-sha256: %s\n", AggregateHash(entries))
 	fmt.Fprintf(&b, "files: %d\n", len(entries))
 	for _, e := range entries {
-		fmt.Fprintf(&b, "%s %d %s\n", e.Hash, e.Size, e.Rel)
+		cat := e.Category
+		if cat == "" {
+			cat = noCategory
+		}
+		fmt.Fprintf(&b, "%s %d %s %s\n", e.Hash, e.Size, cat, e.Rel)
 	}
 	return b.String()
 }
 
-// Pack writes a deterministic archive of srcDir to outPath.
-func Pack(srcDir, outPath, engineRange string, host Hosting) error {
+// Pack writes a deterministic archive of srcDir to outPath. categories maps an
+// embedded model's rel-path to its triangle-budget category (unit|building|
+// other); every .glb in srcDir must be present in it or Pack fails closed (so
+// the load-time per-category budget is always enforceable). Pass nil when srcDir
+// embeds no models.
+func Pack(srcDir, outPath, engineRange string, host Hosting, categories map[string]string) error {
 	st, err := os.Stat(srcDir)
 	if err != nil || !st.IsDir() {
 		return fmt.Errorf("source %q is not a directory", srcDir)
@@ -158,6 +205,9 @@ func Pack(srcDir, outPath, engineRange string, host Hosting) error {
 	}
 	entries, err := hashFiles(srcDir, rels)
 	if err != nil {
+		return err
+	}
+	if err := assignCategories(entries, categories); err != nil {
 		return err
 	}
 	manifest := buildManifest(engineRange, host, entries)

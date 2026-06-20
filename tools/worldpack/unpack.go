@@ -25,11 +25,18 @@ func parseManifest(body string) (engineRange string, byPath map[string]manifestE
 	byPath = map[string]manifestEntry{}
 	sc := bufio.NewScanner(strings.NewReader(body))
 	header := true
+	version := 1
 	for sc.Scan() {
 		line := sc.Text()
 		if header {
 			switch {
 			case strings.HasPrefix(line, "litdworld-version:"):
+				v := strings.TrimSpace(strings.TrimPrefix(line, "litdworld-version:"))
+				n, perr := strconv.Atoi(v)
+				if perr != nil {
+					return "", nil, fmt.Errorf("malformed litdworld-version %q", v)
+				}
+				version = n
 				continue
 			case strings.HasPrefix(line, "engine-range:"):
 				engineRange = strings.TrimSpace(strings.TrimPrefix(line, "engine-range:"))
@@ -48,17 +55,24 @@ func parseManifest(body string) (engineRange string, byPath map[string]manifestE
 				return "", nil, fmt.Errorf("malformed manifest header: %q", line)
 			}
 		}
-		// file row: "<hash> <size> <path>" — path may contain spaces, so split
-		// into exactly three fields.
-		parts := strings.SplitN(line, " ", 3)
-		if len(parts) != 3 {
+		// file row. v1: "<hash> <size> <path>". v2: "<hash> <size> <category>
+		// <path>". The path is the trailing field (may contain spaces), so split
+		// into exactly the field count for the version. Unpack ignores category
+		// (round-trip restores bytes; the load-time gate consumes category).
+		nFields := 3
+		if version >= 2 {
+			nFields = 4
+		}
+		parts := strings.SplitN(line, " ", nFields)
+		if len(parts) != nFields {
 			return "", nil, fmt.Errorf("malformed manifest row: %q", line)
 		}
 		size, perr := strconv.ParseInt(parts[1], 10, 64)
 		if perr != nil {
 			return "", nil, fmt.Errorf("malformed size in manifest row %q: %w", line, perr)
 		}
-		e := manifestEntry{Hash: parts[0], Size: size, Rel: parts[2]}
+		rel := parts[len(parts)-1]
+		e := manifestEntry{Hash: parts[0], Size: size, Rel: rel}
 		byPath[e.Rel] = e
 	}
 	if err := sc.Err(); err != nil {

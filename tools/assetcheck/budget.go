@@ -15,17 +15,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/tools/assetcheck/manifest"
 )
 
-// triangleBudget maps a MANIFEST category to its triangle ceiling. A negative
-// ceiling means "categorized but not subject to the unit/building budget"
-// (terrain, props, fx) — still required to be categorized, just unbounded.
-var triangleBudget = map[string]int{
-	"unit":     1500,
-	"building": 4000,
-	"other":    -1,
-}
+// The per-category triangle ceilings (unit ≤ 1,500, building ≤ 4,000, other
+// unbounded) live in litd/asset/assetcatalog.CategoryBudget — the single source
+// of truth shared with the load-time gate (worldarchive) so the CI validator and
+// the engine read path cannot drift (#424). This gate reads it via
+// assetcatalog.CategoryBudget below.
 
 // waiver is one reviewed exemption: a specific over-budget asset allowed to
 // pass until the named milestone.
@@ -176,7 +174,7 @@ func checkBudget(triangles map[string]int, assets map[string]manifest.Asset, ws 
 			add(rel, "BUDGET-UNCATEGORIZED", fmt.Sprintf("model has %d triangles but its MANIFEST entry has no category; add category = \"unit\"|\"building\"|\"other\"", t))
 			continue
 		}
-		budget, known := triangleBudget[cat]
+		budget, known := assetcatalog.CategoryBudget[cat]
 		if !known {
 			add(rel, "BUDGET-CATEGORY", fmt.Sprintf("unknown MANIFEST category %q; allowed: unit, building, other", cat))
 			continue

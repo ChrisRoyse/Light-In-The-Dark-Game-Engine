@@ -202,13 +202,19 @@ func parseArchiveManifest(body string) (engineRange, aggregate string, byPath ma
 	sc := bufio.NewScanner(strings.NewReader(body))
 	header := true
 	sawVersion := false
+	version := 1
 	sawAuthor, sawTitle, sawDesc, sawAggregate := false, false, false, false
 	for sc.Scan() {
 		line := sc.Text()
 		if header {
 			switch {
 			case strings.HasPrefix(line, "litdworld-version:"):
-				sawVersion = true
+				v := strings.TrimSpace(strings.TrimPrefix(line, "litdworld-version:"))
+				n, perr := strconv.Atoi(v)
+				if perr != nil {
+					return "", "", nil, fmt.Errorf("malformed litdworld-version %q", v)
+				}
+				version, sawVersion = n, true
 				continue
 			case strings.HasPrefix(line, "engine-range:"):
 				engineRange = strings.TrimSpace(strings.TrimPrefix(line, "engine-range:"))
@@ -233,14 +239,21 @@ func parseArchiveManifest(body string) (engineRange, aggregate string, byPath ma
 				return "", "", nil, fmt.Errorf("malformed manifest header line: %q", line)
 			}
 		}
-		parts := strings.SplitN(line, " ", 3)
-		if len(parts) != 3 {
+		// v1 row: "<hash> <size> <rel>". v2 row: "<hash> <size> <category> <rel>"
+		// (#424). rel is the trailing field (may contain spaces); the version
+		// header selects the field count.
+		nFields := 3
+		if version >= 2 {
+			nFields = 4
+		}
+		parts := strings.SplitN(line, " ", nFields)
+		if len(parts) != nFields {
 			return "", "", nil, fmt.Errorf("malformed manifest row: %q", line)
 		}
 		if _, perr := strconv.ParseInt(parts[1], 10, 64); perr != nil {
 			return "", "", nil, fmt.Errorf("malformed size in manifest row: %q", line)
 		}
-		byPath[parts[2]] = parts[0]
+		byPath[parts[len(parts)-1]] = parts[0]
 	}
 	if err := sc.Err(); err != nil {
 		return "", "", nil, err

@@ -4,8 +4,9 @@
 // from tools/assetcheck (package main, unimportable) so BOTH the CI validator
 // AND the in-engine archive read path (litd/asset/worldarchive) enforce ONE rule
 // set with one implementation — no drift (#411; mirrors the lualint extraction in
-// commit 45a2184). Per-CATEGORY triangle budgets stay in assetcheck: they need
-// each asset's MANIFEST category, which a .litdworld archive entry does not carry.
+// commit 45a2184). Per-CATEGORY triangle budgets (CategoryBudget / CheckGLBCategory)
+// are ALSO shared from here now that the v2 archive manifest carries each entry's
+// category (#424) — the CI validator and the load-time gate read the same map.
 package assetcatalog
 
 import (
@@ -28,11 +29,13 @@ var CompressionExtensions = map[string]string{
 	"EXT_meshopt_compression":    "Meshopt",
 }
 
-// MaxArchiveTriangles is the absolute geometry ceiling enforced on an embedded
-// archive GLB at load (#411 defense-in-depth). It equals the largest per-category
-// budget (building, 4,000 tris): an uncategorized archive model over this is a
-// geometry bomb regardless of category. Per-category budgets (unit ≤ 1,500) are
-// still enforced in CI/assetcheck against the MANIFEST, which carries categories.
+// MaxArchiveTriangles is the absolute geometry ceiling enforced on EVERY embedded
+// archive GLB at load (#411 defense-in-depth), including ones with no category (a
+// v1 archive). It equals the largest per-category budget (building, 4,000 tris):
+// an uncategorized archive model over this is a geometry bomb regardless of
+// category. The tighter per-category budgets (unit ≤ 1,500) are enforced both in
+// CI/assetcheck against the MANIFEST AND at load against the v2 archive category
+// (CheckGLBCategory, #424).
 const MaxArchiveTriangles = 4000
 
 // GLBInfo is what the gate needs from a .glb: declared extensions and
@@ -271,6 +274,52 @@ func CheckGLB(data []byte) []string {
 	}
 	if info.Triangles > MaxArchiveTriangles {
 		hits = append(hits, fmt.Sprintf("GEO-MAX: %d triangles exceeds the absolute archive ceiling of %d (R-RND-2; per-category budgets enforced in CI)", info.Triangles, MaxArchiveTriangles))
+	}
+	return hits
+}
+
+// CategoryBudget maps a triangle-budget category to its ceiling (R-RND-2): units
+// ≤ 1,500, buildings ≤ 4,000. A negative ceiling ("other") means categorized but
+// not triangle-limited (terrain, props, fx) — still a valid category, just
+// unbounded. This is the SINGLE SOURCE OF TRUTH for the per-category budget,
+// shared by the CI validator (tools/assetcheck) and the load-time gate
+// (litd/asset/worldarchive) so the two cannot drift — the reason this package
+// exists (#424; mirrors the CheckGLB extraction in #411).
+var CategoryBudget = map[string]int{
+	"unit":     1500,
+	"building": 4000,
+	"other":    -1,
+}
+
+// CategoryKnown reports whether c is a defined budget category.
+func CategoryKnown(c string) bool { _, ok := CategoryBudget[c]; return ok }
+
+// CheckGLBCategory runs the full category-independent catalog (CheckGLB) AND the
+// per-category triangle budget for the given category — the load-time half of
+// #424. category is the archive manifest's per-entry category: "" or "-" means
+// the entry carried none (a v1 archive, or a non-budgeted file), so only the
+// absolute ceiling from CheckGLB applies. A category outside CategoryBudget is a
+// BUDGET-CATEGORY finding (fail-closed: an archive cannot smuggle an unknown
+// category past the budget). Same rule CI enforces against assets/MANIFEST, now
+// enforced against the embedded archive entry at load.
+func CheckGLBCategory(data []byte, category string) []string {
+	hits := CheckGLB(data)
+	if category == "" || category == "-" {
+		return hits // no category to enforce; absolute ceiling already applied
+	}
+	budget, known := CategoryBudget[category]
+	if !known {
+		return append(hits, fmt.Sprintf("BUDGET-CATEGORY: unknown category %q; allowed: unit, building, other", category))
+	}
+	if budget < 0 {
+		return hits // categorized but unbounded (other)
+	}
+	info, err := ParseGLBBytes(data)
+	if err != nil {
+		return hits // CheckGLB already reported GLTF-CORE; don't double-count the parse error
+	}
+	if info.Triangles > budget {
+		hits = append(hits, fmt.Sprintf("BUDGET-OVER: %d triangles exceeds %s budget of %d (R-RND-2)", info.Triangles, category, budget))
 	}
 	return hits
 }
