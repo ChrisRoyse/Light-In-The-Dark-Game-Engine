@@ -344,3 +344,25 @@ func TestTechTickAllocs(t *testing.T) {
 		t.Fatalf("research tick allocates: %v", allocs)
 	}
 }
+
+// TestTrainProgressResearchHeadFSV (#302/#303): TrainProgress must report the
+// HEAD entry's real duration even when the head is a research (or revive) entry.
+// Bug: it indexed unitDefs[Queue[r][0]] unconditionally, but a research head's
+// Queue[0] is an UPGRADE id, so it returned a wrong unit's TrainTicks as `total`
+// (and a misread elapsed) — or panics when the upgrade id exceeds len(unitDefs).
+// SoT = the (elapsed,total) TrainProgress returns vs the upgrade's ResearchTicks.
+func TestTrainProgressResearchHeadFSV(t *testing.T) {
+	w, _, rax := techWorld(t)
+	if got := w.ResearchUpgrade(rax, upgBlades); got != TrainOK {
+		t.Fatalf("research enqueue: %d", got)
+	}
+	w.Step() // 1 tick into the 10-tick iron-blades research
+	el, tot := w.TrainProgress(rax)
+	t.Logf("FSV: research-head TrainProgress = (elapsed=%d, total=%d); want total=10 (iron-blades ResearchTicks L1), elapsed≈1", el, tot)
+	if tot != 10 {
+		t.Fatalf("RESEARCH-PROGRESS BUG: total=%d, want 10 — TrainProgress misread Queue[0]=upgradeID %d as a unit type (footman TrainTicks=40) instead of the research duration", tot, upgBlades)
+	}
+	if el > tot {
+		t.Fatalf("elapsed %d > total %d — misread/underflow", el, tot)
+	}
+}

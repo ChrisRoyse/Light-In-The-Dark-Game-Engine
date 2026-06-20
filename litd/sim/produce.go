@@ -552,7 +552,12 @@ func (w *World) TrainProgress(building EntityID) (elapsed, total uint16) {
 	if r == -1 || w.Produce.QCount[r] == 0 || w.unitDefs == nil {
 		return 0, 0
 	}
-	total = w.unitDefs[w.Produce.Queue[r][0]].TrainTicks
+	// headTicks resolves the head's real duration for ALL head kinds — a unit
+	// train, a research entry (Queue[0] is an upgrade id), or a hero revive
+	// (Queue[0] is a hero id). Indexing unitDefs[Queue[0]] directly would misread
+	// a research/revive head's id as a unit type (wrong total, or an out-of-range
+	// panic when the id exceeds len(unitDefs)).
+	total = w.headTicks(r)
 	remain := w.Produce.Done[r] - w.tick
 	if w.Produce.Done[r] <= w.tick {
 		remain = 0
