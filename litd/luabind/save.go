@@ -37,8 +37,12 @@ import (
 // a single object instead of diverging copies. v5 (#435) folds the world's data
 // globals into that same shared graph, so a top-level global (counter/config)
 // survives a save/load — and a global whose value is also captured by a
-// coroutine round-trips as one object. An older blob is rejected loudly on load.
-const scriptSaveMagic = "LITDLUA\x05"
+// coroutine round-trips as one object. v6 (#446) folds the OnEvent handler
+// closures into that same shared graph too, so a mutable object shared between a
+// coroutine and a handler round-trips as one object (the event section now
+// carries only the handler kinds/order; the closures live here). An older blob is
+// rejected loudly on load.
+const scriptSaveMagic = "LITDLUA\x06"
 
 const (
 	flagAlive   = 1 << 0
@@ -66,7 +70,14 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 			alive = append(alive, s.threads[i].co)
 		}
 	}
-	sb, err := serializeScheduler(reg, L, alive, s.worldGlobals(), handles)
+	// Handler closures join the same pool (#446), in registration order, so a
+	// mutable object shared between a coroutine and a handler interns once. The
+	// matching kinds/order are written separately by SaveEventHandlers.
+	hfns := make([]lua.LValue, len(s.eventHandlers))
+	for i, h := range s.eventHandlers {
+		hfns[i] = h.fn
+	}
+	sb, err := serializeScheduler(reg, L, alive, s.worldGlobals(), hfns, handles)
 	if err != nil {
 		return fmt.Errorf("luabind: SaveScripts: %w", err)
 	}
@@ -170,7 +181,7 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	if len(sb.Threads) != len(aliveSlots) {
 		return fmt.Errorf("luabind: LoadScripts: shared graph has %d coroutines but %d slots are alive", len(sb.Threads), len(aliveSlots))
 	}
-	restored, topFns, globals, err := loadScheduler(reg, L, &sb, handles)
+	restored, topFns, globals, handlerFns, err := loadScheduler(reg, L, &sb, handles)
 	if err != nil {
 		return fmt.Errorf("luabind: LoadScripts: restore: %w", err)
 	}
@@ -184,6 +195,21 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	// global shared with a coroutine to a single object.
 	for _, gv := range globals {
 		L.SetGlobal(gv.Key, gv.Val)
+	}
+	// Bind the restored OnEvent handler closures (#446) back to the subscriptions
+	// RestoreEventHandlers pre-registered (by slot index) before the sim restore.
+	// The handler set is now part of the SAME shared pool, so a cell/table shared
+	// between a handler and a coroutine is one object. Count must match the kinds
+	// the event section restored, or the save is internally inconsistent.
+	if len(handlerFns) != len(s.eventHandlers) {
+		return fmt.Errorf("luabind: LoadScripts: %d handler closures but %d handler subscriptions registered", len(handlerFns), len(s.eventHandlers))
+	}
+	for i, hf := range handlerFns {
+		fn, ok := hf.(*lua.LFunction)
+		if !ok {
+			return fmt.Errorf("luabind: LoadScripts: handler %d decoded to %s, not a function", i, hf.Type())
+		}
+		s.eventHandlers[i].fn = fn
 	}
 
 	nFree := br.u32()

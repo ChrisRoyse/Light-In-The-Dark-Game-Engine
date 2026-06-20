@@ -20,10 +20,13 @@ package luabind
 // coroutines — pathological) is refused loudly at encode time by
 // LitdUpvalueViews, never silently mis-bound.
 //
-// Out of scope here: sharing between a coroutine and an OnEvent handler. Handlers
-// serialize in a SEPARATE save section restored before the sim (load-order
-// constraint, savegame.go), so they cannot share this pool; that residual case
-// stays guarded by DetectCrossThreadSharing.
+// OnEvent handlers (#446) join the SAME pool: their closures are encoded after
+// the coroutines and globals, so a mutable object (a closed cell or table) shared
+// between a handler and a coroutine interns once and round-trips as one object.
+// Only the handler closures live here; their EventKind + registration order live
+// in the event save section (restored pre-sim to re-allocate per-kind HandlerIDs
+// before LoadState — savegame.go), while the closures decode post-sim from this
+// pool and are bound back to the pre-registered subscriptions by slot index.
 
 import (
 	"fmt"
@@ -60,9 +63,20 @@ type schedThread struct {
 // so a global whose value is also captured by a coroutine round-trips as one
 // object rather than diverging copies (the #440 hazard, avoided by one pool).
 type schedBlob struct {
-	Threads []schedThread `json:"threads"`
-	Globals []schedGlobal `json:"globals,omitempty"`
-	Graph   valuesBlob    `json:"graph"`
+	Threads  []schedThread  `json:"threads"`
+	Globals  []schedGlobal  `json:"globals,omitempty"`
+	Handlers []schedHandler `json:"handlers,omitempty"`
+	Graph    valuesBlob     `json:"graph"`
+}
+
+// schedHandler is one persisted OnEvent handler closure: the index of its fn in
+// the shared graph's Roots. Its EventKind and registration order live in the
+// event save section (restored pre-sim to allocate matching per-kind HandlerIDs);
+// the closure decodes post-sim from this shared pool so a mutable object shared
+// between a handler and a coroutine round-trips as one object (#446). Handlers
+// align 1:1, in order, with the event section's kinds.
+type schedHandler struct {
+	Root int `json:"root"`
 }
 
 // schedGlobal is one persisted world data global: its name and the index of its
@@ -135,7 +149,7 @@ func threadSnapshot(th *lua.LState) (vals []lua.LValue, meta threadMeta, err err
 // the right register file) and records its root range. A cross-thread
 // open-upvalue closure reached by a non-owner coroutine is refused loudly by the
 // encoder (LitdUpvalueViews), never silently mis-bound.
-func serializeScheduler(reg *ChunkRegistry, main *lua.LState, alive []*lua.LState, globals []globalEntry, handles HandleMarshaler) (schedBlob, error) {
+func serializeScheduler(reg *ChunkRegistry, main *lua.LState, alive []*lua.LState, globals []globalEntry, handlerFns []lua.LValue, handles HandleMarshaler) (schedBlob, error) {
 	e := &vEncoder{
 		ids:       map[*lua.LTable]int{},
 		fnIDs:     map[*lua.LFunction]int{},
@@ -179,6 +193,19 @@ func serializeScheduler(reg *ChunkRegistry, main *lua.LState, alive []*lua.LStat
 		sb.Globals = append(sb.Globals, schedGlobal{Key: ge.Key, Root: len(roots)})
 		roots = append(roots, r)
 	}
+	// OnEvent handler closures (#446) into the SAME pool, after the globals, so a
+	// cell/table already interned via a coroutine or global capture reuses that one
+	// object. Like globals they are top-level closures (owner = main state,
+	// curThread = -1); an open upvalue in a handler is pathological and rejected
+	// loudly (owner -1 out of thread range).
+	for i, hf := range handlerFns {
+		r, err := e.encode(hf)
+		if err != nil {
+			return schedBlob{}, fmt.Errorf("luabind: event handler %d: %w", i, err)
+		}
+		sb.Handlers = append(sb.Handlers, schedHandler{Root: len(roots)})
+		roots = append(roots, r)
+	}
 	sb.Graph = valuesBlob{
 		Roots: roots, Tables: e.tables, Funcs: e.funcs,
 		Cells: e.cells, Threads: e.threads, UserData: e.uds,
@@ -192,14 +219,14 @@ func serializeScheduler(reg *ChunkRegistry, main *lua.LState, alive []*lua.LStat
 // owner thread, closed cells to the shared interned cells — so cross-coroutine
 // shared objects come back as one object. Returns the threads and their top-frame
 // functions, indexed as schedBlob.Threads (i.e. per alive slot, in order).
-func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handles HandleMarshaler) ([]*lua.LState, []*lua.LFunction, []loadedGlobal, error) {
+func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handles HandleMarshaler) ([]*lua.LState, []*lua.LFunction, []loadedGlobal, []lua.LValue, error) {
 	d, err := newGraphDecoder(parent, reg, &sb.Graph, handles)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	roots, err := d.roots()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	threads := make([]*lua.LState, len(sb.Threads))
 	topFns := make([]*lua.LFunction, len(sb.Threads))
@@ -207,7 +234,7 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 		st := &sb.Threads[k]
 		nReg, nFrames, start := st.Meta.NumRegisters, len(st.Meta.Frames), st.RootStart
 		if nReg < 0 || start < 0 || start+nReg+nFrames > len(roots) {
-			return nil, nil, nil, fmt.Errorf("luabind: coroutine %d root range [%d,%d) out of %d shared roots", k, start, start+nReg+nFrames, len(roots))
+			return nil, nil, nil, nil, fmt.Errorf("luabind: coroutine %d root range [%d,%d) out of %d shared roots", k, start, start+nReg+nFrames, len(roots))
 		}
 		v := &lua.LitdThreadView{
 			Dead: st.Meta.Dead, Wrapped: st.Meta.Wrapped,
@@ -226,7 +253,7 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 		for fi, fim := range st.Meta.Frames {
 			fn, ok := roots[start+nReg+fi].(*lua.LFunction)
 			if !ok {
-				return nil, nil, nil, fmt.Errorf("luabind: coroutine %d frame %d function root is %s, not a function", k, fi, roots[start+nReg+fi].Type())
+				return nil, nil, nil, nil, fmt.Errorf("luabind: coroutine %d frame %d function root is %s, not a function", k, fi, roots[start+nReg+fi].Type())
 			}
 			topFn = fn
 			v.Frames = append(v.Frames, lua.LitdFrameView{
@@ -240,7 +267,7 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 	// All coroutine register files now exist; wire every closure's upvalues —
 	// open upvalues into their OWNER coroutine, closed cells to the shared pool.
 	if err := d.wireUpvaluesMulti(threads); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	// Extract the world data globals from the now-wired graph (#435). Their roots
 	// are fully reconstructed (closures wired, shared objects unified with any
@@ -249,11 +276,22 @@ func loadScheduler(reg *ChunkRegistry, parent *lua.LState, sb *schedBlob, handle
 	for k := range sb.Globals {
 		g := &sb.Globals[k]
 		if g.Root < 0 || g.Root >= len(roots) {
-			return nil, nil, nil, fmt.Errorf("luabind: global %q root %d out of %d shared roots", g.Key, g.Root, len(roots))
+			return nil, nil, nil, nil, fmt.Errorf("luabind: global %q root %d out of %d shared roots", g.Key, g.Root, len(roots))
 		}
 		globals = append(globals, loadedGlobal{Key: g.Key, Val: roots[g.Root]})
 	}
-	return threads, topFns, globals, nil
+	// Extract the OnEvent handler closures from the same wired graph (#446), in
+	// registration order. LoadScripts binds them back to the subscriptions that
+	// RestoreEventHandlers pre-registered (by slot index) before the sim restore.
+	var handlerFns []lua.LValue
+	for k := range sb.Handlers {
+		h := &sb.Handlers[k]
+		if h.Root < 0 || h.Root >= len(roots) {
+			return nil, nil, nil, nil, fmt.Errorf("luabind: event handler %d root %d out of %d shared roots", k, h.Root, len(roots))
+		}
+		handlerFns = append(handlerFns, roots[h.Root])
+	}
+	return threads, topFns, globals, handlerFns, nil
 }
 
 // wireUpvaluesMulti is wireUpvalues for the shared scheduler pool: a closure's

@@ -15,15 +15,16 @@
 // this way; this extends the same guarantee to script-registered handlers.
 //
 // Fail-closed (§2.4): a handler that is a Go function or belongs to no registered
-// chunk is a loud error from SaveEventHandlers — never a silent drop. Handler
-// closures are serialized through the same shared-graph value persister the
-// coroutine saver uses (serializeRegisters / graphDecoder), so captured upvalues
-// round-trip (#436) — INCLUDING a closed cell shared between two handlers, now
-// that the persister interns closed upvalue cells by identity (#437).
+// chunk is a loud error at save time — never a silent drop. As of #446 the
+// handler CLOSURES are serialized by SaveScripts into the one shared scheduler
+// pool (so a mutable object shared between a handler and a coroutine round-trips
+// as a single object); this section now carries only each handler's EventKind in
+// registration order. Those kinds are replayed on a fresh game BEFORE the sim
+// restore so the per-kind HandlerIDs re-allocate and LoadState's subscriptions
+// resolve; the closures are then bound back by slot index post-sim (LoadScripts).
 package luabind
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 
@@ -33,9 +34,11 @@ import (
 
 // eventSaveMagic tags the OnEvent-handler save section and pins its format
 // version. A mismatched magic on load is a loud refusal, never a partial restore.
-// v2 (#436) serializes each handler as a full closure (proto ref + upvalues) via
-// the shared-graph persister, replacing v1's proto-reference-only encoding.
-const eventSaveMagic = "LITDEVT\x02"
+// v2 (#436) serialized each handler as a full closure via the shared-graph
+// persister. v3 (#446) moves the closures into the shared scheduler pool
+// (SaveScripts) and reduces this section to the handler kinds + order, so a
+// coroutine↔handler shared mutable round-trips instead of being refused.
+const eventSaveMagic = "LITDEVT\x03"
 
 // scriptEventReg records one OnEvent(kind, fn) registration in the order it was
 // made. The api side keeps only the Go trampoline closure (the originating Lua
@@ -46,60 +49,69 @@ type scriptEventReg struct {
 	fn   *lua.LFunction
 }
 
-// registerScriptHandler binds fn as an OnEvent handler for kind on g and records
-// the registration on s so it can be persisted. Shared by the OnEvent Lua
-// binding and RestoreEventHandlers so both build the EXACT same trampoline.
-func registerScriptHandler(L *lua.LState, g *api.Game, s *scriptScheduler, kind api.EventKind, fn *lua.LFunction) api.Subscription {
-	sub := g.OnEvent(kind, func(ev api.Event) {
-		callEventHandler(L, fn, ev)
+// subscribeHandlerSlot registers the OnEvent subscription for handler slot idx.
+// The trampoline reads the Lua fn from s.eventHandlers[idx] AT DISPATCH TIME, not
+// at registration, so the same subscription works whether the fn is bound now
+// (live OnEvent) or filled in later (#446 restore: the kinds register pre-sim to
+// re-allocate HandlerIDs, while the closures decode post-sim from the shared
+// pool). A still-nil slot (between pre-sim registration and post-sim binding) is a
+// no-op — no event fires during the sim restore window.
+func subscribeHandlerSlot(L *lua.LState, g *api.Game, s *scriptScheduler, kind api.EventKind, idx int) api.Subscription {
+	return g.OnEvent(kind, func(ev api.Event) {
+		if idx < len(s.eventHandlers) {
+			if fn := s.eventHandlers[idx].fn; fn != nil {
+				callEventHandler(L, fn, ev)
+			}
+		}
 	})
-	s.eventHandlers = append(s.eventHandlers, scriptEventReg{kind: kind, fn: fn})
-	return sub
 }
 
-// SaveEventHandlers serializes the OnEvent handler table on L to w: the public
-// EventKind of each handler (in registration order) followed by one shared-graph
-// blob holding every handler closure — proto references (chunk id + proto path,
-// never bytecode) plus captured upvalues, with shared cells interned once. Pair
-// it with SaveScripts and api.Game.SaveState at the same tick boundary.
+// registerScriptHandler binds fn as an OnEvent handler for kind on g and records
+// the registration on s so it can be persisted. Used by the OnEvent Lua binding;
+// the restore path appends a nil-fn record and calls subscribeHandlerSlot directly
+// (the fn arrives post-sim).
+func registerScriptHandler(L *lua.LState, g *api.Game, s *scriptScheduler, kind api.EventKind, fn *lua.LFunction) api.Subscription {
+	idx := len(s.eventHandlers)
+	s.eventHandlers = append(s.eventHandlers, scriptEventReg{kind: kind, fn: fn})
+	return subscribeHandlerSlot(L, g, s, kind, idx)
+}
+
+// SaveEventHandlers serializes the OnEvent handler table's SHAPE on L to w: the
+// public EventKind of each handler in registration order. The handler closures
+// themselves are written by SaveScripts into the shared scheduler pool (#446) —
+// keeping a coroutine↔handler shared object as a single interned object — so this
+// section is closure-free. Pair it with SaveScripts and api.Game.SaveState at the
+// same tick boundary; a handler whose closure is unpersistable is a loud error
+// from SaveScripts (the pool encoder), preserving the fail-closed posture.
 func SaveEventHandlers(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 	s := getScheduler(L)
 	if s == nil {
 		return fmt.Errorf("luabind: SaveEventHandlers: no scheduler bound to this LState")
 	}
+	_ = reg // closures are encoded by SaveScripts now; kept for signature symmetry
 	bw := &errWriter{w: w}
 	bw.writeRaw([]byte(eventSaveMagic))
 	bw.u32(uint32(len(s.eventHandlers)))
-	if len(s.eventHandlers) == 0 {
-		return bw.err
-	}
-	fns := make([]lua.LValue, len(s.eventHandlers))
-	for i, h := range s.eventHandlers {
+	for _, h := range s.eventHandlers {
 		bw.u16(uint16(h.kind))
-		fns[i] = h.fn
 	}
-	// One shared graph for all handlers. serializeRegisters fails closed on a Go
-	// function or a function from no registered chunk.
-	blob, err := serializeRegisters(reg, L, fns, GameHandles{G: s.g})
-	if err != nil {
-		return fmt.Errorf("luabind: SaveEventHandlers: %w", err)
-	}
-	bw.u32(uint32(len(blob)))
-	bw.writeRaw(blob)
 	return bw.err
 }
 
-// RestoreEventHandlers rebuilds the OnEvent handler table from r against reg and
-// re-binds each handler to g. It MUST run on a fresh game BEFORE g.LoadState —
-// see the package doc for why registration-order replay re-allocates matching
-// per-kind HandlerIDs. A nil scheduler, bad magic, truncated data, an
-// unresolvable proto, or a root that is not a function is a loud error and no
-// partial table is left.
+// RestoreEventHandlers replays the OnEvent handler kinds from r on a fresh game,
+// re-registering one subscription per handler (in order) so the per-kind
+// HandlerIDs re-allocate to match the sim save — see the package doc. It MUST run
+// BEFORE g.LoadState. The handler CLOSURES are bound later, by slot index, when
+// LoadScripts decodes the shared pool post-sim (#446); until then each slot's fn
+// is nil and its trampoline is a no-op (no event fires mid-restore). A nil
+// scheduler, bad magic, or truncated data is a loud error and no partial table is
+// left.
 func RestoreEventHandlers(L *lua.LState, reg *ChunkRegistry, g *api.Game, r io.Reader) error {
 	s := getScheduler(L)
 	if s == nil {
 		return fmt.Errorf("luabind: RestoreEventHandlers: no scheduler bound to this LState")
 	}
+	_ = reg // closures resolve later, in LoadScripts, against the shared pool
 	br := &errReader{r: r}
 	magic := br.readRaw(len(eventSaveMagic))
 	if br.err != nil {
@@ -114,126 +126,14 @@ func RestoreEventHandlers(L *lua.LState, reg *ChunkRegistry, g *api.Game, r io.R
 	}
 	// Rebuild from scratch; a re-save after restore must reproduce this table.
 	s.eventHandlers = nil
-	if n == 0 {
-		return nil
-	}
-	kinds := make([]api.EventKind, n)
-	for i := range kinds {
-		kinds[i] = api.EventKind(br.u16())
-	}
-	blobLen := br.u32()
-	blob := br.readRaw(int(blobLen))
-	if br.err != nil {
-		return fmt.Errorf("luabind: RestoreEventHandlers: %w", br.err)
-	}
-	var vb valuesBlob
-	if err := json.Unmarshal(blob, &vb); err != nil {
-		return fmt.Errorf("luabind: RestoreEventHandlers: malformed closure blob: %w", err)
-	}
-	d, err := newGraphDecoder(L, reg, &vb, GameHandles{G: s.g})
-	if err != nil {
-		return fmt.Errorf("luabind: RestoreEventHandlers: %w", err)
-	}
-	roots, err := d.roots()
-	if err != nil {
-		return fmt.Errorf("luabind: RestoreEventHandlers: %w", err)
-	}
-	// Wire closed upvalues (and any open ones, against L) AFTER the closures and
-	// tables exist, so shared cells coincide.
-	if err := d.wireUpvalues(L); err != nil {
-		return fmt.Errorf("luabind: RestoreEventHandlers: %w", err)
-	}
-	for i, root := range roots {
-		fn, ok := root.(*lua.LFunction)
-		if !ok {
-			return fmt.Errorf("luabind: RestoreEventHandlers: handler %d decoded to %s, not a function", i, root.Type())
+	for i := uint32(0); i < n; i++ {
+		kind := api.EventKind(br.u16())
+		if br.err != nil {
+			return fmt.Errorf("luabind: RestoreEventHandlers: handler %d kind: %w", i, br.err)
 		}
-		registerScriptHandler(L, g, s, kinds[i], fn)
+		idx := len(s.eventHandlers)
+		s.eventHandlers = append(s.eventHandlers, scriptEventReg{kind: kind, fn: nil})
+		subscribeHandlerSlot(L, g, s, kind, idx)
 	}
-	return nil
-}
-
-// threadReachRoots returns the live values reachable from a suspended coroutine
-// (its register stack + each frame's executing function) — the same object set
-// SaveThread serializes, used for cross-thread sharing detection. Nil register
-// slots reach nothing and are skipped.
-func threadReachRoots(th *lua.LState) []lua.LValue {
-	v := th.LitdSnapshot()
-	roots := make([]lua.LValue, 0, len(v.Stack)+len(v.Frames))
-	for _, sv := range v.Stack {
-		if sv != nil {
-			roots = append(roots, sv)
-		}
-	}
-	for _, f := range v.Frames {
-		if f.Fn != nil {
-			roots = append(roots, f.Fn)
-		}
-	}
-	return roots
-}
-
-// DetectCrossThreadSharing fails closed (§2.4) if a mutable Lua object — a closed
-// upvalue cell or a table — is reachable from BOTH a scheduler coroutine AND the
-// OnEvent handler set. Those two serialize in SEPARATE save sections (the handler
-// set restores before the sim, coroutines after — savegame.go load-order
-// constraint), so a shared object is reconstructed as independent copies and a
-// mutation through one is invisible to the other after restore — a silent
-// determinism divergence (#440).
-//
-// Sharing ACROSS coroutines is NOT refused: as of #440 all alive coroutines
-// serialize against one shared intern pool (persist_scheduler.go), so a
-// table/cell shared between coroutines round-trips as a single object. Sharing
-// within one graph (two handlers; closures inside one coroutine) also round-trips.
-// A cross-thread OPEN-upvalue closure (pathological) is caught loudly by the
-// encoder itself (LitdUpvalueViews) at save time.
-//
-// Call it before writing a save. The remaining coroutine↔handler hole awaits a
-// unified script section (blocked on the handler-before-sim / scripts-after-sim
-// load order); until then this keeps it a loud refusal, never a silent desync.
-func DetectCrossThreadSharing(L *lua.LState, reg *ChunkRegistry) error {
-	s := getScheduler(L)
-	if s == nil {
-		return fmt.Errorf("luabind: DetectCrossThreadSharing: no scheduler bound to this LState")
-	}
-	handles := GameHandles{G: s.g}
-
-	// The handler set's reachable mutable objects (one pool, one save section).
-	var handlerCells map[*lua.Upvalue]struct{}
-	var handlerTables map[*lua.LTable]struct{}
-	if len(s.eventHandlers) > 0 {
-		roots := make([]lua.LValue, len(s.eventHandlers))
-		for i, h := range s.eventHandlers {
-			roots[i] = h.fn
-		}
-		var err error
-		handlerCells, handlerTables, err = reachableMutables(reg, L, roots, handles)
-		if err != nil {
-			return err // an unpersistable value the real save would also reject
-		}
-	}
-
-	// Each coroutine: refuse only objects ALSO reachable from the handler set
-	// (cross-section). Coroutine↔coroutine sharing is fine (one shared pool).
-	for i := range s.threads {
-		e := &s.threads[i]
-		if !e.alive || e.co == nil {
-			continue
-		}
-		cells, tables, err := reachableMutables(reg, e.co, threadReachRoots(e.co), handles)
-		if err != nil {
-			return err
-		}
-		for c := range cells {
-			if _, ok := handlerCells[c]; ok {
-				return fmt.Errorf("luabind: coroutine slot %d and the event-handler set share a mutable upvalue cell — shared across the separate coroutine and handler save sections, it would diverge on restore (#440)", i)
-			}
-		}
-		for t := range tables {
-			if _, ok := handlerTables[t]; ok {
-				return fmt.Errorf("luabind: coroutine slot %d and the event-handler set share a mutable table — shared across the separate coroutine and handler save sections, it would diverge on restore (#440)", i)
-			}
-		}
-	}
-	return nil
+	return br.err
 }

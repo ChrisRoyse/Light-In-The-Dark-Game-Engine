@@ -270,40 +270,6 @@ func serializeRegisters(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue, 
 	return json.Marshal(valuesBlob{Roots: roots, Tables: e.tables, Funcs: e.funcs, Cells: e.cells, Threads: e.threads, UserData: e.uds})
 }
 
-// reachableMutables walks the same value graph serializeRegisters would (same
-// encoder, same interning), but returns the IDENTITY sets of the mutable objects
-// it reaches — closed upvalue cells and tables — instead of a blob. It is the
-// detection primitive for the cross-thread sharing guard (#440): an object that
-// appears in two threads' (or a thread's and the handler set's) reachable sets is
-// shared across independently-serialized graphs and would NOT round-trip as one
-// object. Errors exactly where a real serialize would (unpersistable value).
-func reachableMutables(reg *ChunkRegistry, owner *lua.LState, vs []lua.LValue, handles HandleMarshaler) (cells map[*lua.Upvalue]struct{}, tables map[*lua.LTable]struct{}, err error) {
-	e := &vEncoder{
-		ids:       map[*lua.LTable]int{},
-		fnIDs:     map[*lua.LFunction]int{},
-		cellIDs:   map[*lua.Upvalue]int{},
-		threadIDs: map[*lua.LState]int{},
-		udIDs:     map[*lua.LUserData]int{},
-		reg:       reg,
-		owner:     owner,
-		handles:   handles,
-	}
-	for i, v := range vs {
-		if _, err := e.encode(v); err != nil {
-			return nil, nil, fmt.Errorf("luabind: reachability value %d: %w", i, err)
-		}
-	}
-	cells = make(map[*lua.Upvalue]struct{}, len(e.cellIDs))
-	for c := range e.cellIDs {
-		cells[c] = struct{}{}
-	}
-	tables = make(map[*lua.LTable]struct{}, len(e.ids))
-	for t := range e.ids {
-		tables[t] = struct{}{}
-	}
-	return cells, tables, nil
-}
-
 func (e *vEncoder) encodeTable(t *lua.LTable) (sval, error) {
 	if id, ok := e.ids[t]; ok {
 		return sval{T: "table", Ref: id}, nil // already interned (shared / cyclic)
