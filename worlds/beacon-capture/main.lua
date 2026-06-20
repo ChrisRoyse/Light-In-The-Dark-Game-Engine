@@ -65,8 +65,18 @@ Game_Every(TICK_SECONDS, function()
 	else
 		progress = progress + TICK_PROGRESS
 		if progress >= CAPTURE_TICKS then
+			-- Ownership transfer. Stop the PREVIOUS owner's persistent vision first
+			-- (else its fog modifier leaks and the old owner keeps seeing the
+			-- beacon forever); then reset progress to 0 so a future challenger must
+			-- earn the full capture duration again — without the reset progress
+			-- stays clamped at CAPTURE_TICKS and the next sole contender flips
+			-- ownership in a single scan (a 2 s capture stolen in 0.25 s).
+			if fogMod ~= nil then
+				FogModifier_Stop(fogMod)
+				FogModifier_Destroy(fogMod)
+			end
 			owner = who
-			progress = CAPTURE_TICKS
+			progress = 0
 			-- Light it: a persistent fog modifier reveals the radius to the owner
 			-- (survives vision recomputes, unlike a per-tick SetFogState stamp).
 			fogMod = Game_NewFogModifier(Game_Player(owner), 2, -- 2 = FogVisible

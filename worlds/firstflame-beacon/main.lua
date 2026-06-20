@@ -49,8 +49,17 @@ Game_Every(0.25, function()
 	else
 		progress = progress + TICK_PROGRESS
 		if progress >= CAPTURE_TICKS then
+			-- Ownership transfer: stop the previous owner's persistent vision (else
+			-- its fog modifier leaks) and reset progress to 0, so a future challenger
+			-- must earn the full capture duration rather than flip in a single scan
+			-- (progress was clamped at CAPTURE_TICKS → next contender hit the
+			-- threshold instantly). Same fix as worlds/beacon-capture.
+			if fogMod ~= nil then
+				FogModifier_Stop(fogMod)
+				FogModifier_Destroy(fogMod)
+			end
 			owner = who
-			progress = CAPTURE_TICKS
+			progress = 0
 			fogMod = Game_NewFogModifier(Game_Player(owner), 2,
 				{ cx = B.x, cy = B.y, radius = LIGHT_RADIUS })
 			FogModifier_Start(fogMod)
