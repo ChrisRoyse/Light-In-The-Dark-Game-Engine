@@ -293,6 +293,38 @@ func (e Event) Region() Region {
 	return Region{}
 }
 
+// Buff returns the buff type on a buff-lifecycle event, else the null BuffType.
+// Valid for EventBuffApplied/Refreshed/Expired, where Arg's low 16 bits carry
+// the buff type id (#480).
+func (e Event) Buff() BuffType {
+	switch e.kind {
+	case EventBuffApplied, EventBuffRefreshed, EventBuffExpired:
+		return BuffType{ref: sim.BuffArgID(e.arg) + 1}
+	}
+	return BuffType{}
+}
+
+// BuffStacks returns the resulting stack count on a buff apply/refresh event,
+// else 0 (#480). EventBuffExpired carries no stack count.
+func (e Event) BuffStacks() int {
+	switch e.kind {
+	case EventBuffApplied, EventBuffRefreshed:
+		return int(sim.BuffArgStacks(e.arg))
+	}
+	return 0
+}
+
+// FromAura reports whether a buff apply/refresh event came from an aura (an
+// aura-child instance) rather than a direct application (#480). Always false for
+// non-buff kinds and for EventBuffExpired, which carries no aura flag.
+func (e Event) FromAura() bool {
+	switch e.kind {
+	case EventBuffApplied, EventBuffRefreshed:
+		return sim.BuffArgIsAura(e.arg)
+	}
+	return false
+}
+
 // Subscription returns the registration that is currently firing this
 // handler — the capability behind JASS GetTriggeringTrigger, letting a
 // handler cancel itself (e.Subscription().Cancel()) or pass its own

@@ -419,3 +419,12 @@ exact   Game.EmitSpellCue
 # Game.UnitType/BuffType type-catalog resolvers; LitD authoring seam, no JASS
 # native (JASS abilities are 'xxxx' rawcodes passed directly).
 exact   Game.AbilityRef
+# buff-lifecycle trigger hooks (#480): OnBuffExpired/OnBuffRefreshed are sugar
+# over OnEvent for the buff EFFECT kinds; Event.Buff/BuffStacks/FromAura decode a
+# buff event's payload (type, stack count, aura-child flag). WC3 hides buffs
+# behind dummy-caster abilities — no JASS native maps here.
+exact   Game.OnBuffExpired
+exact   Game.OnBuffRefreshed
+exact   Event.Buff
+exact   Event.BuffStacks
+exact   Event.FromAura

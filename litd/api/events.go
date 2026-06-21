@@ -161,6 +161,22 @@ func (g *Game) OnBuffApplied(handler func(Event), opts ...EventOption) Subscript
 	return g.OnEvent(EventBuffApplied, handler, opts...)
 }
 
+// OnBuffExpired registers handler for a buff instance timing out on a unit
+// (EventBuffExpired). Sugar over OnEvent: e.Unit() is the unit losing the buff,
+// e.Buff() the expiring type. Aura children fire it too when their linger ends
+// (#480). For a dispel-driven removal the same kind fires (pre-zeroed duration).
+func (g *Game) OnBuffExpired(handler func(Event), opts ...EventOption) Subscription {
+	return g.OnEvent(EventBuffExpired, handler, opts...)
+}
+
+// OnBuffRefreshed registers handler for an existing buff instance being
+// refreshed/restacked (EventBuffRefreshed). Sugar over OnEvent: e.Unit() is the
+// buffed unit, e.Source() the applier, e.BuffStacks() the resulting stack count,
+// e.FromAura() whether the refresh came from an aura (#480).
+func (g *Game) OnBuffRefreshed(handler func(Event), opts ...EventOption) Subscription {
+	return g.OnEvent(EventBuffRefreshed, handler, opts...)
+}
+
 // runFilter evaluates a subscription's filter. In debug mode it samples
 // the filter twice on the same view; a differing result means the
 // filter is impure (it mutated captured state or read nondeterministic

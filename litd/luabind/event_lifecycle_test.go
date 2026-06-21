@@ -87,13 +87,80 @@ func TestLuaOnBuffAppliedFiresFSV(t *testing.T) {
 	t.Logf("FSV: real buff apply fired Lua OnBuffApplied; Event_Unit is the live buffed unit; Event_Ability degraded to 0")
 }
 
-// TestLuaLifecycleBindersRegistered — the three convenience globals exist and
+// TestLuaBuffHooksFSV (#480) — the Lua buff-lifecycle binders fire on a REAL
+// apply/refresh/expire sequence, and the payload readers (Event_Buff /
+// Event_BuffStacks / Event_FromAura) decode the event. SoT = the Lua handler's
+// observed counters/values joined with the Go-side buff store.
+func TestLuaBuffHooksFSV(t *testing.T) {
+	g, L, u := lifecycleGame(t)
+	defer L.Close()
+	slow := g.BuffType("slow") // stack-count, MaxStacks 3
+
+	if err := L.DoString(`
+		applied=0; refreshed=0; expired=0
+		appliedStacks=-1; refreshedStacks=-1; appliedFromAura=true; buffNil=true
+		OnBuffApplied(function(e)
+			applied = applied + 1
+			appliedStacks = Event_BuffStacks(e)
+			appliedFromAura = Event_FromAura(e)
+			buffNil = (Event_Buff(e) == nil)
+		end)
+		OnBuffRefreshed(function(e) refreshed = refreshed + 1; refreshedStacks = Event_BuffStacks(e) end)
+		OnBuffExpired(function(e) expired = expired + 1 end)`); err != nil {
+		t.Fatalf("register buff hooks: %v", err)
+	}
+
+	// apply (stacks 1), then refresh (stacks 1->2).
+	if err := L.DoString(`Unit_ApplyBuff(u, Game_BuffType("slow"))`); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	g.Advance(1)
+	if err := L.DoString(`Unit_ApplyBuff(u, Game_BuffType("slow"))`); err != nil {
+		t.Fatalf("refresh apply: %v", err)
+	}
+	g.Advance(1)
+	t.Logf("FSV #480 lua: applied=%v appliedStacks=%v fromAura=%v buffNil=%v refreshed=%v refreshedStacks=%v",
+		luaNum(t, L, "applied"), luaNum(t, L, "appliedStacks"),
+		lua.LVAsBool(L.GetGlobal("appliedFromAura")), lua.LVAsBool(L.GetGlobal("buffNil")),
+		luaNum(t, L, "refreshed"), luaNum(t, L, "refreshedStacks"))
+
+	if luaNum(t, L, "applied") != 1 {
+		t.Fatalf("OnBuffApplied fired %v times, want 1", luaNum(t, L, "applied"))
+	}
+	if luaNum(t, L, "appliedStacks") != 1 {
+		t.Fatalf("Event_BuffStacks on apply = %v, want 1", luaNum(t, L, "appliedStacks"))
+	}
+	if lua.LVAsBool(L.GetGlobal("appliedFromAura")) {
+		t.Fatal("Event_FromAura on a direct apply = true, want false")
+	}
+	if lua.LVAsBool(L.GetGlobal("buffNil")) {
+		t.Fatal("Event_Buff returned nil on a buff event")
+	}
+	if luaNum(t, L, "refreshed") != 1 {
+		t.Fatalf("OnBuffRefreshed fired %v times, want 1", luaNum(t, L, "refreshed"))
+	}
+	if luaNum(t, L, "refreshedStacks") != 2 {
+		t.Fatalf("Event_BuffStacks on refresh = %v, want 2", luaNum(t, L, "refreshedStacks"))
+	}
+
+	// run past the 40-tick duration → expiry fires.
+	g.Advance(45)
+	t.Logf("FSV #480 lua expiry: expired=%v hasBuff=%v", luaNum(t, L, "expired"), u.HasBuff(slow))
+	if luaNum(t, L, "expired") < 1 {
+		t.Fatalf("OnBuffExpired fired %v times, want >=1", luaNum(t, L, "expired"))
+	}
+	if u.HasBuff(slow) {
+		t.Fatal("buff still present after its duration; expiry SoT disagrees")
+	}
+}
+
+// TestLuaLifecycleBindersRegistered — the convenience globals exist and
 // register a real (non-nil) subscription handle.
 func TestLuaLifecycleBindersRegistered(t *testing.T) {
 	_, L, _ := lifecycleGame(t)
 	defer L.Close()
 
-	for _, name := range []string{"OnAbilityCast", "OnAttack", "OnBuffApplied"} {
+	for _, name := range []string{"OnAbilityCast", "OnAttack", "OnBuffApplied", "OnBuffExpired", "OnBuffRefreshed"} {
 		if L.GetGlobal(name).Type() != lua.LTFunction {
 			t.Fatalf("global %s is not a function (binder not registered)", name)
 		}

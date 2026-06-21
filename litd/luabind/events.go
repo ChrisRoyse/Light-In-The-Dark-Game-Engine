@@ -130,6 +130,25 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 	bindFixedKindEvent("OnAbilityCast", api.EventAbilityCast)
 	bindFixedKindEvent("OnAttack", api.EventAttackLaunch)
 	bindFixedKindEvent("OnBuffApplied", api.EventBuffApplied)
+	bindFixedKindEvent("OnBuffExpired", api.EventBuffExpired)
+	bindFixedKindEvent("OnBuffRefreshed", api.EventBuffRefreshed)
+
+	// Buff-lifecycle event readers (#480) — LitD new-capabilities, hand-bound
+	// like Event_Ability. Event_Buff returns the buff type (null on a non-buff
+	// event); Event_BuffStacks the resulting stack count; Event_FromAura whether
+	// the apply/refresh came from an aura child.
+	L.SetGlobal("Event_Buff", L.NewFunction(func(L *lua.LState) int {
+		L.Push(pushHandle(L, argEvent(L, 1).Buff()))
+		return 1
+	}))
+	L.SetGlobal("Event_BuffStacks", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LNumber(argEvent(L, 1).BuffStacks()))
+		return 1
+	}))
+	L.SetGlobal("Event_FromAura", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(argEvent(L, 1).FromAura()))
+		return 1
+	}))
 
 	// Event_Ability reads the ability ref off an ability-lifecycle event (the
 	// GetSpellAbilityId idiom); 0 on a non-ability event. Hand-bound like the
