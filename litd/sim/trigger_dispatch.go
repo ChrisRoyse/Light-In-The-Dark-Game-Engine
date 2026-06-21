@@ -22,15 +22,73 @@ import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/lit
 // the shared scheduler.
 const contTriggerActions sched.ContID = 1 << 31
 
-// registerTriggerDispatch binds the action-runner continuation on the
-// world's scheduler. Called once at construction (and again on a fresh
-// world before LoadState), so a resumed trigger relinks to the same
-// stable ContID over the live world.
+// contPeriodicTrigger fires a periodic-timer trigger and re-arms it (#464).
+// It sits one above the action-runner in the sim-reserved ContID range. Its
+// State packs (triggerID, period) — value-typed, no Go closure — so a parked
+// periodic round-trips through save/load and resumes on reload exactly like a
+// suspended action, once registerTriggerDispatch re-binds this ContID over the
+// restored world. This is what lets Game_Every survive a mid-game save (#450):
+// the periodic schedule is data, not a captured closure.
+const contPeriodicTrigger sched.ContID = 1<<31 + 1
+
+// EvPeriodic is the synthetic event kind a periodic-timer trigger fires on.
+// It is never Emit()ed onto the ring — the periodic continuation builds it
+// directly to hand the trigger's condition/actions a well-formed (entity-free)
+// Event — so it needs no index bucket and cannot collide with a real event.
+const EvPeriodic uint16 = 28
+
+// registerTriggerDispatch binds the trigger continuations on the world's
+// scheduler. Called once at construction (and again on a fresh world before
+// LoadState), so a resumed action or periodic relinks to the same stable
+// ContID over the live world.
 func (w *World) registerTriggerDispatch() {
 	w.Sched.Register(contTriggerActions, func(s *sched.Scheduler, st sched.State) {
 		t, e, ord := unpackTriggerState(st)
 		w.runTriggerActions(t, e, ord)
 	})
+	w.Sched.Register(contPeriodicTrigger, func(s *sched.Scheduler, st sched.State) {
+		t, period := unpackPeriodicState(st)
+		sl := w.Triggers.slot(t)
+		if sl == nil {
+			return // trigger destroyed → the periodic stops (no re-arm)
+		}
+		e := Event{Kind: EvPeriodic}
+		if !sl.enabled {
+			w.observeTrigger(t, e, TrigSkipDisabled)
+		} else if w.EvalExpr(sl.cond, e) {
+			w.observeTrigger(t, e, TrigFired)
+			w.runTriggerActions(t, e, 0)
+		} else {
+			w.observeTrigger(t, e, TrigSkipCondition)
+		}
+		// Re-arm while the trigger is alive: a disabled periodic keeps its
+		// schedule and resumes firing when re-enabled (WC3 paused-timer
+		// semantics); only Destroy stops it.
+		w.Sched.After(period, contPeriodicTrigger, packPeriodicState(t, period))
+	})
+}
+
+// packPeriodicState / unpackPeriodicState encode a periodic schedule into the
+// scheduler's value-typed State: the trigger id and the period in ticks.
+func packPeriodicState(t TriggerID, period uint32) sched.State {
+	return sched.State{int64(uint64(t)), int64(uint64(period)), 0, 0}
+}
+
+func unpackPeriodicState(st sched.State) (TriggerID, uint32) {
+	return TriggerID(uint64(st[0])), uint32(uint64(st[1]))
+}
+
+// ArmPeriodic schedules trigger t to fire every `period` ticks (minimum 1),
+// first firing at now+period (a timer does not fire at arm time — the WC3
+// periodic-timer-event semantics). The schedule is a value-typed scheduler
+// continuation keyed by a stable ContID, so it serializes and resumes across
+// save/load with no Go-closure capture. The fired Event is the entity-free
+// EvPeriodic; the trigger's actions run when its condition passes.
+func (w *World) ArmPeriodic(t TriggerID, period uint32) {
+	if period == 0 {
+		period = 1
+	}
+	w.Sched.After(period, contPeriodicTrigger, packPeriodicState(t, period))
 }
 
 // packTriggerState encodes (trigger, next-action ordinal, event) into the
