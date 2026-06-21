@@ -43,6 +43,8 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v31: boolexpr condition arena appended after the trigger slab: every
+// And/Or/Not/Cond node (op + two operands) in node order (#457, ADR #451).
 // v30: first-class ECA trigger slab appended after the handler registry:
 // every slot (gen/alive + alive fields: enabled/initially-on/condition-ref/
 // events/actions) in slot order, then the free list (#456, ADR #451).
@@ -104,7 +106,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 30
+const SaveFormatVersion uint32 = 31
 
 // ---- little-endian writer / reader ----
 
@@ -942,6 +944,16 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u32(f)
 	}
 
+	// boolexpr condition arena (#457, v31): every node (op + operands) in
+	// node order. ExprRefs in trigger slots index this arena.
+	s.u32(uint32(len(w.exprArena)))
+	for i := range w.exprArena {
+		n := &w.exprArena[i]
+		s.u8(uint8(n.op))
+		s.i32(n.a)
+		s.i32(n.b)
+	}
+
 	return s.err
 }
 
@@ -1290,6 +1302,10 @@ type decodedSave struct {
 	// + free list, validated then swapped into the store at apply.
 	trigSlots []triggerSlot
 	trigFree  []uint32
+
+	// boolexpr condition arena (#457, v31): decoded nodes, validated then
+	// swapped into the world arena at apply.
+	exprNodes []exprNode
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2579,6 +2595,22 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	for i := range d.trigFree {
 		d.trigFree[i] = r.u32()
 	}
+
+	// boolexpr condition arena (#457, v31): nodes in node order, bounded.
+	r.what = "boolexpr"
+	beN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if beN > maxExprNodes {
+		return fmt.Errorf("sim: save: boolexpr node count %d exceeds limit %d", beN, maxExprNodes)
+	}
+	d.exprNodes = make([]exprNode, beN)
+	for i := range d.exprNodes {
+		d.exprNodes[i].op = exprOp(r.u8())
+		d.exprNodes[i].a = r.i32()
+		d.exprNodes[i].b = r.i32()
+	}
 	return r.err
 }
 
@@ -3025,6 +3057,39 @@ func validateSave(d *decodedSave, w *World) error {
 		}
 		if d.trigSlots[f].alive {
 			return fmt.Errorf("sim: save: trigger free-list index %d points at a live slot", f)
+		}
+	}
+
+	// boolexpr arena (#457): every node's operands must be in range. Cond
+	// leaves reference a registered HandlerRef; And/Or/Not children must
+	// reference STRICTLY LOWER node indices — the builder appends children
+	// before parents, so enforcing that guarantees an acyclic tree and a
+	// terminating evaluation (defense in depth beyond the eval depth guard).
+	nNodes := len(d.exprNodes)
+	for i := range d.exprNodes {
+		n := &d.exprNodes[i]
+		switch n.op {
+		case exprCond:
+			if n.a != int32(NoHandler) && int(n.a) > hn {
+				return fmt.Errorf("sim: save: boolexpr node %d (Cond) references unregistered HandlerRef %d", i, n.a)
+			}
+		case exprNot:
+			if n.a < 0 || int(n.a) >= i {
+				return fmt.Errorf("sim: save: boolexpr node %d (Not) child %d not a lower node index", i, n.a)
+			}
+		case exprAnd, exprOr:
+			if n.a < 0 || int(n.a) >= i || n.b < 0 || int(n.b) >= i {
+				return fmt.Errorf("sim: save: boolexpr node %d (And/Or) children %d,%d not lower node indices", i, n.a, n.b)
+			}
+		default:
+			return fmt.Errorf("sim: save: boolexpr node %d has unknown op %d", i, n.op)
+		}
+	}
+	// trigger condition refs must index the decoded arena (or be NoExpr).
+	for i := range d.trigSlots {
+		sl := &d.trigSlots[i]
+		if sl.alive && sl.cond != NoExpr && (sl.cond < 0 || int(sl.cond) >= nNodes) {
+			return fmt.Errorf("sim: save: trigger %d condition ref %d out of arena range (%d nodes)", i, sl.cond, nNodes)
 		}
 	}
 
@@ -3534,6 +3599,9 @@ func applySave(d *decodedSave, w *World) {
 	// these slots resolve against it.
 	w.Triggers.slots = d.trigSlots
 	w.Triggers.free = d.trigFree
+
+	// boolexpr condition arena (#457): swap in the decoded nodes.
+	w.exprArena = d.exprNodes
 
 	// regions (#241): replace the store wholesale with the decoded slots,
 	// then rebuild each region's membership presence set from the saved

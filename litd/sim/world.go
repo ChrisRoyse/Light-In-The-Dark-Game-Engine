@@ -360,6 +360,13 @@ type World struct {
 	// first-class ECA trigger slab (#456): gen-checked handles holding
 	// events/condition/actions/enabled/initially-on. Hashes + serializes.
 	Triggers *TriggerStore
+	// boolexpr condition arena (#457): flat And/Or/Not/Cond nodes indexed
+	// by ExprRef. Cold-path authoring; hashes + serializes.
+	exprArena []exprNode
+	// DebugExprImpure, when set (debug/test only), fires loudly if a
+	// condition leaf returns different results on a double-eval — a purity
+	// violation (execution-model.md §4). nil in release (no double-eval).
+	DebugExprImpure func(ref ExprRef)
 	pathReqs    []pathRequest
 }
 

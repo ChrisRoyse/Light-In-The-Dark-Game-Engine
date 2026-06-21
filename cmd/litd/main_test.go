@@ -166,7 +166,11 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // Bumped 0xb79ac7578742efdc → 0x53bbf47c6cd4c49c (2026-06-20, #456): the
 // first-class ECA trigger slab adds a "triggers" system to HashSystems —
 // another constant TopHash shift (empty slab here). run1==run2 unchanged.
-const goldenDetLua uint64 = 0x53bbf47c6cd4c49c
+//
+// Bumped 0x53bbf47c6cd4c49c → 0x2a0ce0ec9ea1f157 (2026-06-20, #457): the
+// boolexpr condition arena adds a "boolexpr" system to HashSystems — another
+// constant TopHash shift (empty arena here). run1==run2 unchanged.
+const goldenDetLua uint64 = 0x2a0ce0ec9ea1f157
 
 // TestLoadWorldPlacementSpawnsEntities — #403: a world ships a placement table
 // (data/placement) and the loader spawns those entities after the type tables

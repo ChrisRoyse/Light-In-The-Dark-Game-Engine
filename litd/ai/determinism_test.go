@@ -284,7 +284,11 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // Bumped 0x67e36f8180b3dabb → 0xb794e7700f4624c7 (2026-06-20, #456): the
 // first-class ECA trigger slab adds a "triggers" system to HashSystems —
 // another constant TopHash shift (empty slab here). run1==run2 unchanged.
-const dGolden uint64 = 0xb794e7700f4624c7
+//
+// Bumped 0xb794e7700f4624c7 → 0x60d4d3e1e67b0acd (2026-06-20, #457): the
+// boolexpr condition arena adds a "boolexpr" system to HashSystems — another
+// constant TopHash shift (empty arena here). run1==run2 unchanged.
+const dGolden uint64 = 0x60d4d3e1e67b0acd
 
 // TestAIDeterminism10k — the gate. Two internal 10k-tick runs are bit-identical
 // and (once the golden is committed) equal the golden hash. FSV runs this with

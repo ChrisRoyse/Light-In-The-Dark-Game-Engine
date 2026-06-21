@@ -50,7 +50,11 @@ import (
 // Bumped 0x2ca39aa855b38e89 → 0x9148c4e869dfed96 (2026-06-20, #456): the
 // first-class ECA trigger slab adds a "triggers" system to HashSystems —
 // another constant TopHash shift (empty slab here). run1==run2 unchanged.
-const goldenLuaDeterminism10k = uint64(0x9148c4e869dfed96)
+//
+// Bumped 0x9148c4e869dfed96 → 0xeeb7746e1f9808a2 (2026-06-20, #457): the
+// boolexpr condition arena adds a "boolexpr" system to HashSystems — another
+// constant TopHash shift (empty arena here). run1==run2 unchanged.
+const goldenLuaDeterminism10k = uint64(0xeeb7746e1f9808a2)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

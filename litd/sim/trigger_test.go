@@ -34,7 +34,7 @@ func buildTwoTriggers(w *World) (TriggerID, TriggerID) {
 	a, _ := w.Triggers.New()
 	w.Triggers.AddEvent(a, EventReg{Kind: EvUnitDeath, Scope: 0})
 	w.Triggers.AddAction(a, actRef)
-	w.Triggers.SetCondition(a, ExprRef(condRef)) // arena lands in #457; store-only here
+	w.Triggers.SetCondition(a, w.Cond(condRef)) // real boolexpr leaf (#457)
 
 	b, _ := w.Triggers.New()
 	w.Triggers.AddEvent(b, EventReg{Kind: 42, Scope: EntityID(7)})

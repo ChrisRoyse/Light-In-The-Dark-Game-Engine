@@ -111,6 +111,10 @@ var HashSystems = []string{
 	// order, then the free list (slab reuse order is state). Empty default
 	// leaves the zero contribution.
 	"triggers",
+	// appended by #457: the boolexpr condition arena — every And/Or/Not/Cond
+	// node (op + operands) in node order. Empty default leaves the zero
+	// contribution.
+	"boolexpr",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -759,6 +763,9 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 
 	htrg := h.next() // triggers (#456): first-class ECA trigger slab
 	w.Triggers.HashInto(htrg)
+
+	hbe := h.next() // boolexpr (#457): condition arena nodes
+	w.hashExprArena(hbe)
 
 	return reg.Sum(dst)
 }
