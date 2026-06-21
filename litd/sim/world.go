@@ -23,6 +23,7 @@ type Caps struct {
 	ScriptedDoodads    int
 	Destructables      int // killable, pathing-blocking widgets (trees/gates) (#229)
 	RuntimeAbilityDefs int // dynamic ability rows appended after bound data
+	RuntimeEffects     int // modder-registered effect primitives (#477)
 	Triggers           int // first-class ECA trigger slab (#456)
 }
 
@@ -38,6 +39,7 @@ var EngineCaps = Caps{
 	ScriptedDoodads:    1024,
 	Destructables:      2048,
 	RuntimeAbilityDefs: 1024,
+	RuntimeEffects:     256,
 	Triggers:           4096,
 }
 
@@ -61,6 +63,7 @@ func (c Caps) resolve() Caps {
 		ScriptedDoodads:    clampCap(c.ScriptedDoodads, EngineCaps.ScriptedDoodads),
 		Destructables:      clampCap(c.Destructables, EngineCaps.Destructables),
 		RuntimeAbilityDefs: clampCap(c.RuntimeAbilityDefs, EngineCaps.RuntimeAbilityDefs),
+		RuntimeEffects:     clampCap(c.RuntimeEffects, EngineCaps.RuntimeEffects),
 		Triggers:           clampCap(c.Triggers, EngineCaps.Triggers),
 	}
 }
@@ -168,6 +171,11 @@ type World struct {
 	// runtime ability rows (#355), appended after loaded abilityDefs.
 	// Backing storage is capped by Caps.RuntimeAbilityDefs.
 	runtimeAbilityDefs []data.Ability
+	// modder-registered effect primitives (#477): names hash + serialize
+	// (the per-match contract); execs are re-bound in setup on load. Capped
+	// by Caps.RuntimeEffects, frozen at first Step.
+	effectRegNames []string
+	effectRegExecs []RuntimeEffectExec
 	// loaded buff-type rows (buff.go #162); BuffInstance.BuffID
 	// indexes this slice
 	buffTypes      []data.BuffType
@@ -467,6 +475,8 @@ func NewWorld(requested Caps) *World {
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),
 		Paths:              path.NewPathStore(caps.PathRequests, 1024),
 		runtimeAbilityDefs: make([]data.Ability, 0, caps.RuntimeAbilityDefs),
+		effectRegNames:     make([]string, 0, caps.RuntimeEffects),
+		effectRegExecs:     make([]RuntimeEffectExec, 0, caps.RuntimeEffects),
 		bucketHead:         make([]int32, bucketCount),
 		bucketNext:         make([]int32, idxSpace),
 		bucketPrev:         make([]int32, idxSpace),

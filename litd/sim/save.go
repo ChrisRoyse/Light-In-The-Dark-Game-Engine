@@ -43,6 +43,10 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v35: runtime effect-primitive registry names appended after the weapon
+// overrides (#477): the count, then each registered name in id order. Only the
+// names are the contract; the execs are re-bound in setup and validated against
+// these names on load (fail-closed).
 // v34: live weapon-field overrides appended after the armor coefficient: the
 // row count, then each (entity, slot, field, value) tuple (#476). Empty when no
 // weapon was re-armed. Restored by re-Set on load (layout is not preserved —
@@ -116,7 +120,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 34
+const SaveFormatVersion uint32 = 35
 
 // ---- little-endian writer / reader ----
 
@@ -243,6 +247,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(uint32(w.caps.ScriptedDoodads))
 	s.u32(uint32(w.caps.Destructables))
 	s.u32(uint32(w.caps.RuntimeAbilityDefs))
+	s.u32(uint32(w.caps.RuntimeEffects))
 	s.u32(uint32(w.caps.Triggers))
 	s.u32(w.tick)
 	s.u32(uint32(w.unitCount))
@@ -997,6 +1002,13 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.i64(wo.Value[i])
 	}
 
+	// runtime effect-primitive registry (#477, v35): names in id order. The
+	// contract two players agree on; execs are re-bound in setup on load.
+	s.u32(uint32(len(w.effectRegNames)))
+	for i := range w.effectRegNames {
+		s.str(w.effectRegNames[i])
+	}
+
 	return s.err
 }
 
@@ -1368,6 +1380,9 @@ type decodedSave struct {
 	woSlot  []uint8
 	woField []uint8
 	woVal   []int64
+
+	// runtime effect-primitive registry (#477, v35): names validated vs re-bind.
+	effNames []string
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -1428,6 +1443,7 @@ func (w *World) LoadState(in io.Reader, fingerprint uint64) error {
 		ScriptedDoodads:    int(r.u32()),
 		Destructables:      int(r.u32()),
 		RuntimeAbilityDefs: int(r.u32()),
+		RuntimeEffects:     int(r.u32()),
 		Triggers:           int(r.u32()),
 	}
 	if r.err == nil && got != w.caps {
@@ -2720,6 +2736,24 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.woField[i] = r.u8()
 		d.woVal[i] = r.i64()
 	}
+
+	// runtime effect-primitive registry (#477, v35): names in id order, bounded.
+	r.what = "effectregistry"
+	effN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(effN) > cap(w.effectRegNames) {
+		return fmt.Errorf("sim: save: effect-registry count %d exceeds capacity %d", effN, cap(w.effectRegNames))
+	}
+	d.effNames = make([]string, effN)
+	for i := uint32(0); i < effN; i++ {
+		name, err := r.str(maxHandlerNameLen)
+		if err != nil {
+			return err
+		}
+		d.effNames[i] = name
+	}
 	return r.err
 }
 
@@ -3177,6 +3211,19 @@ func validateSave(d *decodedSave, w *World) error {
 		cr := w.Combats.Row(d.woEnt[i])
 		if cr == -1 || !validWeaponSlot(slot) || !validWeaponField(field) || !weaponUsed(w.Combats, cr, slot) || !w.validWeaponValue(field, d.woVal[i]) {
 			return fmt.Errorf("sim: save: weapon override %d (entity %#x slot %d field %d value %d) is invalid for the loaded world", i, uint32(d.woEnt[i]), slot, field, d.woVal[i])
+		}
+	}
+
+	// runtime effect registry (#477): the save stores only names; the execs must
+	// have been re-registered in setup before the load. The saved set must match
+	// the re-bound registry exactly (same count, same names, same id order) or
+	// the two diverge — fail closed (the #455 re-bind discipline).
+	if len(d.effNames) != len(w.effectRegNames) {
+		return fmt.Errorf("sim: save: %d registered effects in the save but %d re-bound — register the same set in setup before loading", len(d.effNames), len(w.effectRegNames))
+	}
+	for i := range d.effNames {
+		if d.effNames[i] != w.effectRegNames[i] {
+			return fmt.Errorf("sim: save: effect id %d is %q in the save but %q re-bound — registration order/name diverged", i, d.effNames[i], w.effectRegNames[i])
 		}
 	}
 

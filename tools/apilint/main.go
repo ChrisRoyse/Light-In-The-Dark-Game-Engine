@@ -96,6 +96,7 @@ var methodErrAllowlist = map[string]bool{
 	"Game.ReplaceDamageStage":  true,
 	"Game.SetDamageFormula":    true,
 	"Game.SetArmorReduction":   true,
+	"Game.RegisterEffect":      true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the

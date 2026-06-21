@@ -396,3 +396,13 @@ exact   Unit.SetWeaponField
 exact   Unit.ClearWeaponField
 exact   Unit.ClearWeapon
 exact   Unit.WeaponField
+# runtime effect-primitive registration (#477): a modded map registers a named
+# effect/Action in setup and invokes it from a trigger Action. No JASS native —
+# the registry is a LitD extensibility seam (relates to gamecache-free data).
+exact   Game.RegisterEffect
+exact   Game.RunEffect
+exact   Game.EffectRegistered
+exact   EffectInvocation.Source
+exact   EffectInvocation.Target
+exact   EffectInvocation.Heal
+exact   EffectInvocation.Valid

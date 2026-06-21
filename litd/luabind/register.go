@@ -46,6 +46,7 @@ func Register(L *lua.LState, g *api.Game) error {
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
 		registerScriptTriggers(L, g)           // CreateTrigger/TriggerRegisterX/... ECA bindings (#463)
 		registerScriptWeapon(L, g)             // live weapon override setters + constants (#476)
+		registerScriptEffects(L, g)            // runtime effect-primitive registration (#477)
 		RegisterMap(L, g.MapData())            // Game_MapStarts/MapBeacons from the game's map (#410)
 		// Snapshot the builtin global key set now that every API/lib global is
 		// installed — a mid-game save persists only globals added beyond this

@@ -557,6 +557,15 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	for i := range w.runtimeAbilityDefs {
 		hashAbilityDef(had, &w.runtimeAbilityDefs[i])
 	}
+	// #477: runtime effect-primitive registry rides the same sub. Only the names
+	// (in id order) are the per-match contract. Zero contribution when empty, so
+	// a base game stays byte-identical (no golden churn).
+	if n := len(w.effectRegNames); n > 0 {
+		had.WriteU32(uint32(n))
+		for i := range w.effectRegNames {
+			hashString(had, w.effectRegNames[i])
+		}
+	}
 
 	hvis := h.next() // visibility (#299)
 	w.Visibility.HashInto(hvis)
