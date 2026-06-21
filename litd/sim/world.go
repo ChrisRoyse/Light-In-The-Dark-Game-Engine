@@ -246,10 +246,13 @@ type World struct {
 	coeff      [][]int32 // per-mille attack×armor matrix (BindDamageMatrix)
 	atkTypes   []string  // declared attack-type names, table order (#472 config)
 	armTypes   []string  // declared armor-type names, table order (#472 config)
-	formula    []DamageStage // ordered damage-formula pipeline (#473); base by default
-	fOverride  []bool        // parallel to formula: true = stage replaced from base
-	fReplaced  bool          // SetDamageFormula installed a wholesale custom formula
-	dmgCtx     DamageCtx     // reused per-packet pipeline context (zero-alloc)
+	formula    []DamageStage             // ordered damage-formula pipeline (#473); base by default
+	fOverride  []bool                    // parallel to formula: true = stage replaced from base
+	fReplaced  bool                      // SetDamageFormula installed a wholesale custom formula
+	dmgCtx     DamageCtx                 // reused per-packet pipeline context (zero-alloc)
+	armorLUT   [armorLUTSize]fixed.F64   // per-world armor multiplier LUT (#474)
+	armorK     fixed.F64                 // positive-branch reduction coefficient (default 0.06)
+	armorKOver bool                      // true once SetArmorCoefficient set a non-default k
 	// the sim PRNG (R-SIM-2): every gameplay roll draws here, one
 	// deterministic call order; reseeded per match via SetSeed
 	rng *prng.Stream
@@ -496,6 +499,8 @@ func NewWorld(requested Caps) *World {
 	w.initPlayers()
 	w.registerTriggerDispatch()   // ECA action-runner continuation (#459)
 	w.installBaseDamageFormula() // ordered damage-formula pipeline (#473)
+	w.armorK = defaultArmorK     // configurable armor reduction (#474); default LUT
+	w.armorLUT = armorMult
 	return w
 }
 

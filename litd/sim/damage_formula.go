@@ -28,6 +28,7 @@ var (
 	errEmptyFormula = errors.New("sim: SetDamageFormula: empty stage list")
 	errBadStage     = errors.New("sim: damage stage: empty name or nil Fn")
 	errUnknownStage = errors.New("sim: ReplaceStage: unknown stage name")
+	errBadArmorK    = errors.New("sim: SetArmorCoefficient: coefficient must be positive")
 )
 
 // DamageCtx is the mutable per-packet context a damage stage reads and writes.
@@ -87,7 +88,9 @@ func stageCoeff(c *DamageCtx) {
 	c.Amount = c.Amount.Mul(fixed.FromInt(coeff)).Div(fixed.FromInt(1000))
 }
 
-// stageArmor applies the buffed-armor damage-reduction LUT (#162).
+// stageArmor applies the buffed-armor damage-reduction LUT (#162). The LUT is
+// per-world and rebuilt from a configurable coefficient (#474); a default world
+// uses the shipped 0.06 curve.
 func stageArmor(c *DamageCtx) {
 	armor := c.w.BuffedArmor(c.Target, c.ArmorValue)
 	if armor < ArmorLUTMin {
@@ -95,11 +98,41 @@ func stageArmor(c *DamageCtx) {
 	} else if armor > ArmorLUTMax {
 		armor = ArmorLUTMax
 	}
-	c.Amount = c.Amount.Mul(armorMult[armor-ArmorLUTMin])
+	c.Amount = c.Amount.Mul(c.w.armorLUT[armor-ArmorLUTMin])
 	if c.Amount < 0 {
 		c.Amount = 0
 	}
 }
+
+// SetArmorCoefficient rebuilds the armor-reduction LUT from a new positive-
+// branch coefficient k (#474), keeping the #330 negative-armor piecewise branch.
+// Default is 0.06; passing it (or an equal value) restores the shipped curve.
+// Fail-closed: k must be positive. The coefficient is config that changes damage
+// outcomes, so a non-default value folds into the override-identity hash and the
+// save (a default world contributes nothing — byte-identical hash). Setup-time.
+func (w *World) SetArmorCoefficient(k fixed.F64) error {
+	if k <= 0 {
+		return errBadArmorK
+	}
+	w.armorK = k
+	w.armorLUT = buildArmorLUTk(k)
+	w.armorKOver = k != defaultArmorK
+	return nil
+}
+
+// ArmorMultiplier returns the damage multiplier this world applies at armor
+// value a (clamped to the LUT bounds) — for dumps, tests, and observability.
+func (w *World) ArmorMultiplier(a int) fixed.F64 {
+	if a < ArmorLUTMin {
+		a = ArmorLUTMin
+	} else if a > ArmorLUTMax {
+		a = ArmorLUTMax
+	}
+	return w.armorLUT[a-ArmorLUTMin]
+}
+
+// ArmorCoefficient returns the current positive-branch reduction coefficient.
+func (w *World) ArmorCoefficient() fixed.F64 { return w.armorK }
 
 // stageHandicap scales by the source's damage handicap and the target's
 // incoming handicap (#373). Both default to 1.0 → no-op for an unconfigured
@@ -228,16 +261,31 @@ func (w *World) formulaOverridden() bool {
 // ordered (name, overridden-bit) pairs so a divergent override is caught in the
 // hash, not only at load (mirrors the #455 handler-identity discipline).
 func (w *World) hashDamageFormula(h *statehash.Hasher) {
-	if !w.formulaOverridden() {
-		return
+	if !w.formulaOverridden() && !w.armorKOver {
+		return // base formula + default armor: contribute nothing (golden-stable)
 	}
-	h.WriteU32(uint32(len(w.formula)))
-	for i := range w.formula {
-		hashString(h, w.formula[i].Name)
-		if w.fOverride[i] {
-			h.WriteU8(1)
-		} else {
-			h.WriteU8(0)
+	// formula stage identity (only when stages were overridden — keeps a
+	// pure-armor-coefficient override byte-identical here to a #473-era world
+	// with no formula override).
+	if w.formulaOverridden() {
+		h.WriteU8(1)
+		h.WriteU32(uint32(len(w.formula)))
+		for i := range w.formula {
+			hashString(h, w.formula[i].Name)
+			if w.fOverride[i] {
+				h.WriteU8(1)
+			} else {
+				h.WriteU8(0)
+			}
 		}
+	} else {
+		h.WriteU8(0)
+	}
+	// armor coefficient identity (#474), only when non-default.
+	if w.armorKOver {
+		h.WriteU8(1)
+		h.WriteU64(uint64(w.armorK))
+	} else {
+		h.WriteU8(0)
 	}
 }

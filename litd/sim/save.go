@@ -43,6 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v33: armor-reduction coefficient appended after the damage-formula block: the
+// non-default flag + the fixed-point coefficient (#474). Default 0.06 still
+// writes the pair — present, validated against the re-bound world.
 // v32: damage-formula override identity appended after the boolexpr arena: the
 // wholesale-replaced flag, then each stage's (name, overridden-bit) in stage
 // order (#473, ADR #453). Base formula writes count 0 — present but empty.
@@ -109,7 +112,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 32
+const SaveFormatVersion uint32 = 33
 
 // ---- little-endian writer / reader ----
 
@@ -971,6 +974,11 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.boolean(w.fOverride[i])
 	}
 
+	// armor-reduction coefficient (#474, v33): the non-default flag + the
+	// fixed-point coefficient. Validated against the re-bound world at load.
+	s.boolean(w.armorKOver)
+	s.f64(w.armorK)
+
 	return s.err
 }
 
@@ -1330,6 +1338,11 @@ type decodedSave struct {
 	fmReplaced bool
 	fmNames    []string
 	fmOverride []bool
+
+	// armor-reduction coefficient (#474, v33): non-default flag + coefficient,
+	// validated against the re-bound world at apply.
+	fmArmorKOver bool
+	fmArmorK     fixed.F64
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2658,6 +2671,10 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.fmNames[i] = name
 		d.fmOverride[i] = r.boolean()
 	}
+
+	// armor-reduction coefficient (#474, v33).
+	d.fmArmorKOver = r.boolean()
+	d.fmArmorK = r.f64()
 	return r.err
 }
 
@@ -3098,6 +3115,13 @@ func validateSave(d *decodedSave, w *World) error {
 		if d.fmOverride[i] != w.fOverride[i] {
 			return fmt.Errorf("sim: save: damage stage %q overridden=%v in the save but %v in this world", name, d.fmOverride[i], w.fOverride[i])
 		}
+	}
+
+	// armor-reduction coefficient (#474): the re-bound world must carry the same
+	// coefficient — a divergence would change every armored hit, so fail closed.
+	if d.fmArmorKOver != w.armorKOver || d.fmArmorK != w.armorK {
+		return fmt.Errorf("sim: save: armor coefficient %d (override=%v) in the save but %d (override=%v) in this world — re-bind diverged",
+			d.fmArmorK, d.fmArmorKOver, w.armorK, w.armorKOver)
 	}
 
 	// trigger slab (#456): structural integrity. Alive slots need a live

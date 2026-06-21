@@ -50,22 +50,35 @@ const (
 	ArmorLUTMax = 100
 )
 
-// armorMult[a-ArmorLUTMin] is the damage multiplier at armor value a,
-// 32.32 fixed-point:
+// armorLUTSize is the number of armor values in [ArmorLUTMin, ArmorLUTMax].
+const armorLUTSize = ArmorLUTMax - ArmorLUTMin + 1
+
+// defaultArmorK is the shipped positive-branch reduction coefficient (0.06).
+// SetArmorCoefficient (#474) replaces it per world; a world left at this value
+// reproduces the historical LUT exactly (regression-pinned).
+var defaultArmorK = fixed.FromInt(6).Div(fixed.FromInt(100)) // 0.06
+
+// armorMult is the DEFAULT damage-multiplier LUT (k = 0.06). Each world copies
+// it at NewWorld and may rebuild its own from a configured coefficient (#474);
+// this global remains the canonical default + regression reference.
+//
+// armorMult[a-ArmorLUTMin] is the multiplier at armor value a, 32.32 fixed:
 //
 //	a >= 0: 1/(1 + a·k), k = 0.06      (reduction)
 //	a <  0: 2 − 0.94^(−a)              (amplification)
 //
-// The spec's single-formula reading of negative armor diverges at
-// a ≤ −17 (denominator 1+a·k crosses zero), so negative armor uses
-// the WC3 piecewise amplification curve — recorded as a discovery.
-// Built once at package init from integer ratios via fixed-point
-// Mul/Div only: bit-identical on every platform.
-var armorMult = buildArmorLUT()
+// The spec's single-formula reading of negative armor diverges at a ≤ −17
+// (denominator 1+a·k crosses zero), so negative armor uses the WC3 piecewise
+// amplification curve (#330) — preserved regardless of the positive-branch
+// coefficient. From integer ratios via fixed-point Mul/Div only:
+// bit-identical on every platform.
+var armorMult = buildArmorLUTk(defaultArmorK)
 
-func buildArmorLUT() [ArmorLUTMax - ArmorLUTMin + 1]fixed.F64 {
-	var lut [ArmorLUTMax - ArmorLUTMin + 1]fixed.F64
-	k := fixed.FromInt(6).Div(fixed.FromInt(100))    // 0.06
+// buildArmorLUTk builds the armor multiplier LUT for positive-branch
+// coefficient k. The negative-armor piecewise branch (#330) is independent of k
+// and always preserved.
+func buildArmorLUTk(k fixed.F64) [armorLUTSize]fixed.F64 {
+	var lut [armorLUTSize]fixed.F64
 	p94 := fixed.FromInt(94).Div(fixed.FromInt(100)) // 0.94
 	for a := ArmorLUTMin; a <= ArmorLUTMax; a++ {
 		var m fixed.F64
