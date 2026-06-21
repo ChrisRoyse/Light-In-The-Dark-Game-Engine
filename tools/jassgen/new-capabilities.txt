@@ -389,3 +389,10 @@ exact   DamageEvent.SetAttackType
 exact   DamageEvent.SetArmorType
 exact   DamageEvent.Flags
 exact   DamageEvent.ApplyCoefficient
+# live per-instance weapon overrides (#476): re-arm a unit's weapon at runtime.
+# JASS analog is the BlzSetUnitWeapon* setter family (collapsed to one field
+# enum). Hashes + serializes like the #353 ability-field overrides.
+exact   Unit.SetWeaponField
+exact   Unit.ClearWeaponField
+exact   Unit.ClearWeapon
+exact   Unit.WeaponField

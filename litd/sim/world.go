@@ -116,10 +116,11 @@ type World struct {
 	Flys          *FlyStore
 	PropWindows   *PropWindowStore
 	Regions       *RegionStore
-	Combats       *CombatStore
-	Abilities     *AbilityStore
-	AbilityFields *AbilityFieldStore
-	Invents       *InventoryStore
+	Combats         *CombatStore
+	Abilities       *AbilityStore
+	AbilityFields   *AbilityFieldStore
+	WeaponOverrides *WeaponFieldStore
+	Invents         *InventoryStore
 	Orders        *OrderStore
 	Buffs         *BuffPool
 	Missiles      *MissileStore // first-class missile entities (#158, ADR #295)
@@ -439,6 +440,7 @@ func NewWorld(requested Caps) *World {
 		Combats:            NewCombatStore(caps.Units, idxSpace),
 		Abilities:          NewAbilityStore(caps.Units, idxSpace),
 		AbilityFields:      NewAbilityFieldStore(caps.Units*AbilityOverrideCapPerUnit, idxSpace),
+		WeaponOverrides:    NewWeaponFieldStore(caps.Units*WeaponOverrideCapPerUnit, idxSpace),
 		Invents:            NewInventoryStore(caps.Units, idxSpace),
 		Orders:             NewOrderStore(caps.Units, idxSpace),
 		Buffs:              NewBuffPool(caps.BuffInstances),
@@ -605,6 +607,7 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.Combats.Row(id) != -1 {
 		w.Combats.Remove(id)
 	}
+	w.WeaponOverrides.RemoveEntity(id) // #476: drop live weapon overrides
 	if w.Abilities.Row(id) != -1 {
 		w.AbilityFields.RemoveEntity(id)
 		w.Abilities.Remove(id)

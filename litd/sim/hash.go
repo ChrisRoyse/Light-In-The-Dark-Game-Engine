@@ -231,6 +231,9 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 			hc.WriteU16(c.Effects[i][s].Len)
 		}
 	}
+	// #476: live weapon-field overrides ride the combat sub-hash, canonical
+	// order, zero contribution when empty (golden-stable).
+	w.hashWeaponOverrides(hc)
 
 	ha := h.next() // abilities
 	a := w.Abilities

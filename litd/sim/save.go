@@ -43,6 +43,10 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v34: live weapon-field overrides appended after the armor coefficient: the
+// row count, then each (entity, slot, field, value) tuple (#476). Empty when no
+// weapon was re-armed. Restored by re-Set on load (layout is not preserved —
+// the hash is canonical, layout-independent).
 // v33: armor-reduction coefficient appended after the damage-formula block: the
 // non-default flag + the fixed-point coefficient (#474). Default 0.06 still
 // writes the pair — present, validated against the re-bound world.
@@ -112,7 +116,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 33
+const SaveFormatVersion uint32 = 34
 
 // ---- little-endian writer / reader ----
 
@@ -979,6 +983,20 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.boolean(w.armorKOver)
 	s.f64(w.armorK)
 
+	// live weapon-field overrides (#476, v34): count + each (entity, slot,
+	// field, value). Logical tuples only — layout is rebuilt by re-Set on load.
+	wo := w.WeaponOverrides
+	s.u32(uint32(wo.count))
+	for i := 0; i < wo.Cap(); i++ {
+		if !wo.live[i] {
+			continue
+		}
+		s.ent(wo.Ent[i])
+		s.u8(wo.Slot[i])
+		s.u8(wo.Field[i])
+		s.i64(wo.Value[i])
+	}
+
 	return s.err
 }
 
@@ -1343,6 +1361,13 @@ type decodedSave struct {
 	// validated against the re-bound world at apply.
 	fmArmorKOver bool
 	fmArmorK     fixed.F64
+
+	// live weapon-field overrides (#476, v34): logical tuples, re-Set at apply.
+	woN     uint32
+	woEnt   []EntityID
+	woSlot  []uint8
+	woField []uint8
+	woVal   []int64
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2675,6 +2700,26 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	// armor-reduction coefficient (#474, v33).
 	d.fmArmorKOver = r.boolean()
 	d.fmArmorK = r.f64()
+
+	// live weapon-field overrides (#476, v34): logical tuples, bounded.
+	r.what = "weaponoverrides"
+	d.woN = r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(d.woN) > w.WeaponOverrides.Cap() {
+		return fmt.Errorf("sim: save: weapon-override count %d exceeds capacity %d", d.woN, w.WeaponOverrides.Cap())
+	}
+	d.woEnt = make([]EntityID, d.woN)
+	d.woSlot = make([]uint8, d.woN)
+	d.woField = make([]uint8, d.woN)
+	d.woVal = make([]int64, d.woN)
+	for i := uint32(0); i < d.woN; i++ {
+		d.woEnt[i] = r.ent()
+		d.woSlot[i] = r.u8()
+		d.woField[i] = r.u8()
+		d.woVal[i] = r.i64()
+	}
 	return r.err
 }
 
@@ -3124,6 +3169,17 @@ func validateSave(d *decodedSave, w *World) error {
 			d.fmArmorK, d.fmArmorKOver, w.armorK, w.armorKOver)
 	}
 
+	// live weapon-field overrides (#476): each saved tuple must target a live
+	// unit with a weapon in that slot and carry a valid field/value, or the save
+	// is corrupt — fail closed so a bad override never silently vanishes.
+	for i := uint32(0); i < d.woN; i++ {
+		slot, field := int(d.woSlot[i]), WeaponField(d.woField[i])
+		cr := w.Combats.Row(d.woEnt[i])
+		if cr == -1 || !validWeaponSlot(slot) || !validWeaponField(field) || !weaponUsed(w.Combats, cr, slot) || !w.validWeaponValue(field, d.woVal[i]) {
+			return fmt.Errorf("sim: save: weapon override %d (entity %#x slot %d field %d value %d) is invalid for the loaded world", i, uint32(d.woEnt[i]), slot, field, d.woVal[i])
+		}
+	}
+
 	// trigger slab (#456): structural integrity. Alive slots need a live
 	// generation; free-list entries must point at dead slots; action refs
 	// must resolve in the re-registered handler registry (fail-closed — a
@@ -3442,6 +3498,14 @@ func applySave(d *decodedSave, w *World) {
 	}
 	af.free = af.free[:len(d.afFree)]
 	copy(af.free, d.afFree)
+
+	// live weapon-field overrides (#476, v34): reset the store, then re-Set each
+	// saved logical tuple (rebuilds rowOf/free/perUnit). Tuples were validated in
+	// the validate phase, so Set succeeds.
+	w.WeaponOverrides.reset()
+	for i := uint32(0); i < d.woN; i++ {
+		w.WeaponOverrides.Set(w.Ents, d.woEnt[i], int(d.woSlot[i]), WeaponField(d.woField[i]), d.woVal[i])
+	}
 
 	in := w.Invents
 	in.count = d.inN

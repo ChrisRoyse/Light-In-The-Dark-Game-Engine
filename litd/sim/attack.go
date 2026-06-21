@@ -142,7 +142,7 @@ func (w *World) attackSystem() {
 			if !weaponUsed(c, cr, s) {
 				continue
 			}
-			rHi, rLo := fixed.RadiusSq(c.Range[cr][s])
+			rHi, rLo := fixed.RadiusSq(fixed.F64(w.weaponOverride(cr, s, WeaponFieldRange, int64(c.Range[cr][s]))))
 			inRange := dHi < rHi || (dHi == rHi && dLo <= rLo)
 			if inRange {
 				anyInRange = true
@@ -154,7 +154,7 @@ func (w *World) attackSystem() {
 					break
 				}
 				if CooldownReady(w.tick, c.ReadyAt[cr][s]) {
-					c.PhaseEnd[cr][s] = w.tick + uint32(c.DamagePt[cr][s])
+					c.PhaseEnd[cr][s] = w.tick + uint32(w.weaponOverride(cr, s, WeaponFieldDamagePoint, int64(c.DamagePt[cr][s])))
 					w.atkTransition(id, cr, s, AtkWindup)
 					break
 				}
@@ -171,8 +171,8 @@ func (w *World) attackSystem() {
 					if ur := w.UnitTypes.Row(id); ur >= 0 {
 						w.EmitRenderEvent(RenderUnitAttack, id, w.UnitTypes.TypeID[ur])
 					}
-					c.ReadyAt[cr][s] = c.PhaseEnd[cr][s] - uint32(c.DamagePt[cr][s]) + w.BuffedCooldown(id, c.Cooldown[cr][s])
-					c.PhaseEnd[cr][s] = w.tick + uint32(c.Backswing[cr][s])
+					c.ReadyAt[cr][s] = c.PhaseEnd[cr][s] - uint32(w.weaponOverride(cr, s, WeaponFieldDamagePoint, int64(c.DamagePt[cr][s]))) + w.BuffedCooldown(id, uint16(w.weaponOverride(cr, s, WeaponFieldCooldown, int64(c.Cooldown[cr][s]))))
+					c.PhaseEnd[cr][s] = w.tick + uint32(w.weaponOverride(cr, s, WeaponFieldBackswing, int64(c.Backswing[cr][s])))
 					w.atkTransition(id, cr, s, AtkBackswing)
 				}
 			case AtkBackswing:
@@ -201,8 +201,8 @@ func (w *World) attackSystem() {
 // weapon's flag says a cancel consumes the period.
 func (w *World) cancelWindup(id EntityID, cr int32, s int) {
 	if w.Combats.WFlags[cr][s]&WeaponCancelConsumesCooldown != 0 {
-		windupStart := w.Combats.PhaseEnd[cr][s] - uint32(w.Combats.DamagePt[cr][s])
-		w.Combats.ReadyAt[cr][s] = windupStart + w.BuffedCooldown(id, w.Combats.Cooldown[cr][s])
+		windupStart := w.Combats.PhaseEnd[cr][s] - uint32(w.weaponOverride(cr, s, WeaponFieldDamagePoint, int64(w.Combats.DamagePt[cr][s])))
+		w.Combats.ReadyAt[cr][s] = windupStart + w.BuffedCooldown(id, uint16(w.weaponOverride(cr, s, WeaponFieldCooldown, int64(w.Combats.Cooldown[cr][s]))))
 	}
 	w.atkTransition(id, cr, s, AtkIdle)
 }
@@ -216,7 +216,8 @@ func (w *World) cancelWindup(id EntityID, cr int32, s int) {
 func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 	c := w.Combats
 	w.Emit(Event{Kind: EvAttackLaunch, Src: src, Dst: tgt, Arg: int64(s)}) // FIRE edge
-	if ps := c.ProjSpeed[cr][s]; ps > 0 {
+	atkType := uint8(w.weaponOverride(cr, s, WeaponFieldAttackType, int64(c.AttackType[cr][s])))
+	if ps := fixed.F64(w.weaponOverride(cr, s, WeaponFieldProjSpeed, int64(c.ProjSpeed[cr][s]))); ps > 0 {
 		spec := MissileSpec{
 			Source: src, Target: tgt, Speed: ps,
 			Payload: c.Effects[cr][s],
@@ -225,7 +226,7 @@ func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 			spec.Pos = w.Transforms.Pos[tr]
 		}
 		if spec.Payload.Len == 0 {
-			spec.Packet = DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s], Flags: DamageFromWeapon}
+			spec.Packet = DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: atkType, Flags: DamageFromWeapon}
 		}
 		w.SpawnMissile(spec)
 		return
@@ -234,7 +235,7 @@ func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 		w.ExecuteEffects(lst, EffectCtx{Source: src, Target: tgt})
 		return
 	}
-	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s], Flags: DamageFromWeapon})
+	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: atkType, Flags: DamageFromWeapon})
 }
 
 // rollWeapon rolls base + Ndice×roll(sides) on the sim PRNG, then
@@ -242,8 +243,11 @@ func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 // buffs #162).
 func (w *World) rollWeapon(cr int32, s int) fixed.F64 {
 	c := w.Combats
-	amt := fixed.FromInt(c.DmgBase[cr][s])
-	if dice, sides := int(c.DmgDice[cr][s]), uint32(c.DmgSides[cr][s]); dice > 0 && sides > 0 {
+	base := int32(w.weaponOverride(cr, s, WeaponFieldDamageBase, int64(c.DmgBase[cr][s])))
+	amt := fixed.FromInt(base)
+	dice := int(w.weaponOverride(cr, s, WeaponFieldDice, int64(c.DmgDice[cr][s])))
+	sides := uint32(w.weaponOverride(cr, s, WeaponFieldSides, int64(c.DmgSides[cr][s])))
+	if dice > 0 && sides > 0 {
 		for i := 0; i < dice; i++ {
 			amt = amt.Add(fixed.FromInt(int32(w.rng.Uint32()%sides) + 1))
 		}
