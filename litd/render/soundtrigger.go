@@ -114,21 +114,22 @@ func (t *SoundTrigger) Fire(c AudioCue) TriggerOutcome {
 // closes the #313 pipe — sim death cue → api render event → sound voice — entirely
 // off the non-hashing render channel (#449).
 type SoundDriver struct {
-	trig   *SoundTrigger
-	codeOf map[api.UnitType]string
-	buf    []api.RenderEvent
+	trig        *SoundTrigger
+	codeOf      map[api.UnitType]string
+	localPlayer int // owner-filtered cues (order-ack, under-attack) play only for this player
+	buf         []api.RenderEvent
 }
 
 // NewSoundDriver resolves every sound-set unit-type code to its api.UnitType once
 // (the reverse of the render-event's resolved type), so Drain is allocation-free.
-func NewSoundDriver(g *api.Game, trig *SoundTrigger, sets *audio.SoundSetTable) *SoundDriver {
+func NewSoundDriver(g *api.Game, trig *SoundTrigger, sets *audio.SoundSetTable, localPlayer int) *SoundDriver {
 	m := make(map[api.UnitType]string, sets.Len())
 	for _, code := range sets.Types() {
 		if ut := g.UnitType(code); !ut.IsZero() {
 			m[ut] = code
 		}
 	}
-	return &SoundDriver{trig: trig, codeOf: m}
+	return &SoundDriver{trig: trig, codeOf: m, localPlayer: localPlayer}
 }
 
 // renderCategory maps a render-event kind to its sound category.
@@ -140,8 +141,17 @@ func renderCategory(k api.RenderEventKind) (audio.SoundCategory, bool) {
 		return audio.CatReady, true
 	case api.RenderUnitAttack:
 		return audio.CatAttack, true
+	case api.RenderUnitOrderAck:
+		return audio.CatOrderAck, true
 	}
 	return 0, false
+}
+
+// ownerFiltered reports whether a category is a local-player-only cue (you hear
+// your own units acknowledge / warn, not the enemy's). The sim is player-agnostic,
+// so the local-player filter lives here, render-side.
+func ownerFiltered(c audio.SoundCategory) bool {
+	return c == audio.CatOrderAck || c == audio.CatUnderAttack
 }
 
 // Drain processes this tick's render events into sound cues and returns how many
@@ -153,6 +163,9 @@ func (d *SoundDriver) Drain(g *api.Game) int {
 		cat, ok := renderCategory(ev.Kind)
 		if !ok {
 			continue
+		}
+		if ownerFiltered(cat) && ev.Owner != d.localPlayer {
+			continue // another player's acknowledgement/warning — silent for us
 		}
 		code, ok := d.codeOf[ev.UnitType]
 		if !ok {

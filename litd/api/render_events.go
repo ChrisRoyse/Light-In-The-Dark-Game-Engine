@@ -24,6 +24,9 @@ const (
 	// RenderSpellCue — a script emitted a one-shot spell VFX cue at a unit this
 	// tick (#479, via Game.EmitSpellCue). UnitType and Pos valid.
 	RenderSpellCue
+	// RenderUnitOrderAck — a unit received an explicit order this tick (#313).
+	// UnitType + Owner valid; render filters to the local player's units.
+	RenderUnitOrderAck
 )
 
 // RenderEvent is a value-type presentation cue for render-side consumers.
@@ -31,6 +34,7 @@ type RenderEvent struct {
 	Kind     RenderEventKind
 	UnitType UnitType // the involved unit's type (zero if not applicable)
 	UnitKey  uint32   // stable per-unit key (entity index) for throttling
+	Owner    int      // owning player of the unit, or -1 if none — for local-player presentation filters
 	Pos      Vec2     // world position (valid when HasPos)
 	HasPos   bool
 }
@@ -69,6 +73,8 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 			kind = RenderUnitAttack
 		case sim.RenderSpellCue:
 			kind = RenderSpellCue
+		case sim.RenderUnitOrderAck:
+			kind = RenderUnitOrderAck
 		default:
 			continue
 		}
@@ -76,6 +82,10 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 			Kind:     kind,
 			UnitType: UnitType{ref: e.Data + 1}, // Data = unit-type id
 			UnitKey:  e.Ent.Index(),
+			Owner:    -1,
+		}
+		if or := g.w.Owners.Row(e.Ent); or >= 0 {
+			re.Owner = int(g.w.Owners.Player[or])
 		}
 		// Position from the same snapshot — the unit appears this tick (a dying
 		// unit is published in phase 7 before its removal; a trained unit is live).

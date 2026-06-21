@@ -69,6 +69,10 @@ func (w *World) issueOrderRow(r int32, id EntityID, o Order, queued bool) bool {
 		w.clearOrderQueue(r)
 		w.interruptCurrentOrder(id)
 		w.installOrder(r, id, o.Kind, o.Target, o.Point, o.Data)
+		// Non-hashing order-ack cue (#313): an EXPLICIT order was issued (this path
+		// is player commands + scripted IssueOrder; auto-acquire never reaches here).
+		// Render filters to the local player's units — the sim is player-agnostic.
+		w.EmitUnitRenderCue(RenderUnitOrderAck, id)
 		return true
 	}
 	depth := int32(0)

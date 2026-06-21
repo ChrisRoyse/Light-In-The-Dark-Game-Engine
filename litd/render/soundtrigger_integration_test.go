@@ -81,7 +81,7 @@ under_attack="hfoo_warn"
 	mgr.SetSoundTable(classify)
 	mgr.SetListener(audio.Vec3{}) // listener at origin
 	trig := NewSoundTrigger(mgr, st, 0)
-	drv := NewSoundDriver(g, trig, st)
+	drv := NewSoundDriver(g, trig, st, 1)
 
 	u := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 300, Y: 400}, api.Deg(0))
 	if !u.Valid() {
