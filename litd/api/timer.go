@@ -38,7 +38,7 @@ import (
 // contGoTimer is the single scheduler continuation that fires every
 // Go-closure timer. It is reserved at a value far above any
 // script-assigned ContID (which a Lua host hands out from low numbers),
-// mirroring apiHandlerBase, so it can never collide.
+// so it can never collide.
 const contGoTimer sched.ContID = 1 << 30
 
 // timerEntry is one slot in the Game's timer table. All scheduling

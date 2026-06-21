@@ -376,6 +376,14 @@ type World struct {
 	// condition leaf returns different results on a double-eval — a purity
 	// violation (execution-model.md §4). nil in release (no double-eval).
 	DebugExprImpure func(ref ExprRef)
+	// OnTriggerDispatch is the ECA-layer observability hook (R-FSV-3): when
+	// set, it is called once per (trigger, event) the dispatcher considers,
+	// with the outcome — fired, or why it was skipped. This makes the
+	// condition gate and enabled state visible in a log without re-deriving
+	// them. nil (the default, including release) is a single branch per
+	// trigger and allocates nothing — it never runs on the steady-state path
+	// unless an observer is explicitly installed.
+	OnTriggerDispatch func(d TriggerDispatch)
 	pathReqs    []pathRequest
 }
 

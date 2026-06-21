@@ -101,16 +101,6 @@ type Game struct {
 	// makes Print a deterministic no-op.
 	onUI func(UIMessageEvent)
 
-	// eventKinds maps a sim event kind to its public dispatch list,
-	// consulted only at OnEvent registration time (never on the
-	// dispatch hot path — each list is reached through a closure). nil
-	// until the first OnEvent call.
-	eventKinds map[uint16]*kindList
-	// nextHandlerID hands out sim HandlerIDs for the per-kind
-	// trampolines from a high base that cannot collide with
-	// script-registered handlers.
-	nextHandlerID sim.HandlerID
-
 	// Trigger noun support (#461): pubKindRev reverses simKindOf so an
 	// action can recover the public kind of the event that fired it (built
 	// lazily); trigHandlerSeq names condition/action adapters registered
@@ -176,10 +166,8 @@ type Game struct {
 // world without leaking a litd/sim type through an exported signature.
 func newGame(w *sim.World) *Game {
 	return &Game{
-		w:             w,
-		eventKinds:    make(map[uint16]*kindList),
-		nextHandlerID: apiHandlerBase,
-		localPlayer:   -1, // no local viewer until set (headless default)
+		w:           w,
+		localPlayer: -1, // no local viewer until set (headless default)
 	}
 }
 
@@ -188,10 +176,6 @@ func newGameWithDriver(w *sim.World, d driverHook) *Game {
 	g.driver = d
 	return g
 }
-
-// apiHandlerBase starts the api's sim-HandlerID allocation high enough
-// that it never collides with a script- or sim-registered handler.
-const apiHandlerBase sim.HandlerID = 1 << 30
 
 // alive reports whether an entity handle still names a live sim entity.
 // It is the shared validity primitive for every entity-backed noun

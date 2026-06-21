@@ -55,6 +55,49 @@ func unpackTriggerState(st sched.State) (TriggerID, Event, int) {
 	return t, e, ordinal
 }
 
+// TrigOutcome is the result the dispatcher recorded for one trigger on one
+// event — the ECA-layer observability vocabulary (R-FSV-3).
+type TrigOutcome uint8
+
+const (
+	TrigFired           TrigOutcome = iota // condition passed; actions ran (or parked)
+	TrigSkipStale                          // handle destroyed before dispatch reached it
+	TrigSkipDisabled                       // trigger disabled
+	TrigSkipCondition                      // condition tree returned false
+)
+
+// String renders an outcome for logs.
+func (o TrigOutcome) String() string {
+	switch o {
+	case TrigFired:
+		return "fired"
+	case TrigSkipStale:
+		return "skip-stale"
+	case TrigSkipDisabled:
+		return "skip-disabled"
+	case TrigSkipCondition:
+		return "skip-condition"
+	}
+	return "unknown"
+}
+
+// TriggerDispatch is one observability record handed to OnTriggerDispatch:
+// the trigger, the event that reached it, and the outcome. Value type, no
+// allocation — the observer copies what it needs.
+type TriggerDispatch struct {
+	Trigger TriggerID
+	Event   Event
+	Outcome TrigOutcome
+}
+
+// observeTrigger forwards one dispatch outcome to the hook if installed.
+// Inlined-cheap: a nil check on the steady-state path.
+func (w *World) observeTrigger(t TriggerID, e Event, o TrigOutcome) {
+	if w.OnTriggerDispatch != nil {
+		w.OnTriggerDispatch(TriggerDispatch{Trigger: t, Event: e, Outcome: o})
+	}
+}
+
 // eventScopeKey is the scope key an event is matched against in the
 // trigger index (#458): the event's source entity. A trigger scoped to a
 // specific unit (Scope = that unit's EntityID) fires only when that unit
@@ -77,12 +120,19 @@ func (w *World) dispatchTriggers(e Event) {
 	w.dispatchBuf = append(w.dispatchBuf[:0], list...)
 	for _, t := range w.dispatchBuf {
 		sl := w.Triggers.slot(t)
-		if sl == nil || !sl.enabled {
-			continue // destroyed mid-flush or disabled → no eval, no actions
+		if sl == nil {
+			w.observeTrigger(t, e, TrigSkipStale)
+			continue // destroyed mid-flush → no eval, no actions
+		}
+		if !sl.enabled {
+			w.observeTrigger(t, e, TrigSkipDisabled)
+			continue // disabled → no eval, no actions
 		}
 		if !w.EvalExpr(sl.cond, e) {
+			w.observeTrigger(t, e, TrigSkipCondition)
 			continue // condition false → actions skipped (ECA contract)
 		}
+		w.observeTrigger(t, e, TrigFired)
 		w.runTriggerActions(t, e, 0)
 	}
 }

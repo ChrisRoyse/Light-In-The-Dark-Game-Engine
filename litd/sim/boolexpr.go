@@ -60,12 +60,10 @@ func (w *World) Not(a ExprRef) ExprRef {
 	return w.appendExpr(exprNode{op: exprNot, a: int32(a)})
 }
 
-// appendExpr adds a node to the arena and returns its ref. Cold-path
-// (authoring) only — panics during Step so refs stay deterministic.
+// appendExpr adds a node to the arena and returns its ref. Allowed during
+// Step (a runtime-authored trigger builds its condition tree from a firing
+// trigger); ref assignment is append order, deterministic on replay.
 func (w *World) appendExpr(n exprNode) ExprRef {
-	if w.inStep {
-		panic("sim: condition-expr construction during Step — authoring is setup-only")
-	}
 	w.exprArena = append(w.exprArena, n)
 	return ExprRef(len(w.exprArena) - 1)
 }

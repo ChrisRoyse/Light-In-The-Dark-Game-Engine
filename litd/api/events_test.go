@@ -270,30 +270,33 @@ func TestEventUnknownKind(t *testing.T) {
 	}
 }
 
-// TestEventDispatchZeroAlloc — the api fan-out path allocates nothing
-// at steady state, with and without a filter (R-GC-3).
-func TestEventDispatchZeroAlloc(t *testing.T) {
+// TestEventDispatchFanoutAndFilter — since #462 OnEvent is sugar over a
+// Trigger; this verifies the substrate preserves fan-out (two subs on one
+// kind both fire) and Where filtering through the trigger condition. The
+// steady-state zero-alloc guarantee (R-GC-3) is now proven at the sim
+// dispatch layer (TestDispatchZeroAllocSteadyState).
+func TestEventDispatchFanoutAndFilter(t *testing.T) {
 	w := sim.NewWorld(sim.Caps{Units: 16})
 	g := newGame(w)
-	victim, vID := liveUnit(t, w, g, 1, 100)
-	_ = victim
-	sink := 0
+	_, vID := liveUnit(t, w, g, 1, 100)
+	sink, gated := 0, 0
 	g.OnEvent(EventUnitDamaged, func(Event) { sink++ })
-	kl := g.eventKinds[7]
-	if kl == nil {
-		t.Fatal("kindList not registered for damage")
-	}
-	e := sim.Event{Kind: 7, Src: vID, Dst: vID, Arg: int64(fixed.FromInt(10))}
+	g.OnEvent(EventUnitDamaged, func(Event) { gated++ },
+		Where(func(v EventView) bool { return v.Damage() > 5 }))
 
-	if n := testing.AllocsPerRun(1000, func() { g.dispatch(kl, e) }); n != 0 {
-		t.Errorf("dispatch (no filter) allocates %.1f/run, want 0", n)
+	// damage 10 > 5: both fire (fan-out + filter pass).
+	w.Emit(sim.Event{Kind: 7, Src: vID, Dst: vID, Arg: int64(fixed.FromInt(10))})
+	w.Step()
+	t.Logf("after damage=10: sink=%d gated=%d (want 1,1)", sink, gated)
+	if sink != 1 || gated != 1 {
+		t.Fatalf("fan-out/filter pass wrong: sink=%d gated=%d", sink, gated)
 	}
 
-	// add a filter (debug off): still zero alloc
-	g.OnEvent(EventUnitDamaged, func(Event) { sink++ },
-		Where(func(v EventView) bool { return v.Damage() > 0 }))
-	if n := testing.AllocsPerRun(1000, func() { g.dispatch(kl, e) }); n != 0 {
-		t.Errorf("dispatch (with filter) allocates %.1f/run, want 0", n)
+	// damage 3 < 5: only the unfiltered sub fires (filter gates the other).
+	w.Emit(sim.Event{Kind: 7, Src: vID, Dst: vID, Arg: int64(fixed.FromInt(3))})
+	w.Step()
+	t.Logf("after damage=3: sink=%d gated=%d (want 2,1 — filter gated)", sink, gated)
+	if sink != 2 || gated != 1 {
+		t.Fatalf("filter did not gate the sub-threshold event: sink=%d gated=%d", sink, gated)
 	}
-	t.Logf("zero-alloc dispatch verified (no-filter + filter); sink=%d", sink)
 }

@@ -54,7 +54,15 @@ import (
 // Bumped 0x9148c4e869dfed96 → 0xeeb7746e1f9808a2 (2026-06-20, #457): the
 // boolexpr condition arena adds a "boolexpr" system to HashSystems — another
 // constant TopHash shift (empty arena here). run1==run2 unchanged.
-const goldenLuaDeterminism10k = uint64(0xeeb7746e1f9808a2)
+//
+// Bumped 0xeeb7746e1f9808a2 → 0x7ea316e742921b02 (2026-06-20, #462): OnEvent
+// is now sugar over a Trigger, so each Go-registered subscription in this
+// scenario populates the (hashed) handler registry + trigger slab + boolexpr
+// arena instead of the non-hashed legacy subs table. Behavior is identical
+// (the api/luabind event-behavior suites stay green; dispatch order and fire
+// counts unchanged); only the substrate carrying the subscription graph moved
+// into the state hash. run1==run2==p1==p8 unchanged (deterministic).
+const goldenLuaDeterminism10k = uint64(0x7ea316e742921b02)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

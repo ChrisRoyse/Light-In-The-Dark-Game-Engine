@@ -58,18 +58,19 @@ func newHandlerRegistry() handlerRegistry {
 	return handlerRegistry{byName: make(map[string]HandlerRef)}
 }
 
-// RegisterHandlerID binds a stable name to fn and returns its ref.
-// Cold-path only — it panics, fail-closed, on every condition that
-// would make refs non-deterministic or silently shadow a handler:
-//   - called during Step (refs must be assigned in fixed setup order),
-//   - a nil func, an empty name, or a duplicate name.
+// RegisterHandlerID binds a stable name to fn and returns its ref. It
+// panics, fail-closed, on a nil func, an empty name, or a duplicate name.
+//
+// Registration is allowed during Step: ECA scripts legitimately create
+// triggers (and thus register condition/action handlers) at runtime from
+// within a firing trigger, and dispatch is deterministic, so the
+// registration order — and therefore the ref assignment — is reproducible
+// on replay. (Round-tripping a registry grown at runtime through
+// save/load is the #464 concern, not a determinism break.)
 //
 // Re-registering the same names in the same order on a fresh world
 // reproduces the identical ref table (the save/load invariant).
 func (w *World) RegisterHandlerID(name string, fn TriggerHandler) HandlerRef {
-	if w.inStep {
-		panic("sim: RegisterHandlerID during Step — registration is setup-only")
-	}
 	if fn == nil {
 		panic("sim: RegisterHandlerID with nil func: " + name)
 	}

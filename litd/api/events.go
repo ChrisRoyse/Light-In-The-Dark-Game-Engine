@@ -23,20 +23,18 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
-// kindList is the ordered subscriber list for one public event kind,
-// reached by the kind's trampoline through a captured pointer.
-type kindList struct {
-	pubKind EventKind
-	subs    []*subscription
-}
-
-// subscription is one live OnEvent registration.
+// subscription is one live OnEvent registration. Since #462 OnEvent is
+// sugar over a single-event / single-condition / single-action Trigger:
+// the condition replicates the legacy dispatch gate (cancelled → scope →
+// filter) and the action calls the handler. `trigger` is the backing sim
+// trigger; Cancel flips `cancelled`, which the condition checks.
 type subscription struct {
 	handler   func(Event)
 	filter    func(EventView) bool
 	player    int32 // owner-slot scope; -1 = any player
 	cancelled bool
 	g         *Game
+	trigger   sim.TriggerID
 }
 
 // Subscription is the handle returned by OnEvent; Cancel stops future
@@ -98,50 +96,46 @@ func (g *Game) OnEvent(kind EventKind, handler func(Event), opts ...EventOption)
 	for _, o := range opts {
 		o(sub)
 	}
-	kl := g.ensureKind(simKind, kind)
-	kl.subs = append(kl.subs, sub)
+	// OnEvent is sugar over a one-event/one-condition/one-action Trigger
+	// (#462, ADR #451). The condition replicates the legacy dispatch gate
+	// byte-for-byte: a cancelled sub is skipped, then ForPlayer scope, then
+	// the Where filter, in that order with the same EventView. The action
+	// runs the handler. Dispatch order and snapshot-at-firing semantics fall
+	// out of the trigger substrate: registration order is slot order, and a
+	// trigger registered mid-dispatch joins from the next firing (#459/#458).
+	t, ok := g.w.Triggers.New()
+	if !ok {
+		g.reportInvalid("OnEvent (trigger slab full)")
+		return Subscription{}
+	}
+	sub.trigger = t
+	g.w.Triggers.AddEvent(t, sim.EventReg{Kind: simKind})
+
+	condRef := g.w.RegisterHandlerID(g.nextTriggerHandlerName("onevent.cond"),
+		func(w *sim.World, e sim.Event) bool {
+			if sub.cancelled {
+				return false
+			}
+			ev := Event{kind: kind, src: e.Src, dst: e.Dst, arg: e.Arg, g: g, sub: sub}
+			if sub.player >= 0 && g.scopePlayerOf(ev) != sub.player {
+				return false
+			}
+			if sub.filter != nil && !g.runFilter(sub, ev) {
+				return false
+			}
+			return true
+		})
+	g.w.Triggers.SetCondition(t, g.w.Cond(condRef))
+
+	actRef := g.w.RegisterHandlerID(g.nextTriggerHandlerName("onevent.act"),
+		func(w *sim.World, e sim.Event) bool {
+			ev := Event{kind: kind, src: e.Src, dst: e.Dst, arg: e.Arg, g: g, sub: sub}
+			sub.handler(ev)
+			return true
+		})
+	g.w.Triggers.AddAction(t, actRef)
+
 	return Subscription{s: sub}
-}
-
-// ensureKind returns the dispatch list for a sim kind, registering its
-// trampoline with the sim ring on first use. Registration-time only —
-// off the dispatch hot path.
-func (g *Game) ensureKind(simKind uint16, pubKind EventKind) *kindList {
-	if kl := g.eventKinds[simKind]; kl != nil {
-		return kl
-	}
-	kl := &kindList{pubKind: pubKind}
-	g.eventKinds[simKind] = kl
-	id := g.nextHandlerID
-	g.nextHandlerID++
-	g.w.RegisterHandler(id, func(w *sim.World, e sim.Event) {
-		g.dispatch(kl, e)
-	})
-	g.w.Subscribe(simKind, id)
-	return kl
-}
-
-// dispatch fans one sim event out to a kind's subscribers. The
-// subscriber count is snapshotted at entry, so a handler that registers
-// another subscriber for the same kind does not fire it this tick
-// (execution-model.md §2.4: a newly registered handler joins from the
-// next firing). Cancelled subscribers are skipped, never fired.
-func (g *Game) dispatch(kl *kindList, e sim.Event) {
-	n := len(kl.subs) // snapshot: mid-dispatch registrations wait for next tick
-	for i := 0; i < n; i++ {
-		s := kl.subs[i]
-		if s.cancelled {
-			continue
-		}
-		ev := Event{kind: kl.pubKind, src: e.Src, dst: e.Dst, arg: e.Arg, g: g, sub: s}
-		if s.player >= 0 && g.scopePlayerOf(ev) != s.player {
-			continue
-		}
-		if s.filter != nil && !g.runFilter(s, ev) {
-			continue
-		}
-		s.handler(ev)
-	}
 }
 
 // runFilter evaluates a subscription's filter. In debug mode it samples

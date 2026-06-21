@@ -55,9 +55,10 @@ func (g *Game) RegisterScriptCont(id uint32, fn func(a, b int64)) {
 
 // scriptEventHandlerID is the reserved sim HandlerID under which the script VM's
 // single event-wake dispatcher registers (#413). Low-numbered, like the script
-// ContID range: the api allocates its own per-kind trampolines from 1<<30 up
-// (apiHandlerBase), so this never collides. Registered once at VM setup so a
-// restored kind→handler subscription resolves on load (the subscription list is
+// ContID range, and the only remaining legacy sim subscription on the api side
+// (OnEvent moved to the trigger substrate in #462), so it never collides with
+// the timer reservation. Registered once at VM setup so a restored
+// kind→handler subscription resolves on load (the subscription list is
 // serialized sim state, validated against the handler registry on LoadState).
 const scriptEventHandlerID = sim.HandlerID(1)
 

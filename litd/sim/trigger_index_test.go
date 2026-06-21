@@ -64,6 +64,32 @@ func TestTriggerIndexFireSetAndOrder(t *testing.T) {
 	}
 }
 
+// TestTriggerIndexDescendingKinds — regression for the bucket-insertion
+// aliasing bug (#458, surfaced by #462): when a higher kind is registered
+// BEFORE a lower kind, the rebuild must insert the lower bucket ahead of
+// the higher one without the two sharing an entries backing array. Before
+// the fix, looking up the higher kind returned the lower kind's trigger.
+func TestTriggerIndexDescendingKinds(t *testing.T) {
+	w := NewWorld(Caps{})
+	const kHi, kMid, kLo uint16 = 23, 22, 7
+	// register strictly descending so every new bucket inserts at the front.
+	hi, _ := w.Triggers.New()
+	w.Triggers.AddEvent(hi, EventReg{Kind: kHi})
+	mid, _ := w.Triggers.New()
+	w.Triggers.AddEvent(mid, EventReg{Kind: kMid})
+	lo, _ := w.Triggers.New()
+	w.Triggers.AddEvent(lo, EventReg{Kind: kLo})
+
+	w.ensureTriggerIndex()
+	for kind, want := range map[uint16]TriggerID{kHi: hi, kMid: mid, kLo: lo} {
+		got := w.trigIndex.triggersFor(kind, GlobalScope)
+		t.Logf("kind %d → slots %v (want [%d])", kind, idsOf(got), want.Index())
+		if len(got) != 1 || got[0] != want {
+			t.Fatalf("kind %d routed to %v, want trigger slot %d", kind, idsOf(got), want.Index())
+		}
+	}
+}
+
 // TestTriggerIndexScopeFilter — edge 1: a scoped trigger fires only for
 // its scope key; a global trigger fires for every key.
 func TestTriggerIndexScopeFilter(t *testing.T) {

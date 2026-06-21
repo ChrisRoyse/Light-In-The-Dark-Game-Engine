@@ -183,6 +183,77 @@ func TestDispatchSleepSaveResume(t *testing.T) {
 	}
 }
 
+// TestDispatchZeroAllocSteadyState — R-GC-1/R-GC-3: once the index is
+// built, firing an event (condition eval + action run) allocates nothing.
+func TestDispatchZeroAllocSteadyState(t *testing.T) {
+	w := NewWorld(Caps{})
+	condRef := w.RegisterHandlerID("cond.amount>10", condAmountGt10)
+	actRef := w.RegisterHandlerID("act.mark42", actMark42)
+	u := spawnUnit(w)
+	tr, _ := w.Triggers.New()
+	w.Triggers.AddEvent(tr, EventReg{Kind: evDamagedDispatch})
+	w.Triggers.SetCondition(tr, w.Cond(condRef))
+	w.Triggers.AddAction(tr, actRef)
+	w.ensureTriggerIndex() // build the index (dirty) once, outside measurement
+
+	e := Event{Kind: evDamagedDispatch, Src: u, Arg: 20}
+	n := testing.AllocsPerRun(1000, func() { w.dispatchTriggers(e) })
+	t.Logf("dispatchTriggers (condition eval + action run): %v allocs/op", n)
+	if n != 0 {
+		t.Fatalf("steady-state dispatch allocates %v/op, want 0", n)
+	}
+}
+
+// TestDispatchObservability — the OnTriggerDispatch hook reports every
+// outcome (fired / skip-condition / skip-disabled / skip-stale) in order,
+// and installing it never changes the side-effects; nil stays zero-alloc.
+func TestDispatchObservability(t *testing.T) {
+	w := NewWorld(Caps{})
+	condRef := w.RegisterHandlerID("cond.amount>10", condAmountGt10)
+	actRef := w.RegisterHandlerID("act.mark42", actMark42)
+	u := spawnUnit(w)
+
+	fired, _ := w.Triggers.New() // fires when amount>10
+	w.Triggers.AddEvent(fired, EventReg{Kind: evDamagedDispatch})
+	w.Triggers.SetCondition(fired, w.Cond(condRef))
+	w.Triggers.AddAction(fired, actRef)
+
+	off, _ := w.Triggers.New() // disabled → skip-disabled
+	w.Triggers.AddEvent(off, EventReg{Kind: evDamagedDispatch})
+	w.Triggers.AddAction(off, actRef)
+	w.Triggers.SetEnabled(off, false)
+
+	var log []string
+	w.OnTriggerDispatch = func(d TriggerDispatch) {
+		log = append(log, d.Outcome.String())
+	}
+
+	// amount=5: cond false on `fired`, `off` disabled.
+	emitAndStep(w, Event{Kind: evDamagedDispatch, Src: u, Arg: 5})
+	t.Logf("amount=5 outcomes=%v (want [skip-condition skip-disabled])", log)
+	if len(log) != 2 || log[0] != "skip-condition" || log[1] != "skip-disabled" {
+		t.Fatalf("low-amount outcomes wrong: %v", log)
+	}
+
+	log = log[:0]
+	emitAndStep(w, Event{Kind: evDamagedDispatch, Src: u, Arg: 20})
+	t.Logf("amount=20 outcomes=%v (want [fired skip-disabled])", log)
+	if len(log) != 2 || log[0] != "fired" || log[1] != "skip-disabled" {
+		t.Fatalf("high-amount outcomes wrong: %v", log)
+	}
+	if w.UserData(u) != 42 {
+		t.Fatal("observed dispatch changed side-effects (action did not run)")
+	}
+
+	// nil hook: dispatch stays zero-alloc.
+	w.OnTriggerDispatch = nil
+	w.ensureTriggerIndex()
+	e := Event{Kind: evDamagedDispatch, Src: u, Arg: 20}
+	if n := testing.AllocsPerRun(1000, func() { w.dispatchTriggers(e) }); n != 0 {
+		t.Fatalf("nil-hook dispatch allocates %v/op, want 0", n)
+	}
+}
+
 // TestDispatchDoubleRunIdentical — edge 4: two runs of the same scenario
 // produce identical side-effects and identical state hash.
 func TestDispatchDoubleRunIdentical(t *testing.T) {

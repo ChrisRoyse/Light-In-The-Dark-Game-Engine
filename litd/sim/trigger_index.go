@@ -92,8 +92,16 @@ func (w *World) rebuildTriggerIndex() {
 			if used > len(idx.buckets) {
 				idx.buckets = append(idx.buckets, triggerIndexBucket{})
 			}
+			// Take the freed tail slot's backing for the new bucket BEFORE the
+			// shift. The shift below moves buckets[bi:used-1] up by one, which
+			// duplicates the slice header now at buckets[bi] into buckets[bi+1];
+			// reusing buckets[bi].entries here would alias the inserted bucket
+			// onto its right neighbour's entries and corrupt a kind registered
+			// out of ascending order (e.g. OnEvent kind 23 then 22). The tail
+			// slot's old backing is detached by the shift, so it is safe.
+			spare := idx.buckets[used-1].entries[:0]
 			copy(idx.buckets[bi+1:used], idx.buckets[bi:used-1])
-			idx.buckets[bi] = triggerIndexBucket{kind: ev.Kind, entries: append(idx.buckets[bi].entries[:0], e)}
+			idx.buckets[bi] = triggerIndexBucket{kind: ev.Kind, entries: append(spare, e)}
 		}
 	}
 	// drop any buckets beyond the used prefix (stale from a prior build).

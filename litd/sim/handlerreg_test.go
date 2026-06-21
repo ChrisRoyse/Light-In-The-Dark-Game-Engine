@@ -211,18 +211,23 @@ func TestHandlerRegDuplicateNamePanics(t *testing.T) {
 	w.RegisterHandlerID("dup", falseFn) // must panic
 }
 
-// TestHandlerRegDuringStepPanics — edge 3: registration is setup-only.
-func TestHandlerRegDuringStepPanics(t *testing.T) {
+// TestHandlerRegDuringStepAllowed — edge 3 (revised for #462): an ECA
+// script legitimately creates triggers (and thus registers handlers) at
+// runtime from within a firing trigger, so registration during Step must
+// be ALLOWED — it stays deterministic (dispatch order fixes ref order).
+// The setup-only guard the original #455 carried was too strict for the
+// trigger substrate and was removed; only nil/empty/duplicate still panic.
+func TestHandlerRegDuringStepAllowed(t *testing.T) {
 	w := NewWorld(Caps{})
 	w.inStep = true // simulate being mid-Step (internal test access)
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatal("registration during Step did not panic")
-		}
-		t.Logf("registration during Step rejected fail-closed: %v", r)
-	}()
-	w.RegisterHandlerID("late", trueFn) // must panic
+	ref := w.RegisterHandlerID("late", trueFn)
+	if ref != 1 {
+		t.Fatalf("runtime registration returned ref %d, want 1", ref)
+	}
+	if got, ok := w.HandlerRefOf("late"); !ok || got != ref {
+		t.Fatalf("runtime-registered handler not resolvable: ref=%d ok=%v", got, ok)
+	}
+	t.Logf("registration during Step allowed: ref=%d (deterministic, append order)", ref)
 }
 
 // TestHandlerRegResolveZeroAlloc — R-GC-1: the hot-path lookup is a
