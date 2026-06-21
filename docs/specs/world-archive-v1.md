@@ -89,7 +89,16 @@ unzip -p w.litdworld .litdworld-manifest \
 
 Space-separated comparators, each `(>=|<=|>|<|=)?MAJOR.MINOR.PATCH`, or the
 single token `*` (admits all). Example: `>=0.1.0 <0.2.0`. A version *satisfies*
-the range when it satisfies every comparator.
+the range when it satisfies every comparator. Matching is exact and total — a
+`(version, range)` pair is always compatible or incompatible, never "unknown";
+a bare version means `=`; prerelease/build metadata is not part of the grammar.
+
+The matcher has exactly **one** implementation — `litd/semver` (`ValidRange`,
+`Satisfies`) — shared by the archive verifier (`litd/asset/worldarchive`), the
+`assetcheck` linter, the hub index/intake, and the client loader, so the same
+range can never be judged compatible by one component and incompatible by
+another (#180). A malformed range is rejected at intake/lint time (`ValidRange`),
+never silently at play time, and a malformed range is also never satisfiable.
 
 ## Validation (consumer)
 

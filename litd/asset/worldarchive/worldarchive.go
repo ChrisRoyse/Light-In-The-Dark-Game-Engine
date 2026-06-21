@@ -28,6 +28,7 @@ import (
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	lualint "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/lualint"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/semver"
 )
 
 // manifestName is the reserved archive entry holding the content-hash TOC.
@@ -96,10 +97,10 @@ func verify(fsys fs.FS, engineVersion string) (Manifest, error) {
 	if err != nil {
 		return Manifest{}, err
 	}
-	if man.EngineRange == "" || !validEngineRange(man.EngineRange) {
+	if man.EngineRange == "" || !semver.ValidRange(man.EngineRange) {
 		return Manifest{}, fmt.Errorf("engine-range %q is missing or not well-formed", man.EngineRange)
 	}
-	if engineVersion != "" && !satisfiesRange(engineVersion, man.EngineRange) {
+	if engineVersion != "" && !semver.Satisfies(engineVersion, man.EngineRange) {
 		return Manifest{}, fmt.Errorf("engine %s does not satisfy engine-range %q", engineVersion, man.EngineRange)
 	}
 

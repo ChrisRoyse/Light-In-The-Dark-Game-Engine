@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	lualint "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/lualint"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/semver"
 )
 
 // runArchiveCmd handles `assetcheck archive [--json] <file>`.
@@ -95,9 +96,9 @@ func checkArchive(path, engineVersion string) ([]finding, int, error) {
 	}
 	if engineRange == "" {
 		add(archiveManifestName, "ARCHIVE-VERSION", "manifest has no engine-version range")
-	} else if !validEngineRange(engineRange) {
+	} else if !semver.ValidRange(engineRange) {
 		add(archiveManifestName, "ARCHIVE-VERSION", fmt.Sprintf("engine-version range %q is not well-formed", engineRange))
-	} else if engineVersion != "" && !satisfiesRange(engineVersion, engineRange) {
+	} else if engineVersion != "" && !semver.Satisfies(engineVersion, engineRange) {
 		add(archiveManifestName, "ARCHIVE-VERSION", fmt.Sprintf("engine %s does not satisfy archive engine-range %q", engineVersion, engineRange))
 	}
 	// Aggregate hash: the declared whole-archive fingerprint must equal the value
@@ -292,119 +293,4 @@ func recomputeAggregate(byPath map[string]string) string {
 		io.WriteString(h, "\n")
 	}
 	return hex.EncodeToString(h.Sum(nil))
-}
-
-// validEngineRange accepts a space-separated list of semver comparators, e.g.
-// ">=0.1.0 <0.2.0", or "*". Each token is (>=|<=|>|<|=)?MAJOR.MINOR.PATCH.
-func validEngineRange(r string) bool {
-	r = strings.TrimSpace(r)
-	if r == "" {
-		return false
-	}
-	if r == "*" {
-		return true
-	}
-	for _, tok := range strings.Fields(r) {
-		v := tok
-		for _, op := range []string{">=", "<=", ">", "<", "="} {
-			if strings.HasPrefix(v, op) {
-				v = v[len(op):]
-				break
-			}
-		}
-		if !validSemver(v) {
-			return false
-		}
-	}
-	return true
-}
-
-func validSemver(v string) bool {
-	_, ok := parseSemver(v)
-	return ok
-}
-
-// parseSemver parses MAJOR.MINOR.PATCH into a comparable triple.
-func parseSemver(v string) ([3]int, bool) {
-	var out [3]int
-	parts := strings.Split(v, ".")
-	if len(parts) != 3 {
-		return out, false
-	}
-	for i, p := range parts {
-		if p == "" {
-			return out, false
-		}
-		n, err := strconv.Atoi(p)
-		if err != nil || n < 0 {
-			return out, false
-		}
-		out[i] = n
-	}
-	return out, true
-}
-
-// cmpSemver returns -1/0/+1 comparing a to b component-wise.
-func cmpSemver(a, b [3]int) int {
-	for i := 0; i < 3; i++ {
-		switch {
-		case a[i] < b[i]:
-			return -1
-		case a[i] > b[i]:
-			return 1
-		}
-	}
-	return 0
-}
-
-// satisfiesRange reports whether engine version v (semver) satisfies every
-// comparator in range r ("*" satisfies all). r is assumed well-formed
-// (validEngineRange). A malformed v never satisfies a concrete range.
-func satisfiesRange(v, r string) bool {
-	r = strings.TrimSpace(r)
-	if r == "*" {
-		return true
-	}
-	ver, ok := parseSemver(v)
-	if !ok {
-		return false
-	}
-	for _, tok := range strings.Fields(r) {
-		op := "="
-		rest := tok
-		for _, o := range []string{">=", "<=", ">", "<", "="} {
-			if strings.HasPrefix(tok, o) {
-				op, rest = o, tok[len(o):]
-				break
-			}
-		}
-		bound, ok := parseSemver(rest)
-		if !ok {
-			return false
-		}
-		c := cmpSemver(ver, bound)
-		switch op {
-		case ">=":
-			if c < 0 {
-				return false
-			}
-		case "<=":
-			if c > 0 {
-				return false
-			}
-		case ">":
-			if c <= 0 {
-				return false
-			}
-		case "<":
-			if c >= 0 {
-				return false
-			}
-		case "=":
-			if c != 0 {
-				return false
-			}
-		}
-	}
-	return true
 }
