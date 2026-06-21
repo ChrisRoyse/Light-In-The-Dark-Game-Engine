@@ -50,3 +50,14 @@ after appeal is final for that content hash.
 Each takedown keeps: the report, the decision and its reason category, dates,
 and the blocklisted hash. Records are private to the operator; the public sees
 only the 410 notice category.
+
+## Operator mechanics
+
+The blocklist is a plain text file, one entry per line — `<content-hash>
+<reason-category>` (blank lines and `#` comments ignored). Point the hub at it
+with `litd-hub -blocklist <file>`. It is reloaded on every reindex, so adding a
+hash and reindexing delists the world live (drops from `/index.json`, download
+returns `410 Gone` with the reason category). A malformed hash fails the reindex
+closed rather than silently serving an un-blocklisted index — a typo can never
+quietly restore a taken-down world. Implemented in `litd/hub` (`LoadBlocklist`,
+`BuildIndex`, `Server`); FSV in `litd/hub/hub_test.go:TestHubBlocklistTakedownFSV`.

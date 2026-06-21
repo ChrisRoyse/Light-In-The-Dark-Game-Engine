@@ -70,6 +70,148 @@ func packArchive(t *testing.T, out, engineRange, title, author string) {
 	}
 }
 
+// fileHash returns the sha256 of a file's bytes — the same hash the index
+// publishes and the blocklist keys on.
+func fileHash(t *testing.T, path string) string {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
+}
+
+func indexHashes(t *testing.T, body []byte) map[string]bool {
+	t.Helper()
+	var idx Index
+	if err := json.Unmarshal(body, &idx); err != nil {
+		t.Fatalf("unmarshal index: %v", err)
+	}
+	out := map[string]bool{}
+	for _, e := range idx.Worlds {
+		out[e.Hash] = true
+	}
+	return out
+}
+
+// TestHubBlocklistTakedownFSV is the #181 enforcement keystone. SoT = the served
+// /index.json contents, the archive URL's HTTP status+body, and the BuildIndex
+// skip log — inspected before and after a takedown, with the doctrine edge audit.
+func TestHubBlocklistTakedownFSV(t *testing.T) {
+	dir := t.TempDir()
+	alpha := filepath.Join(dir, "alpha.litdworld")
+	beta := filepath.Join(dir, "beta.litdworld")
+	packArchive(t, alpha, ">=0.1.0 <0.2.0", "Alpha World", "Ada")
+	packArchive(t, beta, ">=0.1.0 <0.2.0", "Beta World", "Bo")
+	alphaHash, betaHash := fileHash(t, alpha), fileHash(t, beta)
+
+	blPath := filepath.Join(dir, "blocklist.txt")
+	srv := NewServer(dir, "")
+	srv.SetBlocklistPath(blPath)
+	ts := httptest.NewServer(srv)
+	defer ts.Close()
+
+	// BEFORE: no blocklist file yet → both worlds indexed and downloadable.
+	resp, body := get(t, ts, "/index.json")
+	before := indexHashes(t, body)
+	t.Logf("FSV BEFORE: index has alpha=%v beta=%v", before[alphaHash], before[betaHash])
+	if !before[alphaHash] || !before[betaHash] {
+		t.Fatalf("both worlds should be indexed before takedown, got %v", before)
+	}
+	if resp, _ := get(t, ts, "/worlds/"+alphaHash+".litdworld"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("alpha download should be 200 before takedown, got %d", resp.StatusCode)
+	}
+
+	// ACTION: file a takedown — alpha's hash enters the blocklist.
+	if err := os.WriteFile(blPath, []byte("# takedown log\n"+alphaHash+" ip-claim\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// AFTER: alpha is delisted; its download is 410 (Gone, not 404); beta intact.
+	resp, body = get(t, ts, "/index.json")
+	after := indexHashes(t, body)
+	t.Logf("FSV AFTER: index has alpha=%v beta=%v", after[alphaHash], after[betaHash])
+	if after[alphaHash] {
+		t.Fatalf("blocklisted alpha must drop from the index, still present: %s", body)
+	}
+	if !after[betaHash] {
+		t.Fatalf("beta must remain indexed after alpha's takedown")
+	}
+	resp, gone := get(t, ts, "/worlds/"+alphaHash+".litdworld")
+	t.Logf("FSV alpha download after takedown: status=%d body=%q", resp.StatusCode, strings.TrimSpace(string(gone)))
+	if resp.StatusCode != http.StatusGone {
+		t.Fatalf("blocklisted download must be 410 Gone, got %d", resp.StatusCode)
+	}
+	if !strings.Contains(string(gone), "taken down") || !strings.Contains(string(gone), "ip-claim") {
+		t.Fatalf("410 body must carry the takedown notice + reason category, got %q", gone)
+	}
+	if resp, _ := get(t, ts, "/worlds/"+betaHash+".litdworld"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("beta download must stay 200 after alpha's takedown, got %d", resp.StatusCode)
+	}
+
+	// EDGE 1 — re-upload of a blocklisted hash is refused at scan (the file is
+	// still on disk): BuildIndex reports it skipped-as-blocklisted, never indexed.
+	bl, err := LoadBlocklist(blPath)
+	if err != nil {
+		t.Fatalf("LoadBlocklist: %v", err)
+	}
+	_, _, skips, err := BuildIndex(dir, "", bl)
+	if err != nil {
+		t.Fatalf("BuildIndex: %v", err)
+	}
+	refused := false
+	for _, sk := range skips {
+		if strings.Contains(sk.Reason, "blocklisted") {
+			refused = true
+			t.Logf("FSV EDGE1 re-upload refused: %s -> %s", sk.Path, sk.Reason)
+		}
+	}
+	if !refused {
+		t.Fatalf("re-upload of a blocklisted hash must be refused at scan, skips=%v", skips)
+	}
+
+	// EDGE 2 — un-blocklisting restores the world on the next reindex.
+	if err := os.WriteFile(blPath, []byte("# cleared after appeal\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, body = get(t, ts, "/index.json")
+	if !indexHashes(t, body)[alphaHash] {
+		t.Fatalf("un-blocklisted alpha must return to the index")
+	}
+	if resp, _ := get(t, ts, "/worlds/"+alphaHash+".litdworld"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("un-blocklisted alpha must download 200 again, got %d", resp.StatusCode)
+	}
+	t.Logf("FSV EDGE2: un-blocklist restored alpha to index + 200")
+
+	// EDGE 3 — blocklisting a hash that was never published is a no-op for the
+	// index (nothing to remove).
+	neverHash := strings.Repeat("ab", 32)
+	if err := os.WriteFile(blPath, []byte(neverHash+" phantom\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, body = get(t, ts, "/index.json")
+	noop := indexHashes(t, body)
+	if !noop[alphaHash] || !noop[betaHash] {
+		t.Fatalf("blocklisting an unpublished hash must not change the index, got %v", noop)
+	}
+	t.Logf("FSV EDGE3: blocklisting a never-published hash left the index unchanged")
+
+	// EDGE 4 — a malformed blocklist fails CLOSED (a typo'd hash must not silently
+	// un-block anything): LoadBlocklist errors, and Reindex propagates it.
+	if err := os.WriteFile(blPath, []byte("not-a-valid-hash takedown\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadBlocklist(blPath); err == nil {
+		t.Fatal("malformed blocklist must fail closed, got nil error")
+	} else {
+		t.Logf("FSV EDGE4 fail-closed: %v", err)
+	}
+	if err := srv.Reindex(); err == nil {
+		t.Fatal("Reindex with a malformed blocklist must error, not serve a stale index")
+	}
+}
+
 func get(t *testing.T, ts *httptest.Server, path string) (*http.Response, []byte) {
 	t.Helper()
 	resp, err := http.Get(ts.URL + path)
@@ -269,7 +411,7 @@ func TestHubSkipsUnverifiableArchiveFSV(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "bad.litdworld"), []byte("not a zip"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	idx, byHash, skips, err := BuildIndex(dir, "")
+	idx, byHash, skips, err := BuildIndex(dir, "", nil)
 	if err != nil {
 		t.Fatalf("BuildIndex: %v", err)
 	}

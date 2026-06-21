@@ -18,9 +18,11 @@ func main() {
 	data := flag.String("data", "./worlds", "directory of .litdworld archives to index and serve")
 	addr := flag.String("addr", ":8080", "listen address")
 	engine := flag.String("engine", "", "engine version for compat filtering (empty: index all well-formed archives)")
+	blocklist := flag.String("blocklist", "", "takedown blocklist file (content hashes to delist + 410); reloaded each reindex (#181)")
 	flag.Parse()
 
 	srv := hub.NewServer(*data, *engine)
+	srv.SetBlocklistPath(*blocklist)
 	if err := srv.Reindex(); err != nil {
 		log.Fatalf("litd-hub: initial index of %q failed: %v", *data, err)
 	}
