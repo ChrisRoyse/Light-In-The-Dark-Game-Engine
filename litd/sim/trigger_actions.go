@@ -18,7 +18,6 @@ package sim
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 )
@@ -65,7 +64,8 @@ func (w *World) RegisterEffectAction(name string, spec EffectActionSpec) (Handle
 // pre-call length so a failed registration leaves no partial effects.
 func (w *World) appendActionLevel(specs []EffectActionSpec) (data.EffectList, error) {
 	off := len(w.effects)
-	if off+len(specs) > math.MaxUint16 {
+	const maxUint16 = 1<<16 - 1 // ChildOff is uint16; math import is determlint-banned
+	if off+len(specs) > maxUint16 {
 		return data.EffectList{}, fmt.Errorf("sim: RegisterEffectAction: effect arena overflow (%d)", off+len(specs))
 	}
 	w.effects = append(w.effects, make([]data.CompiledEffect, len(specs))...)
