@@ -46,7 +46,11 @@ import (
 // bound into the top hash regardless. Not a sim-outcome change: run-to-run and
 // GOMAXPROCS edges stay identical (run1==run2==p1==p8), and the injected-
 // divergence edge still has teeth.
-const goldenLuaDeterminism10k = uint64(0x2ca39aa855b38e89)
+//
+// Bumped 0x2ca39aa855b38e89 → 0x9148c4e869dfed96 (2026-06-20, #456): the
+// first-class ECA trigger slab adds a "triggers" system to HashSystems —
+// another constant TopHash shift (empty slab here). run1==run2 unchanged.
+const goldenLuaDeterminism10k = uint64(0x9148c4e869dfed96)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

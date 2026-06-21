@@ -162,7 +162,11 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // handler-identity registry appends a "handlers" system to HashSystems (ADR
 // #451, R-SIM-6), shifting every World.HashState TopHash by a constant. Not a
 // sim-outcome change — run1==run2 stays identical (deterministic).
-const goldenDetLua uint64 = 0xb79ac7578742efdc
+//
+// Bumped 0xb79ac7578742efdc → 0x53bbf47c6cd4c49c (2026-06-20, #456): the
+// first-class ECA trigger slab adds a "triggers" system to HashSystems —
+// another constant TopHash shift (empty slab here). run1==run2 unchanged.
+const goldenDetLua uint64 = 0x53bbf47c6cd4c49c
 
 // TestLoadWorldPlacementSpawnsEntities — #403: a world ships a placement table
 // (data/placement) and the loader spawns those entities after the type tables

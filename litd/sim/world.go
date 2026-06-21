@@ -23,6 +23,7 @@ type Caps struct {
 	ScriptedDoodads    int
 	Destructables      int // killable, pathing-blocking widgets (trees/gates) (#229)
 	RuntimeAbilityDefs int // dynamic ability rows appended after bound data
+	Triggers           int // first-class ECA trigger slab (#456)
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
@@ -37,6 +38,7 @@ var EngineCaps = Caps{
 	ScriptedDoodads:    1024,
 	Destructables:      2048,
 	RuntimeAbilityDefs: 1024,
+	Triggers:           4096,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -59,6 +61,7 @@ func (c Caps) resolve() Caps {
 		ScriptedDoodads:    clampCap(c.ScriptedDoodads, EngineCaps.ScriptedDoodads),
 		Destructables:      clampCap(c.Destructables, EngineCaps.Destructables),
 		RuntimeAbilityDefs: clampCap(c.RuntimeAbilityDefs, EngineCaps.RuntimeAbilityDefs),
+		Triggers:           clampCap(c.Triggers, EngineCaps.Triggers),
 	}
 }
 
@@ -354,6 +357,9 @@ type World struct {
 	// TriggerHandler. Conditions/actions are stored by ref so the trigger
 	// graph is serializable data (ADR #451). Cold-path registration only.
 	handlerReg handlerRegistry
+	// first-class ECA trigger slab (#456): gen-checked handles holding
+	// events/condition/actions/enabled/initially-on. Hashes + serializes.
+	Triggers *TriggerStore
 	pathReqs    []pathRequest
 }
 
@@ -420,6 +426,7 @@ func NewWorld(requested Caps) *World {
 		events:             make([]Event, caps.PendingEvents),
 		handlers:           make(map[HandlerID]EventHandler),
 		handlerReg:         newHandlerRegistry(),
+		Triggers:           NewTriggerStore(caps.Triggers),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),

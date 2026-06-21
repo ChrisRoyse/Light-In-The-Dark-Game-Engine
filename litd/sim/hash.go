@@ -106,6 +106,11 @@ var HashSystems = []string{
 	// script set; including it binds the trigger graph's identity into the
 	// state hash so a divergent registration is caught here, not only at load.
 	"handlers",
+	// appended by #456: the first-class ECA trigger slab — every slot's
+	// gen/alive/enabled/initially-on/condition-ref/events/actions in slot
+	// order, then the free list (slab reuse order is state). Empty default
+	// leaves the zero contribution.
+	"triggers",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -751,6 +756,9 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 
 	hhreg := h.next() // handlers (#455): ECA handler-identity registry (name table)
 	w.hashHandlerReg(hhreg)
+
+	htrg := h.next() // triggers (#456): first-class ECA trigger slab
+	w.Triggers.HashInto(htrg)
 
 	return reg.Sum(dst)
 }

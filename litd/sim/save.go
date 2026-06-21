@@ -43,6 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v30: first-class ECA trigger slab appended after the handler registry:
+// every slot (gen/alive + alive fields: enabled/initially-on/condition-ref/
+// events/actions) in slot order, then the free list (#456, ADR #451).
 // v29: ECA handler-identity registry name table appended after
 // destructables: the stable condition/action names in ref order, used as a
 // load-time manifest to validate the re-registered registry (#455, ADR #451).
@@ -101,7 +104,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 29
+const SaveFormatVersion uint32 = 30
 
 // ---- little-endian writer / reader ----
 
@@ -228,6 +231,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(uint32(w.caps.ScriptedDoodads))
 	s.u32(uint32(w.caps.Destructables))
 	s.u32(uint32(w.caps.RuntimeAbilityDefs))
+	s.u32(uint32(w.caps.Triggers))
 	s.u32(w.tick)
 	s.u32(uint32(w.unitCount))
 	cur := w.rng.Cursor()
@@ -908,6 +912,36 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.str(name)
 	}
 
+	// first-class ECA trigger slab (#456, v30): every slot in slot order
+	// (gen/alive, then alive fields), then the free list — slab reuse order
+	// is state, so it round-trips exactly like the entity table.
+	ts := w.Triggers
+	s.u32(uint32(len(ts.slots)))
+	for i := range ts.slots {
+		sl := &ts.slots[i]
+		s.u32(sl.gen)
+		s.boolean(sl.alive)
+		if !sl.alive {
+			continue
+		}
+		s.boolean(sl.enabled)
+		s.boolean(sl.on)
+		s.i32(int32(sl.cond))
+		s.u32(uint32(len(sl.events)))
+		for _, ev := range sl.events {
+			s.u16(ev.Kind)
+			s.ent(ev.Scope)
+		}
+		s.u32(uint32(len(sl.actions)))
+		for _, a := range sl.actions {
+			s.u32(uint32(a))
+		}
+	}
+	s.u32(uint32(len(ts.free)))
+	for _, f := range ts.free {
+		s.u32(f)
+	}
+
 	return s.err
 }
 
@@ -1251,6 +1285,11 @@ type decodedSave struct {
 	// ECA handler-identity registry (#455, v29): stable name table in ref
 	// order, validated against the re-registered registry at apply time.
 	handlerNames []string
+
+	// first-class ECA trigger slab (#456, v30): decoded slots in slot order
+	// + free list, validated then swapped into the store at apply.
+	trigSlots []triggerSlot
+	trigFree  []uint32
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -1311,6 +1350,7 @@ func (w *World) LoadState(in io.Reader, fingerprint uint64) error {
 		ScriptedDoodads:    int(r.u32()),
 		Destructables:      int(r.u32()),
 		RuntimeAbilityDefs: int(r.u32()),
+		Triggers:           int(r.u32()),
 	}
 	if r.err == nil && got != w.caps {
 		return fmt.Errorf("sim: save: capability table %+v does not match this world's %+v — load into a world with identical caps", got, w.caps)
@@ -2481,6 +2521,64 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		}
 		d.handlerNames[i] = name
 	}
+
+	// first-class ECA trigger slab (#456, v30): slots in slot order, then
+	// the free list. Counts are bounded so a corrupt save cannot drive an
+	// unbounded allocation.
+	r.what = "triggers"
+	tsN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(tsN) > w.Triggers.Cap() {
+		return fmt.Errorf("sim: save: trigger slot count %d exceeds this world's cap %d", tsN, w.Triggers.Cap())
+	}
+	d.trigSlots = make([]triggerSlot, tsN)
+	for i := range d.trigSlots {
+		sl := &d.trigSlots[i]
+		sl.gen = r.u32()
+		sl.alive = r.boolean()
+		if !sl.alive {
+			continue
+		}
+		sl.enabled = r.boolean()
+		sl.on = r.boolean()
+		sl.cond = ExprRef(r.i32())
+		evN := r.u32()
+		if r.err != nil {
+			return r.err
+		}
+		if evN > maxTriggerEvents {
+			return fmt.Errorf("sim: save: trigger %d event count %d exceeds limit %d", i, evN, maxTriggerEvents)
+		}
+		sl.events = make([]EventReg, evN)
+		for j := range sl.events {
+			sl.events[j].Kind = r.u16()
+			sl.events[j].Scope = r.ent()
+		}
+		acN := r.u32()
+		if r.err != nil {
+			return r.err
+		}
+		if acN > maxTriggerActions {
+			return fmt.Errorf("sim: save: trigger %d action count %d exceeds limit %d", i, acN, maxTriggerActions)
+		}
+		sl.actions = make([]HandlerRef, acN)
+		for j := range sl.actions {
+			sl.actions[j] = HandlerRef(r.u32())
+		}
+	}
+	tfN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if tfN > tsN {
+		return fmt.Errorf("sim: save: trigger free-list count %d exceeds slot count %d", tfN, tsN)
+	}
+	d.trigFree = make([]uint32, tfN)
+	for i := range d.trigFree {
+		d.trigFree[i] = r.u32()
+	}
 	return r.err
 }
 
@@ -2899,6 +2997,34 @@ func validateSave(d *decodedSave, w *World) error {
 	for ref, name := range d.handlerNames {
 		if w.handlerReg.names[ref] != name {
 			return fmt.Errorf("sim: save: handler ref %d is %q in the save but %q in this world — re-registration diverged", ref+1, name, w.handlerReg.names[ref])
+		}
+	}
+
+	// trigger slab (#456): structural integrity. Alive slots need a live
+	// generation; free-list entries must point at dead slots; action refs
+	// must resolve in the re-registered handler registry (fail-closed — a
+	// stored action that no script registers would silently never run).
+	hn := len(w.handlerReg.names)
+	for i := range d.trigSlots {
+		sl := &d.trigSlots[i]
+		if sl.alive && sl.gen == 0 {
+			return fmt.Errorf("sim: save: trigger slot %d is alive with generation 0", i)
+		}
+		if !sl.alive {
+			continue
+		}
+		for _, a := range sl.actions {
+			if a != NoHandler && int(a) > hn {
+				return fmt.Errorf("sim: save: trigger %d action references unregistered HandlerRef %d (registry has %d)", i, a, hn)
+			}
+		}
+	}
+	for _, f := range d.trigFree {
+		if int(f) >= len(d.trigSlots) {
+			return fmt.Errorf("sim: save: trigger free-list index %d out of range (%d slots)", f, len(d.trigSlots))
+		}
+		if d.trigSlots[f].alive {
+			return fmt.Errorf("sim: save: trigger free-list index %d points at a live slot", f)
 		}
 	}
 
@@ -3401,6 +3527,13 @@ func applySave(d *decodedSave, w *World) {
 
 	// subscriptions
 	w.subs = d.subs
+
+	// trigger slab (#456): swap in the decoded slots + free list. The store
+	// cap is preserved (load validated count <= cap); the handler registry
+	// was re-registered by setup before LoadState, so the action refs in
+	// these slots resolve against it.
+	w.Triggers.slots = d.trigSlots
+	w.Triggers.free = d.trigFree
 
 	// regions (#241): replace the store wholesale with the decoded slots,
 	// then rebuild each region's membership presence set from the saved

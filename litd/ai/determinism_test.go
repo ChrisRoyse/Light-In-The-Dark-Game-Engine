@@ -280,7 +280,11 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // handler-identity registry appends a "handlers" system to HashSystems (ADR
 // #451, R-SIM-6), shifting every World.HashState TopHash by a constant. Not a
 // sim-outcome change — run1==run2 stays identical (deterministic).
-const dGolden uint64 = 0x67e36f8180b3dabb
+//
+// Bumped 0x67e36f8180b3dabb → 0xb794e7700f4624c7 (2026-06-20, #456): the
+// first-class ECA trigger slab adds a "triggers" system to HashSystems —
+// another constant TopHash shift (empty slab here). run1==run2 unchanged.
+const dGolden uint64 = 0xb794e7700f4624c7
 
 // TestAIDeterminism10k — the gate. Two internal 10k-tick runs are bit-identical
 // and (once the golden is committed) equal the golden hash. FSV runs this with
