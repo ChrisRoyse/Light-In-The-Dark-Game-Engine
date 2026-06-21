@@ -102,6 +102,7 @@ step "jassgen -emit (schema gate)"        go run ./tools/jassgen -emit
 step "jassgen -check (reproducibility)"   go run ./tools/jassgen -check
 step "jassgen -audit (M2 dedup gate)"     go run ./tools/jassgen -audit
 step "jassgen -revclosure"                go run ./tools/jassgen -revclosure
+step "jassgen -eventcov (EVENT_ coverage)" go run ./tools/jassgen -eventcov
 step "jassgen tests"        go test ./tools/jassgen/
 
 # --- determinism traces (determinism.yml) -----------------------------------

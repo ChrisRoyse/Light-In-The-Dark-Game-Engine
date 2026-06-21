@@ -1,0 +1,968 @@
+{
+  "generatedFrom": "repoes/war3-types/scripts/common.j",
+  "total": 136,
+  "mapped": 33,
+  "tombstoned": 103,
+  "families": {
+    "dialogevent": 2,
+    "gameevent": 16,
+    "playerevent": 22,
+    "playerunitevent": 47,
+    "unitevent": 48,
+    "widgetevent": 1
+  },
+  "events": [
+    {
+      "name": "EVENT_DIALOG_BUTTON_CLICK",
+      "family": "dialogevent",
+      "raw": 90,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_DIALOG_CLICK",
+      "family": "dialogevent",
+      "raw": 91,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_GAME_BUILD_SUBMENU",
+      "family": "gameevent",
+      "raw": 10,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_GAME_CUSTOM_UI_FRAME",
+      "family": "gameevent",
+      "raw": 310,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_GAME_END_LEVEL",
+      "family": "gameevent",
+      "raw": 1,
+      "status": "tombstoned",
+      "reason": "campaign level-flow control; LitD drives level transitions outside the trigger event bus"
+    },
+    {
+      "name": "EVENT_GAME_ENTER_REGION",
+      "family": "gameevent",
+      "raw": 5,
+      "status": "mapped",
+      "kind": "EventRegionEnter"
+    },
+    {
+      "name": "EVENT_GAME_LEAVE_REGION",
+      "family": "gameevent",
+      "raw": 6,
+      "status": "mapped",
+      "kind": "EventRegionLeave"
+    },
+    {
+      "name": "EVENT_GAME_LOADED",
+      "family": "gameevent",
+      "raw": 256,
+      "status": "tombstoned",
+      "reason": "save/load lifecycle is driven by SaveState/LoadState (#456/#464), not a script event"
+    },
+    {
+      "name": "EVENT_GAME_SAVE",
+      "family": "gameevent",
+      "raw": 259,
+      "status": "tombstoned",
+      "reason": "save/load lifecycle is driven by SaveState/LoadState (#456/#464), not a script event"
+    },
+    {
+      "name": "EVENT_GAME_SHOW_SKILL",
+      "family": "gameevent",
+      "raw": 9,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_GAME_STATE_LIMIT",
+      "family": "gameevent",
+      "raw": 3,
+      "status": "tombstoned",
+      "reason": "GUI float-threshold trigger; LitD has no state-register event surface"
+    },
+    {
+      "name": "EVENT_GAME_TIMER_EXPIRED",
+      "family": "gameevent",
+      "raw": 4,
+      "status": "tombstoned",
+      "reason": "timer expiry is delivered via the Timer / Trigger.Every primitive (#464), not a global event constant"
+    },
+    {
+      "name": "EVENT_GAME_TOURNAMENT_FINISH_NOW",
+      "family": "gameevent",
+      "raw": 258,
+      "status": "tombstoned",
+      "reason": "Battle.net tournament hook; not applicable to LitD"
+    },
+    {
+      "name": "EVENT_GAME_TOURNAMENT_FINISH_SOON",
+      "family": "gameevent",
+      "raw": 257,
+      "status": "tombstoned",
+      "reason": "Battle.net tournament hook; not applicable to LitD"
+    },
+    {
+      "name": "EVENT_GAME_TRACKABLE_HIT",
+      "family": "gameevent",
+      "raw": 7,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_GAME_TRACKABLE_TRACK",
+      "family": "gameevent",
+      "raw": 8,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_GAME_VARIABLE_LIMIT",
+      "family": "gameevent",
+      "raw": 2,
+      "status": "tombstoned",
+      "reason": "GUI float-threshold trigger; LitD has no state-register event surface"
+    },
+    {
+      "name": "EVENT_GAME_VICTORY",
+      "family": "gameevent",
+      "raw": 0,
+      "status": "mapped",
+      "kind": "EventVictory"
+    },
+    {
+      "name": "EVENT_PLAYER_ALLIANCE_CHANGED",
+      "family": "playerevent",
+      "raw": 12,
+      "status": "tombstoned",
+      "reason": "diplomacy/alliance change; LitD alliance model has no event hook yet"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_DOWN_DOWN",
+      "family": "playerevent",
+      "raw": 265,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_DOWN_UP",
+      "family": "playerevent",
+      "raw": 266,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_LEFT_DOWN",
+      "family": "playerevent",
+      "raw": 261,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_LEFT_UP",
+      "family": "playerevent",
+      "raw": 262,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_RIGHT_DOWN",
+      "family": "playerevent",
+      "raw": 263,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_RIGHT_UP",
+      "family": "playerevent",
+      "raw": 264,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_UP_DOWN",
+      "family": "playerevent",
+      "raw": 267,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_ARROW_UP_UP",
+      "family": "playerevent",
+      "raw": 268,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_CHAT",
+      "family": "playerevent",
+      "raw": 16,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_DEFEAT",
+      "family": "playerevent",
+      "raw": 13,
+      "status": "mapped",
+      "kind": "EventDefeat"
+    },
+    {
+      "name": "EVENT_PLAYER_END_CINEMATIC",
+      "family": "playerevent",
+      "raw": 17,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_HERO_LEVEL",
+      "family": "playerunitevent",
+      "raw": 41,
+      "status": "mapped",
+      "kind": "EventHeroLevel"
+    },
+    {
+      "name": "EVENT_PLAYER_HERO_REVIVABLE",
+      "family": "playerunitevent",
+      "raw": 43,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_PLAYER_HERO_REVIVE_CANCEL",
+      "family": "playerunitevent",
+      "raw": 45,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_PLAYER_HERO_REVIVE_FINISH",
+      "family": "playerunitevent",
+      "raw": 46,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_PLAYER_HERO_REVIVE_START",
+      "family": "playerunitevent",
+      "raw": 44,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_PLAYER_HERO_SKILL",
+      "family": "playerunitevent",
+      "raw": 42,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_KEY",
+      "family": "playerevent",
+      "raw": 311,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_KEY_DOWN",
+      "family": "playerevent",
+      "raw": 312,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_KEY_UP",
+      "family": "playerevent",
+      "raw": 313,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_LEAVE",
+      "family": "playerevent",
+      "raw": 15,
+      "status": "tombstoned",
+      "reason": "multiplayer-session concern (#326), not a sim event"
+    },
+    {
+      "name": "EVENT_PLAYER_MOUSE_DOWN",
+      "family": "playerevent",
+      "raw": 305,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_MOUSE_MOVE",
+      "family": "playerevent",
+      "raw": 307,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_MOUSE_UP",
+      "family": "playerevent",
+      "raw": 306,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_STATE_LIMIT",
+      "family": "playerevent",
+      "raw": 11,
+      "status": "tombstoned",
+      "reason": "GUI float-threshold trigger; LitD has no state-register event surface"
+    },
+    {
+      "name": "EVENT_PLAYER_SYNC_DATA",
+      "family": "playerevent",
+      "raw": 309,
+      "status": "tombstoned",
+      "reason": "multiplayer-session concern (#326), not a sim event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_ATTACKED",
+      "family": "playerunitevent",
+      "raw": 18,
+      "status": "tombstoned",
+      "reason": "pending #468/#470: attack-lifecycle events (EvAttackLaunch/EvAttackLanded) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_CHANGE_OWNER",
+      "family": "playerunitevent",
+      "raw": 270,
+      "status": "tombstoned",
+      "reason": "ownership transfer; no LitD change-owner event yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_CONSTRUCT_CANCEL",
+      "family": "playerunitevent",
+      "raw": 27,
+      "status": "mapped",
+      "kind": "EventConstructCancelled"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_CONSTRUCT_FINISH",
+      "family": "playerunitevent",
+      "raw": 28,
+      "status": "mapped",
+      "kind": "EventConstructFinished"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_CONSTRUCT_START",
+      "family": "playerunitevent",
+      "raw": 26,
+      "status": "mapped",
+      "kind": "EventConstructStarted"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DAMAGED",
+      "family": "playerunitevent",
+      "raw": 308,
+      "status": "mapped",
+      "kind": "EventUnitDamaged"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DAMAGING",
+      "family": "playerunitevent",
+      "raw": 315,
+      "status": "tombstoned",
+      "reason": "pre-mitigation damage is delivered via the OnDamage modifier sink (#406/#475), not the event bus"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DEATH",
+      "family": "playerunitevent",
+      "raw": 20,
+      "status": "mapped",
+      "kind": "EventUnitDeath"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DECAY",
+      "family": "playerunitevent",
+      "raw": 21,
+      "status": "tombstoned",
+      "reason": "corpse decay; no LitD decay event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DESELECTED",
+      "family": "playerunitevent",
+      "raw": 25,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DETECTED",
+      "family": "playerunitevent",
+      "raw": 22,
+      "status": "tombstoned",
+      "reason": "detection/true-sight reveal; no LitD detection event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_DROP_ITEM",
+      "family": "playerunitevent",
+      "raw": 48,
+      "status": "mapped",
+      "kind": "EventItemDropped"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_HIDDEN",
+      "family": "playerunitevent",
+      "raw": 23,
+      "status": "tombstoned",
+      "reason": "ShowUnit visibility toggle; no LitD event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_ISSUED_ORDER",
+      "family": "playerunitevent",
+      "raw": 38,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER",
+      "family": "playerunitevent",
+      "raw": 39,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER",
+      "family": "playerunitevent",
+      "raw": 40,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_ISSUED_UNIT_ORDER",
+      "family": "playerunitevent",
+      "raw": 40,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_LOADED",
+      "family": "playerunitevent",
+      "raw": 51,
+      "status": "tombstoned",
+      "reason": "transport load/unload; no LitD transport event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_PAWN_ITEM",
+      "family": "playerunitevent",
+      "raw": 277,
+      "status": "tombstoned",
+      "reason": "shop/marketplace transaction; LitD has no shop event surface"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_PICKUP_ITEM",
+      "family": "playerunitevent",
+      "raw": 49,
+      "status": "mapped",
+      "kind": "EventItemPickedUp"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_RESCUED",
+      "family": "playerunitevent",
+      "raw": 19,
+      "status": "tombstoned",
+      "reason": "rescuable-unit handoff; no LitD rescue event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_RESEARCH_CANCEL",
+      "family": "playerunitevent",
+      "raw": 36,
+      "status": "tombstoned",
+      "reason": "no LitD research-cancel event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_RESEARCH_FINISH",
+      "family": "playerunitevent",
+      "raw": 37,
+      "status": "mapped",
+      "kind": "EventResearchFinished"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_RESEARCH_START",
+      "family": "playerunitevent",
+      "raw": 35,
+      "status": "tombstoned",
+      "reason": "no LitD research-start event; only research completion is modeled"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SELECTED",
+      "family": "playerunitevent",
+      "raw": 24,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SELL",
+      "family": "playerunitevent",
+      "raw": 269,
+      "status": "tombstoned",
+      "reason": "shop/marketplace transaction; LitD has no shop event surface"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SELL_ITEM",
+      "family": "playerunitevent",
+      "raw": 271,
+      "status": "tombstoned",
+      "reason": "shop/marketplace transaction; LitD has no shop event surface"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SPELL_CAST",
+      "family": "playerunitevent",
+      "raw": 273,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SPELL_CHANNEL",
+      "family": "playerunitevent",
+      "raw": 272,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SPELL_EFFECT",
+      "family": "playerunitevent",
+      "raw": 274,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SPELL_ENDCAST",
+      "family": "playerunitevent",
+      "raw": 276,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SPELL_FINISH",
+      "family": "playerunitevent",
+      "raw": 275,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_STACK_ITEM",
+      "family": "playerunitevent",
+      "raw": 319,
+      "status": "tombstoned",
+      "reason": "item charge stacking; no LitD event"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_SUMMON",
+      "family": "playerunitevent",
+      "raw": 47,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_TRAIN_CANCEL",
+      "family": "playerunitevent",
+      "raw": 33,
+      "status": "tombstoned",
+      "reason": "no LitD train-cancel event; EventTrainRefused covers refusal-at-issue, not mid-queue cancel"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_TRAIN_FINISH",
+      "family": "playerunitevent",
+      "raw": 34,
+      "status": "mapped",
+      "kind": "EventUnitTrained"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_TRAIN_START",
+      "family": "playerunitevent",
+      "raw": 32,
+      "status": "tombstoned",
+      "reason": "no LitD train-start event; only train completion is modeled"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_UPGRADE_CANCEL",
+      "family": "playerunitevent",
+      "raw": 30,
+      "status": "tombstoned",
+      "reason": "building-upgrade lifecycle; no LitD upgrade event (distinct from research)"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_UPGRADE_FINISH",
+      "family": "playerunitevent",
+      "raw": 31,
+      "status": "tombstoned",
+      "reason": "building-upgrade lifecycle; no LitD upgrade event (distinct from research)"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_UPGRADE_START",
+      "family": "playerunitevent",
+      "raw": 29,
+      "status": "tombstoned",
+      "reason": "building-upgrade lifecycle; no LitD upgrade event (distinct from research)"
+    },
+    {
+      "name": "EVENT_PLAYER_UNIT_USE_ITEM",
+      "family": "playerunitevent",
+      "raw": 50,
+      "status": "mapped",
+      "kind": "EventItemUsed"
+    },
+    {
+      "name": "EVENT_PLAYER_VICTORY",
+      "family": "playerevent",
+      "raw": 14,
+      "status": "mapped",
+      "kind": "EventVictory"
+    },
+    {
+      "name": "EVENT_UNIT_ACQUIRED_TARGET",
+      "family": "unitevent",
+      "raw": 60,
+      "status": "tombstoned",
+      "reason": "pending #468/#470: attack-lifecycle events (EvAttackLaunch/EvAttackLanded) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_ATTACKED",
+      "family": "unitevent",
+      "raw": 62,
+      "status": "tombstoned",
+      "reason": "pending #468/#470: attack-lifecycle events (EvAttackLaunch/EvAttackLanded) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_CHANGE_OWNER",
+      "family": "unitevent",
+      "raw": 287,
+      "status": "tombstoned",
+      "reason": "ownership transfer; no LitD change-owner event yet"
+    },
+    {
+      "name": "EVENT_UNIT_CONSTRUCT_CANCEL",
+      "family": "unitevent",
+      "raw": 64,
+      "status": "mapped",
+      "kind": "EventConstructCancelled"
+    },
+    {
+      "name": "EVENT_UNIT_CONSTRUCT_FINISH",
+      "family": "unitevent",
+      "raw": 65,
+      "status": "mapped",
+      "kind": "EventConstructFinished"
+    },
+    {
+      "name": "EVENT_UNIT_DAMAGED",
+      "family": "unitevent",
+      "raw": 52,
+      "status": "mapped",
+      "kind": "EventUnitDamaged"
+    },
+    {
+      "name": "EVENT_UNIT_DAMAGING",
+      "family": "unitevent",
+      "raw": 314,
+      "status": "tombstoned",
+      "reason": "pre-mitigation damage is delivered via the OnDamage modifier sink (#406/#475), not the event bus"
+    },
+    {
+      "name": "EVENT_UNIT_DEATH",
+      "family": "unitevent",
+      "raw": 53,
+      "status": "mapped",
+      "kind": "EventUnitDeath"
+    },
+    {
+      "name": "EVENT_UNIT_DECAY",
+      "family": "unitevent",
+      "raw": 54,
+      "status": "tombstoned",
+      "reason": "corpse decay; no LitD decay event"
+    },
+    {
+      "name": "EVENT_UNIT_DESELECTED",
+      "family": "unitevent",
+      "raw": 58,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_UNIT_DETECTED",
+      "family": "unitevent",
+      "raw": 55,
+      "status": "tombstoned",
+      "reason": "detection/true-sight reveal; no LitD detection event"
+    },
+    {
+      "name": "EVENT_UNIT_DROP_ITEM",
+      "family": "unitevent",
+      "raw": 85,
+      "status": "mapped",
+      "kind": "EventItemDropped"
+    },
+    {
+      "name": "EVENT_UNIT_HERO_LEVEL",
+      "family": "unitevent",
+      "raw": 78,
+      "status": "mapped",
+      "kind": "EventHeroLevel"
+    },
+    {
+      "name": "EVENT_UNIT_HERO_REVIVABLE",
+      "family": "unitevent",
+      "raw": 80,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_UNIT_HERO_REVIVE_CANCEL",
+      "family": "unitevent",
+      "raw": 82,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_UNIT_HERO_REVIVE_FINISH",
+      "family": "unitevent",
+      "raw": 83,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_UNIT_HERO_REVIVE_START",
+      "family": "unitevent",
+      "raw": 81,
+      "status": "tombstoned",
+      "reason": "hero-revive lifecycle; no LitD revive event yet"
+    },
+    {
+      "name": "EVENT_UNIT_HERO_SKILL",
+      "family": "unitevent",
+      "raw": 79,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_HIDDEN",
+      "family": "unitevent",
+      "raw": 56,
+      "status": "tombstoned",
+      "reason": "ShowUnit visibility toggle; no LitD event"
+    },
+    {
+      "name": "EVENT_UNIT_ISSUED_ORDER",
+      "family": "unitevent",
+      "raw": 75,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_UNIT_ISSUED_POINT_ORDER",
+      "family": "unitevent",
+      "raw": 76,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_UNIT_ISSUED_TARGET_ORDER",
+      "family": "unitevent",
+      "raw": 77,
+      "status": "mapped",
+      "kind": "EventOrderIssued"
+    },
+    {
+      "name": "EVENT_UNIT_LOADED",
+      "family": "unitevent",
+      "raw": 88,
+      "status": "tombstoned",
+      "reason": "transport load/unload; no LitD transport event"
+    },
+    {
+      "name": "EVENT_UNIT_PAWN_ITEM",
+      "family": "unitevent",
+      "raw": 294,
+      "status": "tombstoned",
+      "reason": "shop/marketplace transaction; LitD has no shop event surface"
+    },
+    {
+      "name": "EVENT_UNIT_PICKUP_ITEM",
+      "family": "unitevent",
+      "raw": 86,
+      "status": "mapped",
+      "kind": "EventItemPickedUp"
+    },
+    {
+      "name": "EVENT_UNIT_RESCUED",
+      "family": "unitevent",
+      "raw": 63,
+      "status": "tombstoned",
+      "reason": "rescuable-unit handoff; no LitD rescue event"
+    },
+    {
+      "name": "EVENT_UNIT_RESEARCH_CANCEL",
+      "family": "unitevent",
+      "raw": 73,
+      "status": "tombstoned",
+      "reason": "no LitD research-cancel event"
+    },
+    {
+      "name": "EVENT_UNIT_RESEARCH_FINISH",
+      "family": "unitevent",
+      "raw": 74,
+      "status": "mapped",
+      "kind": "EventResearchFinished"
+    },
+    {
+      "name": "EVENT_UNIT_RESEARCH_START",
+      "family": "unitevent",
+      "raw": 72,
+      "status": "tombstoned",
+      "reason": "no LitD research-start event; only research completion is modeled"
+    },
+    {
+      "name": "EVENT_UNIT_SELECTED",
+      "family": "unitevent",
+      "raw": 57,
+      "status": "tombstoned",
+      "reason": "UI/input concern, out of deterministic-sim scope (render/input/UI layer)"
+    },
+    {
+      "name": "EVENT_UNIT_SELL",
+      "family": "unitevent",
+      "raw": 286,
+      "status": "tombstoned",
+      "reason": "shop/marketplace transaction; LitD has no shop event surface"
+    },
+    {
+      "name": "EVENT_UNIT_SELL_ITEM",
+      "family": "unitevent",
+      "raw": 288,
+      "status": "tombstoned",
+      "reason": "shop/marketplace transaction; LitD has no shop event surface"
+    },
+    {
+      "name": "EVENT_UNIT_SPELL_CAST",
+      "family": "unitevent",
+      "raw": 290,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_SPELL_CHANNEL",
+      "family": "unitevent",
+      "raw": 289,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_SPELL_EFFECT",
+      "family": "unitevent",
+      "raw": 291,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_SPELL_ENDCAST",
+      "family": "unitevent",
+      "raw": 293,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_SPELL_FINISH",
+      "family": "unitevent",
+      "raw": 292,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_STACK_ITEM",
+      "family": "unitevent",
+      "raw": 318,
+      "status": "tombstoned",
+      "reason": "item charge stacking; no LitD event"
+    },
+    {
+      "name": "EVENT_UNIT_STATE_LIMIT",
+      "family": "unitevent",
+      "raw": 59,
+      "status": "tombstoned",
+      "reason": "GUI float-threshold trigger; LitD has no state-register event surface"
+    },
+    {
+      "name": "EVENT_UNIT_SUMMON",
+      "family": "unitevent",
+      "raw": 84,
+      "status": "tombstoned",
+      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+    },
+    {
+      "name": "EVENT_UNIT_TARGET_IN_RANGE",
+      "family": "unitevent",
+      "raw": 61,
+      "status": "tombstoned",
+      "reason": "proximity trigger; model with a periodic Trigger + distance check, no dedicated LitD event"
+    },
+    {
+      "name": "EVENT_UNIT_TRAIN_CANCEL",
+      "family": "unitevent",
+      "raw": 70,
+      "status": "tombstoned",
+      "reason": "no LitD train-cancel event; EventTrainRefused covers refusal-at-issue, not mid-queue cancel"
+    },
+    {
+      "name": "EVENT_UNIT_TRAIN_FINISH",
+      "family": "unitevent",
+      "raw": 71,
+      "status": "mapped",
+      "kind": "EventUnitTrained"
+    },
+    {
+      "name": "EVENT_UNIT_TRAIN_START",
+      "family": "unitevent",
+      "raw": 69,
+      "status": "tombstoned",
+      "reason": "no LitD train-start event; only train completion is modeled"
+    },
+    {
+      "name": "EVENT_UNIT_UPGRADE_CANCEL",
+      "family": "unitevent",
+      "raw": 67,
+      "status": "tombstoned",
+      "reason": "building-upgrade lifecycle; no LitD upgrade event (distinct from research)"
+    },
+    {
+      "name": "EVENT_UNIT_UPGRADE_FINISH",
+      "family": "unitevent",
+      "raw": 68,
+      "status": "tombstoned",
+      "reason": "building-upgrade lifecycle; no LitD upgrade event (distinct from research)"
+    },
+    {
+      "name": "EVENT_UNIT_UPGRADE_START",
+      "family": "unitevent",
+      "raw": 66,
+      "status": "tombstoned",
+      "reason": "building-upgrade lifecycle; no LitD upgrade event (distinct from research)"
+    },
+    {
+      "name": "EVENT_UNIT_USE_ITEM",
+      "family": "unitevent",
+      "raw": 87,
+      "status": "mapped",
+      "kind": "EventItemUsed"
+    },
+    {
+      "name": "EVENT_WIDGET_DEATH",
+      "family": "widgetevent",
+      "raw": 89,
+      "status": "tombstoned",
+      "reason": "generic widget death; LitD models destructable death separately, no unified widget event yet"
+    }
+  ]
+}

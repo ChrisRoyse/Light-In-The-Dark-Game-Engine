@@ -25,6 +25,7 @@ func main() {
 	audit := flag.Bool("audit", false, "generate audit-report.{md,json}; nonzero exit on any M2 gate breach")
 	check := flag.Bool("check", false, "reproducibility gate: regenerate outputs and fail if they differ from committed files")
 	revClosure := flag.Bool("revclosure", false, "reverse-closure gate: fail if any exported litd/api verb traces to neither a manifest goMapping nor new-capabilities.txt")
+	eventCov := flag.Bool("eventcov", false, "emit docs/api/event-coverage.json (every common.j EVENT_* mapped or tombstoned); nonzero exit on any unaccounted constant")
 	provenance := flag.Bool("provenance", false, "inject manifest-generated `// JASS:` provenance lines into litd/api doc comments (G-2, #259)")
 	provenanceCheck := flag.Bool("provenance-check", false, "provenance staleness gate: fail if any committed `// JASS:` line drifts from the manifest")
 	overridesPath := flag.String("overrides", "tools/jassgen/overrides.toml", "path to reviewed overrides.toml applied over heuristic classes")
@@ -54,12 +55,14 @@ func main() {
 		runCheck()
 	case *revClosure:
 		runRevClosure()
+	case *eventCov:
+		runEventCov()
 	case *provenance:
 		runProvenance(true)
 	case *provenanceCheck:
 		runProvenance(false)
 	default:
-		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check | -revclosure | -provenance | -provenance-check")
+		fmt.Fprintln(os.Stderr, "usage: jassgen -dump-decls <file.j> | -dump-bodies <file.j> | -dump-merge | -dump-classes | -emit | -audit | -check | -revclosure | -eventcov | -provenance | -provenance-check")
 		os.Exit(2)
 	}
 }
@@ -114,6 +117,17 @@ func runCheck() {
 	mForLua, _ := BuildManifest(cs, sigs, sources)
 	luaSrc := RenderLuaBindings(mForLua)
 	luaDispatch := RenderLuaDispatch(mForLua)
+	// EVENT_ coverage manifest (#466): regenerate and require it to validate +
+	// match the committed file. A validation error (unaccounted constant, etc.)
+	// is a hard check failure.
+	evCov, evErrs := buildEventCoverage(string(mustRead(defaultScriptsDir + "/common.j")))
+	if len(evErrs) > 0 {
+		for _, e := range evErrs {
+			fmt.Fprintln(os.Stderr, "check: event-coverage:", e)
+		}
+		os.Exit(1)
+	}
+	evCovBytes := marshalEventCov(evCov)
 	fail := false
 	for _, f := range []struct {
 		path string
@@ -125,6 +139,7 @@ func runCheck() {
 		{mappingTablePath, []byte(table)},
 		{filepath.Join(luabindDir, "bindings_gen.go"), []byte(luaSrc)},
 		{filepath.Join(luabindDir, luabindDispatchFile), []byte(luaDispatch)},
+		{eventCovOutputPath, evCovBytes},
 	} {
 		got, err := os.ReadFile(f.path)
 		if err != nil {
