@@ -143,17 +143,22 @@ func (w *World) EventsDropped() uint64 { return w.eventsDropped }
 // an event emitted BY a handler lands in this same flush, after
 // everything already queued — deterministic cascade, no recursion.
 func (w *World) flushEvents() {
+	w.ensureTriggerIndex() // rebuild the ECA index once per flush if dirty (#458)
 	for i := 0; i < w.eventCount; i++ {
 		e := w.events[i]
 		if w.eventLog != nil {
 			w.logEvent(e) // R-FSV-3 structured log, dispatch order (#203)
 		}
+		// legacy OnEvent subscriptions (kept until #462 folds them into the
+		// trigger substrate as sugar).
 		if j, ok := w.subIdx(e.Kind); ok {
 			list := w.subs[j].list
 			for k := 0; k < len(list); k++ {
 				w.handlers[list[k]](w, e)
 			}
 		}
+		// first-class ECA trigger dispatch (#459).
+		w.dispatchTriggers(e)
 	}
 	w.eventCount = 0
 }

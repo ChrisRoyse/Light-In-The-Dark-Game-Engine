@@ -367,6 +367,11 @@ type World struct {
 	// derived from the trigger slab (rebuilt lazily on the store's dirty
 	// bit). Not serialized — reconstructed at load.
 	trigIndex triggerIndex
+	// trigger dispatch scratch (#459): the per-event fire list copied out
+	// of the index, and the pending TriggerSleep request set by an action
+	// and consumed by the action-runner. Both transient within a flush.
+	dispatchBuf  []TriggerID
+	trigSleepReq uint32
 	// DebugExprImpure, when set (debug/test only), fires loudly if a
 	// condition leaf returns different results on a double-eval — a purity
 	// violation (execution-model.md §4). nil in release (no double-eval).
@@ -475,6 +480,7 @@ func NewWorld(requested Caps) *World {
 		w.bucketCell[i] = -1
 	}
 	w.initPlayers()
+	w.registerTriggerDispatch() // ECA action-runner continuation (#459)
 	return w
 }
 
