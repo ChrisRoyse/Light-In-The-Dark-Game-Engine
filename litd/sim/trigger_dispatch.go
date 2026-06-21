@@ -114,6 +114,29 @@ func (w *World) runTriggerActions(t TriggerID, e Event, start int) {
 	}
 }
 
+// ExecuteTrigger runs a trigger's actions directly (WC3 TriggerExecute):
+// run-from-another-trigger, bypassing its events, its condition, and its
+// enabled flag. Actions run on the scheduler exactly as in a normal fire
+// — they may TriggerSleep and round-trip. No-op on a stale handle.
+func (w *World) ExecuteTrigger(t TriggerID, e Event) {
+	if w.Triggers.slot(t) == nil {
+		return
+	}
+	w.runTriggerActions(t, e, 0)
+}
+
+// EvaluateTrigger runs only a trigger's condition tree and returns the
+// result (WC3 TriggerEvaluate): no actions, no side effects (condition
+// leaves are pure). NoExpr / stale handle → true (vacuous), matching the
+// dispatch gate.
+func (w *World) EvaluateTrigger(t TriggerID, e Event) bool {
+	sl := w.Triggers.slot(t)
+	if sl == nil {
+		return false
+	}
+	return w.EvalExpr(sl.cond, e)
+}
+
 // TriggerSleep, called from inside a trigger action, suspends the trigger
 // thread: the remaining actions resume after `ticks` ticks (minimum 1 —
 // a record never wakes on the tick that created it). The WC3

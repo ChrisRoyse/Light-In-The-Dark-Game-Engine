@@ -187,13 +187,27 @@ func (s *TriggerStore) Enabled(t TriggerID) bool {
 	return sl != nil && sl.enabled
 }
 
-// SetInitiallyOn / InitiallyOn — the Initially-On lifecycle flag (#460).
+// Enable / Disable are the WC3 lifecycle verbs — convenience over
+// SetEnabled. A disabled trigger is skipped at fire time (no condition
+// eval, no actions) but keeps its registration; re-Enable restores it.
+func (s *TriggerStore) Enable(t TriggerID) bool  { return s.SetEnabled(t, true) }
+func (s *TriggerStore) Disable(t TriggerID) bool { return s.SetEnabled(t, false) }
+
+// IsEnabled reports the live enabled flag (alias of Enabled, WC3 naming).
+func (s *TriggerStore) IsEnabled(t TriggerID) bool { return s.Enabled(t) }
+
+// SetInitiallyOn sets the Initially-On lifecycle flag (#460). It is an
+// authoring-time call: it also seeds the live enabled flag to match, so
+// SetInitiallyOn(false) makes the trigger start disabled — silent until
+// an explicit Enable (WC3 "Initially Off"). `on` is retained as the
+// recorded initial state; later Enable/Disable move only `enabled`.
 func (s *TriggerStore) SetInitiallyOn(t TriggerID, v bool) bool {
 	sl := s.slot(t)
 	if sl == nil {
 		return false
 	}
 	sl.on = v
+	sl.enabled = v
 	return true
 }
 
