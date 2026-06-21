@@ -17,7 +17,7 @@ var wantFindings = []struct{ where, msg string }{
 	{"BadVerb", "returns error"},                        // gameplay verb returns error
 	{"Frob", "returns error"},                           // free verb returns error
 	{"BadSig", "foreign engine type"},                   // G3N type in signature
-	{"Trigger", `exported type "Trigger" is forbidden`}, // forbidden ident
+	{"BoolExpr", `exported type "BoolExpr" is forbidden`}, // forbidden ident (Trigger allowed per ADR #451)
 	{"Location", `exported type "Location" is forbidden`},
 	{"Surface", `exported field "Node" exposes foreign engine type`}, // G3N field
 	{"Undocumented", "G-1"},                                          // exported method with no doc comment

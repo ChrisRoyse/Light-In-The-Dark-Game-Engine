@@ -7,7 +7,8 @@
 //	              (a trailing variadic options param does NOT count)
 //	G2.4/R-API-1  no package-level func with a noun-handle parameter, except
 //	              option constructors (which return an …Option / func type)
-//	R-API-4       no exported Trigger / BoolExpr / Group / Location identifier
+//	R-API-4       no exported BoolExpr / Group / Location identifier (Trigger
+//	              is the first-class ECA substrate noun per ADR #451)
 //	R-API-5       no error return on a gameplay verb (any noun method; any
 //	              free func not in the setup allowlist NewGame/LoadMap)
 //	R-API-5       every noun handle exposes Valid() bool
@@ -96,8 +97,13 @@ var methodErrAllowlist = map[string]bool{
 // forbiddenIdents are exported identifiers the API must never expose — the
 // trigger-zoo types events replaced (R-API-4) and the heap location type
 // values replaced (R-API-2).
+//
+// Trigger was un-forbidden by ADR #451: the first-class Trigger noun is the
+// ECA engine substrate (Trigger > Condition > Action) and OnEvent becomes
+// sugar over it. The rest of the zoo — boolexpr/triggercondition/
+// triggeraction/conditionfunc — stays collapsed (conditions are a boolexpr
+// arena and actions are handler refs in the sim core, not public types).
 var forbiddenIdents = map[string]bool{
-	"Trigger":  true,
 	"BoolExpr": true,
 	"Group":    true,
 	"Location": true,

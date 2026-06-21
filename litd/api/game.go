@@ -111,6 +111,13 @@ type Game struct {
 	// script-registered handlers.
 	nextHandlerID sim.HandlerID
 
+	// Trigger noun support (#461): pubKindRev reverses simKindOf so an
+	// action can recover the public kind of the event that fired it (built
+	// lazily); trigHandlerSeq names condition/action adapters registered
+	// into the sim handler registry deterministically per game.
+	pubKindRev     map[uint16]EventKind
+	trigHandlerSeq uint32
+
 	// timers is the Go-closure timer table (timer.go): one entry per
 	// live or retired-and-recyclable slot, indexed by Timer.slot.
 	// timerFree holds retired slots for reuse; timerContReg records

@@ -93,8 +93,9 @@ func NewGame() (*Game, error) { return &Game{}, nil } // OK (setup allowlist)
 // BadSig exposes a G3N type in an exported signature -> R-API-6.
 func BadSig() math32.Vector3 { return math32.Vector3{} } // WANT R-API-6 signature
 
-// Trigger is a forbidden exported identifier (the trigger zoo) -> R-API-4.
-type Trigger struct{} // WANT forbidden Trigger
+// BoolExpr is a forbidden exported identifier (the condition zoo) -> R-API-4.
+// (Trigger itself is allowed again per ADR #451 — the ECA substrate noun.)
+type BoolExpr struct{} // WANT forbidden BoolExpr
 
 // Location is a forbidden exported identifier (heap location) -> R-API-2/4.
 type Location struct{} // WANT forbidden Location

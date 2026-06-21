@@ -339,3 +339,26 @@ exact   CueID
 # LitD-original, no JASS equivalent (JASS has no render-event surface — sounds are
 # fired imperatively from triggers).
 exact   Game.RenderEvents
+
+# --- ECA Trigger substrate (ADR #451, #461): the first-class Trigger noun.
+# These reintroduce the WC3 trigger verbs (CreateTrigger / TriggerRegisterX /
+# TriggerAddCondition / TriggerAddAction / Enable/Disable / TriggerExecute /
+# TriggerEvaluate / DestroyTrigger) as the engine event substrate; OnEvent
+# becomes sugar over them (#462). Conditions/actions live in the sim core as a
+# boolexpr arena + handler refs, not as public types.
+exact   Game.NewTrigger
+exact   Trigger.On
+exact   Trigger.When
+exact   Trigger.Do
+exact   Trigger.Enable
+exact   Trigger.Disable
+exact   Trigger.IsEnabled
+exact   Trigger.Execute
+exact   Trigger.Evaluate
+exact   Trigger.Destroy
+exact   Trigger.SetInitiallyOn
+# trigger-scope option constructors + the ready-made owner condition
+exact   ForUnit
+exact   OwnedBy
+exact   InRegion
+exact   OwnerIs
