@@ -130,6 +130,7 @@ func (w *World) applyAuraChild(target, source EntityID, childIdx int, linger uin
 		if !perSource {
 			row.Source = source
 		}
+		w.Emit(Event{Kind: EvBuffRefreshed, Src: source, Dst: target, Arg: packBuffArg(uint16(childIdx), row.Stacks, true)})
 		return
 	}
 	i, ok := p.Alloc()
@@ -146,4 +147,5 @@ func (w *World) applyAuraChild(target, source EntityID, childIdx int, linger uin
 		PeriodicClock:  w.tick,
 	}
 	w.recomputeBuffStats(target)
+	w.Emit(Event{Kind: EvBuffApplied, Src: source, Dst: target, Arg: packBuffArg(uint16(childIdx), 1, true)})
 }

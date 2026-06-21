@@ -34,6 +34,34 @@ import (
 // order within the sweep.
 const EvBuffExpired uint16 = 8
 
+// Buff-attach events (#469). Buffs emitted only EvBuffExpired; a trigger could
+// not react to a buff being attached. EvBuffApplied fires when a new instance
+// is created, EvBuffRefreshed when an existing instance is refreshed/restacked.
+// Ids 37–38 follow the attack events (35–36). Payload: Src = applier source,
+// Dst = target, Arg = packBuffArg(buffID, stacks, auraChild) — so a handler
+// reads the buff type, the resulting stack count, and whether the instance is
+// an aura child, all from one Arg.
+const (
+	EvBuffApplied   uint16 = 37
+	EvBuffRefreshed uint16 = 38
+)
+
+// packBuffArg encodes a buff event's Arg: buffID in bits 0–15, the resulting
+// stack count in bits 16–23, the aura-child flag in bit 24.
+func packBuffArg(buffID uint16, stacks uint8, aura bool) int64 {
+	v := int64(buffID) | int64(stacks)<<16
+	if aura {
+		v |= 1 << 24
+	}
+	return v
+}
+
+// BuffArgID/BuffArgStacks/BuffArgIsAura unpack a buff event's Arg (the inverse
+// of packBuffArg) for handlers/tests.
+func BuffArgID(arg int64) uint16    { return uint16(arg & 0xFFFF) }
+func BuffArgStacks(arg int64) uint8 { return uint8((arg >> 16) & 0xFF) }
+func BuffArgIsAura(arg int64) bool  { return arg&(1<<24) != 0 }
+
 // BindBuffTypes installs the loaded buff-type rows. Refs in
 // BuffInstance.BuffID index this slice directly. Fail-closed on a set
 // too large for the uint16 ref space.
@@ -198,6 +226,7 @@ func (w *World) ApplyBuff(target, source EntityID, typeIdx int, stacks uint8) bo
 			row.PeriodicClock = w.tick
 		}
 		w.recomputeBuffStats(target)
+		w.Emit(Event{Kind: EvBuffRefreshed, Src: source, Dst: target, Arg: packBuffArg(uint16(typeIdx), row.Stacks, false)})
 		return true
 	}
 
@@ -214,6 +243,7 @@ func (w *World) ApplyBuff(target, source EntityID, typeIdx int, stacks uint8) bo
 		PeriodicClock:  w.tick,
 	}
 	w.recomputeBuffStats(target)
+	w.Emit(Event{Kind: EvBuffApplied, Src: source, Dst: target, Arg: packBuffArg(uint16(typeIdx), stacks, false)})
 	return true
 }
 
