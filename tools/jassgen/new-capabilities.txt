@@ -415,3 +415,7 @@ exact   Trigger.BindName
 # VFX cue (#449 presentation channel, no JASS native).
 exact   Unit.Cast
 exact   Game.EmitSpellCue
+# resolve a data-loaded ability's string id to its AbilityRef (#487): mirrors the
+# Game.UnitType/BuffType type-catalog resolvers; LitD authoring seam, no JASS
+# native (JASS abilities are 'xxxx' rawcodes passed directly).
+exact   Game.AbilityRef

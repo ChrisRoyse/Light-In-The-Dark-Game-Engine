@@ -392,6 +392,25 @@ func (w *World) abilityDefByRef(ref uint16) *data.Ability {
 	return nil
 }
 
+// AbilityRefByCode resolves an ability's stable string id to its ability ref
+// (defIndex+1), scanning the static table defs then the runtime registrations —
+// the same order refs are assigned. Returns (0,false) on an unknown id, so a
+// caller can resolve a data-loaded ability without knowing its load position
+// (#487). Mirrors UnitTypeID / BuffTypeID.
+func (w *World) AbilityRefByCode(id string) (uint16, bool) {
+	for i := range w.abilityDefs {
+		if w.abilityDefs[i].ID == id {
+			return uint16(i + 1), true
+		}
+	}
+	for i := range w.runtimeAbilityDefs {
+		if w.runtimeAbilityDefs[i].ID == id {
+			return uint16(len(w.abilityDefs) + i + 1), true
+		}
+	}
+	return 0, false
+}
+
 func (w *World) abilityIDExists(id string) bool {
 	for i := range w.abilityDefs {
 		if w.abilityDefs[i].ID == id {

@@ -13,7 +13,17 @@ import (
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 )
 
-const fireboltRef = api.AbilityRef(1) // firebolt is the only ability in dev-sandbox
+// fireboltRef resolves the firebolt ability by code through the public resolver
+// (#487) — no hardcoded load position. Fails the test if the dev-sandbox world
+// stops shipping the ability.
+func fireboltRef(t *testing.T, g *api.Game) api.AbilityRef {
+	t.Helper()
+	ref, ok := g.AbilityRef("firebolt")
+	if !ok {
+		t.Fatal("dev-sandbox must define the firebolt ability")
+	}
+	return ref
+}
 
 func fireboltWorld(t *testing.T, seed int64) (*api.Game, func()) {
 	t.Helper()
@@ -54,9 +64,9 @@ func TestFireboltCastEnemyFSV(t *testing.T) {
 	}
 	caster := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
 	enemy := g.CreateUnit(p1, g.UnitType("hfoo"), api.Vec2{X: 260, Y: 200}, api.Deg(0))
-	fb := caster.AddAbility(fireboltRef)
+	fb := caster.AddAbility(fireboltRef(t, g))
 	if !fb.Valid() {
-		t.Fatal("firebolt ability did not equip (ref 1)")
+		t.Fatal("firebolt ability did not equip")
 	}
 	burn := g.BuffType("burn")
 
@@ -96,7 +106,7 @@ func TestFireboltCastAllyBlockedFSV(t *testing.T) {
 	p0 := g.Player(0)
 	caster := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
 	ally := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 260, Y: 200}, api.Deg(0))
-	fb := caster.AddAbility(fireboltRef)
+	fb := caster.AddAbility(fireboltRef(t, g))
 	burn := g.BuffType("burn")
 
 	caster.Cast(fb, ally)
@@ -118,7 +128,7 @@ func TestFireboltKillsTargetFSV(t *testing.T) {
 	caster := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
 	enemy := g.CreateUnit(p1, g.UnitType("hfoo"), api.Vec2{X: 260, Y: 200}, api.Deg(0))
 	enemy.SetLife(20) // less than the 30 bolt → lethal
-	fb := caster.AddAbility(fireboltRef)
+	fb := caster.AddAbility(fireboltRef(t, g))
 	caster.Cast(fb, enemy)
 	g.Advance(30)
 	t.Logf("FSV #479 lethal bolt: enemy alive=%v hasBurn=%v", enemy.Alive(), enemy.HasBuff(g.BuffType("burn")))
@@ -141,7 +151,7 @@ func TestFireboltDeterminismFSV(t *testing.T) {
 		p1.SetAlliance(p0, 0)
 		caster := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
 		enemy := g.CreateUnit(p1, g.UnitType("hfoo"), api.Vec2{X: 260, Y: 200}, api.Deg(0))
-		fb := caster.AddAbility(fireboltRef)
+		fb := caster.AddAbility(fireboltRef(t, g))
 		caster.Cast(fb, enemy)
 		g.Advance(60)
 		return g.StateHash()
@@ -164,7 +174,7 @@ func TestFireboltSaveResumeFSV(t *testing.T) {
 	p1.SetAlliance(p0, 0)
 	caster := g.CreateUnit(p0, g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
 	enemy := g.CreateUnit(p1, g.UnitType("hfoo"), api.Vec2{X: 260, Y: 200}, api.Deg(0))
-	fb := caster.AddAbility(fireboltRef)
+	fb := caster.AddAbility(fireboltRef(t, g))
 	caster.Cast(fb, enemy)
 	g.Advance(12) // bolt landed, burn ticking
 	if !enemy.HasBuff(g.BuffType("burn")) {

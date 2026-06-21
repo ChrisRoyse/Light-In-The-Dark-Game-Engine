@@ -37,6 +37,16 @@ func (b gameBinder) bindGameBuffType(L *lua.LState) int {
 	return 1
 }
 
+// bindGameAbilityRef binds Game.AbilityRef(id string) -> (ref, ok): resolves a
+// data-loaded ability's string id to the numeric AbilityRef that Unit_AddAbility
+// / Unit_CastAbility take (#487). Pushes (0, false) on an unknown id.
+func (b gameBinder) bindGameAbilityRef(L *lua.LState) int {
+	ref, ok := b.g.AbilityRef(L.CheckString(1))
+	L.Push(lua.LNumber(uint16(ref)))
+	L.Push(lua.LBool(ok))
+	return 2
+}
+
 // bindGameResourceNodeType binds Game.ResourceNodeType(code string)
 // ResourceNodeType (#401) — resolves a node code a loaded world spawns.
 func (b gameBinder) bindGameResourceNodeType(L *lua.LState) int {
@@ -418,6 +428,7 @@ func registerCatalog(L *lua.LState, b gameBinder) {
 	L.SetGlobal("Game_UnitType", L.NewFunction(b.bindGameUnitType))
 	L.SetGlobal("Game_ItemType", L.NewFunction(b.bindGameItemType))
 	L.SetGlobal("Game_BuffType", L.NewFunction(b.bindGameBuffType))
+	L.SetGlobal("Game_AbilityRef", L.NewFunction(b.bindGameAbilityRef))
 	L.SetGlobal("Game_ResourceNodeType", L.NewFunction(b.bindGameResourceNodeType))
 	L.SetGlobal("Game_CreateResourceNode", L.NewFunction(b.bindGameCreateResourceNode))
 	L.SetGlobal("Game_Order", L.NewFunction(b.bindGameOrder))

@@ -109,6 +109,19 @@ func (g *Game) RegisterAbility(def AbilityDef) AbilityRef {
 	return AbilityRef(ref)
 }
 
+// AbilityRef resolves a data-loaded ability's stable string id (e.g. "firebolt")
+// to its AbilityRef for Unit.AddAbility / Unit.Cast, returning ok=false on an
+// unknown id or no game (#487). Mirrors the type-catalog resolvers
+// Game.UnitType / Game.BuffType: a world author resolves an ability by code
+// without relying on its load position.
+func (g *Game) AbilityRef(id string) (AbilityRef, bool) {
+	if g == nil || g.w == nil {
+		return 0, false
+	}
+	ref, ok := g.w.AbilityRefByCode(id)
+	return AbilityRef(ref), ok
+}
+
 func abilitySecondsToTicks(g *Game, field string, seconds float64) (uint16, bool) {
 	ticks, err := data.SecondsToTicks(seconds)
 	if err != nil {
