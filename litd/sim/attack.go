@@ -34,6 +34,23 @@ const (
 // atkStateNames renders traces (FSV SoT).
 var atkStateNames = [...]string{"idle", "chase", "windup", "backswing", "cooldown"}
 
+// Attack-lifecycle events (#468, ADR #452 / R-SIM-7). WC3 has no native attack
+// event — this is a LitD improvement so triggers can react to auto-attacks. Ids
+// 35–36 follow the ability events (29–34). EvAttackLaunch fires at the FIRE edge
+// (windup end), Arg = weapon slot. EvAttackLanded fires when a weapon-sourced
+// packet is applied to a live target, immediately BEFORE that packet's
+// EvUnitDamaged — so a handler observes Landed→Damaged for the same hit — with
+// Arg = post-mitigation damage. A melee hit lands the same tick it launches; a
+// projectile lands at impact (Launch now, Landed ticks later). A packet whose
+// target is dead/invulnerable at apply is a no-op: no EvUnitDamaged and no
+// EvAttackLanded (the attack effectively missed). Weapon attacks routed through
+// a compiled effect list (#296) deliver via the effect's own packet and are
+// observed through the #467 effect events, not EvAttackLanded.
+const (
+	EvAttackLaunch uint16 = 35
+	EvAttackLanded uint16 = 36
+)
+
 // AtkStateName returns the human name of an Atk* state.
 func AtkStateName(s uint8) string {
 	if int(s) < len(atkStateNames) {
@@ -198,6 +215,7 @@ func (w *World) cancelWindup(id EntityID, cr int32, s int) {
 // a deterministic dud — NEVER a silent fire-as-instant fallback.
 func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 	c := w.Combats
+	w.Emit(Event{Kind: EvAttackLaunch, Src: src, Dst: tgt, Arg: int64(s)}) // FIRE edge
 	if ps := c.ProjSpeed[cr][s]; ps > 0 {
 		spec := MissileSpec{
 			Source: src, Target: tgt, Speed: ps,
@@ -207,7 +225,7 @@ func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 			spec.Pos = w.Transforms.Pos[tr]
 		}
 		if spec.Payload.Len == 0 {
-			spec.Packet = DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s]}
+			spec.Packet = DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s], Flags: DamageFromWeapon}
 		}
 		w.SpawnMissile(spec)
 		return
@@ -216,7 +234,7 @@ func (w *World) fireWeapon(src, tgt EntityID, cr int32, s int) {
 		w.ExecuteEffects(lst, EffectCtx{Source: src, Target: tgt})
 		return
 	}
-	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s]})
+	w.QueueDamage(DamagePacket{Source: src, Target: tgt, Amount: w.rollWeapon(cr, s), AttackType: c.AttackType[cr][s], Flags: DamageFromWeapon})
 }
 
 // rollWeapon rolls base + Ndice×roll(sides) on the sim PRNG, then

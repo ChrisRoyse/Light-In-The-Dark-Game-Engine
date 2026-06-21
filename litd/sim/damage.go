@@ -38,6 +38,11 @@ type DamagePacket struct {
 // one dispatch namespace and 2/3 belong to movement — #332.)
 const EvUnitDamaged uint16 = 7
 
+// DamageFromWeapon tags a packet that originated from a weapon FIRE edge (#468).
+// damageApplySystem emits EvAttackLanded for such a packet, immediately before
+// its EvUnitDamaged, when it lands on a live target.
+const DamageFromWeapon uint8 = 1 << 0
+
 // Armor LUT bounds (combat-and-orders.md §4: practical armor range).
 // ArmorValue outside the range clamps to it.
 const (
@@ -198,6 +203,11 @@ func (w *World) damageApplySystem() {
 		if cr := w.Combats.Row(p.Target); cr != -1 {
 			w.Combats.LastAttacker[cr] = p.Source
 			w.Combats.LastDamagedTick[cr] = w.tick
+		}
+		// A weapon-sourced packet landed on a live target: emit EvAttackLanded
+		// first, so a handler sees Landed→Damaged for the same hit (#468).
+		if p.Flags&DamageFromWeapon != 0 {
+			w.Emit(Event{Kind: EvAttackLanded, Src: p.Source, Dst: p.Target, Arg: int64(post)})
 		}
 		w.Emit(Event{Kind: EvUnitDamaged, Src: p.Source, Dst: p.Target, Arg: int64(post)})
 
