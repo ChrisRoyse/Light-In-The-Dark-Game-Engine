@@ -92,46 +92,46 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 	}
 
 	info := &WorldInfo{Dir: label, Entry: WorldEntry}
-	haveEntry := false
-	modules := make(map[string]string, len(rels)) // rel -> source, for require (#412)
+	entryID := ""
+	relToID := make(map[string]string, len(rels)) // rel -> chunk-id, for require (#412)
 	for _, rel := range rels {
 		src, err := fs.ReadFile(fsys, rel)
 		if err != nil {
 			return nil, fmt.Errorf("luabind: world %q read %s: %w", label, rel, err)
 		}
-		// Register compiles the chunk; a syntax error is returned loudly here,
-		// already naming the chunk and the offending line.
+		// Register compiles AND indexes the chunk's prototypes by pointer identity;
+		// a syntax error is returned loudly here, already naming the chunk and the
+		// offending line.
 		id, err := reg.Register(rel, string(src))
 		if err != nil {
 			return nil, fmt.Errorf("luabind: world %q: %w", label, err)
 		}
 		info.Chunks = append(info.Chunks, WorldChunk{Rel: rel, ID: id})
-		modules[rel] = string(src)
+		relToID[rel] = id
 		if rel == WorldEntry {
-			haveEntry = true
+			entryID = id
 		}
 	}
-	if !haveEntry {
+	if entryID == "" {
 		return nil, fmt.Errorf("luabind: world %q has no %s entry point", label, WorldEntry)
 	}
 
 	// Install the composition shim so main.lua can pull in sibling chunks (#412):
 	// a sandbox-safe require resolving ONLY against this world's compiled chunks
 	// (no filesystem, no arbitrary load — the stripped stdlib require stays gone).
-	installRequire(L, modules)
+	installRequire(L, reg, relToID)
 
-	// Execute the entry on L. L.Load is the Go-side compile API (NOT the Lua
-	// `load` global, which the sandbox strips); the "@" chunkname makes runtime
-	// errors carry main.lua:line.
-	entrySrc, err := fs.ReadFile(fsys, WorldEntry)
+	// Execute the entry through its REGISTERED prototype (not a fresh L.Load
+	// recompile), so every closure the entry creates — Game_Every actions, OnEvent
+	// handlers, trigger conditions/actions — has a prototype the registry owns by
+	// pointer identity. That is what lets SaveScripts persist a mid-game save
+	// (#481/#450): a separately-compiled entry proto belongs to no chunk and
+	// SaveScripts fails closed on it. Same fix the require shim applies to siblings.
+	entryProto, err := reg.ResolveProto(entryID, "")
 	if err != nil {
-		return nil, fmt.Errorf("luabind: world %q read entry: %w", label, err)
+		return nil, fmt.Errorf("luabind: world %q entry proto: %w", label, err)
 	}
-	fn, err := L.Load(strings.NewReader(string(entrySrc)), "@"+WorldEntry)
-	if err != nil {
-		return nil, fmt.Errorf("luabind: world %q entry compile: %w", label, err)
-	}
-	L.Push(fn)
+	L.Push(L.NewFunctionFromProto(entryProto))
 	if err := L.PCall(0, 0, nil); err != nil {
 		return nil, fmt.Errorf("luabind: world %q entry run: %w", label, err)
 	}
@@ -144,13 +144,20 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 // chunk AT MOST ONCE into the shared environment, caches its return value, and
 // detects cycles. Accepted name forms: the exact rel ("scripts/beacon.lua"), the
 // rel without extension ("scripts/beacon"), or Lua dotted form ("scripts.beacon").
-func installRequire(L *lua.LState, modules map[string]string) {
+func installRequire(L *lua.LState, reg *ChunkRegistry, relToID map[string]string) {
 	loaded := map[string]lua.LValue{} // rel -> module value (run-once cache)
 	loading := map[string]bool{}      // rel currently on the require stack (cycle guard)
 
+	// require is engine infrastructure (a host Go-function), installed here per
+	// world AFTER Register captured the builtin-global baseline — fold it into the
+	// baseline so SaveScripts does not mistake it for world data and fail closed on
+	// the unpersistable Go value (#481).
+	if s := getScheduler(L); s != nil {
+		s.markBuiltinGlobal("require")
+	}
 	L.SetGlobal("require", L.NewFunction(func(L *lua.LState) int {
 		name := L.CheckString(1)
-		rel, ok := resolveModule(name, modules)
+		rel, ok := resolveModule(name, relToID)
 		if !ok {
 			L.RaiseError("require: no module %q in this world (worlds compose only sibling chunks)", name)
 			return 0
@@ -164,13 +171,16 @@ func installRequire(L *lua.LState, modules map[string]string) {
 			return 0
 		}
 		loading[rel] = true
-		fn, err := L.Load(strings.NewReader(modules[rel]), "@"+rel)
+		// Run the module through its REGISTERED prototype (not a fresh L.Load), so
+		// closures it creates are persistable for a mid-game save (#481) — same
+		// reason the entry is run from the registry.
+		proto, err := reg.ResolveProto(relToID[rel], "")
 		if err != nil {
 			delete(loading, rel)
 			L.RaiseError("require %q: %v", rel, err)
 			return 0
 		}
-		L.Push(fn)
+		L.Push(L.NewFunctionFromProto(proto))
 		if err := L.PCall(0, 1, nil); err != nil {
 			delete(loading, rel)
 			L.RaiseError("require %q: %v", rel, err)

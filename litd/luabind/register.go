@@ -123,6 +123,37 @@ func pushHandle[T comparable](L *lua.LState, h T) *lua.LUserData {
 	return ud
 }
 
+// internRestoredHandleUD registers a save-restored handle userdata into the
+// scheduler's per-type identity cache, keyed by its handle value (#481). Handles
+// returned by pushHandle are interned so a script's `Game_UnitType("x") ==
+// captured` compares by identity; a userdata rebuilt by the save decoder
+// (UnmarshalUserData) bypasses that cache, so without this a closure that
+// captured e.g. a UnitType upvalue would, after load, no longer equal a fresh
+// Game_UnitType("x"). Inserting the restored userdata makes it the canonical one
+// the next pushHandle returns. No-op without a scheduler or for a nil/
+// non-comparable value. Reflection is used because the cache is typed per
+// concrete handle type (map[T]*lua.LUserData) and the decoder holds only an
+// interface value.
+func internRestoredHandleUD(L *lua.LState, ud *lua.LUserData) {
+	s := getScheduler(L)
+	if s == nil || s.handleCaches == nil || ud == nil || ud.Value == nil {
+		return
+	}
+	rt := reflect.TypeOf(ud.Value)
+	if !rt.Comparable() {
+		return
+	}
+	sub, ok := s.handleCaches[rt]
+	if !ok {
+		// Build a map[<concrete handle type>]*lua.LUserData so pushHandle's typed
+		// assertion (s.handleCaches[rt].(map[T]*lua.LUserData)) still matches.
+		m := reflect.MakeMap(reflect.MapOf(rt, reflect.TypeOf((*lua.LUserData)(nil))))
+		s.handleCaches[rt] = m.Interface()
+		sub = s.handleCaches[rt]
+	}
+	reflect.ValueOf(sub).SetMapIndex(reflect.ValueOf(ud.Value), reflect.ValueOf(ud))
+}
+
 // handleSliceToLua marshals a slice of handles/Players to a 1-based Lua array
 // table, each element wrapped as a userdata (the generated dispatch uses this
 // for []Unit/[]Player/... returns).

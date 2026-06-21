@@ -124,16 +124,47 @@ func RestoreEventHandlers(L *lua.LState, reg *ChunkRegistry, g *api.Game, r io.R
 	if br.err != nil {
 		return fmt.Errorf("luabind: RestoreEventHandlers: %w", br.err)
 	}
-	// Rebuild from scratch; a re-save after restore must reproduce this table.
-	s.eventHandlers = nil
+	kinds := make([]api.EventKind, n)
 	for i := uint32(0); i < n; i++ {
-		kind := api.EventKind(br.u16())
+		kinds[i] = api.EventKind(br.u16())
 		if br.err != nil {
 			return fmt.Errorf("luabind: RestoreEventHandlers: handler %d kind: %w", i, br.err)
 		}
-		idx := len(s.eventHandlers)
+	}
+
+	// Two restore flows reach here (#481):
+	//   * register-only: the entry chunk is registered but NOT re-run, so the
+	//     scheduler has no handlers yet — replay the kinds to re-allocate the
+	//     per-kind HandlerIDs before the sim restore (the original #433 path).
+	//   * entry re-run: the world loader re-ran main.lua (required to rebuild the
+	//     Game_Every periodic slots, #464), so it ALREADY re-subscribed every
+	//     OnEvent in the same order. Re-subscribing again would double the
+	//     subscriptions (LoadState then sees more HandlerIDs than the save).
+	// Detect the re-run case by an already-matching handler table and treat this
+	// as a validation no-op; otherwise do the from-scratch replay.
+	if rerunMatches(s.eventHandlers, kinds) {
+		return br.err
+	}
+	s.eventHandlers = nil
+	for i, kind := range kinds {
 		s.eventHandlers = append(s.eventHandlers, scriptEventReg{kind: kind, fn: nil})
-		subscribeHandlerSlot(L, g, s, kind, idx)
+		subscribeHandlerSlot(L, g, s, kind, i)
 	}
 	return br.err
+}
+
+// rerunMatches reports whether the scheduler's live handler table already equals
+// the saved kinds in count and order — the signature of an entry re-run having
+// re-subscribed every OnEvent before the restore. In that case RestoreEventHandlers
+// must NOT re-subscribe (it would double the sim subscriptions).
+func rerunMatches(live []scriptEventReg, kinds []api.EventKind) bool {
+	if len(live) != len(kinds) {
+		return false
+	}
+	for i := range kinds {
+		if live[i].kind != kinds[i] {
+			return false
+		}
+	}
+	return len(kinds) > 0
 }

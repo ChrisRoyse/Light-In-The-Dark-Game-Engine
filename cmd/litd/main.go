@@ -17,6 +17,7 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/luabind"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
+	lua "github.com/yuin/gopher-lua"
 )
 
 func main() {
@@ -50,21 +51,27 @@ func run(world string, autotest bool, ticks int, seed, budget int64) error {
 	return nil
 }
 
-// loadWorld loads + validates a world's data tables, installs them, and runs
-// the world's sandboxed scripts through the public g.LoadWorld verb. It returns
-// the live game and a cleanup func the caller must defer (it closes the
-// interpreter and chunk registry, which must outlive any sim Advance because
-// the world's script callbacks run on them). Every failure is loud and at load
-// time — never mid-match (#268 constraint).
+// loadWorld loads a world for headless run, returning just the game handle.
+// Thin wrapper over loadWorldFull for callers that don't need the Lua state /
+// chunk registry (everything but the savegame round-trip).
 func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
+	g, _, _, cleanup, err := loadWorldFull(world, seed, budget)
+	return g, cleanup, err
+}
+
+// loadWorldFull loads a world and also returns its Lua state + chunk registry,
+// so a caller can drive the production save/load container (litd/savegame.Write
+// /Load, #204/#481) which bundles the sim state with the suspended Lua
+// scheduler. The two handles are owned by the returned cleanup.
+func loadWorldFull(world string, seed, budget int64) (*api.Game, *lua.LState, *luabind.ChunkRegistry, func(), error) {
 	if world == "" {
-		return nil, nil, fmt.Errorf("missing -world <dir>")
+		return nil, nil, nil, nil, fmt.Errorf("missing -world <dir>")
 	}
 
 	// 1. Load + validate the world's data tables.
 	tables, err := data.Load(os.DirFS(filepath.Join(world, "data")))
 	if err != nil {
-		return nil, nil, fmt.Errorf("load data tables: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("load data tables: %w", err)
 	}
 
 	// 2. Fail-closed scaffold: every content table now has an api install seam
@@ -73,7 +80,7 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	//    point — if a future table type ships without a seam it is refused here
 	//    rather than silently dropped.
 	if missing := uninstallableTables(tables); missing != "" {
-		return nil, nil, fmt.Errorf("world ships %s, but that table has no api install seam yet; "+
+		return nil, nil, nil, nil, fmt.Errorf("world ships %s, but that table has no api install seam yet; "+
 			"refusing to load a partial world", missing)
 	}
 
@@ -83,7 +90,7 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	//    the item/upgrade seams reject an empty table by design.
 	g, err := api.NewGame(api.GameOptions{Seed: seed, MaxUnits: 256})
 	if err != nil {
-		return nil, nil, fmt.Errorf("new game: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("new game: %w", err)
 	}
 	// Combat coefficient matrix first (#406): the world's required damage table
 	// (data/combat) parses to tables.Coeff; until it is installed combat
@@ -95,7 +102,7 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		// forgets a matrix row/column fails loudly here, not silently in combat.
 		if len(tables.AttackTypes) > 0 && len(tables.ArmorTypes) > 0 {
 			if err := g.DefineDamageTypes(tables.AttackTypes, tables.ArmorTypes); err != nil {
-				return nil, nil, fmt.Errorf("define damage types: %w", err)
+				return nil, nil, nil, nil, fmt.Errorf("define damage types: %w", err)
 			}
 		}
 		coeff := make([][]int, len(tables.Coeff))
@@ -106,19 +113,19 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 			}
 		}
 		if err := g.DefineCombat(coeff); err != nil {
-			return nil, nil, fmt.Errorf("define combat: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define combat: %w", err)
 		}
 	}
 	if len(tables.ResourceTypes) > 0 {
 		if err := g.DefineEconomy(len(tables.ResourceTypes)); err != nil {
-			return nil, nil, fmt.Errorf("define economy: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define economy: %w", err)
 		}
 	}
 	// Resource-node types after the economy (a node's Resource index is checked
 	// against the resource count at spawn) (#401).
 	if len(tables.Nodes) > 0 {
 		if err := g.DefineResourceNodes(tables.Nodes); err != nil {
-			return nil, nil, fmt.Errorf("define resource nodes: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define resource nodes: %w", err)
 		}
 	}
 	if len(tables.Effects) > 0 {
@@ -127,30 +134,30 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		// effect-using ability or buff fails closed at DefineEffects.
 		sim.EnsureCoreEffectExecs()
 		if err := g.DefineEffects(tables.Effects); err != nil {
-			return nil, nil, fmt.Errorf("define effects: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define effects: %w", err)
 		}
 	}
 	if err := g.DefineUnits(tables.Units); err != nil {
-		return nil, nil, fmt.Errorf("define units: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("define units: %w", err)
 	}
 	if len(tables.Abilities) > 0 {
 		if err := g.DefineAbilities(tables.Abilities); err != nil {
-			return nil, nil, fmt.Errorf("define abilities: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define abilities: %w", err)
 		}
 	}
 	if len(tables.Items) > 0 {
 		if err := g.DefineItems(tables.Items); err != nil {
-			return nil, nil, fmt.Errorf("define items: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define items: %w", err)
 		}
 	}
 	if len(tables.BuffTypes) > 0 {
 		if err := g.DefineBuffTypes(tables.BuffTypes); err != nil {
-			return nil, nil, fmt.Errorf("define buff types: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define buff types: %w", err)
 		}
 	}
 	if len(tables.Upgrades) > 0 {
 		if err := g.DefineUpgrades(tables.Upgrades, tables.Requires); err != nil {
-			return nil, nil, fmt.Errorf("define upgrades: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define upgrades: %w", err)
 		}
 	}
 	// Heroes last: BindHeroes consults the unit defs (always), the ability defs
@@ -158,7 +165,7 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	// all bound above by this point (#396).
 	if tables.Hero != nil {
 		if err := g.DefineHeroes(tables.Hero); err != nil {
-			return nil, nil, fmt.Errorf("define heroes: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("define heroes: %w", err)
 		}
 	}
 
@@ -170,19 +177,19 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		for _, pu := range tables.Placement.Units {
 			typ := g.UnitType(pu.Type)
 			if typ.IsZero() {
-				return nil, nil, fmt.Errorf("placement: unknown unit type %q", pu.Type)
+				return nil, nil, nil, nil, fmt.Errorf("placement: unknown unit type %q", pu.Type)
 			}
 			if !g.CreateUnit(g.Player(pu.Owner), typ, api.Vec2{X: pu.X, Y: pu.Y}, api.Deg(pu.Facing)).Valid() {
-				return nil, nil, fmt.Errorf("placement: failed to spawn unit %q at (%g,%g)", pu.Type, pu.X, pu.Y)
+				return nil, nil, nil, nil, fmt.Errorf("placement: failed to spawn unit %q at (%g,%g)", pu.Type, pu.X, pu.Y)
 			}
 		}
 		for _, pn := range tables.Placement.Nodes {
 			typ := g.ResourceNodeType(pn.Type)
 			if typ.IsZero() {
-				return nil, nil, fmt.Errorf("placement: unknown node type %q", pn.Type)
+				return nil, nil, nil, nil, fmt.Errorf("placement: unknown node type %q", pn.Type)
 			}
 			if !g.CreateResourceNode(typ, api.Vec2{X: pn.X, Y: pn.Y}).Valid() {
-				return nil, nil, fmt.Errorf("placement: failed to spawn node %q at (%g,%g)", pn.Type, pn.X, pn.Y)
+				return nil, nil, nil, nil, fmt.Errorf("placement: failed to spawn node %q at (%g,%g)", pn.Type, pn.X, pn.Y)
 			}
 		}
 	}
@@ -197,14 +204,14 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	cleanup := func() { reg.Close(); interp.Close() }
 	if err := luabind.Register(interp.L, g); err != nil {
 		cleanup()
-		return nil, nil, fmt.Errorf("register bindings: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("register bindings: %w", err)
 	}
 	luabind.InstallWorldLoader(g, interp.L, reg)
 	if err := g.LoadWorld(world); err != nil {
 		cleanup()
-		return nil, nil, fmt.Errorf("load world: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("load world: %w", err)
 	}
-	return g, cleanup, nil
+	return g, interp.L, reg, cleanup, nil
 }
 
 // uninstallableTables names any content table present that still has no api

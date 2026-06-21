@@ -426,6 +426,10 @@ func newGraphDecoder(parent *lua.LState, reg *ChunkRegistry, blob *valuesBlob, h
 		if err != nil {
 			return nil, fmt.Errorf("luabind: userdata %d: %w", i, err)
 		}
+		// Make the restored handle the canonical interned userdata for its value,
+		// so a post-load pushHandle returns this same object and a captured-handle
+		// equality (e.g. Unit_Type(u) == WAGON) holds after load (#481).
+		internRestoredHandleUD(parent, ud)
 		d.udPool[i] = ud
 	}
 	// Wire table entries now (closures may be stored but their upvalues wait).

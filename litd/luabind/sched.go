@@ -126,6 +126,17 @@ func (s *scriptScheduler) captureBaseGlobals() {
 	s.baseGlobals = base
 }
 
+// markBuiltinGlobal folds name into the builtin baseline so it is excluded from
+// the saved world globals (#481). Used for engine infrastructure installed AFTER
+// Register's captureBaseGlobals — notably the world loader's `require` shim
+// (#412), a host Go-function that is not world data and is unpersistable.
+func (s *scriptScheduler) markBuiltinGlobal(name string) {
+	if s.baseGlobals == nil {
+		s.baseGlobals = make(map[string]struct{})
+	}
+	s.baseGlobals[name] = struct{}{}
+}
+
 // worldGlobals returns the world's data globals (global keys added since the
 // builtin baseline), sorted by key for deterministic save bytes. Builtins and
 // non-string keys are excluded. Each value is handed to the persister, which

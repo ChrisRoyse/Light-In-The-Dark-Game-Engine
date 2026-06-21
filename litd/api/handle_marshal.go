@@ -34,6 +34,18 @@ const (
 	// closure that captures the store (e.g. a Game_Every callback, #464)
 	// round-trips through save/load. It resolves back to the live game's store.
 	HandleStorage
+	// HandlePlayer / HandleUnitType / HandleBuffType / HandleFogModifier marshal
+	// the non-entity handles a world script commonly captures as a Game_Every /
+	// trigger upvalue (#481): a player slot, a bound type-catalog ref, or a live
+	// fog modifier. Raw carries the player slot, the type ref (typeIdx+1), or the
+	// fog-modifier id respectively — all stable across a save/load of the same
+	// world (its type tables rebind in the same order; the fog modifier is sim
+	// state). Without these a script holding e.g. Game_BuffType("burn") in an
+	// upvalue fails closed at SaveScripts.
+	HandlePlayer
+	HandleUnitType
+	HandleBuffType
+	HandleFogModifier
 )
 
 // HandleRef is the persistable, language-portable identity of an entity-backed
@@ -76,6 +88,14 @@ func RefOf(h Handle) (HandleRef, bool) {
 	case *Storage:
 		// the campaign store is a per-game singleton; Raw is unused.
 		return HandleRef{Kind: HandleStorage}, true
+	case Player:
+		return HandleRef{Kind: HandlePlayer, Raw: uint32(t.idx)}, true
+	case UnitType:
+		return HandleRef{Kind: HandleUnitType, Raw: uint32(t.ref)}, true
+	case BuffType:
+		return HandleRef{Kind: HandleBuffType, Raw: uint32(t.ref)}, true
+	case FogModifier:
+		return HandleRef{Kind: HandleFogModifier, Raw: uint32(t.id)}, true
 	default:
 		return HandleRef{}, false
 	}
@@ -100,6 +120,14 @@ func (g *Game) Resolve(ref HandleRef) (Handle, bool) {
 		return Effect{id: id, g: g}, true
 	case HandleStorage:
 		return g.Storage(), true // the per-game campaign store singleton
+	case HandlePlayer:
+		return Player{idx: int32(ref.Raw), g: g}, true
+	case HandleUnitType:
+		return UnitType{ref: uint16(ref.Raw)}, true
+	case HandleBuffType:
+		return BuffType{ref: uint16(ref.Raw)}, true
+	case HandleFogModifier:
+		return FogModifier{g: g, id: sim.FogModifierID(ref.Raw)}, true
 	default:
 		return nil, false
 	}

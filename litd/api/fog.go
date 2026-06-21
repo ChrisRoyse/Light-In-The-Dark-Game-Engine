@@ -93,6 +93,11 @@ func (f FogModifier) Valid() bool {
 	return f.g != nil && f.g.w != nil && f.g.w.FogModifierValid(f.id)
 }
 
+// IsZero reports whether this is the zero-value handle (no bound game). It lets
+// FogModifier satisfy the api.Handle seam so a script may capture it in a
+// save/loadable closure upvalue (#481).
+func (f FogModifier) IsZero() bool { return f == FogModifier{} }
+
 // NewFogModifier creates a fog-state modifier over an area for a player and
 // returns its handle. Created stopped unless Started() is passed. Returns the
 // zero (invalid) handle on a bad player/area or a full modifier pool.

@@ -18,6 +18,11 @@ type BuffType struct {
 // IsZero reports the null buff type.
 func (t BuffType) IsZero() bool { return t.ref == 0 }
 
+// Valid reports whether this names a bound buff type (a non-null ref). It lets
+// BuffType satisfy the api.Handle seam so a script may capture it in a
+// save/loadable closure upvalue (#481).
+func (t BuffType) Valid() bool { return t.ref != 0 }
+
 // BuffType resolves a buff code (e.g. "slow") to its bound type, or the null
 // BuffType if the code is unknown or no buff table is bound.
 func (g *Game) BuffType(code string) BuffType {

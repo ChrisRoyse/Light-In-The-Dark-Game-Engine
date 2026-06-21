@@ -28,6 +28,11 @@ type UnitType struct {
 // IsZero reports whether this is the null unit type.
 func (t UnitType) IsZero() bool { return t.ref == 0 }
 
+// Valid reports whether this names a bound unit type (a non-null ref). It lets
+// UnitType satisfy the api.Handle seam so a script may capture it in a
+// save/loadable closure upvalue (#481).
+func (t UnitType) Valid() bool { return t.ref != 0 }
+
 // UnitType resolves a unit code (e.g. "hfoo") to its bound type, or the null
 // UnitType if the code is unknown or no unit table is bound. JASS: the 'xxxx'
 // rawcodes passed to CreateUnit.
