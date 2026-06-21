@@ -244,6 +244,8 @@ type World struct {
 	dmgBuf     []DamagePacket
 	dmgDropped uint32
 	coeff      [][]int32 // per-mille attack×armor matrix (BindDamageMatrix)
+	atkTypes   []string  // declared attack-type names, table order (#472 config)
+	armTypes   []string  // declared armor-type names, table order (#472 config)
 	// the sim PRNG (R-SIM-2): every gameplay roll draws here, one
 	// deterministic call order; reseeded per match via SetSeed
 	rng *prng.Stream

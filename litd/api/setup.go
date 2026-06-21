@@ -2,6 +2,7 @@ package litd
 
 import (
 	"fmt"
+	"log"
 
 	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
@@ -156,6 +157,24 @@ func (g *Game) DefineResourceNodes(nodes []data.ResourceNodeType) error {
 	return nil
 }
 
+// logSetup emits a one-line observability trace for an install-seam verb when
+// debug mode is on (Game.SetDebug). Setup verbs are infrequent, so this is a
+// plain structured log — it gives an operator a record of exactly which tables
+// and dims a world bound, which is the first thing to check when combat
+// mis-resolves. Routed through the OnInvalidHandle sink if one is installed so
+// a host can capture setup traces alongside its other diagnostics.
+func (g *Game) logSetup(format string, args ...any) {
+	if g == nil || !g.debug {
+		return
+	}
+	msg := "litd/setup: " + fmt.Sprintf(format, args...)
+	if g.onInvalid != nil {
+		g.onInvalid(msg)
+		return
+	}
+	log.Println(msg)
+}
+
 // DefineCombat installs the damage-coefficient matrix — coeff[attackType]
 // [armorType] in thousandths (1000 = 100%) — that combat resolution multiplies
 // each hit by (#406). The install-seam companion to DefineUnits for combat
@@ -178,7 +197,55 @@ func (g *Game) DefineCombat(matrix [][]int) error {
 	if err := g.w.BindDamageMatrix(coeff); err != nil {
 		return fmt.Errorf("api: DefineCombat: %w", err)
 	}
+	cols := 0
+	if len(coeff) > 0 {
+		cols = len(coeff[0])
+	}
+	g.logSetup("DefineCombat: bound %dx%d coefficient matrix", len(coeff), cols)
 	return nil
+}
+
+// DefineDamageTypes declares the named attack- and armor-type tables that index
+// the coefficient matrix (#472). Names are ordered: a name's position is its
+// matrix row (attack) or column (armor). Call before DefineCombat — once the
+// types are declared, DefineCombat validates the matrix dims equal
+// len(attack)×len(armor), so a world that adds a new attack/armor type but
+// forgets a matrix row/column fails loudly at setup instead of silently
+// dropping packets. A setup verb (R-API-5): fails closed on an empty or
+// duplicate-named table. The api takes []string so no sim width leaks across
+// the boundary. Modders extend combat by adding a name + a matrix row — no
+// engine edit (ADR #453).
+func (g *Game) DefineDamageTypes(attack, armor []string) error {
+	if g == nil || g.w == nil {
+		return fmt.Errorf("api: DefineDamageTypes: nil game")
+	}
+	if err := g.w.BindDamageTypes(attack, armor); err != nil {
+		return fmt.Errorf("api: DefineDamageTypes: %w", err)
+	}
+	g.logSetup("DefineDamageTypes: %d attack types %v, %d armor types %v",
+		len(attack), attack, len(armor), armor)
+	return nil
+}
+
+// AttackTypeID / ArmorTypeID resolve a declared type name to its matrix index
+// (ok=false if unknown or the tables were never declared). The name→index seam
+// combat conditions (C2/C4) build on so scripts reference types by name.
+func (g *Game) AttackTypeID(name string) (int, bool) {
+	if g == nil || g.w == nil {
+		return 0, false
+	}
+	i, ok := g.w.AttackTypeIndex(name)
+	return int(i), ok
+}
+
+// ArmorTypeID resolves a declared armor-type name to its matrix column index,
+// reporting ok=false if the name is unknown or no tables were declared.
+func (g *Game) ArmorTypeID(name string) (int, bool) {
+	if g == nil || g.w == nil {
+		return 0, false
+	}
+	i, ok := g.w.ArmorTypeIndex(name)
+	return int(i), ok
 }
 
 // DefineEffects installs the compiled effect-composition arena that abilities

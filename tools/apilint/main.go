@@ -92,6 +92,7 @@ var methodErrAllowlist = map[string]bool{
 	"Game.DefineHeroes":        true,
 	"Game.DefineResourceNodes": true,
 	"Game.DefineCombat":        true,
+	"Game.DefineDamageTypes":   true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the

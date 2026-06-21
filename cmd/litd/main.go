@@ -89,6 +89,14 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 	// resolution drops every hit, so a loaded world's units could not take
 	// damage. The api takes [][]int, so widen the sim's [][]int32.
 	if len(tables.Coeff) > 0 {
+		// Declare the named attack/armor type tables first (#472) so DefineCombat
+		// validates the matrix dims against them — a world that adds a type but
+		// forgets a matrix row/column fails loudly here, not silently in combat.
+		if len(tables.AttackTypes) > 0 && len(tables.ArmorTypes) > 0 {
+			if err := g.DefineDamageTypes(tables.AttackTypes, tables.ArmorTypes); err != nil {
+				return nil, nil, fmt.Errorf("define damage types: %w", err)
+			}
+		}
 		coeff := make([][]int, len(tables.Coeff))
 		for i, row := range tables.Coeff {
 			coeff[i] = make([]int, len(row))

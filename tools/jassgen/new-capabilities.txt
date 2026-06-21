@@ -374,3 +374,7 @@ exact   Event.Ability
 exact   Game.OnAbilityCast
 exact   Game.OnAttack
 exact   Game.OnBuffApplied
+# data-driven extensible attack/armor type tables (#472)
+exact   Game.DefineDamageTypes
+exact   Game.AttackTypeID
+exact   Game.ArmorTypeID

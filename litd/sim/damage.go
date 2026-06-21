@@ -88,9 +88,76 @@ func buildArmorLUT() [ArmorLUTMax - ArmorLUTMin + 1]fixed.F64 {
 // first Step; the cursor folds into the state hash with #154.
 func (w *World) SetSeed(seed uint64) { w.rng = prng.New(seed, 0) }
 
+// BindDamageTypes declares the named attack- and armor-type tables (#472).
+// Order is significant: a name's index is its row/column in the matrix. The
+// names are config, not state — they are not hashed or saved, and are restored
+// by re-running setup on load (like the matrix itself). Fail-closed: empty or
+// duplicate-named tables are refused. Binding the types makes BindDamageMatrix
+// validate the matrix dims against the declared counts, so a matrix that is
+// rectangular but the wrong size for the type tables is caught at the seam.
+func (w *World) BindDamageTypes(attack, armor []string) error {
+	if len(attack) == 0 || len(armor) == 0 {
+		return fmt.Errorf("sim: BindDamageTypes: empty attack (%d) or armor (%d) table", len(attack), len(armor))
+	}
+	if err := uniqueNames("attack", attack); err != nil {
+		return err
+	}
+	if err := uniqueNames("armor", armor); err != nil {
+		return err
+	}
+	w.atkTypes = append(w.atkTypes[:0], attack...)
+	w.armTypes = append(w.armTypes[:0], armor...)
+	return nil
+}
+
+func uniqueNames(kind string, names []string) error {
+	for i := range names {
+		if names[i] == "" {
+			return fmt.Errorf("sim: BindDamageTypes: empty %s-type name at index %d", kind, i)
+		}
+		for j := i + 1; j < len(names); j++ {
+			if names[i] == names[j] {
+				return fmt.Errorf("sim: BindDamageTypes: duplicate %s-type name %q (indices %d, %d)", kind, names[i], i, j)
+			}
+		}
+	}
+	return nil
+}
+
+// AttackTypeIndex resolves an attack-type name to its matrix row index.
+// Setup-time lookup (linear scan over a small table — never in the damage hot
+// path), fail-closed: ok=false on an unknown or unbound name.
+func (w *World) AttackTypeIndex(name string) (uint8, bool) { return nameIndex(w.atkTypes, name) }
+
+// ArmorTypeIndex resolves an armor-type name to its matrix column index.
+func (w *World) ArmorTypeIndex(name string) (uint8, bool) { return nameIndex(w.armTypes, name) }
+
+func nameIndex(names []string, name string) (uint8, bool) {
+	for i := range names {
+		if names[i] == name {
+			return uint8(i), true
+		}
+	}
+	return 0, false
+}
+
+// AttackTypeName / ArmorTypeName map an index back to its declared name for
+// dumps and logging; "" if out of range or unbound.
+func (w *World) AttackTypeName(i uint8) string { return nameAt(w.atkTypes, i) }
+func (w *World) ArmorTypeName(i uint8) string  { return nameAt(w.armTypes, i) }
+
+func nameAt(names []string, i uint8) string {
+	if int(i) >= len(names) {
+		return ""
+	}
+	return names[i]
+}
+
 // BindDamageMatrix installs the loaded per-mille coefficient matrix.
 // Fail-closed: a ragged or empty matrix is refused, and no damage
-// applies before a successful bind (packets drop counted).
+// applies before a successful bind (packets drop counted). When the type
+// tables are bound (BindDamageTypes), the matrix dims must equal
+// len(attack)×len(armor) — a rectangular-but-mis-sized matrix is rejected.
 func (w *World) BindDamageMatrix(coeff [][]int32) error {
 	if len(coeff) == 0 {
 		return fmt.Errorf("sim: BindDamageMatrix: empty matrix")
@@ -103,6 +170,12 @@ func (w *World) BindDamageMatrix(coeff [][]int32) error {
 		if len(coeff[i]) != cols {
 			return fmt.Errorf("sim: BindDamageMatrix: ragged row %d (%d cols, want %d)", i, len(coeff[i]), cols)
 		}
+	}
+	if len(w.atkTypes) > 0 && len(coeff) != len(w.atkTypes) {
+		return fmt.Errorf("sim: BindDamageMatrix: %d rows but %d attack types declared", len(coeff), len(w.atkTypes))
+	}
+	if len(w.armTypes) > 0 && cols != len(w.armTypes) {
+		return fmt.Errorf("sim: BindDamageMatrix: %d cols but %d armor types declared", cols, len(w.armTypes))
 	}
 	w.coeff = coeff
 	return nil
