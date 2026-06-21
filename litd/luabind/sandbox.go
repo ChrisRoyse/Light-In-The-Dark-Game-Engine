@@ -72,7 +72,19 @@ var SandboxGlobalWhitelist = []string{
 // NewSandbox builds a locked-down interpreter per R-SEC-1. Callers must Close it.
 func NewSandbox(opts SandboxOptions) *Interp {
 	L := lua.NewState(lua.Options{SkipOpenLibs: true})
+	installSandboxEnv(L, opts)
+	return &Interp{L: L}
+}
 
+// installSandboxEnv installs the entire R-SEC-1 sandbox environment onto L's
+// CURRENT globals table: the whitelisted libraries, the deterministic math
+// backend, the stripped dangerous globals, the read-only string lock, and the
+// armed budgets/random source. It is shared by NewSandbox (on a brand-new
+// LState) and resetSandbox (#265: after swapping in a fresh _G on a recycled
+// LState) — running the SAME install on both paths is what makes a pooled,
+// reset interpreter byte-for-byte equivalent to a freshly built one. It assumes
+// L's globals table is empty (a new LState, or a freshly swapped _G).
+func installSandboxEnv(L *lua.LState, opts SandboxOptions) {
 	// Open only the whitelisted libraries. Base must be opened first (it
 	// installs _G), matching OpenLibs' own ordering note.
 	for _, lib := range sandboxLibs {
@@ -143,8 +155,6 @@ func NewSandbox(opts SandboxOptions) *Interp {
 	if opts.RandomSource != nil {
 		L.SetRandomSource(opts.RandomSource)
 	}
-
-	return &Interp{L: L}
 }
 
 // GlobalNames returns the sorted top-level names currently in _G. It is the

@@ -44,8 +44,15 @@ type Interp struct{ L *lua.LState }
 // New returns a fresh interpreter. Callers must Close it.
 func New() *Interp { return &Interp{L: NewState()} }
 
-// Close releases the interpreter.
-func (i *Interp) Close() { i.L.Close() }
+// Close releases the interpreter. It also drops any scriptScheduler Register
+// installed for this LState from the package `schedulers` map — otherwise that
+// map retains every interpreter ever Registered for the life of the process
+// (a slow leak in any host that builds many states, #265). Delete on a missing
+// key is a no-op, so this is safe for interpreters that were never Registered.
+func (i *Interp) Close() {
+	schedulers.Delete(i.L)
+	i.L.Close()
+}
 
 // SetRandomSource binds the deterministic source math.random draws from
 // (#263). fn must return a value in [0, 1); the host wires it to the sim PRNG

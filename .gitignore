@@ -28,6 +28,10 @@ assets/**/*.ogg
 # apilint build artifact (go build ./tools/apilint writes ./apilint) — never track
 /apilint
 
+# worldrender FSV harness build artifact (go build -o worldrender ./cmd/worldrender,
+# #490) — regenerable binary, never track
+/worldrender
+
 # world archives are reproducible build artifacts (scripts/pack-world.sh packs
 # them deterministically from map data + world Lua; CI re-produces + validates
 # on every build) — ship via releases, never track the binary (#209).
