@@ -94,6 +94,7 @@ step "zero-alloc (R-GC-1/5)" go test ./litd/sim/ -run TestZeroAlloc -count=1
 step "import-graph (sim ⊥ render/G3N/GL)" go run ./tools/importcheck
 step "determinism lint"     go run ./tools/determlint ./litd/...
 step "API-surface lint (R-API-1..6)" go run ./tools/apilint ./litd/api
+step "presentation-trigger lint (#449/#471)" go run ./tools/presentlint litd/render litd/audio
 step "license-scan"         ./scripts/license-scan.sh
 
 # --- jassgen audit (jassgen-audit.yml) --------------------------------------

@@ -83,6 +83,7 @@ Verification of any visual/behavioral change follows `prompts/fsv.md`: run the t
 ## Architecture rules (PRD §4.1)
 
 - `litd/sim` (deterministic core) never imports `litd/render`; render reads sim state, never mutates.
+- Presentation triggers are a **non-hashing trigger class** (#449/#471). `litd/render`/`litd/audio` react to gameplay by draining the render-event snapshot (`Snapshot.Events` / `World.EmitRenderEvent`), never via the sim-hashing subscription path (`Game.OnEvent` & its sugar, `World.Subscribe`, `NewTrigger`, `OnDamage`). The sim subscription tables serialize *and* hash (R-SIM-6), so an audio-on game must hash identical to an audio-off one. Enforced by `tools/presentlint` in preflight; `OnAudio`/`OnCamera` are the allowed presentation sinks (set a Game field, never touch the sim).
 - Zero heap allocations per sim tick / render frame at steady state (R-GC-1, gated by `scripts/preflight.sh` via `testing.AllocsPerRun`).
 - No `map` iteration in gameplay code; all gameplay randomness via the sim's seeded PRNG (R-SIM-2).
 - Script logic runs on the deterministic cooperative scheduler, never free goroutines (R-EXEC-1).
