@@ -138,6 +138,29 @@ func (g *Game) OnEvent(kind EventKind, handler func(Event), opts ...EventOption)
 	return Subscription{s: sub}
 }
 
+// OnAbilityCast registers handler for the moment a unit commits a cast
+// (EventAbilityCast). Sugar over OnEvent: e.Unit() is the caster, e.Target()
+// the cast target, e.Ability() the ability ref. For the other ability edges
+// (effect/channel/finish/stopped) use OnEvent with the matching EventKind.
+func (g *Game) OnAbilityCast(handler func(Event), opts ...EventOption) Subscription {
+	return g.OnEvent(EventAbilityCast, handler, opts...)
+}
+
+// OnAttack registers handler for a weapon's FIRE edge (EventAttackLaunch).
+// Sugar over OnEvent: e.Unit()/e.Source() is the attacker, e.Target() the
+// target. For the landing hit use OnEvent(EventAttackLanded, …).
+func (g *Game) OnAttack(handler func(Event), opts ...EventOption) Subscription {
+	return g.OnEvent(EventAttackLaunch, handler, opts...)
+}
+
+// OnBuffApplied registers handler for a buff first attaching to a unit
+// (EventBuffApplied). Sugar over OnEvent: e.Unit() is the buffed unit,
+// e.Source() the applier. For a refresh/restack use
+// OnEvent(EventBuffRefreshed, …).
+func (g *Game) OnBuffApplied(handler func(Event), opts ...EventOption) Subscription {
+	return g.OnEvent(EventBuffApplied, handler, opts...)
+}
+
 // runFilter evaluates a subscription's filter. In debug mode it samples
 // the filter twice on the same view; a differing result means the
 // filter is impure (it mutated captured state or read nondeterministic

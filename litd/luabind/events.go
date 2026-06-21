@@ -109,6 +109,36 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		return 0
 	}))
 
+	// Convenience binders over OnEvent for the lifecycle events (#470): each
+	// fixes its kind, so a script writes OnAbilityCast(fn) instead of
+	// OnEvent(<int>, fn). They route through the same scheduler path as OnEvent,
+	// so a handler registered this way survives save/load (#433/#446). The
+	// other ability/attack/buff edges remain reachable via OnEvent(kind, fn).
+	bindFixedKindEvent := func(name string, kind api.EventKind) {
+		L.SetGlobal(name, L.NewFunction(func(L *lua.LState) int {
+			fn := L.CheckFunction(1)
+			var sub api.Subscription
+			if s := getScheduler(L); s != nil {
+				sub = registerScriptHandler(L, g, s, kind, fn)
+			} else {
+				sub = g.OnEvent(kind, func(ev api.Event) { callEventHandler(L, fn, ev) })
+			}
+			L.Push(pushHandle(L, sub))
+			return 1
+		}))
+	}
+	bindFixedKindEvent("OnAbilityCast", api.EventAbilityCast)
+	bindFixedKindEvent("OnAttack", api.EventAttackLaunch)
+	bindFixedKindEvent("OnBuffApplied", api.EventBuffApplied)
+
+	// Event_Ability reads the ability ref off an ability-lifecycle event (the
+	// GetSpellAbilityId idiom); 0 on a non-ability event. Hand-bound like the
+	// DamageEvent_* readers (the api accessor is a LitD new-capability).
+	L.SetGlobal("Event_Ability", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LNumber(uint16(argEvent(L, 1).Ability())))
+		return 1
+	}))
+
 	// OnDamage bridges the typed pre-apply damage-modifier sink (#406). Unlike
 	// OnEvent (which observes a landed hit), an OnDamage handler runs DURING
 	// combat resolution and receives a *DamageEvent it may read (Amount/Source/

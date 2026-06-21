@@ -1,8 +1,8 @@
 {
   "generatedFrom": "repoes/war3-types/scripts/common.j",
   "total": 136,
-  "mapped": 33,
-  "tombstoned": 103,
+  "mapped": 45,
+  "tombstoned": 91,
   "families": {
     "dialogevent": 2,
     "gameevent": 16,
@@ -331,8 +331,8 @@
       "name": "EVENT_PLAYER_UNIT_ATTACKED",
       "family": "playerunitevent",
       "raw": 18,
-      "status": "tombstoned",
-      "reason": "pending #468/#470: attack-lifecycle events (EvAttackLaunch/EvAttackLanded) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAttackLaunch"
     },
     {
       "name": "EVENT_PLAYER_UNIT_CHANGE_OWNER",
@@ -520,36 +520,36 @@
       "name": "EVENT_PLAYER_UNIT_SPELL_CAST",
       "family": "playerunitevent",
       "raw": 273,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityCast"
     },
     {
       "name": "EVENT_PLAYER_UNIT_SPELL_CHANNEL",
       "family": "playerunitevent",
       "raw": 272,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityChannelStart"
     },
     {
       "name": "EVENT_PLAYER_UNIT_SPELL_EFFECT",
       "family": "playerunitevent",
       "raw": 274,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityEffect"
     },
     {
       "name": "EVENT_PLAYER_UNIT_SPELL_ENDCAST",
       "family": "playerunitevent",
       "raw": 276,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityStopped"
     },
     {
       "name": "EVENT_PLAYER_UNIT_SPELL_FINISH",
       "family": "playerunitevent",
       "raw": 275,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityFinish"
     },
     {
       "name": "EVENT_PLAYER_UNIT_STACK_ITEM",
@@ -632,8 +632,8 @@
       "name": "EVENT_UNIT_ATTACKED",
       "family": "unitevent",
       "raw": 62,
-      "status": "tombstoned",
-      "reason": "pending #468/#470: attack-lifecycle events (EvAttackLaunch/EvAttackLanded) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAttackLaunch"
     },
     {
       "name": "EVENT_UNIT_CHANGE_OWNER",
@@ -849,36 +849,36 @@
       "name": "EVENT_UNIT_SPELL_CAST",
       "family": "unitevent",
       "raw": 290,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityCast"
     },
     {
       "name": "EVENT_UNIT_SPELL_CHANNEL",
       "family": "unitevent",
       "raw": 289,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityChannelStart"
     },
     {
       "name": "EVENT_UNIT_SPELL_EFFECT",
       "family": "unitevent",
       "raw": 291,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityEffect"
     },
     {
       "name": "EVENT_UNIT_SPELL_ENDCAST",
       "family": "unitevent",
       "raw": 293,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityStopped"
     },
     {
       "name": "EVENT_UNIT_SPELL_FINISH",
       "family": "unitevent",
       "raw": 292,
-      "status": "tombstoned",
-      "reason": "pending #467/#470: ability-lifecycle events (EvAbilityCast/Effect/Channel/Finish/Stopped) are not modeled yet"
+      "status": "mapped",
+      "kind": "EventAbilityFinish"
     },
     {
       "name": "EVENT_UNIT_STACK_ITEM",

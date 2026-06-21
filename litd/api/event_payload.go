@@ -89,6 +89,37 @@ const (
 	// EventConstructCancelled fires when construction is cancelled before
 	// completing. Unit() is the building.
 	EventConstructCancelled
+	// EventAbilityCast fires when a unit commits a cast (enters cast point).
+	// Unit() is the caster, Target() the cast target, Ability() the ability ref.
+	EventAbilityCast
+	// EventAbilityEffect fires at the EFFECT edge, when the ability's effect
+	// composition runs. Unit() is the caster, Target() the target.
+	EventAbilityEffect
+	// EventAbilityChannelStart fires when a channeled ability enters its channel.
+	// Unit() is the caster.
+	EventAbilityChannelStart
+	// EventAbilityChannelStop fires when a channel ends (into backswing). Unit()
+	// is the caster.
+	EventAbilityChannelStop
+	// EventAbilityFinish fires when a cast completes normally (returns to ready).
+	// Unit() is the caster.
+	EventAbilityFinish
+	// EventAbilityStopped fires when a cast is interrupted before finishing.
+	// Unit() is the caster.
+	EventAbilityStopped
+	// EventAttackLaunch fires at a weapon's FIRE edge. Unit() is the attacker,
+	// Target() the target.
+	EventAttackLaunch
+	// EventAttackLanded fires when a weapon-sourced packet lands on a live
+	// target, immediately before that hit's EventUnitDamaged. Unit() is the
+	// attacker, Target() the victim, Damage() the post-mitigation amount.
+	EventAttackLanded
+	// EventBuffApplied fires when a new buff instance attaches. Unit() is the
+	// buffed unit, Source() the applier.
+	EventBuffApplied
+	// EventBuffRefreshed fires when an existing buff instance is refreshed or
+	// restacked. Unit() is the buffed unit, Source() the applier.
+	EventBuffRefreshed
 )
 
 // simKindOf maps each public event kind to its sim event kind. The map
@@ -96,31 +127,41 @@ const (
 // path. A kind absent here is unknown and OnEvent rejects it
 // (fail-closed).
 var simKindOf = map[EventKind]uint16{
-	EventUnitDeath:          1,  // sim.EvUnitDeath
-	EventUnitDamaged:        7,  // sim.EvUnitDamaged
-	EventOrderIssued:        4,  // sim.EvOrderIssued
-	EventOrderDone:          5,  // sim.EvOrderDone
-	EventUnitTrained:        11, // sim.EvUnitTrained
-	EventResearchFinished:   13, // sim.EvResearchFinished
-	EventHeroLevel:          14, // sim.EvHeroLevel
-	EventItemPickedUp:       16, // sim.EvItemPickedUp
-	EventConstructFinished:  20, // sim.EvConstructFinished
-	EventMissileImpact:      22, // sim.EvMissileImpact
-	EventMissileExpired:     23, // sim.EvMissileExpired
-	EventVictory:            sim.EvVictory,
-	EventDefeat:             sim.EvDefeat,
-	EventRegionEnter:        sim.EvRegionEnter,
-	EventRegionLeave:        sim.EvRegionLeave,
-	EventOrderDropped:       sim.EvOrderDropped,
-	EventBuffExpired:        sim.EvBuffExpired,
-	EventResourceDeposited:  sim.EvResourceDeposited,
-	EventResourceDepleted:   sim.EvResourceDepleted,
-	EventTrainRefused:       sim.EvTrainRefused,
-	EventHeroDied:           sim.EvHeroDied,
-	EventItemUsed:           sim.EvItemUsed,
-	EventItemDropped:        sim.EvItemDropped,
-	EventConstructStarted:   sim.EvConstructStarted,
-	EventConstructCancelled: sim.EvConstructCancelled,
+	EventUnitDeath:           1,  // sim.EvUnitDeath
+	EventUnitDamaged:         7,  // sim.EvUnitDamaged
+	EventOrderIssued:         4,  // sim.EvOrderIssued
+	EventOrderDone:           5,  // sim.EvOrderDone
+	EventUnitTrained:         11, // sim.EvUnitTrained
+	EventResearchFinished:    13, // sim.EvResearchFinished
+	EventHeroLevel:           14, // sim.EvHeroLevel
+	EventItemPickedUp:        16, // sim.EvItemPickedUp
+	EventConstructFinished:   20, // sim.EvConstructFinished
+	EventMissileImpact:       22, // sim.EvMissileImpact
+	EventMissileExpired:      23, // sim.EvMissileExpired
+	EventVictory:             sim.EvVictory,
+	EventDefeat:              sim.EvDefeat,
+	EventRegionEnter:         sim.EvRegionEnter,
+	EventRegionLeave:         sim.EvRegionLeave,
+	EventOrderDropped:        sim.EvOrderDropped,
+	EventBuffExpired:         sim.EvBuffExpired,
+	EventResourceDeposited:   sim.EvResourceDeposited,
+	EventResourceDepleted:    sim.EvResourceDepleted,
+	EventTrainRefused:        sim.EvTrainRefused,
+	EventHeroDied:            sim.EvHeroDied,
+	EventItemUsed:            sim.EvItemUsed,
+	EventItemDropped:         sim.EvItemDropped,
+	EventConstructStarted:    sim.EvConstructStarted,
+	EventConstructCancelled:  sim.EvConstructCancelled,
+	EventAbilityCast:         sim.EvAbilityCast,
+	EventAbilityEffect:       sim.EvAbilityEffect,
+	EventAbilityChannelStart: sim.EvAbilityChannelStart,
+	EventAbilityChannelStop:  sim.EvAbilityChannelStop,
+	EventAbilityFinish:       sim.EvAbilityFinish,
+	EventAbilityStopped:      sim.EvAbilityStopped,
+	EventAttackLaunch:        sim.EvAttackLaunch,
+	EventAttackLanded:        sim.EvAttackLanded,
+	EventBuffApplied:         sim.EvBuffApplied,
+	EventBuffRefreshed:       sim.EvBuffRefreshed,
 }
 
 // Event is the payload handed to an OnEvent handler — a plain value
@@ -146,7 +187,10 @@ func (e Event) IsZero() bool { return e == Event{} }
 // Unit() and by ForPlayer scoping. For a damage event that is the
 // damaged unit (Dst); for every other kind it is the source (Src).
 func (e Event) primary() sim.EntityID {
-	if e.kind == EventUnitDamaged || e.kind == EventMissileImpact {
+	switch e.kind {
+	case EventUnitDamaged, EventMissileImpact,
+		EventBuffApplied, EventBuffRefreshed:
+		// the buffed unit is the target (Dst); the applier is the Source.
 		return e.dst
 	}
 	return e.src
@@ -191,30 +235,49 @@ func (e Event) KillingUnit() Unit {
 // Source returns the attacker on a damage event, else the zero Unit.
 // JASS: GetAttacker, GetEventDamageSource
 func (e Event) Source() Unit {
-	if e.kind != EventUnitDamaged {
-		return Unit{}
+	switch e.kind {
+	case EventUnitDamaged,
+		EventAttackLaunch, EventAttackLanded,
+		EventBuffApplied, EventBuffRefreshed:
+		return Unit{id: e.src, g: e.g}
 	}
-	return Unit{id: e.src, g: e.g}
+	return Unit{}
 }
 
 // Target returns the order target on an order event, else the zero
 // Unit. JASS: GetOrderTargetUnit.
 // JASS: GetEventTargetUnit, GetOrderTargetUnit, GetSpellTargetUnit
 func (e Event) Target() Unit {
-	if e.kind != EventOrderIssued {
-		return Unit{}
+	switch e.kind {
+	case EventOrderIssued,
+		EventAbilityCast, EventAbilityEffect, EventAbilityChannelStart,
+		EventAbilityChannelStop, EventAbilityFinish,
+		EventAttackLaunch, EventAttackLanded:
+		return Unit{id: e.dst, g: e.g}
 	}
-	return Unit{id: e.dst, g: e.g}
+	return Unit{}
+}
+
+// Ability returns the ability ref on an ability-lifecycle event, else the zero
+// (invalid) ref. Valid for EventAbility* kinds, where Arg carries the ref.
+func (e Event) Ability() AbilityRef {
+	switch e.kind {
+	case EventAbilityCast, EventAbilityEffect, EventAbilityChannelStart,
+		EventAbilityChannelStop, EventAbilityFinish, EventAbilityStopped:
+		return AbilityRef(uint16(e.arg))
+	}
+	return 0
 }
 
 // Damage returns the damage amount on a damage event, else 0. JASS:
 // GetEventDamage.
 // JASS: GetEventDamage
 func (e Event) Damage() float64 {
-	if e.kind != EventUnitDamaged {
-		return 0
+	switch e.kind {
+	case EventUnitDamaged, EventAttackLanded:
+		return toFloat(fixed.F64(e.arg))
 	}
-	return toFloat(fixed.F64(e.arg))
+	return 0
 }
 
 // Region returns the region on a region enter/leave event, else the zero

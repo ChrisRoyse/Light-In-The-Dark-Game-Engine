@@ -369,3 +369,8 @@ exact   ForUnit
 exact   OwnedBy
 exact   InRegion
 exact   OwnerIs
+# ability/attack/buff lifecycle event surface (#470 — exposes #467/#468/#469)
+exact   Event.Ability
+exact   Game.OnAbilityCast
+exact   Game.OnAttack
+exact   Game.OnBuffApplied
