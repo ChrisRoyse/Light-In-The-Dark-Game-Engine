@@ -1,0 +1,9 @@
+# First Flame slice combat vocabulary (#482). Two attack types so the firebolt
+# burn (fire) and the soldiers' melee (normal) are distinct in the matrix; one
+# armor type. Coefficients are permille (1000 = 100%).
+attack-types = ["normal", "fire"]
+armor-types = ["unarmored"]
+
+[coefficients]
+normal = [1000]
+fire = [1000]

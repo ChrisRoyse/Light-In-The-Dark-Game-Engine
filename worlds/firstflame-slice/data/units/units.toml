@@ -1,0 +1,55 @@
+# First Flame slice unit roster (#482). A hero (carries firebolt, granted at
+# runtime via Unit_AddAbility) and a soldier with a melee weapon so units
+# auto-attack on acquisition — exercising the attack→damage-event path. Both
+# install through the api unit seam (units may carry attacks; firebolt is added
+# at runtime so there is no unit→ability ordering dependency at load).
+
+[[unit]]
+id = "hero"
+life = 200
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+model = "units/hfoo.glb"
+name = "Vigil Champion"
+[[unit.attack]]
+type = "normal"
+range = 120
+damage-base = 12
+dice = 1
+sides = 1
+cooldown = 1.2
+damage-point = 0.3
+backswing = 0.3
+delivery = "instant"
+targets-allowed = ["ground"]
+
+[[unit]]
+id = "soldier"
+life = 80
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 500
+model = "units/hfoo.glb"
+name = "Soldier"
+[[unit.attack]]
+type = "normal"
+range = 120
+damage-base = 6
+dice = 1
+sides = 1
+cooldown = 1.0
+damage-point = 0.3
+backswing = 0.3
+delivery = "instant"
+targets-allowed = ["ground"]

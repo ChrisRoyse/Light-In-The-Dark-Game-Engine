@@ -1,0 +1,15 @@
+# dev-sandbox example spell (#479). Firebolt's EFFECT-edge behavior is authored
+# NOT as a static effect list but as a bound trigger (#478): the `trigger` key
+# names the trigger that scripts/spell_firebolt.lua creates and binds. The whole
+# spell — cast event, target-is-enemy condition, and the damage + burn-buff +
+# VFX actions — lives in Lua, proving the ECA path is sufficient for a real
+# spell (ADR #452). Mutually exclusive with `[[ability.effects]]`.
+[[ability]]
+id = "firebolt"
+name = "Firebolt"
+mana-cost = 0
+cooldown = 1.0
+cast-point = 0.5
+backswing = 0.5
+cast-range = 500
+trigger = "firebolt"
