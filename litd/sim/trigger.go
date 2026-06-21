@@ -81,6 +81,10 @@ type TriggerStore struct {
 	slots []triggerSlot
 	free  []uint32
 	cap   int
+	// dirty is set by any structural change (create/destroy/add-event) and
+	// cleared when the derived trigger event index (#458) is rebuilt. It
+	// keeps the index a pure, lazily-reconstructed function of the slab.
+	dirty bool
 }
 
 // NewTriggerStore returns an empty store bounded to capCount slots.
@@ -115,12 +119,14 @@ func (s *TriggerStore) New() (TriggerID, bool) {
 		sl.cond = NoExpr
 		sl.events = sl.events[:0]   // generation was bumped at destroy
 		sl.actions = sl.actions[:0] // reuse backing arrays, no churn
+		s.dirty = true
 		return makeTriggerID(id, sl.gen), true
 	}
 	if len(s.slots) >= s.cap {
 		return NoTrigger, false
 	}
 	s.slots = append(s.slots, triggerSlot{gen: 1, alive: true, enabled: true, on: true, cond: NoExpr})
+	s.dirty = true
 	return makeTriggerID(uint32(len(s.slots)-1), 1), true
 }
 
@@ -160,6 +166,7 @@ func (s *TriggerStore) Destroy(t TriggerID) bool {
 		sl.gen = 1
 	}
 	s.free = append(s.free, t.Index())
+	s.dirty = true
 	return true
 }
 
@@ -223,6 +230,7 @@ func (s *TriggerStore) AddEvent(t TriggerID, ev EventReg) bool {
 		return false
 	}
 	sl.events = append(sl.events, ev)
+	s.dirty = true
 	return true
 }
 

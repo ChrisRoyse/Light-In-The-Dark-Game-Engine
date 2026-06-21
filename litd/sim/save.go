@@ -3599,6 +3599,9 @@ func applySave(d *decodedSave, w *World) {
 	// these slots resolve against it.
 	w.Triggers.slots = d.trigSlots
 	w.Triggers.free = d.trigFree
+	// the trigger event index (#458) is derived from the slab — mark it
+	// dirty so the next dispatch rebuilds it from the restored slots.
+	w.Triggers.dirty = true
 
 	// boolexpr condition arena (#457): swap in the decoded nodes.
 	w.exprArena = d.exprNodes

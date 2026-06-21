@@ -363,6 +363,10 @@ type World struct {
 	// boolexpr condition arena (#457): flat And/Or/Not/Cond nodes indexed
 	// by ExprRef. Cold-path authoring; hashes + serializes.
 	exprArena []exprNode
+	// trigger event index (#458): inverted kind->triggers dispatch index,
+	// derived from the trigger slab (rebuilt lazily on the store's dirty
+	// bit). Not serialized — reconstructed at load.
+	trigIndex triggerIndex
 	// DebugExprImpure, when set (debug/test only), fires loudly if a
 	// condition leaf returns different results on a double-eval — a purity
 	// violation (execution-model.md §4). nil in release (no double-eval).
