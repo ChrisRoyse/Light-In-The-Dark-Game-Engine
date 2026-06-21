@@ -184,7 +184,7 @@ func TestFormulaOverrideSaveLoadFSV(t *testing.T) {
 // (R-GC-1), base and overridden.
 func TestFormulaZeroAllocFSV(t *testing.T) {
 	w, victim, attacker := formulaWorld(t, 5)
-	run := func() { _ = w.runDamageFormula(attacker, victim, 0, 0, 5, 100*fixed.One) }
+	run := func() { _ = w.runDamageFormula(attacker, victim, 0, 0, 5, 0, 100*fixed.One) }
 	run() // warm
 	if a := testing.AllocsPerRun(1000, run); a != 0 {
 		t.Fatalf("base pipeline allocs = %v, want 0", a)

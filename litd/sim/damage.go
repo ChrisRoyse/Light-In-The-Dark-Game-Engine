@@ -255,7 +255,7 @@ func (w *World) damageApplySystem() {
 		// so the golden trace is stable.
 		post := w.runDamageFormula(
 			p.Source, p.Target, p.AttackType, w.Healths.ArmorType[hr],
-			int(w.Healths.ArmorValue[hr]), p.Amount,
+			int(w.Healths.ArmorValue[hr]), p.Flags, p.Amount,
 		)
 
 		if cr := w.Combats.Row(p.Target); cr != -1 {

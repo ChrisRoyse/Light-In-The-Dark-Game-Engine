@@ -40,9 +40,23 @@ type DamageCtx struct {
 	AttackType     uint8      // matrix row (validated in range before the pipeline)
 	ArmorType      uint8      // matrix column (validated in range)
 	ArmorValue     int        // the target's base armor value (pre-buff)
+	Flags          uint8      // packet flags (DamageFromWeapon, …) — read-only context
 	Raw            fixed.F64  // the original queued amount (stages should treat as read-only)
 	Amount         fixed.F64  // running value; final value = applied damage
 	w              *World     // world access for the base stages
+}
+
+// ApplyCoefficient re-derives Amount from Raw using the current (possibly
+// mutated) AttackType/ArmorType against the bound matrix — the hook a stage
+// uses after changing the attack type mid-pipeline so the new coefficient
+// lands. Out-of-range indices leave Amount untouched (the upstream drop-check
+// already guarantees the original indices are valid).
+func (c *DamageCtx) ApplyCoefficient() {
+	w := c.w
+	if w.coeff == nil || int(c.AttackType) >= len(w.coeff) || int(c.ArmorType) >= len(w.coeff[c.AttackType]) {
+		return
+	}
+	c.Amount = c.Raw.Mul(fixed.FromInt(w.coeff[c.AttackType][c.ArmorType])).Div(fixed.FromInt(1000))
 }
 
 // DamageStage is one named step in the damage-formula pipeline. Name is the
@@ -172,13 +186,14 @@ func stageClamp(c *DamageCtx) {
 // runDamageFormula executes the pipeline over the reused context and returns
 // the applied amount, floored at 0 (a custom formula that omits clamp or goes
 // negative is still fail-closed — never a heal).
-func (w *World) runDamageFormula(src, dst EntityID, attackType, armorType uint8, armorValue int, raw fixed.F64) fixed.F64 {
+func (w *World) runDamageFormula(src, dst EntityID, attackType, armorType uint8, armorValue int, flags uint8, raw fixed.F64) fixed.F64 {
 	c := &w.dmgCtx
 	c.Source = src
 	c.Target = dst
 	c.AttackType = attackType
 	c.ArmorType = armorType
 	c.ArmorValue = armorValue
+	c.Flags = flags
 	c.Raw = raw
 	c.Amount = raw
 	c.w = w

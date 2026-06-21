@@ -173,6 +173,70 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		L.Push(pushHandle(L, argDamageEvent(L, 1).Source()))
 		return 1
 	}))
+	// Full read/write DamageEvent (#475): the stage-mode fields beyond amount —
+	// raw amount, attack/armor type (by name), flags — plus the coefficient
+	// re-apply. These are live only inside a ReplaceDamageStage callback; in the
+	// legacy OnDamage hook the type/raw/flags read empty and the type setters
+	// return false (fail-closed).
+	L.SetGlobal("DamageEvent_RawAmount", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LNumber(argDamageEvent(L, 1).RawAmount()))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_AttackType", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(argDamageEvent(L, 1).AttackType()))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_ArmorType", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(argDamageEvent(L, 1).ArmorType()))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_Flags", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LNumber(argDamageEvent(L, 1).Flags()))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_SetAttackType", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(argDamageEvent(L, 1).SetAttackType(L.CheckString(2))))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_SetArmorType", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(argDamageEvent(L, 1).SetArmorType(L.CheckString(2))))
+		return 1
+	}))
+	L.SetGlobal("DamageEvent_ApplyCoefficient", L.NewFunction(func(L *lua.LState) int {
+		argDamageEvent(L, 1).ApplyCoefficient()
+		return 0
+	}))
+
+	// Programmable combat (#475): a script owns a named stage of the damage
+	// pipeline. The Lua fn runs synchronously mid-combat-phase with the live
+	// DamageEvent as a userdata; an error in it routes through OnScriptError
+	// (scheduler-aware) and never unwinds the sim. The stage NAME is the
+	// override identity that hashes + saves — on load the script re-registers
+	// the same name (LoadState validates), so a saved match reproduces.
+	L.SetGlobal("ReplaceDamageStage", L.NewFunction(func(L *lua.LState) int {
+		name := L.CheckString(1)
+		fn := L.CheckFunction(2)
+		err := g.ReplaceDamageStage(name, func(de *api.DamageEvent) {
+			ud := L.NewUserData()
+			ud.Value = de
+			if cerr := L.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true}, ud); cerr != nil {
+				if s := getScheduler(L); s != nil {
+					s.reportError(cerr)
+				}
+			}
+		})
+		if err != nil {
+			L.RaiseError("ReplaceDamageStage: %v", err)
+		}
+		return 0
+	}))
+	// SetArmorReduction(k) sets the armor-reduction coefficient (#474/#475).
+	L.SetGlobal("SetArmorReduction", L.NewFunction(func(L *lua.LState) int {
+		if err := g.SetArmorReduction(float64(L.CheckNumber(1))); err != nil {
+			L.RaiseError("SetArmorReduction: %v", err)
+		}
+		return 0
+	}))
 }
 
 // callEventHandler invokes the Lua handler fn with the firing Event as a

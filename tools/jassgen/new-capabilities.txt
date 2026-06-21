@@ -378,3 +378,14 @@ exact   Game.OnBuffApplied
 exact   Game.DefineDamageTypes
 exact   Game.AttackTypeID
 exact   Game.ArmorTypeID
+# programmable combat: damage-formula setters + full read/write DamageEvent (#475)
+exact   Game.ReplaceDamageStage
+exact   Game.SetDamageFormula
+exact   Game.SetArmorReduction
+exact   DamageEvent.RawAmount
+exact   DamageEvent.AttackType
+exact   DamageEvent.ArmorType
+exact   DamageEvent.SetAttackType
+exact   DamageEvent.SetArmorType
+exact   DamageEvent.Flags
+exact   DamageEvent.ApplyCoefficient
