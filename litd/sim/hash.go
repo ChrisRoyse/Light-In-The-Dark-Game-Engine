@@ -100,6 +100,12 @@ var HashSystems = []string{
 	// invuln/blocks/footprint). Creation order; empty default leaves the zero
 	// contribution. Dead+blocking transitions also move the grid sub-hash.
 	"destructables",
+	// appended by #455: ECA handler-identity registry — the count and the
+	// stable condition/action name table in ref order (ADR #451, R-SIM-6).
+	// Registration is setup-only, so this contributes a constant for a given
+	// script set; including it binds the trigger graph's identity into the
+	// state hash so a divergent registration is caught here, not only at load.
+	"handlers",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -742,6 +748,9 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 
 	hde := h.next() // destructables (#229): killable/pathing-blocking widget rows
 	w.Destructables.HashInto(hde)
+
+	hhreg := h.next() // handlers (#455): ECA handler-identity registry (name table)
+	w.hashHandlerReg(hhreg)
 
 	return reg.Sum(dst)
 }

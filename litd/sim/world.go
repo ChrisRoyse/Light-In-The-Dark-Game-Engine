@@ -350,6 +350,10 @@ type World struct {
 	eventLogErr error
 	handlers    map[HandlerID]EventHandler // registry: lookup only, never iterated
 	subs        []kindSubs                 // kind-sorted, registration-ordered lists
+	// ECA handler-identity registry (#455): stable name <-> HandlerRef <->
+	// TriggerHandler. Conditions/actions are stored by ref so the trigger
+	// graph is serializable data (ADR #451). Cold-path registration only.
+	handlerReg handlerRegistry
 	pathReqs    []pathRequest
 }
 
@@ -415,6 +419,7 @@ func NewWorld(requested Caps) *World {
 		orderPool:          make([]orderEntry, caps.OrderQueueEntries),
 		events:             make([]Event, caps.PendingEvents),
 		handlers:           make(map[HandlerID]EventHandler),
+		handlerReg:         newHandlerRegistry(),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),

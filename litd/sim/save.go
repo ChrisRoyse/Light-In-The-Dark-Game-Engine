@@ -43,6 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v29: ECA handler-identity registry name table appended after
+// destructables: the stable condition/action names in ref order, used as a
+// load-time manifest to validate the re-registered registry (#455, ADR #451).
 // v27: AI hook state appended after fog overrides: per-player difficulty,
 // paused/attached flags, and the integer-pair command stack (#257).
 // v26: fog-of-war overrides appended after upkeep: the global fog/mask
@@ -98,7 +101,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 28
+const SaveFormatVersion uint32 = 29
 
 // ---- little-endian writer / reader ----
 
@@ -896,6 +899,15 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(de.Entity[i])
 	}
 
+	// ECA handler-identity registry (#455, v29): the stable name table in
+	// ref order. This is a load-time manifest, not mutable match state — a
+	// fresh world re-registers the same names in the same order and must
+	// reproduce this exact table (validateSave fails closed otherwise).
+	s.u32(uint32(len(w.handlerReg.names)))
+	for _, name := range w.handlerReg.names {
+		s.str(name)
+	}
+
 	return s.err
 }
 
@@ -1235,6 +1247,10 @@ type decodedSave struct {
 	deBlock []bool
 	deFoot  []uint8
 	deE     []EntityID
+
+	// ECA handler-identity registry (#455, v29): stable name table in ref
+	// order, validated against the re-registered registry at apply time.
+	handlerNames []string
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2446,6 +2462,25 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.deFoot[i] = r.u8()
 		d.deE[i] = r.ent()
 	}
+
+	// ECA handler-identity registry (#455, v29): the stable name table in
+	// ref order, bounded so a corrupt save cannot drive an unbounded alloc.
+	r.what = "handlers"
+	hrN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if hrN > maxHandlerNames {
+		return fmt.Errorf("sim: save: handler-registry name count %d exceeds limit %d", hrN, maxHandlerNames)
+	}
+	d.handlerNames = make([]string, hrN)
+	for i := range d.handlerNames {
+		name, err := r.str(maxHandlerNameLen)
+		if err != nil {
+			return err
+		}
+		d.handlerNames[i] = name
+	}
 	return r.err
 }
 
@@ -2850,6 +2885,20 @@ func validateSave(d *decodedSave, w *World) error {
 			if _, ok := w.handlers[id]; !ok {
 				return fmt.Errorf("sim: save: subscription for kind %d references unregistered HandlerID %d", d.subs[i].kind, id)
 			}
+		}
+	}
+
+	// ECA handler-identity registry (#455): the loaded world must already
+	// have re-registered the identical name table (same count, same names in
+	// the same ref order) — that is the invariant making the trigger graph
+	// survive a runtime swap. Any divergence means a stored HandlerRef would
+	// resolve to the wrong (or no) function, so fail closed here.
+	if len(d.handlerNames) != len(w.handlerReg.names) {
+		return fmt.Errorf("sim: save: handler registry has %d names but this world re-registered %d — registration order/script set differs", len(d.handlerNames), len(w.handlerReg.names))
+	}
+	for ref, name := range d.handlerNames {
+		if w.handlerReg.names[ref] != name {
+			return fmt.Errorf("sim: save: handler ref %d is %q in the save but %q in this world — re-registration diverged", ref+1, name, w.handlerReg.names[ref])
 		}
 	}
 

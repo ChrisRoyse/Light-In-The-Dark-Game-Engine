@@ -157,7 +157,12 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // goldenDetLua is the committed 10k-tick state hash of worlds/determinism-lua
 // (#271 G5.7). Re-derive from the TestLoadWorldDeterminismLuaFSV log after an
 // intentional sim/Lua change, with justification (SimVersion discipline).
-const goldenDetLua uint64 = 0xbf6367e3b9e444f4
+//
+// Bumped 0xbf6367e3b9e444f4 → 0xb79ac7578742efdc (2026-06-20, #455): the ECA
+// handler-identity registry appends a "handlers" system to HashSystems (ADR
+// #451, R-SIM-6), shifting every World.HashState TopHash by a constant. Not a
+// sim-outcome change — run1==run2 stays identical (deterministic).
+const goldenDetLua uint64 = 0xb79ac7578742efdc
 
 // TestLoadWorldPlacementSpawnsEntities — #403: a world ships a placement table
 // (data/placement) and the loader spawns those entities after the type tables

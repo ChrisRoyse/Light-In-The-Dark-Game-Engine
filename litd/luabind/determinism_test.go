@@ -38,7 +38,15 @@ import (
 // u1's Y. That legitimately changes u1's final position, hence the hash. Not a
 // regression — a coverage increase; run-to-run and GOMAXPROCS edges stay
 // identical, the injected-divergence edge still has teeth.
-const goldenLuaDeterminism10k = uint64(0x1a07f91892d70515)
+//
+// Bumped 0x1a07f91892d70515 → 0x2ca39aa855b38e89 (2026-06-20, #455): the ECA
+// handler-identity registry adds a "handlers" system to HashSystems (ADR #451,
+// R-SIM-6), so every World.HashState TopHash shifts by a constant — the registry
+// is empty in this scenario, so its sub-hash is constant, but the system name is
+// bound into the top hash regardless. Not a sim-outcome change: run-to-run and
+// GOMAXPROCS edges stay identical (run1==run2==p1==p8), and the injected-
+// divergence edge still has teeth.
+const goldenLuaDeterminism10k = uint64(0x2ca39aa855b38e89)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

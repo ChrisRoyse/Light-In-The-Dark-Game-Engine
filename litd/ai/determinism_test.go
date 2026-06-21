@@ -275,7 +275,12 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 
 // dGolden is the committed 10k-tick match hash (see TestAIDeterminism10k log to
 // re-derive after an intentional change).
-const dGolden uint64 = 0x6ad13821a8664860
+//
+// Bumped 0x6ad13821a8664860 → 0x67e36f8180b3dabb (2026-06-20, #455): the ECA
+// handler-identity registry appends a "handlers" system to HashSystems (ADR
+// #451, R-SIM-6), shifting every World.HashState TopHash by a constant. Not a
+// sim-outcome change — run1==run2 stays identical (deterministic).
+const dGolden uint64 = 0x67e36f8180b3dabb
 
 // TestAIDeterminism10k — the gate. Two internal 10k-tick runs are bit-identical
 // and (once the golden is committed) equal the golden hash. FSV runs this with
