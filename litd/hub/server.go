@@ -28,7 +28,10 @@ type Server struct {
 	dir           string
 	engineVersion string
 	blocklistPath string
-	cur           atomic.Pointer[snapshot]
+	// AllowPublish enables the POST /publish intake endpoint (#176). Off by
+	// default: the hub serves read-only until an operator opts in.
+	AllowPublish bool
+	cur          atomic.Pointer[snapshot]
 }
 
 // NewServer returns a hub over dir. engineVersion is forwarded to verification
@@ -68,8 +71,20 @@ func (s *Server) Reindex() error {
 
 // ServeHTTP routes GET /index.json (rebuilt per request so a newly added archive
 // appears on the next fetch) and GET /worlds/<hash>.litdworld (content-addressed
-// download). Everything else is 404. Only GET/HEAD are accepted.
+// download). POST /publish runs the intake pipeline, but only when publish is
+// explicitly enabled (AllowPublish) — the hub is read-only by default. Everything
+// else is 404.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Publish (write) is the one POST route, gated by AllowPublish; without it the
+	// hub is read-only and a POST is a plain 405.
+	if r.Method == http.MethodPost && r.URL.Path == "/publish" {
+		if !s.AllowPublish {
+			http.Error(w, "publish disabled on this hub", http.StatusForbidden)
+			return
+		}
+		s.servePublish(w, r)
+		return
+	}
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
