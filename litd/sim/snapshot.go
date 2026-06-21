@@ -62,6 +62,7 @@ const (
 	RenderUnitAttack   uint8 = 5 // Ent = attacker, Data = unit-type id (#313 attack-swing cue)
 	RenderSpellCue     uint8 = 6 // Ent = cued unit, Data = unit-type id (#479 script-emitted spell VFX cue)
 	RenderUnitOrderAck uint8 = 7 // Ent = ordered unit, Data = unit-type id (#313 order-ack cue; render filters to local player)
+	RenderUnderAttack  uint8 = 8 // Ent = damaged unit, Data = unit-type id (#313 under-attack stinger; sim-throttled per defender, render filters to local player)
 )
 
 // Snapshot is one published frame of sim state plus that tick's

@@ -143,6 +143,8 @@ func renderCategory(k api.RenderEventKind) (audio.SoundCategory, bool) {
 		return audio.CatAttack, true
 	case api.RenderUnitOrderAck:
 		return audio.CatOrderAck, true
+	case api.RenderUnitUnderAttack:
+		return audio.CatUnderAttack, true
 	}
 	return 0, false
 }

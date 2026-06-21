@@ -22,6 +22,13 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/prng"
 )
 
+// UnderAttackWarnTicks is the minimum gap, in sim ticks, between a defender's
+// under-attack warning render cues (#313): at most one stinger per unit per this
+// window, so sustained fire raises one warning, not a per-hit machine-gun. ~3 s
+// at 20 t/s. Used only to gate a NON-HASHING render cue (R-SIM-6 / #449) — it
+// never affects sim state.
+const UnderAttackWarnTicks uint32 = 60
+
 // DamagePacket is the §3.4 deferred-damage value struct — the
 // element of the phase-5 apply buffer and the rolled-at-launch
 // payload of degenerate missiles (#158).
@@ -277,6 +284,21 @@ func (w *World) damageApplySystem() {
 		)
 
 		if cr := w.Combats.Row(p.Target); cr != -1 {
+			// Under-attack warning stinger (#313): a non-hashing render cue for the
+			// DEFENDER, throttled HERE at the sim site to once per
+			// UnderAttackWarnTicks per unit. Throttling at emission (not only
+			// render-side) keeps a sustained beating from flooding the fixed
+			// render-event buffer or starving death/attack cues. The decision reads
+			// only state already maintained per damage (LastAttacker == 0 ⇒ first
+			// hit ever; LastDamagedTick ⇒ last hit) and writes nothing new to the
+			// hashed sim — the cue rides the non-hashing channel, so an audio-on
+			// game still hashes identically to an audio-off one (R-SIM-6 / #449).
+			firstHit := w.Combats.LastAttacker[cr] == 0
+			if firstHit || w.tick-w.Combats.LastDamagedTick[cr] >= UnderAttackWarnTicks {
+				if ur := w.UnitTypes.Row(p.Target); ur >= 0 {
+					w.EmitRenderEvent(RenderUnderAttack, p.Target, w.UnitTypes.TypeID[ur])
+				}
+			}
 			w.Combats.LastAttacker[cr] = p.Source
 			w.Combats.LastDamagedTick[cr] = w.tick
 		}

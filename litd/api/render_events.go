@@ -27,6 +27,11 @@ const (
 	// RenderUnitOrderAck — a unit received an explicit order this tick (#313).
 	// UnitType + Owner valid; render filters to the local player's units.
 	RenderUnitOrderAck
+	// RenderUnitUnderAttack — a unit took incoming damage this tick and is due a
+	// warning stinger (#313). Sim-throttled to one per defender per
+	// sim.UnderAttackWarnTicks. UnitType + Owner + Pos valid; render filters to
+	// the local player's units (you hear your own units warn, not the enemy's).
+	RenderUnitUnderAttack
 )
 
 // RenderEvent is a value-type presentation cue for render-side consumers.
@@ -75,6 +80,8 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 			kind = RenderSpellCue
 		case sim.RenderUnitOrderAck:
 			kind = RenderUnitOrderAck
+		case sim.RenderUnderAttack:
+			kind = RenderUnitUnderAttack
 		default:
 			continue
 		}
