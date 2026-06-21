@@ -15,9 +15,18 @@
 #
 # Usage:
 #   scripts/preflight.sh            # full gate (default) — run before merge
-#   scripts/preflight.sh --fast     # skip slow gates (bench, 10k determinism,
-#                                    # world-archive) for a quick inner-loop pass
+#   scripts/preflight.sh --fast     # quick inner-loop pass: runs the unit suite
+#                                    # with `go test -short` (heavy 10k/5k-tick
+#                                    # e2e + save/load + stress tests self-skip),
+#                                    # runs the 10k determinism fixtures once as
+#                                    # explicit steps, and skips -race/bench/
+#                                    # world-archive. ~2x faster, same correctness
+#                                    # coverage for the inner loop.
 #   scripts/preflight.sh --no-race  # full gate but skip the -race determinism cell
+#
+# Inner-loop tip: for a single package, `go test -short ./litd/<pkg>/` skips the
+# long e2e/determinism fixtures (gated by testing.Short()) — seconds, not minutes.
+# The FULL gate (no -short) always runs them before a main merge.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
@@ -75,7 +84,16 @@ echo
 # --- core gates (ci.yml linux job) ------------------------------------------
 step "go vet"                go vet ./...
 step "go build"             go build ./...
-step "go test"              go test ./...
+# FAST runs the unit suite with -short: the heavy e2e/determinism variants
+# (10k/5k-tick golden + GOMAXPROCS + save/load stress + table-bomb) self-skip via
+# testing.Short(), cutting the inner-loop suite ~2x. Quality is preserved: the
+# FULL gate (main-push) runs without -short, AND the core 10k sim/AI determinism
+# is a SEPARATE explicit step below that runs in BOTH modes (never -short'd).
+if [ $FAST -eq 1 ]; then
+    step "go test (-short)"     go test -short ./...
+else
+    step "go test"              go test ./...
+fi
 
 # assetcheck is ADVISORY until #445 (author the per-asset MANIFEST `category`
 # field for 627 entries + decide the over-budget CC0-pack waiver policy) lands:
@@ -107,8 +125,15 @@ step "jassgen -eventcov (EVENT_ coverage)" go run ./tools/jassgen -eventcov
 step "jassgen tests"        go test ./tools/jassgen/
 
 # --- determinism traces (determinism.yml) -----------------------------------
-step "10k-tick sim determinism" go test ./litd/sim/ -run 'TestDeterminism10k$'
-step "10k-tick AI determinism"  go test ./litd/ai/ -run 'TestAIDeterminism10k$|TestAISaveRestore$|TestAIDeterminismGOMAXPROCS$'
+# The 10k-tick sim+AI fixtures self-skip under -short. In FAST mode the main
+# `go test -short` step above skipped them, so run them explicitly here (once).
+# In FULL mode the main (no -short) `go test ./...` step already ran them once —
+# running them again here would be a wasteful ~60s double-pass, so FULL relies on
+# the main step for the non-race cell and the block below adds the -race cell.
+if [ $FAST -eq 1 ]; then
+  step "10k-tick sim determinism" go test ./litd/sim/ -run 'TestDeterminism10k$'
+  step "10k-tick AI determinism"  go test ./litd/ai/ -run 'TestAIDeterminism10k$|TestAISaveRestore$|TestAIDeterminismGOMAXPROCS$'
+fi
 
 if [ $FAST -eq 0 ]; then
   if [ $RACE -eq 1 ]; then

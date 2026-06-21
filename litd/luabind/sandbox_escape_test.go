@@ -227,6 +227,9 @@ func TestSandboxQuotaDodgePcall(t *testing.T) {
 // (the non-string variant). Appending forever must trip the memory budget, not
 // OOM the host.
 func TestSandboxTableBomb(t *testing.T) {
+	if testing.Short() {
+		t.Skip("short: skipping the ~1.3s budget-exhaustion stress test (runs in the full gate)")
+	}
 	i := luabind.NewSandbox(luabind.SandboxOptions{InstructionBudget: 50_000_000, MemoryBudget: 1 << 20})
 	defer i.Close()
 	_, err := i.Eval(`local t = {}; local k = 1; while true do t[k] = k; k = k + 1 end`)

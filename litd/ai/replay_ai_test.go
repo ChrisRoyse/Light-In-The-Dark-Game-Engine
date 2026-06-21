@@ -110,6 +110,9 @@ func applyAILog(w *sim.World, tick uint32, log []aiCmd, next *int) {
 }
 
 func TestAIDisabledReplayFSV(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AI-disabled replay reproduction skipped in -short (runs in the full gate)")
+	}
 	const ticks = 2000
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)

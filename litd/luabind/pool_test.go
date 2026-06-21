@@ -73,7 +73,11 @@ func runPoolScenario(t *testing.T, i *Interp, g *api.Game) uint64 {
 	if err := i.L.DoString(poolScenarioSrc); err != nil {
 		t.Fatalf("scenario script: %v", err)
 	}
-	g.Advance(poolScenarioTicks)
+	ticks := poolScenarioTicks
+	if testing.Short() {
+		ticks = 400 // parity (recycled==fresh) + teeth (leaky!=fresh) hold at any tick count
+	}
+	g.Advance(ticks)
 	return g.StateHash()
 }
 

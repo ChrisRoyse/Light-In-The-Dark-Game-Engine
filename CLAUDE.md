@@ -48,8 +48,17 @@ go build -o bin/firstlight ./cmd/firstlight # M0.5 demo
 ```bash
 go vet ./...
 go test ./...
+go test -short ./...    # inner-loop: heavy 10k/5k-tick e2e + determinism + stress
+                        # tests self-skip via testing.Short() (~2x faster). The
+                        # FULL preflight gate always runs them; --fast runs the
+                        # 10k determinism fixtures once as explicit steps.
 ./bin/firstlight -autotest -shot artifacts/firstlight-autotest.png
 ```
+
+New long-running tests (multi-second e2e, save/load, 10k-tick, stress) MUST guard
+with `if testing.Short() { t.Skip(...) }` so the inner loop stays fast — and if it
+is a determinism fixture, add it to the explicit determinism step in
+`scripts/preflight.sh` so the gate still runs it.
 
 ## Pre-merge gate (no CI — runs locally)
 

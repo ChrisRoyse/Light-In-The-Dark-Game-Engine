@@ -294,6 +294,9 @@ const dGolden uint64 = 0x60d4d3e1e67b0acd
 // and (once the golden is committed) equal the golden hash. FSV runs this with
 // -count=100 to confirm 100 identical hashes.
 func TestAIDeterminism10k(t *testing.T) {
+	if testing.Short() {
+		t.Skip("10k-tick AI fixture skipped in -short (runs as the explicit determinism gate step)")
+	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
 
@@ -318,6 +321,9 @@ func TestAIDeterminism10k(t *testing.T) {
 // AI domain) at tick 5000 into a fresh world/domain, run to 10000, and assert
 // the final hash equals the unbroken 10k run. Also probes tick-1 and tick-9999.
 func TestAISaveRestore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("full 10k AI save/restore skipped in -short (runs as the explicit determinism gate step)")
+	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
 
@@ -379,6 +385,9 @@ func TestAISaveRestore(t *testing.T) {
 // TestAIDeterminismGOMAXPROCS — the deterministic single-goroutine sim yields the
 // same hash regardless of GOMAXPROCS.
 func TestAIDeterminismGOMAXPROCS(t *testing.T) {
+	if testing.Short() {
+		t.Skip("GOMAXPROCS determinism edge skipped in -short (runs as the explicit determinism gate step)")
+	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
 	run := func() uint64 {
@@ -403,6 +412,9 @@ func TestAIDeterminismGOMAXPROCS(t *testing.T) {
 // for the spec's "inject an unordered map iteration" probe — it proves the hash
 // is sensitive to a one-unit state difference.)
 func TestAIDeterminismHasTeeth(t *testing.T) {
+	if testing.Short() {
+		t.Skip("determinism-teeth probe skipped in -short (runs in the full gate)")
+	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
 	base := func(shift int32) uint64 {
@@ -428,6 +440,9 @@ func TestAIDeterminismHasTeeth(t *testing.T) {
 // with no-op controllers no soldiers are ever produced, so the match state
 // diverges only through what the AI would have commanded.
 func TestAIIsolationProbe(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AI-isolation probe skipped in -short (runs in the full gate)")
+	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
 
