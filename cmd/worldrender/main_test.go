@@ -11,7 +11,10 @@ import (
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
+	"github.com/g3n/engine/light"
+	"github.com/g3n/engine/math32"
 )
 
 func TestParseBeatsSortsAndFilters(t *testing.T) {
@@ -78,4 +81,55 @@ func TestAutoFitTransformMapsUnitsFSV(t *testing.T) {
 		t.Fatalf("leftmost world x=%.2f (want <0), rightmost x=%.2f (want >0)", leftX, rightX)
 	}
 	t.Logf("FSV AFTER: leftmost->%.2f, rightmost->%.2f (straddle origin, on-plane)", leftX, rightX)
+}
+
+// TestFlickerDimDrivenByPhaseFSV proves the #500 wiring GL-free: the harness's
+// per-beat dim follows the world's own flicker:phase storage, read from the live
+// sim (SoT), not a mock. The render loop needs GL (verified manually via the
+// binary + screenshot luminance), but the storage-read → SetFlickerDim decision
+// is pure and is what would regress.
+func TestFlickerDimDrivenByPhaseFSV(t *testing.T) {
+	world := filepath.Join("..", "..", "worlds", "flicker-cycle")
+	host, err := worldhost.Load(world, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("worldhost.Load(flicker-cycle): %v", err)
+	}
+	defer host.Close()
+
+	ambient := light.NewAmbient(&math32.Color{}, 0)
+	sun := light.NewDirectional(&math32.Color{}, 0)
+	h := &harness{
+		g:         host.Game,
+		tod:       12,
+		day:       litrender.NewDayNight(ambient, sun),
+		dim:       beaconKey{cat: "flicker", key: "phase", set: true},
+		dimFactor: 0.30,
+	}
+
+	// flicker-cycle cycle: CYCLE=100, DIM when tick%100 >= 60. So 30 is bright,
+	// 70 is dim, 130 is bright again — drive the real sim and read its phase.
+	type beat struct {
+		tick      int
+		wantPhase int
+		wantDim   float32
+	}
+	for _, b := range []beat{{30, 0, 1.0}, {70, 1, 0.30}, {130, 0, 1.0}} {
+		h.g.Advance(b.tick - int(h.g.Tick()))
+		ph, _ := h.g.Storage().GetInt("flicker", "phase")
+		if ph != b.wantPhase {
+			t.Fatalf("tick %d: flicker:phase = %d, want %d", b.tick, ph, b.wantPhase)
+		}
+		h.updateFlickerDim()
+		if got := h.day.FlickerDim(); absDelta(got, b.wantDim) > 1e-6 {
+			t.Fatalf("tick %d (phase %d): FlickerDim = %.3f, want %.3f", b.tick, ph, got, b.wantDim)
+		}
+		t.Logf("FSV tick=%d phase=%d FlickerDim=%.2f ✓", b.tick, ph, h.day.FlickerDim())
+	}
+}
+
+func absDelta(a, b float32) float32 {
+	if a > b {
+		return a - b
+	}
+	return b - a
 }

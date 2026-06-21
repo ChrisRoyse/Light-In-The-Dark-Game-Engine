@@ -1,0 +1,20 @@
+# dimpwr — the Flicker's dim-phase empowerment (#170/#500). The flicker-cycle
+# script (main.lua) applies this to every unit during the DIM phase and strips it
+# on return to BRIGHT. It is a short-lived (one dim phase) attack-damage boost: the
+# Veil's beacon pulse makes its defenders stronger while the light is low. The
+# narrowed sight that also accompanies dim flows through unit DATA fields, not a
+# buff, by design (see main.lua header) — this buff is the scriptable half.
+#
+# This data table is what makes worlds/flicker-cycle loadable through
+# litd/worldhost (Game_BuffType("dimpwr") resolves at load); the catalog unit test
+# builds the same game programmatically and only executes main.lua, so it does not
+# read this directory.
+[[buff]]
+id = "dimpwr"
+name = "Dim Empowerment"
+duration = 2.0          # one DIM_TICKS window (40 ticks @ 20 tps); refreshed each dim tick
+stacking = "refresh"
+dispellable = false
+[[buff.mod]]
+stat = "attack-damage"
+permille = 1300         # +30% attack damage while the light is dim

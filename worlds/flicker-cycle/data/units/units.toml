@@ -1,0 +1,18 @@
+# flicker-cycle unit roster. The prototype script (main.lua) empowers existing
+# units during the dim phase; it spawns none itself, so under litd/worldhost the
+# rendered scene is the lit ground plane (the ambient/sun dim is the #500 render
+# evidence). This single type exists so the world's unit table is valid and so a
+# host that does spawn a unit has the Veil defender to empower. No attack is
+# declared (so the world needs no combat matrix) — dimpwr's attack-damage mod is
+# a no-op marker on this prototype defender.
+[[unit]]
+id = "defender"
+life = 120
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+name = "Veil Defender"

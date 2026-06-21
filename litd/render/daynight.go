@@ -40,12 +40,39 @@ type DayNight struct {
 
 	ambientColor math32.Color
 	sunColor     math32.Color
+
+	// dimSub is the amount subtracted from a full (1.0) light scale by the
+	// Flicker's dim phase (#500/#170), so the zero value means "undimmed" — a
+	// DayNight built without NewDayNight, or never told to dim, renders at full
+	// curve. The effective multiplier is 1-dimSub, applied on top of the
+	// day/night curve and re-applied every Update so it persists across frames.
+	// The sun keeps its DayNightSunFloor after dimming so the scene stays
+	// readable even at full dim.
+	dimSub float32
 }
 
 // NewDayNight creates a day/night driver for existing G3N light nodes.
 func NewDayNight(ambient *light.Ambient, sun *light.Directional) *DayNight {
 	return &DayNight{Ambient: ambient, Sun: sun}
 }
+
+// SetFlickerDim sets the Flicker dim multiplier (#500) applied on top of the
+// day/night curve. factor clamps to [0,1]; 1 restores the undimmed curve, 0 is
+// full dim (still floored at DayNightSunFloor for the sun). Takes effect on the
+// next Update (callers Update every frame). This is how a running game darkens
+// its ambient + sun when the beacon pulse enters its dim phase, without
+// disturbing the time-of-day curve itself.
+func (d *DayNight) SetFlickerDim(factor float32) {
+	if factor < 0 {
+		factor = 0
+	} else if factor > 1 {
+		factor = 1
+	}
+	d.dimSub = 1 - factor
+}
+
+// FlickerDim reports the current dim multiplier (1 when undimmed).
+func (d *DayNight) FlickerDim() float32 { return 1 - d.dimSub }
 
 // Update applies the day/night curve at todHours. The input wraps onto
 // [0,24), so 24.0 is continuous with midnight.
@@ -91,8 +118,11 @@ func applyDayNight(d *DayNight, a, b dayNightKey, t float32) {
 		lerp32(a.sun.G, b.sun.G, t),
 		lerp32(a.sun.B, b.sun.B, t),
 	)
-	ambientIntensity := lerp32(a.ambientIntensity, b.ambientIntensity, t)
-	sunIntensity := math32.Max(DayNightSunFloor, lerp32(a.sunIntensity, b.sunIntensity, t))
+	dim := d.FlickerDim()
+	ambientIntensity := lerp32(a.ambientIntensity, b.ambientIntensity, t) * dim
+	// Dim the sun too, then re-floor so a dim flicker phase never blacks out the
+	// scene below the night-readability minimum.
+	sunIntensity := math32.Max(DayNightSunFloor, lerp32(a.sunIntensity, b.sunIntensity, t)*dim)
 	azimuth := lerp32(a.azimuth, b.azimuth, t)
 	elevation := lerp32(a.elevation, b.elevation, t)
 

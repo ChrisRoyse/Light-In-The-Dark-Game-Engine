@@ -1,0 +1,8 @@
+# Minimal combat vocabulary. The flicker-cycle prototype does no combat (its
+# defender has no attack), but litd/worldhost requires exactly one combat table,
+# so this declares the single normal/unarmored pair at 100%.
+attack-types = ["normal"]
+armor-types = ["unarmored"]
+
+[coefficients]
+normal = [1000]

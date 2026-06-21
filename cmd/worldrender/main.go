@@ -17,6 +17,8 @@
 //	-budget N         per-eval Lua instruction budget (R-SEC-1)
 //	-tod H            fixed time-of-day hour for lighting [0,24) (default 11)
 //	-beacon-key CAT:KEY  storage int read per beat; >0 lights a beacon marker
+//	-dim-key CAT:KEY  storage int read per beat; >0 dims ambient+sun (Flicker, #500)
+//	-dim-factor F     light multiplier applied when -dim-key is set (default 0.30)
 //
 // Like cmd/firstlight this drives the scripted advance + screenshot from inside
 // app.Run's update callback (the g3n lifecycle is fiddly under WSLg; replicate
@@ -85,11 +87,13 @@ type harness struct {
 
 	world   string
 	outDir  string
-	tod     float64
-	beats   []int
-	beacon  beaconKey
-	cx, cy  float64 // sim-space center of the auto-fit transform
-	scale   float64 // sim units -> world units
+	tod       float64
+	beats     []int
+	beacon    beaconKey
+	dim       beaconKey // flicker dim-phase storage flag (#500); CAT:KEY, >0 ⇒ dim
+	dimFactor float64   // light multiplier applied on a dim beat
+	cx, cy    float64   // sim-space center of the auto-fit transform
+	scale     float64   // sim units -> world units
 
 	beatIdx     int
 	curTick     int
@@ -121,6 +125,8 @@ func main() {
 	budget := flag.Int64("budget", 50_000_000, "per-eval Lua instruction budget (R-SEC-1)")
 	flag.Float64Var(&h.tod, "tod", 11.0, "fixed time-of-day hour for lighting [0,24)")
 	beaconKeyStr := flag.String("beacon-key", "", "storage int CAT:KEY read per beat; >0 lights a beacon marker")
+	dimKeyStr := flag.String("dim-key", "", "storage int CAT:KEY read per beat; >0 dims ambient+sun (Flicker, #500)")
+	flag.Float64Var(&h.dimFactor, "dim-factor", 0.30, "light multiplier applied on a dim beat [0,1]")
 	flag.Parse()
 
 	if h.world == "" {
@@ -139,6 +145,16 @@ func main() {
 			fatalf("-beacon-key must be CAT:KEY, got %q", *beaconKeyStr)
 		}
 		h.beacon = beaconKey{cat: c, key: k, set: true}
+	}
+	if *dimKeyStr != "" {
+		c, k, ok := strings.Cut(*dimKeyStr, ":")
+		if !ok || c == "" || k == "" {
+			fatalf("-dim-key must be CAT:KEY, got %q", *dimKeyStr)
+		}
+		h.dim = beaconKey{cat: c, key: k, set: true}
+	}
+	if h.dimFactor < 0 || h.dimFactor > 1 {
+		fatalf("-dim-factor must be in [0,1], got %v", h.dimFactor)
 	}
 
 	host, err := worldhost.Load(h.world, *seed, *budget)
@@ -287,10 +303,31 @@ func (h *harness) updateBeacon() {
 	pillar := graphic.NewMesh(geometry.NewCylinder(0.25, 3.0, 12, 1, true, true), mat)
 	pillar.SetPosition(0, 1.5, 0)
 	h.beaconNode.Add(pillar)
-	pl := light.NewPoint(&math32.Color{R: 1.0, G: 0.8, B: 0.4}, 6.0)
+	// The beacon's own point light dims with the flicker phase too (#500): a dim
+	// beat shows a fainter beacon glow, not just darker ground.
+	pl := light.NewPoint(&math32.Color{R: 1.0, G: 0.8, B: 0.4}, 6.0*h.day.FlickerDim())
 	pl.SetPosition(0, 2.5, 0)
 	h.beaconNode.Add(pl)
-	fmt.Printf("event: beacon lit key=%s:%s value=%d\n", h.beacon.cat, h.beacon.key, v)
+	fmt.Printf("event: beacon lit key=%s:%s value=%d glow=%.2f\n", h.beacon.cat, h.beacon.key, v, 6.0*h.day.FlickerDim())
+}
+
+// updateFlickerDim reads the world's flicker-phase storage flag (-dim-key) for
+// the current beat and dims the live ambient + sun when it is set (#500). The
+// dim persists on the DayNight until the next beat flips it, so each beat's
+// screenshot shows the correct bright/dim lighting for that tick. World-agnostic:
+// the world names the storage category/key (the flicker-cycle world publishes
+// flicker:phase); we only read it and rank the light down.
+func (h *harness) updateFlickerDim() {
+	if !h.dim.set {
+		return
+	}
+	v, ok := h.g.Storage().GetInt(h.dim.cat, h.dim.key)
+	if ok && v > 0 {
+		h.day.SetFlickerDim(float32(h.dimFactor))
+		fmt.Printf("event: flicker dim ON key=%s:%s value=%d factor=%.2f\n", h.dim.cat, h.dim.key, v, h.dimFactor)
+	} else {
+		h.day.SetFlickerDim(1)
+	}
 }
 
 func (h *harness) update(rend *renderer.Renderer, _ time.Duration) {
@@ -303,6 +340,7 @@ func (h *harness) update(rend *renderer.Renderer, _ time.Duration) {
 			h.g.Advance(target - h.curTick)
 			h.curTick = target
 		}
+		h.updateFlickerDim() // set the dim before the beacon is (re)built so its VFX dims too
 		h.beatRows = h.rebuildUnits()
 		h.shotPending = true
 	}
@@ -335,8 +373,9 @@ func (h *harness) printState() {
 		TimeOfDay float64     `json:"tod"`
 		Tick      int         `json:"tick"`
 		Lighting  float64     `json:"lit_hour"`
+		Dim       float64     `json:"flicker_dim"` // applied light multiplier (1 = bright)
 		Units     []unitState `json:"units"`
-	}{h.g.TimeOfDay(), h.curTick, h.tod, h.beatRows}
+	}{h.g.TimeOfDay(), h.curTick, h.tod, float64(h.day.FlickerDim()), h.beatRows}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
 }
