@@ -169,6 +169,13 @@ func registerScriptTriggers(L *lua.LState, g *api.Game) {
 		L.Push(lua.LBool(argTrigger(L, 1).Evaluate()))
 		return 1
 	}))
+
+	// BindTriggerName(name, t) -> bool — bind a trigger to a name so a data
+	// ability's `trigger = "name"` fires it at its EFFECT edge (#478).
+	L.SetGlobal("BindTriggerName", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(argTrigger(L, 2).BindName(L.CheckString(1))))
+		return 1
+	}))
 }
 
 // registerScriptPeriodic builds a serializable periodic-timer Trigger whose

@@ -43,6 +43,10 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v36: name→trigger bindings appended after the effect registry (#478): the
+// count, then each (name, TriggerID) pair in bind order. TriggerIDs are stable
+// across the round-trip (the slab is restored first); each must still name a
+// live trigger or the load fails closed.
 // v35: runtime effect-primitive registry names appended after the weapon
 // overrides (#477): the count, then each registered name in id order. Only the
 // names are the contract; the execs are re-bound in setup and validated against
@@ -120,7 +124,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 35
+const SaveFormatVersion uint32 = 36
 
 // ---- little-endian writer / reader ----
 
@@ -1009,6 +1013,13 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.str(w.effectRegNames[i])
 	}
 
+	// name→trigger bindings (#478, v36): (name, TriggerID) pairs in bind order.
+	s.u32(uint32(len(w.trigNameKeys)))
+	for i := range w.trigNameKeys {
+		s.str(w.trigNameKeys[i])
+		s.u64(uint64(w.trigNameIDs[i]))
+	}
+
 	return s.err
 }
 
@@ -1383,6 +1394,10 @@ type decodedSave struct {
 
 	// runtime effect-primitive registry (#477, v35): names validated vs re-bind.
 	effNames []string
+
+	// name→trigger bindings (#478, v36): restored directly (TriggerIDs stable).
+	trigNameKeys []string
+	trigNameIDs  []TriggerID
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2754,6 +2769,26 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		}
 		d.effNames[i] = name
 	}
+
+	// name→trigger bindings (#478, v36): (name, TriggerID) pairs, bounded.
+	r.what = "namedtriggers"
+	tnN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(tnN) > cap(w.trigNameKeys) {
+		return fmt.Errorf("sim: save: named-trigger count %d exceeds capacity %d", tnN, cap(w.trigNameKeys))
+	}
+	d.trigNameKeys = make([]string, tnN)
+	d.trigNameIDs = make([]TriggerID, tnN)
+	for i := uint32(0); i < tnN; i++ {
+		name, err := r.str(maxHandlerNameLen)
+		if err != nil {
+			return err
+		}
+		d.trigNameKeys[i] = name
+		d.trigNameIDs[i] = TriggerID(r.u64())
+	}
 	return r.err
 }
 
@@ -3805,6 +3840,15 @@ func applySave(d *decodedSave, w *World) {
 	// the trigger event index (#458) is derived from the slab — mark it
 	// dirty so the next dispatch rebuilds it from the restored slots.
 	w.Triggers.dirty = true
+
+	// name→trigger bindings (#478): restored directly — TriggerIDs are stable
+	// across the round-trip (the slab is in place above). A binding whose
+	// trigger no longer exists degrades to a no-op at the EFFECT edge
+	// (FireBoundTrigger skips a stale handle), never wrong behavior.
+	w.trigNameKeys = w.trigNameKeys[:len(d.trigNameKeys)]
+	copy(w.trigNameKeys, d.trigNameKeys)
+	w.trigNameIDs = w.trigNameIDs[:len(d.trigNameIDs)]
+	copy(w.trigNameIDs, d.trigNameIDs)
 
 	// boolexpr condition arena (#457): swap in the decoded nodes.
 	w.exprArena = d.exprNodes

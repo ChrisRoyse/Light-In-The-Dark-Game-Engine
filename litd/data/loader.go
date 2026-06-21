@@ -126,9 +126,17 @@ type PlacedNode struct {
 // composition (#296); cast mechanics are sim-unit converted at load
 // (#160). A zero-valued cast block is a passive/stub row.
 type Ability struct {
-	ID             string
-	Name           string
-	Effects        EffectList // zero-length when the row declares none
+	ID   string
+	Name string
+	// Effects and TriggerName are the two mutually-exclusive authoring paths for
+	// a spell's behavior at its EFFECT edge (#478): a static effect-primitive
+	// composition (Effects) OR a bound trigger fired with the cast as its event
+	// (TriggerName, for spells too procedural for the data composition, ADR #452).
+	// At most one may be set; a row with both is a load error. Neither = a spell
+	// with no EFFECT-edge behavior (a pure channel/aura authored elsewhere).
+	Effects     EffectList // zero-length when the row declares none
+	TriggerName string     // names a bound trigger; empty when Effects authors behavior
+
 	ManaCost       int32
 	CooldownTicks  uint16
 	CastPointTicks uint16
@@ -280,6 +288,9 @@ type rawAbility struct {
 	// Effects is the raw composition tree; the effect compiler owns
 	// all validation inside the maps (decodeStrict cannot see them).
 	Effects []map[string]any `toml:"effects" json:"effects"`
+	// TriggerName binds the spell's EFFECT-edge behavior to a named trigger
+	// instead of Effects (#478). Mutually exclusive with effects.
+	TriggerName string `toml:"trigger" json:"trigger"`
 }
 
 // ---- strict decoding ----
@@ -1158,8 +1169,15 @@ func convertAbilityCast(file string, r *rawAbility) (Ability, error) {
 	if err != nil {
 		return fail("cast-range", err)
 	}
+	// #478: a spell's EFFECT-edge behavior is authored exactly one way. A row
+	// that declares both an effect composition and a bound trigger is ambiguous
+	// — fail closed at load rather than silently pick one.
+	if r.TriggerName != "" && len(r.Effects) > 0 {
+		return fail("trigger", fmt.Errorf("ability declares both effects and a bound trigger %q — choose one (#478)", r.TriggerName))
+	}
 	return Ability{
 		ID: r.ID, Name: r.Name,
+		TriggerName:    r.TriggerName,
 		ManaCost:       int32(r.ManaCost),
 		CooldownTicks:  cd,
 		CastPointTicks: cp,

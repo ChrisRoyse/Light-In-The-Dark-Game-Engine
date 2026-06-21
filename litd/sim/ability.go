@@ -280,12 +280,22 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 			w.completeOrder(or, id, false)
 			return
 		}
-		w.ExecuteEffects(def.Effects, EffectCtx{
-			Source: id,
-			Target: w.Orders.Target[or],
-			Point:  w.Orders.Point[or],
-		})
-		w.Emit(Event{Kind: EvAbilityEffect, Src: id, Dst: w.Orders.Target[or], Arg: int64(a.AbilityID[ar][slot])})
+		effectEv := Event{Kind: EvAbilityEffect, Src: id, Dst: w.Orders.Target[or], Arg: int64(a.AbilityID[ar][slot])}
+		if def.TriggerName != "" {
+			// #478: behavior is a bound trigger (event = this cast). An unbound
+			// name, a disabled trigger, or a false condition is a documented
+			// no-op (the spell simply does nothing this cast).
+			if tid, ok := w.TriggerByName(def.TriggerName); ok {
+				w.FireBoundTrigger(tid, effectEv)
+			}
+		} else {
+			w.ExecuteEffects(def.Effects, EffectCtx{
+				Source: id,
+				Target: w.Orders.Target[or],
+				Point:  w.Orders.Point[or],
+			})
+		}
+		w.Emit(effectEv)
 		a.ReadyAt[ar][slot] = w.tick + abilityFieldTicks(cooldown)
 		if def.ChannelTicks > 0 {
 			a.CastEnd[ar] = w.tick + uint32(def.ChannelTicks)

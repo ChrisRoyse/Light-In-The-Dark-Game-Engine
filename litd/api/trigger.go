@@ -80,6 +80,19 @@ func (t Trigger) Valid() bool {
 	return t.g != nil && t.g.w != nil && t.g.w.Triggers.Valid(t.id)
 }
 
+// BindName binds this trigger to a name so a data ability whose TriggerName
+// matches fires it at its EFFECT edge instead of a static effect list (#478).
+// Setup verb: fails (returns false, a no-op) on an invalid handle, an empty or
+// already-bound name, or after the match starts ticking. The binding hashes and
+// serializes — two players, and a save/load, agree on which trigger backs the
+// name.
+func (t Trigger) BindName(name string) bool {
+	if t.g == nil || t.g.w == nil || !t.Valid() {
+		return false
+	}
+	return t.g.w.BindTriggerName(name, t.id)
+}
+
 // TriggerScope configures an On() registration: an event may be global,
 // scoped to one unit (a true index scope on the event source), or scoped
 // to a player / region (which compile to a condition, since the sim

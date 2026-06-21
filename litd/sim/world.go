@@ -176,6 +176,11 @@ type World struct {
 	// by Caps.RuntimeEffects, frozen at first Step.
 	effectRegNames []string
 	effectRegExecs []RuntimeEffectExec
+	// name→trigger bindings (#478): a data ability's TriggerName resolves here to
+	// the trigger that backs its EFFECT edge. Parallel slices, setup-bound; the
+	// pairs hash + serialize (zero when empty).
+	trigNameKeys []string
+	trigNameIDs  []TriggerID
 	// loaded buff-type rows (buff.go #162); BuffInstance.BuffID
 	// indexes this slice
 	buffTypes      []data.BuffType
@@ -477,6 +482,8 @@ func NewWorld(requested Caps) *World {
 		runtimeAbilityDefs: make([]data.Ability, 0, caps.RuntimeAbilityDefs),
 		effectRegNames:     make([]string, 0, caps.RuntimeEffects),
 		effectRegExecs:     make([]RuntimeEffectExec, 0, caps.RuntimeEffects),
+		trigNameKeys:       make([]string, 0, maxNamedTriggers),
+		trigNameIDs:        make([]TriggerID, 0, maxNamedTriggers),
 		bucketHead:         make([]int32, bucketCount),
 		bucketNext:         make([]int32, idxSpace),
 		bucketPrev:         make([]int32, idxSpace),

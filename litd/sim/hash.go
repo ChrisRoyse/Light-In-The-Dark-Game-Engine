@@ -775,6 +775,15 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 
 	htrg := h.next() // triggers (#456): first-class ECA trigger slab
 	w.Triggers.HashInto(htrg)
+	// #478: name→trigger bindings ride the trigger sub. Names in bind order +
+	// the backing TriggerID. Zero contribution when empty (golden-stable).
+	if n := len(w.trigNameKeys); n > 0 {
+		htrg.WriteU32(uint32(n))
+		for i := range w.trigNameKeys {
+			hashString(htrg, w.trigNameKeys[i])
+			htrg.WriteU64(uint64(w.trigNameIDs[i]))
+		}
+	}
 
 	hbe := h.next() // boolexpr (#457): condition arena nodes
 	w.hashExprArena(hbe)
