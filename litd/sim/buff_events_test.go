@@ -189,6 +189,55 @@ func TestBuffAuraChildEmitsWithFlag(t *testing.T) {
 	}
 }
 
+// TestBuffExpiryCarriesAuraFlagAndStacks — #488: EvBuffExpired now packs the full
+// buff arg (id + stacks + aura-child flag), not just the type id. An aura child
+// that lingers out of radius and expires carries IsAura=true and its stack count,
+// so an OnBuffExpired handler can tell an expiring aura child from a direct buff.
+func TestBuffExpiryCarriesAuraFlagAndStacks(t *testing.T) {
+	w, tb := auraWorld(t)
+	cmd := buffTypeIdx(t, tb, "command")
+	src := atkUnit(t, w, 0, fixed.Vec2{X: 1000 * fixed.One, Y: 1000 * fixed.One}, 0)
+	ally := atkUnit(t, w, 0, fixed.Vec2{X: 1100 * fixed.One, Y: 1000 * fixed.One}, 0) // in radius
+	w.ApplyBuff(src, src, cmd, 1)
+
+	var log []abilityEvent
+	captureBuffEvents(w, &log)
+
+	gained := uint32(0)
+	tr := w.Transforms.Row(ally)
+	for w.Tick() < 60 {
+		w.Step()
+		if gained == 0 && childCount(w, ally) == 1 {
+			gained = w.Tick()
+		}
+		if gained != 0 && w.Tick() == gained+7 { // walk out → child lingers then expires
+			w.Transforms.Pos[tr] = fixed.Vec2{X: 8000 * fixed.One, Y: 8000 * fixed.One}
+		}
+	}
+
+	var expiry *abilityEvent
+	for i := range log {
+		if log[i].kind == EvBuffExpired && log[i].src == ally {
+			expiry = &log[i]
+		}
+	}
+	if expiry == nil {
+		t.Fatalf("no EvBuffExpired for the ally aura child in %v", log)
+	}
+	// SoT: the expiry arg decodes to the child type, aura-flagged, 1 stack.
+	if !BuffArgIsAura(expiry.arg) {
+		t.Fatalf("aura-child expiry missing the aura flag (#488): arg=%d IsAura=%v", expiry.arg, BuffArgIsAura(expiry.arg))
+	}
+	if BuffArgStacks(expiry.arg) != 1 {
+		t.Fatalf("aura-child expiry stacks=%d, want 1", BuffArgStacks(expiry.arg))
+	}
+	if got := buffTypeIdx(t, tb, "cmd-child"); BuffArgID(expiry.arg) != uint16(got) {
+		t.Fatalf("expiry buff id=%d, want cmd-child=%d", BuffArgID(expiry.arg), got)
+	}
+	t.Logf("#488 aura-child expiry arg: id=%d stacks=%d aura=%v",
+		BuffArgID(expiry.arg), BuffArgStacks(expiry.arg), BuffArgIsAura(expiry.arg))
+}
+
 // TestBuffEventsDoubleRunIdentical — two identical apply sequences produce a
 // byte-identical event stream and identical StateHash.
 func TestBuffEventsDoubleRunIdentical(t *testing.T) {

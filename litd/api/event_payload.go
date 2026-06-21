@@ -304,22 +304,23 @@ func (e Event) Buff() BuffType {
 	return BuffType{}
 }
 
-// BuffStacks returns the resulting stack count on a buff apply/refresh event,
-// else 0 (#480). EventBuffExpired carries no stack count.
+// BuffStacks returns the stack count carried by a buff apply/refresh/expire
+// event (#480/#488), else 0. On expiry it is the stack count the instance held
+// when it timed out.
 func (e Event) BuffStacks() int {
 	switch e.kind {
-	case EventBuffApplied, EventBuffRefreshed:
+	case EventBuffApplied, EventBuffRefreshed, EventBuffExpired:
 		return int(sim.BuffArgStacks(e.arg))
 	}
 	return 0
 }
 
-// FromAura reports whether a buff apply/refresh event came from an aura (an
-// aura-child instance) rather than a direct application (#480). Always false for
-// non-buff kinds and for EventBuffExpired, which carries no aura flag.
+// FromAura reports whether a buff apply/refresh/expire event concerned an
+// aura-child instance rather than a direct application (#480/#488). Always false
+// for non-buff kinds.
 func (e Event) FromAura() bool {
 	switch e.kind {
-	case EventBuffApplied, EventBuffRefreshed:
+	case EventBuffApplied, EventBuffRefreshed, EventBuffExpired:
 		return sim.BuffArgIsAura(e.arg)
 	}
 	return false

@@ -317,7 +317,11 @@ func (w *World) buffExpirySystem() {
 		}
 		if row.RemainingTicks == 0 {
 			target := row.Target
-			w.Emit(Event{Kind: EvBuffExpired, Src: target, Dst: row.Source, Arg: int64(row.BuffID)})
+			// Pack the full buff arg (id + stacks + aura-child flag) like apply/
+			// refresh (#488), so an OnBuffExpired handler can read Event.BuffStacks
+			// / Event.FromAura on the expiring instance — not just its type id.
+			isAura := row.Flags&BuffInstAuraChild != 0
+			w.Emit(Event{Kind: EvBuffExpired, Src: target, Dst: row.Source, Arg: packBuffArg(row.BuffID, row.Stacks, isAura)})
 			p.Free(i)
 			w.recomputeBuffStats(target)
 		}
