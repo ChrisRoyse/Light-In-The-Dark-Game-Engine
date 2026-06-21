@@ -219,6 +219,12 @@ exact   CurrentThread
 exact   Game.SuspendedThreadCount
 
 # engine control (new-capability: registry/scheduler/debug surface)
+# Game.AttachMeleeAI installs the litd/ai/melee RTS controller as a live computer
+# player (M5.5). LitD-original, no JASS native: WC3's computer players are the
+# external .ai script engine (StartMeleeAI/CommandAI operate that VM), not an
+# in-language attach of a strategy object — this is the engine's own AI-domain
+# wiring (R-EXEC-3), sibling to the manifest-mapped Game.AttachAI.
+exact   Game.AttachMeleeAI
 exact   Game.DetachAI
 exact   Game.ElapsedTime
 exact   Game.Every

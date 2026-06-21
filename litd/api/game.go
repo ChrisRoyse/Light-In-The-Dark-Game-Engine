@@ -18,6 +18,7 @@ package litd
 
 import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ai/melee"
 	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
@@ -59,6 +60,13 @@ type Game struct {
 	// scheduler domain at M5.5. The replay-safe inputs (difficulty, paused,
 	// command stack) live in the sim. nil until the first AttachAI.
 	aiControllers map[uint8]AIController
+
+	// meleeControllers holds the attached litd/ai/melee RTS controllers (the
+	// real economy/production/waves brain), keyed by player slot, installed via
+	// AttachMeleeAI. Distinct from aiControllers (the generic AIView/AICommander
+	// surface): the melee controller needs the full melee.Bridge. Same posture —
+	// api-runtime behavior, not deterministic sim state; nil until first attach.
+	meleeControllers map[uint8]*melee.Controller
 
 	// aiDomain is the live second scheduler domain (R-EXEC-3) hosting one
 	// isolated context per attached computer player. Lazily created on the

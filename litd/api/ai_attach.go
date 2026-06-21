@@ -67,13 +67,18 @@ func (g *Game) tickAIDomain() {
 }
 
 // aiBridge is the sim-backed capability object for one AI player. It is the
-// ONLY thing an AIController can reach across the domain boundary, and it holds
-// no mutable state of its own — every method is a sim read or the validated
-// train intent (R-EXEC-3). One struct implements the public AIView/AICommander
-// AND the domain ai.AIView/ai.AICommander.
+// ONLY thing an AIController (generic) or the melee Controller can reach across
+// the domain boundary; it holds no behavior state — every method is a sim read
+// or a validated intent (R-EXEC-3). One struct implements the public
+// AIView/AICommander AND the domain ai.AIView/ai.AICommander AND (in
+// ai_melee.go) the full melee.Bridge (economy/production/waves).
 type aiBridge struct {
 	g      *Game
 	player uint8
+	// waveScratch backs the WaveSource.EligibleUnits scan (ai_melee.go); a
+	// per-bridge buffer keeps that scan off g.queryScratch (which UnitCount
+	// uses) so a single Step calling both cannot clobber mid-iteration.
+	waveScratch []sim.EntityID
 }
 
 // --- public AIView ---------------------------------------------------------
