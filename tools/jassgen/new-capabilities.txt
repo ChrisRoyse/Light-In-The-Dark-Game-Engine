@@ -349,6 +349,10 @@ exact   Game.RenderEvents
 exact   Game.NewTrigger
 exact   Trigger.On
 exact   Trigger.When
+# WhenEvent is the script compile target for TriggerAddCondition (#463): a
+# condition that receives the full Event (the GetTriggerUnit idiom) rather
+# than the pure EventView that Trigger.When exposes.
+exact   Trigger.WhenEvent
 exact   Trigger.Do
 exact   Trigger.Enable
 exact   Trigger.Disable

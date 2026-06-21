@@ -44,6 +44,7 @@ func Register(L *lua.LState, g *api.Game) error {
 		registerCatalog(L, gameBinder{g: g})   // hand-written type-catalog resolvers (#393)
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
+		registerScriptTriggers(L, g)           // CreateTrigger/TriggerRegisterX/... ECA bindings (#463)
 		RegisterMap(L, g.MapData())            // Game_MapStarts/MapBeacons from the game's map (#410)
 		// Snapshot the builtin global key set now that every API/lib global is
 		// installed — a mid-game save persists only globals added beyond this

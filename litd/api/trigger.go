@@ -155,6 +155,24 @@ func (t Trigger) When(pred func(EventView) bool) Trigger {
 	return t
 }
 
+// WhenEvent adds a condition that receives the full public Event rather
+// than the pure EventView. It is the compile target for a script
+// TriggerAddCondition, where a condition reads the triggering unit /
+// player / region through the Event accessors (the WC3 GetTriggerUnit
+// idiom) that the deliberately entity-free EventView hides. Like When,
+// conditions AND together and pred must be pure. Registered under the same
+// "cond" handler-name role as When, so a Go When and a script WhenEvent at
+// the same position carry identical sim identity (save/load + parity).
+func (t Trigger) WhenEvent(pred func(Event) bool) Trigger {
+	if !t.Valid() || pred == nil {
+		return t
+	}
+	g := t.g
+	t.andLeaf(g.w.RegisterHandlerID(g.nextTriggerHandlerName("cond"),
+		func(w *sim.World, e sim.Event) bool { return pred(g.eventOf(e)) }))
+	return t
+}
+
 // addCondition registers a pure EventView predicate as a sim condition
 // handler and ANDs it into the trigger's condition root. pubKindHint
 // builds the EventView (0 = derive from the fired kind).
