@@ -128,4 +128,10 @@ func (w *World) hashHandlerReg(h *statehash.Hasher) {
 	for _, name := range w.handlerReg.names {
 		hashString(h, name)
 	}
+	// #473: damage-formula override identity rides the same ECA setup-identity
+	// sub-hash. It contributes NOTHING for the shipped base formula, so a
+	// non-overriding world's hash is byte-identical; an override binds its
+	// identity here so a divergent formula is caught in the hash, not only at
+	// load (same discipline as the handler name table above).
+	w.hashDamageFormula(h)
 }

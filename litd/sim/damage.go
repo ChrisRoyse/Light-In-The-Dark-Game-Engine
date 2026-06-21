@@ -234,44 +234,16 @@ func (w *World) damageApplySystem() {
 			w.dmgDropped++
 			continue // unbound matrix or type out of range: counted, never guessed
 		}
-		post := p.Amount.
-			Mul(fixed.FromInt(w.coeff[p.AttackType][w.Healths.ArmorType[hr]])).
-			Div(fixed.FromInt(1000))
-		armor := w.BuffedArmor(p.Target, int(w.Healths.ArmorValue[hr])) // #162
-		if armor < ArmorLUTMin {
-			armor = ArmorLUTMin
-		} else if armor > ArmorLUTMax {
-			armor = ArmorLUTMax
-		}
-		post = post.Mul(armorMult[armor-ArmorLUTMin])
-		if post < 0 {
-			post = 0 // final clamp: damage never heals
-		}
-
-		// #373 player handicaps: the source's units deal scaled damage,
-		// the target's units take scaled damage. Both default to 1.0, so an
-		// unconfigured match is byte-identical (golden trace stable). Player
-		// slots are stored in the owner row, always < MaxPlayers.
-		if sor := w.Owners.Row(p.Source); sor != -1 {
-			post = post.Mul(w.players.handicapDamage[w.Owners.Player[sor]])
-		}
-		if tor := w.Owners.Row(p.Target); tor != -1 {
-			post = post.Mul(w.players.handicap[w.Owners.Player[tor]])
-		}
-		if post < 0 {
-			post = 0
-		}
-
-		// #219 writable-damage hook: a script may scale the final
-		// post-mitigation amount. Runs synchronously here (pre-apply) so
-		// the modified value is what EvUnitDamaged carries and what the
-		// victim's life loses. nil hook ⇒ unchanged (golden trace stable).
-		if w.damageMod != nil {
-			post = w.damageMod(p.Source, p.Target, post)
-			if post < 0 {
-				post = 0
-			}
-		}
+		// #473 staged damage-formula pipeline: coeff-lookup → armor-reduction
+		// → handicap → script-modifier (#219) → clamp, by default. A world may
+		// replace the whole formula or any stage; the value left in the reused
+		// context is the applied damage. Fixed-point + reused ctx ⇒ zero-alloc;
+		// a base (unmodified) formula is byte-identical to the old inline path,
+		// so the golden trace is stable.
+		post := w.runDamageFormula(
+			p.Source, p.Target, p.AttackType, w.Healths.ArmorType[hr],
+			int(w.Healths.ArmorValue[hr]), p.Amount,
+		)
 
 		if cr := w.Combats.Row(p.Target); cr != -1 {
 			w.Combats.LastAttacker[cr] = p.Source

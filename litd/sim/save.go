@@ -43,6 +43,9 @@ import (
 const SaveMagic = "LITDSAV\x01"
 
 // SaveFormatVersion bumps on any layout change.
+// v32: damage-formula override identity appended after the boolexpr arena: the
+// wholesale-replaced flag, then each stage's (name, overridden-bit) in stage
+// order (#473, ADR #453). Base formula writes count 0 — present but empty.
 // v31: boolexpr condition arena appended after the trigger slab: every
 // And/Or/Not/Cond node (op + two operands) in node order (#457, ADR #451).
 // v30: first-class ECA trigger slab appended after the handler registry:
@@ -106,7 +109,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 31
+const SaveFormatVersion uint32 = 32
 
 // ---- little-endian writer / reader ----
 
@@ -954,6 +957,20 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.i32(n.b)
 	}
 
+	// damage-formula override identity (#473, v32): the stable (name,
+	// overridden-bit) table in stage order, plus the wholesale-replaced flag.
+	// Like the handler registry it is a load-time manifest, not mutable match
+	// state — a base (unmodified) formula writes count 0 and re-binds to the
+	// base, so a non-overriding save is unchanged but for the version. An
+	// overriding world re-applies its overrides in setup and must reproduce
+	// this exact table (validated at apply, fail-closed).
+	s.boolean(w.fReplaced)
+	s.u32(uint32(len(w.formula)))
+	for i := range w.formula {
+		s.str(w.formula[i].Name)
+		s.boolean(w.fOverride[i])
+	}
+
 	return s.err
 }
 
@@ -1306,6 +1323,13 @@ type decodedSave struct {
 	// boolexpr condition arena (#457, v31): decoded nodes, validated then
 	// swapped into the world arena at apply.
 	exprNodes []exprNode
+
+	// damage-formula override identity (#473, v32): the stable (name,
+	// overridden-bit) table in stage order + the wholesale-replaced flag,
+	// validated against the re-bound formula at apply.
+	fmReplaced bool
+	fmNames    []string
+	fmOverride []bool
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2611,6 +2635,29 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.exprNodes[i].a = r.i32()
 		d.exprNodes[i].b = r.i32()
 	}
+
+	// damage-formula override identity (#473, v32): the wholesale-replaced
+	// flag, then each stage's (name, overridden-bit). Bounded so a corrupt save
+	// cannot drive an unbounded allocation.
+	r.what = "damageformula"
+	d.fmReplaced = r.boolean()
+	dfN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if dfN > maxDamageStages {
+		return fmt.Errorf("sim: save: damage-formula stage count %d exceeds limit %d", dfN, maxDamageStages)
+	}
+	d.fmNames = make([]string, dfN)
+	d.fmOverride = make([]bool, dfN)
+	for i := range d.fmNames {
+		name, err := r.str(maxHandlerNameLen)
+		if err != nil {
+			return err
+		}
+		d.fmNames[i] = name
+		d.fmOverride[i] = r.boolean()
+	}
 	return r.err
 }
 
@@ -3029,6 +3076,27 @@ func validateSave(d *decodedSave, w *World) error {
 	for ref, name := range d.handlerNames {
 		if w.handlerReg.names[ref] != name {
 			return fmt.Errorf("sim: save: handler ref %d is %q in the save but %q in this world — re-registration diverged", ref+1, name, w.handlerReg.names[ref])
+		}
+	}
+
+	// damage-formula override identity (#473): the loaded world must already
+	// have re-bound the identical formula — same wholesale-replaced flag and the
+	// same (name, overridden-bit) table in stage order. A divergence means the
+	// saved damage outcomes would not reproduce (a replaced stage would resolve
+	// to the base, or vice versa), so fail closed. The base formula matches the
+	// base re-bind trivially.
+	if d.fmReplaced != w.fReplaced {
+		return fmt.Errorf("sim: save: damage formula replaced=%v in the save but %v in this world — re-bind diverged", d.fmReplaced, w.fReplaced)
+	}
+	if len(d.fmNames) != len(w.formula) {
+		return fmt.Errorf("sim: save: damage formula has %d stages but this world re-bound %d", len(d.fmNames), len(w.formula))
+	}
+	for i, name := range d.fmNames {
+		if w.formula[i].Name != name {
+			return fmt.Errorf("sim: save: damage stage %d is %q in the save but %q in this world — re-bind diverged", i, name, w.formula[i].Name)
+		}
+		if d.fmOverride[i] != w.fOverride[i] {
+			return fmt.Errorf("sim: save: damage stage %q overridden=%v in the save but %v in this world", name, d.fmOverride[i], w.fOverride[i])
 		}
 	}
 

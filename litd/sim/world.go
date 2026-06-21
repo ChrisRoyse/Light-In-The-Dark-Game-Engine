@@ -246,6 +246,10 @@ type World struct {
 	coeff      [][]int32 // per-mille attack×armor matrix (BindDamageMatrix)
 	atkTypes   []string  // declared attack-type names, table order (#472 config)
 	armTypes   []string  // declared armor-type names, table order (#472 config)
+	formula    []DamageStage // ordered damage-formula pipeline (#473); base by default
+	fOverride  []bool        // parallel to formula: true = stage replaced from base
+	fReplaced  bool          // SetDamageFormula installed a wholesale custom formula
+	dmgCtx     DamageCtx     // reused per-packet pipeline context (zero-alloc)
 	// the sim PRNG (R-SIM-2): every gameplay roll draws here, one
 	// deterministic call order; reseeded per match via SetSeed
 	rng *prng.Stream
@@ -490,7 +494,8 @@ func NewWorld(requested Caps) *World {
 		w.bucketCell[i] = -1
 	}
 	w.initPlayers()
-	w.registerTriggerDispatch() // ECA action-runner continuation (#459)
+	w.registerTriggerDispatch()   // ECA action-runner continuation (#459)
+	w.installBaseDamageFormula() // ordered damage-formula pipeline (#473)
 	return w
 }
 
