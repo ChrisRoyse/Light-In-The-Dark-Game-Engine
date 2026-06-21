@@ -8,6 +8,7 @@ package luabind
 // empowered IFF dim phase.
 
 import (
+	"bytes"
 	"path/filepath"
 	"testing"
 
@@ -165,4 +166,126 @@ func TestFlickerStripsOnlyItsOwnBuffFSV(t *testing.T) {
 		t.Fatalf("FLICKER STRIPPED A NON-FLICKER BUFF: the unit's anthem buff was removed at the bright transition — Unit_RemoveAllBuffs nukes EVERY buff, not just the flicker's empowerment; must use Unit_RemoveBuff(EMPWR)")
 	}
 	t.Logf("FSV #170 targeted-strip: bright transition removed dimpwr but kept the non-flicker anthem buff")
+}
+
+// loadFlicker builds a flicker game (seed) + a registered Lua runtime with the
+// flicker-cycle world loaded. Returned so the save/load edge can re-create an
+// identical runtime on the load side. Shared shape with TestFlickerCycleWorldFSV.
+func loadFlicker(t *testing.T, seed int64) (*api.Game, api.Unit, *lua.LState, *ChunkRegistry) {
+	t.Helper()
+	g, u := flickerGame(t, seed)
+	L := lua.NewState()
+	if err := Register(L, g); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	reg := NewChunkRegistry()
+	if _, err := LoadWorld(L, reg, filepath.Join("..", "..", "worlds", "flicker-cycle")); err != nil {
+		t.Fatalf("LoadWorld(flicker-cycle): %v", err)
+	}
+	return g, u, L, reg
+}
+
+// TestFlickerSaveLoadAcrossPhaseFSV (#170 edge 2): a mid-DIM-phase save, loaded
+// into a fresh runtime, resumes the tick-anchored cycle bit-identically to an
+// unbroken run. This is the lockstep-safety proof: the flicker's cycle position
+// lives in the Game_Every callback's Lua upvalues (t / lastPhase / transitions)
+// — they must round-trip (#464/#270), or a loaded game would drift its day/night
+// phase from a live one and desync a multiplayer match (D-5).
+//
+// SoT = published flicker/phase + flicker/transitions + Game.StateHash(), unbroken
+// (H1) vs save@70(dim)→load→finish (H2).
+func TestFlickerSaveLoadAcrossPhaseFSV(t *testing.T) {
+	const fp = uint64(0xF11CCE12)
+	const finish = 250
+
+	// --- Unbroken reference run straight to `finish`. ---
+	gRef, _, LRef, regRef := loadFlicker(t, 5)
+	defer LRef.Close()
+	defer regRef.Close()
+	gRef.Advance(finish)
+	refPhase, _ := gRef.Storage().GetInt("flicker", "phase")
+	refTrans, _ := gRef.Storage().GetInt("flicker", "transitions")
+	refHash := gRef.StateHash()
+	t.Logf("UNBROKEN @%d: phase=%d transitions=%d hash=%#x", finish, refPhase, refTrans, refHash)
+
+	// --- Save run: advance into the DIM phase (CYCLE=100, dim 60..99), save @70. ---
+	const saveTick = 70
+	gSave, _, LSave, regSave := loadFlicker(t, 5)
+	defer LSave.Close()
+	defer regSave.Close()
+	gSave.Advance(saveTick)
+	if ph, _ := gSave.Storage().GetInt("flicker", "phase"); ph != 1 {
+		t.Fatalf("precondition: expected DIM(1) at tick %d, got phase=%d", saveTick, ph)
+	}
+	savePhase, _ := gSave.Storage().GetInt("flicker", "phase")
+	saveTrans, _ := gSave.Storage().GetInt("flicker", "transitions")
+	t.Logf("SAVE @%d: phase=%d transitions=%d (mid-dim)", saveTick, savePhase, saveTrans)
+	var simBuf, scrBuf bytes.Buffer
+	if err := gSave.SaveState(&simBuf, fp); err != nil {
+		t.Fatalf("SaveState: %v", err)
+	}
+	if err := SaveScripts(LSave, regSave, &scrBuf); err != nil {
+		t.Fatalf("SaveScripts: %v", err)
+	}
+
+	// --- Load into a fresh runtime: re-create the world (re-arms the periodic +
+	// re-registers the action slot), then restore sim + scripts (upvalues). ---
+	gLoad, _, LLoad, regLoad := loadFlicker(t, 5)
+	defer LLoad.Close()
+	defer regLoad.Close()
+	if err := gLoad.LoadState(bytes.NewReader(simBuf.Bytes()), fp); err != nil {
+		t.Fatalf("LoadState: %v", err)
+	}
+	if err := LoadScripts(LLoad, regLoad, bytes.NewReader(scrBuf.Bytes())); err != nil {
+		t.Fatalf("LoadScripts: %v", err)
+	}
+	// Note: Storage is only re-published on the next tick, so reading it here
+	// (before any post-load Advance) would show the stale pre-load value — the
+	// resumed cycle position lives in the restored upvalues. The SoT is the final
+	// @finish comparison below, which is driven by those upvalues.
+	_ = saveTrans
+	gLoad.Advance(finish - saveTick) // 70 → 250
+	loadPhase, _ := gLoad.Storage().GetInt("flicker", "phase")
+	loadTrans, _ := gLoad.Storage().GetInt("flicker", "transitions")
+	loadHash := gLoad.StateHash()
+	t.Logf("RESUMED @%d: phase=%d transitions=%d hash=%#x", finish, loadPhase, loadTrans, loadHash)
+
+	if loadPhase != refPhase || loadTrans != refTrans || loadHash != refHash {
+		t.Fatalf("save/load across phase boundary DRIFTED:\n  unbroken phase=%d trans=%d hash=%#x\n  resumed  phase=%d trans=%d hash=%#x",
+			refPhase, refTrans, refHash, loadPhase, loadTrans, loadHash)
+	}
+	t.Logf("FSV #170 save/load: mid-dim save@70 → load → @250 BIT-IDENTICAL to unbroken (phase=%d trans=%d hash=%#x)", loadPhase, loadTrans, loadHash)
+}
+
+// TestFlickerUnitTrainedOnTransitionFSV (#170 edge 1): a unit created on the
+// exact dim-transition tick must pick up the dim empowerment that same tick —
+// the world empowers every un-buffed unit each dim tick (idempotent), so a unit
+// born mid-transition is not skipped. SoT = the new unit's buff state.
+func TestFlickerUnitTrainedOnTransitionFSV(t *testing.T) {
+	g, _, L, reg := loadFlicker(t, 5)
+	defer L.Close()
+	defer reg.Close()
+	dimpwr := g.BuffType("dimpwr")
+
+	// CYCLE=100: bright 0..59, the first DIM tick is 60. Advance to 59 (still
+	// bright), train a fresh unit, then step onto tick 60 (the dim publish).
+	g.Advance(59)
+	if ph, _ := g.Storage().GetInt("flicker", "phase"); ph != 0 {
+		t.Fatalf("precondition: expected BRIGHT(0) at tick 59, got phase=%d", ph)
+	}
+	born := g.CreateUnit(g.Player(1), g.UnitType("hfoo"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
+	if !born.Valid() {
+		t.Fatal("trained unit invalid")
+	}
+	if born.HasBuff(dimpwr) {
+		t.Fatal("precondition: unit born in bright must not yet carry dimpwr")
+	}
+	g.Advance(1) // step onto tick 60 — the dim-phase empower pass runs
+	if ph, _ := g.Storage().GetInt("flicker", "phase"); ph != 1 {
+		t.Fatalf("expected DIM(1) at tick 60, got phase=%d", ph)
+	}
+	if !born.HasBuff(dimpwr) {
+		t.Fatal("unit trained on the bright→dim transition tick was NOT empowered — the dim empower pass skips units born that tick")
+	}
+	t.Logf("FSV #170 trained-on-transition: unit born at tick 59 is empowered on the tick-60 dim pass (idempotent empower)")
 }
