@@ -171,6 +171,46 @@ func registerScriptTriggers(L *lua.LState, g *api.Game) {
 	}))
 }
 
+// registerScriptPeriodic builds a serializable periodic-timer Trigger whose
+// single action invokes the Lua fn every `secs` of game time (#464). The fn is
+// interned at a stable slot in the scheduler's periodicActions table so it
+// joins the shared save pool (SaveScripts) and its upvalues round-trip; the
+// action reads the fn back by slot at fire time (not by capture), so after a
+// load-and-rebind the restored closure — with its restored upvalues — is the
+// one that fires. Returns the Trigger the script holds (and can stop).
+func registerScriptPeriodic(L *lua.LState, g *api.Game, s *scriptScheduler, secs float64, fn *lua.LFunction) api.Trigger {
+	idx := len(s.periodicActions)
+	s.periodicActions = append(s.periodicActions, fn)
+	t := g.NewTrigger()
+	t.Do(func(api.Event) {
+		if idx < len(s.periodicActions) {
+			callPeriodicFn(L, s, s.periodicActions[idx], t)
+		}
+	})
+	t.Every(time.Duration(secs * float64(time.Second)))
+	return t
+}
+
+// callPeriodicFn invokes a periodic callback with its own Trigger handle as
+// the argument (the script can stop itself), protected — an error routes to
+// OnScriptError, never unwinding the sim. A nil fn (a slot momentarily unbound
+// during a restore window) is a no-op. s may be nil for the schedulerless
+// live-only path.
+func callPeriodicFn(L *lua.LState, s *scriptScheduler, fn *lua.LFunction, t api.Trigger) {
+	if fn == nil {
+		return
+	}
+	L.Push(fn)
+	L.Push(pushHandle(L, t))
+	if err := L.PCall(1, 0, nil); err != nil {
+		if s != nil {
+			s.reportError(err)
+		} else if sc := getScheduler(L); sc != nil {
+			sc.reportError(err)
+		}
+	}
+}
+
 // callLuaCondition invokes a Lua condition fn with the firing Event as a
 // userdata argument and returns its boolean result. It runs on the sim
 // goroutine during condition evaluation, protected so a throwing condition

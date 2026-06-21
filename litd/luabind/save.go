@@ -72,10 +72,18 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 	}
 	// Handler closures join the same pool (#446), in registration order, so a
 	// mutable object shared between a coroutine and a handler interns once. The
-	// matching kinds/order are written separately by SaveEventHandlers.
-	hfns := make([]lua.LValue, len(s.eventHandlers))
-	for i, h := range s.eventHandlers {
-		hfns[i] = h.fn
+	// matching kinds/order are written separately by SaveEventHandlers. The
+	// Game_Every periodic-action closures (#464) follow, in their own
+	// registration order, so a repeating timer's captured upvalues round-trip
+	// through the same shared graph; LoadScripts splits the two back apart at
+	// len(eventHandlers) (both tables are rebuilt to the same counts by the
+	// entry re-run on load).
+	hfns := make([]lua.LValue, 0, len(s.eventHandlers)+len(s.periodicActions))
+	for _, h := range s.eventHandlers {
+		hfns = append(hfns, h.fn)
+	}
+	for _, f := range s.periodicActions {
+		hfns = append(hfns, f)
 	}
 	sb, err := serializeScheduler(reg, L, alive, s.worldGlobals(), hfns, handles)
 	if err != nil {
@@ -201,15 +209,24 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	// The handler set is now part of the SAME shared pool, so a cell/table shared
 	// between a handler and a coroutine is one object. Count must match the kinds
 	// the event section restored, or the save is internally inconsistent.
-	if len(handlerFns) != len(s.eventHandlers) {
-		return fmt.Errorf("luabind: LoadScripts: %d handler closures but %d handler subscriptions registered", len(handlerFns), len(s.eventHandlers))
+	// The pool carries the OnEvent handler closures followed by the Game_Every
+	// periodic-action closures (#464); split at len(eventHandlers). Both tables
+	// were rebuilt to their saved counts by the entry re-run, so the totals must
+	// line up or the save is internally inconsistent (fail-closed).
+	nEvt := len(s.eventHandlers)
+	if len(handlerFns) != nEvt+len(s.periodicActions) {
+		return fmt.Errorf("luabind: LoadScripts: %d pooled closures but %d handler + %d periodic registrations", len(handlerFns), nEvt, len(s.periodicActions))
 	}
 	for i, hf := range handlerFns {
 		fn, ok := hf.(*lua.LFunction)
 		if !ok {
-			return fmt.Errorf("luabind: LoadScripts: handler %d decoded to %s, not a function", i, hf.Type())
+			return fmt.Errorf("luabind: LoadScripts: pooled closure %d decoded to %s, not a function", i, hf.Type())
 		}
-		s.eventHandlers[i].fn = fn
+		if i < nEvt {
+			s.eventHandlers[i].fn = fn
+		} else {
+			s.periodicActions[i-nEvt] = fn
+		}
 	}
 
 	nFree := br.u32()

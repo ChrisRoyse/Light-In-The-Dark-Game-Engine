@@ -359,6 +359,9 @@ exact   Trigger.Disable
 exact   Trigger.IsEnabled
 exact   Trigger.Execute
 exact   Trigger.Evaluate
+# Every arms a periodic-timer event on the trigger (#464): the serializable
+# substrate under the script Game_Every, replacing the Go-closure timer.
+exact   Trigger.Every
 exact   Trigger.Destroy
 exact   Trigger.SetInitiallyOn
 # trigger-scope option constructors + the ready-made owner condition

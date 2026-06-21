@@ -29,6 +29,11 @@ const (
 	HandleDestructable
 	HandleMissile
 	HandleEffect
+	// HandleStorage is the per-game campaign store singleton (Game.Storage()).
+	// It is not entity-backed — Raw is unused — but it must marshal so a script
+	// closure that captures the store (e.g. a Game_Every callback, #464)
+	// round-trips through save/load. It resolves back to the live game's store.
+	HandleStorage
 )
 
 // HandleRef is the persistable, language-portable identity of an entity-backed
@@ -68,6 +73,9 @@ func RefOf(h Handle) (HandleRef, bool) {
 		return HandleRef{Kind: HandleMissile, Raw: uint32(t.id)}, true
 	case Effect:
 		return HandleRef{Kind: HandleEffect, Raw: uint32(t.id)}, true
+	case *Storage:
+		// the campaign store is a per-game singleton; Raw is unused.
+		return HandleRef{Kind: HandleStorage}, true
 	default:
 		return HandleRef{}, false
 	}
@@ -90,6 +98,8 @@ func (g *Game) Resolve(ref HandleRef) (Handle, bool) {
 		return Missile{id: id, g: g}, true
 	case HandleEffect:
 		return Effect{id: id, g: g}, true
+	case HandleStorage:
+		return g.Storage(), true // the per-game campaign store singleton
 	default:
 		return nil, false
 	}

@@ -24,6 +24,7 @@ package litd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
@@ -262,6 +263,19 @@ func (t Trigger) IsEnabled() bool {
 func (t Trigger) SetInitiallyOn(on bool) Trigger {
 	if t.Valid() {
 		t.g.w.Triggers.SetInitiallyOn(t.id, on)
+	}
+	return t
+}
+
+// Every arms the trigger to fire on a periodic-timer event every `period`
+// of game time (quantized up to whole sim ticks, drift-free), first firing
+// one period from now. Unlike a Go-closure timer the schedule is a
+// value-typed scheduler continuation (sim #464), so it round-trips through
+// save/load. The trigger's actions run each period when its condition
+// passes. This is the serializable substrate under the script Game_Every.
+func (t Trigger) Every(period time.Duration) Trigger {
+	if t.Valid() {
+		t.g.w.ArmPeriodic(t.id, durationToTicks(period))
 	}
 	return t
 }

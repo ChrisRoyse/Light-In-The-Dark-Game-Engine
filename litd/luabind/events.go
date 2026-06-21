@@ -60,24 +60,45 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		L.Push(pushHandle(L, timer))
 		return 1
 	}))
-	// Game_Every(secs, fn) runs fn every secs of GAME time until stopped (#267) —
-	// the repeating companion to Game_After. The api callback receives the Timer
-	// (so the script can stop itself); the binding forwards it as the handler's
-	// single argument. Same scheduler + error-routing posture as Game_After.
+	// Game_Every(secs, fn) runs fn every secs of GAME time until stopped (#267).
+	// Since #464 it is backed by a serializable periodic-timer Trigger, not a
+	// Go-closure timer: the callback is interned by slot (registerScriptPeriodic)
+	// so a mid-game save of a repeating timer round-trips (resolves the #450
+	// class). It returns the backing Trigger handle (Valid() works; Timer_Stop,
+	// overridden below, stops it) and passes that handle to the callback so a
+	// script can stop itself — the same shape the old api.Timer presented.
 	L.SetGlobal("Game_Every", L.NewFunction(func(L *lua.LState) int {
 		secs := float64(L.CheckNumber(1))
 		fn := L.CheckFunction(2)
-		timer := g.Every(time.Duration(secs*float64(time.Second)), func(t api.Timer) {
-			L.Push(fn)
+		s := getScheduler(L)
+		if s == nil {
+			// No scheduler (no save layer): a live-only periodic, fn captured
+			// directly. Cannot round-trip, but neither could the old timer.
+			t := g.NewTrigger()
+			t.Do(func(api.Event) { callPeriodicFn(L, nil, fn, t) })
+			t.Every(time.Duration(secs * float64(time.Second)))
 			L.Push(pushHandle(L, t))
-			if err := L.PCall(1, 0, nil); err != nil {
-				if s := getScheduler(L); s != nil {
-					s.reportError(err)
-				}
-			}
-		})
-		L.Push(pushHandle(L, timer))
+			return 1
+		}
+		t := registerScriptPeriodic(L, g, s, secs, fn)
+		L.Push(pushHandle(L, t))
 		return 1
+	}))
+
+	// Timer_Stop is overridden (over the generated Timer.Stop binding) to also
+	// accept a Trigger, so a Game_Every handle — now a periodic Trigger (#464) —
+	// stops via the same verb scripts already use. A real api.Timer (Game_After)
+	// still Stops; anything else is a loud arg error (fail-closed).
+	L.SetGlobal("Timer_Stop", L.NewFunction(func(L *lua.LState) int {
+		switch h := handleArg(L, 1).(type) {
+		case api.Trigger:
+			h.Destroy()
+		case api.Timer:
+			h.Stop()
+		default:
+			L.ArgError(1, "Timer_Stop expects a Timer or Trigger handle")
+		}
+		return 0
 	}))
 	L.SetGlobal("Cancel", L.NewFunction(func(L *lua.LState) int {
 		sub, ok := handleArg(L, 1).(api.Subscription)

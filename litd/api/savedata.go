@@ -52,6 +52,14 @@ func (g *Game) Storage() *Storage {
 	return g.storage
 }
 
+// Valid reports whether the store is live (non-nil). It lets *Storage satisfy
+// the api.Handle marshaling seam (#267) so a script closure capturing the
+// store round-trips through save/load (#464).
+func (s *Storage) Valid() bool { return s != nil }
+
+// IsZero reports the null store (a nil *Storage).
+func (s *Storage) IsZero() bool { return s == nil }
+
 func newStorage() *Storage {
 	return &Storage{
 		ints:  map[storageKey]int64{},

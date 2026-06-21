@@ -76,6 +76,14 @@ type scriptScheduler struct {
 	// matching per-kind HandlerIDs on load (RestoreEventHandlers, #433). The api
 	// side holds only the Go trampoline, from which the Lua fn is unrecoverable.
 	eventHandlers []scriptEventReg
+	// periodicActions records every Game_Every(secs, fn) callback in registration
+	// order, as the named action of a serializable periodic-timer trigger (#464).
+	// Like eventHandlers the Lua fn is held here (the api side keeps only the Go
+	// adapter), so it interns into the shared script pool (SaveScripts) and a
+	// mid-game save of a repeating timer round-trips — its upvalues reattach by
+	// slot on load. The backing trigger + its periodic schedule live in the sim
+	// save; re-running the entry on load re-creates them and re-reads this slot.
+	periodicActions []*lua.LFunction
 	// pendingWaitSecs carries the seconds a coroutine asked to wait, from the
 	// PolledWait native to resume(), WITHOUT pushing it through the Lua value
 	// stack (#265). Passing it as a Lua value forced an LNumber→interface box
