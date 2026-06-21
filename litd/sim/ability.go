@@ -32,6 +32,22 @@ const (
 	maxRuntimeAbilityManaCost  = 1 << 20
 )
 
+// Ability-lifecycle events (#467). The cast machine emitted nothing before;
+// triggers observe spells through these. Ids 29–34 are the next free kind
+// values after EvPeriodic(28) — distinct kinds, no #332 collision. The emit
+// order within a single cast is deterministic (Cast → [Effect] → [ChannelStart
+// → ChannelStop] → Finish, or Stopped on interrupt). Payload convention:
+// Src = caster, Dst = target (0 if none), Arg = ability ref. WC3 parity:
+// EVENT_UNIT_SPELL_CAST/EFFECT/CHANNEL/ENDCAST/FINISH (see #466 coverage).
+const (
+	EvAbilityCast         uint16 = 29 // cast committed: entered castpoint
+	EvAbilityEffect       uint16 = 30 // EFFECT edge: the effect composition fired
+	EvAbilityChannelStart uint16 = 31 // entered the channel phase
+	EvAbilityChannelStop  uint16 = 32 // left the channel phase (into backswing)
+	EvAbilityFinish       uint16 = 33 // cast completed normally (returned to ready)
+	EvAbilityStopped      uint16 = 34 // cast interrupted before finish
+)
+
 // CastStateName returns the human name of a Cast* state.
 func CastStateName(s uint8) string {
 	if int(s) < len(castStateNames) {
@@ -235,6 +251,7 @@ func (w *World) driveCast(ar int32) {
 	a.CastSlot[ar] = int8(slot)
 	a.CastEnd[ar] = w.tick + uint32(def.CastPointTicks)
 	w.castTransition(id, ar, slot, CastPoint)
+	w.Emit(Event{Kind: EvAbilityCast, Src: id, Dst: w.Orders.Target[or], Arg: int64(ref)})
 	if def.CastPointTicks == 0 {
 		w.advanceCast(ar, id, slot, or) // instant cast point fires this tick
 	}
@@ -268,10 +285,12 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 			Target: w.Orders.Target[or],
 			Point:  w.Orders.Point[or],
 		})
+		w.Emit(Event{Kind: EvAbilityEffect, Src: id, Dst: w.Orders.Target[or], Arg: int64(a.AbilityID[ar][slot])})
 		a.ReadyAt[ar][slot] = w.tick + abilityFieldTicks(cooldown)
 		if def.ChannelTicks > 0 {
 			a.CastEnd[ar] = w.tick + uint32(def.ChannelTicks)
 			w.castTransition(id, ar, slot, CastChannel)
+			w.Emit(Event{Kind: EvAbilityChannelStart, Src: id, Dst: w.Orders.Target[or], Arg: int64(a.AbilityID[ar][slot])})
 			return
 		}
 		a.CastEnd[ar] = w.tick + uint32(def.BackswingTicks)
@@ -280,6 +299,7 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 			w.finishCast(ar, id, slot, or)
 		}
 	case CastChannel:
+		w.Emit(Event{Kind: EvAbilityChannelStop, Src: id, Dst: w.Orders.Target[or], Arg: int64(a.AbilityID[ar][slot])})
 		a.CastEnd[ar] = w.tick + uint32(def.BackswingTicks)
 		w.castTransition(id, ar, slot, CastBackswing)
 		if def.BackswingTicks == 0 {
@@ -292,8 +312,10 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 
 // finishCast returns the slot to READY and completes the order.
 func (w *World) finishCast(ar int32, id EntityID, slot int, or int32) {
+	ref := w.Abilities.AbilityID[ar][slot]
 	w.Abilities.CastSlot[ar] = -1
 	w.castTransition(id, ar, slot, CastReady)
+	w.Emit(Event{Kind: EvAbilityFinish, Src: id, Dst: w.Orders.Target[or], Arg: int64(ref)})
 	w.completeOrder(or, id, true)
 }
 
@@ -313,8 +335,12 @@ func (w *World) cancelCast(ar int32, id EntityID, slot int) {
 		}
 		a.Mana[ar] = m
 	}
+	ref := a.AbilityID[ar][slot]
 	a.CastSlot[ar] = -1
 	w.castTransition(id, ar, slot, CastReady)
+	// interrupt: target may be gone, so Dst = 0; the ability ref still identifies
+	// which cast was stopped.
+	w.Emit(Event{Kind: EvAbilityStopped, Src: id, Dst: 0, Arg: int64(ref)})
 }
 
 // castableSlot finds the slot equipped with ref. nil = not equipped.
