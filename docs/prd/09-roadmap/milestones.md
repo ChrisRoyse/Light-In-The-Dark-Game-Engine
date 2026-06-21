@@ -372,7 +372,10 @@ and the hard sandbox; doodad handle promotion lands with the API.*
 6. *(Added 2026-06-11 per D-2026-06-11-8.)* Lua parity: the conformance suite (or its
    sim-side representative subset) runs from Lua and is green; binding regeneration in CI
    is byte-identical (G2.7); a Lua-scripted scenario passes the determinism hash matrix
-   (G5.7).
+   (G5.7). *(Amended 2026-06-21 per D-2026-06-21-1 / #447: G5.7's cross-OS/arch matrix
+   is verified by the committed portable golden — `goldenDetLua` — which validates
+   identically on any machine; the automated CI matrix is deferred to a future infra
+   milestone, #16/#115/#265, and is not a closure blocker.)*
 7. *(Added 2026-06-11 per D-2026-06-11-20.)* Sandbox verified adversarially: escape-attempt
    tests (io/os/net reach, quota busting, runaway loops) fail loudly; per-tick instruction
    and memory quotas are enforced and deterministic.
@@ -600,7 +603,7 @@ conditional.* What is fixed now:
 |---|---|---|
 | License/provenance scans (G4.x, incl. generated-asset provenance G4.7) | M0 (G4.7 from M4) | every milestone |
 | Import-graph separation (sim ↛ render) | M0 | every milestone |
-| Determinism hash matrix (G5.1/G5.2) | M1 | every milestone |
+| Determinism hash matrix (G5.1/G5.2) — *portable golden; cross-arch CI matrix deferred per D-2026-06-21-1/#447* | M1 | every milestone (golden); matrix deferred |
 | Scheduler serialization round-trip (D-9, R8; spike already green, D-28) | M1 (production), M3 (full sim) | every milestone |
 | Manifest regeneration reproducibility (incl. Lua bindings from M5) | M2 | every milestone |
 | Tick budget + zero-alloc tick (G3.3/G3.8); 1,000-unit stretch tracked (G3.10) | M3 | every milestone |

@@ -485,6 +485,41 @@ Golden bit-pattern table in `litd/luabind/mathlib_test.go`.
 
 ---
 
+## D-2026-06-21-1 (#447) — Cross-OS/arch determinism is a portable golden, not a CI matrix; matrix deferred
+
+**Decision.** The cross-platform clause of the determinism gates (G5.1/G5.2/G5.7 —
+"bit-identical 64-bit `Game.StateHash` across linux/windows/macos × amd64/arm64,
+verified by a CI matrix") is **amended**: the accepted determinism guarantee is the
+committed **portable golden trace** (`litd/sim/testdata/golden-10ktick.trace`, plus
+the Lua scenario golden `goldenDetLua`), which by construction validates identically
+on *any* machine that runs `go test ./litd/sim -run Golden` / the determinism-lua
+suite. The automated cross-OS/arch **matrix** is **deferred to a future infra
+milestone** and tracked by #16/#115/#265; it is not a blocker for closing the
+determinism-bearing gates on local evidence. Owner sign-off via #447 (2026-06-21).
+
+**Why.** The project removed hosted CI (#284, billing unresolved) and gates locally
+via `scripts/preflight.sh`; a single workstation is one platform, so the matrix rows
+cannot be satisfied by any amount of local work. The determinism *property* is
+already locked: the golden is portable (a hash table independent of the machine that
+wrote it), stable run-to-run and across GOMAXPROCS 1/8, with an injected-divergence
+teeth control and a mid-run save/restore == unbroken proof. Pure-Go fixed-point math
+(D-2026-06-11-1) + the deterministic Lua fork (D-25) + transcendentals through
+`litd/fixed` (D-2026-06-19-1) minimize the platform-variance the matrix would catch.
+
+**Accepted trade-off.** Cross-platform float/determinism drift would not be caught
+automatically until the deferred infra milestone restores a paid matrix runner; the
+portable golden is the interim tripwire (it fails on the first machine that diverges).
+
+**Unblocks.** #271 and #265 close on local evidence; the milestone exit gates
+#321–#327 (and #485) may close their determinism rows against the portable golden
+rather than a matrix artifact.
+
+**Supersedes.** Tightens the CI-matrix expression of G5.1/G5.2/G5.7 in
+[milestones.md](../09-roadmap/milestones.md) §8/§14; the determinism *requirement*
+stands, its *verification mechanism* is the portable golden.
+
+---
+
 ## No remaining deferred decisions
 
 | Formerly open | Now |
