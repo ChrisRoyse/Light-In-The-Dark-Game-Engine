@@ -16,6 +16,11 @@ type ItemType struct {
 // IsZero reports the null item type.
 func (t ItemType) IsZero() bool { return t.ref == 0 }
 
+// Valid reports a non-null item type. Together with IsZero this satisfies
+// api.Handle, so a captured ItemType round-trips through the handle-marshal seam
+// (#489).
+func (t ItemType) Valid() bool { return t.ref != 0 }
+
 // ItemType resolves an item code (e.g. "potion") to its bound type, or the
 // null ItemType if the code is unknown or no item table is bound. JASS: the
 // 'xxxx' rawcodes passed to CreateItem.

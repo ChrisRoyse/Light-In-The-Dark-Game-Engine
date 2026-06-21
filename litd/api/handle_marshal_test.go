@@ -65,3 +65,49 @@ func TestHandleRefRoundTripAndStaleness(t *testing.T) {
 	}
 	t.Logf("FSV: seam round-trips opaque refs, staleness honored, non-entity + null rejected")
 }
+
+// TestTypeCatalogHandleRoundTrip locks the #489 additions: ItemType and
+// ResourceNodeType are stable type-catalog refs (ref = typeIdx+1, like
+// UnitType/BuffType). A world script can capture one as a Game_Every / trigger
+// upvalue, so it MUST survive the RefOf -> JSON -> Resolve save path and resolve
+// back to an equal handle. SoT = the recovered handle value compared to the
+// original.
+func TestTypeCatalogHandleRoundTrip(t *testing.T) {
+	w := sim.NewWorld(sim.Caps{Units: 8})
+	g := newGame(w)
+
+	cases := []struct {
+		name string
+		h    Handle
+		kind HandleKind
+		raw  uint32
+	}{
+		{"ItemType", ItemType{ref: 3}, HandleItemType, 3},
+		{"ResourceNodeType", ResourceNodeType{ref: 5}, HandleResourceNodeType, 5},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ref, ok := RefOf(c.h)
+			if !ok || ref.Kind != c.kind || ref.Raw != c.raw {
+				t.Fatalf("RefOf(%s) = %+v ok=%v, want {%d, %d}", c.name, ref, ok, c.kind, c.raw)
+			}
+			blob, _ := json.Marshal(ref)
+			t.Logf("FSV %s ref artifact: %s", c.name, blob)
+			var ref2 HandleRef
+			if err := json.Unmarshal(blob, &ref2); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			h2, ok := g.Resolve(ref2)
+			if !ok {
+				t.Fatalf("Resolve(%s ref) ok=false", c.name)
+			}
+			if h2 != c.h {
+				t.Fatalf("round-trip %s = %#v, want %#v", c.name, h2, c.h)
+			}
+			if !h2.Valid() {
+				t.Fatalf("non-null %s must resolve Valid()", c.name)
+			}
+			t.Logf("FSV %s: %#v survived save round-trip, Valid=%v", c.name, h2, h2.Valid())
+		})
+	}
+}

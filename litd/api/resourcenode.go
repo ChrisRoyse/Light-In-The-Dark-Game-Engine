@@ -14,6 +14,11 @@ type ResourceNodeType struct {
 // IsZero reports whether this is the null resource-node type.
 func (t ResourceNodeType) IsZero() bool { return t.ref == 0 }
 
+// Valid reports a non-null resource-node type. Together with IsZero this
+// satisfies api.Handle, so a captured ResourceNodeType round-trips through the
+// handle-marshal seam (#489).
+func (t ResourceNodeType) Valid() bool { return t.ref != 0 }
+
 // ResourceNodeType resolves a node code (data.ResourceNodeType.ID) to its ref.
 // Returns the null type for an unknown code or before DefineResourceNodes.
 func (g *Game) ResourceNodeType(code string) ResourceNodeType {

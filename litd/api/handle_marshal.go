@@ -46,6 +46,15 @@ const (
 	HandleUnitType
 	HandleBuffType
 	HandleFogModifier
+	// HandleItemType / HandleResourceNodeType marshal the remaining stable
+	// type-catalog refs a world script can capture as an upvalue (#489) —
+	// e.g. Game_ItemType("ember-cloak") or Game_ResourceNodeType("emberwell")
+	// held by a Game_Every / trigger closure. Raw carries the type ref
+	// (typeIdx+1), stable across a save/load of the same world exactly like
+	// HandleUnitType/HandleBuffType. Without these a script holding such a ref
+	// fails closed at SaveScripts.
+	HandleItemType
+	HandleResourceNodeType
 )
 
 // HandleRef is the persistable, language-portable identity of an entity-backed
@@ -96,6 +105,10 @@ func RefOf(h Handle) (HandleRef, bool) {
 		return HandleRef{Kind: HandleBuffType, Raw: uint32(t.ref)}, true
 	case FogModifier:
 		return HandleRef{Kind: HandleFogModifier, Raw: uint32(t.id)}, true
+	case ItemType:
+		return HandleRef{Kind: HandleItemType, Raw: uint32(t.ref)}, true
+	case ResourceNodeType:
+		return HandleRef{Kind: HandleResourceNodeType, Raw: uint32(t.ref)}, true
 	default:
 		return HandleRef{}, false
 	}
@@ -128,6 +141,10 @@ func (g *Game) Resolve(ref HandleRef) (Handle, bool) {
 		return BuffType{ref: uint16(ref.Raw)}, true
 	case HandleFogModifier:
 		return FogModifier{g: g, id: sim.FogModifierID(ref.Raw)}, true
+	case HandleItemType:
+		return ItemType{ref: uint16(ref.Raw)}, true
+	case HandleResourceNodeType:
+		return ResourceNodeType{ref: uint16(ref.Raw)}, true
 	default:
 		return nil, false
 	}

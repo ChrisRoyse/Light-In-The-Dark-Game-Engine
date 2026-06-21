@@ -97,9 +97,10 @@ func TestValidStaleHandleAcrossTicksFSV(t *testing.T) {
 }
 
 // TestValidFailsClosedOnNonPredicate: Valid on a payload with no Valid()
-// predicate (an ItemType id-ref) is a loud error, not a silent answer.
-// (UnitType/BuffType gained Valid() in #481 so they can marshal as save/loadable
-// closure upvalues; ItemType still has only IsZero, so it remains the witness.)
+// predicate (an Order command token) is a loud error, not a silent answer.
+// (UnitType/BuffType gained Valid() in #481, ItemType/ResourceNodeType in #489 so
+// they can marshal as save/loadable closure upvalues; Order has only IsZero, so
+// it is now the witness for the fail-closed Valid() path.)
 func TestValidFailsClosedOnNonPredicate(t *testing.T) {
 	g := catalogGame(t, 1)
 	L := lua.NewState()
@@ -107,15 +108,15 @@ func TestValidFailsClosedOnNonPredicate(t *testing.T) {
 	if err := luabind.Register(L, g); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
-	setUD(L, "it", g.ItemType("anything")) // ItemType has IsZero but no Valid
+	setUD(L, "it", g.Order("attack")) // Order has IsZero but no Valid
 
 	err := L.DoString("return Valid(it)")
 	if err == nil {
 		t.Fatal("Valid on a non-Valid payload must error (fail-closed), got nil")
 	}
-	t.Logf("FSV fail-closed: Valid(itemtype) -> %v", err)
-	// IsZero IS implemented on ItemType, so it must work.
+	t.Logf("FSV fail-closed: Valid(order) -> %v", err)
+	// IsZero IS implemented on Order, so it must work.
 	if err := L.DoString("return IsZero(it)"); err != nil {
-		t.Errorf("IsZero(itemtype) should work (ItemType has IsZero): %v", err)
+		t.Errorf("IsZero(order) should work (Order has IsZero): %v", err)
 	}
 }
