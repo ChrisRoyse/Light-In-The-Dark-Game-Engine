@@ -21,6 +21,9 @@ const (
 	RenderUnitReady
 	// RenderUnitAttack — a unit fired an attack this tick. UnitType and Pos valid.
 	RenderUnitAttack
+	// RenderSpellCue — a script emitted a one-shot spell VFX cue at a unit this
+	// tick (#479, via Game.EmitSpellCue). UnitType and Pos valid.
+	RenderSpellCue
 )
 
 // RenderEvent is a value-type presentation cue for render-side consumers.
@@ -30,6 +33,18 @@ type RenderEvent struct {
 	UnitKey  uint32   // stable per-unit key (entity index) for throttling
 	Pos      Vec2     // world position (valid when HasPos)
 	HasPos   bool
+}
+
+// EmitSpellCue stages a one-shot spell VFX cue at a unit on the NON-HASHING
+// render-event channel (#449/#479) — a trigger Action calls this so render plays
+// an impact/cast effect without perturbing the state hash (an audio/vfx-on game
+// hashes identically to one without). Returns false on an invalid handle. The
+// cue carries the unit's type and position for the render consumer.
+func (g *Game) EmitSpellCue(u Unit) bool {
+	if g == nil || g.w == nil || !u.Valid() {
+		return false
+	}
+	return g.w.EmitUnitRenderCue(sim.RenderSpellCue, u.id)
 }
 
 // RenderEvents appends this tick's published presentation cues to buf and returns
@@ -52,6 +67,8 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 			kind = RenderUnitReady
 		case sim.RenderUnitAttack:
 			kind = RenderUnitAttack
+		case sim.RenderSpellCue:
+			kind = RenderSpellCue
 		default:
 			continue
 		}

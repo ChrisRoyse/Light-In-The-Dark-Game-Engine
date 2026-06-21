@@ -409,3 +409,9 @@ exact   EffectInvocation.Valid
 # ability binds a trigger as its EFFECT-edge behavior (#478): bind a trigger to
 # a name a data ability references. LitD authoring seam, no JASS native.
 exact   Trigger.BindName
+# public cast-ability order + script render cue (#479): the dogfood of a full
+# trigger-authored spell surfaced these gaps. Unit.Cast issues the cast order
+# (IssueTargetOrder spell family); Game.EmitSpellCue stages a non-hashing render
+# VFX cue (#449 presentation channel, no JASS native).
+exact   Unit.Cast
+exact   Game.EmitSpellCue

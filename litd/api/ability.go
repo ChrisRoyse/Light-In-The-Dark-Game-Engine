@@ -169,6 +169,32 @@ func (u Unit) AddAbility(ref AbilityRef) Ability {
 	return Ability{owner: u.id, ref: uint32(r), g: u.g}
 }
 
+// Cast orders the unit to cast one of its learned abilities at a target unit —
+// the public cast-ability order (#479; the IssueTargetOrder spell-cast family).
+// The cast runs through the normal cast machine (cast point, cooldown, mana,
+// EFFECT edge), so a trigger-bound ability (#478) fires its trigger here.
+// Fail-closed: an invalid caster or target, a zero/foreign ability handle, or an
+// ability the unit has not learned makes the call a no-op returning false.
+func (u Unit) Cast(ab Ability, target Unit) bool {
+	if !u.Valid() {
+		u.g.reportInvalid("Unit.Cast")
+		return false
+	}
+	if ab.ref == 0 || ab.g != u.g {
+		u.g.reportInvalid("Unit.Cast (invalid ability handle)")
+		return false
+	}
+	if !target.Valid() {
+		u.g.reportInvalid("Unit.Cast (dead target)")
+		return false
+	}
+	return u.g.w.IssueOrder(u.id, sim.Order{
+		Kind:   uint8(sim.OrderCastAbility),
+		Target: target.id,
+		Data:   uint16(ab.ref),
+	}, false)
+}
+
 // RemoveAbility removes ref from the unit, clearing all per-instance
 // overrides for the slot. It returns false on invalid handles, unknown
 // refs, or refs not equipped by the unit.

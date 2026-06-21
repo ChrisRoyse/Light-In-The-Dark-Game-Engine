@@ -49,4 +49,12 @@ func registerScriptEffects(L *lua.LState, g *api.Game) {
 		L.Push(lua.LBool(g.EffectRegistered(L.CheckString(1))))
 		return 1
 	}))
+
+	// Game_EmitSpellCue(unit) -> bool — stage a one-shot spell VFX cue on the
+	// non-hashing render channel (#479). A trigger Action calls this so render
+	// plays an impact effect without perturbing the state hash.
+	L.SetGlobal("Game_EmitSpellCue", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(g.EmitSpellCue(argUnit(L, 1))))
+		return 1
+	}))
 }

@@ -52,4 +52,12 @@ func registerScriptWeapon(L *lua.LState, g *api.Game) {
 		L.Push(lua.LBool(ok))
 		return 2
 	}))
+
+	// Unit_CastAbility(caster, ability, target) -> bool — the public cast-ability
+	// order (#479): runs through the cast machine, firing a trigger-bound ability
+	// (#478) at its EFFECT edge.
+	L.SetGlobal("Unit_CastAbility", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(argUnit(L, 1).Cast(argAbility(L, 2), argUnit(L, 3))))
+		return 1
+	}))
 }

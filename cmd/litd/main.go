@@ -16,6 +16,7 @@ import (
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/luabind"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
 func main() {
@@ -121,6 +122,10 @@ func loadWorld(world string, seed, budget int64) (*api.Game, func(), error) {
 		}
 	}
 	if len(tables.Effects) > 0 {
+		// Register the core effect-primitive backends once per process before
+		// binding any arena (#479) — without this a world that ships an
+		// effect-using ability or buff fails closed at DefineEffects.
+		sim.EnsureCoreEffectExecs()
 		if err := g.DefineEffects(tables.Effects); err != nil {
 			return nil, nil, fmt.Errorf("define effects: %w", err)
 		}

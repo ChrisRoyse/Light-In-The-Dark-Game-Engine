@@ -60,6 +60,7 @@ const (
 	RenderUnitDeath   uint8 = 3 // Ent = dying unit, Data = unit-type id (#313 sound/anim cue)
 	RenderUnitReady   uint8 = 4 // Ent = trained unit, Data = unit-type id (#313 "ready" cue)
 	RenderUnitAttack  uint8 = 5 // Ent = attacker, Data = unit-type id (#313 attack-swing cue)
+	RenderSpellCue    uint8 = 6 // Ent = cued unit, Data = unit-type id (#479 script-emitted spell VFX cue)
 )
 
 // Snapshot is one published frame of sim state plus that tick's
@@ -139,6 +140,18 @@ func (w *World) EmitRenderEvent(kind uint8, ent EntityID, data uint16) bool {
 	}
 	w.renderEvStaging = append(w.renderEvStaging, RenderEvent{Kind: kind, Ent: ent, Data: data})
 	return true
+}
+
+// EmitUnitRenderCue stages a render cue for a unit, filling Data with the unit's
+// type id (so a render consumer can pick the right model/anim) — the shape the
+// engine uses for its built-in unit cues (#313). Fail-closed on a non-unit
+// entity. The seam a script-facing presentation verb (#479) sits on.
+func (w *World) EmitUnitRenderCue(kind uint8, id EntityID) bool {
+	ur := w.UnitTypes.Row(id)
+	if ur < 0 {
+		return false
+	}
+	return w.EmitRenderEvent(kind, id, w.UnitTypes.TypeID[ur])
 }
 
 // lifeFrac quantizes life/maxLife to u16. Entities without a Health

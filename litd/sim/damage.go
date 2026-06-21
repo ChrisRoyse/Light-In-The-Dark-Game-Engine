@@ -15,6 +15,7 @@ package sim
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
@@ -227,6 +228,23 @@ func (w *World) DamageDropped() uint32 { return w.dmgDropped }
 // LastDamagedTick (threat memory, #148), emit EvUnitDamaged; lethal
 // packets mark the deferred-kill buffer — removal stays phase 7's
 // job, so same-tick mutual kills both resolve.
+// coreExecsOnce guards EnsureCoreEffectExecs so a host can call it on every
+// world load without tripping the duplicate-registration panic.
+var coreExecsOnce sync.Once
+
+// EnsureCoreEffectExecs registers the core effect backends and freezes the
+// registry exactly once per process (#479). It is the production entry point —
+// a host (cmd/litd) calls it before installing any effect-using content, where
+// RegisterCoreEffectExecs/FreezeEffectExecs (raw, for tests that reset the
+// global registry) would panic on a second call. Idempotent and safe to call on
+// every world load.
+func EnsureCoreEffectExecs() {
+	coreExecsOnce.Do(func() {
+		RegisterCoreEffectExecs()
+		FreezeEffectExecs()
+	})
+}
+
 func (w *World) damageApplySystem() {
 	for i := range w.dmgBuf {
 		p := &w.dmgBuf[i]

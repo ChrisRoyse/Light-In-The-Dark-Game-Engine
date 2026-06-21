@@ -1,0 +1,13 @@
+# dev-sandbox "burn" debuff (#479): the damage-over-time the firebolt spell
+# applies. A periodic damage composition (5 per second for 3 seconds) on the
+# world's "normal" attack type. Refresh stacking: a re-cast restarts the clock.
+[[buff]]
+id = "burn"
+duration = 3.0
+stacking = "refresh"
+period = 1.0
+dispellable = true
+[[buff.effects]]
+prim = "damage"
+amount = 5
+attack-type = "normal"

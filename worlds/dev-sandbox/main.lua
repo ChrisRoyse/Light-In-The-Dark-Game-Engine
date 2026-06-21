@@ -13,3 +13,9 @@ Game_SetTimeOfDay(12.0)
 
 -- Spawn one unit at a known location, facing east (90 deg).
 Game_CreateUnit(Game_Player(0), Game_UnitType("hfoo"), { x = 320, y = 256 }, 90)
+
+-- Install the example trigger-authored firebolt spell (#478/#479). The module
+-- creates the trigger and binds it to the name the firebolt ability references;
+-- a unit that learns + casts firebolt fires it. Required as a sibling chunk
+-- (#412) — no engine rebuild, no global injection.
+require("scripts/spell_firebolt")
