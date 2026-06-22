@@ -89,6 +89,48 @@ type CueBufferBackend interface {
 	CueBufferInfo(cue uint32) (CueBufferInfo, bool)
 }
 
+// StreamDeviceInfo is the OpenAL stream-ring state exposed for FSV. It is the
+// device-side counterpart to StreamController's pure-Go stream snapshot.
+type StreamDeviceInfo struct {
+	Kind             StreamKind `json:"kind"`
+	Slot             int        `json:"slot"`
+	SourceID         uint32     `json:"sourceId,omitempty"`
+	BufferIDs        []uint32   `json:"bufferIds,omitempty"`
+	ChunkBytes       int        `json:"chunkBytes"`
+	RingChunks       int        `json:"ringChunks"`
+	BufferBytes      int        `json:"bufferBytes"`
+	Queued           int32      `json:"queued"`
+	Processed        int32      `json:"processed"`
+	SourceState      int32      `json:"sourceState"`
+	Playing          bool       `json:"playing"`
+	Active           bool       `json:"active"`
+	Filename         string     `json:"filename,omitempty"`
+	Loop             bool       `json:"loop"`
+	Channels         int        `json:"channels,omitempty"`
+	SampleRate       int        `json:"sampleRate,omitempty"`
+	TotalBytesQueued int64      `json:"totalBytesQueued"`
+	Refills          int        `json:"refills"`
+	Underruns        int        `json:"underruns"`
+	EOF              bool       `json:"eof"`
+	LastReadBytes    int        `json:"lastReadBytes"`
+}
+
+// StreamUnderrunReporter is implemented by StreamController. A streaming backend
+// calls it after observing an empty device queue and before refilling the ring.
+type StreamUnderrunReporter interface {
+	ReportUnderrun(kind StreamKind, observedFill int)
+}
+
+// StreamBackend is the optional queued-buffer stream capability provided by the
+// OpenAL backend for the two fixed stream slots: music and ambience.
+type StreamBackend interface {
+	StartStream(kind StreamKind, filename string, loop bool, gain float64) (StreamDeviceInfo, error)
+	UpdateStream(kind StreamKind) (StreamDeviceInfo, error)
+	StopStream(kind StreamKind) (StreamDeviceInfo, error)
+	StreamInfo(kind StreamKind) (StreamDeviceInfo, bool)
+	SetStreamUnderrunReporter(StreamUnderrunReporter)
+}
+
 // nullBackend is the no-op device: it makes no sound but is otherwise a fully
 // valid sink. The Manager does all accounting regardless, so the null backend is
 // the deterministic, headless-testable path that mirrors a real device exactly.

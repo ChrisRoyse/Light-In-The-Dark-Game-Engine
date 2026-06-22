@@ -31,15 +31,20 @@ type openALCueBuffer struct {
 	sampleRate int
 }
 
+const residentOpenALSources = WorldVoices + UIVoices
+
 // openALBackend drives a real OpenAL device. One pooled source per active voice
 // slot (MaxVoices); the Manager owns the mix, this only places sources.
 type openALBackend struct {
-	dev        *al.Device
-	ctx        *al.Context
-	sources    []uint32                   // the source pool
-	byCue      map[uint32]uint32          // cue -> assigned source (latest)
-	cueBuffers map[uint32]openALCueBuffer // cue -> resident OpenAL buffer
-	next       int                        // round-robin cursor into sources
+	dev            *al.Device
+	ctx            *al.Context
+	sources        []uint32                   // the source pool
+	byCue          map[uint32]uint32          // cue -> assigned source (latest)
+	cueBuffers     map[uint32]openALCueBuffer // cue -> resident OpenAL buffer
+	streamBuffers  [StreamVoices][]uint32
+	streams        [StreamVoices]openALStream
+	streamReporter StreamUnderrunReporter
+	next           int // round-robin cursor into resident sources
 }
 
 // OpenDevice opens the default OpenAL device and builds a backend. Returns an
@@ -67,6 +72,22 @@ func OpenDevice() (Backend, error) {
 		cueBuffers: make(map[uint32]openALCueBuffer),
 	}
 	al.GenSources(b.sources)
+	if err := al.GetError(); err != nil {
+		al.DestroyContext(ctx)
+		al.CloseDevice(dev)
+		return nil, fmt.Errorf("audio: OpenAL source allocation: %w", err)
+	}
+	for i := range b.streamBuffers {
+		b.streamBuffers[i] = al.GenBuffers(StreamRingChunks)
+		if len(b.streamBuffers[i]) != StreamRingChunks {
+			b.Close()
+			return nil, fmt.Errorf("audio: OpenAL stream buffer allocation returned %d buffers, want %d", len(b.streamBuffers[i]), StreamRingChunks)
+		}
+		if err := al.GetError(); err != nil {
+			b.Close()
+			return nil, fmt.Errorf("audio: OpenAL stream buffer allocation: %w", err)
+		}
+	}
 	return b, nil
 }
 
@@ -74,13 +95,26 @@ func (b *openALBackend) Name() string { return "openal" }
 
 func (b *openALBackend) SourceCount() int { return len(b.sources) }
 
-// assign returns the source for cue, round-robin allocating one on first use.
-func (b *openALBackend) assign(cue uint32) (uint32, bool) {
+// assign returns the source for cue, allocating one on first use. Resident cues
+// are confined to the first 30 sources; slots 30 and 31 are reserved streams.
+func (b *openALBackend) assign(cue uint32, preferredSlot int) (uint32, bool) {
 	if s, ok := b.byCue[cue]; ok {
 		return s, false
 	}
-	s := b.sources[b.next%len(b.sources)]
-	b.next++
+	idx := -1
+	if preferredSlot >= 0 && preferredSlot < residentOpenALSources && preferredSlot < len(b.sources) {
+		idx = preferredSlot
+	} else if len(b.sources) >= residentOpenALSources {
+		idx = b.next % residentOpenALSources
+		b.next++
+	} else if len(b.sources) > 0 {
+		idx = b.next % len(b.sources)
+		b.next++
+	}
+	if idx < 0 {
+		return 0, true
+	}
+	s := b.sources[idx]
 	b.byCue[cue] = s
 	return s, true
 }
@@ -177,7 +211,10 @@ func (b *openALBackend) Play(v Voice) {
 	if !ok {
 		return
 	}
-	s, fresh := b.assign(v.Cue)
+	s, fresh := b.assign(v.Cue, v.Slot)
+	if s == 0 {
+		return
+	}
 	al.Sourcef(s, al.Gain, float32(v.Gain))
 	al.Sourcef(s, al.Pitch, float32(v.Pitch))
 	al.Sourcef(s, al.RolloffFactor, 0) // Manager already applied distance attenuation
@@ -200,8 +237,16 @@ func (b *openALBackend) SetListener(pos Vec3) {
 }
 
 func (b *openALBackend) Close() error {
+	for i := range b.streams {
+		_, _ = b.stopStreamAt(i)
+	}
 	if len(b.sources) > 0 {
 		al.DeleteSources(b.sources)
+	}
+	for i := range b.streamBuffers {
+		if len(b.streamBuffers[i]) > 0 {
+			al.DeleteBuffers(b.streamBuffers[i])
+		}
 	}
 	if len(b.cueBuffers) > 0 {
 		bufs := make([]uint32, 0, len(b.cueBuffers))
