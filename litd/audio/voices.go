@@ -8,7 +8,7 @@ package audio
 // and mutates the fixed slot array and returns a value Decision.
 //
 // The WC3-style admission chain, in order:
-//  1. distance cull — positional request beyond MaxAudible is dropped;
+//  1. distance cull — positional world request beyond MaxAudible is dropped;
 //  2. duplicate coalescing — at most MaxConcurrentPerAsset (3) concurrent
 //     instances of one asset in a partition; the excess merges into the newest
 //     instance with a capped gain bump and NO restart (anti-machine-gun);
@@ -199,8 +199,10 @@ func (a *Allocator) dist2(p Vec3) float64 {
 // Admit runs the admission chain for req and returns the decision. Zero-alloc:
 // operates only on the fixed slot array.
 func (a *Allocator) Admit(req VoiceRequest) Decision {
-	// (1) Distance cull.
-	if req.HasPos && a.dist2(req.Pos) > a.maxAudible*a.maxAudible {
+	// (1) Distance cull. UI-domain sounds may carry a world position for
+	// presentation context, but the UI partition is flat and must remain audible
+	// regardless of camera distance (#231).
+	if req.Partition == PartitionWorld && req.HasPos && a.dist2(req.Pos) > a.maxAudible*a.maxAudible {
 		return Decision{Outcome: CulledDistance, Slot: -1, Victim: -1}
 	}
 

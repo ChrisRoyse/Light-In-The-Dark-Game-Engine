@@ -79,6 +79,42 @@ func TestAdmissionUINotStarvedByBattleFSV(t *testing.T) {
 		WorldVoices)
 }
 
+// Edge for #231: a cue classified as UI remains flat and audible even if a caller
+// supplies a far-away position on the Effects channel. The allocator's distance
+// cull applies only to the world partition.
+func TestAdmissionUIDomainSkipsDistanceCullFSV(t *testing.T) {
+	const tbl = `
+[[sound]]
+cue = "under_attack_stinger"
+domain = "ui"
+priority = "alert"
+ogg = "ui/under_attack.ogg"
+`
+	st, err := LoadSoundTable(fstest.MapFS{"audio/sounds.toml": {Data: []byte(tbl)}}, "audio/sounds.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(nil)
+	m.SetSoundTable(st)
+	m.SetListener(Vec3{0, 0, 0})
+
+	cue := api.CueID("under_attack_stinger")
+	m.Handle(api.AudioEvent{
+		Kind: api.AudioPlayAt, Cue: cue, Volume: 1,
+		HasPos: true, Pos: api.Vec2{X: MaxAudibleDistance * 2, Y: 0}, Channel: api.ChannelEffects,
+	})
+	s := m.Dump()
+	if s.Culled != 0 || s.VoiceCount != 1 || partCount(s, PartitionUI) != 1 {
+		t.Fatalf("UI-domain far positional sound was culled or mispartitioned: %+v", s)
+	}
+	v := s.Voices[0]
+	if v.Domain != DomainUI || v.Group != GroupUI || !approx(v.Gain, 1) || !approx(v.Pan, 0) {
+		t.Fatalf("UI-domain far positional sound not flat/full/centered: %+v", v)
+	}
+	t.Logf("FSV #231 edge: UI-classified stinger at %.0f world units -> admitted in UI partition, gain=%.1f pan=%.1f culled=%d",
+		MaxAudibleDistance*2, v.Gain, v.Pan, s.Culled)
+}
+
 // Edge: priority eviction on the real play path. A world partition full of
 // low-priority (Ambient) voices must yield to a high-priority Alert via a steal.
 func TestAdmissionPriorityStealFSV(t *testing.T) {
@@ -99,8 +135,8 @@ ogg = "sfx/alert.ogg"
 	m.SetListener(Vec3{0, 0, 0})
 
 	const victimCue = 300
-	playWorld(m, victimCue, 100, 1)      // slot 0 — an Ambient
-	for i := 1; i < WorldVoices; i++ {    // fill the rest of the world partition
+	playWorld(m, victimCue, 100, 1)    // slot 0 — an Ambient
+	for i := 1; i < WorldVoices; i++ { // fill the rest of the world partition
 		playWorld(m, uint32(300+i), 100, 1)
 	}
 	full := m.Dump()

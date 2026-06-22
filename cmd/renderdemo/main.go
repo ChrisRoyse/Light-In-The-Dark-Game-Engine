@@ -536,7 +536,7 @@ type resourceBarValues struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm, battle500")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
 	dumpAudioInitMode := flag.String("dump-audio-init", "", "print audio init/accounting JSON for backend mode: null, openal, or auto")
@@ -547,6 +547,7 @@ func main() {
 	autotestGroups := flag.Bool("autotest-groups", false, "render the control-group input FSV fixture")
 	autotestOrders := flag.Bool("autotest-orders", false, "render the smart-right-click order FSV fixture")
 	autotestQueue := flag.Bool("autotest-queue", false, "render the shift-queue order FSV fixture")
+	autotestAudio := flag.Bool("autotest-audio", false, "run the basecamp audio domain FSV fixture and dump gain/pan/cull JSON")
 	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
 	debugFarplane := flag.Float64("debug-farplane", 1, "multiply the computed far plane by this factor (#40 invariant probe: 2x must not change the visible-graphic set)")
 	vfxLowPreset := flag.Bool("vfx-low-preset", false, "spellstorm scene: run the VFX light pool in low preset (requests accounted, no light bound)")
@@ -605,6 +606,30 @@ func main() {
 		if !dump.OK {
 			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio-init failed: %s\n", strings.Join(dump.Errors, "; "))
 			os.Exit(1)
+		}
+		return
+	}
+	if *autotestAudio {
+		dump, err := buildAudioDomainDump(*sceneName)
+		if dump != nil && *dumpPath != "" {
+			if writeErr := writeJSONFile(*dumpPath, dump); writeErr != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: autotest-audio dump: %v\n", writeErr)
+				os.Exit(1)
+			}
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: autotest-audio: %v\n", err)
+			os.Exit(1)
+		}
+		if dump == nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: autotest-audio: missing dump\n")
+			os.Exit(1)
+		}
+		fmt.Printf("audio-domains: scene=%s ok=%v playbacks=%d culled=%d dump=%s\n",
+			dump.Scene, dump.OK, len(dump.Playbacks), dump.Snapshot.Culled, *dumpPath)
+		if !dump.OK {
+			fmt.Fprintf(os.Stderr, "renderdemo: autotest-audio failed: %s\n", strings.Join(dump.Errors, "; "))
+			os.Exit(2)
 		}
 		return
 	}

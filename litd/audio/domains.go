@@ -15,10 +15,9 @@ import (
 //
 // The domain is a property of the ASSET (its data-table entry), not of whether a
 // play call carried a position — a UI sound played "at" a unit is still flat. The
-// per-asset domain/priority data table + its assetcheck gate are tracked separately
-// (the table format is coupled to the #313 data-driven sound sets and does not yet
-// exist); until then the Manager infers the domain from the mixer channel, which is
-// a faithful interim (the UI channel is the UI domain).
+// per-asset domain/priority data table + its assetcheck gate are the authoritative
+// source when installed. The channel mapping below remains the fallback for
+// unclassified rollout fixtures and direct tests.
 //
 // This file is the pure resolution model: given a domain, a source/listener
 // geometry, and the volume inputs, it yields the final gain/pan (or a cull). It is
@@ -89,9 +88,9 @@ func ResolveFlat(vol, groupVol float64) Resolved {
 	return Resolved{Gain: clamp(vol*groupVol, 0, 1), Pan: 0}
 }
 
-// DomainOf classifies a mixer channel into a playback domain (interim mapping
-// until per-asset classification exists). The UI channel is the UI domain; every
-// other channel is World.
+// DomainOf classifies a mixer channel into a playback domain for fallback paths
+// without a per-asset table row. The UI channel is the UI domain; every other
+// channel is World.
 func DomainOf(ch api.SoundChannel) Domain {
 	if ch == api.ChannelUI {
 		return DomainUI
