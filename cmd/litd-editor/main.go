@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/cmd/litd-editor/shell"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
@@ -140,6 +141,9 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runMetadataFSV(app, outDir, metadataState); err != nil {
 		return err
 	}
+	if err := runArchiveRoundTripFSV(app, outDir); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -236,6 +240,9 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 		return err
 	}
 	if err := writeMetadataDump(app, outDir, metadataState); err != nil {
+		return err
+	}
+	if err := runArchiveRoundTripFSV(app, outDir); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -1271,6 +1278,267 @@ func writeMetadataDump(app *shell.App, outDir string, state *metadataFSVState) e
 		return err
 	}
 	return os.WriteFile(filepath.Join(outDir, "metadata-starts-dump.json"), append(body, '\n'), 0o644)
+}
+
+type archiveRoundTripFSVState struct {
+	ArchiveA       string              `json:"archiveA"`
+	ArchiveB       string              `json:"archiveB"`
+	HashesA        []string            `json:"hashesA"`
+	HashesB        []string            `json:"hashesB"`
+	Load           archiveSnapshot     `json:"load"`
+	Corrupt        archiveErrorRecord  `json:"corrupt"`
+	EngineRange    archiveErrorRecord  `json:"engineRange"`
+	ReadOnlySave   archiveReadOnlySave `json:"readOnlySave"`
+	ShippedArchive archiveSnapshot     `json:"shippedArchive"`
+}
+
+type archiveSnapshot struct {
+	ProjectPath     string                     `json:"projectPath"`
+	ArchivePath     string                     `json:"archivePath"`
+	ArchiveReadOnly bool                       `json:"archiveReadOnly"`
+	Status          string                     `json:"status"`
+	Error           string                     `json:"error,omitempty"`
+	Dirty           bool                       `json:"dirty"`
+	Name            string                     `json:"name"`
+	Width           int                        `json:"width"`
+	Height          int                        `json:"height"`
+	Starts          []sourceform.StartLocation `json:"starts,omitempty"`
+}
+
+type archiveErrorRecord struct {
+	Before archiveSnapshot `json:"before"`
+	Error  string          `json:"error"`
+	After  archiveSnapshot `json:"after"`
+}
+
+type archiveReadOnlySave struct {
+	Target       string `json:"target"`
+	BeforeDirty  bool   `json:"beforeDirty"`
+	AfterDirty   bool   `json:"afterDirty"`
+	BeforeHeight int    `json:"beforeHeight"`
+	AfterHeight  int    `json:"afterHeight"`
+	Error        string `json:"error"`
+	Status       string `json:"status"`
+}
+
+func runArchiveRoundTripFSV(app *shell.App, outDir string) error {
+	root := filepath.Join(outDir, "archive-roundtrip")
+	if err := os.RemoveAll(root); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return err
+	}
+	state := archiveRoundTripFSVState{}
+
+	if err := app.NewProject(filepath.Join(root, "source")); err != nil {
+		return err
+	}
+	players := sourceform.Players{Min: 1, Max: 8, Suggested: 2}
+	if err := app.SetMapMetadata("Archive Round Trip FSV", "save load save", ">=0.1.0 <0.2.0", players, "vigil-lowlands", "dawn-splat"); err != nil {
+		return err
+	}
+	if err := app.EditTerrainHeight(1, 1, 5); err != nil {
+		return err
+	}
+	state.ArchiveA = filepath.Join(root, "a.litdworld")
+	if err := app.SaveArchive(state.ArchiveA); err != nil {
+		return err
+	}
+	hashesA, err := archiveMemberHashList(state.ArchiveA)
+	if err != nil {
+		return err
+	}
+	state.HashesA = hashesA
+	if err := app.OpenArchive(state.ArchiveA, filepath.Join(root, "work")); err != nil {
+		return err
+	}
+	state.Load = archiveSnapshotFrom(app.Snapshot())
+	if err := renderState(outDir, "29-archive-load.png", app); err != nil {
+		return err
+	}
+	state.ArchiveB = filepath.Join(root, "b.litdworld")
+	if err := app.SaveArchive(state.ArchiveB); err != nil {
+		return err
+	}
+	hashesB, err := archiveMemberHashList(state.ArchiveB)
+	if err != nil {
+		return err
+	}
+	state.HashesB = hashesB
+	if !reflect.DeepEqual(state.HashesA, state.HashesB) {
+		return fmt.Errorf("archive FSV: save-load-save member hashes differ")
+	}
+
+	corrupt := filepath.Join(root, "corrupt.litdworld")
+	if err := rewriteArchiveEntry(state.ArchiveA, corrupt, "world.toml", func(b []byte) []byte {
+		if len(b) > 0 {
+			b[0] ^= 0x01
+		}
+		return b
+	}); err != nil {
+		return err
+	}
+	beforeCorrupt := archiveSnapshotFrom(app.Snapshot())
+	corruptErr := app.OpenArchive(corrupt, filepath.Join(root, "corrupt-work"))
+	state.Corrupt = archiveErrorRecord{Before: beforeCorrupt, Error: errorString(corruptErr), After: archiveSnapshotFrom(app.Snapshot())}
+	if corruptErr == nil {
+		return fmt.Errorf("archive FSV: corrupt member opened without error")
+	}
+
+	if err := app.NewProject(filepath.Join(root, "future-source")); err != nil {
+		return err
+	}
+	if err := app.SetMapMetadata("Future Engine FSV", "range edge", ">=99.0.0", players, "vigil-lowlands", "dawn-splat"); err != nil {
+		return err
+	}
+	futureArchive := filepath.Join(root, "future.litdworld")
+	if err := app.SaveArchive(futureArchive); err != nil {
+		return err
+	}
+	beforeRange := archiveSnapshotFrom(app.Snapshot())
+	rangeErr := app.OpenArchive(futureArchive, filepath.Join(root, "future-work"))
+	state.EngineRange = archiveErrorRecord{Before: beforeRange, Error: errorString(rangeErr), After: archiveSnapshotFrom(app.Snapshot())}
+	if rangeErr == nil {
+		return fmt.Errorf("archive FSV: incompatible engine range opened without error")
+	}
+
+	if err := app.NewProject(filepath.Join(root, "readonly-source")); err != nil {
+		return err
+	}
+	if err := app.EditTerrainHeight(1, 1, 9); err != nil {
+		return err
+	}
+	roDir := filepath.Join(root, "readonly")
+	if err := os.MkdirAll(roDir, 0o755); err != nil {
+		return err
+	}
+	if err := os.Chmod(roDir, 0o555); err != nil {
+		return err
+	}
+	beforeRO := app.Snapshot()
+	roTarget := filepath.Join(roDir, "blocked.litdworld")
+	roErr := app.SaveArchive(roTarget)
+	afterRO := app.Snapshot()
+	_ = os.Chmod(roDir, 0o755)
+	state.ReadOnlySave = archiveReadOnlySave{
+		Target:       roTarget,
+		BeforeDirty:  beforeRO.Dirty,
+		AfterDirty:   afterRO.Dirty,
+		BeforeHeight: beforeRO.World.HeightCell,
+		AfterHeight:  afterRO.World.HeightCell,
+		Error:        errorString(roErr),
+		Status:       afterRO.Status,
+	}
+	if roErr == nil {
+		return fmt.Errorf("archive FSV: read-only archive save succeeded unexpectedly")
+	}
+
+	shipped := filepath.Join("worlds", "firstflame.litdworld")
+	if err := app.OpenProject(shipped); err != nil {
+		return err
+	}
+	state.ShippedArchive = archiveSnapshotFrom(app.Snapshot())
+	if err := renderState(outDir, "30-m6-archive-open.png", app); err != nil {
+		return err
+	}
+
+	body, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "archive-roundtrip-dump.json"), append(body, '\n'), 0o644)
+}
+
+func archiveSnapshotFrom(s shell.Snapshot) archiveSnapshot {
+	return archiveSnapshot{
+		ProjectPath:     s.ProjectPath,
+		ArchivePath:     s.ArchivePath,
+		ArchiveReadOnly: s.ArchiveReadOnly,
+		Status:          s.Status,
+		Error:           s.Error,
+		Dirty:           s.Dirty,
+		Name:            s.World.Name,
+		Width:           s.World.Width,
+		Height:          s.World.Height,
+		Starts:          append([]sourceform.StartLocation(nil), s.World.Starts...),
+	}
+}
+
+func archiveMemberHashList(path string) ([]string, error) {
+	opened, err := worldarchive.Open(path, "")
+	if err != nil {
+		return nil, err
+	}
+	defer opened.Close()
+	lines := make([]string, 0, len(opened.Manifest.Files))
+	for rel, entry := range opened.Manifest.Files {
+		lines = append(lines, fmt.Sprintf("%s %s %d", rel, entry.Hash, entry.Size))
+	}
+	sort.Strings(lines)
+	return lines, nil
+}
+
+func rewriteArchiveEntry(src, dst, target string, mutate func([]byte) []byte) error {
+	zr, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer zr.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	zw := zip.NewWriter(out)
+	rewrote := false
+	for _, f := range zr.File {
+		rc, err := f.Open()
+		if err != nil {
+			zw.Close()
+			out.Close()
+			return err
+		}
+		body, err := io.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			zw.Close()
+			out.Close()
+			return err
+		}
+		w, err := zw.Create(f.Name)
+		if err != nil {
+			zw.Close()
+			out.Close()
+			return err
+		}
+		if f.Name == target {
+			body = mutate(body)
+			rewrote = true
+		}
+		if _, err := w.Write(body); err != nil {
+			zw.Close()
+			out.Close()
+			return err
+		}
+	}
+	if err := zw.Close(); err != nil {
+		out.Close()
+		return err
+	}
+	if err := out.Close(); err != nil {
+		return err
+	}
+	if !rewrote {
+		return fmt.Errorf("archive entry %q not found", target)
+	}
+	return nil
+}
+
+func errorString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }
 
 func readRawArchiveManifest(path string) (string, error) {

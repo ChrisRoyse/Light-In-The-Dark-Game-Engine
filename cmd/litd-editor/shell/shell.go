@@ -9,11 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
@@ -34,6 +36,8 @@ type App struct {
 	table           *locale.Table
 	world           *sourceform.World
 	projectPath     string
+	archivePath     string
+	archiveReadOnly bool
 	mode            Mode
 	status          string
 	errText         string
@@ -55,23 +59,25 @@ type Confirm struct {
 }
 
 type Snapshot struct {
-	Title       string               `json:"title"`
-	ProjectPath string               `json:"projectPath"`
-	Mode        Mode                 `json:"mode"`
-	ModeLabel   string               `json:"modeLabel"`
-	Dirty       bool                 `json:"dirty"`
-	DirtyLabel  string               `json:"dirtyLabel"`
-	Status      string               `json:"status"`
-	Error       string               `json:"error,omitempty"`
-	Confirm     *Confirm             `json:"confirm,omitempty"`
-	Labels      map[string]string    `json:"labels"`
-	World       WorldSnapshot        `json:"world"`
-	Stack       StackSnapshot        `json:"stack"`
-	Brush       TerrainBrushSnapshot `json:"brush"`
-	TerrainTool TerrainTool          `json:"terrainTool"`
-	Paint       PaintBrushSnapshot   `json:"paint"`
-	CliffFlags  []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
-	Objects     ObjectSnapshot       `json:"objects"`
+	Title           string               `json:"title"`
+	ProjectPath     string               `json:"projectPath"`
+	ArchivePath     string               `json:"archivePath,omitempty"`
+	ArchiveReadOnly bool                 `json:"archiveReadOnly,omitempty"`
+	Mode            Mode                 `json:"mode"`
+	ModeLabel       string               `json:"modeLabel"`
+	Dirty           bool                 `json:"dirty"`
+	DirtyLabel      string               `json:"dirtyLabel"`
+	Status          string               `json:"status"`
+	Error           string               `json:"error,omitempty"`
+	Confirm         *Confirm             `json:"confirm,omitempty"`
+	Labels          map[string]string    `json:"labels"`
+	World           WorldSnapshot        `json:"world"`
+	Stack           StackSnapshot        `json:"stack"`
+	Brush           TerrainBrushSnapshot `json:"brush"`
+	TerrainTool     TerrainTool          `json:"terrainTool"`
+	Paint           PaintBrushSnapshot   `json:"paint"`
+	CliffFlags      []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
+	Objects         ObjectSnapshot       `json:"objects"`
 }
 
 type WorldSnapshot struct {
@@ -155,6 +161,8 @@ func (a *App) createProject(dir string) error {
 	}
 	a.world = w
 	a.projectPath = dir
+	a.archivePath = ""
+	a.archiveReadOnly = false
 	a.mode = ModeTerrain
 	a.errText = ""
 	a.confirm = nil
@@ -179,6 +187,8 @@ func (a *App) OpenProject(path string) error {
 		}
 		a.world = w
 		a.projectPath = path
+		a.archivePath = ""
+		a.archiveReadOnly = false
 		a.mode = ModeTerrain
 		a.errText = ""
 		a.confirm = nil
@@ -188,14 +198,64 @@ func (a *App) OpenProject(path string) error {
 		return nil
 	}
 	if filepath.Ext(path) == ".litdworld" {
-		arc, err := worldarchive.Open(path, "")
-		if err != nil {
-			return a.openError(path, err)
-		}
-		arc.Close()
-		return a.openError(path, errors.New("archive verified but is read-only in the editor shell; unpack to source form before editing"))
+		return a.OpenArchive(path, "")
 	}
 	return a.openError(path, fmt.Errorf("unsupported project path %q", path))
+}
+
+// OpenArchive verifies a .litdworld, then opens it in the editor. Archives that
+// contain source-form files are unpacked into workDir and become editable;
+// runtime M6 archives open as a verified read-only projection for inspection.
+func (a *App) OpenArchive(archivePath, workDir string) error {
+	if archivePath == "" {
+		return a.openError(archivePath, errors.New("empty archive path"))
+	}
+	arc, err := worldarchive.Open(archivePath, EditorEngineVersion())
+	if err != nil {
+		return a.openError(archivePath, err)
+	}
+	defer arc.Close()
+
+	if archiveHasSourceForm(arc.Manifest) {
+		dir, err := prepareArchiveWorkDir(archivePath, workDir)
+		if err != nil {
+			return a.openError(archivePath, err)
+		}
+		if err := worldpack.Unpack(archivePath, dir); err != nil {
+			return a.openError(archivePath, err)
+		}
+		w, err := sourceform.Load(dir)
+		if err != nil {
+			return a.openError(archivePath, err)
+		}
+		a.world = w
+		a.projectPath = dir
+		a.archivePath = archivePath
+		a.archiveReadOnly = false
+		a.mode = ModeTerrain
+		a.errText = ""
+		a.confirm = nil
+		a.cliffFlags = nil
+		a.status = fmt.Sprintf("Archive opened: %s", archivePath)
+		a.resetCommandStack()
+		return nil
+	}
+
+	w, err := runtimeArchiveProjection(arc)
+	if err != nil {
+		return a.openError(archivePath, err)
+	}
+	a.world = w
+	a.projectPath = archivePath
+	a.archivePath = archivePath
+	a.archiveReadOnly = true
+	a.mode = ModeMetadata
+	a.errText = ""
+	a.confirm = nil
+	a.cliffFlags = nil
+	a.status = fmt.Sprintf("Archive opened read-only: %s", archivePath)
+	a.resetCommandStack()
+	return nil
 }
 
 func (a *App) openError(path string, err error) error {
@@ -344,6 +404,12 @@ func (a *App) ExportArchive(outPath string) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
 	}
+	if a.archiveReadOnly {
+		err := errors.New("editor shell: archive opened read-only; source-form payload required for archive save")
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
 	opts := sourceform.ExportOptions{
 		EngineRange: a.world.Metadata.Engine,
 		Hosting: worldpack.Hosting{
@@ -394,12 +460,42 @@ func (a *App) Save() error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
 	}
+	if a.archivePath != "" {
+		return a.SaveArchive(a.archivePath)
+	}
 	if err := a.world.Save(a.projectPath); err != nil {
 		a.errText = err.Error()
 		return err
 	}
 	a.status = must(a.table, locale.EditorDirtyClean)
 	a.errText = ""
+	return nil
+}
+
+// SaveArchive saves the current source-form state and packs it as a .litdworld.
+// It preflights the output path before writing source-form bytes so a refused
+// archive write keeps the in-memory dirty state visible to the user.
+func (a *App) SaveArchive(outPath string) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	if a.archiveReadOnly {
+		err := errors.New("editor shell: archive opened read-only; source-form payload required for archive save")
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	if err := ensureArchiveWritable(outPath); err != nil {
+		a.errText = fmt.Sprintf("save archive %s: %v", outPath, err)
+		a.status = a.errText
+		return err
+	}
+	if err := a.ExportArchive(outPath); err != nil {
+		a.status = a.errText
+		return err
+	}
+	a.archivePath = outPath
+	a.status = fmt.Sprintf("Saved archive: %s", outPath)
 	return nil
 }
 
@@ -459,22 +555,24 @@ func (a *App) Snapshot() Snapshot {
 		title += " *"
 	}
 	s := Snapshot{
-		Title:       title,
-		ProjectPath: a.projectPath,
-		Mode:        a.mode,
-		ModeLabel:   must(a.table, locale.EditorModeLabel),
-		Dirty:       dirty,
-		DirtyLabel:  dirtyLabel,
-		Status:      a.status,
-		Error:       a.errText,
-		Confirm:     a.confirm,
-		Labels:      labels,
-		Stack:       a.StackSnapshot(),
-		Brush:       a.BrushSnapshot(),
-		TerrainTool: a.ensureTerrainTool(),
-		Paint:       a.PaintSnapshot(),
-		CliffFlags:  cloneCliffFlags(a.cliffFlags),
-		Objects:     a.ObjectSnapshot(),
+		Title:           title,
+		ProjectPath:     a.projectPath,
+		ArchivePath:     a.archivePath,
+		ArchiveReadOnly: a.archiveReadOnly,
+		Mode:            a.mode,
+		ModeLabel:       must(a.table, locale.EditorModeLabel),
+		Dirty:           dirty,
+		DirtyLabel:      dirtyLabel,
+		Status:          a.status,
+		Error:           a.errText,
+		Confirm:         a.confirm,
+		Labels:          labels,
+		Stack:           a.StackSnapshot(),
+		Brush:           a.BrushSnapshot(),
+		TerrainTool:     a.ensureTerrainTool(),
+		Paint:           a.PaintSnapshot(),
+		CliffFlags:      cloneCliffFlags(a.cliffFlags),
+		Objects:         a.ObjectSnapshot(),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -509,6 +607,12 @@ func (a *App) Snapshot() Snapshot {
 }
 
 func (a *App) executeCommand(cmd Command) error {
+	if a.archiveReadOnly {
+		err := errors.New("editor shell: archive opened read-only; source-form payload required for editing")
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
 	if err := a.ensureCommandStack().Execute(a, cmd); err != nil {
 		a.errText = err.Error()
 		return err
@@ -763,6 +867,264 @@ func DefaultEngineRange() string {
 		}
 	}
 	return ">=0.1.0 <0.2.0"
+}
+
+// EditorEngineVersion returns the concrete semver used by the editor archive
+// loader. Unstamped dev builds use 0.1.0 so local FSV exercises the same
+// fail-closed engine-range guard as released builds.
+func EditorEngineVersion() string {
+	v := strings.TrimPrefix(buildinfo.Get().Version, "v")
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return "0.1.0"
+	}
+	for _, p := range parts {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < 0 {
+			return "0.1.0"
+		}
+	}
+	return v
+}
+
+func archiveHasSourceForm(man worldarchive.Manifest) bool {
+	for _, rel := range []string{"world.toml", "map/terrain.toml", "map/height.txt", "map/cliff.txt", "map/splat.txt", "map/entities.toml", "map/doodads.toml"} {
+		if _, ok := man.Files[rel]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func prepareArchiveWorkDir(archivePath, workDir string) (string, error) {
+	if workDir == "" {
+		base := strings.TrimSuffix(filepath.Base(archivePath), filepath.Ext(archivePath))
+		dir, err := os.MkdirTemp("", "litd-editor-"+sanitizeWorldID(base)+"-")
+		if err != nil {
+			return "", err
+		}
+		return dir, nil
+	}
+	if entries, err := os.ReadDir(workDir); err == nil {
+		if len(entries) > 0 {
+			return "", fmt.Errorf("archive work directory %q is not empty", workDir)
+		}
+		return workDir, nil
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return "", err
+	}
+	return workDir, nil
+}
+
+func runtimeArchiveProjection(arc *worldarchive.Archive) (*sourceform.World, error) {
+	dirs := archiveMapDirs(arc.Manifest)
+	var lastErr error
+	for _, dir := range dirs {
+		m, err := mapdata.Load(arc.FS(), dir)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		return projectRuntimeMap(arc.Manifest, m), nil
+	}
+	if lastErr != nil {
+		return nil, fmt.Errorf("archive has no editable source-form payload and no loadable runtime map: %w", lastErr)
+	}
+	return nil, errors.New("archive has no editable source-form payload and no data/maps/* runtime map")
+}
+
+func archiveMapDirs(man worldarchive.Manifest) []string {
+	seen := map[string]bool{}
+	for rel := range man.Files {
+		if !strings.HasPrefix(rel, "data/maps/") || path.Base(rel) != "terrain.toml" {
+			continue
+		}
+		dir := path.Dir(rel)
+		if dir == "." || dir == "data/maps" {
+			continue
+		}
+		seen[dir] = true
+	}
+	out := make([]string, 0, len(seen))
+	for dir := range seen {
+		out = append(out, dir)
+	}
+	sortStrings(out)
+	return out
+}
+
+func projectRuntimeMap(man worldarchive.Manifest, m *mapdata.Map) *sourceform.World {
+	starts := make([]sourceform.StartLocation, 0, len(m.Starts()))
+	for _, start := range m.Starts() {
+		starts = append(starts, sourceform.StartLocation{
+			Player: int(start.Player) + 1,
+			Cell:   [2]int{start.X / mapdata.PathingScale, start.Y / mapdata.PathingScale},
+		})
+	}
+	players := sourceform.Players{Min: 1, Max: maxInt(1, len(starts)), Suggested: maxInt(1, len(starts))}
+	if man.Players != (worldarchive.Players{}) {
+		players = sourceform.Players{Min: man.Players.Min, Max: man.Players.Max, Suggested: man.Players.Suggested}
+	}
+	tileset := man.Tileset
+	if tileset == "" {
+		tileset = m.Biome
+	}
+	splatSet := man.SplatSet
+	if splatSet == "" {
+		splatSet = m.Biome
+	}
+	return &sourceform.World{
+		Metadata: sourceform.Metadata{
+			Format:      1,
+			ID:          sanitizeWorldID(path.Base(m.Path)),
+			Name:        firstNonEmpty(man.Title, path.Base(m.Path)),
+			Description: firstNonEmpty(man.Description, "runtime archive projection"),
+			Authors:     []string{firstNonEmpty(man.Author, "unknown")},
+			Engine:      man.EngineRange,
+			Players:     players,
+			SeedPolicy:  "host",
+		},
+		Terrain: sourceform.Terrain{
+			Width:          m.Width,
+			Height:         m.Height,
+			Tileset:        tileset,
+			Biome:          splatSet,
+			StartLocations: starts,
+		},
+		Height:  runtimeHeightGrid(m),
+		Cliff:   runtimeCliffGrid(m),
+		Splat:   runtimeSplatGrid(m),
+		Doodads: runtimeDoodads(m),
+	}
+}
+
+func runtimeHeightGrid(m *mapdata.Map) [][]int {
+	rows := make([][]int, m.Height)
+	for y := 0; y < m.Height; y++ {
+		rows[y] = make([]int, m.Width)
+		for x := 0; x < m.Width; x++ {
+			if v, ok := m.HeightAtVertex(x, y); ok {
+				rows[y][x] = int(v)
+			}
+		}
+	}
+	return rows
+}
+
+func runtimeCliffGrid(m *mapdata.Map) [][]sourceform.CliffCell {
+	rows := make([][]sourceform.CliffCell, m.Height)
+	for y := 0; y < m.Height; y++ {
+		rows[y] = make([]sourceform.CliffCell, m.Width)
+		for x := 0; x < m.Width; x++ {
+			if c, ok := m.CliffAt(x*mapdata.PathingScale, y*mapdata.PathingScale); ok {
+				rows[y][x] = sourceform.CliffCell{Level: int(c.Level), Ramp: c.Ramp}
+			}
+		}
+	}
+	return rows
+}
+
+func runtimeSplatGrid(m *mapdata.Map) [][]sourceform.SplatWeight {
+	rows := make([][]sourceform.SplatWeight, m.Height)
+	for y := 0; y < m.Height; y++ {
+		rows[y] = make([]sourceform.SplatWeight, m.Width)
+		for x := 0; x < m.Width; x++ {
+			if s, ok := m.SplatAt(x, y); ok {
+				rows[y][x] = sourceform.SplatWeight{A: s.A, B: s.B, C: s.C, D: s.D}
+			}
+		}
+	}
+	return rows
+}
+
+func runtimeDoodads(m *mapdata.Map) []sourceform.Doodad {
+	doodads := m.Doodads()
+	out := make([]sourceform.Doodad, 0, len(doodads))
+	for _, d := range doodads {
+		out = append(out, sourceform.Doodad{
+			ID:       d.ID,
+			Type:     d.Asset,
+			Pos:      [2]int{d.X, d.Y},
+			Rotation: int(d.Rotation),
+			Scale:    sourceform.PlacementScaleDefault,
+		})
+	}
+	return out
+}
+
+func ensureArchiveWritable(outPath string) error {
+	if strings.TrimSpace(outPath) == "" {
+		return errors.New("archive path is empty")
+	}
+	if st, err := os.Stat(outPath); err == nil {
+		if st.IsDir() {
+			return fmt.Errorf("%q is a directory", outPath)
+		}
+		if st.Mode().Perm()&0o222 == 0 {
+			return fmt.Errorf("%q is read-only", outPath)
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	parent := filepath.Dir(outPath)
+	st, err := os.Stat(parent)
+	if err != nil {
+		return err
+	}
+	if !st.IsDir() {
+		return fmt.Errorf("archive parent %q is not a directory", parent)
+	}
+	if st.Mode().Perm()&0o222 == 0 {
+		return fmt.Errorf("archive parent %q is read-only", parent)
+	}
+	return nil
+}
+
+func sanitizeWorldID(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	lastHyphen := false
+	for _, r := range s {
+		ok := r >= 'a' && r <= 'z' || r >= '0' && r <= '9'
+		if ok {
+			b.WriteRune(r)
+			lastHyphen = false
+			continue
+		}
+		if !lastHyphen && b.Len() > 0 {
+			b.WriteByte('-')
+			lastHyphen = true
+		}
+	}
+	out := strings.Trim(b.String(), "-")
+	if out == "" {
+		return "archive-world"
+	}
+	return out
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func sortStrings(values []string) {
+	for i := 1; i < len(values); i++ {
+		for j := i; j > 0 && values[j] < values[j-1]; j-- {
+			values[j], values[j-1] = values[j-1], values[j]
+		}
+	}
 }
 
 func cloneIntGrid(grid [][]int) [][]int {

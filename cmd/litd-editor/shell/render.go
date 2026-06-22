@@ -177,6 +177,13 @@ func drawMetadata(img *image.RGBA, snap Snapshot) {
 	text(img, 236, 132, snap.Labels["panelMetadata"], ink)
 	text(img, 236, 166, snap.Labels["hintMetadata"], muted)
 	drawMetadataStartGrid(img, snap)
+	displayPath := snap.ProjectPath
+	if snap.ArchivePath != "" {
+		displayPath = snap.ArchivePath
+		if snap.ArchiveReadOnly {
+			displayPath += " (read-only)"
+		}
+	}
 	rows := []string{
 		snap.Labels["fieldID"] + ": " + snap.World.ID,
 		snap.Labels["fieldName"] + ": " + snap.World.Name,
@@ -187,7 +194,7 @@ func drawMetadata(img *image.RGBA, snap Snapshot) {
 		snap.Labels["fieldSplatSet"] + ": " + snap.World.SplatSet,
 		snap.Labels["fieldStarts"] + ": " + startsLabel(snap.World.Starts),
 		snap.Labels["fieldSeedPolicy"] + ": " + snap.World.SeedPolicy,
-		snap.Labels["fieldPath"] + ": " + snap.ProjectPath,
+		snap.Labels["fieldPath"] + ": " + displayPath,
 	}
 	for i, row := range rows {
 		fill(img, 640, 208+i*36, 470, 28, panelAlt)
