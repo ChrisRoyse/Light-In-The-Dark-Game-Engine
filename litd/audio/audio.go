@@ -64,13 +64,35 @@ type Backend interface {
 	Close() error
 }
 
+// CueBufferInfo is the OpenAL cue-buffer state exposed for FSV. It is only
+// populated by a real buffer-owning backend; null/headless backends do not
+// implement CueBufferBackend.
+type CueBufferInfo struct {
+	Cue         uint32 `json:"cue"`
+	BufferID    uint32 `json:"bufferId"`
+	Bytes       int    `json:"bytes"`
+	Channels    int    `json:"channels"`
+	SampleRate  int    `json:"sampleRate"`
+	SourceID    uint32 `json:"sourceId,omitempty"`
+	SourceState int32  `json:"sourceState,omitempty"`
+	Playing     bool   `json:"playing"`
+}
+
+// CueBufferBackend is the optional resident cue-buffer capability provided by
+// the OpenAL backend. It is kept outside Backend so headless/null tests preserve
+// their exact no-device behavior.
+type CueBufferBackend interface {
+	LoadCueBuffer(cue uint32, filename string) error
+	CueBufferInfo(cue uint32) (CueBufferInfo, bool)
+}
+
 // nullBackend is the no-op device: it makes no sound but is otherwise a fully
 // valid sink. The Manager does all accounting regardless, so the null backend is
 // the deterministic, headless-testable path that mirrors a real device exactly.
 type nullBackend struct{}
 
-func (nullBackend) Name() string         { return "null" }
-func (nullBackend) Play(Voice)           {}
-func (nullBackend) Stop(uint32)          {}
-func (nullBackend) SetListener(Vec3)     {}
-func (nullBackend) Close() error         { return nil }
+func (nullBackend) Name() string     { return "null" }
+func (nullBackend) Play(Voice)       {}
+func (nullBackend) Stop(uint32)      {}
+func (nullBackend) SetListener(Vec3) {}
+func (nullBackend) Close() error     { return nil }

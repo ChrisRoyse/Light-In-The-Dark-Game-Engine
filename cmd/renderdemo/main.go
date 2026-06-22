@@ -25,6 +25,7 @@ import (
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
+	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	litdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
@@ -485,6 +486,7 @@ func main() {
 	resizeFrom := resolutionFlag{}
 	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
+	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
@@ -517,6 +519,20 @@ func main() {
 		enc.SetIndent("", "  ")
 		if err := enc.Encode(dump); err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: dump-map: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+	if strings.TrimSpace(*dumpAudioPath) != "" {
+		dump, err := buildAudioLoadDump(*dumpAudioPath)
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if encErr := enc.Encode(dump); encErr != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio: %v\n", encErr)
+			os.Exit(1)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio: %v\n", err)
 			os.Exit(1)
 		}
 		return
@@ -765,6 +781,10 @@ func buildMapDataDump(dir string) (mapDataRuntimeDump, error) {
 		}
 	}
 	return dump, nil
+}
+
+func buildAudioLoadDump(dir string) (litaudio.LoadDump, error) {
+	return litaudio.LoadRuntimeAssetsDir(dir)
 }
 
 func mapDataPathingSampleAt(m *litmapdata.Map, x, y int) (mapDataPathingSample, bool) {
