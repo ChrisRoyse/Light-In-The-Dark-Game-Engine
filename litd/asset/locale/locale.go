@@ -46,6 +46,41 @@ const (
 	HUDCommandTrainArcherTooltip  Key = "hud.command.train_archer.tooltip"
 	HUDCommandRallyLabel          Key = "hud.command.rally.label"
 	HUDCommandRallyTooltip        Key = "hud.command.rally.tooltip"
+	EditorTitle                   Key = "editor.title"
+	EditorProjectUntitled         Key = "editor.project.untitled"
+	EditorModeLabel               Key = "editor.mode.label"
+	EditorModeTerrain             Key = "editor.mode.terrain"
+	EditorModeObjects             Key = "editor.mode.objects"
+	EditorModeMetadata            Key = "editor.mode.metadata"
+	EditorDirtyClean              Key = "editor.dirty.clean"
+	EditorDirtyUnsaved            Key = "editor.dirty.unsaved"
+	EditorActionNew               Key = "editor.action.new"
+	EditorActionOpen              Key = "editor.action.open"
+	EditorActionSave              Key = "editor.action.save"
+	EditorActionExport            Key = "editor.action.export"
+	EditorStatusReady             Key = "editor.status.ready"
+	EditorStatusProjectCreated    Key = "editor.status.project_created"
+	EditorStatusProjectOpened     Key = "editor.status.project_opened"
+	EditorErrorOpen               Key = "editor.error.open"
+	EditorConfirmNewTitle         Key = "editor.confirm.new.title"
+	EditorConfirmNewBody          Key = "editor.confirm.new.body"
+	EditorConfirmCancel           Key = "editor.confirm.cancel"
+	EditorConfirmProceed          Key = "editor.confirm.proceed"
+	EditorPanelTerrain            Key = "editor.panel.terrain"
+	EditorPanelObjects            Key = "editor.panel.objects"
+	EditorPanelMetadata           Key = "editor.panel.metadata"
+	EditorHintTerrain             Key = "editor.hint.terrain"
+	EditorHintObjects             Key = "editor.hint.objects"
+	EditorHintMetadata            Key = "editor.hint.metadata"
+	EditorStatusPrefix            Key = "editor.status.prefix"
+	EditorFieldCell               Key = "editor.field.cell"
+	EditorFieldEntities           Key = "editor.field.entities"
+	EditorFieldID                 Key = "editor.field.id"
+	EditorFieldName               Key = "editor.field.name"
+	EditorFieldEngine             Key = "editor.field.engine"
+	EditorFieldSeedPolicy         Key = "editor.field.seed_policy"
+	EditorFieldPath               Key = "editor.field.path"
+	EditorScopeNoTriggerGUI       Key = "editor.scope.no_trigger_gui"
 )
 
 var requiredKeys = []string{
@@ -82,6 +117,41 @@ var requiredKeys = []string{
 	string(HUDCommandTrainArcherTooltip),
 	string(HUDCommandRallyLabel),
 	string(HUDCommandRallyTooltip),
+	string(EditorTitle),
+	string(EditorProjectUntitled),
+	string(EditorModeLabel),
+	string(EditorModeTerrain),
+	string(EditorModeObjects),
+	string(EditorModeMetadata),
+	string(EditorDirtyClean),
+	string(EditorDirtyUnsaved),
+	string(EditorActionNew),
+	string(EditorActionOpen),
+	string(EditorActionSave),
+	string(EditorActionExport),
+	string(EditorStatusReady),
+	string(EditorStatusProjectCreated),
+	string(EditorStatusProjectOpened),
+	string(EditorErrorOpen),
+	string(EditorConfirmNewTitle),
+	string(EditorConfirmNewBody),
+	string(EditorConfirmCancel),
+	string(EditorConfirmProceed),
+	string(EditorPanelTerrain),
+	string(EditorPanelObjects),
+	string(EditorPanelMetadata),
+	string(EditorHintTerrain),
+	string(EditorHintObjects),
+	string(EditorHintMetadata),
+	string(EditorStatusPrefix),
+	string(EditorFieldCell),
+	string(EditorFieldEntities),
+	string(EditorFieldID),
+	string(EditorFieldName),
+	string(EditorFieldEngine),
+	string(EditorFieldSeedPolicy),
+	string(EditorFieldPath),
+	string(EditorScopeNoTriggerGUI),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)
