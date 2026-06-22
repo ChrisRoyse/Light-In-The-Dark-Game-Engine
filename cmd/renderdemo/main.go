@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"image/color"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -28,6 +29,7 @@ import (
 	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	litasset "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
@@ -75,6 +77,7 @@ type renderDemoDump struct {
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
 	VFXLights *vfxLightsRuntimeDump   `json:"vfxLights,omitempty"`
 	Voices    *voiceBattleRuntimeDump `json:"voices,omitempty"`
+	Atlas     *atlasRuntimeDump       `json:"atlas,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -142,6 +145,38 @@ type vfxLightEventDump struct {
 	Request  string                `json:"request"`
 	Priority litrender.VFXPriority `json:"priority"`
 	Decision litrender.VFXDecision `json:"decision"`
+}
+
+type atlasRuntimeDump struct {
+	Scene               string                            `json:"scene"`
+	Preset              litasset.AtlasPreset              `json:"preset"`
+	Source              atlasSourceDump                   `json:"source"`
+	Upload              litasset.AtlasUpload              `json:"upload"`
+	Material            litrender.AtlasMaterialSnapshot   `json:"material"`
+	AdditionalMaterials []litrender.AtlasMaterialSnapshot `json:"additionalMaterials,omitempty"`
+	MaterialInstances   int                               `json:"materialInstances"`
+	SampledSwatches     []atlasSwatchDump                 `json:"sampledSwatches"`
+	RuntimeSwitch       []litrender.AtlasMaterialSnapshot `json:"runtimeSwitch,omitempty"`
+	RuntimeSwitchReused *bool                             `json:"runtimeSwitchReused,omitempty"`
+	OK                  bool                              `json:"ok"`
+	Errors              []string                          `json:"errors,omitempty"`
+}
+
+type atlasSourceDump struct {
+	Name   string `json:"name"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+	SHA256 string `json:"sha256"`
+}
+
+type atlasSwatchDump struct {
+	Label string `json:"label"`
+	X     int    `json:"x"`
+	Y     int    `json:"y"`
+	R     uint8  `json:"r"`
+	G     uint8  `json:"g"`
+	B     uint8  `json:"b"`
+	A     uint8  `json:"a"`
 }
 
 type mapDataRuntimeDump struct {
@@ -556,7 +591,8 @@ type campaignMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
 	dumpAudioInitMode := flag.String("dump-audio-init", "", "print audio init/accounting JSON for backend mode: null, openal, or auto")
@@ -584,6 +620,11 @@ func main() {
 	flag.Var(&res, "res", "window resolution WIDTHxHEIGHT")
 	flag.Var(&resizeFrom, "resize-from", "optional pre-resize WIDTHxHEIGHT to include in HUD canvas dump")
 	flag.Parse()
+	atlasPreset, err := litasset.ParseAtlasPreset(*presetText)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "renderdemo: preset: %v\n", err)
+		os.Exit(1)
+	}
 	if strings.TrimSpace(*dumpMapPath) != "" {
 		dump, err := buildMapDataDump(*dumpMapPath)
 		if err != nil {
@@ -683,6 +724,7 @@ func main() {
 	var terrainFSV *terrainRuntimeDump
 	var vfxFSV *vfxLightsRuntimeDump
 	var voiceFSV *voiceBattleRuntimeDump
+	var atlasFSV *atlasRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -758,6 +800,18 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: battle500: %v\n", err)
 				os.Exit(1)
 			}
+		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "atlas" {
+			spec, atlasFSV, err = buildAtlasFSV(scene, atlasPreset)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: atlas: %v\n", err)
+				os.Exit(1)
+			}
+		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "atlas-two" {
+			spec, atlasFSV, err = buildAtlasTwoFSV(scene, atlasPreset)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: atlas-two: %v\n", err)
+				os.Exit(1)
+			}
 		} else {
 			spec, err = buildScene(scene, *sceneName)
 			if err != nil {
@@ -804,10 +858,12 @@ func main() {
 				pass = pass && vfxFSV.OK
 			} else if voiceFSV != nil {
 				pass = pass && voiceFSV.OK && stats == spec.expected
+			} else if atlasFSV != nil {
+				pass = pass && atlasFSV.OK && stats == spec.expected
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1251,6 +1307,179 @@ func buildScene(scene *core.Node, name string) (sceneSpec, error) {
 	default:
 		return sceneSpec{}, fmt.Errorf("unknown scene %q", name)
 	}
+}
+
+func buildAtlasFSV(scene *core.Node, preset litasset.AtlasPreset) (sceneSpec, *atlasRuntimeDump, error) {
+	src, err := syntheticAtlasSource("synthetic/faction-vigil.atlas.png", atlasPaletteVigil())
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cache := litrender.NewAtlasMaterialCache()
+	entry, err := cache.Material(src, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	uploadImg, upload, err := litasset.BuildAtlasUpload(src, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	plane := graphic.NewMesh(geometry.NewPlane(1120, 1120), entry.Material)
+	plane.SetRotationX(-math32.Pi / 2)
+	plane.SetPosition(0, 8, 0)
+	scene.Add(plane)
+
+	dump := &atlasRuntimeDump{
+		Scene:  "atlas",
+		Preset: preset,
+		Source: atlasSourceDump{
+			Name:   src.Name,
+			Width:  src.Width,
+			Height: src.Height,
+			SHA256: src.SHA256,
+		},
+		Upload:            entry.Upload,
+		Material:          cache.Snapshot(entry),
+		MaterialInstances: cache.Count(),
+		OK:                true,
+	}
+	if upload.SHA256 != entry.Upload.SHA256 || upload.Width != entry.Upload.Width || upload.Height != entry.Upload.Height {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "upload readback does not match cached material upload")
+	}
+	for _, s := range atlasSamplePoints(upload.Width, upload.Height) {
+		c := uploadImg.RGBAAt(s.x, s.y)
+		dump.SampledSwatches = append(dump.SampledSwatches, atlasSwatchDump{
+			Label: s.label,
+			X:     s.x,
+			Y:     s.y,
+			R:     c.R,
+			G:     c.G,
+			B:     c.B,
+			A:     c.A,
+		})
+	}
+	switchSnapshots, switchReused := atlasRuntimeSwitchProbe(src)
+	dump.RuntimeSwitch = switchSnapshots
+	dump.RuntimeSwitchReused = &switchReused
+	return sceneSpec{name: "atlas-" + string(preset), expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
+}
+
+func buildAtlasTwoFSV(scene *core.Node, preset litasset.AtlasPreset) (sceneSpec, *atlasRuntimeDump, error) {
+	srcA, err := syntheticAtlasSource("synthetic/faction-vigil.atlas.png", atlasPaletteVigil())
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	srcB, err := syntheticAtlasSource("synthetic/faction-ember.atlas.png", atlasPaletteEmber())
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cache := litrender.NewAtlasMaterialCache()
+	matA, err := cache.Material(srcA, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	matB, err := cache.Material(srcB, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	addAtlasPlane(scene, matA.Material, -370, 0, 620)
+	addAtlasPlane(scene, matB.Material, 370, 0, 620)
+
+	dump := &atlasRuntimeDump{
+		Scene:  "atlas-two",
+		Preset: preset,
+		Source: atlasSourceDump{
+			Name:   srcA.Name,
+			Width:  srcA.Width,
+			Height: srcA.Height,
+			SHA256: srcA.SHA256,
+		},
+		Upload:              matA.Upload,
+		Material:            cache.Snapshot(matA),
+		AdditionalMaterials: []litrender.AtlasMaterialSnapshot{cache.Snapshot(matB)},
+		MaterialInstances:   cache.Count(),
+		OK:                  true,
+	}
+	if cache.Count() != 2 || matA == matB || matA.Texture == matB.Texture {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "two-atlas scene did not create exactly two distinct material/texture entries")
+	}
+	return sceneSpec{name: "atlas-two-" + string(preset), expected: expectedStats(2, 0, 2, 0, 2, 0)}, dump, nil
+}
+
+func addAtlasPlane(scene *core.Node, mat material.IMaterial, x, z, size float32) {
+	plane := graphic.NewMesh(geometry.NewPlane(size, size), mat)
+	plane.SetRotationX(-math32.Pi / 2)
+	plane.SetPosition(x, 8, z)
+	scene.Add(plane)
+}
+
+func syntheticAtlasSource(name string, palette []color.RGBA) (*litasset.AtlasSource, error) {
+	img := image.NewRGBA(image.Rect(0, 0, litasset.AuthoredAtlasSize, litasset.AuthoredAtlasSize))
+	swatches := []struct {
+		rect image.Rectangle
+		c    color.RGBA
+	}{
+		{image.Rect(0, 0, 512, 512), palette[0]},
+		{image.Rect(512, 0, 1024, 512), palette[1]},
+		{image.Rect(0, 512, 512, 1024), palette[2]},
+		{image.Rect(512, 512, 1024, 1024), palette[3]},
+	}
+	for _, sw := range swatches {
+		for y := sw.rect.Min.Y; y < sw.rect.Max.Y; y++ {
+			for x := sw.rect.Min.X; x < sw.rect.Max.X; x++ {
+				img.SetRGBA(x, y, sw.c)
+			}
+		}
+	}
+	return litasset.NewAtlasSource(name, img)
+}
+
+func atlasPaletteVigil() []color.RGBA {
+	return []color.RGBA{
+		{218, 56, 48, 255},
+		{51, 151, 76, 255},
+		{48, 99, 205, 255},
+		{226, 194, 63, 255},
+	}
+}
+
+func atlasPaletteEmber() []color.RGBA {
+	return []color.RGBA{
+		{136, 65, 210, 255},
+		{44, 174, 190, 255},
+		{231, 127, 42, 255},
+		{236, 236, 232, 255},
+	}
+}
+
+func atlasSamplePoints(w, h int) []struct {
+	label string
+	x, y  int
+} {
+	return []struct {
+		label string
+		x, y  int
+	}{
+		{label: "red-upper-left", x: w / 4, y: h / 4},
+		{label: "green-upper-right", x: 3 * w / 4, y: h / 4},
+		{label: "blue-lower-left", x: w / 4, y: 3 * h / 4},
+		{label: "gold-lower-right", x: 3 * w / 4, y: 3 * h / 4},
+	}
+}
+
+func atlasRuntimeSwitchProbe(src *litasset.AtlasSource) ([]litrender.AtlasMaterialSnapshot, bool) {
+	cache := litrender.NewAtlasMaterialCache()
+	high, _ := cache.Material(src, litasset.AtlasPresetHigh)
+	medium, _ := cache.Material(src, litasset.AtlasPresetMedium)
+	highAgain, _ := cache.Material(src, litasset.AtlasPresetHigh)
+	out := []litrender.AtlasMaterialSnapshot{
+		cache.Snapshot(high),
+		cache.Snapshot(medium),
+		cache.Snapshot(highAgain),
+	}
+	return out, high == highAgain && cache.Count() == 2
 }
 
 // buildSpellstormFSV lights a dark ground plane with the fixed VFX light pool
