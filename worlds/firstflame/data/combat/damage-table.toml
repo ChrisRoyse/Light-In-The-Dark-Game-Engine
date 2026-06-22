@@ -1,0 +1,8 @@
+# Minimal First Flame map-victory vocabulary. The canonical map script only
+# needs live units for beacon capture; combat is present so the production world
+# loader has a complete, self-contained data root.
+attack-types = ["normal"]
+armor-types = ["unarmored"]
+
+[coefficients]
+normal = [1000]

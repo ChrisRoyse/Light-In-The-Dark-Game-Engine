@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # pack-world.sh — the make-level world-archive producer (#209 deliverable;
-# #205 "packaging step (make-level)"). It stages a skirmish map's data plus a
-# world's Lua into one tree and packs a deterministic `.litdworld` via the
-# worldpack producer, then validates the result with `assetcheck archive`.
+# #205 "packaging step (make-level)"). It stages a skirmish map's data, a
+# world's own data tables, and Lua into one tree and packs a deterministic
+# `.litdworld` via the worldpack producer, then validates the result with
+# `assetcheck archive`.
 #
 # Fail-closed posture (R-FMT-2, doctrine §2.4): the archive is packaged ONLY
 # from inputs that already pass assetcheck (the map is re-validated in `data`
@@ -15,13 +16,13 @@
 #       <engine-range> <author> <title> <description>
 #
 # Example (the First Flame slice):
-#   scripts/pack-world.sh data/maps/firstflame worlds/firstflame-beacon \
+#   scripts/pack-world.sh data/maps/firstflame worlds/firstflame \
 #       worlds/firstflame.litdworld ">=0.1.0 <0.2.0" \
 #       "Light in the Dark" "First Flame" "Two-player beacon duel on the ashen veil"
 #
-# The map data lands under `data/maps/<name>/` inside the archive and the world
-# Lua under `scripts/` — the layout the in-engine loader (#205 remaining) will
-# mount. Map name is taken from the basename of <map-dir>.
+# World data lands under `data/`, map data under `data/maps/<name>/`, and world
+# Lua under `scripts/` — the layout the in-engine loader mounts. Map name is
+# taken from the basename of <map-dir>.
 set -euo pipefail
 
 if [ "$#" -ne 7 ]; then
@@ -55,10 +56,13 @@ if [ "$(cat /tmp/pack-world-mapcheck.json)" != "[]" ]; then
   exit 1
 fi
 
-# 2. Stage map data + world Lua into a clean tree.
+# 2. Stage world data + map data + world Lua into a clean tree.
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/data/maps/$MAP_NAME" "$STAGE/scripts"
+if [ -d "$WORLD_DIR/data" ]; then
+  cp -R "$WORLD_DIR/data/." "$STAGE/data/"
+fi
 cp -R "$MAP_DIR/." "$STAGE/data/maps/$MAP_NAME/"
 # Only .lua chunks from the world dir (no stray editor files).
 find "$WORLD_DIR" -name '*.lua' -type f -print0 | while IFS= read -r -d '' f; do

@@ -16,18 +16,121 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/savegame"
 )
 
 const sliceWorld = "../../worlds/firstflame-slice"
+const firstFlameWorld = "../../worlds/firstflame"
 const sliceSeed = int64(0x5717)
 
 func sliceInt(g *api.Game, key string) int {
 	v, _ := g.Storage().GetInt("slice", key)
 	return v
+}
+
+func firstFlameInt(g *api.Game, cat, key string) int {
+	v, _ := g.Storage().GetInt(cat, key)
+	return v
+}
+
+func copyTree(t *testing.T, src, dst string) {
+	t.Helper()
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		t.Fatalf("read %s: %v", src, err)
+	}
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", dst, err)
+	}
+	for _, e := range entries {
+		sp, dp := filepath.Join(src, e.Name()), filepath.Join(dst, e.Name())
+		if e.IsDir() {
+			copyTree(t, sp, dp)
+			continue
+		}
+		b, err := os.ReadFile(sp)
+		if err != nil {
+			t.Fatalf("read %s: %v", sp, err)
+		}
+		if err := os.WriteFile(dp, b, 0o644); err != nil {
+			t.Fatalf("write %s: %v", dp, err)
+		}
+	}
+}
+
+func packFirstFlameArchive(t *testing.T) string {
+	t.Helper()
+	stage := t.TempDir()
+	copyTree(t, filepath.Join(firstFlameWorld, "data"), filepath.Join(stage, "data"))
+	copyTree(t, filepath.Join("..", "..", "data", "maps", "firstflame"), filepath.Join(stage, "data", "maps", "firstflame"))
+	if err := os.MkdirAll(filepath.Join(stage, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	mainLua, err := os.ReadFile(filepath.Join(firstFlameWorld, "main.lua"))
+	if err != nil {
+		t.Fatalf("read firstflame main.lua: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(stage, "scripts", "main.lua"), mainLua, 0o644); err != nil {
+		t.Fatalf("write archive main.lua: %v", err)
+	}
+	archive := filepath.Join(t.TempDir(), "firstflame.litdworld")
+	if err := worldpack.Pack(stage, archive, ">=0.1.0 <0.2.0", worldpack.Hosting{
+		Author:      "Light in the Dark",
+		Title:       "First Flame",
+		Description: "Two-player beacon duel on the ashen veil",
+	}, nil); err != nil {
+		t.Fatalf("pack firstflame archive: %v", err)
+	}
+	return archive
+}
+
+// TestFirstFlameWorldLoadsWithPlacementFSV proves the shippable First Flame
+// archive is self-contained for the production loader: data tables install,
+// map data is mounted from the archive, placement rows spawn live units on the
+// real map beacons, and the canonical beacon-victory script reaches a terminal
+// result without test-only setup.
+func TestFirstFlameWorldLoadsWithPlacementFSV(t *testing.T) {
+	archive := packFirstFlameArchive(t)
+	g, cleanup, err := loadWorldInput("", archive, 1, 200_000_000)
+	if err != nil {
+		t.Fatalf("load firstflame archive: %v", err)
+	}
+	defer cleanup()
+
+	units := g.UnitsInRange(api.Vec2{X: 4112, Y: 4112}, 5000, nil)
+	if len(units) != 3 {
+		t.Fatalf("First Flame placement spawned %d units, want 3", len(units))
+	}
+	t.Logf("FSV BEFORE: placed units=%d beacon1=(id=%d owner=%d state=%d) beacon2=(id=%d owner=%d state=%d) beacon3=(id=%d owner=%d state=%d)",
+		len(units),
+		firstFlameInt(g, "beacon1", "id"), firstFlameInt(g, "beacon1", "owner"), firstFlameInt(g, "beacon1", "state"),
+		firstFlameInt(g, "beacon2", "id"), firstFlameInt(g, "beacon2", "owner"), firstFlameInt(g, "beacon2", "state"),
+		firstFlameInt(g, "beacon3", "id"), firstFlameInt(g, "beacon3", "owner"), firstFlameInt(g, "beacon3", "state"))
+
+	g.Advance(130)
+	if got := firstFlameInt(g, "match", "decided"); got != 1 {
+		t.Fatalf("match decided = %d, want 1", got)
+	}
+	if got := firstFlameInt(g, "match", "winner"); got != 1 {
+		t.Fatalf("match winner = %d, want slot 1", got)
+	}
+	if g.Player(1).Result() != api.ResultWon {
+		t.Fatalf("player 1 result = %v, want Won", g.Player(1).Result())
+	}
+	if g.Player(0).Result() != api.ResultLost {
+		t.Fatalf("player 0 result = %v, want Lost", g.Player(0).Result())
+	}
+	t.Logf("FSV AFTER: beacon1 owner=%d state=%d beacon2 owner=%d state=%d beacon3 owner=%d state=%d holdP1=%d match=%d/%d hash=%#016x",
+		firstFlameInt(g, "beacon1", "owner"), firstFlameInt(g, "beacon1", "state"),
+		firstFlameInt(g, "beacon2", "owner"), firstFlameInt(g, "beacon2", "state"),
+		firstFlameInt(g, "beacon3", "owner"), firstFlameInt(g, "beacon3", "state"),
+		firstFlameInt(g, "hold", "p1"), firstFlameInt(g, "match", "decided"), firstFlameInt(g, "match", "winner"), g.StateHash())
 }
 
 // TestFirstFlameSliceFSV drives the full slice and inspects every beat's state.

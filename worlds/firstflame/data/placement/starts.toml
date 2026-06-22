@@ -1,0 +1,26 @@
+# Spawn directly on the three authored map beacons:
+#   beacon1 cell(128,128) -> world(4112,4112)
+#   beacon2 cell(88,88)   -> world(2832,2832)
+#   beacon3 cell(168,168) -> world(5392,5392)
+# P1 holds two beacons and wins after the scripted hold timer; P0 owns the third
+# so the screenshot shows an opposing slot as well.
+[[unit]]
+type = "hfoo"
+owner = 1
+x = 4112
+y = 4112
+facing = 0
+
+[[unit]]
+type = "hfoo"
+owner = 1
+x = 2832
+y = 2832
+facing = 0
+
+[[unit]]
+type = "hfoo"
+owner = 0
+x = 5392
+y = 5392
+facing = 180

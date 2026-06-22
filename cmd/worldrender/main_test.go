@@ -8,6 +8,7 @@ package main
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -29,6 +30,47 @@ func TestParseBeatsSortsAndFilters(t *testing.T) {
 		}
 	}
 	t.Logf("FSV parseBeats: %v", got)
+}
+
+func TestSourceSelectionFSV(t *testing.T) {
+	cases := []struct {
+		name     string
+		h        harness
+		wantErr  string
+		wantKind string
+		wantPath string
+		wantName string
+	}{
+		{name: "missing", h: harness{}, wantErr: "missing -world or -archive"},
+		{name: "both", h: harness{world: "worlds/firstflame", archive: "worlds/firstflame.litdworld"}, wantErr: "not both"},
+		{name: "world", h: harness{world: "worlds/firstflame/"}, wantKind: "world", wantPath: "worlds/firstflame/", wantName: "firstflame"},
+		{name: "archive", h: harness{archive: "artifacts/firstflame.litdworld"}, wantKind: "archive", wantPath: "artifacts/firstflame.litdworld", wantName: "firstflame"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.h.validateSource()
+			if tc.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("validateSource error = %v, want containing %q", err, tc.wantErr)
+				}
+				t.Logf("FSV source %s refused: %v", tc.name, err)
+				return
+			}
+			if err != nil {
+				t.Fatalf("validateSource: %v", err)
+			}
+			if got := tc.h.sourceKind(); got != tc.wantKind {
+				t.Fatalf("sourceKind = %q, want %q", got, tc.wantKind)
+			}
+			if got := tc.h.sourcePath(); got != tc.wantPath {
+				t.Fatalf("sourcePath = %q, want %q", got, tc.wantPath)
+			}
+			if got := tc.h.sourceName(); got != tc.wantName {
+				t.Fatalf("sourceName = %q, want %q", got, tc.wantName)
+			}
+			t.Logf("FSV source %s accepted: kind=%s path=%s shotBase=%s", tc.name, tc.h.sourceKind(), tc.h.sourcePath(), tc.h.sourceName())
+		})
+	}
 }
 
 // TestAutoFitTransformMapsUnitsFSV loads the First Flame slice and proves the

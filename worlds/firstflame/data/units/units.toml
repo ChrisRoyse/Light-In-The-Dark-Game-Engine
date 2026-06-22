@@ -1,0 +1,14 @@
+# Minimal unit used by the First Flame map-victory placement rows. The render
+# harness currently draws team-tinted boxes, so no model asset is required here.
+[[unit]]
+id = "hfoo"
+life = 100
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 250
+name = "Beacon Guard"

@@ -10,7 +10,8 @@
 // ground plane); an optional -beacon-key places a light marker when a world's
 // control-point storage flag is set, giving #482 its per-beat rendered evidence.
 //
-//	-world DIR        world to load (contains data/ and main.lua) [required]
+//	-world DIR        world directory to load (contains data/ and main.lua)
+//	-archive FILE     verified .litdworld archive to load
 //	-beats LIST       comma sim-tick beats to capture, e.g. "20,60,120"
 //	-out DIR          screenshot output directory (default artifacts)
 //	-seed N           deterministic PRNG seed (R-SIM-2)
@@ -40,6 +41,7 @@ import (
 	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	"github.com/g3n/engine/app"
@@ -85,8 +87,8 @@ type harness struct {
 	unitsRoot  *core.Node // re-parented each beat
 	beaconNode *core.Node
 
-	world   string
-	outDir  string
+	world     string
+	outDir    string
 	tod       float64
 	beats     []int
 	beacon    beaconKey
@@ -94,6 +96,7 @@ type harness struct {
 	dimFactor float64   // light multiplier applied on a dim beat
 	cx, cy    float64   // sim-space center of the auto-fit transform
 	scale     float64   // sim units -> world units
+	archive   string
 
 	beatIdx     int
 	curTick     int
@@ -119,6 +122,7 @@ func fatalf(format string, a ...any) {
 func main() {
 	h := &harness{}
 	flag.StringVar(&h.world, "world", "", "world directory to load (contains data/ and main.lua)")
+	flag.StringVar(&h.archive, "archive", "", "verified .litdworld archive to load")
 	beatsStr := flag.String("beats", "60", "comma sim-tick beats to capture, e.g. \"20,60,120\"")
 	flag.StringVar(&h.outDir, "out", "artifacts", "screenshot output directory")
 	seed := flag.Int64("seed", 1, "deterministic PRNG seed (R-SIM-2)")
@@ -129,8 +133,8 @@ func main() {
 	flag.Float64Var(&h.dimFactor, "dim-factor", 0.30, "light multiplier applied on a dim beat [0,1]")
 	flag.Parse()
 
-	if h.world == "" {
-		fatalf("missing -world")
+	if err := h.validateSource(); err != nil {
+		fatalf("%v", err)
 	}
 	if h.tod < 0 || h.tod >= 24 {
 		fatalf("-tod must be in [0,24), got %v", h.tod)
@@ -157,13 +161,13 @@ func main() {
 		fatalf("-dim-factor must be in [0,1], got %v", h.dimFactor)
 	}
 
-	host, err := worldhost.Load(h.world, *seed, *budget)
+	host, err := h.loadHost(*seed, *budget)
 	if err != nil {
-		fatalf("load world %q: %v", h.world, err)
+		fatalf("load %s %q: %v", h.sourceKind(), h.sourcePath(), err)
 	}
 	defer host.Close()
 	h.g = host.Game
-	fmt.Printf("event: world loaded path=%s seed=%d beats=%v\n", h.world, *seed, h.beats)
+	fmt.Printf("event: world loaded source=%s path=%s seed=%d beats=%v\n", h.sourceKind(), h.sourcePath(), *seed, h.beats)
 
 	h.computeFit() // auto-fit transform from the initial unit cloud
 
@@ -195,6 +199,54 @@ func parseBeats(s string) []int {
 	}
 	sort.Ints(out) // beats are cumulative tick targets; advancing only goes forward
 	return out
+}
+
+func (h *harness) validateSource() error {
+	switch {
+	case h.world == "" && h.archive == "":
+		return fmt.Errorf("missing -world or -archive")
+	case h.world != "" && h.archive != "":
+		return fmt.Errorf("pass either -world or -archive, not both")
+	default:
+		return nil
+	}
+}
+
+func (h *harness) loadHost(seed, budget int64) (*worldhost.Host, error) {
+	if err := h.validateSource(); err != nil {
+		return nil, err
+	}
+	if h.archive != "" {
+		return worldhost.LoadArchive(h.archive, engineVersion(), seed, budget)
+	}
+	return worldhost.Load(h.world, seed, budget)
+}
+
+func (h *harness) sourceKind() string {
+	if h.archive != "" {
+		return "archive"
+	}
+	return "world"
+}
+
+func (h *harness) sourcePath() string {
+	if h.archive != "" {
+		return h.archive
+	}
+	return h.world
+}
+
+func (h *harness) sourceName() string {
+	p := filepath.Base(strings.TrimRight(h.sourcePath(), string(os.PathSeparator)+"/"))
+	if h.archive != "" {
+		if ext := filepath.Ext(p); ext != "" {
+			p = strings.TrimSuffix(p, ext)
+		}
+	}
+	if p == "" || p == "." {
+		return h.sourceKind()
+	}
+	return p
 }
 
 // computeFit derives the sim->world transform from the initial unit positions:
@@ -353,7 +405,7 @@ func (h *harness) update(rend *renderer.Renderer, _ time.Duration) {
 
 	if h.shotPending {
 		h.shotPending = false
-		name := filepath.Base(strings.TrimRight(h.world, "/"))
+		name := h.sourceName()
 		path := filepath.Join(h.outDir, fmt.Sprintf("%s-beat%d.png", name, h.curTick))
 		if err := h.screenshot(path); err != nil {
 			fatalf("screenshot: %v", err)
@@ -365,6 +417,17 @@ func (h *harness) update(rend *renderer.Renderer, _ time.Duration) {
 			h.done = true
 		}
 	}
+}
+
+func engineVersion() string {
+	v := buildinfo.Get().Version
+	if len(v) > 0 && v[0] == 'v' {
+		v = v[1:]
+	}
+	if v == "" || v == "dev" {
+		return "0.1.0"
+	}
+	return v
 }
 
 // beatRows holds the rows captured for the current beat's state line.
