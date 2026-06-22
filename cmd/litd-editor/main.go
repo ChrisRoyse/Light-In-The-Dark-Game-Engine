@@ -852,21 +852,10 @@ func newObjectFSVState() *objectFSVState {
 func objectSteps(app *shell.App, state *objectFSVState) []editorObjectStep {
 	return []editorObjectStep{
 		{
-			Name: "objects-reject-unwalkable",
+			Name: "objects-reject-blocked-pathing",
 			Apply: func() error {
-				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
-					return err
-				}
-				if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
-					return err
-				}
-				if err := app.SetBrushSize(0); err != nil {
-					return err
-				}
-				if err := app.SetBrushStrength(1); err != nil {
-					return err
-				}
-				if err := app.ApplyTerrainBrush(7, 7); err != nil {
+				px, py := sourceform.TerrainCellCenterPathingCell(7, 7)
+				if err := app.EditPathingFlags(px, py, 0); err != nil {
 					return err
 				}
 				if err := app.SwitchMode(shell.ModeObjects); err != nil {
@@ -876,7 +865,7 @@ func objectSteps(app *shell.App, state *objectFSVState) []editorObjectStep {
 				_, err := app.PlaceUnitCell("footman", 3, 7, 7, 0, shell.ClampPlacementScale(1000), false)
 				after := app.Snapshot()
 				if err == nil {
-					return fmt.Errorf("object FSV: unwalkable unit placement unexpectedly succeeded")
+					return fmt.Errorf("object FSV: blocked pathing unit placement unexpectedly succeeded")
 				}
 				state.Rejected = objectRejectRecord{
 					BeforeUnits:   before.World.Entities,
@@ -1162,21 +1151,10 @@ func metadataSteps(app *shell.App, state *metadataFSVState) []editorMetadataStep
 			},
 		},
 		{
-			Name: "metadata-reject-unwalkable",
+			Name: "metadata-reject-unbuildable",
 			Apply: func() error {
-				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
-					return err
-				}
-				if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
-					return err
-				}
-				if err := app.SetBrushSize(0); err != nil {
-					return err
-				}
-				if err := app.SetBrushStrength(1); err != nil {
-					return err
-				}
-				if err := app.ApplyTerrainBrush(7, 7); err != nil {
+				px, py := sourceform.TerrainCellCenterPathingCell(7, 7)
+				if err := app.EditPathingFlags(px, py, 0); err != nil {
 					return err
 				}
 				if err := app.SwitchMode(shell.ModeMetadata); err != nil {
@@ -1186,7 +1164,7 @@ func metadataSteps(app *shell.App, state *metadataFSVState) []editorMetadataStep
 				err := app.PutStartLocationCell(5, 7, 7)
 				after := app.Snapshot()
 				if err == nil {
-					return fmt.Errorf("metadata FSV: unwalkable start unexpectedly succeeded")
+					return fmt.Errorf("metadata FSV: unbuildable start unexpectedly succeeded")
 				}
 				state.Unwalkable = metadataRejectRecord{
 					BeforeStarts: append([]sourceform.StartLocation(nil), before.World.Starts...),

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
 
@@ -21,25 +22,18 @@ func TestObjectPlacementPaletteTransformsAndEdgesFSV(t *testing.T) {
 		t.Fatalf("doodad palette missing tree asset: %+v", palette)
 	}
 
-	if err := app.SetTerrainBrush(BrushCliffRaise); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.SetBrushSize(0); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.SetBrushStrength(1); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.ApplyTerrainBrush(7, 7); err != nil {
+	px, py := sourceform.TerrainCellCenterPathingCell(7, 7)
+	blockX, blockY := px-1, py-1
+	if err := app.world.SetPathingCell(blockX, blockY, 0); err != nil {
 		t.Fatal(err)
 	}
 	beforeReject := app.Snapshot()
 	_, err := app.PlaceUnitCell("footman", 3, 7, 7, 0, sourceform.PlacementScaleDefault, false)
 	afterReject := app.Snapshot()
-	t.Logf("FSV object reject before: units=%d doodads=%d status=%q", beforeReject.World.Entities, beforeReject.World.Doodads, beforeReject.Status)
-	t.Logf("FSV object reject after: units=%d doodads=%d err=%v status=%q", afterReject.World.Entities, afterReject.World.Doodads, err, afterReject.Status)
-	if err == nil || !strings.Contains(err.Error(), "unwalkable cell 7,7") {
-		t.Fatalf("unwalkable unit placement should reject loudly, got %v", err)
+	t.Logf("FSV object reject before: units=%d doodads=%d pathing[%d,%d]=%d center=%d,%d status=%q", beforeReject.World.Entities, beforeReject.World.Doodads, blockX, blockY, app.world.Pathing[blockY][blockX], px, py, beforeReject.Status)
+	t.Logf("FSV object reject after: units=%d doodads=%d err=%v pathing[%d,%d]=%d center=%d,%d status=%q", afterReject.World.Entities, afterReject.World.Doodads, err, blockX, blockY, app.world.Pathing[blockY][blockX], px, py, afterReject.Status)
+	if err == nil || !strings.Contains(err.Error(), "blocked pathing footprint") {
+		t.Fatalf("blocked pathing unit placement should reject loudly, got %v", err)
 	}
 	if afterReject.World.Entities != beforeReject.World.Entities || afterReject.World.Doodads != beforeReject.World.Doodads {
 		t.Fatalf("rejected placement changed counts: before=%+v after=%+v", beforeReject.World, afterReject.World)
@@ -68,9 +62,9 @@ func TestObjectPlacementPaletteTransformsAndEdgesFSV(t *testing.T) {
 		t.Fatalf("unit transform not exact: %+v", u1After)
 	}
 
-	d1, err := app.PlaceDoodadCell("kaykit-hexagon/tree_single_A.glb", 0, 3, 0, 1000)
+	d1, err := app.PlaceDoodadCell("kaykit-hexagon/tree_single_A.glb", 7, 7, 0, 1000)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("doodad should place on blocked pathing cell: %v", err)
 	}
 	if err := app.TransformDoodad(d1.ID, d1.Pos, d1.Rotation, -5); err != nil {
 		t.Fatal(err)
@@ -125,6 +119,48 @@ func TestObjectPlacementPaletteTransformsAndEdgesFSV(t *testing.T) {
 	}
 	if !bytes.Contains(doodads, []byte(`type = "kaykit-hexagon/tree_single_A.glb"`)) || !bytes.Contains(doodads, []byte(`scale = 1`)) {
 		t.Fatalf("saved doodads missing clamped doodad:\n%s", doodads)
+	}
+}
+
+func TestObjectPlacementFootprintRequiresBuildablePathingFSV(t *testing.T) {
+	app := newCommandTestApp(t)
+	const towerType = "fsv-tower"
+	app.objectPalette = append(app.objectPalette, ObjectPaletteItem{Kind: ObjectKindUnit, Type: towerType, Source: "test"})
+	app.unitData[towerType] = data.Unit{ID: towerType, Pathing: data.PathingGround, Footprint: 4}
+
+	px, py := 1*sourceform.PathingScale, 1*sourceform.PathingScale
+	beforeClear, err := app.world.PathingFootprintClear(px, py, 4, 4, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := app.world.SetPathingCell(px+3, py+3, sourceform.PathWalkable); err != nil {
+		t.Fatal(err)
+	}
+	afterBlockClear, err := app.world.PathingFootprintClear(px, py, 4, 4, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeReject := app.Snapshot()
+	_, err = app.PlaceUnitCell(towerType, 0, 1, 1, 0, sourceform.PlacementScaleDefault, false)
+	afterReject := app.Snapshot()
+	t.Logf("FSV footprint before: clear=%v units=%d pathing[%d,%d]=%d", beforeClear, beforeReject.World.Entities, px+3, py+3, app.world.Pathing[py+3][px+3])
+	t.Logf("FSV footprint blocked: clear=%v err=%v units=%d status=%q", afterBlockClear, err, afterReject.World.Entities, afterReject.Status)
+	if !beforeClear || afterBlockClear || err == nil || !strings.Contains(err.Error(), "blocked pathing footprint") || afterReject.World.Entities != beforeReject.World.Entities {
+		t.Fatalf("buildable footprint rejection mismatch: beforeClear=%v afterClear=%v err=%v before=%+v after=%+v", beforeClear, afterBlockClear, err, beforeReject.World, afterReject.World)
+	}
+
+	if err := app.world.SetPathingCell(px+3, py+3, sourceform.PathWalkable|sourceform.PathBuildable); err != nil {
+		t.Fatal(err)
+	}
+	afterRestoreClear, err := app.world.PathingFootprintClear(px, py, 4, 4, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ent, err := app.PlaceUnitCell(towerType, 0, 1, 1, 0, sourceform.PlacementScaleDefault, false)
+	afterPlace := app.Snapshot()
+	t.Logf("FSV footprint restored: clear=%v ent=%+v units=%d", afterRestoreClear, ent, afterPlace.World.Entities)
+	if !afterRestoreClear || err != nil || ent.Type != towerType || afterPlace.World.Entities != beforeReject.World.Entities+1 {
+		t.Fatalf("restored buildable footprint should place exactly one unit: clear=%v ent=%+v err=%v before=%+v after=%+v", afterRestoreClear, ent, err, beforeReject.World, afterPlace.World)
 	}
 }
 

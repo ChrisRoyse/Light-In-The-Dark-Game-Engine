@@ -48,26 +48,15 @@ func TestMetadataStartsExportFSV(t *testing.T) {
 		t.Fatalf("duplicate start was not rejected cleanly: err=%v after=%+v", dupErr, afterDup)
 	}
 
-	if err := app.SwitchMode(ModeTerrain); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.SetTerrainBrush(BrushCliffRaise); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.SetBrushSize(0); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.SetBrushStrength(1); err != nil {
-		t.Fatal(err)
-	}
-	if err := app.ApplyTerrainBrush(7, 7); err != nil {
+	px, py := sourceform.TerrainCellCenterPathingCell(7, 7)
+	if err := app.world.SetPathingCell(px, py, 0); err != nil {
 		t.Fatal(err)
 	}
 	beforeUnwalkable := app.Snapshot().World.Starts
 	unwalkableErr := app.PutStartLocationCell(5, 7, 7)
 	afterUnwalkable := app.Snapshot()
-	t.Logf("FSV unwalkable start edge before=%+v err=%v after=%+v status=%q", beforeUnwalkable, unwalkableErr, afterUnwalkable.World.Starts, afterUnwalkable.Status)
-	if unwalkableErr == nil || !slices.Equal(beforeUnwalkable, afterUnwalkable.World.Starts) || !strings.Contains(afterUnwalkable.Error, "unwalkable cell") {
+	t.Logf("FSV unbuildable start edge before=%+v err=%v pathing[%d,%d]=%d after=%+v status=%q", beforeUnwalkable, unwalkableErr, px, py, app.world.Pathing[py][px], afterUnwalkable.World.Starts, afterUnwalkable.Status)
+	if unwalkableErr == nil || !slices.Equal(beforeUnwalkable, afterUnwalkable.World.Starts) || !strings.Contains(afterUnwalkable.Error, "unbuildable cell") {
 		t.Fatalf("unwalkable start was not rejected cleanly: err=%v after=%+v", unwalkableErr, afterUnwalkable)
 	}
 

@@ -65,8 +65,10 @@ func (a *App) LoadObjectPalette(fsys fs.FS) error {
 		return fmt.Errorf("editor objects: load unit palette: %w", err)
 	}
 	items := make([]ObjectPaletteItem, 0, len(tables.Units))
+	units := make(map[string]data.Unit, len(tables.Units))
 	for _, u := range tables.Units {
 		items = append(items, ObjectPaletteItem{Kind: ObjectKindUnit, Type: u.ID, Source: "data/units"})
+		units[u.ID] = u
 	}
 	doodads, err := loadDoodadPalette(fsys)
 	if err != nil {
@@ -83,6 +85,7 @@ func (a *App) LoadObjectPalette(fsys fs.FS) error {
 		return items[i].Type < items[j].Type
 	})
 	a.objectPalette = items
+	a.unitData = units
 	if a.objectSelection.Type == "" || !a.paletteContains(a.objectSelection.Kind, a.objectSelection.Type) {
 		a.objectSelection = ObjectSelection{Kind: items[0].Kind, Type: items[0].Type, Scale: sourceform.PlacementScaleDefault}
 	}
@@ -261,12 +264,12 @@ func (a *App) PlaceUnitCell(typeID string, owner, x, y, rotation, scale int, ove
 		return sourceform.Entity{}, fmt.Errorf("editor objects: rotation %d outside 0..65535", rotation)
 	}
 	if !overrideWalkability {
-		ok, err := a.UnitPlacementWalkableCell(x, y)
+		ok, err := a.UnitPlacementWalkableCell(typeID, x, y)
 		if err != nil {
 			return sourceform.Entity{}, err
 		}
 		if !ok {
-			err := fmt.Errorf("editor objects: unit placement rejected at unwalkable cell %d,%d", x, y)
+			err := fmt.Errorf("editor objects: unit placement rejected at blocked pathing footprint for cell %d,%d", x, y)
 			a.errText = err.Error()
 			a.status = a.errText
 			return sourceform.Entity{}, err
@@ -350,30 +353,42 @@ func (a *App) DeleteDoodad(id uint32) error {
 	return a.executeCommand(doodadDeleteCommand{before: d})
 }
 
-func (a *App) UnitPlacementWalkableCell(x, y int) (bool, error) {
+func (a *App) UnitPlacementWalkableCell(typeID string, x, y int) (bool, error) {
 	if a.world == nil {
 		return false, fmt.Errorf("editor shell: no project loaded")
 	}
 	if err := validateObjectCell(a.world, x, y); err != nil {
 		return false, err
 	}
-	if a.world.Terrain.Width == 1 && a.world.Terrain.Height == 1 {
+	u, ok := a.unitData[typeID]
+	if !ok {
+		return false, fmt.Errorf("editor objects: unit %q metadata is not loaded", typeID)
+	}
+	px, py, fw, fh, requireBuildable, airborne, err := unitPlacementPathingFootprint(x, y, u)
+	if err != nil {
+		return false, err
+	}
+	if airborne {
 		return true, nil
 	}
-	for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
-		nx, ny := x+d[0], y+d[1]
-		if nx < 0 || ny < 0 || nx >= a.world.Terrain.Width || ny >= a.world.Terrain.Height {
-			continue
-		}
-		ok, err := a.world.CliffStepLegal(x, y, nx, ny)
-		if err != nil {
-			return false, err
-		}
-		if ok {
-			return true, nil
-		}
+	return a.world.PathingFootprintClear(px, py, fw, fh, requireBuildable)
+}
+
+func unitPlacementPathingFootprint(x, y int, u data.Unit) (px, py, width, height int, requireBuildable, airborne bool, err error) {
+	if u.Footprint > 0 {
+		return x * sourceform.PathingScale, y * sourceform.PathingScale, int(u.Footprint), int(u.Footprint), true, false, nil
 	}
-	return false, nil
+	switch u.Pathing {
+	case data.PathingGround:
+		radius := int(u.CollisionClass)
+		cx, cy := sourceform.TerrainCellCenterPathingCell(x, y)
+		side := radius*2 + 1
+		return cx - radius, cy - radius, side, side, false, false, nil
+	case data.PathingAir:
+		return 0, 0, 0, 0, false, true, nil
+	default:
+		return 0, 0, 0, 0, false, false, fmt.Errorf("editor objects: unit %q has unsupported pathing class %d", u.ID, u.Pathing)
+	}
 }
 
 func ClampPlacementScale(scale int) int {

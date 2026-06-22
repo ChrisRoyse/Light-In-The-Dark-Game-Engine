@@ -130,6 +130,7 @@ func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
 		},
 		Terrain: Terrain{Width: 3, Height: 1, Tileset: "test", StartLocations: []StartLocation{{Player: 1, Cell: [2]int{0, 0}}}},
 		Height:  [][]int{{0, 0, 0}},
+		Pathing: DefaultPathingGrid(3, 1),
 		Cliff:   [][]CliffCell{{{Level: 0}, {Level: 0, Ramp: true}, {Level: 1}}},
 		Splat:   [][]SplatWeight{{{A: 255}, {A: 255}, {A: 255}}},
 	}
@@ -167,6 +168,9 @@ func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(heightFile)), []byte("0 0 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(pathingFile)), []byte("3 3 3 3 3 3 3 3 3 3 3 3\n3 3 3 3 3 3 3 3 3 3 3 3\n3 3 3 3 3 3 3 3 3 3 3 3\n3 3 3 3 3 3 3 3 3 3 3 3\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(cliffFile)), []byte("0 r0 0\n"), 0o644); err != nil {
@@ -218,6 +222,82 @@ func TestSourceFormSplatWeightsRoundTripFSV(t *testing.T) {
 	t.Logf("FSV invalid splat load: row=%q err=%v", "10,20,30,40", err)
 	if err == nil || !strings.Contains(err.Error(), "weights sum to 100, want 255") {
 		t.Fatalf("invalid splat should fail closed, got %v", err)
+	}
+}
+
+func TestSourceFormPathingRoundTripAndEdgesFSV(t *testing.T) {
+	dir := t.TempDir()
+	writeSyntheticWorld(t, dir, 1)
+	w, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := renderPathingGrid(w.Pathing)
+	if err := w.SetPathingCell(0, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	clear, err := w.PathingFootprintClear(0, 0, 1, 1, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Save(""); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(pathingFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV pathing before bytes:\n%s", before)
+	t.Logf("FSV pathing after bytes:\n%s", body)
+	t.Logf("FSV pathing cell after load: flags=%d footprintClear=%v", loaded.Pathing[0][0], clear)
+	if clear || loaded.Pathing[0][0] != 0 || !strings.HasPrefix(string(body), "0 3 3 3\n") {
+		t.Fatalf("pathing did not round-trip blocked cell: clear=%v cell=%d body=%q", clear, loaded.Pathing[0][0], string(body))
+	}
+
+	beforeOOB := loaded.Pathing[0][0]
+	oobErr := loaded.SetPathingCell(4, 0, PathWalkable)
+	t.Logf("FSV pathing out-of-bounds beforeCell=%d err=%v afterCell=%d", beforeOOB, oobErr, loaded.Pathing[0][0])
+	if oobErr == nil || loaded.Pathing[0][0] != beforeOOB {
+		t.Fatalf("out-of-bounds pathing edit should fail without mutation: err=%v cell=%d", oobErr, loaded.Pathing[0][0])
+	}
+
+	missing := t.TempDir()
+	writeSyntheticWorld(t, missing, 1)
+	if err := os.Remove(filepath.Join(missing, filepath.FromSlash(pathingFile))); err != nil {
+		t.Fatal(err)
+	}
+	_, err = Load(missing)
+	t.Logf("FSV missing pathing edge: err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "missing required file map/pathing.txt") {
+		t.Fatalf("missing pathing should fail closed, got %v", err)
+	}
+
+	badFlags := t.TempDir()
+	writeSyntheticWorld(t, badFlags, 1)
+	grid := DefaultPathingGrid(1, 1)
+	grid[0][0] = PathWalkable | PathWater
+	if err := os.WriteFile(filepath.Join(badFlags, filepath.FromSlash(pathingFile)), renderPathingGrid(grid), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = Load(badFlags)
+	t.Logf("FSV invalid pathing flags edge: err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "water path flags") {
+		t.Fatalf("invalid water+walk flags should fail closed, got %v", err)
+	}
+
+	truncated := t.TempDir()
+	writeSyntheticWorld(t, truncated, 1)
+	if err := os.WriteFile(filepath.Join(truncated, filepath.FromSlash(pathingFile)), []byte("3 3 3\n3 3 3 3\n3 3 3 3\n3 3 3 3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = Load(truncated)
+	t.Logf("FSV truncated pathing row edge: err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "row 0 has 3 columns, want 4") {
+		t.Fatalf("truncated pathing row should fail closed, got %v", err)
 	}
 }
 
@@ -415,8 +495,9 @@ func TestSourceFormMetadataStartsArchiveManifestFSV(t *testing.T) {
 	if dupErr == nil || len(w.Terrain.StartLocations) != 4 {
 		t.Fatalf("duplicate start should be rejected without changing count: err=%v starts=%+v", dupErr, w.Terrain.StartLocations)
 	}
-	if err := w.SetCliffCell(7, 7, CliffCell{Level: 1}); err != nil {
-		t.Fatalf("raise cliff for unwalkable edge: %v", err)
+	px, py := TerrainCellCenterPathingCell(7, 7)
+	if err := w.SetPathingCell(px, py, 0); err != nil {
+		t.Fatalf("block pathing for unbuildable edge: %v", err)
 	}
 	beforeUnwalkable := append([]StartLocation(nil), w.Terrain.StartLocations...)
 	unwalkableErr := w.PutStartLocation(StartLocation{Player: 5, Cell: [2]int{7, 7}})
@@ -629,6 +710,7 @@ func writeSyntheticWorld(t *testing.T, dir string, nEntities int) {
 	files := map[string][]byte{
 		worldFile:    renderWorld(meta),
 		terrainFile:  renderTerrain(terrain),
+		pathingFile:  renderPathingGrid(DefaultPathingGrid(terrain.Width, terrain.Height)),
 		heightFile:   []byte("0\n"),
 		cliffFile:    []byte("0\n"),
 		splatFile:    []byte("255,0,0,0\n"),

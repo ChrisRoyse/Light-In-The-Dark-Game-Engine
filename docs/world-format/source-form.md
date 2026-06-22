@@ -25,6 +25,7 @@ build step.
 │   └── main.lua            # entry point; required iff scripts/ exists
 ├── map/                    # terrain + placements, line-stable text (required)
 │   ├── terrain.toml        # dimensions, tileset ref, biome
+│   ├── pathing.txt         # walk/build/water flags, one pathing row per line
 │   ├── height.txt          # height grid, one row per line
 │   ├── cliff.txt           # cliff-level grid, one row per line
 │   ├── splat.txt           # texture blend-weight grid, one row per line
@@ -77,10 +78,12 @@ cell = [6, 6]
 ```
 
 `[[start]]` rows are required (`1..8` rows). `player` is the editor-facing slot
-number (`1..8`) and must be unique. The editor refuses starts outside the map or
-on cells that are not walkable by the source-form cliff pathability rule. Archive
-export copies these rows into the manifest header so hub/load tooling can inspect
-map identity without reading payload files.
+number (`1..8`) and must be unique. Source-form start cells are terrain-cell
+coordinates; the editor maps each start to the center pathing cell (`x*4+2`,
+`y*4+2`) and refuses starts outside the map or on cells that are not buildable
+non-water ground in `map/pathing.txt`. Archive export copies these rows into the
+manifest header so hub/load tooling can inspect map identity without reading
+payload files.
 
 ## 3. Text-format rules (the diff-stability contract)
 
@@ -99,11 +102,14 @@ mechanically, and `tools/worldpack` validates them.
    within its file, assigned once by the editor and never reused). Placements are
    ordered by `id` ascending in the file — insertion order never reshuffles
    neighbours.
-4. **Grid files are row-per-line.** `height.txt`, `cliff.txt`, `splat.txt` write one
-   map row per line, values space-separated, fixed formatting (no scientific
-   notation; heights are the fixed-point integers the sim uses — floats never appear
-   in map data). `splat.txt` cells are canonical four-way blend weights
-   (`a,b,c,d`) that sum to 255. Editing one region touches only that region's lines.
+4. **Grid files are row-per-line.** `height.txt`, `cliff.txt`, `splat.txt`, and
+   `pathing.txt` write one row per line, values space-separated, fixed formatting
+   (no scientific notation; heights are the fixed-point integers the sim uses —
+   floats never appear in map data). `height.txt`, `cliff.txt`, and `splat.txt`
+   are terrain-cell grids. `pathing.txt` is a pathing-cell grid with width and
+   height equal to `terrain.toml` dimensions multiplied by 4. `splat.txt` cells
+   are canonical four-way blend weights (`a,b,c,d`) that sum to 255. Editing one
+   region touches only that region's lines.
 5. **No timestamps, no machine names, no editor versions** anywhere in source form.
    Provenance lives in the VCS, not the files.
 6. **Numbers are written canonically.** Integers without leading zeros; fixed-point
@@ -112,6 +118,21 @@ mechanically, and `tools/worldpack` validates them.
    point).
 7. **Newline `\n`, UTF-8, no BOM, trailing newline required.** Unicode is permitted
    in every human-facing string field (names, descriptions, authors).
+
+### map/pathing.txt — pathing flags
+
+`pathing.txt` is the canonical source-form authoring layer for placement and
+runtime pathing. It uses the same flag byte as `litd/asset/mapdata`: decimal or
+`0x...` integer values where `1` means walkable, `2` means buildable, and `4`
+means water. Unknown bits are a load error. Water must not be combined with
+walkable or buildable. Typical ground is `3`; impassable terrain is `0`; water is
+`4`.
+
+Unit placement checks a unit's loaded data row. Ground units test a square
+footprint derived from `collision-size` / `CollisionClass` around the center
+pathing cell of the selected terrain cell. Building-like unit rows with a
+non-zero `footprint` test that authored footprint against buildable ground.
+Doodads remain scenery placement by default and are not rejected by pathing flags.
 
 ### map/entities.toml — worked example
 
@@ -178,6 +199,7 @@ co-editing layer exists or is planned for v1. Nothing in the engine reads VCS st
 | Key order / line forms / canonical numbers | editor writer (#11); worldpack `--lint` |
 | Entity id uniqueness + ordering | worldpack lint, editor |
 | Grid dimensions vs `terrain.toml` | engine loader, worldpack |
+| Pathing flags, water exclusivity, unit/start placement checks | editor, engine loader |
 | MANIFEST 1:1 + hashes | worldpack, engine, assetcheck (#37) |
 | Lua parse (no execution) | worldpack lint via vendored VM (#261) |
 

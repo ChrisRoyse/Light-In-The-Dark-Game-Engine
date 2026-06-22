@@ -15,6 +15,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/semver"
 )
@@ -22,6 +23,7 @@ import (
 const (
 	worldFile    = "world.toml"
 	terrainFile  = "map/terrain.toml"
+	pathingFile  = "map/pathing.txt"
 	heightFile   = "map/height.txt"
 	cliffFile    = "map/cliff.txt"
 	splatFile    = "map/splat.txt"
@@ -90,6 +92,17 @@ type SplatWeight struct {
 	D uint8 `json:"d"`
 }
 
+// PathFlags is the canonical source-form pathing bitfield. It aliases runtime
+// mapdata so authored source bytes and runtime loaders share one flag contract.
+type PathFlags = mapdata.PathFlags
+
+const (
+	PathingScale  = mapdata.PathingScale
+	PathWalkable  = mapdata.PathWalkable
+	PathBuildable = mapdata.PathBuildable
+	PathWater     = mapdata.PathWater
+)
+
 // Entity is one placed map entity. IDs are stable and sorted on save.
 type Entity struct {
 	ID       uint32
@@ -113,9 +126,10 @@ type Doodad struct {
 type GridKind string
 
 const (
-	GridHeight GridKind = "height"
-	GridCliff  GridKind = "cliff"
-	GridSplat  GridKind = "splat"
+	GridHeight  GridKind = "height"
+	GridCliff   GridKind = "cliff"
+	GridSplat   GridKind = "splat"
+	GridPathing GridKind = "pathing"
 )
 
 // World is an editable source-form tree.
@@ -124,6 +138,7 @@ type World struct {
 	Metadata Metadata
 	Terrain  Terrain
 	Height   [][]int
+	Pathing  [][]PathFlags
 	Cliff    [][]CliffCell
 	Splat    [][]SplatWeight
 	Entities []Entity
@@ -197,7 +212,7 @@ func Load(dir string) (*World, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, rel := range []string{worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile} {
+	for _, rel := range []string{worldFile, terrainFile, pathingFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile} {
 		if _, ok := all[rel]; !ok {
 			return nil, fmt.Errorf("sourceform: load %q: missing required file %s", dir, rel)
 		}
@@ -210,6 +225,10 @@ func Load(dir string) (*World, error) {
 	terrain, err := parseTerrain(all[terrainFile])
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", terrainFile, err)
+	}
+	pathing, err := parsePathingGrid(all[pathingFile], terrain.Width*PathingScale, terrain.Height*PathingScale)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", pathingFile, err)
 	}
 	height, err := parseGrid(all[heightFile], terrain.Width, terrain.Height)
 	if err != nil {
@@ -235,23 +254,28 @@ func Load(dir string) (*World, error) {
 	files := make(map[string][]byte, len(all))
 	for rel, body := range all {
 		switch rel {
-		case worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile:
+		case worldFile, terrainFile, pathingFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile:
 			continue
 		default:
 			files[rel] = cloneBytes(body)
 		}
 	}
-	return &World{
+	w := &World{
 		Dir:      dir,
 		Metadata: meta,
 		Terrain:  terrain,
 		Height:   height,
+		Pathing:  pathing,
 		Cliff:    cliff,
 		Splat:    splat,
 		Entities: entities,
 		Doodads:  doodads,
 		files:    files,
-	}, nil
+	}
+	if err := validateWorld(w); err != nil {
+		return nil, err
+	}
+	return w, nil
 }
 
 // Dirty reports whether the editor state has unsaved changes.
@@ -447,7 +471,7 @@ func (w *World) PutStartLocation(start StartLocation) error {
 	if ok, err := w.StartLocationWalkableCell(start.Cell[0], start.Cell[1]); err != nil {
 		return err
 	} else if !ok {
-		return fmt.Errorf("sourceform: start location player %d at %d,%d is not on walkable ground", start.Player, start.Cell[0], start.Cell[1])
+		return fmt.Errorf("sourceform: start location player %d at %d,%d is not on buildable ground", start.Player, start.Cell[0], start.Cell[1])
 	}
 	for i := range w.Terrain.StartLocations {
 		if w.Terrain.StartLocations[i].Player != start.Player {
@@ -518,6 +542,9 @@ func (w *World) StartLocationByPlayer(player int) (StartLocation, bool) {
 
 // SetGridCell edits one terrain grid cell.
 func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
+	if kind == GridPathing {
+		return w.SetPathingCell(x, y, PathFlags(value))
+	}
 	if kind == GridCliff {
 		return w.SetCliffCell(x, y, CliffCell{Level: value})
 	}
@@ -539,6 +566,25 @@ func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
 		return nil
 	}
 	grid[y][x] = value
+	w.dirty = true
+	return nil
+}
+
+// SetPathingCell edits one pathing-grid cell.
+func (w *World) SetPathingCell(x, y int, flags PathFlags) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set pathing cell on nil world")
+	}
+	if err := validatePathingFlags(flags); err != nil {
+		return err
+	}
+	if y < 0 || y >= len(w.Pathing) || x < 0 || x >= len(w.Pathing[y]) {
+		return fmt.Errorf("sourceform: pathing cell (%d,%d) outside %dx%d grid", x, y, w.Terrain.Width*PathingScale, w.Terrain.Height*PathingScale)
+	}
+	if w.Pathing[y][x] == flags {
+		return nil
+	}
+	w.Pathing[y][x] = flags
 	w.dirty = true
 	return nil
 }
@@ -789,7 +835,7 @@ func isAllowedDir(rel string) bool {
 
 func isAllowedRel(rel string) bool {
 	switch rel {
-	case worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile:
+	case worldFile, terrainFile, pathingFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile:
 		return true
 	}
 	return isPassthroughRel(rel)
@@ -1034,6 +1080,53 @@ func parseGrid(body []byte, width, height int) ([][]int, error) {
 	return grid, nil
 }
 
+func parsePathingGrid(body []byte, width, height int) ([][]PathFlags, error) {
+	text := string(body)
+	if strings.HasPrefix(text, "\ufeff") {
+		return nil, fmt.Errorf("UTF-8 BOM is not allowed")
+	}
+	text = strings.TrimSuffix(text, "\n")
+	if text == "" {
+		if height == 0 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("grid is empty, want %d rows", height)
+	}
+	lines := strings.Split(text, "\n")
+	if len(lines) != height {
+		return nil, fmt.Errorf("got %d rows, want %d", len(lines), height)
+	}
+	grid := make([][]PathFlags, height)
+	for y, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) != width {
+			return nil, fmt.Errorf("row %d has %d columns, want %d", y, len(fields), width)
+		}
+		row := make([]PathFlags, width)
+		for x, f := range fields {
+			flags, err := parsePathingFlags(f)
+			if err != nil {
+				return nil, fmt.Errorf("row %d col %d: %w", y, x, err)
+			}
+			row[x] = flags
+		}
+		grid[y] = row
+	}
+	return grid, nil
+}
+
+func parsePathingFlags(text string) (PathFlags, error) {
+	v, err := strconv.ParseUint(text, 0, 8)
+	if err != nil {
+		return 0, fmt.Errorf("path flags %q: %w", text, err)
+	}
+	flags := PathFlags(v)
+	if err := validatePathingFlags(flags); err != nil {
+		return 0, fmt.Errorf("path flags %q: %w", text, err)
+	}
+	return flags, nil
+}
+
 func parseCliffGrid(body []byte, width, height int) ([][]CliffCell, error) {
 	text := string(body)
 	if strings.HasPrefix(text, "\ufeff") {
@@ -1163,13 +1256,16 @@ func validateWorld(w *World) error {
 	if err := validateStartLocations(w.Terrain.StartLocations, w.Terrain.Width, w.Terrain.Height); err != nil {
 		return err
 	}
+	if err := validatePathingGrid(w.Pathing, w.Terrain.Width*PathingScale, w.Terrain.Height*PathingScale); err != nil {
+		return err
+	}
 	for _, start := range w.Terrain.StartLocations {
 		ok, err := w.StartLocationWalkableCell(start.Cell[0], start.Cell[1])
 		if err != nil {
 			return err
 		}
 		if !ok {
-			return fmt.Errorf("sourceform: start location player %d at %d,%d is not on walkable ground", start.Player, start.Cell[0], start.Cell[1])
+			return fmt.Errorf("sourceform: start location player %d at %d,%d is not on buildable ground", start.Player, start.Cell[0], start.Cell[1])
 		}
 	}
 	if err := validateGrid(w.Height, w.Terrain.Width, w.Terrain.Height, "height"); err != nil {
@@ -1275,6 +1371,33 @@ func validateGrid(grid [][]int, width, height int, name string) error {
 	return nil
 }
 
+func validatePathingGrid(grid [][]PathFlags, width, height int) error {
+	if len(grid) != height {
+		return fmt.Errorf("sourceform: pathing grid has %d rows, want %d", len(grid), height)
+	}
+	for y, row := range grid {
+		if len(row) != width {
+			return fmt.Errorf("sourceform: pathing grid row %d has %d columns, want %d", y, len(row), width)
+		}
+		for x, flags := range row {
+			if err := validatePathingFlags(flags); err != nil {
+				return fmt.Errorf("sourceform: pathing cell (%d,%d): %w", x, y, err)
+			}
+		}
+	}
+	return nil
+}
+
+func validatePathingFlags(flags PathFlags) error {
+	if flags&^(PathWalkable|PathBuildable|PathWater) != 0 {
+		return fmt.Errorf("unknown bits in path flags %d", flags)
+	}
+	if flags&PathWater != 0 && flags&(PathWalkable|PathBuildable) != 0 {
+		return fmt.Errorf("water path flags %d must not also be walk/build", flags)
+	}
+	return nil
+}
+
 func validateCliffGrid(grid [][]CliffCell, width, height int) error {
 	if len(grid) != height {
 		return fmt.Errorf("sourceform: cliff grid has %d rows, want %d", len(grid), height)
@@ -1324,8 +1447,10 @@ func validateSplatCell(cell SplatWeight) error {
 	return nil
 }
 
-// StartLocationWalkableCell reports whether a player start can stand on a cell
-// using the source-form cliff pathability rule.
+// StartLocationWalkableCell reports whether a player start can stand on the
+// center pathing cell of a source-form terrain cell. Runtime mapdata requires
+// starts to be buildable non-water ground; source form keeps terrain-cell UI
+// coordinates but checks the same flag semantics.
 func (w *World) StartLocationWalkableCell(x, y int) (bool, error) {
 	if w == nil {
 		return false, fmt.Errorf("sourceform: start walkability on nil world")
@@ -1333,23 +1458,82 @@ func (w *World) StartLocationWalkableCell(x, y int) (bool, error) {
 	if x < 0 || y < 0 || x >= w.Terrain.Width || y >= w.Terrain.Height {
 		return false, fmt.Errorf("sourceform: start location cell %d,%d outside %dx%d map", x, y, w.Terrain.Width, w.Terrain.Height)
 	}
-	if w.Terrain.Width == 1 && w.Terrain.Height == 1 {
-		return true, nil
+	px, py := TerrainCellCenterPathingCell(x, y)
+	flags, err := w.PathingCell(px, py)
+	if err != nil {
+		return false, err
 	}
-	for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
-		nx, ny := x+d[0], y+d[1]
-		if nx < 0 || ny < 0 || nx >= w.Terrain.Width || ny >= w.Terrain.Height {
-			continue
-		}
-		ok, err := w.CliffStepLegal(x, y, nx, ny)
-		if err != nil {
-			return false, err
-		}
-		if ok {
-			return true, nil
+	return flags&PathBuildable != 0 && flags&PathWater == 0, nil
+}
+
+// PathingCell returns one pathing-grid cell.
+func (w *World) PathingCell(x, y int) (PathFlags, error) {
+	if w == nil {
+		return 0, fmt.Errorf("sourceform: pathing cell on nil world")
+	}
+	if y < 0 || y >= len(w.Pathing) || x < 0 || x >= len(w.Pathing[y]) {
+		return 0, fmt.Errorf("sourceform: pathing cell (%d,%d) outside %dx%d grid", x, y, w.Terrain.Width*PathingScale, w.Terrain.Height*PathingScale)
+	}
+	return w.Pathing[y][x], nil
+}
+
+// PathingFootprintClear reports whether every pathing cell in the rectangle is
+// ground-clear. Mobile units require walkable cells; building footprints require
+// buildable cells.
+func (w *World) PathingFootprintClear(x, y, width, height int, requireBuildable bool) (bool, error) {
+	if w == nil {
+		return false, fmt.Errorf("sourceform: pathing footprint on nil world")
+	}
+	if width <= 0 || height <= 0 {
+		return false, fmt.Errorf("sourceform: pathing footprint %dx%d must be positive", width, height)
+	}
+	pathW, pathH := w.Terrain.Width*PathingScale, w.Terrain.Height*PathingScale
+	if x < 0 || y < 0 || x+width > pathW || y+height > pathH {
+		return false, fmt.Errorf("sourceform: pathing footprint %dx%d at %d,%d outside %dx%d grid", width, height, x, y, pathW, pathH)
+	}
+	for py := y; py < y+height; py++ {
+		for px := x; px < x+width; px++ {
+			flags, err := w.PathingCell(px, py)
+			if err != nil {
+				return false, err
+			}
+			if flags&PathWater != 0 {
+				return false, nil
+			}
+			if requireBuildable {
+				if flags&PathBuildable == 0 {
+					return false, nil
+				}
+				continue
+			}
+			if flags&PathWalkable == 0 {
+				return false, nil
+			}
 		}
 	}
-	return false, nil
+	return true, nil
+}
+
+// TerrainCellCenterPathingCell maps an editor terrain-cell coordinate to the
+// pathing-grid cell used for center-based placement checks.
+func TerrainCellCenterPathingCell(x, y int) (int, int) {
+	return x*PathingScale + PathingScale/2, y*PathingScale + PathingScale/2
+}
+
+// DefaultPathingGrid creates a canonical walkable+buildable pathing layer for a
+// new source-form world.
+func DefaultPathingGrid(width, height int) [][]PathFlags {
+	if width <= 0 || height <= 0 {
+		return nil
+	}
+	rows := make([][]PathFlags, height*PathingScale)
+	for y := range rows {
+		rows[y] = make([]PathFlags, width*PathingScale)
+		for x := range rows[y] {
+			rows[y][x] = PathWalkable | PathBuildable
+		}
+	}
+	return rows
 }
 
 // SplatCell returns one texture-blend cell.
@@ -1457,12 +1641,13 @@ func (w *World) CliffCell(x, y int) (CliffCell, error) {
 }
 
 func (w *World) renderFiles() map[string][]byte {
-	files := make(map[string][]byte, len(w.files)+7)
+	files := make(map[string][]byte, len(w.files)+8)
 	for rel, body := range w.files {
 		files[rel] = cloneBytes(body)
 	}
 	files[worldFile] = renderWorld(w.Metadata)
 	files[terrainFile] = renderTerrain(w.Terrain)
+	files[pathingFile] = renderPathingGrid(w.Pathing)
 	files[heightFile] = renderGrid(w.Height)
 	files[cliffFile] = renderCliffGrid(w.Cliff)
 	files[splatFile] = renderSplatGrid(w.Splat)
@@ -1511,6 +1696,20 @@ func renderGrid(grid [][]int) []byte {
 				b.WriteByte(' ')
 			}
 			b.WriteString(strconv.Itoa(n))
+		}
+		b.WriteByte('\n')
+	}
+	return []byte(b.String())
+}
+
+func renderPathingGrid(grid [][]PathFlags) []byte {
+	var b strings.Builder
+	for _, row := range grid {
+		for x, flags := range row {
+			if x > 0 {
+				b.WriteByte(' ')
+			}
+			b.WriteString(strconv.Itoa(int(flags)))
 		}
 		b.WriteByte('\n')
 	}

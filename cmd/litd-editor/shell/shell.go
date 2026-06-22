@@ -19,6 +19,7 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
 
@@ -49,6 +50,7 @@ type App struct {
 	cliffFlags      []CliffFlagSnapshot
 	objectPalette   []ObjectPaletteItem
 	objectSelection ObjectSelection
+	unitData        map[string]data.Unit
 	cameraTarget    [2]int
 	playtest        PlaytestSnapshot
 }
@@ -317,6 +319,17 @@ func (a *App) EditTerrainHeight(x, y, value int) error {
 	return a.executeCommand(gridCellCommand{kind: sourceform.GridHeight, x: x, y: y, before: before, after: value})
 }
 
+func (a *App) EditPathingFlags(x, y int, flags sourceform.PathFlags) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	before, err := gridCellValue(a.world, sourceform.GridPathing, x, y)
+	if err != nil {
+		return err
+	}
+	return a.executeCommand(gridCellCommand{kind: sourceform.GridPathing, x: x, y: y, before: before, after: int(flags)})
+}
+
 func (a *App) MoveEntity(id uint32, pos [2]int, facing int) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
@@ -384,14 +397,14 @@ func (a *App) PutStartLocationCell(player, x, y int) error {
 		a.status = a.errText
 		return err
 	}
-	ok, err := a.UnitPlacementWalkableCell(x, y)
+	ok, err := a.world.StartLocationWalkableCell(x, y)
 	if err != nil {
 		a.errText = err.Error()
 		a.status = a.errText
 		return err
 	}
 	if !ok {
-		err := fmt.Errorf("editor metadata: start location rejected at unwalkable cell %d,%d", x, y)
+		err := fmt.Errorf("editor metadata: start location rejected at unbuildable cell %d,%d", x, y)
 		a.errText = err.Error()
 		a.status = a.errText
 		return err
@@ -844,6 +857,12 @@ func gridCellValue(w *sourceform.World, kind sourceform.GridKind, x, y int) (int
 			return 0, err
 		}
 		return splatDominantLayer(cell), nil
+	case sourceform.GridPathing:
+		flags, err := w.PathingCell(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return int(flags), nil
 	default:
 		return 0, fmt.Errorf("editor shell: unknown grid %q", kind)
 	}
@@ -947,9 +966,10 @@ func defaultWorldSized(name string, width, height int) (*sourceform.World, error
 				{Player: 2, Cell: startB},
 			},
 		},
-		Height: grid(),
-		Cliff:  cliffGrid(),
-		Splat:  splatGrid(),
+		Height:  grid(),
+		Pathing: sourceform.DefaultPathingGrid(width, height),
+		Cliff:   cliffGrid(),
+		Splat:   splatGrid(),
 		Entities: []sourceform.Entity{
 			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{entityCell[0] * 4096, entityCell[1] * 4096}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
 		},
@@ -989,7 +1009,7 @@ func EditorEngineVersion() string {
 }
 
 func archiveHasSourceForm(man worldarchive.Manifest) bool {
-	for _, rel := range []string{"world.toml", "map/terrain.toml", "map/height.txt", "map/cliff.txt", "map/splat.txt", "map/entities.toml", "map/doodads.toml"} {
+	for _, rel := range []string{"world.toml", "map/terrain.toml", "map/pathing.txt", "map/height.txt", "map/cliff.txt", "map/splat.txt", "map/entities.toml", "map/doodads.toml"} {
 		if _, ok := man.Files[rel]; !ok {
 			return false
 		}
@@ -1093,10 +1113,24 @@ func projectRuntimeMap(man worldarchive.Manifest, m *mapdata.Map) *sourceform.Wo
 			StartLocations: starts,
 		},
 		Height:  runtimeHeightGrid(m),
+		Pathing: runtimePathingGrid(m),
 		Cliff:   runtimeCliffGrid(m),
 		Splat:   runtimeSplatGrid(m),
 		Doodads: runtimeDoodads(m),
 	}
+}
+
+func runtimePathingGrid(m *mapdata.Map) [][]sourceform.PathFlags {
+	rows := make([][]sourceform.PathFlags, m.PathingHeight)
+	for y := 0; y < m.PathingHeight; y++ {
+		rows[y] = make([]sourceform.PathFlags, m.PathingWidth)
+		for x := 0; x < m.PathingWidth; x++ {
+			if flags, ok := m.PathingAt(x, y); ok {
+				rows[y][x] = sourceform.PathFlags(flags)
+			}
+		}
+	}
+	return rows
 }
 
 func runtimeHeightGrid(m *mapdata.Map) [][]int {
