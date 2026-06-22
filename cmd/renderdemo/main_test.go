@@ -458,6 +458,80 @@ func TestBuildBatchingFSV(t *testing.T) {
 	}
 }
 
+func TestBuildInstancesFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	scene := core.NewNode()
+	spec, dump, err := buildInstancesFSV(scene, litasset.AtlasPresetHigh, "mixedteams")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo instances mixed spec=%+v buffer=%+v invalid=%q", spec, dump.Buffer, dump.InvalidTeamError)
+	if !dump.OK || dump.UnitCount != 200 || dump.Buffer.Count != 200 || dump.Buffer.UpdateBytes != 200*litrender.InstanceUpdateBytes {
+		t.Fatalf("mixedteams dump wrong: %+v", dump)
+	}
+	if spec.expected.VisibleGraphics != 1 || spec.expected.OpaqueDrawCalls != 1 || spec.expected.OpaqueStates != 1 {
+		t.Fatalf("mixedteams expected stats wrong: %+v", spec.expected)
+	}
+	if len(dump.Buffer.Samples) < 3 || dump.Buffer.Samples[0].Slot != 0 || dump.Buffer.Samples[1].Slot != 1 || dump.Buffer.Samples[2].Slot != litrender.NeutralTeamSlot {
+		t.Fatalf("mixedteams samples wrong: %+v", dump.Buffer.Samples)
+	}
+
+	oneScene := core.NewNode()
+	oneSpec, one, err := buildInstancesFSV(oneScene, litasset.AtlasPresetHigh, "mixedteams-one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo instances same-team spec=%+v buffer=%+v", oneSpec, one.Buffer)
+	if !one.OK || one.Mode != "same-team" || oneSpec.expected != spec.expected {
+		t.Fatalf("same-team dump should match mixed counters: one=%+v mixed=%+v", one, dump)
+	}
+	for _, sample := range one.Buffer.Samples {
+		if sample.Slot != 0 {
+			t.Fatalf("same-team sample not slot 0: %+v", one.Buffer.Samples)
+		}
+	}
+
+	plainScene := core.NewNode()
+	plainSpec, plain, err := buildInstancesFSV(plainScene, litasset.AtlasPresetHigh, "mixedteams-plain-one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo instances plain control spec=%+v dump=%+v", plainSpec, plain)
+	if !plain.OK || plain.Mode != "plain-same-team" || plainSpec.expected.OpaqueDrawCalls != 200 || plainSpec.expected.VisibleGraphics != 200 {
+		t.Fatalf("plain same-team control wrong: dump=%+v spec=%+v", plain, plainSpec)
+	}
+
+	stressScene := core.NewNode()
+	stressSpec, stress, err := buildInstancesFSV(stressScene, litasset.AtlasPresetHigh, "mixedteams-1000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo instances stress spec=%+v buffer=%+v", stressSpec, stress.Buffer)
+	if !stress.OK || stress.UnitCount != 1000 || stress.Buffer.UpdateBytes != 1000*litrender.InstanceUpdateBytes || stressSpec.expected != spec.expected {
+		t.Fatalf("stress dump wrong: %+v spec=%+v", stress, stressSpec)
+	}
+
+	movingScene := core.NewNode()
+	_, moving, err := buildInstancesFSV(movingScene, litasset.AtlasPresetHigh, "mixedteams-moving")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo instances moving frames=%+v", moving.MotionFrames)
+	if !moving.OK || len(moving.MotionFrames) != 3 || moving.MotionFrames[2].Samples[0].X <= moving.MotionFrames[0].Samples[0].X {
+		t.Fatalf("moving dump wrong: %+v", moving)
+	}
+
+	culledScene := core.NewNode()
+	culledSpec, culled, err := buildInstancesFSV(culledScene, litasset.AtlasPresetHigh, "mixedteams-culled")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo instances culled spec=%+v buffer=%+v", culledSpec, culled.Buffer)
+	if !culled.OK || culledSpec.expected.VisibleGraphics != 0 || culledSpec.expected.CulledGraphics != 1 || culledSpec.expected.OpaqueDrawCalls != 0 {
+		t.Fatalf("culled dump/spec wrong: dump=%+v spec=%+v", culled, culledSpec)
+	}
+}
+
 func TestBuildLightingFSV(t *testing.T) {
 	defer chdirRepoRoot(t)()
 	scene := core.NewNode()

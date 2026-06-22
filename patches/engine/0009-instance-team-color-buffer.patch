@@ -1,0 +1,1610 @@
+diff --git a/gls/gls-browser.go b/gls/gls-browser.go
+index e4f55a3..a4517ad 100644
+--- a/gls/gls-browser.go
++++ b/gls/gls-browser.go
+@@ -287,6 +287,15 @@ func (gs *GLS) BufferData(target uint32, size int, data interface{}, usage uint3
+ 	free()
+ }
+ 
++// BufferSubData updates a range of the buffer object currently bound to target.
++func (gs *GLS) BufferSubData(target uint32, offset int, size int, data interface{}) {
++
++	dataTA, free := wasm.SliceToTypedArray(data)
++	gs.gl.Call("bufferSubData", int(target), offset, dataTA)
++	gs.checkError("BufferSubData")
++	free()
++}
++
+ // ClearColor specifies the red, green, blue, and alpha values
+ // used by glClear to clear the color buffers.
+ func (gs *GLS) ClearColor(r, g, b, a float32) {
+diff --git a/gls/gls-desktop.go b/gls/gls-desktop.go
+index 65b5005..fd0c9e5 100644
+--- a/gls/gls-desktop.go
++++ b/gls/gls-desktop.go
+@@ -255,6 +255,12 @@ func (gs *GLS) BufferData(target uint32, size int, data interface{}, usage uint3
+ 	C.glBufferData(C.GLenum(target), C.GLsizeiptr(size), ptr(data), C.GLenum(usage))
+ }
+ 
++// BufferSubData updates a range of the buffer object currently bound to target.
++func (gs *GLS) BufferSubData(target uint32, offset int, size int, data interface{}) {
++
++	C.glBufferSubData(C.GLenum(target), C.GLintptr(offset), C.GLsizeiptr(size), ptr(data))
++}
++
+ // ClearColor specifies the red, green, blue, and alpha values
+ // used by glClear to clear the color buffers.
+ func (gs *GLS) ClearColor(r, g, b, a float32) {
+diff --git a/graphic/instanced_mesh.go b/graphic/instanced_mesh.go
+index ed15284..cff8977 100644
+--- a/graphic/instanced_mesh.go
++++ b/graphic/instanced_mesh.go
+@@ -13,8 +13,10 @@ import (
+ )
+ 
+ const (
+-	instanceMatrixFloats = 16
+-	instanceMatrixAttrib = uint32(8)
++	instanceMatrixFloats    = 16
++	instanceTeamColorFloats = 3
++	instanceMatrixAttrib    = uint32(8)
++	instanceTeamColorAttrib = uint32(12)
+ )
+ 
+ // InstancedMesh renders many rigid instances of one geometry and material.
+@@ -28,9 +30,19 @@ type InstancedMesh struct {
+ 	instanceCount  int
+ 	instanceBuffer math32.ArrayF32
+ 	instanceDirty  bool
++	teamBuffer     math32.ArrayF32
++	teamDirty      bool
+ 
+-	instanceGS     *gls.GLS
+-	instanceHandle uint32
++	instanceGS         *gls.GLS
++	instanceHandle     uint32
++	teamHandle         uint32
++	instanceBufferSize int
++	teamBufferSize     int
++
++	uniTeamZone  gls.Uniform
++	uniFxScalars gls.Uniform
++	teamZone     [4]float32
++	fxScalars    [4]float32
+ 
+ 	bounds      math32.Box3
+ 	boundsValid bool
+@@ -49,11 +61,17 @@ func (m *InstancedMesh) Init(igeom geometry.IGeometry, imat material.IMaterial,
+ 
+ 	m.Graphic.Init(m, igeom, gls.TRIANGLES)
+ 	m.ShaderDefines.Set("LITD_INSTANCING", "1")
++	m.ShaderDefines.Set("LITD_INSTANCE_TEAMCOLOR", "1")
++	m.ShaderDefines.Set("LITD_TEAMCOLOR", "1")
+ 
+ 	m.uniMm.Init("ModelMatrix")
+ 	m.uniMVm.Init("ModelViewMatrix")
+ 	m.uniMVPm.Init("MVP")
+ 	m.uniNm.Init("NormalMatrix")
++	m.uniTeamZone.Init("LitdTeamColorZone")
++	m.uniFxScalars.Init("LitdFxScalars")
++	m.teamZone = [4]float32{0, 0, 0.5, 1}
++	m.fxScalars = [4]float32{0, 1, 1, 1}
+ 
+ 	m.bounds.MakeEmpty()
+ 	m.SetInstanceCount(instanceCount)
+@@ -69,8 +87,14 @@ func (m *InstancedMesh) Dispose() {
+ 	if m.instanceGS != nil && m.instanceHandle != 0 {
+ 		m.instanceGS.DeleteBuffers(m.instanceHandle)
+ 	}
++	if m.instanceGS != nil && m.teamHandle != 0 {
++		m.instanceGS.DeleteBuffers(m.teamHandle)
++	}
+ 	m.instanceGS = nil
+ 	m.instanceHandle = 0
++	m.teamHandle = 0
++	m.instanceBufferSize = 0
++	m.teamBufferSize = 0
+ 	m.Graphic.Dispose()
+ }
+ 
+@@ -84,6 +108,13 @@ func (m *InstancedMesh) Clone() core.INode {
+ 	clone.instanceBuffer = make(math32.ArrayF32, len(m.instanceBuffer))
+ 	copy(clone.instanceBuffer, m.instanceBuffer)
+ 	clone.instanceDirty = true
++	clone.teamBuffer = make(math32.ArrayF32, len(m.teamBuffer))
++	copy(clone.teamBuffer, m.teamBuffer)
++	clone.teamDirty = true
++	clone.uniTeamZone.Init("LitdTeamColorZone")
++	clone.uniFxScalars.Init("LitdFxScalars")
++	clone.teamZone = m.teamZone
++	clone.fxScalars = m.fxScalars
+ 	clone.bounds = m.bounds
+ 	clone.boundsValid = m.boundsValid
+ 	return clone
+@@ -129,14 +160,25 @@ func (m *InstancedMesh) SetInstanceCount(count int) {
+ 	} else {
+ 		m.instanceBuffer = m.instanceBuffer[:required]
+ 	}
++	requiredTeams := count * instanceTeamColorFloats
++	if cap(m.teamBuffer) < requiredTeams {
++		next := make(math32.ArrayF32, requiredTeams)
++		copy(next, m.teamBuffer)
++		m.teamBuffer = next
++	} else {
++		m.teamBuffer = m.teamBuffer[:requiredTeams]
++	}
+ 	m.instanceCount = count
+ 
+ 	var ident math32.Matrix4
+ 	ident.Identity()
++	white := math32.Color{R: 1, G: 1, B: 1}
+ 	for i := old; i < count; i++ {
+ 		m.SetInstanceMatrix(i, &ident)
++		m.SetInstanceTeamColor(i, &white)
+ 	}
+ 	m.instanceDirty = true
++	m.teamDirty = true
+ 	m.boundsValid = false
+ }
+ 
+@@ -163,6 +205,31 @@ func (m *InstancedMesh) SetInstanceMatrices(matrices []math32.Matrix4) {
+ 	}
+ }
+ 
++// SetInstanceTeamColor copies color into the specified instance slot.
++func (m *InstancedMesh) SetInstanceTeamColor(index int, color *math32.Color) {
++
++	if index < 0 || index >= m.instanceCount {
++		panic("InstancedMesh.SetInstanceTeamColor: index out of range")
++	}
++	if color == nil {
++		panic("InstancedMesh.SetInstanceTeamColor: nil color")
++	}
++	base := index * instanceTeamColorFloats
++	m.teamBuffer[base] = color.R
++	m.teamBuffer[base+1] = color.G
++	m.teamBuffer[base+2] = color.B
++	m.teamDirty = true
++}
++
++// SetInstanceTeamColors replaces all instance team colors.
++func (m *InstancedMesh) SetInstanceTeamColors(colors []math32.Color) {
++
++	m.SetInstanceCount(len(colors))
++	for i := range colors {
++		m.SetInstanceTeamColor(i, &colors[i])
++	}
++}
++
+ // InstanceMatrix copies one instance matrix into target and returns target.
+ func (m *InstancedMesh) InstanceMatrix(index int, target *math32.Matrix4) *math32.Matrix4 {
+ 
+@@ -176,6 +243,47 @@ func (m *InstancedMesh) InstanceMatrix(index int, target *math32.Matrix4) *math3
+ 	return target
+ }
+ 
++// InstanceTeamColor copies one instance team color into target and returns target.
++func (m *InstancedMesh) InstanceTeamColor(index int, target *math32.Color) *math32.Color {
++
++	if index < 0 || index >= m.instanceCount {
++		panic("InstancedMesh.InstanceTeamColor: index out of range")
++	}
++	if target == nil {
++		target = math32.NewColor("white")
++	}
++	m.teamBuffer.GetColor(index*instanceTeamColorFloats, target)
++	return target
++}
++
++// SetTeamColorZone sets the UV rectangle where per-instance team color applies.
++func (m *InstancedMesh) SetTeamColorZone(minU, minV, maxU, maxV float32) {
++
++	m.teamZone = [4]float32{minU, minV, maxU, maxV}
++}
++
++// SetPresentationScalars sets the hit-flash, fade-alpha, fog-dim, and enable values.
++func (m *InstancedMesh) SetPresentationScalars(hitFlash, fadeAlpha, fogDim float32, enabled bool) {
++
++	enable := float32(0)
++	if enabled {
++		enable = 1
++	}
++	m.fxScalars = [4]float32{hitFlash, fadeAlpha, fogDim, enable}
++}
++
++// InstanceBufferBytes returns the transform-buffer byte size.
++func (m *InstancedMesh) InstanceBufferBytes() int {
++
++	return m.instanceBuffer.Bytes()
++}
++
++// InstanceTeamColorBufferBytes returns the team-color-buffer byte size.
++func (m *InstancedMesh) InstanceTeamColorBufferBytes() int {
++
++	return m.teamBuffer.Bytes()
++}
++
+ // LocalBoundingBox returns a conservative box around all local instances.
+ func (m *InstancedMesh) LocalBoundingBox() math32.Box3 {
+ 
+@@ -185,6 +293,18 @@ func (m *InstancedMesh) LocalBoundingBox() math32.Box3 {
+ 	return m.bounds
+ }
+ 
++// RenderSetup transfers model and shared instanced-team-color uniforms.
++func (m *InstancedMesh) RenderSetup(gs *gls.GLS, rinfo *core.RenderInfo) {
++
++	m.Mesh.RenderSetup(gs, rinfo)
++
++	location := m.uniTeamZone.Location(gs)
++	gs.Uniform4f(location, m.teamZone[0], m.teamZone[1], m.teamZone[2], m.teamZone[3])
++
++	location = m.uniFxScalars.Location(gs)
++	gs.Uniform4f(location, m.fxScalars[0], m.fxScalars[1], m.fxScalars[2], m.fxScalars[3])
++}
++
+ // RenderGraphicMaterial is called by GraphicMaterial.Render for this type.
+ func (m *InstancedMesh) RenderGraphicMaterial(gs *gls.GLS, rinfo *core.RenderInfo, grmat *GraphicMaterial) {
+ 
+@@ -220,7 +340,11 @@ func (m *InstancedMesh) transferInstances(gs *gls.GLS) {
+ 	if m.instanceGS != gs {
+ 		m.instanceGS = gs
+ 		m.instanceHandle = 0
++		m.teamHandle = 0
+ 		m.instanceDirty = true
++		m.teamDirty = true
++		m.instanceBufferSize = 0
++		m.teamBufferSize = 0
+ 	}
+ 	if m.instanceHandle == 0 {
+ 		m.instanceHandle = gs.GenBuffer()
+@@ -229,7 +353,13 @@ func (m *InstancedMesh) transferInstances(gs *gls.GLS) {
+ 
+ 	gs.BindBuffer(gls.ARRAY_BUFFER, m.instanceHandle)
+ 	if m.instanceDirty {
+-		gs.BufferData(gls.ARRAY_BUFFER, m.instanceBuffer.Bytes(), m.instanceBuffer.ToFloat32(), gls.DYNAMIC_DRAW)
++		size := m.instanceBuffer.Bytes()
++		if size > m.instanceBufferSize {
++			gs.BufferData(gls.ARRAY_BUFFER, size, m.instanceBuffer.ToFloat32(), gls.DYNAMIC_DRAW)
++			m.instanceBufferSize = size
++		} else {
++			gs.BufferSubData(gls.ARRAY_BUFFER, 0, size, m.instanceBuffer.ToFloat32())
++		}
+ 		m.instanceDirty = false
+ 	}
+ 
+@@ -240,6 +370,25 @@ func (m *InstancedMesh) transferInstances(gs *gls.GLS) {
+ 		gs.VertexAttribPointer(loc, 4, gls.FLOAT, false, stride, col*4*uint32(gls.FloatSize))
+ 		gs.VertexAttribDivisor(loc, 1)
+ 	}
++
++	if m.teamHandle == 0 {
++		m.teamHandle = gs.GenBuffer()
++		m.teamDirty = true
++	}
++	gs.BindBuffer(gls.ARRAY_BUFFER, m.teamHandle)
++	if m.teamDirty {
++		size := m.teamBuffer.Bytes()
++		if size > m.teamBufferSize {
++			gs.BufferData(gls.ARRAY_BUFFER, size, m.teamBuffer.ToFloat32(), gls.DYNAMIC_DRAW)
++			m.teamBufferSize = size
++		} else {
++			gs.BufferSubData(gls.ARRAY_BUFFER, 0, size, m.teamBuffer.ToFloat32())
++		}
++		m.teamDirty = false
++	}
++	gs.EnableVertexAttribArray(instanceTeamColorAttrib)
++	gs.VertexAttribPointer(instanceTeamColorAttrib, 3, gls.FLOAT, false, int32(instanceTeamColorFloats)*gls.FloatSize, 0)
++	gs.VertexAttribDivisor(instanceTeamColorAttrib, 1)
+ }
+ 
+ func (m *InstancedMesh) recalculateBounds() {
+diff --git a/graphic/instanced_mesh_litd_test.go b/graphic/instanced_mesh_litd_test.go
+index ad5e677..d5b5e16 100644
+--- a/graphic/instanced_mesh_litd_test.go
++++ b/graphic/instanced_mesh_litd_test.go
+@@ -40,6 +40,45 @@ func TestLITDInstancedMeshBoundsAndMatricesFSV(t *testing.T) {
+ 	}
+ }
+ 
++func TestLITDInstancedMeshTeamColorsFSV(t *testing.T) {
++	mesh := NewInstancedMesh(geometry.NewPlane(1, 1), material.NewBasic(), 2)
++	before := mesh.InstanceTeamColor(0, nil)
++	t.Logf("FSV instanced team color BEFORE count=%d bytes=%d color0=%+v defines=%+v", mesh.InstanceCount(), mesh.InstanceTeamColorBufferBytes(), before, mesh.ShaderDefines)
++	if before.R != 1 || before.G != 1 || before.B != 1 {
++		t.Fatalf("default team color = %+v, want white", before)
++	}
++	if mesh.InstanceTeamColorBufferBytes() != 2*3*4 {
++		t.Fatalf("team color buffer bytes = %d, want 24", mesh.InstanceTeamColorBufferBytes())
++	}
++	if mesh.ShaderDefines["LITD_INSTANCE_TEAMCOLOR"] != "1" || mesh.ShaderDefines["LITD_TEAMCOLOR"] != "1" {
++		t.Fatalf("instanced team color shader defines missing: %+v", mesh.ShaderDefines)
++	}
++
++	want := math32.Color{R: 0.1, G: 0.6, B: 0.9}
++	mesh.SetInstanceTeamColor(1, &want)
++	var got math32.Color
++	mesh.InstanceTeamColor(1, &got)
++	t.Logf("FSV instanced team color AFTER color1=%+v bytes=%d", got, mesh.InstanceTeamColorBufferBytes())
++	if got != want {
++		t.Fatalf("team color readback = %+v, want %+v", got, want)
++	}
++
++	clone := mesh.Clone().(*InstancedMesh)
++	var cloneColor math32.Color
++	clone.InstanceTeamColor(1, &cloneColor)
++	if cloneColor != want {
++		t.Fatalf("clone team color = %+v, want %+v", cloneColor, want)
++	}
++
++	mesh.SetInstanceCount(3)
++	var newSlot math32.Color
++	mesh.InstanceTeamColor(2, &newSlot)
++	t.Logf("FSV instanced team color grow count=%d bytes=%d newSlot=%+v", mesh.InstanceCount(), mesh.InstanceTeamColorBufferBytes(), newSlot)
++	if newSlot.R != 1 || newSlot.G != 1 || newSlot.B != 1 {
++		t.Fatalf("new slot color = %+v, want white", newSlot)
++	}
++}
++
+ func TestLITDInstancedMeshMaterialOwnershipFSV(t *testing.T) {
+ 	mesh := NewInstancedMesh(geometry.NewPlane(1, 1), material.NewBasic(), 1)
+ 	before := mesh.Materials()[0].IGraphic()
+@@ -72,11 +111,16 @@ func TestLITDInstancedMeshInvalidInputsFSV(t *testing.T) {
+ 	}{
+ 		{name: "negative-count", fn: func() { mesh.SetInstanceCount(-1) }},
+ 		{name: "nil-matrix", fn: func() { mesh.SetInstanceMatrix(0, nil) }},
++		{name: "nil-team-color", fn: func() { mesh.SetInstanceTeamColor(0, nil) }},
+ 		{name: "index-out-of-range", fn: func() {
+ 			var m math32.Matrix4
+ 			m.Identity()
+ 			mesh.SetInstanceMatrix(1, &m)
+ 		}},
++		{name: "team-color-index-out-of-range", fn: func() {
++			c := math32.Color{R: 1, G: 1, B: 1}
++			mesh.SetInstanceTeamColor(1, &c)
++		}},
+ 	}
+ 	for _, tc := range cases {
+ 		t.Run(tc.name, func(t *testing.T) {
+diff --git a/renderer/shaders/include/litd_instancing.glsl b/renderer/shaders/include/litd_instancing.glsl
+index ad98700..f13af74 100644
+--- a/renderer/shaders/include/litd_instancing.glsl
++++ b/renderer/shaders/include/litd_instancing.glsl
+@@ -4,6 +4,9 @@
+     layout(location = 9) in vec4 LitdInstanceMatrix1;
+     layout(location = 10) in vec4 LitdInstanceMatrix2;
+     layout(location = 11) in vec4 LitdInstanceMatrix3;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    layout(location = 12) in vec3 LitdInstanceTeamColor;
++#endif
+ 
+     mat4 LitdInstanceMatrix() {
+         return mat4(LitdInstanceMatrix0, LitdInstanceMatrix1, LitdInstanceMatrix2, LitdInstanceMatrix3);
+@@ -13,3 +16,11 @@
+         return mat4(1.0);
+     }
+ #endif
++
++vec3 LitdInstanceTeamColorValue() {
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    return LitdInstanceTeamColor;
++#else
++    return vec3(1.0);
++#endif
++}
+diff --git a/renderer/shaders/include/litd_teamcolor.glsl b/renderer/shaders/include/litd_teamcolor.glsl
+index 63e2f2a..e7e03e0 100644
+--- a/renderer/shaders/include/litd_teamcolor.glsl
++++ b/renderer/shaders/include/litd_teamcolor.glsl
+@@ -1,13 +1,17 @@
+ // LITD-PATCH: per-graphic team color and presentation scalar channel.
+ #ifdef LITD_TEAMCOLOR
++#ifndef LITD_INSTANCE_TEAMCOLOR
+ uniform vec3 LitdTeamColor;
++#endif
+ uniform vec4 LitdTeamColorZone;
+ // x = hit flash, y = fade alpha, z = fog dim, w = enabled flag.
+ uniform vec4 LitdFxScalars;
+ #endif
+ 
+ vec3 getTeamColor() {
+-#ifdef LITD_TEAMCOLOR
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    return LitdInstanceTeamColorVarying;
++#elif defined(LITD_TEAMCOLOR)
+     return LitdTeamColor;
+ #else
+     return vec3(1.0);
+diff --git a/renderer/shaders/physical_fragment.glsl b/renderer/shaders/physical_fragment.glsl
+index c83d3b4..53fd4f9 100644
+--- a/renderer/shaders/physical_fragment.glsl
++++ b/renderer/shaders/physical_fragment.glsl
+@@ -52,15 +52,18 @@ uniform vec4 Material[3];
+ #define uMetallicFactor     Material[2].x
+ #define uRoughnessFactor    Material[2].y
+ 
+-#include <lights>
+-#include <litd_teamcolor>
+-
+ // Inputs from vertex shader
+ in vec3 Position;       // Vertex position in camera coordinates.
+ in vec3 Normal;         // Vertex normal in camera coordinates.
+ in vec3 CamDir;         // Direction from vertex to camera
+ in vec2 FragTexcoord;
+ in vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++in vec3 LitdInstanceTeamColorVarying;
++#endif
++
++#include <lights>
++#include <litd_teamcolor>
+ 
+ // Final fragment color
+ out vec4 FragColor;
+diff --git a/renderer/shaders/physical_vertex.glsl b/renderer/shaders/physical_vertex.glsl
+index 6cc91fb..ec8b88c 100644
+--- a/renderer/shaders/physical_vertex.glsl
++++ b/renderer/shaders/physical_vertex.glsl
+@@ -19,6 +19,9 @@ out vec3 Normal;
+ out vec3 CamDir;
+ out vec2 FragTexcoord;
+ out vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++out vec3 LitdInstanceTeamColorVarying;
++#endif
+ 
+ void main() {
+ 
+@@ -29,6 +32,9 @@ void main() {
+ #else
+     LitdVertexColor = vec3(1.0);
+ #endif
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    LitdInstanceTeamColorVarying = LitdInstanceTeamColorValue();
++#endif
+ 
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);
+diff --git a/renderer/shaders/sources.go b/renderer/shaders/sources.go
+index f1e5fd1..6293b2d 100644
+--- a/renderer/shaders/sources.go
++++ b/renderer/shaders/sources.go
+@@ -4,22 +4,19 @@
+ 
+ package shaders
+ 
+-const include_morphtarget_vertex2_source = `	vPosition += MorphPosition{i} * morphTargetInfluences[{i}];
+-  #ifdef MORPHTARGETS_NORMAL
+-	vNormal += MorphNormal{i} * morphTargetInfluences[{i}];
+-  #endif`
+-
+ const include_morphtarget_vertex_declaration2_source = `	in vec3 MorphPosition{i};
+   #ifdef MORPHTARGETS_NORMAL
+ 	in vec3 MorphNormal{i};
+   #endif
+ `
+ 
+-const include_morphtarget_vertex_source = `#ifdef MORPHTARGETS
+-
+-    #include <morphtarget_vertex2> [MORPHTARGETS]
+-
+-#endif
++const include_attributes_source = `//
++// Vertex attributes
++//
++layout(location = 0) in  vec3  VertexPosition;
++layout(location = 1) in  vec3  VertexNormal;
++layout(location = 2) in  vec3  VertexColor;
++layout(location = 3) in  vec2  VertexTexcoord;
+ `
+ 
+ const include_morphtarget_vertex_declaration_source = `#ifdef MORPHTARGETS
+@@ -28,35 +25,167 @@ const include_morphtarget_vertex_declaration_source = `#ifdef MORPHTARGETS
+ #endif
+ `
+ 
+-const include_bones_vertex_source = `#ifdef BONE_INFLUENCERS
+-    #if BONE_INFLUENCERS > 0
++const include_material_source = `//
++// Material properties uniform
++//
+ 
+-        mat4 influence = mBones[int(matricesIndices[0])] * matricesWeights[0];
+-        #if BONE_INFLUENCERS > 1
+-            influence += mBones[int(matricesIndices[1])] * matricesWeights[1];
+-            #if BONE_INFLUENCERS > 2
+-                influence += mBones[int(matricesIndices[2])] * matricesWeights[2];
+-                #if BONE_INFLUENCERS > 3
+-                    influence += mBones[int(matricesIndices[3])] * matricesWeights[3];
+-    //                #if BONE_INFLUENCERS > 4
+-    //                    influence += mBones[int(matricesIndicesExtra[0])] * matricesWeightsExtra[0];
+-    //                    #if BONE_INFLUENCERS > 5
+-    //                        influence += mBones[int(matricesIndicesExtra[1])] * matricesWeightsExtra[1];
+-    //                        #if BONE_INFLUENCERS > 6
+-    //                            influence += mBones[int(matricesIndicesExtra[2])] * matricesWeightsExtra[2];
+-    //                            #if BONE_INFLUENCERS > 7
+-    //                                influence += mBones[int(matricesIndicesExtra[3])] * matricesWeightsExtra[3];
+-    //                            #endif
+-    //                        #endif
+-    //                    #endif
+-    //                #endif
+-                #endif
+-            #endif
+-        #endif
++// Material parameters uniform array
++uniform vec3 Material[6];
++// Macros to access elements inside the Material array
++#define MatAmbientColor		Material[0]
++#define MatDiffuseColor     Material[1]
++#define MatSpecularColor    Material[2]
++#define MatEmissiveColor    Material[3]
++#define MatShininess        Material[4].x
++#define MatOpacity          Material[4].y
++#define MatPointSize        Material[4].z
++#define MatPointRotationZ   Material[5].x
+ 
+-        finalWorld = finalWorld * influence;
++#if MAT_TEXTURES > 0
++    // Texture unit sampler array
++    uniform sampler2D MatTexture[MAT_TEXTURES];
++    // Texture parameters (3*vec2 per texture)
++    uniform vec2 MatTexinfo[3*MAT_TEXTURES];
++    // Macros to access elements inside the MatTexinfo array
++    #define MatTexOffset(a)		MatTexinfo[(3*a)]
++    #define MatTexRepeat(a)		MatTexinfo[(3*a)+1]
++    #define MatTexFlipY(a)		bool(MatTexinfo[(3*a)+2].x)
++    #define MatTexVisible(a)	bool(MatTexinfo[(3*a)+2].y)
++    // Alpha compositing (see here: https://ciechanow.ski/alpha-compositing/)
++    vec4 Blend(vec4 texMixed, vec4 texColor) {
++        texMixed.rgb *= texMixed.a;
++        texColor.rgb *= texColor.a;
++        texMixed = texColor + texMixed * (1 - texColor.a);
++        if (texMixed.a > 0.0) {
++            texMixed.rgb /= texMixed.a;
++        }
++        return texMixed;
++    }
++#endif
++`
++
++const include_lights_source = `//
++// Lights uniforms
++//
++
++#if AMB_LIGHTS>0
++    // Ambient lights color uniform
++    uniform vec3 AmbientLightColor[AMB_LIGHTS];
++#endif
++
++#if DIR_LIGHTS>0
++    // Directional lights uniform array. Each directional light uses 2 elements
++    uniform vec3 DirLight[2*DIR_LIGHTS];
++    // Macros to access elements inside the DirectionalLight uniform array
++    #define DirLightColor(a)		DirLight[2*a]
++    #define DirLightPosition(a)		DirLight[2*a+1]
++#endif
++
++#if POINT_LIGHTS>0
++    // Point lights uniform array. Each point light uses 3 elements
++    uniform vec3 PointLight[3*POINT_LIGHTS];
++    // Macros to access elements inside the PointLight uniform array
++    #define PointLightColor(a)			PointLight[3*a]
++    #define PointLightPosition(a)		PointLight[3*a+1]
++    #define PointLightLinearDecay(a)	PointLight[3*a+2].x
++    #define PointLightQuadraticDecay(a)	PointLight[3*a+2].y
++#endif
++
++#if SPOT_LIGHTS>0
++    // Spot lights uniforms. Each spot light uses 5 elements
++    uniform vec3  SpotLight[5*SPOT_LIGHTS];
++    // Macros to access elements inside the PointLight uniform array
++    #define SpotLightColor(a)			SpotLight[5*a]
++    #define SpotLightPosition(a)		SpotLight[5*a+1]
++    #define SpotLightDirection(a)		SpotLight[5*a+2]
++    #define SpotLightAngularDecay(a)	SpotLight[5*a+3].x
++    #define SpotLightCutoffAngle(a)		SpotLight[5*a+3].y
++    #define SpotLightLinearDecay(a)		SpotLight[5*a+3].z
++    #define SpotLightQuadraticDecay(a)	SpotLight[5*a+4].x
++#endif
++`
++
++const include_litd_instancing_source = `#ifdef LITD_INSTANCING
++    // LITD-PATCH: per-instance rigid transform columns.
++    layout(location = 8) in vec4 LitdInstanceMatrix0;
++    layout(location = 9) in vec4 LitdInstanceMatrix1;
++    layout(location = 10) in vec4 LitdInstanceMatrix2;
++    layout(location = 11) in vec4 LitdInstanceMatrix3;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    layout(location = 12) in vec3 LitdInstanceTeamColor;
++#endif
++
++    mat4 LitdInstanceMatrix() {
++        return mat4(LitdInstanceMatrix0, LitdInstanceMatrix1, LitdInstanceMatrix2, LitdInstanceMatrix3);
++    }
++#else
++    mat4 LitdInstanceMatrix() {
++        return mat4(1.0);
++    }
++#endif
++
++vec3 LitdInstanceTeamColorValue() {
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    return LitdInstanceTeamColor;
++#else
++    return vec3(1.0);
++#endif
++}
++`
++
++const include_litd_teamcolor_source = `// LITD-PATCH: per-graphic team color and presentation scalar channel.
++#ifdef LITD_TEAMCOLOR
++#ifndef LITD_INSTANCE_TEAMCOLOR
++uniform vec3 LitdTeamColor;
++#endif
++uniform vec4 LitdTeamColorZone;
++// x = hit flash, y = fade alpha, z = fog dim, w = enabled flag.
++uniform vec4 LitdFxScalars;
++#endif
++
++vec3 getTeamColor() {
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    return LitdInstanceTeamColorVarying;
++#elif defined(LITD_TEAMCOLOR)
++    return LitdTeamColor;
++#else
++    return vec3(1.0);
++#endif
++}
++
++bool LitdInTeamColorZone(vec2 uv) {
++#ifdef LITD_TEAMCOLOR
++    return uv.x >= LitdTeamColorZone.x && uv.x <= LitdTeamColorZone.z &&
++           uv.y >= LitdTeamColorZone.y && uv.y <= LitdTeamColorZone.w;
++#else
++    return false;
++#endif
++}
++
++vec4 LitdApplyTeamColor(vec4 color, vec2 uv) {
++#ifdef LITD_TEAMCOLOR
++    if (LitdFxScalars.w < 0.5) {
++        return color;
++    }
++
++    vec4 outColor = color;
++    if (LitdInTeamColorZone(uv)) {
++        outColor.rgb *= getTeamColor();
++    }
++    outColor.rgb = mix(outColor.rgb, vec3(1.0), clamp(LitdFxScalars.x, 0.0, 1.0));
++    outColor.rgb *= clamp(LitdFxScalars.z, 0.0, 1.0);
++    outColor.a *= clamp(LitdFxScalars.y, 0.0, 1.0);
++    return outColor;
++#else
++    return color;
++#endif
++}
++`
++
++const include_morphtarget_vertex_source = `#ifdef MORPHTARGETS
++
++    #include <morphtarget_vertex2> [MORPHTARGETS]
+ 
+-    #endif
+ #endif
+ `
+ 
+@@ -179,156 +308,42 @@ void phongModel(vec4 position, vec3 normal, vec3 camDir, vec3 matAmbient, vec3 m
+ }
+ `
+ 
+-const include_attributes_source = `//
+-// Vertex attributes
+-//
+-layout(location = 0) in  vec3  VertexPosition;
+-layout(location = 1) in  vec3  VertexNormal;
+-layout(location = 2) in  vec3  VertexColor;
+-layout(location = 3) in  vec2  VertexTexcoord;
+-`
+-
+-const include_litd_instancing_source = `#ifdef LITD_INSTANCING
+-    // LITD-PATCH: per-instance rigid transform columns.
+-    layout(location = 8) in vec4 LitdInstanceMatrix0;
+-    layout(location = 9) in vec4 LitdInstanceMatrix1;
+-    layout(location = 10) in vec4 LitdInstanceMatrix2;
+-    layout(location = 11) in vec4 LitdInstanceMatrix3;
+-
+-    mat4 LitdInstanceMatrix() {
+-        return mat4(LitdInstanceMatrix0, LitdInstanceMatrix1, LitdInstanceMatrix2, LitdInstanceMatrix3);
+-    }
+-#else
+-    mat4 LitdInstanceMatrix() {
+-        return mat4(1.0);
+-    }
+-#endif
+-`
+-
+-const include_litd_teamcolor_source = `// LITD-PATCH: per-graphic team color and presentation scalar channel.
+-#ifdef LITD_TEAMCOLOR
+-uniform vec3 LitdTeamColor;
+-uniform vec4 LitdTeamColorZone;
+-// x = hit flash, y = fade alpha, z = fog dim, w = enabled flag.
+-uniform vec4 LitdFxScalars;
+-#endif
+-
+-vec3 getTeamColor() {
+-#ifdef LITD_TEAMCOLOR
+-    return LitdTeamColor;
+-#else
+-    return vec3(1.0);
+-#endif
+-}
+-
+-bool LitdInTeamColorZone(vec2 uv) {
+-#ifdef LITD_TEAMCOLOR
+-    return uv.x >= LitdTeamColorZone.x && uv.x <= LitdTeamColorZone.z &&
+-           uv.y >= LitdTeamColorZone.y && uv.y <= LitdTeamColorZone.w;
+-#else
+-    return false;
+-#endif
+-}
+-
+-vec4 LitdApplyTeamColor(vec4 color, vec2 uv) {
+-#ifdef LITD_TEAMCOLOR
+-    if (LitdFxScalars.w < 0.5) {
+-        return color;
+-    }
+-
+-    vec4 outColor = color;
+-    if (LitdInTeamColorZone(uv)) {
+-        outColor.rgb *= getTeamColor();
+-    }
+-    outColor.rgb = mix(outColor.rgb, vec3(1.0), clamp(LitdFxScalars.x, 0.0, 1.0));
+-    outColor.rgb *= clamp(LitdFxScalars.z, 0.0, 1.0);
+-    outColor.a *= clamp(LitdFxScalars.y, 0.0, 1.0);
+-    return outColor;
+-#else
+-    return color;
+-#endif
+-}
+-`
++const include_bones_vertex_source = `#ifdef BONE_INFLUENCERS
++    #if BONE_INFLUENCERS > 0
+ 
+-const include_material_source = `//
+-// Material properties uniform
+-//
++        mat4 influence = mBones[int(matricesIndices[0])] * matricesWeights[0];
++        #if BONE_INFLUENCERS > 1
++            influence += mBones[int(matricesIndices[1])] * matricesWeights[1];
++            #if BONE_INFLUENCERS > 2
++                influence += mBones[int(matricesIndices[2])] * matricesWeights[2];
++                #if BONE_INFLUENCERS > 3
++                    influence += mBones[int(matricesIndices[3])] * matricesWeights[3];
++    //                #if BONE_INFLUENCERS > 4
++    //                    influence += mBones[int(matricesIndicesExtra[0])] * matricesWeightsExtra[0];
++    //                    #if BONE_INFLUENCERS > 5
++    //                        influence += mBones[int(matricesIndicesExtra[1])] * matricesWeightsExtra[1];
++    //                        #if BONE_INFLUENCERS > 6
++    //                            influence += mBones[int(matricesIndicesExtra[2])] * matricesWeightsExtra[2];
++    //                            #if BONE_INFLUENCERS > 7
++    //                                influence += mBones[int(matricesIndicesExtra[3])] * matricesWeightsExtra[3];
++    //                            #endif
++    //                        #endif
++    //                    #endif
++    //                #endif
++                #endif
++            #endif
++        #endif
+ 
+-// Material parameters uniform array
+-uniform vec3 Material[6];
+-// Macros to access elements inside the Material array
+-#define MatAmbientColor		Material[0]
+-#define MatDiffuseColor     Material[1]
+-#define MatSpecularColor    Material[2]
+-#define MatEmissiveColor    Material[3]
+-#define MatShininess        Material[4].x
+-#define MatOpacity          Material[4].y
+-#define MatPointSize        Material[4].z
+-#define MatPointRotationZ   Material[5].x
++        finalWorld = finalWorld * influence;
+ 
+-#if MAT_TEXTURES > 0
+-    // Texture unit sampler array
+-    uniform sampler2D MatTexture[MAT_TEXTURES];
+-    // Texture parameters (3*vec2 per texture)
+-    uniform vec2 MatTexinfo[3*MAT_TEXTURES];
+-    // Macros to access elements inside the MatTexinfo array
+-    #define MatTexOffset(a)		MatTexinfo[(3*a)]
+-    #define MatTexRepeat(a)		MatTexinfo[(3*a)+1]
+-    #define MatTexFlipY(a)		bool(MatTexinfo[(3*a)+2].x)
+-    #define MatTexVisible(a)	bool(MatTexinfo[(3*a)+2].y)
+-    // Alpha compositing (see here: https://ciechanow.ski/alpha-compositing/)
+-    vec4 Blend(vec4 texMixed, vec4 texColor) {
+-        texMixed.rgb *= texMixed.a;
+-        texColor.rgb *= texColor.a;
+-        texMixed = texColor + texMixed * (1 - texColor.a);
+-        if (texMixed.a > 0.0) {
+-            texMixed.rgb /= texMixed.a;
+-        }
+-        return texMixed;
+-    }
++    #endif
+ #endif
+ `
+ 
+-const include_lights_source = `//
+-// Lights uniforms
+-//
+-
+-#if AMB_LIGHTS>0
+-    // Ambient lights color uniform
+-    uniform vec3 AmbientLightColor[AMB_LIGHTS];
+-#endif
+-
+-#if DIR_LIGHTS>0
+-    // Directional lights uniform array. Each directional light uses 2 elements
+-    uniform vec3 DirLight[2*DIR_LIGHTS];
+-    // Macros to access elements inside the DirectionalLight uniform array
+-    #define DirLightColor(a)		DirLight[2*a]
+-    #define DirLightPosition(a)		DirLight[2*a+1]
+-#endif
+-
+-#if POINT_LIGHTS>0
+-    // Point lights uniform array. Each point light uses 3 elements
+-    uniform vec3 PointLight[3*POINT_LIGHTS];
+-    // Macros to access elements inside the PointLight uniform array
+-    #define PointLightColor(a)			PointLight[3*a]
+-    #define PointLightPosition(a)		PointLight[3*a+1]
+-    #define PointLightLinearDecay(a)	PointLight[3*a+2].x
+-    #define PointLightQuadraticDecay(a)	PointLight[3*a+2].y
+-#endif
+-
+-#if SPOT_LIGHTS>0
+-    // Spot lights uniforms. Each spot light uses 5 elements
+-    uniform vec3  SpotLight[5*SPOT_LIGHTS];
+-    // Macros to access elements inside the PointLight uniform array
+-    #define SpotLightColor(a)			SpotLight[5*a]
+-    #define SpotLightPosition(a)		SpotLight[5*a+1]
+-    #define SpotLightDirection(a)		SpotLight[5*a+2]
+-    #define SpotLightAngularDecay(a)	SpotLight[5*a+3].x
+-    #define SpotLightCutoffAngle(a)		SpotLight[5*a+3].y
+-    #define SpotLightLinearDecay(a)		SpotLight[5*a+3].z
+-    #define SpotLightQuadraticDecay(a)	SpotLight[5*a+4].x
+-#endif
+-`
++const include_morphtarget_vertex2_source = `	vPosition += MorphPosition{i} * morphTargetInfluences[{i}];
++  #ifdef MORPHTARGETS_NORMAL
++	vNormal += MorphNormal{i} * morphTargetInfluences[{i}];
++  #endif`
+ 
+ const include_bones_vertex_declaration_source = `#ifdef BONE_INFLUENCERS
+     #if BONE_INFLUENCERS > 0
+@@ -343,15 +358,23 @@ const include_bones_vertex_declaration_source = `#ifdef BONE_INFLUENCERS
+ #endif
+ `
+ 
+-const point_fragment_source = `precision highp float;
+-
+-#include <material>
++const standard_fragment_source = `precision highp float;
+ 
+ // Inputs from vertex shader
+-in vec3 Color;
+-flat in mat2 Rotation;
++in vec4 Position;     // Fragment position in camera coordinates
++in vec3 Normal;       // Fragment normal in camera coordinates
++in vec2 FragTexcoord; // Fragment texture coordinates
++in vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++in vec3 LitdInstanceTeamColorVarying;
++#endif
+ 
+-// Output
++#include <lights>
++#include <material>
++#include <phong_model>
++#include <litd_teamcolor>
++
++// Final fragment color
+ out vec4 FragColor;
+ 
+ void main() {
+@@ -359,10 +382,9 @@ void main() {
+     // Compute final texture color
+     vec4 texMixed = vec4(1);
+     #if MAT_TEXTURES > 0
+-        vec2 pointCoord = Rotation * gl_PointCoord - vec2(0.5) + vec2(0.5);
+         bool firstTex = true;
+         if (MatTexVisible(0)) {
+-            vec4 texColor = texture(MatTexture[0], pointCoord * MatTexRepeat(0) + MatTexOffset(0));
++            vec4 texColor = texture(MatTexture[0], FragTexcoord * MatTexRepeat(0) + MatTexOffset(0));
+             if (firstTex) {
+                 texMixed = texColor;
+                 firstTex = false;
+@@ -372,7 +394,7 @@ void main() {
+         }
+         #if MAT_TEXTURES > 1
+             if (MatTexVisible(1)) {
+-                vec4 texColor = texture(MatTexture[1], pointCoord * MatTexRepeat(1) + MatTexOffset(1));
++                vec4 texColor = texture(MatTexture[1], FragTexcoord * MatTexRepeat(1) + MatTexOffset(1));
+                 if (firstTex) {
+                     texMixed = texColor;
+                     firstTex = false;
+@@ -382,7 +404,7 @@ void main() {
+             }
+             #if MAT_TEXTURES > 2
+                 if (MatTexVisible(2)) {
+-                    vec4 texColor = texture(MatTexture[2], pointCoord * MatTexRepeat(2) + MatTexOffset(2));
++                    vec4 texColor = texture(MatTexture[2], FragTexcoord * MatTexRepeat(2) + MatTexOffset(2));
+                     if (firstTex) {
+                         texMixed = texColor;
+                         firstTex = false;
+@@ -394,16 +416,37 @@ void main() {
+         #endif
+     #endif
+ 
+-    // Generates final color
+-    FragColor = min(vec4(Color, MatOpacity) * texMixed, vec4(1));
++    texMixed.rgb *= LitdVertexColor;
++    texMixed = LitdApplyTeamColor(texMixed, FragTexcoord);
++
++    // Combine material with texture colors
++    vec4 matDiffuse = vec4(MatDiffuseColor, MatOpacity) * texMixed;
++    vec4 matAmbient = vec4(MatAmbientColor, MatOpacity) * texMixed;
++
++    // Normalize interpolated normal as it may have shrinked
++    vec3 fragNormal = normalize(Normal);
++
++    // Calculate the direction vector from the fragment to the camera (origin)
++    vec3 camDir = normalize(-Position.xyz);
++
++    // Workaround for gl_FrontFacing
++    vec3 fdx = dFdx(Position.xyz);
++    vec3 fdy = dFdy(Position.xyz);
++    vec3 faceNormal = normalize(cross(fdx,fdy));
++    if (dot(fragNormal, faceNormal) < 0.0) { // Back-facing
++        fragNormal = -fragNormal;
++    }
++
++    // Calculates the Ambient+Diffuse and Specular colors for this fragment using the Phong model.
++    vec3 Ambdiff, Spec;
++    phongModel(Position, fragNormal, camDir, vec3(matAmbient), vec3(matDiffuse), Ambdiff, Spec);
++
++    // Final fragment color
++    FragColor = min(vec4(Ambdiff + Spec, matDiffuse.a), vec4(1.0));
+ }
+ `
+ 
+-const physical_vertex_source = `//
+-// Physically Based Shading of a microfacet surface material - Vertex Shader
+-// Modified from reference implementation at https://github.com/KhronosGroup/glTF-WebGL-PBR
+-//
+-#include <attributes>
++const standard_vertex_source = `#include <attributes>
+ #include <litd_instancing>
+ 
+ // Model uniforms
+@@ -411,26 +454,37 @@ uniform mat4 ModelViewMatrix;
+ uniform mat3 NormalMatrix;
+ uniform mat4 MVP;
+ 
++#include <material>
+ #include <morphtarget_vertex_declaration>
+ #include <bones_vertex_declaration>
+ 
+ // Output variables for Fragment shader
+-out vec3 Position;
++out vec4 Position;
+ out vec3 Normal;
+-out vec3 CamDir;
+ out vec2 FragTexcoord;
+ out vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++out vec3 LitdInstanceTeamColorVarying;
++#endif
+ 
+ void main() {
+ 
+-    // Output texture coordinates to fragment shader
+-    FragTexcoord = VertexTexcoord;
++    vec2 texcoord = VertexTexcoord;
++#if MAT_TEXTURES > 0
++    // Flip texture coordinate Y if requested.
++    if (MatTexFlipY(0)) {
++        texcoord.y = 1.0 - texcoord.y;
++    }
++#endif
++    FragTexcoord = texcoord;
+ #ifdef LITD_VERTEX_COLOR
+     LitdVertexColor = VertexColor;
+ #else
+     LitdVertexColor = vec3(1.0);
+ #endif
+-
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    LitdInstanceTeamColorVarying = LitdInstanceTeamColorValue();
++#endif
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);
+     #include <morphtarget_vertex>
+@@ -439,18 +493,14 @@ void main() {
+     mat4 litdInstanceMatrix = LitdInstanceMatrix();
+     vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
+ 
+-    // Transform this vertex position to camera coordinates.
+-    Position = vec3(ModelViewMatrix * litdWorldPosition);
++    // Transform vertex position to camera coordinates
++    Position = ModelViewMatrix * litdWorldPosition;
+ 
+-    // Transform this vertex normal to camera coordinates.
++    // Transform vertex normal to camera coordinates
+     Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
+ 
+-    // Calculate the direction vector from the vertex to the camera
+-    // The camera is at 0,0,0
+-    CamDir = normalize(-Position.xyz);
+-
++    // Output projected and transformed vertex position
+     gl_Position = MVP * litdWorldPosition;
+-
+ }
+ `
+ 
+@@ -508,15 +558,18 @@ uniform vec4 Material[3];
+ #define uMetallicFactor     Material[2].x
+ #define uRoughnessFactor    Material[2].y
+ 
+-#include <lights>
+-#include <litd_teamcolor>
+-
+ // Inputs from vertex shader
+ in vec3 Position;       // Vertex position in camera coordinates.
+ in vec3 Normal;         // Vertex normal in camera coordinates.
+ in vec3 CamDir;         // Direction from vertex to camera
+ in vec2 FragTexcoord;
+ in vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++in vec3 LitdInstanceTeamColorVarying;
++#endif
++
++#include <lights>
++#include <litd_teamcolor>
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -838,225 +891,38 @@ void main() {
+ #endif
+     color += emissive;
+ 
+-    // Base Color
+-//    FragColor = baseColor;
+-
+-    // Normal
+-//    FragColor = vec4(n, 1.0);
+-
+-    // Emissive Color
+-//    FragColor = vec4(emissive, 1.0);
+-
+-    // F
+-//    color = F;
+-
+-    // G
+-//    color = vec3(G);
+-
+-    // D
+-//    color = vec3(D);
+-
+-    // Specular
+-//    color = specContrib;
+-
+-    // Diffuse
+-//    color = diffuseContrib;
+-
+-    // Roughness
+-//    color = vec3(perceptualRoughness);
+-
+-    // Metallic
+-//    color = vec3(metallic);
+-
+-    // Final fragment color
+-    FragColor = vec4(pow(color,vec3(1.0/2.2)), baseColor.a);
+-}
+-`
+-
+-const point_vertex_source = `#include <attributes>
+-
+-// Model uniforms
+-uniform mat4 MVP;
+-uniform mat4 MV;
+-
+-// Material uniforms
+-#include <material>
+-
+-// Outputs for fragment shader
+-out vec3 Color;
+-flat out mat2 Rotation;
+-
+-void main() {
+-
+-    // Rotation matrix for fragment shader
+-    float rotSin = sin(MatPointRotationZ);
+-    float rotCos = cos(MatPointRotationZ);
+-    Rotation = mat2(rotCos, rotSin, - rotSin, rotCos);
+-
+-    // Sets the vertex position
+-    vec4 pos = MVP * vec4(VertexPosition, 1.0);
+-    gl_Position = pos;
+-
+-    // Sets the size of the rasterized point decreasing with distance
+-    vec4 posMV = MV * vec4(VertexPosition, 1.0);
+-    gl_PointSize = MatPointSize / -posMV.z;
+-
+-    // Outputs color
+-    Color = MatEmissiveColor;
+-}
+-
+-`
+-
+-const standard_vertex_source = `#include <attributes>
+-#include <litd_instancing>
+-
+-// Model uniforms
+-uniform mat4 ModelViewMatrix;
+-uniform mat3 NormalMatrix;
+-uniform mat4 MVP;
+-
+-#include <material>
+-#include <morphtarget_vertex_declaration>
+-#include <bones_vertex_declaration>
+-
+-// Output variables for Fragment shader
+-out vec4 Position;
+-out vec3 Normal;
+-out vec2 FragTexcoord;
+-out vec3 LitdVertexColor;
+-
+-void main() {
+-
+-    vec2 texcoord = VertexTexcoord;
+-#if MAT_TEXTURES > 0
+-    // Flip texture coordinate Y if requested.
+-    if (MatTexFlipY(0)) {
+-        texcoord.y = 1.0 - texcoord.y;
+-    }
+-#endif
+-    FragTexcoord = texcoord;
+-#ifdef LITD_VERTEX_COLOR
+-    LitdVertexColor = VertexColor;
+-#else
+-    LitdVertexColor = vec3(1.0);
+-#endif
+-    vec3 vPosition = VertexPosition;
+-    mat4 finalWorld = mat4(1.0);
+-    #include <morphtarget_vertex>
+-    #include <bones_vertex>
+-
+-    mat4 litdInstanceMatrix = LitdInstanceMatrix();
+-    vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
+-
+-    // Transform vertex position to camera coordinates
+-    Position = ModelViewMatrix * litdWorldPosition;
+-
+-    // Transform vertex normal to camera coordinates
+-    Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
+-
+-    // Output projected and transformed vertex position
+-    gl_Position = MVP * litdWorldPosition;
+-}
+-`
+-
+-const basic_vertex_source = `#include <attributes>
+-#include <litd_instancing>
+-
+-// Model uniforms
+-uniform mat4 MVP;
+-
+-// Final output color for fragment shader
+-out vec3 Color;
+-
+-void main() {
+-
+-    Color = VertexColor;
+-    gl_Position = MVP * LitdInstanceMatrix() * vec4(VertexPosition, 1.0);
+-}
+-`
+-
+-const standard_fragment_source = `precision highp float;
+-
+-// Inputs from vertex shader
+-in vec4 Position;     // Fragment position in camera coordinates
+-in vec3 Normal;       // Fragment normal in camera coordinates
+-in vec2 FragTexcoord; // Fragment texture coordinates
+-in vec3 LitdVertexColor;
+-
+-#include <lights>
+-#include <material>
+-#include <phong_model>
+-#include <litd_teamcolor>
+-
+-// Final fragment color
+-out vec4 FragColor;
+-
+-void main() {
+-
+-    // Compute final texture color
+-    vec4 texMixed = vec4(1);
+-    #if MAT_TEXTURES > 0
+-        bool firstTex = true;
+-        if (MatTexVisible(0)) {
+-            vec4 texColor = texture(MatTexture[0], FragTexcoord * MatTexRepeat(0) + MatTexOffset(0));
+-            if (firstTex) {
+-                texMixed = texColor;
+-                firstTex = false;
+-            } else {
+-                texMixed = Blend(texMixed, texColor);
+-            }
+-        }
+-        #if MAT_TEXTURES > 1
+-            if (MatTexVisible(1)) {
+-                vec4 texColor = texture(MatTexture[1], FragTexcoord * MatTexRepeat(1) + MatTexOffset(1));
+-                if (firstTex) {
+-                    texMixed = texColor;
+-                    firstTex = false;
+-                } else {
+-                    texMixed = Blend(texMixed, texColor);
+-                }
+-            }
+-            #if MAT_TEXTURES > 2
+-                if (MatTexVisible(2)) {
+-                    vec4 texColor = texture(MatTexture[2], FragTexcoord * MatTexRepeat(2) + MatTexOffset(2));
+-                    if (firstTex) {
+-                        texMixed = texColor;
+-                        firstTex = false;
+-                    } else {
+-                        texMixed = Blend(texMixed, texColor);
+-                    }
+-                }
+-            #endif
+-        #endif
+-    #endif
+-
+-    texMixed.rgb *= LitdVertexColor;
+-    texMixed = LitdApplyTeamColor(texMixed, FragTexcoord);
++    // Base Color
++//    FragColor = baseColor;
+ 
+-    // Combine material with texture colors
+-    vec4 matDiffuse = vec4(MatDiffuseColor, MatOpacity) * texMixed;
+-    vec4 matAmbient = vec4(MatAmbientColor, MatOpacity) * texMixed;
++    // Normal
++//    FragColor = vec4(n, 1.0);
+ 
+-    // Normalize interpolated normal as it may have shrinked
+-    vec3 fragNormal = normalize(Normal);
++    // Emissive Color
++//    FragColor = vec4(emissive, 1.0);
+ 
+-    // Calculate the direction vector from the fragment to the camera (origin)
+-    vec3 camDir = normalize(-Position.xyz);
++    // F
++//    color = F;
+ 
+-    // Workaround for gl_FrontFacing
+-    vec3 fdx = dFdx(Position.xyz);
+-    vec3 fdy = dFdy(Position.xyz);
+-    vec3 faceNormal = normalize(cross(fdx,fdy));
+-    if (dot(fragNormal, faceNormal) < 0.0) { // Back-facing
+-        fragNormal = -fragNormal;
+-    }
++    // G
++//    color = vec3(G);
+ 
+-    // Calculates the Ambient+Diffuse and Specular colors for this fragment using the Phong model.
+-    vec3 Ambdiff, Spec;
+-    phongModel(Position, fragNormal, camDir, vec3(matAmbient), vec3(matDiffuse), Ambdiff, Spec);
++    // D
++//    color = vec3(D);
++
++    // Specular
++//    color = specContrib;
++
++    // Diffuse
++//    color = diffuseContrib;
++
++    // Roughness
++//    color = vec3(perceptualRoughness);
++
++    // Metallic
++//    color = vec3(metallic);
+ 
+     // Final fragment color
+-    FragColor = min(vec4(Ambdiff + Spec, matDiffuse.a), vec4(1.0));
++    FragColor = vec4(pow(color,vec3(1.0/2.2)), baseColor.a);
+ }
+ `
+ 
+@@ -1082,17 +948,6 @@ void main() {
+ }
+ `
+ 
+-const basic_fragment_source = `precision highp float;
+-
+-in vec3 Color;
+-out vec4 FragColor;
+-
+-void main() {
+-
+-    FragColor = vec4(Color, 1.0);
+-}
+-`
+-
+ const panel_fragment_source = `precision highp float;
+ 
+ // Texture uniforms
+@@ -1218,36 +1073,214 @@ void main() {
+ }
+ `
+ 
++const point_fragment_source = `precision highp float;
++
++#include <material>
++
++// Inputs from vertex shader
++in vec3 Color;
++flat in mat2 Rotation;
++
++// Output
++out vec4 FragColor;
++
++void main() {
++
++    // Compute final texture color
++    vec4 texMixed = vec4(1);
++    #if MAT_TEXTURES > 0
++        vec2 pointCoord = Rotation * gl_PointCoord - vec2(0.5) + vec2(0.5);
++        bool firstTex = true;
++        if (MatTexVisible(0)) {
++            vec4 texColor = texture(MatTexture[0], pointCoord * MatTexRepeat(0) + MatTexOffset(0));
++            if (firstTex) {
++                texMixed = texColor;
++                firstTex = false;
++            } else {
++                texMixed = Blend(texMixed, texColor);
++            }
++        }
++        #if MAT_TEXTURES > 1
++            if (MatTexVisible(1)) {
++                vec4 texColor = texture(MatTexture[1], pointCoord * MatTexRepeat(1) + MatTexOffset(1));
++                if (firstTex) {
++                    texMixed = texColor;
++                    firstTex = false;
++                } else {
++                    texMixed = Blend(texMixed, texColor);
++                }
++            }
++            #if MAT_TEXTURES > 2
++                if (MatTexVisible(2)) {
++                    vec4 texColor = texture(MatTexture[2], pointCoord * MatTexRepeat(2) + MatTexOffset(2));
++                    if (firstTex) {
++                        texMixed = texColor;
++                        firstTex = false;
++                    } else {
++                        texMixed = Blend(texMixed, texColor);
++                    }
++                }
++            #endif
++        #endif
++    #endif
++
++    // Generates final color
++    FragColor = min(vec4(Color, MatOpacity) * texMixed, vec4(1));
++}
++`
++
++const physical_vertex_source = `//
++// Physically Based Shading of a microfacet surface material - Vertex Shader
++// Modified from reference implementation at https://github.com/KhronosGroup/glTF-WebGL-PBR
++//
++#include <attributes>
++#include <litd_instancing>
++
++// Model uniforms
++uniform mat4 ModelViewMatrix;
++uniform mat3 NormalMatrix;
++uniform mat4 MVP;
++
++#include <morphtarget_vertex_declaration>
++#include <bones_vertex_declaration>
++
++// Output variables for Fragment shader
++out vec3 Position;
++out vec3 Normal;
++out vec3 CamDir;
++out vec2 FragTexcoord;
++out vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++out vec3 LitdInstanceTeamColorVarying;
++#endif
++
++void main() {
++
++    // Output texture coordinates to fragment shader
++    FragTexcoord = VertexTexcoord;
++#ifdef LITD_VERTEX_COLOR
++    LitdVertexColor = VertexColor;
++#else
++    LitdVertexColor = vec3(1.0);
++#endif
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    LitdInstanceTeamColorVarying = LitdInstanceTeamColorValue();
++#endif
++
++    vec3 vPosition = VertexPosition;
++    mat4 finalWorld = mat4(1.0);
++    #include <morphtarget_vertex>
++    #include <bones_vertex>
++
++    mat4 litdInstanceMatrix = LitdInstanceMatrix();
++    vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
++
++    // Transform this vertex position to camera coordinates.
++    Position = vec3(ModelViewMatrix * litdWorldPosition);
++
++    // Transform this vertex normal to camera coordinates.
++    Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
++
++    // Calculate the direction vector from the vertex to the camera
++    // The camera is at 0,0,0
++    CamDir = normalize(-Position.xyz);
++
++    gl_Position = MVP * litdWorldPosition;
++
++}
++`
++
++const basic_fragment_source = `precision highp float;
++
++in vec3 Color;
++out vec4 FragColor;
++
++void main() {
++
++    FragColor = vec4(Color, 1.0);
++}
++`
++
++const point_vertex_source = `#include <attributes>
++
++// Model uniforms
++uniform mat4 MVP;
++uniform mat4 MV;
++
++// Material uniforms
++#include <material>
++
++// Outputs for fragment shader
++out vec3 Color;
++flat out mat2 Rotation;
++
++void main() {
++
++    // Rotation matrix for fragment shader
++    float rotSin = sin(MatPointRotationZ);
++    float rotCos = cos(MatPointRotationZ);
++    Rotation = mat2(rotCos, rotSin, - rotSin, rotCos);
++
++    // Sets the vertex position
++    vec4 pos = MVP * vec4(VertexPosition, 1.0);
++    gl_Position = pos;
++
++    // Sets the size of the rasterized point decreasing with distance
++    vec4 posMV = MV * vec4(VertexPosition, 1.0);
++    gl_PointSize = MatPointSize / -posMV.z;
++
++    // Outputs color
++    Color = MatEmissiveColor;
++}
++
++`
++
++const basic_vertex_source = `#include <attributes>
++#include <litd_instancing>
++
++// Model uniforms
++uniform mat4 MVP;
++
++// Final output color for fragment shader
++out vec3 Color;
++
++void main() {
++
++    Color = VertexColor;
++    gl_Position = MVP * LitdInstanceMatrix() * vec4(VertexPosition, 1.0);
++}
++`
++
+ // Maps include name with its source code
+ var includeMap = map[string]string{
+ 
+-	"morphtarget_vertex2":             include_morphtarget_vertex2_source,
+ 	"morphtarget_vertex_declaration2": include_morphtarget_vertex_declaration2_source,
+-	"morphtarget_vertex":              include_morphtarget_vertex_source,
+-	"morphtarget_vertex_declaration":  include_morphtarget_vertex_declaration_source,
+-	"bones_vertex":                    include_bones_vertex_source,
+-	"phong_model":                     include_phong_model_source,
+ 	"attributes":                      include_attributes_source,
+-	"litd_instancing":                 include_litd_instancing_source,
+-	"litd_teamcolor":                  include_litd_teamcolor_source,
++	"morphtarget_vertex_declaration":  include_morphtarget_vertex_declaration_source,
+ 	"material":                        include_material_source,
+ 	"lights":                          include_lights_source,
++	"litd_instancing":                 include_litd_instancing_source,
++	"litd_teamcolor":                  include_litd_teamcolor_source,
++	"morphtarget_vertex":              include_morphtarget_vertex_source,
++	"phong_model":                     include_phong_model_source,
++	"bones_vertex":                    include_bones_vertex_source,
++	"morphtarget_vertex2":             include_morphtarget_vertex2_source,
+ 	"bones_vertex_declaration":        include_bones_vertex_declaration_source,
+ }
+ 
+ // Maps shader name with its source code
+ var shaderMap = map[string]string{
+ 
++	"standard_fragment": standard_fragment_source,
++	"standard_vertex":   standard_vertex_source,
++	"physical_fragment": physical_fragment_source,
++	"panel_vertex":      panel_vertex_source,
++	"panel_fragment":    panel_fragment_source,
+ 	"point_fragment":    point_fragment_source,
+ 	"physical_vertex":   physical_vertex_source,
+-	"physical_fragment": physical_fragment_source,
++	"basic_fragment":    basic_fragment_source,
+ 	"point_vertex":      point_vertex_source,
+-	"standard_vertex":   standard_vertex_source,
+ 	"basic_vertex":      basic_vertex_source,
+-	"standard_fragment": standard_fragment_source,
+-	"panel_vertex":      panel_vertex_source,
+-	"basic_fragment":    basic_fragment_source,
+-	"panel_fragment":    panel_fragment_source,
+ }
+ 
+ // Maps program name with Proginfo struct with shaders names
+diff --git a/renderer/shaders/standard_fragment.glsl b/renderer/shaders/standard_fragment.glsl
+index cc3d664..79cd134 100644
+--- a/renderer/shaders/standard_fragment.glsl
++++ b/renderer/shaders/standard_fragment.glsl
+@@ -5,6 +5,9 @@ in vec4 Position;     // Fragment position in camera coordinates
+ in vec3 Normal;       // Fragment normal in camera coordinates
+ in vec2 FragTexcoord; // Fragment texture coordinates
+ in vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++in vec3 LitdInstanceTeamColorVarying;
++#endif
+ 
+ #include <lights>
+ #include <material>
+diff --git a/renderer/shaders/standard_vertex.glsl b/renderer/shaders/standard_vertex.glsl
+index 82e9f21..e097cf0 100644
+--- a/renderer/shaders/standard_vertex.glsl
++++ b/renderer/shaders/standard_vertex.glsl
+@@ -15,6 +15,9 @@ out vec4 Position;
+ out vec3 Normal;
+ out vec2 FragTexcoord;
+ out vec3 LitdVertexColor;
++#ifdef LITD_INSTANCE_TEAMCOLOR
++out vec3 LitdInstanceTeamColorVarying;
++#endif
+ 
+ void main() {
+ 
+@@ -30,6 +33,9 @@ void main() {
+     LitdVertexColor = VertexColor;
+ #else
+     LitdVertexColor = vec3(1.0);
++#endif
++#ifdef LITD_INSTANCE_TEAMCOLOR
++    LitdInstanceTeamColorVarying = LitdInstanceTeamColorValue();
+ #endif
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);

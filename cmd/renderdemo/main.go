@@ -82,6 +82,7 @@ type renderDemoDump struct {
 	TeamColor *teamColorRuntimeDump   `json:"teamColor,omitempty"`
 	Lighting  *lightingRuntimeDump    `json:"lighting,omitempty"`
 	Batching  *batchingRuntimeDump    `json:"batching,omitempty"`
+	Instances *instancesRuntimeDump   `json:"instances,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -206,6 +207,20 @@ type batchingUnitDump struct {
 	RenderOrder int    `json:"renderOrder"`
 	X           int    `json:"x"`
 	Z           int    `json:"z"`
+}
+
+type instancesRuntimeDump struct {
+	Scene             string                             `json:"scene"`
+	Preset            litasset.AtlasPreset               `json:"preset"`
+	Mode              string                             `json:"mode"`
+	UnitCount         int                                `json:"unitCount"`
+	MaterialPath      string                             `json:"materialPath"`
+	MaterialInstances int                                `json:"materialInstances"`
+	Buffer            litrender.InstanceBufferSnapshot   `json:"buffer"`
+	MotionFrames      []litrender.InstanceBufferSnapshot `json:"motionFrames,omitempty"`
+	InvalidTeamError  string                             `json:"invalidTeamError"`
+	OK                bool                               `json:"ok"`
+	Errors            []string                           `json:"errors,omitempty"`
 }
 
 type teamColorRuntimeDump struct {
@@ -686,7 +701,7 @@ type campaignMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -824,6 +839,7 @@ func main() {
 	var teamColorFSV *teamColorRuntimeDump
 	var lightingFSV *lightingRuntimeDump
 	var batchingFSV *batchingRuntimeDump
+	var instancesFSV *instancesRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -920,6 +936,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: batching: %v\n", err)
 				os.Exit(1)
 			}
+		} else if strings.HasPrefix(sceneKey, "mixedteams") {
+			spec, instancesFSV, err = buildInstancesFSV(scene, atlasPreset, sceneKey)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: instances: %v\n", err)
+				os.Exit(1)
+			}
 		} else if strings.HasPrefix(sceneKey, "lit") || sceneKey == "unlit" {
 			spec, lightingFSV, err = buildLightingFSV(scene, atlasPreset, sceneKey, *bakedSun)
 			if err != nil {
@@ -986,10 +1008,12 @@ func main() {
 				pass = pass && lightingFSV.OK && stats == spec.expected
 			} else if batchingFSV != nil {
 				pass = pass && batchingFSV.OK && stats == spec.expected
+			} else if instancesFSV != nil {
+				pass = pass && instancesFSV.OK && stats == spec.expected
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1669,6 +1693,220 @@ func validateBatchingDump(dump *batchingRuntimeDump) {
 		if group.Entities != dump.UnitCount/dump.AtlasPairs || group.GraphicMaterials != group.Entities {
 			dump.Errors = append(dump.Errors, fmt.Sprintf("batch group invalid: %+v", group))
 		}
+	}
+	dump.OK = len(dump.Errors) == 0
+}
+
+func buildInstancesFSV(scene *core.Node, preset litasset.AtlasPreset, name string) (sceneSpec, *instancesRuntimeDump, error) {
+	switch name {
+	case "mixedteams", "mixedteams-one", "mixedteams-plain-one", "mixedteams-moving", "mixedteams-1000", "mixedteams-culled":
+	default:
+		return sceneSpec{}, nil, fmt.Errorf("unknown instanced-team scene %q", name)
+	}
+
+	src, err := syntheticTeamColorAtlasSource()
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	mat, _, materialPath, materialInstances, err := buildTeamColorMaterial(src, preset, false)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	count := 200
+	mode := "mixed"
+	if name == "mixedteams-one" {
+		mode = "same-team"
+	}
+	if name == "mixedteams-plain-one" {
+		dump := &instancesRuntimeDump{
+			Scene:             name,
+			Preset:            preset,
+			Mode:              "plain-same-team",
+			UnitCount:         count,
+			MaterialPath:      materialPath,
+			MaterialInstances: materialInstances,
+			OK:                true,
+		}
+		if err := fillPlainTeamGrid(scene, mat, count); err != nil {
+			return sceneSpec{}, nil, err
+		}
+		if dump.MaterialInstances != 1 {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("material instances = %d, want 1", dump.MaterialInstances))
+		}
+		expected := expectedStats(count, 0, count, 0, 1, 0)
+		if preset == litasset.AtlasPresetLow {
+			expected.Lights = 0
+		}
+		return sceneSpec{name: name + "-" + string(preset), expected: expected}, dump, nil
+	}
+	if name == "mixedteams-moving" {
+		mode = "moving"
+	}
+	if name == "mixedteams-1000" {
+		count = 1000
+		mode = "stress-1000"
+	}
+	if name == "mixedteams-culled" {
+		mode = "culled"
+	}
+
+	mesh := graphic.NewInstancedMesh(geometry.NewPlane(96, 72), mat, 0)
+	mesh.SetRotationX(-math32.Pi / 2)
+	if name == "mixedteams-culled" {
+		mesh.SetPosition(50000, 0, 50000)
+	}
+	scene.Add(mesh)
+
+	buf, err := litrender.NewInstanceBuffer(mesh, count)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	if err := buf.SetTeamColorZone(litrender.DefaultTeamColorZone()); err != nil {
+		return sceneSpec{}, nil, err
+	}
+	buf.SetPresentationScalars(0, 1, 1, true)
+
+	dump := &instancesRuntimeDump{
+		Scene:             name,
+		Preset:            preset,
+		Mode:              mode,
+		UnitCount:         count,
+		MaterialPath:      materialPath,
+		MaterialInstances: materialInstances,
+		OK:                true,
+	}
+	if name == "mixedteams-moving" {
+		for frame := 0; frame < 3; frame++ {
+			if err := fillInstanceGrid(buf, count, name, float32(frame)*18); err != nil {
+				return sceneSpec{}, nil, err
+			}
+			dump.MotionFrames = append(dump.MotionFrames, buf.Snapshot(instanceSampleIndices(count)...))
+		}
+	} else if err := fillInstanceGrid(buf, count, name, 0); err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	beforeInvalid := buf.Snapshot(0)
+	var invalidProbe math32.Matrix4
+	invalidProbe.Identity()
+	if err := buf.SetInstance(0, &invalidProbe, litrender.TeamColorSlots); err != nil {
+		dump.InvalidTeamError = err.Error()
+	} else {
+		dump.Errors = append(dump.Errors, "invalid team slot was accepted")
+	}
+	afterInvalid := buf.Snapshot(0)
+	if afterInvalid.UpdateBytes != beforeInvalid.UpdateBytes || len(afterInvalid.Samples) != len(beforeInvalid.Samples) || (len(afterInvalid.Samples) > 0 && afterInvalid.Samples[0] != beforeInvalid.Samples[0]) {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("invalid team mutation: before=%+v after=%+v", beforeInvalid, afterInvalid))
+	}
+
+	dump.Buffer = buf.Snapshot(instanceSampleIndices(count)...)
+	validateInstancesDump(dump)
+
+	expected := expectedStats(1, 0, 1, 0, 1, 0)
+	if name == "mixedteams-culled" {
+		expected = expectedStats(0, 1, 0, 0, 0, 0)
+	}
+	if preset == litasset.AtlasPresetLow {
+		expected.Lights = 0
+	}
+	return sceneSpec{name: name + "-" + string(preset), expected: expected}, dump, nil
+}
+
+func fillInstanceGrid(buf *litrender.InstanceBuffer, count int, name string, xOffset float32) error {
+	buf.BeginFrame()
+	if err := buf.SetCount(count); err != nil {
+		return err
+	}
+	columns := 20
+	if count >= 1000 {
+		columns = 40
+	}
+	step := float32(70)
+	if count >= 1000 {
+		step = 34
+	}
+	for i := 0; i < count; i++ {
+		slot := i % litrender.TeamColorSlots
+		if name == "mixedteams-one" {
+			slot = 0
+		}
+		col, row := i%columns, i/columns
+		x := (float32(col) - float32(columns-1)/2) * step
+		y := (float32(row) - float32((count+columns-1)/columns-1)/2) * step
+		var m math32.Matrix4
+		m.MakeTranslation(x+xOffset, y, 0)
+		if err := buf.SetInstance(i, &m, slot); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func fillPlainTeamGrid(scene *core.Node, mat material.IMaterial, count int) error {
+	geom := geometry.NewPlane(96, 72)
+	columns := 20
+	step := float32(70)
+	for i := 0; i < count; i++ {
+		mesh, err := litrender.NewTeamColorMesh(geom, mat, 0)
+		if err != nil {
+			return err
+		}
+		col, row := i%columns, i/columns
+		x := (float32(col) - float32(columns-1)/2) * step
+		y := (float32(row) - float32((count+columns-1)/columns-1)/2) * step
+		mesh.SetRotationX(-math32.Pi / 2)
+		mesh.SetPosition(x, 0, -y)
+		scene.Add(mesh)
+	}
+	return nil
+}
+
+func instanceSampleIndices(count int) []int {
+	if count <= 0 {
+		return nil
+	}
+	out := []int{0}
+	if count > 1 {
+		out = append(out, 1)
+	}
+	if count > litrender.NeutralTeamSlot {
+		out = append(out, litrender.NeutralTeamSlot)
+	}
+	if count > 1 {
+		out = append(out, count-1)
+	}
+	return out
+}
+
+func validateInstancesDump(dump *instancesRuntimeDump) {
+	if dump.MaterialInstances != 1 {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("material instances = %d, want 1", dump.MaterialInstances))
+	}
+	if dump.Buffer.Count != dump.UnitCount || dump.Buffer.Capacity != dump.UnitCount {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("buffer count/capacity = %d/%d, want %d/%d", dump.Buffer.Count, dump.Buffer.Capacity, dump.UnitCount, dump.UnitCount))
+	}
+	if dump.Buffer.UpdateBytes != dump.UnitCount*litrender.InstanceUpdateBytes {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("update bytes = %d, want %d", dump.Buffer.UpdateBytes, dump.UnitCount*litrender.InstanceUpdateBytes))
+	}
+	if dump.Buffer.MeshTransformBytes != dump.UnitCount*litrender.InstanceTransformBytes || dump.Buffer.MeshTeamColorBytes != dump.UnitCount*litrender.InstanceTeamColorBytes {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("mesh bytes invalid: %+v", dump.Buffer))
+	}
+	if !strings.Contains(dump.InvalidTeamError, "out of range") {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("invalid team error missing: %q", dump.InvalidTeamError))
+	}
+	for _, sample := range dump.Buffer.Samples {
+		wantSlot := sample.Index % litrender.TeamColorSlots
+		if dump.Mode == "same-team" {
+			wantSlot = 0
+		}
+		if sample.Slot != wantSlot {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("sample %d slot = %d, want %d", sample.Index, sample.Slot, wantSlot))
+		}
+	}
+	if dump.Mode == "moving" && len(dump.MotionFrames) != 3 {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("motion frames = %d, want 3", len(dump.MotionFrames)))
 	}
 	dump.OK = len(dump.Errors) == 0
 }
