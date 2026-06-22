@@ -34,6 +34,7 @@ const (
 	CueRouted    TriggerOutcome = iota // handed to the Manager (then subject to admission)
 	CueThrottled                       // suppressed by a per-category throttle window
 	CueNoSet                           // no sound set for this unit type — silently skipped
+	CueFiltered                        // filtered by local-player / selection ownership rules
 )
 
 func (o TriggerOutcome) String() string {
@@ -44,6 +45,8 @@ func (o TriggerOutcome) String() string {
 		return "throttled"
 	case CueNoSet:
 		return "no-set"
+	case CueFiltered:
+		return "filtered"
 	}
 	return "invalid"
 }
@@ -55,6 +58,8 @@ type SoundTrigger struct {
 	mgr           *audio.Manager
 	underAtkTicks uint32
 	lastUnderAtk  map[uint32]uint32 // unit -> tick of its last under-attack stinger
+	lastAckCue    uint32            // previous selection ack cue; stopped before the next ack
+	hasAckCue     bool
 }
 
 // NewSoundTrigger builds a trigger over the given sound-set table, routing to mgr.
@@ -104,7 +109,15 @@ func (t *SoundTrigger) Fire(c AudioCue) TriggerOutcome {
 		ev.Kind = api.AudioPlay
 		ev.Channel = api.ChannelUI
 	}
+	if c.Category == audio.CatAck && t.hasAckCue {
+		t.mgr.Handle(api.AudioEvent{Kind: api.AudioStop, Cue: t.lastAckCue})
+		t.hasAckCue = false
+	}
 	t.mgr.Handle(ev)
+	if c.Category == audio.CatAck {
+		t.lastAckCue = ev.Cue
+		t.hasAckCue = true
+	}
 	return CueRouted
 }
 
