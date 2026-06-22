@@ -16,6 +16,7 @@ type TerrainTool string
 
 const (
 	TerrainToolSculpt TerrainTool = "sculpt"
+	TerrainToolCliff  TerrainTool = "cliff"
 	TerrainToolPaint  TerrainTool = "paint"
 )
 
@@ -226,7 +227,7 @@ func (a *App) ensurePaintBrush() PaintBrush {
 
 func (a *App) ensureTerrainTool() TerrainTool {
 	switch a.terrainTool {
-	case TerrainToolSculpt, TerrainToolPaint:
+	case TerrainToolSculpt, TerrainToolCliff, TerrainToolPaint:
 		return a.terrainTool
 	default:
 		return TerrainToolSculpt

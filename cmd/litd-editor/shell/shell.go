@@ -38,6 +38,7 @@ type App struct {
 	brush       TerrainBrush
 	terrainTool TerrainTool
 	paint       PaintBrush
+	cliffFlags  []CliffFlagSnapshot
 }
 
 type Confirm struct {
@@ -63,6 +64,7 @@ type Snapshot struct {
 	Brush       TerrainBrushSnapshot `json:"brush"`
 	TerrainTool TerrainTool          `json:"terrainTool"`
 	Paint       PaintBrushSnapshot   `json:"paint"`
+	CliffFlags  []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
 }
 
 type WorldSnapshot struct {
@@ -143,6 +145,7 @@ func (a *App) createProject(dir string) error {
 	a.mode = ModeTerrain
 	a.errText = ""
 	a.confirm = nil
+	a.cliffFlags = nil
 	a.status = must(a.table, locale.EditorStatusProjectCreated)
 	a.resetCommandStack()
 	return nil
@@ -166,6 +169,7 @@ func (a *App) OpenProject(path string) error {
 		a.mode = ModeTerrain
 		a.errText = ""
 		a.confirm = nil
+		a.cliffFlags = nil
 		a.status = must(a.table, locale.EditorStatusProjectOpened)
 		a.resetCommandStack()
 		return nil
@@ -284,6 +288,7 @@ func (a *App) Snapshot() Snapshot {
 		"fieldSplat":        must(a.table, locale.EditorFieldSplat),
 		"fieldTool":         must(a.table, locale.EditorFieldTool),
 		"fieldPaint":        must(a.table, locale.EditorFieldPaint),
+		"fieldFlags":        must(a.table, locale.EditorFieldFlags),
 		"fieldID":           must(a.table, locale.EditorFieldID),
 		"fieldName":         must(a.table, locale.EditorFieldName),
 		"fieldEngine":       must(a.table, locale.EditorFieldEngine),
@@ -319,6 +324,7 @@ func (a *App) Snapshot() Snapshot {
 		Brush:       a.BrushSnapshot(),
 		TerrainTool: a.ensureTerrainTool(),
 		Paint:       a.PaintSnapshot(),
+		CliffFlags:  cloneCliffFlags(a.cliffFlags),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -387,6 +393,14 @@ func (a *App) setCliffCellDirect(x, y int, cell sourceform.CliffCell) error {
 		return errors.New("editor shell: no project loaded")
 	}
 	return a.world.SetCliffCell(x, y, cell)
+}
+
+func (a *App) setCliffFlagsDirect(flags []CliffFlagSnapshot) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	a.cliffFlags = cloneCliffFlags(flags)
+	return nil
 }
 
 func (a *App) setSplatCellDirect(x, y int, cell sourceform.SplatWeight) error {

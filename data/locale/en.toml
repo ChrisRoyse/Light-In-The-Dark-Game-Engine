@@ -66,6 +66,7 @@
 "editor.field.splat" = "splat"
 "editor.field.tool" = "tool"
 "editor.field.paint" = "paint"
+"editor.field.flags" = "flags"
 "editor.field.id" = "id"
 "editor.field.name" = "name"
 "editor.field.engine" = "engine"

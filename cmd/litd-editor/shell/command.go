@@ -237,6 +237,24 @@ func (c cliffCellCommand) Revert(app *App) error {
 
 func (c cliffCellCommand) Noop() bool { return c.before == c.after }
 
+type cliffFlagsCommand struct {
+	before, after []CliffFlagSnapshot
+}
+
+func (c cliffFlagsCommand) Label() string {
+	return fmt.Sprintf("cliff-flags:%d->%d", len(c.before), len(c.after))
+}
+
+func (c cliffFlagsCommand) Apply(app *App) error {
+	return app.setCliffFlagsDirect(c.after)
+}
+
+func (c cliffFlagsCommand) Revert(app *App) error {
+	return app.setCliffFlagsDirect(c.before)
+}
+
+func (c cliffFlagsCommand) Noop() bool { return cliffFlagsEqual(c.before, c.after) }
+
 type splatCellCommand struct {
 	x, y          int
 	before, after sourceform.SplatWeight

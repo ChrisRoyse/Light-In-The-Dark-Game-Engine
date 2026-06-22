@@ -12,10 +12,13 @@ import (
 type BrushOp string
 
 const (
-	BrushRaise BrushOp = "raise"
-	BrushLower BrushOp = "lower"
-	BrushLevel BrushOp = "level"
-	BrushRamp  BrushOp = "ramp"
+	BrushRaise      BrushOp = "raise"
+	BrushLower      BrushOp = "lower"
+	BrushLevel      BrushOp = "level"
+	BrushRamp       BrushOp = "ramp"
+	BrushCliffRaise BrushOp = "cliff-raise"
+	BrushCliffLower BrushOp = "cliff-lower"
+	BrushCliffLevel BrushOp = "cliff-level"
 )
 
 type RampDirection string
@@ -51,6 +54,8 @@ type TerrainStroke struct {
 	seen         map[[2]int]struct{}
 	heightBefore map[brushCell]int
 	cliffBefore  map[brushCell]sourceform.CliffCell
+	flagsBefore  []CliffFlagSnapshot
+	flagsTouched bool
 	closed       bool
 }
 
@@ -80,7 +85,7 @@ func (a *App) SetTerrainBrush(op BrushOp) error {
 	}
 	a.brush = a.ensureBrush()
 	a.brush.Op = op
-	a.terrainTool = TerrainToolSculpt
+	a.terrainTool = terrainToolForBrush(op)
 	a.errText = ""
 	a.status = fmt.Sprintf("Brush: %s", a.brush.label())
 	return nil
@@ -173,6 +178,8 @@ func (a *App) ApplyTerrainStroke(points [][2]int) error {
 		}
 		x, y := points[0][0], points[0][1]
 		commands, err = a.rampBrushCommands(x, y, brush)
+	case BrushCliffRaise, BrushCliffLower, BrushCliffLevel:
+		commands, err = a.cliffStrokeCommands(points, brush)
 	default:
 		err = fmt.Errorf("editor brush: unknown op %q", brush.Op)
 	}
@@ -195,7 +202,7 @@ func (a *App) ApplyTerrainStroke(points [][2]int) error {
 		a.status = fmt.Sprintf("Brush %s stroke: no cells changed", brush.Op)
 		return nil
 	}
-	a.terrainTool = TerrainToolSculpt
+	a.terrainTool = terrainToolForBrush(brush.Op)
 	a.status = fmt.Sprintf("Brush %s stroke applied (%d point(s))", brush.Op, len(points))
 	return nil
 }
@@ -291,6 +298,11 @@ func (s *TerrainStroke) rememberBefore(commands []Command) {
 			if _, ok := s.cliffBefore[k]; !ok {
 				s.cliffBefore[k] = c.before
 			}
+		case cliffFlagsCommand:
+			if !s.flagsTouched {
+				s.flagsBefore = cloneCliffFlags(c.before)
+				s.flagsTouched = true
+			}
 		}
 	}
 }
@@ -310,6 +322,9 @@ func (s *TerrainStroke) finalCommands() ([]Command, error) {
 			return nil, err
 		}
 		commands = append(commands, cliffCellCommand{x: k.x, y: k.y, before: s.cliffBefore[k], after: after})
+	}
+	if s.flagsTouched {
+		commands = append(commands, cliffFlagsCommand{before: s.flagsBefore, after: cloneCliffFlags(s.app.cliffFlags)})
 	}
 	return commands, nil
 }
@@ -334,6 +349,8 @@ func (a *App) terrainStrokePointCommands(x, y int, brush TerrainBrush) ([]Comman
 		return a.heightStrokeCommands([][2]int{{x, y}}, brush)
 	case BrushRamp:
 		return a.rampBrushCommands(x, y, brush)
+	case BrushCliffRaise, BrushCliffLower, BrushCliffLevel:
+		return a.cliffStrokeCommands([][2]int{{x, y}}, brush)
 	default:
 		return nil, fmt.Errorf("editor brush: unknown op %q", brush.Op)
 	}
@@ -427,10 +444,16 @@ func (a *App) rampBrushCommands(cx, cy int, brush TerrainBrush) ([]Command, erro
 		{x: cx, y: cy, before: center, after: sourceform.CliffCell{Level: low.Level, Ramp: true}},
 		{x: highX, y: highY, before: highBefore, after: sourceform.CliffCell{Level: low.Level + 1}},
 	}
-	commands := make([]Command, 0, len(targets))
+	changed := map[terrainCellKey]struct{}{}
+	commands := make([]Command, 0, len(targets)+1)
 	for _, t := range targets {
+		if t.before != t.after {
+			changed[terrainCellKey{x: t.x, y: t.y}] = struct{}{}
+		}
 		commands = append(commands, cliffCellCommand{x: t.x, y: t.y, before: t.before, after: t.after})
 	}
+	flags := appendPlacementFlags(cloneCliffFlags(a.cliffFlags), a.world, changed)
+	commands = append(commands, cliffFlagsCommand{before: cloneCliffFlags(a.cliffFlags), after: flags})
 	return commands, nil
 }
 
@@ -474,10 +497,19 @@ func (a *App) ensureBrush() TerrainBrush {
 
 func validateBrushOp(op BrushOp) error {
 	switch op {
-	case BrushRaise, BrushLower, BrushLevel, BrushRamp:
+	case BrushRaise, BrushLower, BrushLevel, BrushRamp, BrushCliffRaise, BrushCliffLower, BrushCliffLevel:
 		return nil
 	default:
 		return fmt.Errorf("editor brush: unknown op %q", op)
+	}
+}
+
+func terrainToolForBrush(op BrushOp) TerrainTool {
+	switch op {
+	case BrushRamp, BrushCliffRaise, BrushCliffLower, BrushCliffLevel:
+		return TerrainToolCliff
+	default:
+		return TerrainToolSculpt
 	}
 }
 
@@ -498,7 +530,7 @@ func rampDelta(dir RampDirection) (int, int, error) {
 
 func (b TerrainBrush) label() string {
 	parts := []string{string(b.Op), fmt.Sprintf("size %d", b.Size), fmt.Sprintf("strength %d", b.Strength)}
-	if b.Op == BrushLevel {
+	if b.Op == BrushLevel || b.Op == BrushCliffLevel {
 		parts = append(parts, fmt.Sprintf("target %d", b.LevelTarget))
 	}
 	if b.Op == BrushRamp {

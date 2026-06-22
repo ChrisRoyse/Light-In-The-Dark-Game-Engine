@@ -80,6 +80,7 @@ const (
 	EditorFieldSplat              Key = "editor.field.splat"
 	EditorFieldTool               Key = "editor.field.tool"
 	EditorFieldPaint              Key = "editor.field.paint"
+	EditorFieldFlags              Key = "editor.field.flags"
 	EditorFieldID                 Key = "editor.field.id"
 	EditorFieldName               Key = "editor.field.name"
 	EditorFieldEngine             Key = "editor.field.engine"
@@ -156,6 +157,7 @@ var requiredKeys = []string{
 	string(EditorFieldSplat),
 	string(EditorFieldTool),
 	string(EditorFieldPaint),
+	string(EditorFieldFlags),
 	string(EditorFieldID),
 	string(EditorFieldName),
 	string(EditorFieldEngine),

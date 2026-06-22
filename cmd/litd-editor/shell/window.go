@@ -94,6 +94,10 @@ func RunWindow(state *App, opts WindowOptions) error {
 			markDirty(state.SetTerrainBrush(BrushLevel))
 		case window.KeyR:
 			markDirty(state.SetTerrainBrush(BrushRamp))
+		case window.KeyX:
+			markDirty(state.SetTerrainBrush(BrushCliffLower))
+		case window.KeyC:
+			markDirty(state.SetTerrainBrush(BrushCliffLevel))
 		case window.KeyLeftBracket:
 			b := state.BrushSnapshot()
 			markDirty(state.SetBrushSize(b.Size - 1))
@@ -121,6 +125,8 @@ func RunWindow(state *App, opts WindowOptions) error {
 		case window.KeyZ:
 			if kev.Mods&window.ModControl != 0 {
 				markDirty(state.Undo())
+			} else {
+				markDirty(state.SetTerrainBrush(BrushCliffRaise))
 			}
 		case window.KeyY:
 			if kev.Mods&window.ModControl != 0 {

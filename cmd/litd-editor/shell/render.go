@@ -105,6 +105,7 @@ func drawTerrain(img *image.RGBA, snap Snapshot) {
 			rows[y] = make([]int, min(8, snap.World.Width))
 		}
 	}
+	flagCells := cliffFlagCells(snap.CliffFlags)
 	for y := 0; y < len(rows) && y < 8; y++ {
 		for x := 0; x < len(rows[y]) && x < 8; x++ {
 			h := rows[y][x]
@@ -118,6 +119,9 @@ func drawTerrain(img *image.RGBA, snap Snapshot) {
 			if y < len(snap.World.CliffRows) && x < len(snap.World.CliffRows[y]) && strings.HasPrefix(snap.World.CliffRows[y][x], "r") {
 				fill(img, terrainGridX+x*terrainGridStepX+terrainGridCellW-7, terrainGridY+y*terrainGridStepY, 7, terrainGridCellH, brass)
 			}
+			if kind, ok := flagCells[[2]int{x, y}]; ok {
+				drawCliffFlagMarker(img, terrainGridX+x*terrainGridStepX, terrainGridY+y*terrainGridStepY, kind)
+			}
 		}
 	}
 	text(img, 640, 226, snap.Labels["fieldCell"]+"[1,1]="+fmt.Sprint(snap.World.HeightCell), brass)
@@ -126,16 +130,17 @@ func drawTerrain(img *image.RGBA, snap Snapshot) {
 	text(img, 640, 338, snap.Labels["fieldTool"]+": "+string(snap.TerrainTool), brass)
 	text(img, 640, 370, snap.Labels["fieldBrush"]+": "+snap.Brush.Label, ink)
 	text(img, 640, 402, snap.Labels["fieldPaint"]+": "+snap.Paint.Label, ink)
+	textFit(img, 640, 434, 520, snap.Labels["fieldFlags"]+": "+cliffFlagsLabel(snap.CliffFlags), flagTextColor(snap.CliffFlags))
 	for i, layer := range snap.Paint.Palette {
 		x := 640 + i*72
-		y := 442
+		y := 474
 		fill(img, x, y, 42, 24, paintLayerColor(layer.Layer))
 		if layer.Active {
 			fill(img, x, y+26, 42, 3, brass)
 		}
 		text(img, x+50, y+18, string(rune('A'+layer.Layer)), muted)
 	}
-	text(img, 640, 502, snap.Labels["hintTerrain"], muted)
+	text(img, 640, 532, snap.Labels["hintTerrain"], muted)
 }
 
 func drawObjects(img *image.RGBA, snap Snapshot) {
@@ -218,6 +223,62 @@ func paintLayerColor(layer int) color.RGBA {
 	default:
 		return panelAlt
 	}
+}
+
+func cliffFlagCells(flags []CliffFlagSnapshot) map[[2]int]CliffFlagKind {
+	out := make(map[[2]int]CliffFlagKind, len(flags))
+	for _, flag := range flags {
+		key := [2]int{flag.X, flag.Y}
+		if flag.Kind == CliffFlagRampInvalidated {
+			out[key] = flag.Kind
+			continue
+		}
+		if _, ok := out[key]; !ok {
+			out[key] = flag.Kind
+		}
+	}
+	return out
+}
+
+func drawCliffFlagMarker(img *image.RGBA, x, y int, kind CliffFlagKind) {
+	c := brass
+	if kind == CliffFlagRampInvalidated {
+		c = errorColor
+	}
+	fill(img, x+2, y+2, terrainGridCellW-4, 3, c)
+	fill(img, x+2, y+2, 3, terrainGridCellH-4, c)
+	fill(img, x+terrainGridCellW-5, y+2, 3, terrainGridCellH-4, c)
+	fill(img, x+2, y+terrainGridCellH-5, terrainGridCellW-4, 3, c)
+}
+
+func cliffFlagsLabel(flags []CliffFlagSnapshot) string {
+	if len(flags) == 0 {
+		return "none"
+	}
+	limit := len(flags)
+	if limit > 3 {
+		limit = 3
+	}
+	parts := make([]string, 0, limit+1)
+	for i := 0; i < limit; i++ {
+		flag := flags[i]
+		label := fmt.Sprintf("%s[%d,%d]", flag.Kind, flag.X, flag.Y)
+		if flag.EntityID != 0 {
+			label += fmt.Sprintf("#%d", flag.EntityID)
+		}
+		parts = append(parts, label)
+	}
+	if len(flags) > limit {
+		parts = append(parts, fmt.Sprintf("+%d more", len(flags)-limit))
+	}
+	return strings.Join(parts, " ")
+}
+
+func flagTextColor(flags []CliffFlagSnapshot) color.RGBA {
+	if len(flags) == 0 {
+		return muted
+	}
+	return errorColor
 }
 
 func clampInt(v, lo, hi int) int {

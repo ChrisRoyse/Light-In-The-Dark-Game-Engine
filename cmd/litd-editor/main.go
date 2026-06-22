@@ -120,6 +120,10 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runPaintFSV(app, outDir); err != nil {
 		return err
 	}
+	cliffState := newCliffFSVState()
+	if err := runCliffFSV(app, outDir, cliffState); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -183,8 +187,13 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 	for _, step := range brushWindowSteps(app, outDir) {
 		steps = append(steps, step)
 	}
-	var paintBeforeHash string
-	for _, step := range paintWindowSteps(app, outDir, &paintBeforeHash) {
+	var paintBeforeHash, paintAfterHash string
+	var paintStack shell.StackSnapshot
+	for _, step := range paintWindowSteps(app, outDir, &paintBeforeHash, &paintAfterHash, &paintStack) {
+		steps = append(steps, step)
+	}
+	cliffState := newCliffFSVState()
+	for _, step := range cliffWindowSteps(app, outDir, cliffState) {
 		steps = append(steps, step)
 	}
 	if err := shell.RunWindowCaptureSequence(app, steps); err != nil {
@@ -193,7 +202,10 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 	if err := writeBrushDump(app, outDir); err != nil {
 		return err
 	}
-	if err := writePaintDump(app, outDir, paintBeforeHash); err != nil {
+	if err := writePaintDump(app, outDir, paintBeforeHash, paintAfterHash, &paintStack); err != nil {
+		return err
+	}
+	if err := writeCliffDump(app, outDir, cliffState); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -355,7 +367,7 @@ func runPaintFSV(app *shell.App, outDir string) error {
 			return err
 		}
 	}
-	return writePaintDump(app, outDir, beforeHash)
+	return writePaintDump(app, outDir, beforeHash, "", nil)
 }
 
 func brushWindowSteps(app *shell.App, outDir string) []shell.WindowCaptureStep {
@@ -374,7 +386,7 @@ func brushWindowSteps(app *shell.App, outDir string) []shell.WindowCaptureStep {
 	return out
 }
 
-func paintWindowSteps(app *shell.App, outDir string, beforeHash *string) []shell.WindowCaptureStep {
+func paintWindowSteps(app *shell.App, outDir string, beforeHash, afterHash *string, stack *shell.StackSnapshot) []shell.WindowCaptureStep {
 	steps := paintSteps(app)
 	out := make([]shell.WindowCaptureStep, 0, len(steps))
 	for i, step := range steps {
@@ -386,6 +398,196 @@ func paintWindowSteps(app *shell.App, outDir string, beforeHash *string) []shell
 				if beforeHash != nil && *beforeHash == "" {
 					*beforeHash = app.SimRelevantHash()
 				}
+				if err := step.Apply(); err != nil {
+					return err
+				}
+				if afterHash != nil {
+					*afterHash = app.SimRelevantHash()
+				}
+				if stack != nil {
+					*stack = app.StackSnapshot()
+				}
+				return nil
+			},
+		})
+	}
+	return out
+}
+
+type cliffFSVState struct {
+	Pathable      map[string]bool                      `json:"pathable"`
+	StepCliffRows map[string][][]string                `json:"stepCliffRows"`
+	StepFlags     map[string][]shell.CliffFlagSnapshot `json:"stepFlags"`
+}
+
+func newCliffFSVState() *cliffFSVState {
+	return &cliffFSVState{
+		Pathable:      map[string]bool{},
+		StepCliffRows: map[string][][]string{},
+		StepFlags:     map[string][]shell.CliffFlagSnapshot{},
+	}
+}
+
+func (s *cliffFSVState) capture(name string, app *shell.App) {
+	if s == nil {
+		return
+	}
+	snap := app.Snapshot()
+	s.StepCliffRows[name] = snap.World.CliffRows
+	s.StepFlags[name] = snap.CliffFlags
+}
+
+type editorCliffStep struct {
+	Name  string
+	Apply func() error
+}
+
+func cliffSteps(app *shell.App, state *cliffFSVState) []editorCliffStep {
+	recordPath := func(name string, ax, ay, bx, by int) error {
+		ok, err := app.CliffStepLegal(ax, ay, bx, by)
+		if err != nil {
+			return err
+		}
+		if state != nil {
+			state.Pathable[name] = ok
+		}
+		return nil
+	}
+	return []editorCliffStep{
+		{
+			Name: "cliff-unit-flag",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
+					return err
+				}
+				if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(0); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(1, 1); err != nil {
+					return err
+				}
+				state.capture("unit-flag", app)
+				return nil
+			},
+		},
+		{
+			Name: "cliff-plateau",
+			Apply: func() error {
+				if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(1); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(4, 4); err != nil {
+					return err
+				}
+				state.capture("plateau", app)
+				return nil
+			},
+		},
+		{
+			Name: "cliff-ramp",
+			Apply: func() error {
+				if err := app.SetTerrainBrush(shell.BrushRamp); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.SetBrushRampDirection(shell.RampEast); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(3, 4); err != nil {
+					return err
+				}
+				if err := recordPath("low_to_ramp_before_lower", 2, 4, 3, 4); err != nil {
+					return err
+				}
+				if err := recordPath("ramp_to_high_before_lower", 3, 4, 4, 4); err != nil {
+					return err
+				}
+				state.capture("ramp", app)
+				return nil
+			},
+		},
+		{
+			Name: "cliff-lower-invalidates-ramp",
+			Apply: func() error {
+				if err := app.SetTerrainBrush(shell.BrushCliffLower); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(0); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(3, 4); err != nil {
+					return err
+				}
+				if err := recordPath("low_to_center_after_lower", 2, 4, 3, 4); err != nil {
+					return err
+				}
+				if err := recordPath("center_to_high_after_lower", 3, 4, 4, 4); err != nil {
+					return err
+				}
+				state.capture("lower-invalidates-ramp", app)
+				return nil
+			},
+		},
+		{
+			Name: "cliff-border",
+			Apply: func() error {
+				if err := app.SetTerrainBrush(shell.BrushCliffLower); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(2); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(64); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(0, 0); err != nil {
+					return err
+				}
+				state.capture("border", app)
+				return nil
+			},
+		},
+	}
+}
+
+func runCliffFSV(app *shell.App, outDir string, state *cliffFSVState) error {
+	for i, step := range cliffSteps(app, state) {
+		if err := step.Apply(); err != nil {
+			return err
+		}
+		if err := renderState(outDir, fmt.Sprintf("%02d-%s.png", i+15, step.Name), app); err != nil {
+			return err
+		}
+	}
+	return writeCliffDump(app, outDir, state)
+}
+
+func cliffWindowSteps(app *shell.App, outDir string, state *cliffFSVState) []shell.WindowCaptureStep {
+	steps := cliffSteps(app, state)
+	out := make([]shell.WindowCaptureStep, 0, len(steps))
+	for i, step := range steps {
+		step := step
+		out = append(out, shell.WindowCaptureStep{
+			Name:     step.Name,
+			ShotPath: filepath.Join(outDir, fmt.Sprintf("%02d-%s.png", i+15, step.Name)),
+			BeforeCapture: func() error {
 				return step.Apply()
 			},
 		})
@@ -429,11 +631,77 @@ func writeBrushDump(app *shell.App, outDir string) error {
 	return os.WriteFile(filepath.Join(outDir, "brush-grid-dump.json"), append(body, '\n'), 0o644)
 }
 
-func writePaintDump(app *shell.App, outDir, beforeHash string) error {
+func writeCliffDump(app *shell.App, outDir string, state *cliffFSVState) error {
+	if state == nil {
+		state = newCliffFSVState()
+	}
+	snap := app.Snapshot()
+	pathable := map[string]bool{}
+	for k, v := range state.Pathable {
+		pathable[k] = v
+	}
+	for name, q := range map[string][4]int{
+		"final_low_to_center":   {2, 4, 3, 4},
+		"final_center_to_high":  {3, 4, 4, 4},
+		"final_brush_ramp_low":  {3, 6, 4, 6},
+		"final_brush_ramp_high": {4, 6, 5, 6},
+	} {
+		ok, err := app.CliffStepLegal(q[0], q[1], q[2], q[3])
+		if err != nil {
+			return err
+		}
+		pathable[name] = ok
+	}
+	dump := struct {
+		CliffRows     [][]string                           `json:"cliffRows"`
+		CliffFlags    []shell.CliffFlagSnapshot            `json:"cliffFlags"`
+		StepCliffRows map[string][][]string                `json:"stepCliffRows"`
+		StepFlags     map[string][]shell.CliffFlagSnapshot `json:"stepFlags"`
+		Brush         shell.TerrainBrushSnapshot           `json:"brush"`
+		Stack         shell.StackSnapshot                  `json:"stack"`
+		Pathable      map[string]bool                      `json:"pathable"`
+		Cells         map[string]string                    `json:"cells"`
+	}{
+		CliffRows:     snap.World.CliffRows,
+		CliffFlags:    snap.CliffFlags,
+		StepCliffRows: state.StepCliffRows,
+		StepFlags:     state.StepFlags,
+		Brush:         snap.Brush,
+		Stack:         snap.Stack,
+		Pathable:      pathable,
+		Cells: map[string]string{
+			"unit_1_1":       snap.World.CliffRows[1][1],
+			"low_2_4":        snap.World.CliffRows[4][2],
+			"ramp_3_4":       snap.World.CliffRows[4][3],
+			"plateau_4_4":    snap.World.CliffRows[4][4],
+			"border_0_0":     snap.World.CliffRows[0][0],
+			"border_1_0":     snap.World.CliffRows[0][1],
+			"brush_ramp_4_6": snap.World.CliffRows[6][4],
+			"brush_high_5_6": snap.World.CliffRows[6][5],
+		},
+	}
+	body, err := json.MarshalIndent(dump, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "cliff-grid-dump.json"), append(body, '\n'), 0o644)
+}
+
+func writePaintDump(app *shell.App, outDir, beforeHash, afterHash string, stackOverride *shell.StackSnapshot) error {
 	if beforeHash == "" {
 		return fmt.Errorf("paint FSV missing pre-paint sim-relevant hash")
 	}
+	if afterHash == "" {
+		afterHash = app.SimRelevantHash()
+	}
 	snap := app.Snapshot()
+	stack := snap.Stack
+	if stackOverride != nil {
+		stack = *stackOverride
+	}
 	dump := struct {
 		SplatRows             [][][]int                `json:"splatRows"`
 		Paint                 shell.PaintBrushSnapshot `json:"paint"`
@@ -444,9 +712,9 @@ func writePaintDump(app *shell.App, outDir, beforeHash string) error {
 	}{
 		SplatRows:             snap.World.SplatRows,
 		Paint:                 snap.Paint,
-		Stack:                 snap.Stack,
+		Stack:                 stack,
 		SimRelevantHashBefore: beforeHash,
-		SimRelevantHashAfter:  app.SimRelevantHash(),
+		SimRelevantHashAfter:  afterHash,
 		Cells: map[string][]int{
 			"overlap_2_2":  snap.World.SplatRows[2][2],
 			"boundary_3_4": snap.World.SplatRows[4][3],
