@@ -26,7 +26,9 @@
 #
 # Inner-loop tip: for a single package, `go test -short ./litd/<pkg>/` skips the
 # long e2e/determinism fixtures (gated by testing.Short()) — seconds, not minutes.
-# The FULL gate (no -short) always runs them before a main merge.
+# The FULL gate (no -short) always runs them before a main merge. Wall-clock
+# budget tests are isolated into explicit preflight steps instead of normal
+# package-parallel `go test ./...`.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
@@ -139,6 +141,10 @@ if [ $FAST -eq 0 ]; then
   if [ $RACE -eq 1 ]; then
     step "10k-tick sim determinism (-race)" go test ./litd/sim/ -run 'TestDeterminism10k$' -race
   fi
+
+  # Wall-clock worst-tick gates are sensitive to go test's package-level
+  # parallelism, so run this gate alone and require explicit opt-in in the test.
+  step "battle-500 tick budget (isolated)" env LITD_TICK_GATE=on GOMAXPROCS=1 go test ./litd/sim/bench -run '^TestBattle500TickBudget$' -count=1 -p 1
 
   # --- bench budgets (ci.yml bench job) -------------------------------------
   step "benchmark budgets (R-GC-5)" go run ./tools/benchharness

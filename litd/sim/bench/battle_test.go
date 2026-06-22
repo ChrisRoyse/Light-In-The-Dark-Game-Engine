@@ -353,14 +353,20 @@ func TestBattle500CounterExportFSV(t *testing.T) {
 	}
 }
 
-// TestBattle500TickBudget is the CI gate + #202 edge 3: a sustained
-// 5,000-tick run where no tick may exceed 10 ms, no pool exhausts,
-// and the missile population stays saturated. LITD_TICK_GATE=off
-// demotes the assert to a log line for loaded dev machines; CI keeps
-// it fatal.
+// TestBattle500TickBudget is the local preflight gate + #202 edge 3:
+// a sustained 5,000-tick run where no tick may exceed 10 ms, no pool
+// exhausts, and the missile population stays saturated. Because this
+// is a wall-clock gate, normal package-parallel `go test ./...` skips
+// it; scripts/preflight.sh runs it in isolation with LITD_TICK_GATE=on.
+// LITD_TICK_GATE=off still runs the measurement but demotes the
+// budget assert to a log line for loaded dev machines.
 func TestBattle500TickBudget(t *testing.T) {
 	if testing.Short() {
 		t.Skip("5,000-tick sustained run skipped in -short")
+	}
+	gateMode := os.Getenv("LITD_TICK_GATE")
+	if gateMode == "" {
+		t.Skip("wall-clock tick gate runs only when LITD_TICK_GATE is set; scripts/preflight.sh runs it isolated with LITD_TICK_GATE=on")
 	}
 	w := buildBattle(t, 500)
 	for i := 0; i < warmupTicks; i++ {
@@ -379,7 +385,7 @@ func TestBattle500TickBudget(t *testing.T) {
 	}
 	if st.worst > tickBudget {
 		msg := "worst tick " + st.worst.String() + " exceeds the " + tickBudget.String() + " gate"
-		if os.Getenv("LITD_TICK_GATE") == "off" {
+		if gateMode == "off" {
 			t.Log("GATE (demoted by LITD_TICK_GATE=off): " + msg)
 		} else {
 			t.Error(msg)
