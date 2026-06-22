@@ -9,6 +9,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 )
 
 // loadCategories reads a category map file: one `<rel-path> <category>` per line,
@@ -68,7 +70,7 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		if err := Pack(fs.Arg(0), fs.Arg(1), *engine, Hosting{Author: *author, Title: *title, Description: *desc}, categories); err != nil {
+		if err := worldpack.Pack(fs.Arg(0), fs.Arg(1), *engine, worldpack.Hosting{Author: *author, Title: *title, Description: *desc}, categories); err != nil {
 			fmt.Fprintln(os.Stderr, "worldpack: pack:", err)
 			os.Exit(1)
 		}
@@ -85,7 +87,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "usage: worldpack unpack <archive.litdworld> <dest-dir>")
 			os.Exit(2)
 		}
-		if err := Unpack(fs.Arg(0), fs.Arg(1)); err != nil {
+		if err := worldpack.Unpack(fs.Arg(0), fs.Arg(1)); err != nil {
 			fmt.Fprintln(os.Stderr, "worldpack: unpack:", err)
 			os.Exit(1)
 		}

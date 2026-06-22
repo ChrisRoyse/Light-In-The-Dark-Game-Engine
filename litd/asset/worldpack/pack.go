@@ -1,10 +1,10 @@
-// Package main implements worldpack: a deterministic world-archive builder and
+// Package worldpack implements a deterministic world-archive builder and
 // unpacker (#10; D-2026-06-11-33, D-14). A given source directory always packs
 // to a byte-identical `.litdworld` archive — sorted entry order, a fixed
 // timestamp, uniform file mode, and Deflate — so the content hash is stable
 // across machines and OSes. The archive carries a content-hash manifest
 // (consumed by the hub and the M7 join-guard) and an engine-version range.
-package main
+package worldpack
 
 import (
 	"archive/zip"
@@ -78,6 +78,19 @@ func collect(srcDir string) ([]string, error) {
 		if err != nil {
 			return err
 		}
+		if p != srcDir {
+			rel, rerr := filepath.Rel(srcDir, p)
+			if rerr != nil {
+				return rerr
+			}
+			rel = filepath.ToSlash(rel)
+			if isVCSMetadataRel(rel) {
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+		}
 		if d.IsDir() {
 			return nil
 		}
@@ -108,6 +121,15 @@ func collect(srcDir string) ([]string, error) {
 		seen[lc] = rel
 	}
 	return rels, nil
+}
+
+func isVCSMetadataRel(rel string) bool {
+	switch rel {
+	case ".git", ".gitattributes", ".gitignore", ".gitmodules":
+		return true
+	default:
+		return false
+	}
 }
 
 // hashFiles streams each file through SHA-256 (no full-file buffering).

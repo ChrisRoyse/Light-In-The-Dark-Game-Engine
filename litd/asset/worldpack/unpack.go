@@ -1,4 +1,4 @@
-package main
+package worldpack
 
 import (
 	"archive/zip"

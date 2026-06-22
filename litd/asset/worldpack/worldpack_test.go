@@ -1,4 +1,4 @@
-package main
+package worldpack
 
 // #10 worldpack FSV. SoT = the archive bytes (sha256) and the unpacked tree.
 // Determinism is proven by packing identical source twice and comparing the
@@ -188,4 +188,29 @@ func TestManifestContents(t *testing.T) {
 	if byPath["x.txt"].Hash != hex.EncodeToString(hx[:]) {
 		t.Fatalf("x.txt hash mismatch: manifest %s want %s", byPath["x.txt"].Hash, hex.EncodeToString(hx[:]))
 	}
+}
+
+func TestPackSkipsGitMetadataFSV(t *testing.T) {
+	src := t.TempDir()
+	writeTree(t, src, map[string]string{
+		"world.toml":     "name = \"git-skip\"\n",
+		".git/config":    "[core]\nrepositoryformatversion = 0\n",
+		".gitattributes": "assets/** filter=lfs\n",
+		".gitignore":     "*.tmp\n",
+		".gitmodules":    "",
+	})
+	arc := filepath.Join(t.TempDir(), "git-skip.litdworld")
+	if err := Pack(src, arc, "", Hosting{}, nil); err != nil {
+		t.Fatal(err)
+	}
+	dest := t.TempDir()
+	if err := Unpack(arc, dest); err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{".git/config", ".gitattributes", ".gitignore", ".gitmodules"} {
+		if _, err := os.Stat(filepath.Join(dest, filepath.FromSlash(rel))); !os.IsNotExist(err) {
+			t.Fatalf("VCS metadata %s leaked into archive: %v", rel, err)
+		}
+	}
+	t.Logf("FSV git metadata skip: .git/config/.gitattributes/.gitignore/.gitmodules present before pack, absent after unpack")
 }
