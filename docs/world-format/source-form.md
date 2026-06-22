@@ -192,12 +192,13 @@ Doodads remain scenery placement by default and are not rejected by pathing flag
 ```toml
 # one element per line; ordered by id; ids never reused
 entities = [
-  { id = 1, type = "footman", player = 0, pos = [4096, 4096], rotation = 16384, scale = 1000 },
-  { id = 2, type = "beacon", player = 255, pos = [8192, 8192], rotation = 0, scale = 1000 },
+  { id = 1, type = "footman", player = 0, pos = [128, 128], rotation = 16384, scale = 1000 },
+  { id = 2, type = "beacon", player = 255, pos = [256, 256], rotation = 0, scale = 1000 },
 ]
 ```
 
-`pos` is sim fixed-point world units (integers); `rotation` is a BAM angle;
+`pos` is sim world units (integers); one terrain cell is 128 world units
+(4 pathing cells * 32 world units). `rotation` is a BAM angle;
 `scale` is an integer per-mille transform scale where `1000` means 1.0x. Legacy
 hand-authored `facing` is accepted as an alias for `rotation` and normalized on
 save.
@@ -207,7 +208,7 @@ save.
 ```toml
 # one element per line; ordered by id; ids never reused
 doodads = [
-  { id = 1, type = "kaykit-hexagon/tree_single_A.glb", pos = [4096, 8192], rotation = 0, scale = 1000 },
+  { id = 1, type = "kaykit-hexagon/tree_single_A.glb", pos = [128, 256], rotation = 0, scale = 1000 },
 ]
 ```
 

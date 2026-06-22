@@ -984,7 +984,7 @@ func defaultWorldSized(name string, width, height int) (*sourceform.World, error
 		Cliff:   cliffGrid(),
 		Splat:   splatGrid(),
 		Entities: []sourceform.Entity{
-			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{entityCell[0] * 4096, entityCell[1] * 4096}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
+			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{entityCell[0] * sourceform.TerrainCellWorldUnit, entityCell[1] * sourceform.TerrainCellWorldUnit}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
 		},
 	}, nil
 }

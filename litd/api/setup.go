@@ -5,6 +5,7 @@ import (
 	"log"
 
 	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapgrid"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
@@ -42,9 +43,10 @@ type GameOptions struct {
 
 	// Map is the loaded skirmish map (#410), or nil for a mapless programmatic
 	// game. The CALLER loads + validates it (mapdata.Load) and passes it in, so
-	// NewGame still reads no filesystem. When set, NewGame seeds each player's
-	// start location from the map; MapStarts/MapBeacons expose the placements,
-	// and the script-binding layer surfaces them to Lua worlds.
+	// NewGame still reads no filesystem. When set, NewGame installs the sim
+	// pathing grid, seeds each player's start location from the map,
+	// MapStarts/MapBeacons expose the placements, and the script-binding layer
+	// surfaces them to Lua worlds.
 	Map *mapdata.Map
 }
 
@@ -74,6 +76,11 @@ func NewGame(opts GameOptions) (*Game, error) {
 	w.SetSeed(uint64(opts.Seed))
 	g := newGame(w)
 	if opts.Map != nil {
+		grid, err := mapgrid.GridFromMap(opts.Map)
+		if err != nil {
+			return nil, fmt.Errorf("api: NewGame: map pathing grid: %w", err)
+		}
+		g.w.SetGrid(grid)
 		g.mapData = opts.Map
 		// Seed start locations: the map's per-player start cell becomes both the
 		// indexed start-location table (StartLocation(i)) and the player's sim

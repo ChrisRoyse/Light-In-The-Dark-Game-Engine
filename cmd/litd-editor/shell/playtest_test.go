@@ -32,6 +32,10 @@ func TestInstallPlayableRuntimePersistsSourceAndArchiveFSV(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	units, err := os.ReadFile(filepath.Join(app.projectPath, "data", "units", "editor.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	script, err := os.ReadFile(filepath.Join(app.projectPath, "scripts", "main.lua"))
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +43,10 @@ func TestInstallPlayableRuntimePersistsSourceAndArchiveFSV(t *testing.T) {
 	if !strings.Contains(string(placement), "type = \"footman\"") || !strings.Contains(string(placement), "owner = 0") {
 		t.Fatalf("FSV after install: placement TOML missing unit row:\n%s", placement)
 	}
-	if string(script) != "Game_SetTimeOfDay(12.0)\n" {
+	if !strings.Contains(string(units), "sight-day = 900") || !strings.Contains(string(units), "sight-night = 900") {
+		t.Fatalf("FSV after install: unit TOML missing sight radii needed by mapped-world acquisition:\n%s", units)
+	}
+	if string(script) != playtestMainLua {
 		t.Fatalf("FSV after install: scripts/main.lua=%q", script)
 	}
 
@@ -56,7 +63,14 @@ func TestInstallPlayableRuntimePersistsSourceAndArchiveFSV(t *testing.T) {
 		manifestFiles = append(manifestFiles, rel)
 	}
 	opened.Close()
-	for _, rel := range []string{"data/combat/damage-table.toml", "data/units/editor.toml", "data/placement/editor.toml", "scripts/main.lua"} {
+	for _, rel := range []string{
+		"data/combat/damage-table.toml",
+		"data/units/editor.toml",
+		"data/placement/editor.toml",
+		"data/maps/untitled-world/terrain.toml",
+		"data/maps/untitled-world/pathing.txt",
+		"scripts/main.lua",
+	} {
 		if !containsString(manifestFiles, rel) {
 			t.Fatalf("FSV archive manifest missing %s in %v", rel, manifestFiles)
 		}
@@ -64,7 +78,7 @@ func TestInstallPlayableRuntimePersistsSourceAndArchiveFSV(t *testing.T) {
 	if containsString(manifestFiles, "main.lua") {
 		t.Fatalf("FSV archive should carry source-form scripts/main.lua, not root main.lua: %v", manifestFiles)
 	}
-	t.Logf("FSV playable runtime: source placement=%q script=%q archive=%s manifest=%v", string(placement), string(script), archive, manifestFiles)
+	t.Logf("FSV playable runtime: source placement=%q units=%q script=%q archive=%s manifest=%v", string(placement), string(units), string(script), archive, manifestFiles)
 }
 
 func TestInstallPlayableRuntimeRefusesNoProjectFSV(t *testing.T) {

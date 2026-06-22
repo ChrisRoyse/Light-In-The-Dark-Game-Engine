@@ -127,6 +127,24 @@ func (a *App) InstallPlayableRuntime() error {
 			return err
 		}
 	}
+	runtimeMap, err := a.world.RuntimeMapFiles()
+	if err != nil {
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	mapRels := make([]string, 0, len(runtimeMap))
+	for rel := range runtimeMap {
+		mapRels = append(mapRels, rel)
+	}
+	sort.Strings(mapRels)
+	for _, rel := range mapRels {
+		if err := a.world.SetPassthroughFile(rel, runtimeMap[rel]); err != nil {
+			a.errText = err.Error()
+			a.status = a.errText
+			return err
+		}
+	}
 	a.errText = ""
 	a.status = "Playable runtime installed"
 	return nil
@@ -210,12 +228,18 @@ type playtestRuntimeFile struct {
 	body []byte
 }
 
+const playtestMainLua = `Game_SetTimeOfDay(12.0)
+for _, u in ipairs(Game_AllUnits()) do
+	Unit_Order(u, Game_Order("hold"), nil)
+end
+`
+
 func playtestRuntimeFiles(w *sourceform.World, scriptRel string) []playtestRuntimeFile {
 	return []playtestRuntimeFile{
 		{rel: "data/combat/damage-table.toml", body: []byte(playtestDamageTable)},
 		{rel: "data/units/editor.toml", body: []byte(playtestUnitsTOML(w.Entities))},
 		{rel: "data/placement/editor.toml", body: []byte(playtestPlacementTOML(w.Entities))},
-		{rel: scriptRel, body: []byte("Game_SetTimeOfDay(12.0)\n")},
+		{rel: scriptRel, body: []byte(playtestMainLua)},
 	}
 }
 
@@ -225,7 +249,7 @@ func writePlaytestRuntime(stage string, w *sourceform.World) error {
 			return err
 		}
 	}
-	return nil
+	return w.WriteRuntimeMapFiles(stage)
 }
 
 const playtestDamageTable = `attack-types = ["normal", "piercing"]
@@ -254,7 +278,7 @@ func playtestUnitsTOML(entities []sourceform.Entity) string {
 			armor = "light"
 			attack = "piercing"
 		}
-		fmt.Fprintf(&b, "[[unit]]\nid = %s\nlife = 100\narmor-type = %s\nmove-speed = 270\nturn-rate = 0.6\ncollision-size = 16\npathing = \"ground\"\n\n", strconv.Quote(typ), strconv.Quote(armor))
+		fmt.Fprintf(&b, "[[unit]]\nid = %s\nlife = 100\narmor-type = %s\nmove-speed = 270\nturn-rate = 0.6\ncollision-size = 16\npathing = \"ground\"\nsight-day = 900\nsight-night = 900\n\n", strconv.Quote(typ), strconv.Quote(armor))
 		fmt.Fprintf(&b, "acquisition-range = 600\n\n")
 		fmt.Fprintf(&b, "[[unit.attack]]\ntype = %s\nrange = 90\ndamage-base = 10\ncooldown = 1.0\ndelivery = \"instant\"\ntargets-allowed = [\"ground\"]\n\n", strconv.Quote(attack))
 	}

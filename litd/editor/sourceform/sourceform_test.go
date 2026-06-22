@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 )
@@ -528,8 +529,94 @@ func TestSourceFormExportArchiveFSV(t *testing.T) {
 	if gotEntry.Hash != wantHash {
 		t.Fatalf("archive manifest hash %s, want source file hash %s", gotEntry.Hash, wantHash)
 	}
+	for _, rel := range []string{
+		"data/maps/firstlight-sample/terrain.toml",
+		"data/maps/firstlight-sample/pathing.txt",
+		"data/maps/firstlight-sample/cliff.txt",
+		"data/maps/firstlight-sample/height.txt",
+		"data/maps/firstlight-sample/splat.txt",
+		"data/maps/firstlight-sample/doodads.toml",
+	} {
+		if _, ok := opened.Manifest.Files[rel]; !ok {
+			t.Fatalf("archive manifest missing generated runtime map file %s", rel)
+		}
+	}
+	runtimeMap, err := mapdata.Load(opened.FS(), "data/maps/firstlight-sample")
+	if err != nil {
+		t.Fatalf("generated runtime map should load from archive: %v", err)
+	}
+	t.Logf("FSV generated runtime map: path=%s dims=%dx%d pathing=%dx%d starts=%+v fp=%016x",
+		runtimeMap.Path, runtimeMap.Width, runtimeMap.Height, runtimeMap.PathingWidth, runtimeMap.PathingHeight, runtimeMap.Starts(), runtimeMap.Fingerprint)
 	if !bytes.Contains(entitiesBytes, []byte(`pos = [2048, 2048]`)) {
 		t.Fatalf("saved entities missing exported dirty edit:\n%s", entitiesBytes)
+	}
+}
+
+func TestSourceFormRuntimeMapProjectionFSV(t *testing.T) {
+	w := &World{
+		Metadata: Metadata{
+			Format:      1,
+			ID:          "runtime-map-fsv",
+			Name:        "Runtime Map FSV",
+			Description: "runtime projection",
+			Authors:     []string{"FSV"},
+			Engine:      ">=0.1.0 <0.2.0",
+			Players:     Players{Min: 1, Max: 2, Suggested: 1},
+			SeedPolicy:  "host",
+		},
+		Terrain: Terrain{
+			Width:   2,
+			Height:  2,
+			Tileset: "vigil-lowlands",
+			Biome:   "dawn-splat",
+			StartLocations: []StartLocation{
+				{Player: 1, Cell: [2]int{1, 1}},
+			},
+		},
+		Height: [][]int{
+			{1, 2},
+			{3, 4},
+		},
+		Pathing: DefaultPathingGrid(2, 2),
+		Cliff: [][]CliffCell{
+			{{Level: 0, Ramp: true}, {Level: 1}},
+			{{Level: 0}, {Level: 0}},
+		},
+		Splat: [][]SplatWeight{
+			{{A: 255}, {B: 255}},
+			{{C: 255}, {D: 255}},
+		},
+	}
+	w.Pathing[0][0] = 0
+	stage := t.TempDir()
+	files, err := w.RuntimeMapFiles()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writeFiles(stage, files); err != nil {
+		t.Fatal(err)
+	}
+	m, err := mapdata.Load(os.DirFS(stage), "data/maps/runtime-map-fsv")
+	if err != nil {
+		t.Fatalf("runtime projection should load: %v", err)
+	}
+	starts := m.Starts()
+	flags, _ := m.PathingAt(0, 0)
+	height, _ := m.HeightAtVertex(2, 2)
+	ramp, _ := m.CliffAt(0, 0)
+	high, _ := m.CliffAt(4, 0)
+	t.Logf("FSV runtime projection: files=%d start=%+v pathing00=%d height(2,2)=%d cliff00=%+v cliff40=%+v", len(files), starts, flags, height, ramp, high)
+	if len(starts) != 1 || starts[0].Player != 0 || starts[0].X != 6 || starts[0].Y != 6 {
+		t.Fatalf("runtime start = %+v, want player 0 at source cell center pathing 6,6", starts)
+	}
+	if flags != 0 {
+		t.Fatalf("pathing[0,0]=%d, want authored blocked cell 0", flags)
+	}
+	if height != 4 {
+		t.Fatalf("height vertex (2,2)=%d, want duplicated source edge 4", height)
+	}
+	if !ramp.Ramp || ramp.Level != 0 || high.Level != 1 || high.Ramp {
+		t.Fatalf("cliff expansion wrong: ramp=%+v high=%+v", ramp, high)
 	}
 }
 

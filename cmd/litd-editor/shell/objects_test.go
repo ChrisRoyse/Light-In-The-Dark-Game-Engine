@@ -58,7 +58,7 @@ func TestObjectPlacementPaletteTransformsAndEdgesFSV(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("FSV object unit transform before=%+v after=%+v stack=%s", u1, u1After, stackJSON(t, app.StackSnapshot()))
-	if u1After.Pos != ([2]int{8192, 8192}) || u1After.Rotation != 8192 || u1After.Scale != 1250 {
+	if u1After.Pos != ([2]int{2 * editorTerrainCellWorldUnit, 2 * editorTerrainCellWorldUnit}) || u1After.Rotation != 8192 || u1After.Scale != 1250 {
 		t.Fatalf("unit transform not exact: %+v", u1After)
 	}
 

@@ -9,7 +9,7 @@ import (
 
 const (
 	maxCliffLevel              = 126
-	editorTerrainCellWorldUnit = 4096
+	editorTerrainCellWorldUnit = sourceform.TerrainCellWorldUnit
 )
 
 type CliffFlagKind string

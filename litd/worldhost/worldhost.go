@@ -13,12 +13,16 @@
 package worldhost
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"sort"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/luabind"
@@ -99,6 +103,40 @@ func archiveScriptFS(archiveFS fs.FS, archivePath string) (fs.FS, string, error)
 	return nil, "", fmt.Errorf("archive %q has no %s or scripts/%s", archivePath, luabind.WorldEntry, luabind.WorldEntry)
 }
 
+func loadRuntimeMap(dataFS fs.FS) (*mapdata.Map, error) {
+	entries, err := fs.ReadDir(dataFS, "maps")
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("runtime maps directory: %w", err)
+	}
+	var dirs []string
+	for _, ent := range entries {
+		if !ent.IsDir() {
+			continue
+		}
+		dir := path.Join("maps", ent.Name())
+		if _, err := fs.Stat(dataFS, path.Join(dir, "terrain.toml")); err == nil {
+			dirs = append(dirs, dir)
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("runtime map %s terrain check: %w", dir, err)
+		}
+	}
+	sort.Strings(dirs)
+	if len(dirs) == 0 {
+		return nil, nil
+	}
+	if len(dirs) > 1 {
+		return nil, fmt.Errorf("world ships %d runtime maps (%v); load path requires exactly one", len(dirs), dirs)
+	}
+	m, err := mapdata.Load(dataFS, dirs[0])
+	if err != nil {
+		return nil, fmt.Errorf("load runtime map %s: %w", dirs[0], err)
+	}
+	return m, nil
+}
+
 func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extraCleanup func()) (host *Host, err error) {
 	extraClosed := false
 	closeExtra := func() {
@@ -129,11 +167,16 @@ func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extr
 			"refusing to load a partial world", missing)
 	}
 
+	runtimeMap, err := loadRuntimeMap(dataFS)
+	if err != nil {
+		return nil, err
+	}
+
 	// 3. New game, then install the data tables in dependency order: effects
 	//    (referenced by items/abilities) → units (referenced by upgrades) →
 	//    abilities/items/buffs → upgrades. Empty optional tables are skipped —
 	//    the item/upgrade seams reject an empty table by design.
-	g, err := api.NewGame(api.GameOptions{Seed: seed, MaxUnits: 256})
+	g, err := api.NewGame(api.GameOptions{Seed: seed, MaxUnits: 256, Map: runtimeMap})
 	if err != nil {
 		return nil, fmt.Errorf("new game: %w", err)
 	}

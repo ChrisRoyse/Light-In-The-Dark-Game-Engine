@@ -796,7 +796,7 @@ func writePaintDump(app *shell.App, outDir, beforeHash, afterHash string, stackO
 	return os.WriteFile(filepath.Join(outDir, "paint-grid-dump.json"), append(body, '\n'), 0o644)
 }
 
-const objectFSVCellWorld = 4096
+const objectFSVCellWorld = sourceform.TerrainCellWorldUnit
 
 type objectFSVState struct {
 	Rejected         objectRejectRecord        `json:"rejected"`
@@ -2004,12 +2004,12 @@ func runM8EndToEndFSV(app *shell.App, outDir string) error {
 	if err != nil {
 		return err
 	}
-	state.Played, err = runM8GameFSV("played", state.Archive, filepath.Join(outDir, "46-m8-e2e-played.png"), 700, true, 8192, 0)
+	state.Played, err = runM8GameFSV("played", state.Archive, filepath.Join(outDir, "46-m8-e2e-played.png"), 700, true, 128, 0)
 	if err != nil {
 		return err
 	}
 	state.Screenshots = append(state.Screenshots, state.Played.Screenshot)
-	state.Replay, err = runM8GameFSV("replay", state.Archive, filepath.Join(outDir, "47-m8-e2e-replay.png"), 700, true, 8192, 0)
+	state.Replay, err = runM8GameFSV("replay", state.Archive, filepath.Join(outDir, "47-m8-e2e-replay.png"), 700, true, 128, 0)
 	if err != nil {
 		return err
 	}
@@ -2136,7 +2136,7 @@ func authorM8EndToEndMap(app *shell.App) error {
 	if _, err := app.PlaceDoodadCell("kaykit-hexagon/barrel.glb", 3, 6, 16384, 1000); err != nil {
 		return err
 	}
-	if _, err := app.PlaceUnitCell("footman", 0, 2, 4, 0, 1000, false); err != nil {
+	if _, err := app.PlaceUnitCell("footman", 0, 1, 1, 0, 1000, false); err != nil {
 		return err
 	}
 	u1, err := app.PlaceUnitCell("footman", 0, 5, 5, 0, 1000, false)
@@ -2160,10 +2160,10 @@ func authorM8EndToEndMap(app *shell.App) error {
 		pos [2]int
 		rot int
 	}{
-		{id: u1.ID, pos: [2]int{24000, 12000}, rot: 0},
-		{id: u2.ID, pos: [2]int{24000, 12100}, rot: 0},
-		{id: u3.ID, pos: [2]int{24050, 12000}, rot: 32768},
-		{id: u4.ID, pos: [2]int{24050, 12100}, rot: 32768},
+		{id: u1.ID, pos: [2]int{640, 640}, rot: 0},
+		{id: u2.ID, pos: [2]int{640, 680}, rot: 0},
+		{id: u3.ID, pos: [2]int{690, 640}, rot: 32768},
+		{id: u4.ID, pos: [2]int{690, 680}, rot: 32768},
 	} {
 		if err := app.TransformEntity(move.id, move.pos, move.rot, 1000); err != nil {
 			return err

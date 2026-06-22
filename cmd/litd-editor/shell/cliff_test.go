@@ -140,7 +140,7 @@ func TestCliffBrushPlacementFlagBorderClampAndMaxLevelFSV(t *testing.T) {
 	if !hasCliffFlag(app.cliffFlags, CliffFlagPlacementChangedCliff, 1, 1, 1) {
 		t.Fatalf("missing placement flag: %s", cliffFlagsJSON(t, app))
 	}
-	if got := app.world.Entities[0].Pos; got != ([2]int{4096, 4096}) {
+	if got := app.world.Entities[0].Pos; got != ([2]int{editorTerrainCellWorldUnit, editorTerrainCellWorldUnit}) {
 		t.Fatalf("cliff edit relocated entity: pos=%v", got)
 	}
 
@@ -227,7 +227,7 @@ func TestCliffRampFlagsPlacementFSV(t *testing.T) {
 	if !hasCliffFlag(app.cliffFlags, CliffFlagPlacementChangedCliff, 1, 1, 1) {
 		t.Fatalf("missing ramp placement flag: %s", cliffFlagsJSON(t, app))
 	}
-	if got := app.world.Entities[0].Pos; got != ([2]int{4096, 4096}) {
+	if got := app.world.Entities[0].Pos; got != ([2]int{editorTerrainCellWorldUnit, editorTerrainCellWorldUnit}) {
 		t.Fatalf("ramp edit relocated entity: pos=%v", got)
 	}
 }

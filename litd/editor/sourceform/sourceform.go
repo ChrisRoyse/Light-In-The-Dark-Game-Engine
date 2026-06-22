@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -37,6 +38,11 @@ const (
 	PlacementScaleDefault = 1000
 	PlacementScaleMin     = 1
 	PlacementScaleMax     = 1_000_000
+
+	// TerrainCellWorldUnit is the public world-coordinate size of one terrain
+	// cell: WC3-style 4 pathing cells per terrain cell, and the sim's pathing
+	// cells are 32 world units wide (sim.CellCenter convention).
+	TerrainCellWorldUnit = PathingScale * 32
 )
 
 // Metadata is the canonical world.toml state.
@@ -706,6 +712,20 @@ func (w *World) Save(dir string) error {
 	return nil
 }
 
+func writeFiles(dir string, files map[string][]byte) error {
+	rels := make([]string, 0, len(files))
+	for rel := range files {
+		rels = append(rels, rel)
+	}
+	sort.Strings(rels)
+	for _, rel := range rels {
+		if err := writeFileIfChanged(dir, rel, files[rel]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ExportOptions controls .litdworld archive export.
 type ExportOptions struct {
 	EngineRange string
@@ -727,13 +747,59 @@ func (w *World) ExportArchive(outPath string, opts ExportOptions) error {
 		}
 	}
 	opts = w.fillExportOptions(opts)
-	return ExportArchive(w.Dir, outPath, opts)
+	stage, err := os.MkdirTemp("", "litd-sourceform-export-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(stage)
+	files := w.renderFiles()
+	runtime, err := w.RuntimeMapFiles()
+	if err != nil {
+		return err
+	}
+	for rel, body := range runtime {
+		files[rel] = body
+	}
+	if err := writeFiles(stage, files); err != nil {
+		return err
+	}
+	return worldpack.Pack(stage, outPath, opts.EngineRange, opts.Hosting, opts.Categories)
 }
 
 // ExportArchive packs an already-saved source tree with the deterministic
 // worldpack archive builder.
 func ExportArchive(srcDir, outPath string, opts ExportOptions) error {
 	return worldpack.Pack(srcDir, outPath, opts.EngineRange, opts.Hosting, opts.Categories)
+}
+
+// RuntimeMapFiles returns the generated runtime data/maps/<world-id> projection
+// of the source-form map. The source map/* files remain the authoring SoT; these
+// bytes are the production mapdata view consumed by worldhost/cmd/litd.
+func (w *World) RuntimeMapFiles() (map[string][]byte, error) {
+	if w == nil {
+		return nil, fmt.Errorf("sourceform: runtime map on nil world")
+	}
+	if err := validateWorld(w); err != nil {
+		return nil, err
+	}
+	dir := path.Join("data/maps", w.Metadata.ID)
+	return map[string][]byte{
+		path.Join(dir, "terrain.toml"): renderRuntimeTerrain(w.Terrain),
+		path.Join(dir, "pathing.txt"):  renderPathingGrid(w.Pathing),
+		path.Join(dir, "height.txt"):   renderRuntimeHeightGrid(w.Height, w.Terrain.Width, w.Terrain.Height),
+		path.Join(dir, "cliff.txt"):    renderRuntimeCliffGrid(w.Cliff, w.Terrain.Width, w.Terrain.Height),
+		path.Join(dir, "splat.txt"):    renderSplatGrid(w.Splat),
+		path.Join(dir, "doodads.toml"): []byte(""),
+	}, nil
+}
+
+// WriteRuntimeMapFiles writes RuntimeMapFiles under dir.
+func (w *World) WriteRuntimeMapFiles(dir string) error {
+	files, err := w.RuntimeMapFiles()
+	if err != nil {
+		return err
+	}
+	return writeFiles(dir, files)
 }
 
 func (w *World) fillExportOptions(opts ExportOptions) ExportOptions {
@@ -1700,6 +1766,26 @@ func renderTerrain(t Terrain) []byte {
 	return []byte(b.String())
 }
 
+func renderRuntimeTerrain(t Terrain) []byte {
+	var b strings.Builder
+	biome := t.Biome
+	if strings.TrimSpace(biome) == "" {
+		biome = t.Tileset
+	}
+	fmt.Fprintf(&b, "version = %d\n", mapdata.FormatVersion)
+	fmt.Fprintf(&b, "width = %d\n", t.Width)
+	fmt.Fprintf(&b, "height = %d\n", t.Height)
+	fmt.Fprintf(&b, "biome = %s\n", strconv.Quote(biome))
+	fmt.Fprintf(&b, "pathing-scale = %d\n", PathingScale)
+	starts := append([]StartLocation(nil), t.StartLocations...)
+	sortStartLocations(starts)
+	for _, start := range starts {
+		px, py := TerrainCellCenterPathingCell(start.Cell[0], start.Cell[1])
+		fmt.Fprintf(&b, "\n[[start]]\nplayer = %d\ncell = [%d, %d]\n", start.Player-1, px, py)
+	}
+	return []byte(b.String())
+}
+
 func renderGrid(grid [][]int) []byte {
 	var b strings.Builder
 	for _, row := range grid {
@@ -1743,6 +1829,37 @@ func renderCliffGrid(grid [][]CliffCell) []byte {
 		b.WriteByte('\n')
 	}
 	return []byte(b.String())
+}
+
+func renderRuntimeHeightGrid(grid [][]int, width, height int) []byte {
+	out := make([][]int, height+1)
+	for y := 0; y <= height; y++ {
+		out[y] = make([]int, width+1)
+		srcY := minIndex(y, height)
+		for x := 0; x <= width; x++ {
+			out[y][x] = grid[srcY][minIndex(x, width)]
+		}
+	}
+	return renderGrid(out)
+}
+
+func renderRuntimeCliffGrid(grid [][]CliffCell, width, height int) []byte {
+	out := make([][]CliffCell, height*PathingScale)
+	for y := range out {
+		out[y] = make([]CliffCell, width*PathingScale)
+		srcY := y / PathingScale
+		for x := range out[y] {
+			out[y][x] = grid[srcY][x/PathingScale]
+		}
+	}
+	return renderCliffGrid(out)
+}
+
+func minIndex(i, length int) int {
+	if i >= length {
+		return length - 1
+	}
+	return i
 }
 
 func renderSplatGrid(grid [][]SplatWeight) []byte {
