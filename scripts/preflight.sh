@@ -85,7 +85,12 @@ echo
 
 # --- core gates (ci.yml linux job) ------------------------------------------
 step "go vet"                go vet ./...
-step "go build"             go build ./...
+if [ $FAST -eq 1 ]; then
+  echo "FAST mode: skipped go build (go test -short compiles all packages; FULL gate still runs go build)."
+  echo
+else
+  step "go build"             go build ./...
+fi
 # FAST runs the unit suite with -short: the heavy e2e/determinism variants
 # (10k/5k-tick golden + GOMAXPROCS + save/load stress + table-bomb) self-skip via
 # testing.Short(), cutting the inner-loop suite ~2x. Quality is preserved: the
