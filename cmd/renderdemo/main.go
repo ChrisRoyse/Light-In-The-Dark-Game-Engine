@@ -192,6 +192,7 @@ type teamColorRuntimeDump struct {
 	Units             []teamColorUnitDump  `json:"units"`
 	FlashIndex        int                  `json:"flashIndex,omitempty"`
 	FadeIndex         int                  `json:"fadeIndex,omitempty"`
+	FogIndex          int                  `json:"fogIndex,omitempty"`
 	OK                bool                 `json:"ok"`
 	Errors            []string             `json:"errors,omitempty"`
 }
@@ -204,17 +205,22 @@ type teamColorUnitDump struct {
 }
 
 type lightingRuntimeDump struct {
-	Scene               string                             `json:"scene"`
-	MapPath             string                             `json:"mapPath"`
-	MapFingerprint      string                             `json:"mapFingerprint"`
-	Preset              litasset.AtlasPreset               `json:"preset"`
-	Material            litrender.PBRAtlasMaterialSnapshot `json:"material"`
-	AdditionalMaterials []lightingMaterialDump             `json:"additionalMaterials,omitempty"`
-	MaterialInstances   int                                `json:"materialInstances"`
-	SceneLights         litrender.SceneLightingSnapshot    `json:"sceneLights"`
-	ClearcoatRejection  rejectedGLBDump                    `json:"clearcoatRejection"`
-	OK                  bool                               `json:"ok"`
-	Errors              []string                           `json:"errors,omitempty"`
+	Scene               string                                 `json:"scene"`
+	MapPath             string                                 `json:"mapPath"`
+	MapFingerprint      string                                 `json:"mapFingerprint"`
+	Preset              litasset.AtlasPreset                   `json:"preset"`
+	MaterialPath        string                                 `json:"materialPath"`
+	Material            *litrender.PBRAtlasMaterialSnapshot    `json:"material,omitempty"`
+	UnlitMaterial       *litrender.UnlitAtlasMaterialSnapshot  `json:"unlitMaterial,omitempty"`
+	AdditionalMaterials []lightingMaterialDump                 `json:"additionalMaterials,omitempty"`
+	MaterialInstances   int                                    `json:"materialInstances"`
+	SceneLights         litrender.SceneLightingSnapshot        `json:"sceneLights"`
+	BakedSun            bool                                   `json:"bakedSun"`
+	BakedSunVertexColor *litrender.BakedSunVertexColorSnapshot `json:"bakedSunVertexColor,omitempty"`
+	RuntimeSwitch       lightingRuntimeSwitchDump              `json:"runtimeSwitch"`
+	ClearcoatRejection  rejectedGLBDump                        `json:"clearcoatRejection"`
+	OK                  bool                                   `json:"ok"`
+	Errors              []string                               `json:"errors,omitempty"`
 }
 
 type lightingMaterialDump struct {
@@ -222,6 +228,18 @@ type lightingMaterialDump struct {
 	TextureWidth  int                          `json:"textureWidth"`
 	TextureHeight int                          `json:"textureHeight"`
 	Factors       litrender.PBRMaterialFactors `json:"factors"`
+}
+
+type lightingRuntimeSwitchDump struct {
+	HighPreset         litasset.AtlasPreset `json:"highPreset"`
+	LowPreset          litasset.AtlasPreset `json:"lowPreset"`
+	BeforeTotal        int                  `json:"beforeTotal"`
+	AfterTotal         int                  `json:"afterTotal"`
+	HighReused         bool                 `json:"highReused"`
+	LowReused          bool                 `json:"lowReused"`
+	PBRMaterialCount   int                  `json:"pbrMaterialCount"`
+	UnlitMaterialCount int                  `json:"unlitMaterialCount"`
+	OK                 bool                 `json:"ok"`
 }
 
 type rejectedGLBDump struct {
@@ -642,7 +660,7 @@ type campaignMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, lit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -658,6 +676,7 @@ func main() {
 	wireframe := flag.Bool("wireframe", false, "render terrain scene material as wireframe")
 	debugFarplane := flag.Float64("debug-farplane", 1, "multiply the computed far plane by this factor (#40 invariant probe: 2x must not change the visible-graphic set)")
 	vfxLowPreset := flag.Bool("vfx-low-preset", false, "spellstorm scene: run the VFX light pool in low preset (requests accounted, no light bound)")
+	bakedSun := flag.Bool("baked-sun", false, "lighting scene: apply optional baked top-down sun vertex-color term on the low unlit preset")
 	hudMode := flag.Bool("hud", false, "render the HUD virtual-canvas FSV fixture")
 	cameraMode := flag.String("camera", "persp", "RTS camera projection: persp or ortho")
 	zoomMode := flag.String("zoom", "default", "RTS camera zoom request: default, min, max, below-min, above-max, or a numeric world-unit distance")
@@ -835,7 +854,7 @@ func main() {
 	} else {
 		var err error
 		sceneKey := strings.ToLower(strings.TrimSpace(*sceneName))
-		if !strings.HasPrefix(sceneKey, "lit") {
+		if !strings.HasPrefix(sceneKey, "lit") && sceneKey != "unlit" {
 			buildLights(scene)
 		}
 		if strings.HasPrefix(sceneKey, "terrain") {
@@ -868,8 +887,8 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: atlas-two: %v\n", err)
 				os.Exit(1)
 			}
-		} else if strings.HasPrefix(sceneKey, "lit") {
-			spec, lightingFSV, err = buildLightingFSV(scene, atlasPreset, sceneKey)
+		} else if strings.HasPrefix(sceneKey, "lit") || sceneKey == "unlit" {
+			spec, lightingFSV, err = buildLightingFSV(scene, atlasPreset, sceneKey, *bakedSun)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: lighting: %v\n", err)
 				os.Exit(1)
@@ -1479,11 +1498,17 @@ func buildAtlasTwoFSV(scene *core.Node, preset litasset.AtlasPreset) (sceneSpec,
 	return sceneSpec{name: "atlas-two-" + string(preset), expected: expectedStats(2, 0, 2, 0, 2, 0)}, dump, nil
 }
 
-func buildLightingFSV(scene *core.Node, preset litasset.AtlasPreset, name string) (sceneSpec, *lightingRuntimeDump, error) {
+func buildLightingFSV(scene *core.Node, preset litasset.AtlasPreset, name string, bakedSun bool) (sceneSpec, *lightingRuntimeDump, error) {
 	switch name {
-	case "lit", "lit-east", "lit-ambient0", "lit-emissive":
+	case "lit", "unlit", "lit-east", "lit-ambient0", "lit-emissive":
 	default:
 		return sceneSpec{}, nil, fmt.Errorf("unknown lighting scene %q", name)
+	}
+	if name == "unlit" {
+		preset = litasset.AtlasPresetLow
+	}
+	if bakedSun && preset != litasset.AtlasPresetLow {
+		return sceneSpec{}, nil, fmt.Errorf("-baked-sun requires -preset low")
 	}
 	const mapPath = "data/maps/_fixture"
 	m, err := litmapdata.Load(os.DirFS("."), mapPath)
@@ -1510,43 +1535,70 @@ func buildLightingFSV(scene *core.Node, preset litasset.AtlasPreset, name string
 	if err != nil {
 		return sceneSpec{}, nil, err
 	}
-	cache := litrender.NewPBRAtlasMaterialCache()
-	entry, err := cache.Material(src, preset)
-	if err != nil {
-		return sceneSpec{}, nil, err
-	}
-	visible, states := addLightingPBRPrimitives(scene, entry.Material), 2
 	dump := &lightingRuntimeDump{
 		Scene:              name,
 		MapPath:            mapPath,
 		MapFingerprint:     fmt.Sprintf("%016x", m.Fingerprint),
 		Preset:             preset,
-		Material:           cache.Snapshot(entry),
-		MaterialInstances:  cache.Count(),
 		SceneLights:        litrender.SnapshotSceneLighting(scene, cfg),
+		BakedSun:           bakedSun,
+		RuntimeSwitch:      lightingRuntimeSwitchProbe(src),
 		ClearcoatRejection: clearcoatRejectionDump(),
 		OK:                 true,
 	}
-	if name == "lit-ambient0" || name == "lit-emissive" {
-		emissiveMat, factors, err := litrender.NewPBRMaterial(entry.Texture, litrender.PBRMaterialOptions{EmissiveFactor: [3]float32{1, 0.42, 0.12}})
+
+	visible, states := 0, 0
+	if preset == litasset.AtlasPresetLow {
+		cache := litrender.NewUnlitAtlasMaterialCache()
+		entry, err := cache.Material(src, preset)
 		if err != nil {
 			return sceneSpec{}, nil, err
 		}
-		beacon := graphic.NewMesh(geometry.NewBox(105, 150, 105), emissiveMat)
-		beacon.SetPosition(0, 75, -310)
-		scene.Add(beacon)
-		visible++
-		states++
-		dump.AdditionalMaterials = append(dump.AdditionalMaterials, lightingMaterialDump{
-			Name:          "emissive-factor-fx",
-			TextureWidth:  entry.Texture.Width(),
-			TextureHeight: entry.Texture.Height(),
-			Factors:       factors,
-		})
-		dump.MaterialInstances++
+		visible, states = addLightingUnlitPrimitives(scene, entry.Material, bakedSun, dump), 2
+		snap := cache.Snapshot(entry)
+		dump.MaterialPath = litrender.UnlitShaderPath
+		dump.UnlitMaterial = &snap
+		dump.MaterialInstances = cache.Count()
+	} else {
+		cache := litrender.NewPBRAtlasMaterialCache()
+		entry, err := cache.Material(src, preset)
+		if err != nil {
+			return sceneSpec{}, nil, err
+		}
+		visible, states = addLightingPBRPrimitives(scene, entry.Material), 2
+		snap := cache.Snapshot(entry)
+		dump.MaterialPath = "physical-pbr"
+		dump.Material = &snap
+		dump.MaterialInstances = cache.Count()
+		if name == "lit-ambient0" || name == "lit-emissive" {
+			emissiveMat, factors, err := litrender.NewPBRMaterial(entry.Texture, litrender.PBRMaterialOptions{EmissiveFactor: [3]float32{1, 0.42, 0.12}})
+			if err != nil {
+				return sceneSpec{}, nil, err
+			}
+			beacon := graphic.NewMesh(geometry.NewBox(105, 150, 105), emissiveMat)
+			beacon.SetPosition(0, 75, -310)
+			scene.Add(beacon)
+			visible++
+			states++
+			dump.AdditionalMaterials = append(dump.AdditionalMaterials, lightingMaterialDump{
+				Name:          "emissive-factor-fx",
+				TextureWidth:  entry.Texture.Width(),
+				TextureHeight: entry.Texture.Height(),
+				Factors:       factors,
+			})
+			dump.MaterialInstances++
+		}
 	}
+
 	validateLightingDump(dump)
-	return sceneSpec{name: name + "-" + string(preset), expected: expectedStats(visible, 0, visible, 0, states, 0)}, dump, nil
+	expected := expectedStats(visible, 0, visible, 0, states, 0)
+	if preset == litasset.AtlasPresetLow {
+		expected.Lights = 0
+	}
+	if bakedSun {
+		name += "-baked"
+	}
+	return sceneSpec{name: name + "-" + string(preset), expected: expected}, dump, nil
 }
 
 func addLightingPBRPrimitives(scene *core.Node, mat material.IMaterial) int {
@@ -1561,6 +1613,33 @@ func addLightingPBRPrimitives(scene *core.Node, mat material.IMaterial) int {
 	return 4
 }
 
+func addLightingUnlitPrimitives(scene *core.Node, mat material.IMaterial, bakedSun bool, dump *lightingRuntimeDump) int {
+	unitGeom := geometry.NewBox(150, 170, 150)
+	cliffGeom := geometry.NewBox(620, 120, 140)
+	if bakedSun {
+		cfg := litasset.DefaultBakedSunConfig()
+		unitSnap, err := litrender.ApplyBakedSunVertexColors(unitGeom, cfg)
+		if err != nil {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, err.Error())
+		} else {
+			dump.BakedSunVertexColor = &unitSnap
+		}
+		if _, err := litrender.ApplyBakedSunVertexColors(cliffGeom, cfg); err != nil {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, err.Error())
+		}
+	}
+	addMesh(scene, unitGeom, mat, -255, 85, 20)
+	addMesh(scene, unitGeom, mat, 0, 85, 20)
+	addMesh(scene, unitGeom, mat, 255, 85, 20)
+
+	cliff := graphic.NewMesh(cliffGeom, mat)
+	cliff.SetPosition(0, 60, 280)
+	scene.Add(cliff)
+	return 4
+}
+
 func validateLightingDump(dump *lightingRuntimeDump) {
 	if !dump.SceneLights.OK {
 		dump.Errors = append(dump.Errors, dump.SceneLights.Errors...)
@@ -1568,12 +1647,33 @@ func validateLightingDump(dump *lightingRuntimeDump) {
 	if len(dump.SceneLights.Lights) != 2 || dump.SceneLights.Lights[0].Kind != "Directional" || dump.SceneLights.Lights[1].Kind != "Ambient" {
 		dump.Errors = append(dump.Errors, fmt.Sprintf("scene lights = %+v, want exactly [Directional, Ambient]", dump.SceneLights.Lights))
 	}
-	factors := dump.Material.Factors
-	if factors.MetallicFactor != litrender.DefaultPBRMetallicFactor || factors.RoughnessFactor != litrender.DefaultPBRRoughnessFactor || !factors.BaseColorMap {
-		dump.Errors = append(dump.Errors, fmt.Sprintf("base material factors invalid: %+v", factors))
-	}
-	if factors.MetallicRoughnessMap || factors.NormalMap || factors.OcclusionMap || factors.EmissiveMap {
-		dump.Errors = append(dump.Errors, fmt.Sprintf("base material has forbidden texture map flags: %+v", factors))
+	switch dump.MaterialPath {
+	case "physical-pbr":
+		if dump.Material == nil {
+			dump.Errors = append(dump.Errors, "missing PBR material snapshot")
+			break
+		}
+		factors := dump.Material.Factors
+		if factors.MetallicFactor != litrender.DefaultPBRMetallicFactor || factors.RoughnessFactor != litrender.DefaultPBRRoughnessFactor || !factors.BaseColorMap {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("base material factors invalid: %+v", factors))
+		}
+		if factors.MetallicRoughnessMap || factors.NormalMap || factors.OcclusionMap || factors.EmissiveMap {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("base material has forbidden texture map flags: %+v", factors))
+		}
+	case litrender.UnlitShaderPath:
+		if dump.UnlitMaterial == nil {
+			dump.Errors = append(dump.Errors, "missing unlit material snapshot")
+			break
+		}
+		factors := dump.UnlitMaterial.Factors
+		if !factors.BaseColorMap || !factors.VertexColor || !factors.SRGBPassthrough || factors.UseLights != "none" {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("unlit material factors invalid: %+v", factors))
+		}
+		if dump.UnlitMaterial.TextureWidth != 256 || dump.UnlitMaterial.TextureHeight != 256 {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("unlit texture size = %dx%d, want 256x256", dump.UnlitMaterial.TextureWidth, dump.UnlitMaterial.TextureHeight))
+		}
+	default:
+		dump.Errors = append(dump.Errors, fmt.Sprintf("unknown material path %q", dump.MaterialPath))
 	}
 	if !dump.ClearcoatRejection.OK {
 		dump.Errors = append(dump.Errors, fmt.Sprintf("clearcoat rejection failed: %+v", dump.ClearcoatRejection.Findings))
@@ -1583,7 +1683,38 @@ func validateLightingDump(dump *lightingRuntimeDump) {
 			dump.Errors = append(dump.Errors, fmt.Sprintf("emissive FX material factors invalid: %+v", extra.Factors))
 		}
 	}
+	if dump.BakedSun {
+		if dump.BakedSunVertexColor == nil || !dump.BakedSunVertexColor.ShaderDefine || !dump.BakedSunVertexColor.VertexColorBuffer {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("baked sun vertex-color snapshot invalid: %+v", dump.BakedSunVertexColor))
+		}
+	}
+	if !dump.RuntimeSwitch.OK {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("runtime switch material counts invalid: %+v", dump.RuntimeSwitch))
+	}
 	dump.OK = len(dump.Errors) == 0
+}
+
+func lightingRuntimeSwitchProbe(src *litasset.AtlasSource) lightingRuntimeSwitchDump {
+	pbrCache := litrender.NewPBRAtlasMaterialCache()
+	unlitCache := litrender.NewUnlitAtlasMaterialCache()
+	high, highErr := pbrCache.Material(src, litasset.AtlasPresetHigh)
+	low, lowErr := unlitCache.Material(src, litasset.AtlasPresetLow)
+	before := pbrCache.Count() + unlitCache.Count()
+	lowAgain, lowAgainErr := unlitCache.Material(src, litasset.AtlasPresetLow)
+	highAgain, highAgainErr := pbrCache.Material(src, litasset.AtlasPresetHigh)
+	after := pbrCache.Count() + unlitCache.Count()
+	ok := highErr == nil && lowErr == nil && lowAgainErr == nil && highAgainErr == nil && before == 2 && after == 2 && high == highAgain && low == lowAgain
+	return lightingRuntimeSwitchDump{
+		HighPreset:         litasset.AtlasPresetHigh,
+		LowPreset:          litasset.AtlasPresetLow,
+		BeforeTotal:        before,
+		AfterTotal:         after,
+		HighReused:         high == highAgain,
+		LowReused:          low == lowAgain,
+		PBRMaterialCount:   pbrCache.Count(),
+		UnlitMaterialCount: unlitCache.Count(),
+		OK:                 ok,
+	}
 }
 
 func clearcoatRejectionDump() rejectedGLBDump {
@@ -1720,7 +1851,7 @@ func atlasRuntimeSwitchProbe(src *litasset.AtlasSource) ([]litrender.AtlasMateri
 
 func buildTeamColorsFSV(scene *core.Node, preset litasset.AtlasPreset, name string) (sceneSpec, *teamColorRuntimeDump, error) {
 	switch name {
-	case "teamcolors", "teamcolors-one", "teamcolors-flash", "teamcolors-fade":
+	case "teamcolors", "teamcolors-one", "teamcolors-flash", "teamcolors-fade", "teamcolors-fog":
 	default:
 		return sceneSpec{}, nil, fmt.Errorf("unknown team-color scene %q", name)
 	}
@@ -1744,6 +1875,7 @@ func buildTeamColorsFSV(scene *core.Node, preset litasset.AtlasPreset, name stri
 		MaterialInstances: materialInstances,
 		FlashIndex:        -1,
 		FadeIndex:         -1,
+		FogIndex:          -1,
 		OK:                true,
 	}
 
@@ -1774,6 +1906,10 @@ func buildTeamColorsFSV(scene *core.Node, preset litasset.AtlasPreset, name stri
 			mesh.SetPresentationScalars(0, 0.5, 1)
 			dump.FadeIndex = i
 		}
+		if name == "teamcolors-fog" && i == 6 {
+			mesh.SetPresentationScalars(0, 1, 0.35)
+			dump.FogIndex = i
+		}
 		scene.Add(mesh)
 		dump.Units = append(dump.Units, teamColorUnitDump{
 			Index: i,
@@ -1796,17 +1932,15 @@ func buildTeamColorsFSV(scene *core.Node, preset litasset.AtlasPreset, name stri
 
 func buildTeamColorMaterial(src *litasset.AtlasSource, preset litasset.AtlasPreset, transparent bool) (material.IMaterial, litasset.AtlasUpload, string, int, error) {
 	if preset == litasset.AtlasPresetLow {
-		cache := litrender.NewAtlasMaterialCache()
+		cache := litrender.NewUnlitAtlasMaterialCache()
 		entry, err := cache.Material(src, preset)
 		if err != nil {
 			return nil, litasset.AtlasUpload{}, "", 0, err
 		}
-		entry.Material.SetUseLights(material.UseLightNone)
-		entry.Material.SetSpecularColor(&math32.Color{R: 0, G: 0, B: 0})
 		if transparent {
 			entry.Material.SetTransparent(true)
 		}
-		return entry.Material, entry.Upload, "standard-unlit", cache.Count(), nil
+		return entry.Material, entry.Upload, litrender.UnlitShaderPath, cache.Count(), nil
 	}
 
 	uploadImg, upload, err := litasset.BuildAtlasUpload(src, preset)
@@ -1892,6 +2026,10 @@ func validateTeamColorDump(dump *teamColorRuntimeDump, name string, preset litas
 	if name == "teamcolors-fade" && (dump.FadeIndex < 0 || dump.Units[dump.FadeIndex].State.FadeAlpha != 0.5) {
 		dump.OK = false
 		dump.Errors = append(dump.Errors, "fade scalar was not captured on the fade unit")
+	}
+	if name == "teamcolors-fog" && (dump.FogIndex < 0 || dump.Units[dump.FogIndex].State.FogDim != 0.35) {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "fog-dim scalar was not captured on the fog unit")
 	}
 }
 

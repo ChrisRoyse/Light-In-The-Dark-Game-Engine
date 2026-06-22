@@ -1,0 +1,169 @@
+diff --git a/loader/gltf/loader.go b/loader/gltf/loader.go
+--- a/loader/gltf/loader.go
++++ b/loader/gltf/loader.go
+@@ -619,6 +619,10 @@ func (g *GLTF) loadAttributes(geom *geometry.Geometry, attributes map[string]int
+ 		}
+ 	}
+ 
++	if geom.VBO(gls.VertexColor) != nil {
++		geom.ShaderDefines.Set("LITD_VERTEX_COLOR", "1")
++	}
++
+ 	// LITD-PATCH: gls.VBO assumes a gapless stride equal to the sum of its
+ 	// registered attribute sizes. If the file's declared ByteStride differs
+ 	// (padding, or an attribute this loader skipped), rendering would be
+diff --git a/renderer/shaders/physical_vertex.glsl b/renderer/shaders/physical_vertex.glsl
+--- a/renderer/shaders/physical_vertex.glsl
++++ b/renderer/shaders/physical_vertex.glsl
+@@ -18,11 +18,17 @@ out vec3 Position;
+ out vec3 Normal;
+ out vec3 CamDir;
+ out vec2 FragTexcoord;
++out vec3 LitdVertexColor;
+ 
+ void main() {
+ 
+     // Output texture coordinates to fragment shader
+     FragTexcoord = VertexTexcoord;
++#ifdef LITD_VERTEX_COLOR
++    LitdVertexColor = VertexColor;
++#else
++    LitdVertexColor = vec3(1.0);
++#endif
+ 
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);
+diff --git a/renderer/shaders/physical_fragment.glsl b/renderer/shaders/physical_fragment.glsl
+--- a/renderer/shaders/physical_fragment.glsl
++++ b/renderer/shaders/physical_fragment.glsl
+@@ -58,6 +58,7 @@ in vec3 Position;       // Vertex position in camera coordinates.
+ in vec3 Normal;         // Vertex normal in camera coordinates.
+ in vec3 CamDir;         // Direction from vertex to camera
+ in vec2 FragTexcoord;
++in vec3 LitdVertexColor;
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -269,6 +270,7 @@ void main() {
+ #else
+     vec4 baseColor = uBaseColor;
+ #endif
++    baseColor.rgb *= LitdVertexColor;
+     baseColor = LitdApplyTeamColor(baseColor, FragTexcoord);
+ 
+     vec3 f0 = vec3(0.04);
+diff --git a/renderer/shaders/sources.go b/renderer/shaders/sources.go
+--- a/renderer/shaders/sources.go
++++ b/renderer/shaders/sources.go
+@@ -419,11 +419,17 @@ out vec3 Position;
+ out vec3 Normal;
+ out vec3 CamDir;
+ out vec2 FragTexcoord;
++out vec3 LitdVertexColor;
+ 
+ void main() {
+ 
+     // Output texture coordinates to fragment shader
+     FragTexcoord = VertexTexcoord;
++#ifdef LITD_VERTEX_COLOR
++    LitdVertexColor = VertexColor;
++#else
++    LitdVertexColor = vec3(1.0);
++#endif
+ 
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);
+@@ -509,6 +515,7 @@ in vec3 Position;       // Vertex position in camera coordinates.
+ in vec3 Normal;         // Vertex normal in camera coordinates.
+ in vec3 CamDir;         // Direction from vertex to camera
+ in vec2 FragTexcoord;
++in vec3 LitdVertexColor;
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -720,6 +727,7 @@ void main() {
+ #else
+     vec4 baseColor = uBaseColor;
+ #endif
++    baseColor.rgb *= LitdVertexColor;
+     baseColor = LitdApplyTeamColor(baseColor, FragTexcoord);
+ 
+     vec3 f0 = vec3(0.04);
+@@ -922,6 +930,7 @@ out vec4 Position;
+ out vec4 Position;
+ out vec3 Normal;
+ out vec2 FragTexcoord;
++out vec3 LitdVertexColor;
+ 
+ void main() {
+ 
+@@ -935,6 +944,11 @@ void main() {
+     }
+ #endif
+     FragTexcoord = texcoord;
++#ifdef LITD_VERTEX_COLOR
++    LitdVertexColor = VertexColor;
++#else
++    LitdVertexColor = vec3(1.0);
++#endif
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);
+     #include <morphtarget_vertex>
+@@ -981,6 +995,7 @@ precision highp float;
+ in vec4 Position;     // Fragment position in camera coordinates
+ in vec3 Normal;       // Fragment normal in camera coordinates
+ in vec2 FragTexcoord; // Fragment texture coordinates
++in vec3 LitdVertexColor;
+ 
+ #include <lights>
+ #include <material>
+@@ -1015,6 +1030,7 @@ void main() {
+         #endif
+     #endif
+ 
++    texMixed.rgb *= LitdVertexColor;
+     texMixed = LitdApplyTeamColor(texMixed, FragTexcoord);
+ 
+     // Combine material with texture colors
+diff --git a/renderer/shaders/standard_vertex.glsl b/renderer/shaders/standard_vertex.glsl
+--- a/renderer/shaders/standard_vertex.glsl
++++ b/renderer/shaders/standard_vertex.glsl
+@@ -14,6 +14,7 @@ uniform mat4 MVP;
+ out vec4 Position;
+ out vec3 Normal;
+ out vec2 FragTexcoord;
++out vec3 LitdVertexColor;
+ 
+ void main() {
+ 
+@@ -26,6 +27,11 @@ void main() {
+     }
+ #endif
+     FragTexcoord = texcoord;
++#ifdef LITD_VERTEX_COLOR
++    LitdVertexColor = VertexColor;
++#else
++    LitdVertexColor = vec3(1.0);
++#endif
+     vec3 vPosition = VertexPosition;
+     mat4 finalWorld = mat4(1.0);
+     #include <morphtarget_vertex>
+diff --git a/renderer/shaders/standard_fragment.glsl b/renderer/shaders/standard_fragment.glsl
+--- a/renderer/shaders/standard_fragment.glsl
++++ b/renderer/shaders/standard_fragment.glsl
+@@ -4,6 +4,7 @@ precision highp float;
+ in vec4 Position;     // Fragment position in camera coordinates
+ in vec3 Normal;       // Fragment normal in camera coordinates
+ in vec2 FragTexcoord; // Fragment texture coordinates
++in vec3 LitdVertexColor;
+ 
+ #include <lights>
+ #include <material>
+@@ -53,6 +54,7 @@ void main() {
+         #endif
+     #endif
+ 
++    texMixed.rgb *= LitdVertexColor;
+     texMixed = LitdApplyTeamColor(texMixed, FragTexcoord);
+ 
+     // Combine material with texture colors

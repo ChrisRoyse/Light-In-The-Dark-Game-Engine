@@ -2,7 +2,7 @@ diff --git a/loader/gltf/khr_materials_unlit.go b/loader/gltf/khr_materials_unli
 index 35d0879..5f5ff6a 100644
 --- a/loader/gltf/khr_materials_unlit.go
 +++ b/loader/gltf/khr_materials_unlit.go
-@@ -2,14 +2,47 @@ package gltf
+@@ -2,14 +2,48 @@ package gltf
  
  import (
  	"github.com/g3n/engine/material"
@@ -21,9 +21,10 @@ index 35d0879..5f5ff6a 100644
 +// material's pbrMetallicRoughness baseColor per the extension spec:
  // https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_unlit
 -func (g *GLTF) loadMaterialUnlit(ext interface{}) (material.IMaterial, error) {
-+// The fragment color is baseColorFactor × baseColorTexture, nothing
-+// else. Implemented as a Standard material with UseLightNone: the
-+// standard shader's noLights path outputs exactly matDiffuse × texture.
++// The fragment color is baseColorFactor × baseColorTexture × vertex
++// color when COLOR_0 is present. Implemented as a Standard material with
++// UseLightNone: the standard shader's noLights path skips all light
++// uploads and outputs the base-color path directly.
 +func (g *GLTF) loadMaterialUnlit(m *Material) (material.IMaterial, error) {
  
 -	return nil, nil

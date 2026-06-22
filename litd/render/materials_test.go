@@ -186,6 +186,105 @@ func TestPBRMaterialEdgesFSV(t *testing.T) {
 	}
 }
 
+func TestUnlitAtlasMaterialDefaultsFSV(t *testing.T) {
+	src := mustRenderAtlasSource(t, "unlit-vigil.atlas.png", color.RGBA{155, 185, 210, 255})
+	cache := NewUnlitAtlasMaterialCache()
+	t.Logf("FSV unlit atlas BEFORE count=%d", cache.Count())
+	entry, err := cache.Material(src, litasset.AtlasPresetLow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, err := cache.Material(src, litasset.AtlasPresetLow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snap := cache.Snapshot(entry)
+	matState := entry.Material.GetMaterial()
+	t.Logf("FSV unlit atlas AFTER snapshot=%+v same=%v shader=%s useLights=%d textures=%d", snap, entry == again, matState.Shader(), matState.UseLights(), matState.TextureCount())
+	if entry != again || cache.Count() != 1 {
+		t.Fatalf("same atlas+preset should reuse one unlit material: same=%v count=%d", entry == again, cache.Count())
+	}
+	if snap.TextureWidth != 256 || snap.TextureHeight != 256 {
+		t.Fatalf("low unlit texture dims = %dx%d", snap.TextureWidth, snap.TextureHeight)
+	}
+	if matState.Shader() != "standard" || matState.UseLights() != material.UseLightNone {
+		t.Fatalf("unlit material shader/useLights wrong: shader=%s lights=%d", matState.Shader(), matState.UseLights())
+	}
+	if matState.TextureCount() != 1 || !snap.Factors.BaseColorMap || !snap.Factors.VertexColor || !snap.Factors.SRGBPassthrough || snap.Factors.UseLights != "none" {
+		t.Fatalf("unlit material factors wrong: textures=%d factors=%+v", matState.TextureCount(), snap.Factors)
+	}
+}
+
+func TestUnlitMaterialEdgesFSV(t *testing.T) {
+	if _, _, err := NewUnlitMaterial(nil, UnlitMaterialOptions{}); err == nil {
+		t.Fatal("nil base-color texture accepted")
+	} else {
+		t.Logf("FSV unlit material nil texture AFTER err=%v", err)
+	}
+
+	src := mustRenderAtlasSource(t, "unlit-edges.atlas.png", color.RGBA{90, 140, 180, 255})
+	cache := NewUnlitAtlasMaterialCache()
+	if _, err := cache.Material(nil, litasset.AtlasPresetLow); err == nil {
+		t.Fatal("nil source accepted")
+	} else {
+		t.Logf("FSV unlit material nil source BEFORE count=%d AFTER err=%v count=%d", cache.Count(), err, cache.Count())
+	}
+	if _, err := cache.Material(src, litasset.AtlasPreset("bad")); err == nil {
+		t.Fatal("invalid preset accepted")
+	} else {
+		t.Logf("FSV unlit material bad preset BEFORE count=%d AFTER err=%v count=%d", cache.Count(), err, cache.Count())
+	}
+	var nilCache *UnlitAtlasMaterialCache
+	if _, err := nilCache.Material(src, litasset.AtlasPresetLow); err == nil {
+		t.Fatal("nil unlit cache accepted")
+	} else {
+		t.Logf("FSV unlit material nil cache AFTER err=%v", err)
+	}
+	entry, err := cache.Material(src, litasset.AtlasPresetLow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mat, factors, err := NewUnlitMaterial(entry.Texture, UnlitMaterialOptions{Transparent: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV unlit transparent material AFTER transparent=%v factors=%+v", mat.GetMaterial().Transparent(), factors)
+	if !mat.GetMaterial().Transparent() || factors.UseLights != "none" {
+		t.Fatalf("transparent unlit material wrong: transparent=%v factors=%+v", mat.GetMaterial().Transparent(), factors)
+	}
+}
+
+func TestLowPresetMaterialRuntimeSwitchFSV(t *testing.T) {
+	src := mustRenderAtlasSource(t, "switch-low.atlas.png", color.RGBA{135, 175, 115, 255})
+	pbrCache := NewPBRAtlasMaterialCache()
+	unlitCache := NewUnlitAtlasMaterialCache()
+	high, err := pbrCache.Material(src, litasset.AtlasPresetHigh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	low, err := unlitCache.Material(src, litasset.AtlasPresetLow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := pbrCache.Count() + unlitCache.Count()
+	lowAgain, err := unlitCache.Material(src, litasset.AtlasPresetLow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	highAgain, err := pbrCache.Material(src, litasset.AtlasPresetHigh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after := pbrCache.Count() + unlitCache.Count()
+	t.Logf("FSV low/high switch BEFORE total=%d high=%p low=%p AFTER total=%d highAgain=%p lowAgain=%p", before, high.Material, low.Material, after, highAgain.Material, lowAgain.Material)
+	if before != 2 || after != 2 || highAgain != high || lowAgain != low {
+		t.Fatalf("runtime switch created new material entries: before=%d after=%d highReused=%v lowReused=%v", before, after, highAgain == high, lowAgain == low)
+	}
+	if high.Texture.Width() != 1024 || low.Texture.Width() != 256 {
+		t.Fatalf("preset texture sizes wrong: high=%d low=%d", high.Texture.Width(), low.Texture.Width())
+	}
+}
+
 func mustRenderAtlasSource(t *testing.T, name string, c color.RGBA) *litasset.AtlasSource {
 	t.Helper()
 	img := image.NewRGBA(image.Rect(0, 0, 1024, 1024))

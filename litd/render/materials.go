@@ -49,6 +49,19 @@ type PBRMaterialOptions struct {
 	Transparent    bool
 }
 
+const UnlitShaderPath = "standard-unlit"
+
+type UnlitMaterialFactors struct {
+	BaseColorMap    bool   `json:"baseColorMap"`
+	VertexColor     bool   `json:"vertexColor"`
+	SRGBPassthrough bool   `json:"srgbPassthrough"`
+	UseLights       string `json:"useLights"`
+}
+
+type UnlitMaterialOptions struct {
+	Transparent bool
+}
+
 type PBRAtlasMaterialSnapshot struct {
 	Key           AtlasMaterialKey   `json:"key"`
 	SourceWidth   int                `json:"sourceWidth"`
@@ -58,6 +71,18 @@ type PBRAtlasMaterialSnapshot struct {
 	UploadSHA256  string             `json:"uploadSHA256"`
 	MaterialCount int                `json:"materialCount"`
 	Factors       PBRMaterialFactors `json:"factors"`
+}
+
+type UnlitAtlasMaterialSnapshot struct {
+	Key           AtlasMaterialKey     `json:"key"`
+	SourceWidth   int                  `json:"sourceWidth"`
+	SourceHeight  int                  `json:"sourceHeight"`
+	TextureWidth  int                  `json:"textureWidth"`
+	TextureHeight int                  `json:"textureHeight"`
+	UploadSHA256  string               `json:"uploadSHA256"`
+	MaterialCount int                  `json:"materialCount"`
+	ShaderPath    string               `json:"shaderPath"`
+	Factors       UnlitMaterialFactors `json:"factors"`
 }
 
 type AtlasMaterial struct {
@@ -75,6 +100,14 @@ type PBRAtlasMaterial struct {
 	Factors  PBRMaterialFactors
 }
 
+type UnlitAtlasMaterial struct {
+	Key      AtlasMaterialKey
+	Upload   litasset.AtlasUpload
+	Texture  *texture.Texture2D
+	Material *material.Standard
+	Factors  UnlitMaterialFactors
+}
+
 type AtlasMaterialCache struct {
 	entries map[AtlasMaterialKey]*AtlasMaterial
 }
@@ -83,12 +116,20 @@ type PBRAtlasMaterialCache struct {
 	entries map[AtlasMaterialKey]*PBRAtlasMaterial
 }
 
+type UnlitAtlasMaterialCache struct {
+	entries map[AtlasMaterialKey]*UnlitAtlasMaterial
+}
+
 func NewAtlasMaterialCache() *AtlasMaterialCache {
 	return &AtlasMaterialCache{entries: make(map[AtlasMaterialKey]*AtlasMaterial)}
 }
 
 func NewPBRAtlasMaterialCache() *PBRAtlasMaterialCache {
 	return &PBRAtlasMaterialCache{entries: make(map[AtlasMaterialKey]*PBRAtlasMaterial)}
+}
+
+func NewUnlitAtlasMaterialCache() *UnlitAtlasMaterialCache {
+	return &UnlitAtlasMaterialCache{entries: make(map[AtlasMaterialKey]*UnlitAtlasMaterial)}
 }
 
 func (c *AtlasMaterialCache) Material(src *litasset.AtlasSource, preset litasset.AtlasPreset) (*AtlasMaterial, error) {
@@ -118,6 +159,36 @@ func (c *AtlasMaterialCache) Material(src *litasset.AtlasSource, preset litasset
 	mat.AddTexture(tex)
 
 	entry := &AtlasMaterial{Key: key, Upload: upload, Texture: tex, Material: mat}
+	c.entries[key] = entry
+	return entry, nil
+}
+
+func (c *UnlitAtlasMaterialCache) Material(src *litasset.AtlasSource, preset litasset.AtlasPreset) (*UnlitAtlasMaterial, error) {
+	if c == nil {
+		return nil, fmt.Errorf("unlit atlas material cache is nil")
+	}
+	if src == nil {
+		return nil, fmt.Errorf("atlas source is nil")
+	}
+	key := AtlasMaterialKey{Atlas: src.Name, Preset: preset}
+	if existing := c.entries[key]; existing != nil {
+		return existing, nil
+	}
+	img, upload, err := litasset.BuildAtlasUpload(src, preset)
+	if err != nil {
+		return nil, err
+	}
+	tex := texture.NewTexture2DFromRGBA(img)
+	tex.SetMagFilter(gls.LINEAR)
+	tex.SetMinFilter(gls.LINEAR_MIPMAP_LINEAR)
+	tex.SetWrapS(gls.CLAMP_TO_EDGE)
+	tex.SetWrapT(gls.CLAMP_TO_EDGE)
+
+	mat, factors, err := NewUnlitMaterial(tex, UnlitMaterialOptions{})
+	if err != nil {
+		return nil, err
+	}
+	entry := &UnlitAtlasMaterial{Key: key, Upload: upload, Texture: tex, Material: mat, Factors: factors}
 	c.entries[key] = entry
 	return entry, nil
 }
@@ -152,6 +223,28 @@ func (c *PBRAtlasMaterialCache) Material(src *litasset.AtlasSource, preset litas
 	return entry, nil
 }
 
+func NewUnlitMaterial(tex *texture.Texture2D, opts UnlitMaterialOptions) (*material.Standard, UnlitMaterialFactors, error) {
+	if tex == nil {
+		return nil, UnlitMaterialFactors{}, fmt.Errorf("unlit material base-color texture is nil")
+	}
+	factors := UnlitMaterialFactors{
+		BaseColorMap:    true,
+		VertexColor:     true,
+		SRGBPassthrough: true,
+		UseLights:       "none",
+	}
+	mat := material.NewStandard(&math32.Color{R: 1, G: 1, B: 1})
+	mat.SetUseLights(material.UseLightNone)
+	mat.SetSpecularColor(&math32.Color{R: 0, G: 0, B: 0})
+	mat.SetEmissiveColor(&math32.Color{R: 0, G: 0, B: 0})
+	mat.SetShininess(1)
+	mat.AddTexture(tex)
+	if opts.Transparent {
+		mat.SetTransparent(true)
+	}
+	return mat, factors, nil
+}
+
 func NewPBRMaterial(tex *texture.Texture2D, opts PBRMaterialOptions) (*material.Physical, PBRMaterialFactors, error) {
 	if tex == nil {
 		return nil, PBRMaterialFactors{}, fmt.Errorf("pbr material base-color texture is nil")
@@ -180,6 +273,13 @@ func (c *AtlasMaterialCache) Count() int {
 	return len(c.entries)
 }
 
+func (c *UnlitAtlasMaterialCache) Count() int {
+	if c == nil {
+		return 0
+	}
+	return len(c.entries)
+}
+
 func (c *PBRAtlasMaterialCache) Count() int {
 	if c == nil {
 		return 0
@@ -199,6 +299,23 @@ func (c *AtlasMaterialCache) Snapshot(m *AtlasMaterial) AtlasMaterialSnapshot {
 		TextureHeight: m.Texture.Height(),
 		UploadSHA256:  m.Upload.SHA256,
 		MaterialCount: c.Count(),
+	}
+}
+
+func (c *UnlitAtlasMaterialCache) Snapshot(m *UnlitAtlasMaterial) UnlitAtlasMaterialSnapshot {
+	if m == nil {
+		return UnlitAtlasMaterialSnapshot{MaterialCount: c.Count(), ShaderPath: UnlitShaderPath}
+	}
+	return UnlitAtlasMaterialSnapshot{
+		Key:           m.Key,
+		SourceWidth:   m.Upload.SourceWidth,
+		SourceHeight:  m.Upload.SourceHeight,
+		TextureWidth:  m.Texture.Width(),
+		TextureHeight: m.Texture.Height(),
+		UploadSHA256:  m.Upload.SHA256,
+		MaterialCount: c.Count(),
+		ShaderPath:    UnlitShaderPath,
+		Factors:       m.Factors,
 	}
 }
 

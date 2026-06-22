@@ -426,11 +426,11 @@ func TestBuildTerrainChunksFSV(t *testing.T) {
 func TestBuildLightingFSV(t *testing.T) {
 	defer chdirRepoRoot(t)()
 	scene := core.NewNode()
-	spec, dump, err := buildLightingFSV(scene, litasset.AtlasPresetHigh, "lit")
+	spec, dump, err := buildLightingFSV(scene, litasset.AtlasPresetHigh, "lit", false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("FSV renderdemo lighting lit spec=%+v lights=%+v material=%+v clearcoat=%+v", spec, dump.SceneLights.Lights, dump.Material.Factors, dump.ClearcoatRejection)
+	t.Logf("FSV renderdemo lighting lit spec=%+v lights=%+v path=%s material=%+v clearcoat=%+v", spec, dump.SceneLights.Lights, dump.MaterialPath, dump.Material.Factors, dump.ClearcoatRejection)
 	if !dump.OK || !dump.SceneLights.OK || len(dump.SceneLights.Lights) != 2 || dump.SceneLights.Lights[0].Kind != "Directional" || dump.SceneLights.Lights[1].Kind != "Ambient" {
 		t.Fatalf("lit dump light SoT wrong: %+v", dump)
 	}
@@ -442,7 +442,7 @@ func TestBuildLightingFSV(t *testing.T) {
 	}
 
 	eastScene := core.NewNode()
-	_, east, err := buildLightingFSV(eastScene, litasset.AtlasPresetHigh, "lit-east")
+	_, east, err := buildLightingFSV(eastScene, litasset.AtlasPresetHigh, "lit-east", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -452,7 +452,7 @@ func TestBuildLightingFSV(t *testing.T) {
 	}
 
 	ambientScene := core.NewNode()
-	ambientSpec, ambient, err := buildLightingFSV(ambientScene, litasset.AtlasPresetHigh, "lit-ambient0")
+	ambientSpec, ambient, err := buildLightingFSV(ambientScene, litasset.AtlasPresetHigh, "lit-ambient0", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,6 +465,29 @@ func TestBuildLightingFSV(t *testing.T) {
 	}
 	if ambient.AdditionalMaterials[0].Factors.EmissiveFactor == [3]float32{} || ambient.AdditionalMaterials[0].Factors.EmissiveMap {
 		t.Fatalf("emissive edge did not use textureless emissive factor: %+v", ambient.AdditionalMaterials[0])
+	}
+
+	lowScene := core.NewNode()
+	lowSpec, low, err := buildLightingFSV(lowScene, litasset.AtlasPresetLow, "lit", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo lighting low spec=%+v path=%s unlit=%+v switch=%+v", lowSpec, low.MaterialPath, low.UnlitMaterial, low.RuntimeSwitch)
+	if !low.OK || low.MaterialPath != litrender.UnlitShaderPath || low.UnlitMaterial == nil || low.UnlitMaterial.Factors.UseLights != "none" {
+		t.Fatalf("low lighting unlit SoT wrong: %+v", low)
+	}
+	if lowSpec.expected.Lights != 0 || lowSpec.expected.VisibleGraphics != 4 || low.UnlitMaterial.TextureWidth != 256 || !low.RuntimeSwitch.OK {
+		t.Fatalf("low lighting expected stats/material wrong: spec=%+v dump=%+v", lowSpec.expected, low)
+	}
+
+	bakedScene := core.NewNode()
+	bakedSpec, baked, err := buildLightingFSV(bakedScene, litasset.AtlasPresetLow, "lit", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo lighting baked spec=%+v baked=%+v", bakedSpec, baked.BakedSunVertexColor)
+	if !baked.OK || !baked.BakedSun || baked.BakedSunVertexColor == nil || !baked.BakedSunVertexColor.VertexColorBuffer {
+		t.Fatalf("baked low lighting SoT wrong: %+v", baked)
 	}
 }
 
