@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	litasset "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset"
+	"github.com/g3n/engine/geometry"
+	"github.com/g3n/engine/material"
+	"github.com/g3n/engine/math32"
 )
 
 func TestAtlasMaterialCacheIdentityFSV(t *testing.T) {
@@ -112,4 +115,91 @@ func mustRenderAtlasSource(t *testing.T, name string, c color.RGBA) *litasset.At
 		t.Fatal(err)
 	}
 	return src
+}
+
+func TestTeamColorPaletteFSV(t *testing.T) {
+	for slot := 0; slot < TeamColorSlots; slot++ {
+		c, err := TeamColor(slot)
+		t.Logf("FSV team palette slot=%d color=%+v err=%v", slot, c, err)
+		if err != nil {
+			t.Fatalf("slot %d rejected: %v", slot, err)
+		}
+		if c.R < 0 || c.R > 1 || c.G < 0 || c.G > 1 || c.B < 0 || c.B > 1 {
+			t.Fatalf("slot %d color out of normalized range: %+v", slot, c)
+		}
+	}
+	for _, slot := range []int{-1, TeamColorSlots} {
+		if _, err := TeamColor(slot); err == nil {
+			t.Fatalf("invalid slot %d accepted", slot)
+		} else {
+			t.Logf("FSV invalid team slot=%d err=%v", slot, err)
+		}
+	}
+}
+
+func TestTeamColorMeshStateFSV(t *testing.T) {
+	mat := material.NewStandard(&math32.Color{R: 1, G: 1, B: 1})
+	mesh, err := NewTeamColorMesh(geometry.NewPlane(1, 1), mat, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := mesh.TeamColorState()
+	t.Logf("FSV team mesh BEFORE state=%+v materials=%d", before, len(mesh.Materials()))
+	if len(mesh.Materials()) != 1 || mesh.Materials()[0].IGraphic() != mesh {
+		t.Fatalf("team mesh material ownership wrong")
+	}
+	if got := mesh.GetGraphic().ShaderDefines["LITD_TEAMCOLOR"]; got != "1" {
+		t.Fatalf("team mesh shader define = %q, want 1", got)
+	}
+	if _, ok := mat.GetMaterial().ShaderDefines["LITD_TEAMCOLOR"]; ok {
+		t.Fatalf("team-color define leaked into shared material")
+	}
+
+	mesh.SetPresentationScalars(1.5, -1, 0.35)
+	if err := mesh.SetTeamColorZone(TeamColorZone{MinU: 0.1, MinV: 0.2, MaxU: 0.45, MaxV: 0.9}); err != nil {
+		t.Fatal(err)
+	}
+	if err := mesh.SetTeamSlot(NeutralTeamSlot); err != nil {
+		t.Fatal(err)
+	}
+	after := mesh.TeamColorState()
+	t.Logf("FSV team mesh AFTER state=%+v", after)
+	if after.Slot != NeutralTeamSlot || after.HitFlash != 1 || after.FadeAlpha != 0 || after.FogDim != 0.35 {
+		t.Fatalf("team mesh state wrong after updates: %+v", after)
+	}
+	if after.Zone.MinU != 0.1 || after.Zone.MinV != 0.2 || after.Zone.MaxU != 0.45 || after.Zone.MaxV != 0.9 {
+		t.Fatalf("zone not applied: %+v", after.Zone)
+	}
+
+	zoneBefore := after.Zone
+	if err := mesh.SetTeamColorZone(TeamColorZone{MinU: 0.6, MinV: 0, MaxU: 0.4, MaxV: 1}); err == nil {
+		t.Fatal("invalid zone accepted")
+	} else {
+		t.Logf("FSV invalid team zone BEFORE=%+v AFTER err=%v state=%+v", zoneBefore, err, mesh.TeamColorState().Zone)
+	}
+	if mesh.TeamColorState().Zone != zoneBefore {
+		t.Fatalf("invalid zone mutated state: %+v -> %+v", zoneBefore, mesh.TeamColorState().Zone)
+	}
+}
+
+func TestTeamColorMeshCloneAndEdgesFSV(t *testing.T) {
+	mesh, err := NewTeamColorMesh(geometry.NewPlane(1, 1), material.NewStandard(&math32.Color{R: 1, G: 1, B: 1}), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mesh.SetTeamColor(math32.Color{R: 0.25, G: 0.5, B: 0.75})
+	mesh.SetTeamColorEnabled(false)
+	clone := mesh.Clone().(*TeamColorMesh)
+	t.Logf("FSV team clone original=%+v clone=%+v", mesh.TeamColorState(), clone.TeamColorState())
+	if clone.TeamColorState() != mesh.TeamColorState() {
+		t.Fatalf("clone state mismatch: original=%+v clone=%+v", mesh.TeamColorState(), clone.TeamColorState())
+	}
+	if len(clone.Materials()) != 1 || clone.Materials()[0].IGraphic() != clone {
+		t.Fatalf("clone material ownership wrong")
+	}
+	if _, err := NewTeamColorMesh(geometry.NewPlane(1, 1), nil, TeamColorSlots); err == nil {
+		t.Fatal("invalid constructor slot accepted")
+	} else {
+		t.Logf("FSV team constructor invalid slot err=%v", err)
+	}
 }

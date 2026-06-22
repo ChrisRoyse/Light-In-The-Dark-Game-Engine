@@ -1,0 +1,187 @@
+diff --git a/renderer/shaders/include/litd_teamcolor.glsl b/renderer/shaders/include/litd_teamcolor.glsl
+new file mode 100644
+index 0000000..63e2f2a
+--- /dev/null
++++ b/renderer/shaders/include/litd_teamcolor.glsl
+@@ -0,0 +1,43 @@
++// LITD-PATCH: per-graphic team color and presentation scalar channel.
++#ifdef LITD_TEAMCOLOR
++uniform vec3 LitdTeamColor;
++uniform vec4 LitdTeamColorZone;
++// x = hit flash, y = fade alpha, z = fog dim, w = enabled flag.
++uniform vec4 LitdFxScalars;
++#endif
++
++vec3 getTeamColor() {
++#ifdef LITD_TEAMCOLOR
++    return LitdTeamColor;
++#else
++    return vec3(1.0);
++#endif
++}
++
++bool LitdInTeamColorZone(vec2 uv) {
++#ifdef LITD_TEAMCOLOR
++    return uv.x >= LitdTeamColorZone.x && uv.x <= LitdTeamColorZone.z &&
++           uv.y >= LitdTeamColorZone.y && uv.y <= LitdTeamColorZone.w;
++#else
++    return false;
++#endif
++}
++
++vec4 LitdApplyTeamColor(vec4 color, vec2 uv) {
++#ifdef LITD_TEAMCOLOR
++    if (LitdFxScalars.w < 0.5) {
++        return color;
++    }
++
++    vec4 outColor = color;
++    if (LitdInTeamColorZone(uv)) {
++        outColor.rgb *= getTeamColor();
++    }
++    outColor.rgb = mix(outColor.rgb, vec3(1.0), clamp(LitdFxScalars.x, 0.0, 1.0));
++    outColor.rgb *= clamp(LitdFxScalars.z, 0.0, 1.0);
++    outColor.a *= clamp(LitdFxScalars.y, 0.0, 1.0);
++    return outColor;
++#else
++    return color;
++#endif
++}
+diff --git a/renderer/shaders/physical_fragment.glsl b/renderer/shaders/physical_fragment.glsl
+index eb70535..fe77eb4 100644
+--- a/renderer/shaders/physical_fragment.glsl
++++ b/renderer/shaders/physical_fragment.glsl
+@@ -53,6 +53,7 @@ uniform vec4 Material[3];
+ #define uRoughnessFactor    Material[2].y
+ 
+ #include <lights>
++#include <litd_teamcolor>
+ 
+ // Inputs from vertex shader
+ in vec3 Position;       // Vertex position in camera coordinates.
+@@ -268,6 +269,7 @@ void main() {
+ #else
+     vec4 baseColor = uBaseColor;
+ #endif
++    baseColor = LitdApplyTeamColor(baseColor, FragTexcoord);
+ 
+     vec3 f0 = vec3(0.04);
+     vec3 diffuseColor = baseColor.rgb * (vec3(1.0) - f0);
+diff --git a/renderer/shaders/sources.go b/renderer/shaders/sources.go
+index 97c3ab7..2cf37bc 100644
+--- a/renderer/shaders/sources.go
++++ b/renderer/shaders/sources.go
+@@ -205,6 +205,51 @@ const include_litd_instancing_source = `#ifdef LITD_INSTANCING
+ #endif
+ `
+ 
++const include_litd_teamcolor_source = `// LITD-PATCH: per-graphic team color and presentation scalar channel.
++#ifdef LITD_TEAMCOLOR
++uniform vec3 LitdTeamColor;
++uniform vec4 LitdTeamColorZone;
++// x = hit flash, y = fade alpha, z = fog dim, w = enabled flag.
++uniform vec4 LitdFxScalars;
++#endif
++
++vec3 getTeamColor() {
++#ifdef LITD_TEAMCOLOR
++    return LitdTeamColor;
++#else
++    return vec3(1.0);
++#endif
++}
++
++bool LitdInTeamColorZone(vec2 uv) {
++#ifdef LITD_TEAMCOLOR
++    return uv.x >= LitdTeamColorZone.x && uv.x <= LitdTeamColorZone.z &&
++           uv.y >= LitdTeamColorZone.y && uv.y <= LitdTeamColorZone.w;
++#else
++    return false;
++#endif
++}
++
++vec4 LitdApplyTeamColor(vec4 color, vec2 uv) {
++#ifdef LITD_TEAMCOLOR
++    if (LitdFxScalars.w < 0.5) {
++        return color;
++    }
++
++    vec4 outColor = color;
++    if (LitdInTeamColorZone(uv)) {
++        outColor.rgb *= getTeamColor();
++    }
++    outColor.rgb = mix(outColor.rgb, vec3(1.0), clamp(LitdFxScalars.x, 0.0, 1.0));
++    outColor.rgb *= clamp(LitdFxScalars.z, 0.0, 1.0);
++    outColor.a *= clamp(LitdFxScalars.y, 0.0, 1.0);
++    return outColor;
++#else
++    return color;
++#endif
++}
++`
++
+ const include_material_source = `//
+ // Material properties uniform
+ //
+@@ -458,6 +503,7 @@ uniform vec4 Material[3];
+ #define uRoughnessFactor    Material[2].y
+ 
+ #include <lights>
++#include <litd_teamcolor>
+ 
+ // Inputs from vertex shader
+ in vec3 Position;       // Vertex position in camera coordinates.
+@@ -673,6 +719,7 @@ void main() {
+ #else
+     vec4 baseColor = uBaseColor;
+ #endif
++    baseColor = LitdApplyTeamColor(baseColor, FragTexcoord);
+ 
+     vec3 f0 = vec3(0.04);
+     vec3 diffuseColor = baseColor.rgb * (vec3(1.0) - f0);
+@@ -924,6 +971,7 @@ in vec2 FragTexcoord; // Fragment texture coordinates
+ #include <lights>
+ #include <material>
+ #include <phong_model>
++#include <litd_teamcolor>
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -967,6 +1015,8 @@ void main() {
+         #endif
+     #endif
+ 
++    texMixed = LitdApplyTeamColor(texMixed, FragTexcoord);
++
+     // Combine material with texture colors
+     vec4 matDiffuse = vec4(MatDiffuseColor, MatOpacity) * texMixed;
+     vec4 matAmbient = vec4(MatAmbientColor, MatOpacity) * texMixed;
+@@ -1163,6 +1213,7 @@ var includeMap = map[string]string{
+ 	"phong_model":                     include_phong_model_source,
+ 	"attributes":                      include_attributes_source,
+ 	"litd_instancing":                 include_litd_instancing_source,
++	"litd_teamcolor":                  include_litd_teamcolor_source,
+ 	"material":                        include_material_source,
+ 	"lights":                          include_lights_source,
+ 	"bones_vertex_declaration":        include_bones_vertex_declaration_source,
+diff --git a/renderer/shaders/standard_fragment.glsl b/renderer/shaders/standard_fragment.glsl
+index 8ecc689..cc8d917 100644
+--- a/renderer/shaders/standard_fragment.glsl
++++ b/renderer/shaders/standard_fragment.glsl
+@@ -8,6 +8,7 @@ in vec2 FragTexcoord; // Fragment texture coordinates
+ #include <lights>
+ #include <material>
+ #include <phong_model>
++#include <litd_teamcolor>
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -51,6 +52,8 @@ void main() {
+         #endif
+     #endif
+ 
++    texMixed = LitdApplyTeamColor(texMixed, FragTexcoord);
++
+     // Combine material with texture colors
+     vec4 matDiffuse = vec4(MatDiffuseColor, MatOpacity) * texMixed;
+     vec4 matAmbient = vec4(MatAmbientColor, MatOpacity) * texMixed;

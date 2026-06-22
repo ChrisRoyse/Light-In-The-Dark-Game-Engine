@@ -78,6 +78,7 @@ type renderDemoDump struct {
 	VFXLights *vfxLightsRuntimeDump   `json:"vfxLights,omitempty"`
 	Voices    *voiceBattleRuntimeDump `json:"voices,omitempty"`
 	Atlas     *atlasRuntimeDump       `json:"atlas,omitempty"`
+	TeamColor *teamColorRuntimeDump   `json:"teamColor,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -177,6 +178,27 @@ type atlasSwatchDump struct {
 	G     uint8  `json:"g"`
 	B     uint8  `json:"b"`
 	A     uint8  `json:"a"`
+}
+
+type teamColorRuntimeDump struct {
+	Scene             string               `json:"scene"`
+	Preset            litasset.AtlasPreset `json:"preset"`
+	MaterialPath      string               `json:"materialPath"`
+	Uniforms          []string             `json:"uniforms"`
+	Upload            litasset.AtlasUpload `json:"upload"`
+	MaterialInstances int                  `json:"materialInstances"`
+	Units             []teamColorUnitDump  `json:"units"`
+	FlashIndex        int                  `json:"flashIndex,omitempty"`
+	FadeIndex         int                  `json:"fadeIndex,omitempty"`
+	OK                bool                 `json:"ok"`
+	Errors            []string             `json:"errors,omitempty"`
+}
+
+type teamColorUnitDump struct {
+	Index int                      `json:"index"`
+	X     float32                  `json:"x"`
+	Z     float32                  `json:"z"`
+	State litrender.TeamColorState `json:"state"`
 }
 
 type mapDataRuntimeDump struct {
@@ -591,7 +613,7 @@ type campaignMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -725,6 +747,7 @@ func main() {
 	var vfxFSV *vfxLightsRuntimeDump
 	var voiceFSV *voiceBattleRuntimeDump
 	var atlasFSV *atlasRuntimeDump
+	var teamColorFSV *teamColorRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -812,6 +835,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: atlas-two: %v\n", err)
 				os.Exit(1)
 			}
+		} else if strings.HasPrefix(strings.ToLower(strings.TrimSpace(*sceneName)), "teamcolors") {
+			spec, teamColorFSV, err = buildTeamColorsFSV(scene, atlasPreset, strings.ToLower(strings.TrimSpace(*sceneName)))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: teamcolors: %v\n", err)
+				os.Exit(1)
+			}
 		} else {
 			spec, err = buildScene(scene, *sceneName)
 			if err != nil {
@@ -860,10 +889,12 @@ func main() {
 				pass = pass && voiceFSV.OK && stats == spec.expected
 			} else if atlasFSV != nil {
 				pass = pass && atlasFSV.OK && stats == spec.expected
+			} else if teamColorFSV != nil {
+				pass = pass && teamColorFSV.OK && stats == spec.expected
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1480,6 +1511,183 @@ func atlasRuntimeSwitchProbe(src *litasset.AtlasSource) ([]litrender.AtlasMateri
 		cache.Snapshot(highAgain),
 	}
 	return out, high == highAgain && cache.Count() == 2
+}
+
+func buildTeamColorsFSV(scene *core.Node, preset litasset.AtlasPreset, name string) (sceneSpec, *teamColorRuntimeDump, error) {
+	switch name {
+	case "teamcolors", "teamcolors-one", "teamcolors-flash", "teamcolors-fade":
+	default:
+		return sceneSpec{}, nil, fmt.Errorf("unknown team-color scene %q", name)
+	}
+
+	src, err := syntheticTeamColorAtlasSource()
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	transparent := name == "teamcolors-fade"
+	mat, upload, materialPath, materialInstances, err := buildTeamColorMaterial(src, preset, transparent)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	dump := &teamColorRuntimeDump{
+		Scene:             name,
+		Preset:            preset,
+		MaterialPath:      materialPath,
+		Uniforms:          []string{"LitdTeamColor", "LitdTeamColorZone", "LitdFxScalars"},
+		Upload:            upload,
+		MaterialInstances: materialInstances,
+		FlashIndex:        -1,
+		FadeIndex:         -1,
+		OK:                true,
+	}
+
+	geom := geometry.NewPlane(132, 92)
+	const (
+		columns = 7
+		stepX   = float32(152)
+		stepZ   = float32(132)
+	)
+	for i := 0; i < litrender.TeamColorSlots; i++ {
+		slot := i
+		if name == "teamcolors-one" {
+			slot = 0
+		}
+		mesh, err := litrender.NewTeamColorMesh(geom, mat, slot)
+		if err != nil {
+			return sceneSpec{}, nil, err
+		}
+		mesh.SetRotationX(-math32.Pi / 2)
+		x := float32(i%columns-3) * stepX
+		z := float32(i/columns)*stepZ - stepZ/2
+		mesh.SetPosition(x, 8, z)
+		if name == "teamcolors-flash" && i == 4 {
+			mesh.SetPresentationScalars(1, 1, 1)
+			dump.FlashIndex = i
+		}
+		if name == "teamcolors-fade" && i == 5 {
+			mesh.SetPresentationScalars(0, 0.5, 1)
+			dump.FadeIndex = i
+		}
+		scene.Add(mesh)
+		dump.Units = append(dump.Units, teamColorUnitDump{
+			Index: i,
+			X:     x,
+			Z:     z,
+			State: mesh.TeamColorState(),
+		})
+	}
+	validateTeamColorDump(dump, name, preset)
+
+	expected := expectedStats(litrender.TeamColorSlots, 0, litrender.TeamColorSlots, 0, 1, 0)
+	if transparent {
+		expected = expectedStats(litrender.TeamColorSlots, 0, 0, litrender.TeamColorSlots, 0, 1)
+	}
+	if preset == litasset.AtlasPresetLow {
+		expected.Lights = 0
+	}
+	return sceneSpec{name: name + "-" + string(preset), expected: expected}, dump, nil
+}
+
+func buildTeamColorMaterial(src *litasset.AtlasSource, preset litasset.AtlasPreset, transparent bool) (material.IMaterial, litasset.AtlasUpload, string, int, error) {
+	if preset == litasset.AtlasPresetLow {
+		cache := litrender.NewAtlasMaterialCache()
+		entry, err := cache.Material(src, preset)
+		if err != nil {
+			return nil, litasset.AtlasUpload{}, "", 0, err
+		}
+		entry.Material.SetUseLights(material.UseLightNone)
+		entry.Material.SetSpecularColor(&math32.Color{R: 0, G: 0, B: 0})
+		if transparent {
+			entry.Material.SetTransparent(true)
+		}
+		return entry.Material, entry.Upload, "standard-unlit", cache.Count(), nil
+	}
+
+	uploadImg, upload, err := litasset.BuildAtlasUpload(src, preset)
+	if err != nil {
+		return nil, litasset.AtlasUpload{}, "", 0, err
+	}
+	tex := texture.NewTexture2DFromRGBA(uploadImg)
+	tex.SetMagFilter(gls.LINEAR)
+	tex.SetMinFilter(gls.LINEAR_MIPMAP_LINEAR)
+	tex.SetWrapS(gls.CLAMP_TO_EDGE)
+	tex.SetWrapT(gls.CLAMP_TO_EDGE)
+
+	mat := material.NewPhysical()
+	mat.SetBaseColorMap(tex)
+	mat.SetMetallicFactor(0)
+	mat.SetRoughnessFactor(1)
+	if transparent {
+		mat.SetTransparent(true)
+	}
+	return mat, upload, "physical", 1, nil
+}
+
+func syntheticTeamColorAtlasSource() (*litasset.AtlasSource, error) {
+	img := image.NewRGBA(image.Rect(0, 0, litasset.AuthoredAtlasSize, litasset.AuthoredAtlasSize))
+	fill := func(rect image.Rectangle, c color.RGBA) {
+		for y := rect.Min.Y; y < rect.Max.Y; y++ {
+			for x := rect.Min.X; x < rect.Max.X; x++ {
+				img.SetRGBA(x, y, c)
+			}
+		}
+	}
+
+	fill(image.Rect(0, 0, 512, 1024), color.RGBA{R: 225, G: 225, B: 225, A: 255})
+	fill(image.Rect(512, 0, 1024, 1024), color.RGBA{R: 78, G: 92, B: 108, A: 255})
+	fill(image.Rect(512, 0, 1024, 256), color.RGBA{R: 218, G: 198, B: 150, A: 255})
+	fill(image.Rect(512, 256, 1024, 512), color.RGBA{R: 58, G: 72, B: 86, A: 255})
+	fill(image.Rect(512, 512, 1024, 768), color.RGBA{R: 150, G: 116, B: 73, A: 255})
+	fill(image.Rect(512, 768, 1024, 1024), color.RGBA{R: 232, G: 229, B: 214, A: 255})
+	return litasset.NewAtlasSource("synthetic/teamcolor-mask.atlas.png", img)
+}
+
+func validateTeamColorDump(dump *teamColorRuntimeDump, name string, preset litasset.AtlasPreset) {
+	if dump.MaterialInstances != 1 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("material instances = %d, want 1", dump.MaterialInstances))
+	}
+	if len(dump.Units) != litrender.TeamColorSlots {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("unit count = %d, want %d", len(dump.Units), litrender.TeamColorSlots))
+	}
+	wantSize, err := preset.Size()
+	if err != nil {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, err.Error())
+		return
+	}
+	if dump.Upload.Width != wantSize || dump.Upload.Height != wantSize {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("upload size = %dx%d, want %dx%d", dump.Upload.Width, dump.Upload.Height, wantSize, wantSize))
+	}
+	for i, unit := range dump.Units {
+		wantSlot := i
+		if name == "teamcolors-one" {
+			wantSlot = 0
+		}
+		if unit.State.Slot != wantSlot {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("unit %d slot = %d, want %d", i, unit.State.Slot, wantSlot))
+		}
+		if unit.State.Zone != litrender.DefaultTeamColorZone() {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("unit %d zone = %+v", i, unit.State.Zone))
+		}
+		if !unit.State.Enabled {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, fmt.Sprintf("unit %d team color disabled", i))
+		}
+	}
+	if name == "teamcolors-flash" && (dump.FlashIndex < 0 || dump.Units[dump.FlashIndex].State.HitFlash != 1) {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "flash scalar was not captured on the flash unit")
+	}
+	if name == "teamcolors-fade" && (dump.FadeIndex < 0 || dump.Units[dump.FadeIndex].State.FadeAlpha != 0.5) {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "fade scalar was not captured on the fade unit")
+	}
 }
 
 // buildSpellstormFSV lights a dark ground plane with the fixed VFX light pool
