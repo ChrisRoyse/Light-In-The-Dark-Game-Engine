@@ -66,6 +66,7 @@ const (
 	EditorModeTerrain             Key = "editor.mode.terrain"
 	EditorModeObjects             Key = "editor.mode.objects"
 	EditorModeMetadata            Key = "editor.mode.metadata"
+	EditorModeFaction             Key = "editor.mode.faction"
 	EditorDirtyClean              Key = "editor.dirty.clean"
 	EditorDirtyUnsaved            Key = "editor.dirty.unsaved"
 	EditorActionNew               Key = "editor.action.new"
@@ -84,10 +85,12 @@ const (
 	EditorPanelTerrain            Key = "editor.panel.terrain"
 	EditorPanelObjects            Key = "editor.panel.objects"
 	EditorPanelMetadata           Key = "editor.panel.metadata"
+	EditorPanelFaction            Key = "editor.panel.faction"
 	EditorPanelMinimap            Key = "editor.panel.minimap"
 	EditorHintTerrain             Key = "editor.hint.terrain"
 	EditorHintObjects             Key = "editor.hint.objects"
 	EditorHintMetadata            Key = "editor.hint.metadata"
+	EditorHintFaction             Key = "editor.hint.faction"
 	EditorStatusPrefix            Key = "editor.status.prefix"
 	EditorFieldCell               Key = "editor.field.cell"
 	EditorFieldEntities           Key = "editor.field.entities"
@@ -112,6 +115,12 @@ const (
 	EditorFieldSeedPolicy         Key = "editor.field.seed_policy"
 	EditorFieldPath               Key = "editor.field.path"
 	EditorFieldCamera             Key = "editor.field.camera"
+	EditorFieldCulture            Key = "editor.field.culture"
+	EditorFieldTraits             Key = "editor.field.traits"
+	EditorFieldGrimoires          Key = "editor.field.grimoires"
+	EditorFieldWorker             Key = "editor.field.worker"
+	EditorFieldTownHall           Key = "editor.field.town_hall"
+	EditorFieldOutput             Key = "editor.field.output"
 	EditorScopeNoTriggerGUI       Key = "editor.scope.no_trigger_gui"
 )
 
@@ -169,6 +178,7 @@ var requiredKeys = []string{
 	string(EditorModeTerrain),
 	string(EditorModeObjects),
 	string(EditorModeMetadata),
+	string(EditorModeFaction),
 	string(EditorDirtyClean),
 	string(EditorDirtyUnsaved),
 	string(EditorActionNew),
@@ -187,10 +197,12 @@ var requiredKeys = []string{
 	string(EditorPanelTerrain),
 	string(EditorPanelObjects),
 	string(EditorPanelMetadata),
+	string(EditorPanelFaction),
 	string(EditorPanelMinimap),
 	string(EditorHintTerrain),
 	string(EditorHintObjects),
 	string(EditorHintMetadata),
+	string(EditorHintFaction),
 	string(EditorStatusPrefix),
 	string(EditorFieldCell),
 	string(EditorFieldEntities),
@@ -215,6 +227,12 @@ var requiredKeys = []string{
 	string(EditorFieldSeedPolicy),
 	string(EditorFieldPath),
 	string(EditorFieldCamera),
+	string(EditorFieldCulture),
+	string(EditorFieldTraits),
+	string(EditorFieldGrimoires),
+	string(EditorFieldWorker),
+	string(EditorFieldTownHall),
+	string(EditorFieldOutput),
 	string(EditorScopeNoTriggerGUI),
 }
 

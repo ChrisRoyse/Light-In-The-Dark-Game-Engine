@@ -83,6 +83,7 @@ func RenderImage(snap Snapshot) *image.RGBA {
 	modeButton(img, 22, 124, snap.Labels["terrain"], snap.Mode == ModeTerrain)
 	modeButton(img, 22, 176, snap.Labels["objects"], snap.Mode == ModeObjects)
 	modeButton(img, 22, 228, snap.Labels["metadata"], snap.Mode == ModeMetadata)
+	modeButton(img, 22, 280, snap.Labels["faction"], snap.Mode == ModeFaction)
 	text(img, 24, 330, snap.Labels["new"]+"   "+snap.Labels["open"], muted)
 	text(img, 24, 358, snap.Labels["save"]+"   "+snap.Labels["export"], muted)
 	modeButton(img, playtestButtonX, playtestButtonY, snap.Labels["playtest"], false)
@@ -95,6 +96,8 @@ func RenderImage(snap Snapshot) *image.RGBA {
 		drawObjects(img, snap)
 	case ModeMetadata:
 		drawMetadata(img, snap)
+	case ModeFaction:
+		drawFactionCreator(img, snap)
 	}
 	if snap.Error != "" {
 		fill(img, 210, 612, 1040, 42, color.RGBA{R: 83, G: 40, B: 38, A: 255})
@@ -368,6 +371,43 @@ func drawMetadata(img *image.RGBA, snap Snapshot) {
 	}
 }
 
+func drawFactionCreator(img *image.RGBA, snap Snapshot) {
+	text(img, 236, 132, snap.Labels["panelFaction"], ink)
+	textFit(img, 236, 166, 880, snap.Labels["hintFaction"], muted)
+	f := snap.Faction
+	y := 218
+	text(img, 236, y, snap.Labels["fieldID"]+": "+emptyDash(f.Draft.ID), ink)
+	y += 34
+	text(img, 236, y, snap.Labels["fieldName"]+": "+emptyDash(f.Draft.Name), ink)
+	y += 34
+	text(img, 236, y, snap.Labels["fieldCulture"]+": "+emptyDash(f.Draft.Culture), ink)
+	y += 34
+	textFit(img, 236, y, 880, snap.Labels["fieldTraits"]+": "+joinOrDash(f.Draft.Traits), ink)
+	y += 34
+	textFit(img, 236, y, 880, snap.Labels["fieldGrimoires"]+": "+joinOrDash(f.Draft.Grimoires), ink)
+	y += 48
+	if f.Valid {
+		text(img, 236, y, snap.Labels["fieldTownHall"]+": "+f.Preview.TownHall, brass)
+		y += 34
+		text(img, 236, y, fmt.Sprintf("%s: %s x%d", snap.Labels["fieldWorker"], f.Preview.Worker, f.Preview.WorkerCount), brass)
+		y += 34
+		text(img, 236, y, fmt.Sprintf("G%d L%d F%d", f.Preview.Gold, f.Preview.Lumber, f.Preview.FoodCap), muted)
+		y += 42
+		text(img, 236, y, snap.Labels["fieldOutput"]+": "+joinOrDash(f.Preview.OutputPaths), green)
+		return
+	}
+	if len(f.Errors) == 0 {
+		return
+	}
+	fill(img, 236, y-22, 860, 84, color.RGBA{R: 83, G: 40, B: 38, A: 255})
+	for i, e := range f.Errors {
+		if i >= 3 {
+			break
+		}
+		textFit(img, 252, y+i*24, 820, e, ink)
+	}
+}
+
 func drawMetadataStartGrid(img *image.RGBA, snap Snapshot) {
 	starts := map[[2]int]int{}
 	for _, start := range snap.World.Starts {
@@ -412,6 +452,20 @@ func startsLabel(starts []sourceform.StartLocation) string {
 		parts[i] = fmt.Sprintf("P%d@%d,%d", start.Player, start.Cell[0], start.Cell[1])
 	}
 	return strings.Join(parts, " ")
+}
+
+func emptyDash(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return "-"
+	}
+	return s
+}
+
+func joinOrDash(values []string) string {
+	if len(values) == 0 {
+		return "-"
+	}
+	return strings.Join(values, ", ")
 }
 
 func modeButton(img *image.RGBA, x, y int, label string, active bool) {

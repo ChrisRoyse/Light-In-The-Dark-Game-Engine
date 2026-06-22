@@ -29,9 +29,10 @@ const (
 	ModeTerrain  Mode = "terrain"
 	ModeObjects  Mode = "objects"
 	ModeMetadata Mode = "metadata"
+	ModeFaction  Mode = "faction"
 )
 
-var allModes = []Mode{ModeTerrain, ModeObjects, ModeMetadata}
+var allModes = []Mode{ModeTerrain, ModeObjects, ModeMetadata, ModeFaction}
 
 type App struct {
 	table           *locale.Table
@@ -53,6 +54,7 @@ type App struct {
 	unitData        map[string]data.Unit
 	cameraTarget    [2]int
 	playtest        PlaytestSnapshot
+	faction         FactionCreatorState
 }
 
 type Confirm struct {
@@ -63,27 +65,28 @@ type Confirm struct {
 }
 
 type Snapshot struct {
-	Title           string               `json:"title"`
-	ProjectPath     string               `json:"projectPath"`
-	ArchivePath     string               `json:"archivePath,omitempty"`
-	ArchiveReadOnly bool                 `json:"archiveReadOnly,omitempty"`
-	Mode            Mode                 `json:"mode"`
-	ModeLabel       string               `json:"modeLabel"`
-	Dirty           bool                 `json:"dirty"`
-	DirtyLabel      string               `json:"dirtyLabel"`
-	Status          string               `json:"status"`
-	Error           string               `json:"error,omitempty"`
-	Confirm         *Confirm             `json:"confirm,omitempty"`
-	Labels          map[string]string    `json:"labels"`
-	World           WorldSnapshot        `json:"world"`
-	Stack           StackSnapshot        `json:"stack"`
-	Brush           TerrainBrushSnapshot `json:"brush"`
-	TerrainTool     TerrainTool          `json:"terrainTool"`
-	Paint           PaintBrushSnapshot   `json:"paint"`
-	CliffFlags      []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
-	Objects         ObjectSnapshot       `json:"objects"`
-	Camera          CameraSnapshot       `json:"camera"`
-	Playtest        PlaytestSnapshot     `json:"playtest,omitempty"`
+	Title           string                 `json:"title"`
+	ProjectPath     string                 `json:"projectPath"`
+	ArchivePath     string                 `json:"archivePath,omitempty"`
+	ArchiveReadOnly bool                   `json:"archiveReadOnly,omitempty"`
+	Mode            Mode                   `json:"mode"`
+	ModeLabel       string                 `json:"modeLabel"`
+	Dirty           bool                   `json:"dirty"`
+	DirtyLabel      string                 `json:"dirtyLabel"`
+	Status          string                 `json:"status"`
+	Error           string                 `json:"error,omitempty"`
+	Confirm         *Confirm               `json:"confirm,omitempty"`
+	Labels          map[string]string      `json:"labels"`
+	World           WorldSnapshot          `json:"world"`
+	Stack           StackSnapshot          `json:"stack"`
+	Brush           TerrainBrushSnapshot   `json:"brush"`
+	TerrainTool     TerrainTool            `json:"terrainTool"`
+	Paint           PaintBrushSnapshot     `json:"paint"`
+	CliffFlags      []CliffFlagSnapshot    `json:"cliffFlags,omitempty"`
+	Objects         ObjectSnapshot         `json:"objects"`
+	Camera          CameraSnapshot         `json:"camera"`
+	Playtest        PlaytestSnapshot       `json:"playtest,omitempty"`
+	Faction         FactionCreatorSnapshot `json:"faction"`
 }
 
 type WorldSnapshot struct {
@@ -299,7 +302,7 @@ func (a *App) openError(path string, err error) error {
 
 func (a *App) SwitchMode(mode Mode) error {
 	switch mode {
-	case ModeTerrain, ModeObjects, ModeMetadata:
+	case ModeTerrain, ModeObjects, ModeMetadata, ModeFaction:
 		a.mode = mode
 		a.errText = ""
 		return nil
@@ -582,13 +585,16 @@ func (a *App) Snapshot() Snapshot {
 		"terrain":           must(a.table, locale.EditorModeTerrain),
 		"objects":           must(a.table, locale.EditorModeObjects),
 		"metadata":          must(a.table, locale.EditorModeMetadata),
+		"faction":           must(a.table, locale.EditorModeFaction),
 		"panelTerrain":      must(a.table, locale.EditorPanelTerrain),
 		"panelObjects":      must(a.table, locale.EditorPanelObjects),
 		"panelMetadata":     must(a.table, locale.EditorPanelMetadata),
+		"panelFaction":      must(a.table, locale.EditorPanelFaction),
 		"panelMinimap":      must(a.table, locale.EditorPanelMinimap),
 		"hintTerrain":       must(a.table, locale.EditorHintTerrain),
 		"hintObjects":       must(a.table, locale.EditorHintObjects),
 		"hintMetadata":      must(a.table, locale.EditorHintMetadata),
+		"hintFaction":       must(a.table, locale.EditorHintFaction),
 		"statusPrefix":      must(a.table, locale.EditorStatusPrefix),
 		"fieldCell":         must(a.table, locale.EditorFieldCell),
 		"fieldEntities":     must(a.table, locale.EditorFieldEntities),
@@ -613,6 +619,12 @@ func (a *App) Snapshot() Snapshot {
 		"fieldSeedPolicy":   must(a.table, locale.EditorFieldSeedPolicy),
 		"fieldPath":         must(a.table, locale.EditorFieldPath),
 		"fieldCamera":       must(a.table, locale.EditorFieldCamera),
+		"fieldCulture":      must(a.table, locale.EditorFieldCulture),
+		"fieldTraits":       must(a.table, locale.EditorFieldTraits),
+		"fieldGrimoires":    must(a.table, locale.EditorFieldGrimoires),
+		"fieldWorker":       must(a.table, locale.EditorFieldWorker),
+		"fieldTownHall":     must(a.table, locale.EditorFieldTownHall),
+		"fieldOutput":       must(a.table, locale.EditorFieldOutput),
 		"scopeNoTriggerGUI": must(a.table, locale.EditorScopeNoTriggerGUI),
 	}
 	dirty := a.world != nil && a.world.Dirty()
@@ -649,6 +661,7 @@ func (a *App) Snapshot() Snapshot {
 		Objects:         a.ObjectSnapshot(),
 		Camera:          CameraSnapshot{TargetCell: a.clampedCameraTarget()},
 		Playtest:        a.playtest,
+		Faction:         a.FactionCreatorSnapshot(),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
