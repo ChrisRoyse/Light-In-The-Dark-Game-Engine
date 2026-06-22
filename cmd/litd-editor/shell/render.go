@@ -8,9 +8,11 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/minimap"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
@@ -25,6 +27,13 @@ const (
 	terrainGridStepY = 34
 	terrainGridCellW = 34
 	terrainGridCellH = 24
+	minimapPanelX    = 22
+	minimapPanelY    = 408
+	minimapPanelW    = 144
+	minimapPanelH    = 184
+	minimapMapX      = 30
+	minimapMapY      = 438
+	minimapMapSize   = 128
 )
 
 var (
@@ -72,6 +81,7 @@ func RenderImage(snap Snapshot) *image.RGBA {
 	modeButton(img, 22, 228, snap.Labels["metadata"], snap.Mode == ModeMetadata)
 	text(img, 24, 330, snap.Labels["new"]+"   "+snap.Labels["open"], muted)
 	text(img, 24, 358, snap.Labels["save"]+"   "+snap.Labels["export"], muted)
+	drawMinimapPanel(img, snap)
 
 	switch snap.Mode {
 	case ModeTerrain:
@@ -94,6 +104,152 @@ func RenderImage(snap Snapshot) *image.RGBA {
 	}
 	textFit(img, 226, 686, 1000, snap.Labels["statusPrefix"]+": "+snap.Status, muted)
 	return img
+}
+
+func drawMinimapPanel(img *image.RGBA, snap Snapshot) {
+	fill(img, minimapPanelX, minimapPanelY, minimapPanelW, minimapPanelH, panel)
+	line(img, minimapPanelX, minimapPanelY, minimapPanelX+minimapPanelW, minimapPanelY, brass)
+	text(img, minimapPanelX+12, minimapPanelY+22, snap.Labels["panelMinimap"], ink)
+	outer := image.Rect(minimapMapX, minimapMapY, minimapMapX+minimapMapSize, minimapMapY+minimapMapSize)
+	fill(img, outer.Min.X, outer.Min.Y, outer.Dx(), outer.Dy(), graphite)
+	rect := MinimapContentRect(snap)
+	if rect.Empty() {
+		return
+	}
+	mapper := editorMinimapMapper(rect, snap)
+	for py := rect.Min.Y; py < rect.Max.Y; py++ {
+		for px := rect.Min.X; px < rect.Max.X; px++ {
+			wx, wz := mapper.PixelToWorld(px-rect.Min.X, py-rect.Min.Y)
+			cx := clampInt(int(wx), 0, snap.World.Width-1)
+			cy := clampInt(int(wz), 0, snap.World.Height-1)
+			img.SetRGBA(px, py, minimapTerrainColor(snap, cx, cy))
+		}
+	}
+	line(img, rect.Min.X, rect.Min.Y, rect.Max.X, rect.Min.Y, muted)
+	line(img, rect.Min.X, rect.Max.Y-1, rect.Max.X, rect.Max.Y-1, muted)
+	line(img, rect.Min.X, rect.Min.Y, rect.Min.X, rect.Max.Y, muted)
+	line(img, rect.Max.X-1, rect.Min.Y, rect.Max.X-1, rect.Max.Y, muted)
+	for _, start := range snap.World.Starts {
+		drawMinimapStartMarker(img, snap, start)
+	}
+	drawMinimapCameraMarker(img, snap)
+	textFit(img, minimapPanelX+12, minimapPanelY+174, minimapPanelW-24, fmt.Sprintf("%s %d,%d", snap.Labels["fieldCamera"], snap.Camera.TargetCell[0], snap.Camera.TargetCell[1]), muted)
+}
+
+// MinimapContentRect returns the screen-space map image region inside the
+// editor minimap panel, preserving map aspect ratio within the fixed preview.
+func MinimapContentRect(snap Snapshot) image.Rectangle {
+	outer := image.Rect(minimapMapX, minimapMapY, minimapMapX+minimapMapSize, minimapMapY+minimapMapSize)
+	if snap.World.Width <= 0 || snap.World.Height <= 0 {
+		return image.Rectangle{}
+	}
+	if snap.World.Width == snap.World.Height {
+		return outer
+	}
+	if snap.World.Width > snap.World.Height {
+		h := maxInt(1, outer.Dy()*snap.World.Height/snap.World.Width)
+		y := outer.Min.Y + (outer.Dy()-h)/2
+		return image.Rect(outer.Min.X, y, outer.Max.X, y+h)
+	}
+	w := maxInt(1, outer.Dx()*snap.World.Width/snap.World.Height)
+	x := outer.Min.X + (outer.Dx()-w)/2
+	return image.Rect(x, outer.Min.Y, x+w, outer.Max.Y)
+}
+
+// MinimapScreenPointForCell returns the screen pixel nearest the center of a
+// source-form map cell.
+func MinimapScreenPointForCell(snap Snapshot, x, y int) (int, int, bool) {
+	rect := MinimapContentRect(snap)
+	if rect.Empty() || x < 0 || y < 0 || x >= snap.World.Width || y >= snap.World.Height {
+		return 0, 0, false
+	}
+	mapper := editorMinimapMapper(rect, snap)
+	px, py := mapper.WorldToPixel(float32(x)+0.5, float32(y)+0.5)
+	return rect.Min.X + px, rect.Min.Y + py, true
+}
+
+func minimapCellAt(snap Snapshot, xpos, ypos float32) (int, int, bool) {
+	rect := MinimapContentRect(snap)
+	if rect.Empty() {
+		return 0, 0, false
+	}
+	p := image.Point{X: int(xpos), Y: int(ypos)}
+	if !p.In(rect) {
+		return 0, 0, false
+	}
+	mapper := editorMinimapMapper(rect, snap)
+	wx, wz := mapper.PixelToWorld(p.X-rect.Min.X, p.Y-rect.Min.Y)
+	return clampInt(int(wx), 0, snap.World.Width-1), clampInt(int(wz), 0, snap.World.Height-1), true
+}
+
+func editorMinimapMapper(rect image.Rectangle, snap Snapshot) minimap.Mapper {
+	return minimap.NewMapper(rect.Dx(), rect.Dy(), 0, 0, float32(snap.World.Width), float32(snap.World.Height))
+}
+
+func minimapTerrainColor(snap Snapshot, x, y int) color.RGBA {
+	c := panelAlt
+	if y < len(snap.World.HeightRows) && x < len(snap.World.HeightRows[y]) {
+		c = heightColor(snap.World.HeightRows[y][x])
+	}
+	if y < len(snap.World.SplatRows) && x < len(snap.World.SplatRows[y]) {
+		if sc, ok := splatColor(snap.World.SplatRows[y][x]); ok {
+			c = sc
+		}
+	}
+	level, ramp := minimapCliffCell(snap, x, y)
+	if level > 0 {
+		c = mixColor(c, graphite, clampInt(42+level*18, 0, 130))
+	}
+	if ramp {
+		c = mixColor(c, brass, 110)
+	}
+	return c
+}
+
+func minimapCliffCell(snap Snapshot, x, y int) (level int, ramp bool) {
+	if y >= len(snap.World.CliffRows) || x >= len(snap.World.CliffRows[y]) {
+		return 0, false
+	}
+	label := snap.World.CliffRows[y][x]
+	if strings.HasPrefix(label, "r") {
+		ramp = true
+		label = strings.TrimPrefix(label, "r")
+	}
+	n, err := strconv.Atoi(label)
+	if err != nil {
+		return 0, ramp
+	}
+	return n, ramp
+}
+
+func drawMinimapStartMarker(img *image.RGBA, snap Snapshot, start sourceform.StartLocation) {
+	px, py, ok := MinimapScreenPointForCell(snap, start.Cell[0], start.Cell[1])
+	if !ok {
+		return
+	}
+	fill(img, px-3, py-3, 7, 7, brass)
+	fill(img, px-1, py-1, 3, 3, graphite)
+}
+
+func drawMinimapCameraMarker(img *image.RGBA, snap Snapshot) {
+	px, py, ok := MinimapScreenPointForCell(snap, snap.Camera.TargetCell[0], snap.Camera.TargetCell[1])
+	if !ok {
+		return
+	}
+	line(img, px-5, py, px+6, py, ink)
+	line(img, px, py-5, px, py+6, ink)
+	fill(img, px-1, py-1, 3, 3, green)
+}
+
+func mixColor(base, overlay color.RGBA, alpha int) color.RGBA {
+	alpha = clampInt(alpha, 0, 255)
+	inv := 255 - alpha
+	return color.RGBA{
+		R: uint8((int(base.R)*inv + int(overlay.R)*alpha) / 255),
+		G: uint8((int(base.G)*inv + int(overlay.G)*alpha) / 255),
+		B: uint8((int(base.B)*inv + int(overlay.B)*alpha) / 255),
+		A: 255,
+	}
 }
 
 func drawTerrain(img *image.RGBA, snap Snapshot) {

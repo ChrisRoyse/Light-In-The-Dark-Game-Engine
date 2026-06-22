@@ -144,6 +144,9 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runArchiveRoundTripFSV(app, outDir); err != nil {
 		return err
 	}
+	if err := runMinimapFSV(app, outDir); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -243,6 +246,9 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 		return err
 	}
 	if err := runArchiveRoundTripFSV(app, outDir); err != nil {
+		return err
+	}
+	if err := runMinimapFSV(app, outDir); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -1463,6 +1469,220 @@ func archiveSnapshotFrom(s shell.Snapshot) archiveSnapshot {
 		Height:          s.World.Height,
 		Starts:          append([]sourceform.StartLocation(nil), s.World.Starts...),
 	}
+}
+
+type minimapFSVState struct {
+	Before       minimapSnapshotRecord `json:"before"`
+	After        minimapSnapshotRecord `json:"after"`
+	Undo         minimapSnapshotRecord `json:"undo"`
+	Click        minimapClickRecord    `json:"click"`
+	OutsideClick minimapClickRecord    `json:"outsideClick"`
+	Small64      minimapSnapshotRecord `json:"small64"`
+	Large256     minimapSnapshotRecord `json:"large256"`
+}
+
+type minimapSnapshotRecord struct {
+	Screenshot   string                     `json:"screenshot"`
+	Rect         string                     `json:"rect"`
+	SampleCell   [2]int                     `json:"sampleCell"`
+	SamplePixel  [2]int                     `json:"samplePixel"`
+	SampleRGBA   [4]uint8                   `json:"sampleRGBA"`
+	Starts       []sourceform.StartLocation `json:"starts"`
+	CameraTarget [2]int                     `json:"cameraTarget"`
+	Width        int                        `json:"width"`
+	Height       int                        `json:"height"`
+	CliffRows    [][]string                 `json:"cliffRows,omitempty"`
+	SavedCliff   string                     `json:"savedCliff,omitempty"`
+	SavedTerrain string                     `json:"savedTerrain,omitempty"`
+}
+
+type minimapClickRecord struct {
+	Click       [2]int `json:"click"`
+	Before      [2]int `json:"before"`
+	After       [2]int `json:"after"`
+	Error       string `json:"error,omitempty"`
+	ContentRect string `json:"contentRect"`
+}
+
+func runMinimapFSV(app *shell.App, outDir string) error {
+	root := filepath.Join(outDir, "minimap-fsv")
+	if err := os.RemoveAll(root); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return err
+	}
+	state := minimapFSVState{}
+	sample := [2]int{5, 4}
+
+	if err := app.NewProjectWithSize(filepath.Join(root, "preview-source"), 8, 8); err != nil {
+		return err
+	}
+	if err := app.PutStartLocationCell(1, 1, 6); err != nil {
+		return err
+	}
+	if err := app.PutStartLocationCell(2, 6, 1); err != nil {
+		return err
+	}
+	before, err := captureMinimapRecord(app, outDir, "31-minimap-before.png", sample)
+	if err != nil {
+		return err
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+	if err := fillMinimapSourceBytes(app, &before, true); err != nil {
+		return err
+	}
+	state.Before = before
+
+	if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
+		return err
+	}
+	if err := app.SetBrushSize(1); err != nil {
+		return err
+	}
+	if err := app.SetBrushStrength(1); err != nil {
+		return err
+	}
+	if err := app.ApplyTerrainBrush(4, 4); err != nil {
+		return err
+	}
+	after, err := captureMinimapRecord(app, outDir, "32-minimap-after.png", sample)
+	if err != nil {
+		return err
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+	if err := fillMinimapSourceBytes(app, &after, true); err != nil {
+		return err
+	}
+	state.After = after
+
+	if state.Before.SampleRGBA == state.After.SampleRGBA {
+		return fmt.Errorf("minimap FSV: plateau sample did not change: %v", state.After.SampleRGBA)
+	}
+	if err := app.Undo(); err != nil {
+		return err
+	}
+	undo, err := captureMinimapRecord(app, outDir, "33-minimap-undo.png", sample)
+	if err != nil {
+		return err
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+	if err := fillMinimapSourceBytes(app, &undo, true); err != nil {
+		return err
+	}
+	state.Undo = undo
+	if state.Before.SampleRGBA != state.Undo.SampleRGBA {
+		return fmt.Errorf("minimap FSV: undo sample %v did not restore before %v", state.Undo.SampleRGBA, state.Before.SampleRGBA)
+	}
+
+	rect := shell.MinimapContentRect(app.Snapshot())
+	click := [2]int{rect.Min.X, rect.Min.Y}
+	beforeClick := app.Snapshot().Camera.TargetCell
+	clickErr := app.RecenterCameraFromMinimapPixel(click[0], click[1])
+	afterClick := app.Snapshot().Camera.TargetCell
+	state.Click = minimapClickRecord{Click: click, Before: beforeClick, After: afterClick, Error: errorString(clickErr), ContentRect: fmt.Sprint(rect)}
+	if clickErr != nil || afterClick != ([2]int{0, 0}) {
+		return fmt.Errorf("minimap FSV: corner click target=%v err=%v, want 0,0 nil", afterClick, clickErr)
+	}
+	outside := [2]int{rect.Min.X - 1, rect.Min.Y - 1}
+	beforeOutside := afterClick
+	outsideErr := app.RecenterCameraFromMinimapPixel(outside[0], outside[1])
+	afterOutside := app.Snapshot().Camera.TargetCell
+	state.OutsideClick = minimapClickRecord{Click: outside, Before: beforeOutside, After: afterOutside, Error: errorString(outsideErr), ContentRect: fmt.Sprint(rect)}
+	if outsideErr == nil || afterOutside != beforeOutside {
+		return fmt.Errorf("minimap FSV: outside click err=%v before=%v after=%v", outsideErr, beforeOutside, afterOutside)
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+
+	if err := app.NewProjectWithSize(filepath.Join(root, "small-64"), 64, 64); err != nil {
+		return err
+	}
+	state.Small64, err = captureMinimapRecord(app, outDir, "34-minimap-64.png", [2]int{10, 10})
+	if err != nil {
+		return err
+	}
+	if err := fillMinimapSourceBytes(app, &state.Small64, false); err != nil {
+		return err
+	}
+
+	if err := app.NewProjectWithSize(filepath.Join(root, "large-256"), 256, 256); err != nil {
+		return err
+	}
+	state.Large256, err = captureMinimapRecord(app, outDir, "35-minimap-256.png", [2]int{10, 10})
+	if err != nil {
+		return err
+	}
+	if err := fillMinimapSourceBytes(app, &state.Large256, false); err != nil {
+		return err
+	}
+
+	body, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(outDir, "minimap-dump.json"), append(body, '\n'), 0o644); err != nil {
+		return err
+	}
+	return app.OpenProject(filepath.Join(root, "preview-source"))
+}
+
+func captureMinimapRecord(app *shell.App, outDir, shotName string, sample [2]int) (minimapSnapshotRecord, error) {
+	if err := renderState(outDir, shotName, app); err != nil {
+		return minimapSnapshotRecord{}, err
+	}
+	snap := app.Snapshot()
+	px, py, ok := shell.MinimapScreenPointForCell(snap, sample[0], sample[1])
+	if !ok {
+		return minimapSnapshotRecord{}, fmt.Errorf("minimap FSV: sample cell %d,%d outside %dx%d map", sample[0], sample[1], snap.World.Width, snap.World.Height)
+	}
+	img := shell.RenderImage(snap)
+	c := img.RGBAAt(px, py)
+	rec := minimapSnapshotRecord{
+		Screenshot:   filepath.Join(outDir, shotName),
+		Rect:         fmt.Sprint(shell.MinimapContentRect(snap)),
+		SampleCell:   sample,
+		SamplePixel:  [2]int{px, py},
+		SampleRGBA:   [4]uint8{c.R, c.G, c.B, c.A},
+		Starts:       append([]sourceform.StartLocation(nil), snap.World.Starts...),
+		CameraTarget: snap.Camera.TargetCell,
+		Width:        snap.World.Width,
+		Height:       snap.World.Height,
+	}
+	if snap.World.Width <= 16 && snap.World.Height <= 16 {
+		rec.CliffRows = snap.World.CliffRows
+	}
+	return rec, nil
+}
+
+func fillMinimapSourceBytes(app *shell.App, rec *minimapSnapshotRecord, includeCliff bool) error {
+	if rec == nil {
+		return nil
+	}
+	snap := app.Snapshot()
+	if snap.ProjectPath == "" {
+		return nil
+	}
+	if includeCliff {
+		body, err := os.ReadFile(filepath.Join(snap.ProjectPath, "map", "cliff.txt"))
+		if err != nil {
+			return err
+		}
+		rec.SavedCliff = string(body)
+	}
+	body, err := os.ReadFile(filepath.Join(snap.ProjectPath, "map", "terrain.toml"))
+	if err != nil {
+		return err
+	}
+	rec.SavedTerrain = string(body)
+	return nil
 }
 
 func archiveMemberHashList(path string) ([]string, error) {

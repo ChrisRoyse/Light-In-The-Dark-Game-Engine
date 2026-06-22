@@ -55,6 +55,7 @@
 "editor.panel.terrain" = "Height Grid"
 "editor.panel.objects" = "Placement List"
 "editor.panel.metadata" = "World Metadata"
+"editor.panel.minimap" = "Minimap"
 "editor.hint.terrain" = "Sculpt height and cliff data in source form."
 "editor.hint.objects" = "Place units and doodads without trigger authoring."
 "editor.hint.metadata" = "Edit identity, players, and archive metadata."
@@ -81,4 +82,5 @@
 "editor.field.starts" = "starts"
 "editor.field.seed_policy" = "seed-policy"
 "editor.field.path" = "path"
+"editor.field.camera" = "camera"
 "editor.scope.no_trigger_gui" = "trigger GUI: out of scope"

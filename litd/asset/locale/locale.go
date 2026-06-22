@@ -69,6 +69,7 @@ const (
 	EditorPanelTerrain            Key = "editor.panel.terrain"
 	EditorPanelObjects            Key = "editor.panel.objects"
 	EditorPanelMetadata           Key = "editor.panel.metadata"
+	EditorPanelMinimap            Key = "editor.panel.minimap"
 	EditorHintTerrain             Key = "editor.hint.terrain"
 	EditorHintObjects             Key = "editor.hint.objects"
 	EditorHintMetadata            Key = "editor.hint.metadata"
@@ -95,6 +96,7 @@ const (
 	EditorFieldStarts             Key = "editor.field.starts"
 	EditorFieldSeedPolicy         Key = "editor.field.seed_policy"
 	EditorFieldPath               Key = "editor.field.path"
+	EditorFieldCamera             Key = "editor.field.camera"
 	EditorScopeNoTriggerGUI       Key = "editor.scope.no_trigger_gui"
 )
 
@@ -155,6 +157,7 @@ var requiredKeys = []string{
 	string(EditorPanelTerrain),
 	string(EditorPanelObjects),
 	string(EditorPanelMetadata),
+	string(EditorPanelMinimap),
 	string(EditorHintTerrain),
 	string(EditorHintObjects),
 	string(EditorHintMetadata),
@@ -181,6 +184,7 @@ var requiredKeys = []string{
 	string(EditorFieldStarts),
 	string(EditorFieldSeedPolicy),
 	string(EditorFieldPath),
+	string(EditorFieldCamera),
 	string(EditorScopeNoTriggerGUI),
 }
 

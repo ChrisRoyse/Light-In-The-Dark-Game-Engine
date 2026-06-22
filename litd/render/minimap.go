@@ -1,6 +1,7 @@
 package render
 
 import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/minimap"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/texture"
@@ -29,53 +30,33 @@ const MinimapSize = 256
 // Minimap holds the world rect, the CPU blip buffer, the viewport line loop,
 // and the persistent blip texture.
 type Minimap struct {
-	size                   int
-	minX, minZ, maxX, maxZ float32
-	buf                    []byte // size*size*4 RGBA, the blip texture source
-	tex                    *texture.Texture2D
-	frustum                [5]math32.Vector2 // viewport line loop (last == first)
-	uploads                int
+	mapper  minimap.Mapper
+	buf     []byte // size*size*4 RGBA, the blip texture source
+	tex     *texture.Texture2D
+	frustum [5]math32.Vector2 // viewport line loop (last == first)
+	uploads int
 }
 
 // NewMinimap builds a minimap over the given world rect (render-world XZ).
 func NewMinimap(minX, minZ, maxX, maxZ float32) *Minimap {
 	return &Minimap{
-		size: MinimapSize,
-		minX: minX, minZ: minZ, maxX: maxX, maxZ: maxZ,
-		buf: make([]byte, MinimapSize*MinimapSize*4),
+		mapper: minimap.NewMapper(MinimapSize, MinimapSize, minX, minZ, maxX, maxZ),
+		buf:    make([]byte, MinimapSize*MinimapSize*4),
 	}
 }
 
 // Size returns the minimap edge in pixels.
-func (m *Minimap) Size() int { return m.size }
+func (m *Minimap) Size() int { return m.mapper.Width() }
 
 // WorldToPixel maps a world XZ point to its minimap pixel, clamped to the map.
 func (m *Minimap) WorldToPixel(x, z float32) (px, py int) {
-	u := (x - m.minX) / (m.maxX - m.minX)
-	v := (z - m.minZ) / (m.maxZ - m.minZ)
-	px = clampPix(int(u*float32(m.size)), m.size)
-	py = clampPix(int(v*float32(m.size)), m.size)
-	return px, py
+	return m.mapper.WorldToPixel(x, z)
 }
 
 // PixelToWorld maps a minimap pixel (its center) back to a world XZ point — the
 // exact inverse of WorldToPixel at pixel centers, used for click-to-world.
 func (m *Minimap) PixelToWorld(px, py int) (x, z float32) {
-	u := (float32(px) + 0.5) / float32(m.size)
-	v := (float32(py) + 0.5) / float32(m.size)
-	x = m.minX + u*(m.maxX-m.minX)
-	z = m.minZ + v*(m.maxZ-m.minZ)
-	return x, z
-}
-
-func clampPix(v, size int) int {
-	if v < 0 {
-		return 0
-	}
-	if v >= size {
-		return size - 1
-	}
-	return v
+	return m.mapper.PixelToWorld(px, py)
 }
 
 // Clear resets the blip buffer to transparent black (zero), allocation-free.
@@ -98,15 +79,15 @@ func (m *Minimap) PlotBlip(x, z float32, sizePx int, c RGBA, visible bool) {
 	r, g, b, a := toByte(c.R), toByte(c.G), toByte(c.B), toByte(c.A)
 	for dy := 0; dy < sizePx; dy++ {
 		py := cy - half + dy
-		if py < 0 || py >= m.size {
+		if py < 0 || py >= m.Size() {
 			continue
 		}
 		for dx := 0; dx < sizePx; dx++ {
 			px := cx - half + dx
-			if px < 0 || px >= m.size {
+			if px < 0 || px >= m.Size() {
 				continue
 			}
-			o := (py*m.size + px) * 4
+			o := (py*m.Size() + px) * 4
 			m.buf[o], m.buf[o+1], m.buf[o+2], m.buf[o+3] = r, g, b, a
 		}
 	}
@@ -135,7 +116,7 @@ func (m *Minimap) Frustum(fp RTSCameraFootprint) [5]math32.Vector2 {
 
 // At returns the RGBA at a blip-buffer pixel (for inspection/test).
 func (m *Minimap) At(px, py int) RGBA {
-	o := (py*m.size + px) * 4
+	o := (py*m.Size() + px) * 4
 	return RGBA{
 		R: float32(m.buf[o]) / 255,
 		G: float32(m.buf[o+1]) / 255,
@@ -151,7 +132,7 @@ func (m *Minimap) Buffer() []byte { return m.buf }
 // buffer (CPU-only until the renderer uploads).
 func (m *Minimap) EnsureTexture() *texture.Texture2D {
 	if m.tex == nil {
-		m.tex = texture.NewTexture2DFromData(m.size, m.size, gls.RGBA, gls.UNSIGNED_BYTE, gls.RGBA8, m.buf)
+		m.tex = texture.NewTexture2DFromData(m.Size(), m.Size(), gls.RGBA, gls.UNSIGNED_BYTE, gls.RGBA8, m.buf)
 	}
 	return m.tex
 }
@@ -160,7 +141,7 @@ func (m *Minimap) EnsureTexture() *texture.Texture2D {
 // (same backing slice — no allocation, no texture recreation).
 func (m *Minimap) Upload() {
 	m.EnsureTexture()
-	m.tex.SetData(m.size, m.size, gls.RGBA, gls.UNSIGNED_BYTE, gls.RGBA8, m.buf)
+	m.tex.SetData(m.Size(), m.Size(), gls.RGBA, gls.UNSIGNED_BYTE, gls.RGBA8, m.buf)
 	m.uploads++
 }
 

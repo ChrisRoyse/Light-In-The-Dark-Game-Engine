@@ -151,6 +151,10 @@ func RunWindow(state *App, opts WindowOptions) error {
 		if mev.Button != window.MouseButtonLeft {
 			return
 		}
+		if _, _, ok := minimapCellAt(state.Snapshot(), mev.Xpos, mev.Ypos); ok {
+			markDirty(state.RecenterCameraFromMinimapPixel(int(mev.Xpos), int(mev.Ypos)))
+			return
+		}
 		if state.Snapshot().Mode == ModeObjects {
 			x, y, ok := terrainCellAt(state.Snapshot(), mev.Xpos, mev.Ypos)
 			if ok {

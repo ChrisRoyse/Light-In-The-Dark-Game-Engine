@@ -49,6 +49,7 @@ type App struct {
 	cliffFlags      []CliffFlagSnapshot
 	objectPalette   []ObjectPaletteItem
 	objectSelection ObjectSelection
+	cameraTarget    [2]int
 }
 
 type Confirm struct {
@@ -78,6 +79,7 @@ type Snapshot struct {
 	Paint           PaintBrushSnapshot   `json:"paint"`
 	CliffFlags      []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
 	Objects         ObjectSnapshot       `json:"objects"`
+	Camera          CameraSnapshot       `json:"camera"`
 }
 
 type WorldSnapshot struct {
@@ -100,6 +102,10 @@ type WorldSnapshot struct {
 	HeightRows  [][]int                    `json:"heightRows,omitempty"`
 	CliffRows   [][]string                 `json:"cliffRows,omitempty"`
 	SplatRows   [][][]int                  `json:"splatRows,omitempty"`
+}
+
+type CameraSnapshot struct {
+	TargetCell [2]int `json:"targetCell"`
 }
 
 func New(table *locale.Table) *App {
@@ -151,10 +157,29 @@ func (a *App) CancelConfirm() {
 }
 
 func (a *App) createProject(dir string) error {
+	return a.createProjectSized(dir, 8, 8)
+}
+
+// NewProjectWithSize creates a source-form project with explicit dimensions for
+// editor verification and tooling. The interactive NewProject path retains the
+// existing confirmation flow for dirty maps.
+func (a *App) NewProjectWithSize(dir string, width, height int) error {
+	if a.world != nil && a.world.Dirty() {
+		return errors.New("editor shell: sized new project requires a clean current project")
+	}
+	return a.createProjectSized(dir, width, height)
+}
+
+func (a *App) createProjectSized(dir string, width, height int) error {
 	if dir == "" {
 		return errors.New("editor shell: new project requires a directory")
 	}
-	w := defaultWorld(must(a.table, locale.EditorProjectUntitled))
+	w, err := defaultWorldSized(must(a.table, locale.EditorProjectUntitled), width, height)
+	if err != nil {
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
 	if err := w.Save(dir); err != nil {
 		a.errText = fmt.Sprintf("%s: %v", must(a.table, locale.EditorErrorOpen), err)
 		return err
@@ -168,6 +193,7 @@ func (a *App) createProject(dir string) error {
 	a.confirm = nil
 	a.cliffFlags = nil
 	a.status = must(a.table, locale.EditorStatusProjectCreated)
+	a.resetCameraTarget()
 	a.resetCommandStack()
 	return nil
 }
@@ -194,6 +220,7 @@ func (a *App) OpenProject(path string) error {
 		a.confirm = nil
 		a.cliffFlags = nil
 		a.status = must(a.table, locale.EditorStatusProjectOpened)
+		a.resetCameraTarget()
 		a.resetCommandStack()
 		return nil
 	}
@@ -237,6 +264,7 @@ func (a *App) OpenArchive(archivePath, workDir string) error {
 		a.confirm = nil
 		a.cliffFlags = nil
 		a.status = fmt.Sprintf("Archive opened: %s", archivePath)
+		a.resetCameraTarget()
 		a.resetCommandStack()
 		return nil
 	}
@@ -254,6 +282,7 @@ func (a *App) OpenArchive(archivePath, workDir string) error {
 	a.confirm = nil
 	a.cliffFlags = nil
 	a.status = fmt.Sprintf("Archive opened read-only: %s", archivePath)
+	a.resetCameraTarget()
 	a.resetCommandStack()
 	return nil
 }
@@ -449,6 +478,33 @@ func (a *App) StackSnapshot() StackSnapshot {
 	return a.ensureCommandStack().Snapshot()
 }
 
+func (a *App) RecenterCameraCell(x, y int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	if x < 0 || y < 0 || x >= a.world.Terrain.Width || y >= a.world.Terrain.Height {
+		err := fmt.Errorf("editor minimap: camera target %d,%d outside %dx%d map", x, y, a.world.Terrain.Width, a.world.Terrain.Height)
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	a.cameraTarget = [2]int{x, y}
+	a.errText = ""
+	a.status = fmt.Sprintf("Camera target: %d,%d", x, y)
+	return nil
+}
+
+func (a *App) RecenterCameraFromMinimapPixel(screenX, screenY int) error {
+	x, y, ok := minimapCellAt(a.Snapshot(), float32(screenX), float32(screenY))
+	if !ok {
+		err := fmt.Errorf("editor minimap: click %d,%d outside minimap", screenX, screenY)
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	return a.RecenterCameraCell(x, y)
+}
+
 func (a *App) CliffStepLegal(ax, ay, bx, by int) (bool, error) {
 	if a.world == nil {
 		return false, errors.New("editor shell: no project loaded")
@@ -513,6 +569,7 @@ func (a *App) Snapshot() Snapshot {
 		"panelTerrain":      must(a.table, locale.EditorPanelTerrain),
 		"panelObjects":      must(a.table, locale.EditorPanelObjects),
 		"panelMetadata":     must(a.table, locale.EditorPanelMetadata),
+		"panelMinimap":      must(a.table, locale.EditorPanelMinimap),
 		"hintTerrain":       must(a.table, locale.EditorHintTerrain),
 		"hintObjects":       must(a.table, locale.EditorHintObjects),
 		"hintMetadata":      must(a.table, locale.EditorHintMetadata),
@@ -539,6 +596,7 @@ func (a *App) Snapshot() Snapshot {
 		"fieldStarts":       must(a.table, locale.EditorFieldStarts),
 		"fieldSeedPolicy":   must(a.table, locale.EditorFieldSeedPolicy),
 		"fieldPath":         must(a.table, locale.EditorFieldPath),
+		"fieldCamera":       must(a.table, locale.EditorFieldCamera),
 		"scopeNoTriggerGUI": must(a.table, locale.EditorScopeNoTriggerGUI),
 	}
 	dirty := a.world != nil && a.world.Dirty()
@@ -573,6 +631,7 @@ func (a *App) Snapshot() Snapshot {
 		Paint:           a.PaintSnapshot(),
 		CliffFlags:      cloneCliffFlags(a.cliffFlags),
 		Objects:         a.ObjectSnapshot(),
+		Camera:          CameraSnapshot{TargetCell: a.clampedCameraTarget()},
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -639,6 +698,27 @@ func (a *App) ensureCommandStack() *CommandStack {
 
 func (a *App) resetCommandStack() {
 	a.commands = NewCommandStack(CommandStackLimit)
+}
+
+func (a *App) resetCameraTarget() {
+	if a.world == nil || a.world.Terrain.Width <= 0 || a.world.Terrain.Height <= 0 {
+		a.cameraTarget = [2]int{}
+		return
+	}
+	a.cameraTarget = [2]int{a.world.Terrain.Width / 2, a.world.Terrain.Height / 2}
+}
+
+func (a *App) clampedCameraTarget() [2]int {
+	target := a.cameraTarget
+	if a.world == nil || a.world.Terrain.Width <= 0 || a.world.Terrain.Height <= 0 {
+		return [2]int{}
+	}
+	target[0] = clampInt(target[0], 0, a.world.Terrain.Width-1)
+	target[1] = clampInt(target[1], 0, a.world.Terrain.Height-1)
+	if target != a.cameraTarget {
+		a.cameraTarget = target
+	}
+	return target
 }
 
 func (a *App) setGridCellDirect(kind sourceform.GridKind, x, y, value int) error {
@@ -801,30 +881,47 @@ func (s Snapshot) JSON() string {
 }
 
 func defaultWorld(name string) *sourceform.World {
+	w, err := defaultWorldSized(name, 8, 8)
+	if err != nil {
+		panic(err)
+	}
+	return w
+}
+
+func defaultWorldSized(name string, width, height int) (*sourceform.World, error) {
+	if width <= 0 || height <= 0 {
+		return nil, fmt.Errorf("editor shell: map size %dx%d must be positive", width, height)
+	}
+	if width > 1024 || height > 1024 {
+		return nil, fmt.Errorf("editor shell: map size %dx%d exceeds 1024x1024 limit", width, height)
+	}
 	grid := func() [][]int {
-		rows := make([][]int, 8)
+		rows := make([][]int, height)
 		for y := range rows {
-			rows[y] = make([]int, 8)
+			rows[y] = make([]int, width)
 		}
 		return rows
 	}
 	cliffGrid := func() [][]sourceform.CliffCell {
-		rows := make([][]sourceform.CliffCell, 8)
+		rows := make([][]sourceform.CliffCell, height)
 		for y := range rows {
-			rows[y] = make([]sourceform.CliffCell, 8)
+			rows[y] = make([]sourceform.CliffCell, width)
 		}
 		return rows
 	}
 	splatGrid := func() [][]sourceform.SplatWeight {
-		rows := make([][]sourceform.SplatWeight, 8)
+		rows := make([][]sourceform.SplatWeight, height)
 		for y := range rows {
-			rows[y] = make([]sourceform.SplatWeight, 8)
+			rows[y] = make([]sourceform.SplatWeight, width)
 			for x := range rows[y] {
 				rows[y][x] = sourceform.SplatWeight{A: 255}
 			}
 		}
 		return rows
 	}
+	startA := [2]int{minInt(1, width-1), minInt(1, height-1)}
+	startB := [2]int{maxInt(0, width-2), maxInt(0, height-2)}
+	entityCell := [2]int{minInt(1, width-1), minInt(1, height-1)}
 	return &sourceform.World{
 		Metadata: sourceform.Metadata{
 			Format:      1,
@@ -837,22 +934,22 @@ func defaultWorld(name string) *sourceform.World {
 			SeedPolicy:  "host",
 		},
 		Terrain: sourceform.Terrain{
-			Width:   8,
-			Height:  8,
+			Width:   width,
+			Height:  height,
 			Tileset: "vigil-lowlands",
 			Biome:   "vigil-lowlands",
 			StartLocations: []sourceform.StartLocation{
-				{Player: 1, Cell: [2]int{1, 1}},
-				{Player: 2, Cell: [2]int{6, 6}},
+				{Player: 1, Cell: startA},
+				{Player: 2, Cell: startB},
 			},
 		},
 		Height: grid(),
 		Cliff:  cliffGrid(),
 		Splat:  splatGrid(),
 		Entities: []sourceform.Entity{
-			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{4096, 4096}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
+			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{entityCell[0] * 4096, entityCell[1] * 4096}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
 		},
-	}
+	}, nil
 }
 
 func DefaultEngineRange() string {
@@ -1114,6 +1211,13 @@ func firstNonEmpty(values ...string) string {
 
 func maxInt(a, b int) int {
 	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt(a, b int) int {
+	if a < b {
 		return a
 	}
 	return b

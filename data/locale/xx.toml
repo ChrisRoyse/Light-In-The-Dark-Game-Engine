@@ -55,6 +55,7 @@
 "editor.panel.terrain" = "[xx.54]"
 "editor.panel.objects" = "[xx.55]"
 "editor.panel.metadata" = "[xx.56]"
+"editor.panel.minimap" = "[xx.84]"
 "editor.hint.terrain" = "[xx.57]"
 "editor.hint.objects" = "[xx.58]"
 "editor.hint.metadata" = "[xx.59]"
@@ -81,4 +82,5 @@
 "editor.field.starts" = "[xx.80]"
 "editor.field.seed_policy" = "[xx.81]"
 "editor.field.path" = "[xx.82]"
+"editor.field.camera" = "[xx.85]"
 "editor.scope.no_trigger_gui" = "[xx.83]"
