@@ -43,6 +43,9 @@ const (
 	// cell: WC3-style 4 pathing cells per terrain cell, and the sim's pathing
 	// cells are 32 world units wide (sim.CellCenter convention).
 	TerrainCellWorldUnit = PathingScale * 32
+	// PathingCellWorldUnit is the public world-coordinate size of one runtime
+	// pathing cell.
+	PathingCellWorldUnit = TerrainCellWorldUnit / PathingScale
 )
 
 // Metadata is the canonical world.toml state.
@@ -789,7 +792,7 @@ func (w *World) RuntimeMapFiles() (map[string][]byte, error) {
 		path.Join(dir, "height.txt"):   renderRuntimeHeightGrid(w.Height, w.Terrain.Width, w.Terrain.Height),
 		path.Join(dir, "cliff.txt"):    renderRuntimeCliffGrid(w.Cliff, w.Terrain.Width, w.Terrain.Height),
 		path.Join(dir, "splat.txt"):    renderSplatGrid(w.Splat),
-		path.Join(dir, "doodads.toml"): []byte(""),
+		path.Join(dir, "doodads.toml"): renderRuntimeDoodads(w),
 	}, nil
 }
 
@@ -1784,6 +1787,99 @@ func renderRuntimeTerrain(t Terrain) []byte {
 		fmt.Fprintf(&b, "\n[[start]]\nplayer = %d\ncell = [%d, %d]\n", start.Player-1, px, py)
 	}
 	return []byte(b.String())
+}
+
+func renderRuntimeDoodads(w *World) []byte {
+	sorted := append([]Doodad(nil), w.Doodads...)
+	sortDoodads(sorted)
+	var b strings.Builder
+	b.WriteString("# generated from source-form map/doodads.toml\n")
+	b.WriteString("# doodads without embedded runtime assets are skipped so mapdata.Load remains fail-closed\n")
+	for _, d := range sorted {
+		asset, ok, reason := runtimeDoodadAsset(w, d)
+		if !ok {
+			writeRuntimeDoodadSkip(&b, d.ID, reason)
+			continue
+		}
+		x, y, ok, reason := runtimeDoodadCell(w, d)
+		if !ok {
+			writeRuntimeDoodadSkip(&b, d.ID, reason)
+			continue
+		}
+		fmt.Fprintf(&b, "\n[[doodad]]\n")
+		fmt.Fprintf(&b, "id = %d\n", d.ID)
+		fmt.Fprintf(&b, "asset = %s\n", strconv.Quote(asset))
+		fmt.Fprintf(&b, "cell = [%d, %d]\n", x, y)
+		fmt.Fprintf(&b, "rotation = %d\n", d.Rotation)
+	}
+	return []byte(b.String())
+}
+
+func runtimeDoodadAsset(w *World, d Doodad) (string, bool, string) {
+	asset := strings.Trim(strings.TrimSpace(d.Type), "/")
+	asset = strings.TrimPrefix(asset, "assets/")
+	if asset == "" || asset == "." {
+		return "", false, "asset type is empty"
+	}
+	if strings.Contains(asset, "\\") || strings.ContainsAny(asset, "\r\n") {
+		return "", false, "asset path contains unsupported characters"
+	}
+	if strings.Contains(asset, "..") {
+		return "", false, fmt.Sprintf("asset %q must be relative", d.Type)
+	}
+	asset = path.Clean(asset)
+	if asset == "." || asset == "" || strings.HasPrefix(asset, "../") || asset == ".." || strings.Contains(asset, "..") {
+		return "", false, fmt.Sprintf("asset %q must be relative", d.Type)
+	}
+	if !runtimeAssetAvailable(w, asset) {
+		return "", false, fmt.Sprintf("missing runtime asset assets/%s", asset)
+	}
+	return asset, true, ""
+}
+
+func runtimeAssetAvailable(w *World, asset string) bool {
+	if w == nil {
+		return false
+	}
+	rel := path.Join("assets", asset)
+	if _, ok := w.files[rel]; ok {
+		return true
+	}
+	if w.Dir == "" {
+		return false
+	}
+	st, err := os.Stat(filepath.Join(w.Dir, filepath.FromSlash(rel)))
+	return err == nil && !st.IsDir()
+}
+
+func runtimeDoodadCell(w *World, d Doodad) (int, int, bool, string) {
+	if d.Pos[0] < 0 || d.Pos[1] < 0 {
+		return 0, 0, false, fmt.Sprintf("position [%d,%d] must be non-negative", d.Pos[0], d.Pos[1])
+	}
+	if d.Pos[0]%PathingCellWorldUnit != 0 || d.Pos[1]%PathingCellWorldUnit != 0 {
+		return 0, 0, false, fmt.Sprintf("position [%d,%d] is not aligned to %d world-unit pathing cells", d.Pos[0], d.Pos[1], PathingCellWorldUnit)
+	}
+	x := d.Pos[0] / PathingCellWorldUnit
+	y := d.Pos[1] / PathingCellWorldUnit
+	pathW, pathH := w.Terrain.Width*PathingScale, w.Terrain.Height*PathingScale
+	if x < 0 || y < 0 || x >= pathW || y >= pathH {
+		return 0, 0, false, fmt.Sprintf("cell [%d,%d] outside %dx%d runtime pathing grid", x, y, pathW, pathH)
+	}
+	return x, y, true, ""
+}
+
+func writeRuntimeDoodadSkip(b *strings.Builder, id uint32, reason string) {
+	fmt.Fprintf(b, "# skipped doodad %d: %s\n", id, sanitizeRuntimeDoodadReason(reason))
+}
+
+func sanitizeRuntimeDoodadReason(reason string) string {
+	reason = strings.ReplaceAll(reason, "\r", " ")
+	reason = strings.ReplaceAll(reason, "\n", " ")
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return "not representable as a runtime doodad"
+	}
+	return reason
 }
 
 func renderGrid(grid [][]int) []byte {

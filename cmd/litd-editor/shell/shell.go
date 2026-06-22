@@ -1192,7 +1192,7 @@ func runtimeDoodads(m *mapdata.Map) []sourceform.Doodad {
 		out = append(out, sourceform.Doodad{
 			ID:       d.ID,
 			Type:     d.Asset,
-			Pos:      [2]int{d.X, d.Y},
+			Pos:      [2]int{d.X * sourceform.PathingCellWorldUnit, d.Y * sourceform.PathingCellWorldUnit},
 			Rotation: int(d.Rotation),
 			Scale:    sourceform.PlacementScaleDefault,
 		})

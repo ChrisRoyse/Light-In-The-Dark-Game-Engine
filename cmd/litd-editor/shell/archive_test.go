@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	mapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
@@ -151,6 +152,51 @@ func TestOpenShippedM6ArchiveReadOnlyProjectionFSV(t *testing.T) {
 	}
 	if err := app.Save(); err == nil || !strings.Contains(err.Error(), "read-only") {
 		t.Fatalf("read-only shipped archive save should be refused, got %v", err)
+	}
+}
+
+func TestRuntimeDoodadsProjectToSourceWorldUnitsFSV(t *testing.T) {
+	root := t.TempDir()
+	writeRuntimeMapFile := func(rel, body string) {
+		t.Helper()
+		full := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeRuntimeMapFile("assets/valid/tree.glb", "synthetic glb placeholder")
+	writeRuntimeMapFile("data/maps/runtime-only/terrain.toml", `version = 1
+width = 2
+height = 2
+biome = "dawn-splat"
+pathing-scale = 4
+
+[[start]]
+player = 0
+cell = [2, 2]
+`)
+	writeRuntimeMapFile("data/maps/runtime-only/pathing.txt", strings.Repeat("3 3 3 3 3 3 3 3\n", 8))
+	writeRuntimeMapFile("data/maps/runtime-only/cliff.txt", strings.Repeat("0 0 0 0 0 0 0 0\n", 8))
+	writeRuntimeMapFile("data/maps/runtime-only/height.txt", strings.Repeat("0 0 0\n", 3))
+	writeRuntimeMapFile("data/maps/runtime-only/splat.txt", strings.Repeat("255,0,0,0 255,0,0,0\n", 2))
+	writeRuntimeMapFile("data/maps/runtime-only/doodads.toml", `[[doodad]]
+id = 7
+asset = "valid/tree.glb"
+cell = [3, 5]
+rotation = 4096
+`)
+	m, err := mapdata.Load(os.DirFS(root), "data/maps/runtime-only")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sourceDoodads := runtimeDoodads(m)
+	t.Logf("FSV runtime doodad source projection: runtime=%+v source=%+v", m.Doodads(), sourceDoodads)
+	wantPos := [2]int{3 * sourceform.PathingCellWorldUnit, 5 * sourceform.PathingCellWorldUnit}
+	if len(sourceDoodads) != 1 || sourceDoodads[0].ID != 7 || sourceDoodads[0].Type != "valid/tree.glb" || sourceDoodads[0].Pos != wantPos || sourceDoodads[0].Rotation != 4096 {
+		t.Fatalf("runtime doodad source projection = %+v, want id=7 pos=%v", sourceDoodads, wantPos)
 	}
 }
 

@@ -545,8 +545,16 @@ func TestSourceFormExportArchiveFSV(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generated runtime map should load from archive: %v", err)
 	}
+	runtimeDoodads, err := fs.ReadFile(opened.FS(), "data/maps/firstlight-sample/doodads.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Logf("FSV generated runtime map: path=%s dims=%dx%d pathing=%dx%d starts=%+v fp=%016x",
 		runtimeMap.Path, runtimeMap.Width, runtimeMap.Height, runtimeMap.PathingWidth, runtimeMap.PathingHeight, runtimeMap.Starts(), runtimeMap.Fingerprint)
+	t.Logf("FSV generated runtime doodads.toml:\n%s", runtimeDoodads)
+	if !bytes.Contains(runtimeDoodads, []byte("generated from source-form map/doodads.toml")) {
+		t.Fatalf("runtime doodads.toml missing generated header:\n%s", runtimeDoodads)
+	}
 	if !bytes.Contains(entitiesBytes, []byte(`pos = [2048, 2048]`)) {
 		t.Fatalf("saved entities missing exported dirty edit:\n%s", entitiesBytes)
 	}
@@ -586,14 +594,29 @@ func TestSourceFormRuntimeMapProjectionFSV(t *testing.T) {
 			{{A: 255}, {B: 255}},
 			{{C: 255}, {D: 255}},
 		},
+		Doodads: []Doodad{
+			{ID: 1, Type: "valid/tree.glb", Pos: [2]int{128, 128}, Rotation: 4096, Scale: PlacementScaleDefault},
+			{ID: 2, Type: "missing/tree.glb", Pos: [2]int{0, 0}, Rotation: 0, Scale: PlacementScaleDefault},
+			{ID: 3, Type: "valid/tree.glb", Pos: [2]int{512, 0}, Rotation: 0, Scale: PlacementScaleDefault},
+			{ID: 4, Type: "valid/tree.glb", Pos: [2]int{33, 0}, Rotation: 0, Scale: PlacementScaleDefault},
+		},
 	}
 	w.Pathing[0][0] = 0
+	assetBody := []byte("synthetic glb placeholder")
+	if err := w.SetPassthroughFile("assets/valid/tree.glb", assetBody); err != nil {
+		t.Fatal(err)
+	}
 	stage := t.TempDir()
 	files, err := w.RuntimeMapFiles()
 	if err != nil {
 		t.Fatal(err)
 	}
+	files["assets/valid/tree.glb"] = assetBody
 	if err := writeFiles(stage, files); err != nil {
+		t.Fatal(err)
+	}
+	runtimeDoodads, err := os.ReadFile(filepath.Join(stage, "data", "maps", "runtime-map-fsv", "doodads.toml"))
+	if err != nil {
 		t.Fatal(err)
 	}
 	m, err := mapdata.Load(os.DirFS(stage), "data/maps/runtime-map-fsv")
@@ -601,13 +624,28 @@ func TestSourceFormRuntimeMapProjectionFSV(t *testing.T) {
 		t.Fatalf("runtime projection should load: %v", err)
 	}
 	starts := m.Starts()
+	doodads := m.Doodads()
 	flags, _ := m.PathingAt(0, 0)
 	height, _ := m.HeightAtVertex(2, 2)
 	ramp, _ := m.CliffAt(0, 0)
 	high, _ := m.CliffAt(4, 0)
-	t.Logf("FSV runtime projection: files=%d start=%+v pathing00=%d height(2,2)=%d cliff00=%+v cliff40=%+v", len(files), starts, flags, height, ramp, high)
+	t.Logf("FSV runtime doodads.toml after projection:\n%s", runtimeDoodads)
+	t.Logf("FSV runtime projection: files=%d start=%+v doodads=%+v pathing00=%d height(2,2)=%d cliff00=%+v cliff40=%+v", len(files), starts, doodads, flags, height, ramp, high)
 	if len(starts) != 1 || starts[0].Player != 0 || starts[0].X != 6 || starts[0].Y != 6 {
 		t.Fatalf("runtime start = %+v, want player 0 at source cell center pathing 6,6", starts)
+	}
+	if len(doodads) != 1 || doodads[0].ID != 1 || doodads[0].Asset != "valid/tree.glb" || doodads[0].X != 4 || doodads[0].Y != 4 || doodads[0].Rotation != 4096 {
+		t.Fatalf("runtime doodads = %+v, want only id=1 at pathing cell 4,4", doodads)
+	}
+	for _, snippet := range [][]byte{
+		[]byte(`[[doodad]]`),
+		[]byte(`skipped doodad 2: missing runtime asset assets/missing/tree.glb`),
+		[]byte(`skipped doodad 3: cell [16,0] outside 8x8 runtime pathing grid`),
+		[]byte(`skipped doodad 4: position [33,0] is not aligned to 32 world-unit pathing cells`),
+	} {
+		if !bytes.Contains(runtimeDoodads, snippet) {
+			t.Fatalf("runtime doodads.toml missing %q:\n%s", snippet, runtimeDoodads)
+		}
 	}
 	if flags != 0 {
 		t.Fatalf("pathing[0,0]=%d, want authored blocked cell 0", flags)
