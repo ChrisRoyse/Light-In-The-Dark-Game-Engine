@@ -168,7 +168,18 @@ func TestManifestContents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	man := buildManifest(">=1.0", Hosting{Author: "ann", Title: "T", Description: "d"}, entries)
+	man := buildManifest(">=1.0", Hosting{
+		Author:      "ann",
+		Title:       "T",
+		Description: "d",
+		Players:     Players{Min: 1, Max: 8, Suggested: 4},
+		Tileset:     "vigil-lowlands",
+		SplatSet:    "dawn-splat",
+		StartLocations: []StartLocation{
+			{Player: 2, Cell: [2]int{2, 1}},
+			{Player: 1, Cell: [2]int{1, 1}},
+		},
+	}, entries)
 	t.Logf("FSV manifest body:\n%s", man)
 	rng, byPath, perr := parseManifest(man)
 	if perr != nil {
@@ -181,6 +192,11 @@ func TestManifestContents(t *testing.T) {
 	for _, want := range []string{"author: ann", "title: T", "description: d"} {
 		if !strings.Contains(man, want) {
 			t.Fatalf("manifest missing hosting line %q in:\n%s", want, man)
+		}
+	}
+	for _, want := range []string{"players-min: 1", "players-max: 8", "players-suggested: 4", "tileset: vigil-lowlands", "splat-set: dawn-splat", "start-locations: 2", "start-location: 1 1 1", "start-location: 2 2 1"} {
+		if !strings.Contains(man, want) {
+			t.Fatalf("manifest missing metadata line %q in:\n%s", want, man)
 		}
 	}
 	// independent hash of x.txt

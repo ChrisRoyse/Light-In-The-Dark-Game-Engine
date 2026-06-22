@@ -155,9 +155,26 @@ func hashFiles(srcDir string, rels []string) ([]fileEntry, error) {
 // from day one, values may be empty pre-M9. Single-line each (newlines are
 // stripped — the manifest is a line format).
 type Hosting struct {
-	Author      string
-	Title       string
-	Description string
+	Author         string
+	Title          string
+	Description    string
+	Players        Players
+	Tileset        string
+	SplatSet       string
+	StartLocations []StartLocation
+}
+
+// Players carries the author-declared player counts into the archive manifest.
+type Players struct {
+	Min       int
+	Max       int
+	Suggested int
+}
+
+// StartLocation is one editor-facing player-slot start marker.
+type StartLocation struct {
+	Player int
+	Cell   [2]int
 }
 
 // oneLine collapses any newlines so a metadata value can't break the line-based
@@ -199,6 +216,25 @@ func buildManifest(engineRange string, host Hosting, entries []fileEntry) string
 	fmt.Fprintf(&b, "author: %s\n", oneLine(host.Author))
 	fmt.Fprintf(&b, "title: %s\n", oneLine(host.Title))
 	fmt.Fprintf(&b, "description: %s\n", oneLine(host.Description))
+	if host.Players != (Players{}) {
+		fmt.Fprintf(&b, "players-min: %d\n", host.Players.Min)
+		fmt.Fprintf(&b, "players-max: %d\n", host.Players.Max)
+		fmt.Fprintf(&b, "players-suggested: %d\n", host.Players.Suggested)
+	}
+	if host.Tileset != "" {
+		fmt.Fprintf(&b, "tileset: %s\n", oneLine(host.Tileset))
+	}
+	if host.SplatSet != "" {
+		fmt.Fprintf(&b, "splat-set: %s\n", oneLine(host.SplatSet))
+	}
+	if len(host.StartLocations) > 0 {
+		starts := append([]StartLocation(nil), host.StartLocations...)
+		sort.Slice(starts, func(i, j int) bool { return starts[i].Player < starts[j].Player })
+		fmt.Fprintf(&b, "start-locations: %d\n", len(starts))
+		for _, start := range starts {
+			fmt.Fprintf(&b, "start-location: %d %d %d\n", start.Player, start.Cell[0], start.Cell[1])
+		}
+	}
 	fmt.Fprintf(&b, "aggregate-sha256: %s\n", AggregateHash(entries))
 	fmt.Fprintf(&b, "files: %d\n", len(entries))
 	for _, e := range entries {

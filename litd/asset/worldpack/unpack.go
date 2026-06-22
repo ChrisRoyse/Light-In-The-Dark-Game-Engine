@@ -44,6 +44,13 @@ func parseManifest(body string) (engineRange string, byPath map[string]manifestE
 			case strings.HasPrefix(line, "author:"),
 				strings.HasPrefix(line, "title:"),
 				strings.HasPrefix(line, "description:"),
+				strings.HasPrefix(line, "players-min:"),
+				strings.HasPrefix(line, "players-max:"),
+				strings.HasPrefix(line, "players-suggested:"),
+				strings.HasPrefix(line, "tileset:"),
+				strings.HasPrefix(line, "splat-set:"),
+				strings.HasPrefix(line, "start-locations:"),
+				strings.HasPrefix(line, "start-location:"),
 				strings.HasPrefix(line, "aggregate-sha256:"):
 				// Hosting metadata (D-23) + aggregate fingerprint — accepted; the
 				// per-entry hashes drive restore, so neither is needed here.

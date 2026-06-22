@@ -49,7 +49,7 @@ id = "first-flame"              # [a-z0-9-]+, unique key; archive + hub identity
 name = "loc:world.name"         # display string: literal or locale key (D-17)
 description = "loc:world.desc"
 authors = ["Paula Ascenzi"]     # free text; unicode permitted
-engine = ">=0.4 <0.6"           # engine-version range the archive header carries (#180)
+engine = ">=0.4.0 <0.6.0"       # engine-version range the archive header carries (#180)
 players = { min = 2, max = 2, suggested = 2 }
 seed-policy = "host"            # host | fixed; fixed requires seed = <u64>
 ```
@@ -58,6 +58,29 @@ seed-policy = "host"            # host | fixed; fixed requires seed = <u64>
   loudly (never best-effort).
 - `name`/`description` accept either a literal or a `loc:` key resolved against
   `locale/` (the same literal-or-key rule as the public API text surfaces).
+
+### map/terrain.toml — metadata and starts
+
+```toml
+width = 8
+height = 8
+tileset = "vigil-lowlands"
+biome = "dawn-splat"
+
+[[start]]
+player = 1
+cell = [1, 1]
+
+[[start]]
+player = 2
+cell = [6, 6]
+```
+
+`[[start]]` rows are required (`1..8` rows). `player` is the editor-facing slot
+number (`1..8`) and must be unique. The editor refuses starts outside the map or
+on cells that are not walkable by the source-form cliff pathability rule. Archive
+export copies these rows into the manifest header so hub/load tooling can inspect
+map identity without reading payload files.
 
 ## 3. Text-format rules (the diff-stability contract)
 

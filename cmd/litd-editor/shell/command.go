@@ -392,6 +392,75 @@ func (c doodadDeleteCommand) Revert(app *App) error {
 
 func (c doodadDeleteCommand) Noop() bool { return false }
 
+type mapMetadataState struct {
+	Name        string
+	Description string
+	EngineRange string
+	Players     sourceform.Players
+	Tileset     string
+	SplatSet    string
+}
+
+type mapMetadataCommand struct {
+	before, after mapMetadataState
+}
+
+func (c mapMetadataCommand) Label() string {
+	return fmt.Sprintf("metadata:%q->%q players:%d->%d", c.before.Name, c.after.Name, c.before.Players.Suggested, c.after.Players.Suggested)
+}
+
+func (c mapMetadataCommand) Apply(app *App) error {
+	return app.setMapMetadataDirect(c.after)
+}
+
+func (c mapMetadataCommand) Revert(app *App) error {
+	return app.setMapMetadataDirect(c.before)
+}
+
+func (c mapMetadataCommand) Noop() bool { return c.before == c.after }
+
+type startLocationCommand struct {
+	before    sourceform.StartLocation
+	hadBefore bool
+	after     sourceform.StartLocation
+	hasAfter  bool
+}
+
+func (c startLocationCommand) Label() string {
+	switch {
+	case c.hadBefore && c.hasAfter:
+		return fmt.Sprintf("start[%d]:(%d,%d)->(%d,%d)", c.after.Player, c.before.Cell[0], c.before.Cell[1], c.after.Cell[0], c.after.Cell[1])
+	case c.hasAfter:
+		return fmt.Sprintf("start[%d]:add(%d,%d)", c.after.Player, c.after.Cell[0], c.after.Cell[1])
+	default:
+		return fmt.Sprintf("start[%d]:delete(%d,%d)", c.before.Player, c.before.Cell[0], c.before.Cell[1])
+	}
+}
+
+func (c startLocationCommand) Apply(app *App) error {
+	if c.hasAfter {
+		return app.putStartLocationDirect(c.after)
+	}
+	if c.hadBefore {
+		return app.removeStartLocationDirect(c.before.Player)
+	}
+	return nil
+}
+
+func (c startLocationCommand) Revert(app *App) error {
+	if c.hadBefore {
+		return app.putStartLocationDirect(c.before)
+	}
+	if c.hasAfter {
+		return app.removeStartLocationDirect(c.after.Player)
+	}
+	return nil
+}
+
+func (c startLocationCommand) Noop() bool {
+	return c.hadBefore && c.hasAfter && c.before == c.after
+}
+
 type metadataNameCommand struct {
 	before, after string
 }

@@ -205,6 +205,9 @@ func parseArchiveManifest(body string) (engineRange, aggregate string, byPath ma
 	sawVersion := false
 	version := 1
 	sawAuthor, sawTitle, sawDesc, sawAggregate := false, false, false, false
+	declaredStarts := -1
+	seenStarts := map[int]bool{}
+	actualStarts := 0
 	for sc.Scan() {
 		line := sc.Text()
 		if header {
@@ -228,6 +231,34 @@ func parseArchiveManifest(body string) (engineRange, aggregate string, byPath ma
 				continue
 			case strings.HasPrefix(line, "description:"):
 				sawDesc = true
+				continue
+			case strings.HasPrefix(line, "players-min:"),
+				strings.HasPrefix(line, "players-max:"),
+				strings.HasPrefix(line, "players-suggested:"):
+				if _, perr := strconv.Atoi(strings.TrimSpace(line[strings.IndexByte(line, ':')+1:])); perr != nil {
+					return "", "", nil, fmt.Errorf("malformed manifest header line: %q", line)
+				}
+				continue
+			case strings.HasPrefix(line, "tileset:"),
+				strings.HasPrefix(line, "splat-set:"):
+				continue
+			case strings.HasPrefix(line, "start-locations:"):
+				n, perr := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(line, "start-locations:")))
+				if perr != nil {
+					return "", "", nil, fmt.Errorf("malformed manifest header line: %q", line)
+				}
+				declaredStarts = n
+				continue
+			case strings.HasPrefix(line, "start-location:"):
+				player, perr := parseArchiveStartLocation(strings.TrimSpace(strings.TrimPrefix(line, "start-location:")))
+				if perr != nil {
+					return "", "", nil, perr
+				}
+				if seenStarts[player] {
+					return "", "", nil, fmt.Errorf("manifest duplicate start-location for player %d", player)
+				}
+				seenStarts[player] = true
+				actualStarts++
 				continue
 			case strings.HasPrefix(line, "aggregate-sha256:"):
 				aggregate = strings.TrimSpace(strings.TrimPrefix(line, "aggregate-sha256:"))
@@ -274,7 +305,32 @@ func parseArchiveManifest(body string) (engineRange, aggregate string, byPath ma
 	case !sawAggregate:
 		return "", "", nil, fmt.Errorf("manifest missing aggregate-sha256 header")
 	}
+	if declaredStarts >= 0 && declaredStarts != actualStarts {
+		return "", "", nil, fmt.Errorf("manifest declared %d start-location rows, got %d", declaredStarts, actualStarts)
+	}
 	return engineRange, aggregate, byPath, nil
+}
+
+func parseArchiveStartLocation(raw string) (int, error) {
+	parts := strings.Fields(raw)
+	if len(parts) != 3 {
+		return 0, fmt.Errorf("malformed start-location row %q", raw)
+	}
+	vals := [3]int{}
+	for i, p := range parts {
+		v, err := strconv.Atoi(p)
+		if err != nil {
+			return 0, fmt.Errorf("malformed start-location row %q", raw)
+		}
+		vals[i] = v
+	}
+	if vals[0] < 1 || vals[0] > 8 {
+		return 0, fmt.Errorf("manifest start-location player %d outside 1..8", vals[0])
+	}
+	if vals[1] < 0 || vals[2] < 0 {
+		return 0, fmt.Errorf("manifest start-location player %d has negative cell %d,%d", vals[0], vals[1], vals[2])
+	}
+	return vals[0], nil
 }
 
 // recomputeAggregate rebuilds the whole-archive fingerprint from the parsed

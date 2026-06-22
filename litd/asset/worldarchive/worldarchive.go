@@ -45,13 +45,30 @@ type FileEntry struct {
 
 // Manifest is the parsed, verified archive table of contents.
 type Manifest struct {
-	Version     int
-	EngineRange string
-	Author      string
-	Title       string
-	Description string
-	Aggregate   string
-	Files       map[string]FileEntry // payload rel-path -> entry
+	Version        int
+	EngineRange    string
+	Author         string
+	Title          string
+	Description    string
+	Players        Players
+	Tileset        string
+	SplatSet       string
+	StartLocations []StartLocation
+	Aggregate      string
+	Files          map[string]FileEntry // payload rel-path -> entry
+}
+
+// Players is the author-declared player-count metadata from the archive manifest.
+type Players struct {
+	Min       int
+	Max       int
+	Suggested int
+}
+
+// StartLocation is one editor-facing player-slot start marker parsed from the manifest.
+type StartLocation struct {
+	Player int
+	Cell   [2]int
 }
 
 // Archive is an opened, fully verified world archive. FS serves the verified
@@ -184,6 +201,7 @@ func aggregate(files map[string]FileEntry) string {
 func parseManifest(body string) (Manifest, error) {
 	m := Manifest{Files: map[string]FileEntry{}}
 	var sawVersion, sawAuthor, sawTitle, sawDesc, sawAgg bool
+	declaredStarts := -1
 	header := true
 	for _, line := range strings.Split(body, "\n") {
 		if line == "" {
@@ -210,6 +228,47 @@ func parseManifest(body string) (Manifest, error) {
 				continue
 			case strings.HasPrefix(line, "description:"):
 				m.Description, sawDesc = strings.TrimSpace(strings.TrimPrefix(line, "description:")), true
+				continue
+			case strings.HasPrefix(line, "players-min:"):
+				v, err := parseHeaderInt(line, "players-min:")
+				if err != nil {
+					return Manifest{}, err
+				}
+				m.Players.Min = v
+				continue
+			case strings.HasPrefix(line, "players-max:"):
+				v, err := parseHeaderInt(line, "players-max:")
+				if err != nil {
+					return Manifest{}, err
+				}
+				m.Players.Max = v
+				continue
+			case strings.HasPrefix(line, "players-suggested:"):
+				v, err := parseHeaderInt(line, "players-suggested:")
+				if err != nil {
+					return Manifest{}, err
+				}
+				m.Players.Suggested = v
+				continue
+			case strings.HasPrefix(line, "tileset:"):
+				m.Tileset = strings.TrimSpace(strings.TrimPrefix(line, "tileset:"))
+				continue
+			case strings.HasPrefix(line, "splat-set:"):
+				m.SplatSet = strings.TrimSpace(strings.TrimPrefix(line, "splat-set:"))
+				continue
+			case strings.HasPrefix(line, "start-locations:"):
+				v, err := parseHeaderInt(line, "start-locations:")
+				if err != nil {
+					return Manifest{}, err
+				}
+				declaredStarts = v
+				continue
+			case strings.HasPrefix(line, "start-location:"):
+				start, err := parseStartLocationLine(strings.TrimSpace(strings.TrimPrefix(line, "start-location:")))
+				if err != nil {
+					return Manifest{}, err
+				}
+				m.StartLocations = append(m.StartLocations, start)
 				continue
 			case strings.HasPrefix(line, "aggregate-sha256:"):
 				m.Aggregate, sawAgg = strings.TrimSpace(strings.TrimPrefix(line, "aggregate-sha256:")), true
@@ -255,5 +314,53 @@ func parseManifest(body string) (Manifest, error) {
 	case !sawAgg:
 		return Manifest{}, fmt.Errorf("manifest missing aggregate-sha256 header")
 	}
+	if declaredStarts >= 0 && declaredStarts != len(m.StartLocations) {
+		return Manifest{}, fmt.Errorf("manifest declared %d start-location rows, got %d", declaredStarts, len(m.StartLocations))
+	}
+	if err := validateManifestStarts(m.StartLocations); err != nil {
+		return Manifest{}, err
+	}
 	return m, nil
+}
+
+func parseHeaderInt(line, prefix string) (int, error) {
+	raw := strings.TrimSpace(strings.TrimPrefix(line, prefix))
+	v, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, fmt.Errorf("malformed %s value %q", strings.TrimSuffix(prefix, ":"), raw)
+	}
+	return v, nil
+}
+
+func parseStartLocationLine(raw string) (StartLocation, error) {
+	parts := strings.Fields(raw)
+	if len(parts) != 3 {
+		return StartLocation{}, fmt.Errorf("malformed start-location row %q", raw)
+	}
+	var vals [3]int
+	for i, p := range parts {
+		v, err := strconv.Atoi(p)
+		if err != nil {
+			return StartLocation{}, fmt.Errorf("malformed start-location row %q", raw)
+		}
+		vals[i] = v
+	}
+	return StartLocation{Player: vals[0], Cell: [2]int{vals[1], vals[2]}}, nil
+}
+
+func validateManifestStarts(starts []StartLocation) error {
+	seen := map[int]bool{}
+	for _, start := range starts {
+		if start.Player < 1 || start.Player > 8 {
+			return fmt.Errorf("manifest start-location player %d outside 1..8", start.Player)
+		}
+		if start.Cell[0] < 0 || start.Cell[1] < 0 {
+			return fmt.Errorf("manifest start-location player %d has negative cell %d,%d", start.Player, start.Cell[0], start.Cell[1])
+		}
+		if seen[start.Player] {
+			return fmt.Errorf("manifest duplicate start-location for player %d", start.Player)
+		}
+		seen[start.Player] = true
+	}
+	return nil
 }

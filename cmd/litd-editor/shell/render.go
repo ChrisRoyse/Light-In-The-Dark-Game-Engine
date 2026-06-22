@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
@@ -175,17 +176,69 @@ func drawObjects(img *image.RGBA, snap Snapshot) {
 func drawMetadata(img *image.RGBA, snap Snapshot) {
 	text(img, 236, 132, snap.Labels["panelMetadata"], ink)
 	text(img, 236, 166, snap.Labels["hintMetadata"], muted)
+	drawMetadataStartGrid(img, snap)
 	rows := []string{
 		snap.Labels["fieldID"] + ": " + snap.World.ID,
 		snap.Labels["fieldName"] + ": " + snap.World.Name,
+		snap.Labels["fieldDescription"] + ": " + snap.World.Description,
 		snap.Labels["fieldEngine"] + ": " + snap.World.EngineRange,
+		fmt.Sprintf("%s: min %d / suggested %d / max %d", snap.Labels["fieldPlayers"], snap.World.Players.Min, snap.World.Players.Suggested, snap.World.Players.Max),
+		snap.Labels["fieldTileset"] + ": " + snap.World.Tileset,
+		snap.Labels["fieldSplatSet"] + ": " + snap.World.SplatSet,
+		snap.Labels["fieldStarts"] + ": " + startsLabel(snap.World.Starts),
 		snap.Labels["fieldSeedPolicy"] + ": " + snap.World.SeedPolicy,
 		snap.Labels["fieldPath"] + ": " + snap.ProjectPath,
 	}
 	for i, row := range rows {
-		fill(img, 238, 208+i*48, 850, 36, panelAlt)
-		textFit(img, 258, 232+i*48, 800, row, ink)
+		fill(img, 640, 208+i*36, 470, 28, panelAlt)
+		textFit(img, 658, 228+i*36, 430, row, ink)
 	}
+}
+
+func drawMetadataStartGrid(img *image.RGBA, snap Snapshot) {
+	starts := map[[2]int]int{}
+	for _, start := range snap.World.Starts {
+		starts[start.Cell] = start.Player
+	}
+	rows := snap.World.HeightRows
+	if len(rows) == 0 {
+		rows = make([][]int, min(8, snap.World.Height))
+		for y := range rows {
+			rows[y] = make([]int, min(8, snap.World.Width))
+		}
+	}
+	for y := 0; y < len(rows) && y < 8; y++ {
+		for x := 0; x < len(rows[y]) && x < 8; x++ {
+			c := heightColor(rows[y][x])
+			if y < len(snap.World.SplatRows) && x < len(snap.World.SplatRows[y]) {
+				if sc, ok := splatColor(snap.World.SplatRows[y][x]); ok {
+					c = sc
+				}
+			}
+			gx := terrainGridX + x*terrainGridStepX
+			gy := terrainGridY + y*terrainGridStepY
+			fill(img, gx, gy, terrainGridCellW, terrainGridCellH, c)
+			if player, ok := starts[[2]int{x, y}]; ok {
+				drawStartMarker(img, gx, gy, player)
+			}
+		}
+	}
+}
+
+func drawStartMarker(img *image.RGBA, x, y, player int) {
+	fill(img, x+3, y+3, terrainGridCellW-6, terrainGridCellH-6, brass)
+	text(img, x+8, y+19, fmt.Sprintf("P%d", player), graphite)
+}
+
+func startsLabel(starts []sourceform.StartLocation) string {
+	if len(starts) == 0 {
+		return "none"
+	}
+	parts := make([]string, len(starts))
+	for i, start := range starts {
+		parts[i] = fmt.Sprintf("P%d@%d,%d", start.Player, start.Cell[0], start.Cell[1])
+	}
+	return strings.Join(parts, " ")
 }
 
 func modeButton(img *image.RGBA, x, y int, label string, active bool) {

@@ -124,11 +124,11 @@ func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
 			Name:        "Ramp FSV",
 			Description: "Synthetic ramp source-form world",
 			Authors:     []string{"FSV"},
-			Engine:      ">=0.1 <0.2",
+			Engine:      ">=0.1.0 <0.2.0",
 			Players:     Players{Min: 1, Max: 2, Suggested: 1},
 			SeedPolicy:  "host",
 		},
-		Terrain: Terrain{Width: 3, Height: 1, Tileset: "test"},
+		Terrain: Terrain{Width: 3, Height: 1, Tileset: "test", StartLocations: []StartLocation{{Player: 1, Cell: [2]int{0, 0}}}},
 		Height:  [][]int{{0, 0, 0}},
 		Cliff:   [][]CliffCell{{{Level: 0}, {Level: 0, Ramp: true}, {Level: 1}}},
 		Splat:   [][]SplatWeight{{{A: 255}, {A: 255}, {A: 255}}},
@@ -163,7 +163,7 @@ func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
 
 	bad := t.TempDir()
 	writeSyntheticWorld(t, bad, 1)
-	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(terrainFile)), []byte("width = 3\nheight = 1\ntileset = \"test\"\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(terrainFile)), []byte("width = 3\nheight = 1\ntileset = \"test\"\n\n[[start]]\nplayer = 1\ncell = [0, 0]\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(heightFile)), []byte("0 0 0\n"), 0o644); err != nil {
@@ -389,6 +389,92 @@ func TestSourceFormExportArchiveFSV(t *testing.T) {
 	}
 }
 
+func TestSourceFormMetadataStartsArchiveManifestFSV(t *testing.T) {
+	dir := copySampleWorld(t)
+	w, err := Load(dir)
+	if err != nil {
+		t.Fatalf("load sample: %v", err)
+	}
+	players := Players{Min: 1, Max: 8, Suggested: 4}
+	if err := w.SetMapMetadata("Four Start FSV", "archive metadata source-form test", ">=0.1.0 <0.2.0", players, "vigil-lowlands", "dawn-splat"); err != nil {
+		t.Fatalf("set metadata: %v", err)
+	}
+	for _, start := range []StartLocation{
+		{Player: 1, Cell: [2]int{1, 1}},
+		{Player: 2, Cell: [2]int{2, 1}},
+		{Player: 3, Cell: [2]int{1, 2}},
+		{Player: 4, Cell: [2]int{2, 2}},
+	} {
+		if err := w.PutStartLocation(start); err != nil {
+			t.Fatalf("put start %+v: %v", start, err)
+		}
+	}
+	beforeDuplicate := append([]StartLocation(nil), w.Terrain.StartLocations...)
+	dupErr := w.AddStartLocation(StartLocation{Player: 2, Cell: [2]int{3, 3}})
+	t.Logf("FSV duplicate start before=%+v err=%v after=%+v", beforeDuplicate, dupErr, w.Terrain.StartLocations)
+	if dupErr == nil || len(w.Terrain.StartLocations) != 4 {
+		t.Fatalf("duplicate start should be rejected without changing count: err=%v starts=%+v", dupErr, w.Terrain.StartLocations)
+	}
+	if err := w.SetCliffCell(7, 7, CliffCell{Level: 1}); err != nil {
+		t.Fatalf("raise cliff for unwalkable edge: %v", err)
+	}
+	beforeUnwalkable := append([]StartLocation(nil), w.Terrain.StartLocations...)
+	unwalkableErr := w.PutStartLocation(StartLocation{Player: 5, Cell: [2]int{7, 7}})
+	t.Logf("FSV unwalkable start before=%+v err=%v after=%+v", beforeUnwalkable, unwalkableErr, w.Terrain.StartLocations)
+	if unwalkableErr == nil || len(w.Terrain.StartLocations) != 4 {
+		t.Fatalf("unwalkable start should be rejected without changing count: err=%v starts=%+v", unwalkableErr, w.Terrain.StartLocations)
+	}
+	validName := w.Metadata.Name
+	w.Metadata.Name = ""
+	saveErr := w.Save("")
+	t.Logf("FSV empty-name save edge: beforeName=%q saveErr=%v sourceDir=%q", validName, saveErr, dir)
+	if saveErr == nil || !strings.Contains(saveErr.Error(), "name, description, and engine are required") {
+		t.Fatalf("empty name should block save, got %v", saveErr)
+	}
+	w.Metadata.Name = validName
+	if err := w.Save(""); err != nil {
+		t.Fatalf("save valid metadata/starts: %v", err)
+	}
+	worldBytes, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(worldFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	terrainBytes, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(terrainFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV saved world.toml:\n%s", worldBytes)
+	t.Logf("FSV saved terrain.toml:\n%s", terrainBytes)
+	arc := filepath.Join(t.TempDir(), "metadata-starts.litdworld")
+	if err := w.ExportArchive(arc, ExportOptions{}); err != nil {
+		t.Fatalf("export archive: %v", err)
+	}
+	opened, err := worldarchive.Open(arc, "")
+	if err != nil {
+		t.Fatalf("open exported archive: %v", err)
+	}
+	defer opened.Close()
+	t.Logf("FSV manifest metadata: title=%q desc=%q players=%+v tileset=%q splat=%q starts=%+v", opened.Manifest.Title, opened.Manifest.Description, opened.Manifest.Players, opened.Manifest.Tileset, opened.Manifest.SplatSet, opened.Manifest.StartLocations)
+	if opened.Manifest.Title != "Four Start FSV" || opened.Manifest.Description != "archive metadata source-form test" {
+		t.Fatalf("manifest hosting metadata mismatch: %+v", opened.Manifest)
+	}
+	if opened.Manifest.Players.Min != 1 || opened.Manifest.Players.Max != 8 || opened.Manifest.Players.Suggested != 4 {
+		t.Fatalf("manifest players mismatch: %+v", opened.Manifest.Players)
+	}
+	if opened.Manifest.Tileset != "vigil-lowlands" || opened.Manifest.SplatSet != "dawn-splat" {
+		t.Fatalf("manifest terrain metadata mismatch: tileset=%q splat=%q", opened.Manifest.Tileset, opened.Manifest.SplatSet)
+	}
+	wantStarts := []worldarchive.StartLocation{
+		{Player: 1, Cell: [2]int{1, 1}},
+		{Player: 2, Cell: [2]int{2, 1}},
+		{Player: 3, Cell: [2]int{1, 2}},
+		{Player: 4, Cell: [2]int{2, 2}},
+	}
+	if !slices.Equal(opened.Manifest.StartLocations, wantStarts) {
+		t.Fatalf("manifest starts = %+v, want %+v", opened.Manifest.StartLocations, wantStarts)
+	}
+}
+
 func TestSourceFormConcurrentNonOverlappingMergeFSV(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not available")
@@ -524,11 +610,11 @@ func writeSyntheticWorld(t *testing.T, dir string, nEntities int) {
 		Name:        "Merge FSV",
 		Description: "Synthetic merge world",
 		Authors:     []string{"FSV"},
-		Engine:      ">=0.1 <0.2",
+		Engine:      ">=0.1.0 <0.2.0",
 		Players:     Players{Min: 1, Max: 2, Suggested: 1},
 		SeedPolicy:  "host",
 	}
-	terrain := Terrain{Width: 1, Height: 1, Tileset: "test"}
+	terrain := Terrain{Width: 1, Height: 1, Tileset: "test", StartLocations: []StartLocation{{Player: 1, Cell: [2]int{0, 0}}}}
 	entities := make([]Entity, 0, nEntities)
 	for i := 1; i <= nEntities; i++ {
 		entities = append(entities, Entity{

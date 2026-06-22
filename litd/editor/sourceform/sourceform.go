@@ -16,6 +16,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/semver"
 )
 
 const (
@@ -58,10 +59,19 @@ type Players struct {
 
 // Terrain is the canonical map/terrain.toml state.
 type Terrain struct {
-	Width   int
-	Height  int
-	Tileset string
-	Biome   string
+	Width          int
+	Height         int
+	Tileset        string
+	Biome          string
+	StartLocations []StartLocation
+}
+
+// StartLocation is one author-facing player start marker. Player slots are
+// editor-facing 1..8 values; runtime loaders can map them to zero-based player
+// handles when they materialize a match.
+type StartLocation struct {
+	Player int
+	Cell   [2]int
 }
 
 // CliffCell is one source-form cliff grid cell. A ramp cell joins Level and
@@ -136,10 +146,16 @@ type rawWorld struct {
 }
 
 type rawTerrain struct {
-	Width   int    `toml:"width"`
-	Height  int    `toml:"height"`
-	Tileset string `toml:"tileset"`
-	Biome   string `toml:"biome"`
+	Width   int                `toml:"width"`
+	Height  int                `toml:"height"`
+	Tileset string             `toml:"tileset"`
+	Biome   string             `toml:"biome"`
+	Start   []rawStartLocation `toml:"start"`
+}
+
+type rawStartLocation struct {
+	Player int   `toml:"player"`
+	Cell   []int `toml:"cell"`
 }
 
 type rawEntities struct {
@@ -392,6 +408,114 @@ func (w *World) SetMetadataName(name string) error {
 	return nil
 }
 
+// SetMapMetadata edits the archive-facing map metadata in one atomic operation.
+func (w *World) SetMapMetadata(name, description, engineRange string, players Players, tileset, splatSet string) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set map metadata on nil world")
+	}
+	meta := w.Metadata
+	terrain := w.Terrain
+	meta.Name = name
+	meta.Description = description
+	meta.Engine = engineRange
+	meta.Players = players
+	terrain.Tileset = tileset
+	terrain.Biome = splatSet
+	if _, err := parseWorld(renderWorld(meta)); err != nil {
+		return fmt.Errorf("sourceform: invalid metadata: %w", err)
+	}
+	if _, err := parseTerrain(renderTerrain(terrain)); err != nil {
+		return fmt.Errorf("sourceform: invalid terrain metadata: %w", err)
+	}
+	if metadataEqual(w.Metadata, meta) && terrainEqual(w.Terrain, terrain) {
+		return nil
+	}
+	w.Metadata = meta
+	w.Terrain = terrain
+	w.dirty = true
+	return nil
+}
+
+// PutStartLocation inserts or replaces one player start marker.
+func (w *World) PutStartLocation(start StartLocation) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: put start location on nil world")
+	}
+	if err := validateStartLocation(start, w.Terrain.Width, w.Terrain.Height); err != nil {
+		return err
+	}
+	if ok, err := w.StartLocationWalkableCell(start.Cell[0], start.Cell[1]); err != nil {
+		return err
+	} else if !ok {
+		return fmt.Errorf("sourceform: start location player %d at %d,%d is not on walkable ground", start.Player, start.Cell[0], start.Cell[1])
+	}
+	for i := range w.Terrain.StartLocations {
+		if w.Terrain.StartLocations[i].Player != start.Player {
+			continue
+		}
+		if w.Terrain.StartLocations[i] == start {
+			return nil
+		}
+		w.Terrain.StartLocations[i] = start
+		sortStartLocations(w.Terrain.StartLocations)
+		w.dirty = true
+		return nil
+	}
+	next := append(append([]StartLocation(nil), w.Terrain.StartLocations...), start)
+	if err := validateStartLocations(next, w.Terrain.Width, w.Terrain.Height); err != nil {
+		return err
+	}
+	w.Terrain.StartLocations = next
+	sortStartLocations(w.Terrain.StartLocations)
+	w.dirty = true
+	return nil
+}
+
+// AddStartLocation inserts one start marker and rejects duplicate player slots.
+func (w *World) AddStartLocation(start StartLocation) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: add start location on nil world")
+	}
+	if _, ok := w.StartLocationByPlayer(start.Player); ok {
+		return fmt.Errorf("sourceform: duplicate start location for player %d", start.Player)
+	}
+	return w.PutStartLocation(start)
+}
+
+// RemoveStartLocation deletes a player start marker.
+func (w *World) RemoveStartLocation(player int) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: remove start location on nil world")
+	}
+	for i := range w.Terrain.StartLocations {
+		if w.Terrain.StartLocations[i].Player != player {
+			continue
+		}
+		next := append([]StartLocation(nil), w.Terrain.StartLocations[:i]...)
+		next = append(next, w.Terrain.StartLocations[i+1:]...)
+		if err := validateStartLocations(next, w.Terrain.Width, w.Terrain.Height); err != nil {
+			return err
+		}
+		w.Terrain.StartLocations = next
+		w.dirty = true
+		return nil
+	}
+	return fmt.Errorf("sourceform: start location for player %d not found", player)
+}
+
+// StartLocationByPlayer returns the marker for an author-facing player slot.
+func (w *World) StartLocationByPlayer(player int) (StartLocation, bool) {
+	if w == nil {
+		return StartLocation{}, false
+	}
+	for _, start := range w.Terrain.StartLocations {
+		if start.Player == player {
+			return start, true
+		}
+	}
+	return StartLocation{}, false
+}
+
 // SetGridCell edits one terrain grid cell.
 func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
 	if kind == GridCliff {
@@ -544,6 +668,7 @@ func (w *World) ExportArchive(outPath string, opts ExportOptions) error {
 			return err
 		}
 	}
+	opts = w.fillExportOptions(opts)
 	return ExportArchive(w.Dir, outPath, opts)
 }
 
@@ -551,6 +676,43 @@ func (w *World) ExportArchive(outPath string, opts ExportOptions) error {
 // worldpack archive builder.
 func ExportArchive(srcDir, outPath string, opts ExportOptions) error {
 	return worldpack.Pack(srcDir, outPath, opts.EngineRange, opts.Hosting, opts.Categories)
+}
+
+func (w *World) fillExportOptions(opts ExportOptions) ExportOptions {
+	if opts.EngineRange == "" {
+		opts.EngineRange = w.Metadata.Engine
+	}
+	if opts.Hosting.Author == "" {
+		opts.Hosting.Author = strings.Join(w.Metadata.Authors, ", ")
+	}
+	if opts.Hosting.Title == "" {
+		opts.Hosting.Title = w.Metadata.Name
+	}
+	if opts.Hosting.Description == "" {
+		opts.Hosting.Description = w.Metadata.Description
+	}
+	if opts.Hosting.Players == (worldpack.Players{}) {
+		opts.Hosting.Players = worldpack.Players{
+			Min:       w.Metadata.Players.Min,
+			Max:       w.Metadata.Players.Max,
+			Suggested: w.Metadata.Players.Suggested,
+		}
+	}
+	if opts.Hosting.Tileset == "" {
+		opts.Hosting.Tileset = w.Terrain.Tileset
+	}
+	if opts.Hosting.SplatSet == "" {
+		opts.Hosting.SplatSet = w.Terrain.Biome
+	}
+	if len(opts.Hosting.StartLocations) == 0 {
+		for _, start := range w.Terrain.StartLocations {
+			opts.Hosting.StartLocations = append(opts.Hosting.StartLocations, worldpack.StartLocation{
+				Player: start.Player,
+				Cell:   start.Cell,
+			})
+		}
+	}
+	return opts
 }
 
 func (w *World) grid(kind GridKind) ([][]int, error) {
@@ -675,11 +837,14 @@ func parseWorld(body []byte) (Metadata, error) {
 	if meta.Name == "" || meta.Description == "" || meta.Engine == "" {
 		return Metadata{}, fmt.Errorf("name, description, and engine are required")
 	}
+	if !semver.ValidRange(meta.Engine) {
+		return Metadata{}, fmt.Errorf("engine range %q is not well-formed", meta.Engine)
+	}
 	if len(meta.Authors) == 0 {
 		return Metadata{}, fmt.Errorf("authors must contain at least one entry")
 	}
-	if meta.Players.Min <= 0 || meta.Players.Max < meta.Players.Min || meta.Players.Suggested < meta.Players.Min || meta.Players.Suggested > meta.Players.Max {
-		return Metadata{}, fmt.Errorf("players must satisfy 0 < min <= suggested <= max")
+	if meta.Players.Min <= 0 || meta.Players.Max < meta.Players.Min || meta.Players.Max > 8 || meta.Players.Suggested < meta.Players.Min || meta.Players.Suggested > meta.Players.Max {
+		return Metadata{}, fmt.Errorf("players must satisfy 0 < min <= suggested <= max <= 8")
 	}
 	switch meta.SeedPolicy {
 	case "host":
@@ -705,13 +870,23 @@ func parseTerrain(body []byte) (Terrain, error) {
 	if err := rejectUndecoded(md); err != nil {
 		return Terrain{}, err
 	}
-	t := Terrain(raw)
+	t := Terrain{Width: raw.Width, Height: raw.Height, Tileset: raw.Tileset, Biome: raw.Biome}
 	if t.Width <= 0 || t.Height <= 0 {
 		return Terrain{}, fmt.Errorf("width and height must be positive")
 	}
 	if t.Tileset == "" {
 		return Terrain{}, fmt.Errorf("tileset is required")
 	}
+	for _, rawStart := range raw.Start {
+		if len(rawStart.Cell) != 2 {
+			return Terrain{}, fmt.Errorf("start location player %d cell must have exactly two integers", rawStart.Player)
+		}
+		t.StartLocations = append(t.StartLocations, StartLocation{Player: rawStart.Player, Cell: [2]int{rawStart.Cell[0], rawStart.Cell[1]}})
+	}
+	if err := validateStartLocations(t.StartLocations, t.Width, t.Height); err != nil {
+		return Terrain{}, err
+	}
+	sortStartLocations(t.StartLocations)
 	return t, nil
 }
 
@@ -985,6 +1160,18 @@ func validateWorld(w *World) error {
 	if _, err := parseTerrain(renderTerrain(w.Terrain)); err != nil {
 		return fmt.Errorf("sourceform: invalid terrain: %w", err)
 	}
+	if err := validateStartLocations(w.Terrain.StartLocations, w.Terrain.Width, w.Terrain.Height); err != nil {
+		return err
+	}
+	for _, start := range w.Terrain.StartLocations {
+		ok, err := w.StartLocationWalkableCell(start.Cell[0], start.Cell[1])
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("sourceform: start location player %d at %d,%d is not on walkable ground", start.Player, start.Cell[0], start.Cell[1])
+		}
+	}
 	if err := validateGrid(w.Height, w.Terrain.Width, w.Terrain.Height, "height"); err != nil {
 		return err
 	}
@@ -1018,6 +1205,33 @@ func validateWorld(w *World) error {
 		if !isPassthroughRel(rel) {
 			return fmt.Errorf("sourceform: invalid passthrough file %q", rel)
 		}
+	}
+	return nil
+}
+
+func validateStartLocations(starts []StartLocation, width, height int) error {
+	if len(starts) < 1 || len(starts) > 8 {
+		return fmt.Errorf("sourceform: start locations count %d outside 1..8", len(starts))
+	}
+	seen := map[int]bool{}
+	for _, start := range starts {
+		if seen[start.Player] {
+			return fmt.Errorf("sourceform: duplicate start location for player %d", start.Player)
+		}
+		seen[start.Player] = true
+		if err := validateStartLocation(start, width, height); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateStartLocation(start StartLocation, width, height int) error {
+	if start.Player < 1 || start.Player > 8 {
+		return fmt.Errorf("sourceform: start location player %d outside 1..8", start.Player)
+	}
+	if start.Cell[0] < 0 || start.Cell[1] < 0 || start.Cell[0] >= width || start.Cell[1] >= height {
+		return fmt.Errorf("sourceform: start location player %d cell %d,%d outside %dx%d map", start.Player, start.Cell[0], start.Cell[1], width, height)
 	}
 	return nil
 }
@@ -1108,6 +1322,34 @@ func validateSplatCell(cell SplatWeight) error {
 		return fmt.Errorf("sourceform: splat weights sum to %d, want 255", sum)
 	}
 	return nil
+}
+
+// StartLocationWalkableCell reports whether a player start can stand on a cell
+// using the source-form cliff pathability rule.
+func (w *World) StartLocationWalkableCell(x, y int) (bool, error) {
+	if w == nil {
+		return false, fmt.Errorf("sourceform: start walkability on nil world")
+	}
+	if x < 0 || y < 0 || x >= w.Terrain.Width || y >= w.Terrain.Height {
+		return false, fmt.Errorf("sourceform: start location cell %d,%d outside %dx%d map", x, y, w.Terrain.Width, w.Terrain.Height)
+	}
+	if w.Terrain.Width == 1 && w.Terrain.Height == 1 {
+		return true, nil
+	}
+	for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+		nx, ny := x+d[0], y+d[1]
+		if nx < 0 || ny < 0 || nx >= w.Terrain.Width || ny >= w.Terrain.Height {
+			continue
+		}
+		ok, err := w.CliffStepLegal(x, y, nx, ny)
+		if err != nil {
+			return false, err
+		}
+		if ok {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // SplatCell returns one texture-blend cell.
@@ -1253,6 +1495,11 @@ func renderTerrain(t Terrain) []byte {
 	if t.Biome != "" {
 		fmt.Fprintf(&b, "biome = %s\n", strconv.Quote(t.Biome))
 	}
+	starts := append([]StartLocation(nil), t.StartLocations...)
+	sortStartLocations(starts)
+	for _, start := range starts {
+		fmt.Fprintf(&b, "\n[[start]]\nplayer = %d\ncell = [%d, %d]\n", start.Player, start.Cell[0], start.Cell[1])
+	}
 	return []byte(b.String())
 }
 
@@ -1352,6 +1599,46 @@ func sortEntities(entities []Entity) {
 
 func sortDoodads(doodads []Doodad) {
 	sort.Slice(doodads, func(i, j int) bool { return doodads[i].ID < doodads[j].ID })
+}
+
+func sortStartLocations(starts []StartLocation) {
+	sort.Slice(starts, func(i, j int) bool { return starts[i].Player < starts[j].Player })
+}
+
+func terrainEqual(a, b Terrain) bool {
+	if a.Width != b.Width || a.Height != b.Height || a.Tileset != b.Tileset || a.Biome != b.Biome {
+		return false
+	}
+	if len(a.StartLocations) != len(b.StartLocations) {
+		return false
+	}
+	for i := range a.StartLocations {
+		if a.StartLocations[i] != b.StartLocations[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func metadataEqual(a, b Metadata) bool {
+	if a.Format != b.Format || a.ID != b.ID || a.Name != b.Name || a.Description != b.Description || a.Engine != b.Engine || a.Players != b.Players || a.SeedPolicy != b.SeedPolicy {
+		return false
+	}
+	if (a.Seed == nil) != (b.Seed == nil) {
+		return false
+	}
+	if a.Seed != nil && *a.Seed != *b.Seed {
+		return false
+	}
+	if len(a.Authors) != len(b.Authors) {
+		return false
+	}
+	for i := range a.Authors {
+		if a.Authors[i] != b.Authors[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func writeFileIfChanged(root, rel string, body []byte) error {

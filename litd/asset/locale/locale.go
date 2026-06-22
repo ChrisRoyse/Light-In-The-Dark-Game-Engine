@@ -87,7 +87,12 @@ const (
 	EditorFieldFlags              Key = "editor.field.flags"
 	EditorFieldID                 Key = "editor.field.id"
 	EditorFieldName               Key = "editor.field.name"
+	EditorFieldDescription        Key = "editor.field.description"
 	EditorFieldEngine             Key = "editor.field.engine"
+	EditorFieldPlayers            Key = "editor.field.players"
+	EditorFieldTileset            Key = "editor.field.tileset"
+	EditorFieldSplatSet           Key = "editor.field.splat_set"
+	EditorFieldStarts             Key = "editor.field.starts"
 	EditorFieldSeedPolicy         Key = "editor.field.seed_policy"
 	EditorFieldPath               Key = "editor.field.path"
 	EditorScopeNoTriggerGUI       Key = "editor.scope.no_trigger_gui"
@@ -168,7 +173,12 @@ var requiredKeys = []string{
 	string(EditorFieldFlags),
 	string(EditorFieldID),
 	string(EditorFieldName),
+	string(EditorFieldDescription),
 	string(EditorFieldEngine),
+	string(EditorFieldPlayers),
+	string(EditorFieldTileset),
+	string(EditorFieldSplatSet),
+	string(EditorFieldStarts),
 	string(EditorFieldSeedPolicy),
 	string(EditorFieldPath),
 	string(EditorScopeNoTriggerGUI),

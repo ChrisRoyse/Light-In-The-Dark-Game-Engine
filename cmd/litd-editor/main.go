@@ -2,15 +2,18 @@
 package main
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/cmd/litd-editor/shell"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
 
@@ -133,6 +136,10 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runObjectFSV(app, outDir, objectState); err != nil {
 		return err
 	}
+	metadataState := newMetadataFSVState()
+	if err := runMetadataFSV(app, outDir, metadataState); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -209,6 +216,10 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 	for _, step := range objectWindowSteps(app, outDir, objectState) {
 		steps = append(steps, step)
 	}
+	metadataState := newMetadataFSVState()
+	for _, step := range metadataWindowSteps(app, outDir, metadataState) {
+		steps = append(steps, step)
+	}
 	if err := shell.RunWindowCaptureSequence(app, steps); err != nil {
 		return err
 	}
@@ -222,6 +233,9 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 		return err
 	}
 	if err := writeObjectDump(app, outDir, objectState); err != nil {
+		return err
+	}
+	if err := writeMetadataDump(app, outDir, metadataState); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -1022,6 +1036,265 @@ func writeObjectDump(app *shell.App, outDir string, state *objectFSVState) error
 		return err
 	}
 	return os.WriteFile(filepath.Join(outDir, "object-placement-dump.json"), append(body, '\n'), 0o644)
+}
+
+type metadataFSVState struct {
+	HappyPath        metadataHappyRecord     `json:"happyPath"`
+	Duplicate        metadataRejectRecord    `json:"duplicate"`
+	Unwalkable       metadataRejectRecord    `json:"unwalkable"`
+	EmptyName        metadataEmptyNameRecord `json:"emptyName"`
+	Stack            shell.StackSnapshot     `json:"stack"`
+	SavedSourceFiles map[string]string       `json:"savedSourceFiles"`
+	ArchivePath      string                  `json:"archivePath"`
+	RawManifest      string                  `json:"rawManifest"`
+	Manifest         worldarchive.Manifest   `json:"manifest"`
+	ManifestJSON     string                  `json:"manifestJSON"`
+}
+
+type metadataHappyRecord struct {
+	Name        string                     `json:"name"`
+	Description string                     `json:"description"`
+	EngineRange string                     `json:"engineRange"`
+	Players     sourceform.Players         `json:"players"`
+	Tileset     string                     `json:"tileset"`
+	SplatSet    string                     `json:"splatSet"`
+	Starts      []sourceform.StartLocation `json:"starts"`
+}
+
+type metadataRejectRecord struct {
+	BeforeStarts []sourceform.StartLocation `json:"beforeStarts"`
+	AfterStarts  []sourceform.StartLocation `json:"afterStarts"`
+	Error        string                     `json:"error"`
+	Status       string                     `json:"status"`
+}
+
+type metadataEmptyNameRecord struct {
+	BeforeName string `json:"beforeName"`
+	AfterName  string `json:"afterName"`
+	Error      string `json:"error"`
+	Status     string `json:"status"`
+}
+
+type editorMetadataStep struct {
+	Name  string
+	Apply func() error
+}
+
+func newMetadataFSVState() *metadataFSVState {
+	return &metadataFSVState{SavedSourceFiles: map[string]string{}}
+}
+
+func metadataSteps(app *shell.App, state *metadataFSVState) []editorMetadataStep {
+	players := sourceform.Players{Min: 1, Max: 8, Suggested: 4}
+	return []editorMetadataStep{
+		{
+			Name: "metadata-starts",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeMetadata); err != nil {
+					return err
+				}
+				if err := app.SetMapMetadata("Metadata FSV World", "Four player start FSV", ">=0.1.0 <0.2.0", players, "vigil-lowlands", "dawn-splat"); err != nil {
+					return err
+				}
+				for _, start := range []struct {
+					player int
+					x, y   int
+				}{
+					{1, 1, 1},
+					{2, 2, 1},
+					{3, 1, 2},
+					{4, 2, 2},
+				} {
+					if err := app.PutStartLocationCell(start.player, start.x, start.y); err != nil {
+						return err
+					}
+				}
+				snap := app.Snapshot()
+				state.HappyPath = metadataHappyRecord{
+					Name:        snap.World.Name,
+					Description: snap.World.Description,
+					EngineRange: snap.World.EngineRange,
+					Players:     snap.World.Players,
+					Tileset:     snap.World.Tileset,
+					SplatSet:    snap.World.SplatSet,
+					Starts:      append([]sourceform.StartLocation(nil), snap.World.Starts...),
+				}
+				return nil
+			},
+		},
+		{
+			Name: "metadata-duplicate-player",
+			Apply: func() error {
+				before := app.Snapshot()
+				err := app.AddStartLocationCell(2, 3, 3)
+				after := app.Snapshot()
+				if err == nil {
+					return fmt.Errorf("metadata FSV: duplicate player 2 start unexpectedly succeeded")
+				}
+				state.Duplicate = metadataRejectRecord{
+					BeforeStarts: append([]sourceform.StartLocation(nil), before.World.Starts...),
+					AfterStarts:  append([]sourceform.StartLocation(nil), after.World.Starts...),
+					Error:        err.Error(),
+					Status:       after.Status,
+				}
+				return nil
+			},
+		},
+		{
+			Name: "metadata-reject-unwalkable",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
+					return err
+				}
+				if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(0); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(7, 7); err != nil {
+					return err
+				}
+				if err := app.SwitchMode(shell.ModeMetadata); err != nil {
+					return err
+				}
+				before := app.Snapshot()
+				err := app.PutStartLocationCell(5, 7, 7)
+				after := app.Snapshot()
+				if err == nil {
+					return fmt.Errorf("metadata FSV: unwalkable start unexpectedly succeeded")
+				}
+				state.Unwalkable = metadataRejectRecord{
+					BeforeStarts: append([]sourceform.StartLocation(nil), before.World.Starts...),
+					AfterStarts:  append([]sourceform.StartLocation(nil), after.World.Starts...),
+					Error:        err.Error(),
+					Status:       after.Status,
+				}
+				return nil
+			},
+		},
+		{
+			Name: "metadata-empty-name",
+			Apply: func() error {
+				before := app.Snapshot()
+				err := app.SetMapMetadata("", "Four player start FSV", ">=0.1.0 <0.2.0", players, "vigil-lowlands", "dawn-splat")
+				after := app.Snapshot()
+				if err == nil {
+					return fmt.Errorf("metadata FSV: empty map name unexpectedly succeeded")
+				}
+				state.EmptyName = metadataEmptyNameRecord{
+					BeforeName: before.World.Name,
+					AfterName:  after.World.Name,
+					Error:      err.Error(),
+					Status:     after.Status,
+				}
+				return nil
+			},
+		},
+	}
+}
+
+func runMetadataFSV(app *shell.App, outDir string, state *metadataFSVState) error {
+	for i, step := range metadataSteps(app, state) {
+		if err := step.Apply(); err != nil {
+			return err
+		}
+		if err := renderState(outDir, fmt.Sprintf("%02d-%s.png", i+25, step.Name), app); err != nil {
+			return err
+		}
+	}
+	return writeMetadataDump(app, outDir, state)
+}
+
+func metadataWindowSteps(app *shell.App, outDir string, state *metadataFSVState) []shell.WindowCaptureStep {
+	steps := metadataSteps(app, state)
+	out := make([]shell.WindowCaptureStep, 0, len(steps))
+	for i, step := range steps {
+		step := step
+		out = append(out, shell.WindowCaptureStep{
+			Name:     step.Name,
+			ShotPath: filepath.Join(outDir, fmt.Sprintf("%02d-%s.png", i+25, step.Name)),
+			BeforeCapture: func() error {
+				return step.Apply()
+			},
+		})
+	}
+	return out
+}
+
+func writeMetadataDump(app *shell.App, outDir string, state *metadataFSVState) error {
+	if state == nil {
+		state = newMetadataFSVState()
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+	snap := app.Snapshot()
+	state.Stack = snap.Stack
+	state.SavedSourceFiles = map[string]string{}
+	for _, rel := range []string{"world.toml", "map/terrain.toml"} {
+		body, err := os.ReadFile(filepath.Join(snap.ProjectPath, filepath.FromSlash(rel)))
+		if err != nil {
+			return err
+		}
+		state.SavedSourceFiles[rel] = string(body)
+	}
+	archivePath := filepath.Join(outDir, "metadata-starts-fsv.litdworld")
+	if err := app.ExportArchive(archivePath); err != nil {
+		return err
+	}
+	state.ArchivePath = archivePath
+	rawManifest, err := readRawArchiveManifest(archivePath)
+	if err != nil {
+		return err
+	}
+	state.RawManifest = rawManifest
+	opened, err := worldarchive.Open(archivePath, "")
+	if err != nil {
+		return err
+	}
+	state.Manifest = opened.Manifest
+	opened.Close()
+	manifestJSON, err := json.MarshalIndent(state.Manifest, "", "  ")
+	if err != nil {
+		return err
+	}
+	state.ManifestJSON = string(manifestJSON)
+	body, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "metadata-starts-dump.json"), append(body, '\n'), 0o644)
+}
+
+func readRawArchiveManifest(path string) (string, error) {
+	zr, err := zip.OpenReader(path)
+	if err != nil {
+		return "", err
+	}
+	defer zr.Close()
+	for _, f := range zr.File {
+		if f.Name != ".litdworld-manifest" {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return "", err
+		}
+		body, err := io.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			return "", err
+		}
+		return string(body), nil
+	}
+	return "", fmt.Errorf("%s has no .litdworld-manifest", path)
 }
 
 func entityRecord(ent sourceform.Entity, override bool) objectPlacementRecord {

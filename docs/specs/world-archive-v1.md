@@ -40,6 +40,14 @@ engine-range: >=0.1.0 <0.2.0
 author: Paul Ascenzi
 title: First Flame
 description: ashen-veil duel
+players-min: 1
+players-max: 8
+players-suggested: 2
+tileset: vigil-lowlands
+splat-set: dawn-splat
+start-locations: 2
+start-location: 1 4 4
+start-location: 2 20 20
 aggregate-sha256: 2c11403cbe485d9145e5aed3d2ed39200de6d4f0a8e3986b0e428eed1c74a878
 files: 2
 8c10d11872b51bca…7de605af 5 scripts/main.lua
@@ -55,6 +63,11 @@ afeea2a0126e2a1c…6cb93856 11 world.toml
 | `author` | yes (value may be empty) | Hosting metadata (D-23). |
 | `title` | yes (value may be empty) | Hosting metadata (D-23). |
 | `description` | yes (value may be empty) | Hosting metadata (D-23). |
+| `players-min` / `players-max` / `players-suggested` | no | Editor/source-form player-count metadata. |
+| `tileset` | no | Map tileset selected by the editor/source form. |
+| `splat-set` | no | Terrain texture/splat set selected by the editor/source form. |
+| `start-locations` | no | Count of repeated `start-location` rows. |
+| `start-location` | no | Repeated `player x y` start marker rows, using editor-facing player slots `1..8` and grid cells. |
 | `aggregate-sha256` | yes | Whole-archive fingerprint (see below). |
 | `files` | yes | Count of payload rows that follow. Terminates the header. |
 

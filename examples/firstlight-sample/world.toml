@@ -3,6 +3,6 @@ id = "firstlight-sample"
 name = "loc:world.name"
 description = "loc:world.desc"
 authors = ["Paula Ascenzi", "Ōkami 灯り"]
-engine = ">=0.1 <0.2"
-players = { min = 1, max = 2, suggested = 2 }
+engine = ">=0.1.0 <0.2.0"
+players = { min = 1, max = 8, suggested = 2 }
 seed-policy = "host"

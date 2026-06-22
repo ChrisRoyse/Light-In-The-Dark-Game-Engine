@@ -10,9 +10,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
 
@@ -71,20 +75,25 @@ type Snapshot struct {
 }
 
 type WorldSnapshot struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	Width       int        `json:"width"`
-	Height      int        `json:"height"`
-	Entities    int        `json:"entities"`
-	Doodads     int        `json:"doodads"`
-	HeightCell  int        `json:"heightCell"`
-	CliffCell   string     `json:"cliffCell"`
-	SplatCell   string     `json:"splatCell"`
-	SeedPolicy  string     `json:"seedPolicy"`
-	EngineRange string     `json:"engineRange"`
-	HeightRows  [][]int    `json:"heightRows,omitempty"`
-	CliffRows   [][]string `json:"cliffRows,omitempty"`
-	SplatRows   [][][]int  `json:"splatRows,omitempty"`
+	ID          string                     `json:"id"`
+	Name        string                     `json:"name"`
+	Description string                     `json:"description"`
+	Width       int                        `json:"width"`
+	Height      int                        `json:"height"`
+	Tileset     string                     `json:"tileset"`
+	SplatSet    string                     `json:"splatSet"`
+	Entities    int                        `json:"entities"`
+	Doodads     int                        `json:"doodads"`
+	Players     sourceform.Players         `json:"players"`
+	Starts      []sourceform.StartLocation `json:"starts,omitempty"`
+	HeightCell  int                        `json:"heightCell"`
+	CliffCell   string                     `json:"cliffCell"`
+	SplatCell   string                     `json:"splatCell"`
+	SeedPolicy  string                     `json:"seedPolicy"`
+	EngineRange string                     `json:"engineRange"`
+	HeightRows  [][]int                    `json:"heightRows,omitempty"`
+	CliffRows   [][]string                 `json:"cliffRows,omitempty"`
+	SplatRows   [][][]int                  `json:"splatRows,omitempty"`
 }
 
 func New(table *locale.Table) *App {
@@ -247,6 +256,121 @@ func (a *App) SetMetadataName(name string) error {
 	return a.executeCommand(metadataNameCommand{before: a.world.Metadata.Name, after: name})
 }
 
+func (a *App) SetMapMetadata(name, description, engineRange string, players sourceform.Players, tileset, splatSet string) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	before := mapMetadataState{
+		Name:        a.world.Metadata.Name,
+		Description: a.world.Metadata.Description,
+		EngineRange: a.world.Metadata.Engine,
+		Players:     a.world.Metadata.Players,
+		Tileset:     a.world.Terrain.Tileset,
+		SplatSet:    a.world.Terrain.Biome,
+	}
+	after := mapMetadataState{
+		Name:        name,
+		Description: description,
+		EngineRange: engineRange,
+		Players:     players,
+		Tileset:     tileset,
+		SplatSet:    splatSet,
+	}
+	if err := a.executeCommand(mapMetadataCommand{before: before, after: after}); err != nil {
+		a.status = err.Error()
+		return err
+	}
+	a.status = fmt.Sprintf("Metadata updated: %s", name)
+	return nil
+}
+
+func (a *App) PutStartLocationCell(player, x, y int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	if err := validateObjectCell(a.world, x, y); err != nil {
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	ok, err := a.UnitPlacementWalkableCell(x, y)
+	if err != nil {
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	if !ok {
+		err := fmt.Errorf("editor metadata: start location rejected at unwalkable cell %d,%d", x, y)
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	before, hadBefore := a.world.StartLocationByPlayer(player)
+	after := sourceform.StartLocation{Player: player, Cell: [2]int{x, y}}
+	if err := a.executeCommand(startLocationCommand{before: before, hadBefore: hadBefore, after: after, hasAfter: true}); err != nil {
+		a.status = err.Error()
+		return err
+	}
+	a.mode = ModeMetadata
+	a.status = fmt.Sprintf("Start location player %d set to %d,%d", player, x, y)
+	return nil
+}
+
+func (a *App) AddStartLocationCell(player, x, y int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	if _, exists := a.world.StartLocationByPlayer(player); exists {
+		err := fmt.Errorf("editor metadata: duplicate start location for player %d", player)
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	return a.PutStartLocationCell(player, x, y)
+}
+
+func (a *App) RemoveStartLocation(player int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	before, ok := a.world.StartLocationByPlayer(player)
+	if !ok {
+		return fmt.Errorf("editor metadata: start location for player %d not found", player)
+	}
+	return a.executeCommand(startLocationCommand{before: before, hadBefore: true})
+}
+
+func (a *App) ExportArchive(outPath string) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	opts := sourceform.ExportOptions{
+		EngineRange: a.world.Metadata.Engine,
+		Hosting: worldpack.Hosting{
+			Author:      strings.Join(a.world.Metadata.Authors, ", "),
+			Title:       a.world.Metadata.Name,
+			Description: a.world.Metadata.Description,
+			Players: worldpack.Players{
+				Min:       a.world.Metadata.Players.Min,
+				Max:       a.world.Metadata.Players.Max,
+				Suggested: a.world.Metadata.Players.Suggested,
+			},
+			Tileset:  a.world.Terrain.Tileset,
+			SplatSet: a.world.Terrain.Biome,
+		},
+	}
+	for _, start := range a.world.Terrain.StartLocations {
+		opts.Hosting.StartLocations = append(opts.Hosting.StartLocations, worldpack.StartLocation{Player: start.Player, Cell: start.Cell})
+	}
+	if err := a.world.ExportArchive(outPath, opts); err != nil {
+		a.errText = err.Error()
+		return err
+	}
+	a.status = fmt.Sprintf("Exported archive: %s", outPath)
+	a.errText = ""
+	return nil
+}
+
 func (a *App) Undo() error {
 	return a.ensureCommandStack().Undo(a)
 }
@@ -311,7 +435,12 @@ func (a *App) Snapshot() Snapshot {
 		"fieldFlags":        must(a.table, locale.EditorFieldFlags),
 		"fieldID":           must(a.table, locale.EditorFieldID),
 		"fieldName":         must(a.table, locale.EditorFieldName),
+		"fieldDescription":  must(a.table, locale.EditorFieldDescription),
 		"fieldEngine":       must(a.table, locale.EditorFieldEngine),
+		"fieldPlayers":      must(a.table, locale.EditorFieldPlayers),
+		"fieldTileset":      must(a.table, locale.EditorFieldTileset),
+		"fieldSplatSet":     must(a.table, locale.EditorFieldSplatSet),
+		"fieldStarts":       must(a.table, locale.EditorFieldStarts),
 		"fieldSeedPolicy":   must(a.table, locale.EditorFieldSeedPolicy),
 		"fieldPath":         must(a.table, locale.EditorFieldPath),
 		"scopeNoTriggerGUI": must(a.table, locale.EditorScopeNoTriggerGUI),
@@ -351,10 +480,15 @@ func (a *App) Snapshot() Snapshot {
 		s.World = WorldSnapshot{
 			ID:          a.world.Metadata.ID,
 			Name:        a.world.Metadata.Name,
+			Description: a.world.Metadata.Description,
 			Width:       a.world.Terrain.Width,
 			Height:      a.world.Terrain.Height,
+			Tileset:     a.world.Terrain.Tileset,
+			SplatSet:    a.world.Terrain.Biome,
 			Entities:    len(a.world.Entities),
 			Doodads:     len(a.world.Doodads),
+			Players:     a.world.Metadata.Players,
+			Starts:      append([]sourceform.StartLocation(nil), a.world.Terrain.StartLocations...),
 			SeedPolicy:  a.world.Metadata.SeedPolicy,
 			EngineRange: a.world.Metadata.Engine,
 			HeightRows:  cloneIntGrid(a.world.Height),
@@ -481,6 +615,27 @@ func (a *App) setMetadataNameDirect(name string) error {
 	return a.world.SetMetadataName(name)
 }
 
+func (a *App) setMapMetadataDirect(state mapMetadataState) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.SetMapMetadata(state.Name, state.Description, state.EngineRange, state.Players, state.Tileset, state.SplatSet)
+}
+
+func (a *App) putStartLocationDirect(start sourceform.StartLocation) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.PutStartLocation(start)
+}
+
+func (a *App) removeStartLocationDirect(player int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.RemoveStartLocation(player)
+}
+
 func gridCellValue(w *sourceform.World, kind sourceform.GridKind, x, y int) (int, error) {
 	if w == nil {
 		return 0, errors.New("editor shell: no project loaded")
@@ -573,18 +728,41 @@ func defaultWorld(name string) *sourceform.World {
 			Name:        name,
 			Description: "loc:world.desc",
 			Authors:     []string{"Light in the Dark Editor"},
-			Engine:      ">=0.1 <0.2",
-			Players:     sourceform.Players{Min: 1, Max: 2, Suggested: 1},
+			Engine:      DefaultEngineRange(),
+			Players:     sourceform.Players{Min: 1, Max: 8, Suggested: 2},
 			SeedPolicy:  "host",
 		},
-		Terrain: sourceform.Terrain{Width: 8, Height: 8, Tileset: "vigil-lowlands"},
-		Height:  grid(),
-		Cliff:   cliffGrid(),
-		Splat:   splatGrid(),
+		Terrain: sourceform.Terrain{
+			Width:   8,
+			Height:  8,
+			Tileset: "vigil-lowlands",
+			Biome:   "vigil-lowlands",
+			StartLocations: []sourceform.StartLocation{
+				{Player: 1, Cell: [2]int{1, 1}},
+				{Player: 2, Cell: [2]int{6, 6}},
+			},
+		},
+		Height: grid(),
+		Cliff:  cliffGrid(),
+		Splat:  splatGrid(),
 		Entities: []sourceform.Entity{
 			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{4096, 4096}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
 		},
 	}
+}
+
+func DefaultEngineRange() string {
+	v := strings.TrimPrefix(buildinfo.Get().Version, "v")
+	parts := strings.Split(v, ".")
+	if len(parts) == 3 {
+		major, majorErr := strconv.Atoi(parts[0])
+		minor, minorErr := strconv.Atoi(parts[1])
+		patch, patchErr := strconv.Atoi(parts[2])
+		if majorErr == nil && minorErr == nil && patchErr == nil && major >= 0 && minor >= 0 && patch >= 0 {
+			return fmt.Sprintf(">=%d.%d.%d <%d.%d.0", major, minor, patch, major, minor+1)
+		}
+	}
+	return ">=0.1.0 <0.2.0"
 }
 
 func cloneIntGrid(grid [][]int) [][]int {
