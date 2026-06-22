@@ -205,6 +205,22 @@ func (w *World) MoveEntity(id uint32, pos [2]int, facing int) error {
 	return fmt.Errorf("sourceform: entity id %d not found", id)
 }
 
+// SetMetadataName edits the user-facing world name.
+func (w *World) SetMetadataName(name string) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set metadata name on nil world")
+	}
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("sourceform: metadata name is required")
+	}
+	if w.Metadata.Name == name {
+		return nil
+	}
+	w.Metadata.Name = name
+	w.dirty = true
+	return nil
+}
+
 // SetGridCell edits one terrain grid cell.
 func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
 	grid, err := w.grid(kind)

@@ -82,6 +82,14 @@ func RunWindow(state *App, opts WindowOptions) error {
 			markDirty(state.NewProject(newTarget()))
 		case window.KeyS:
 			markDirty(state.Save())
+		case window.KeyZ:
+			if kev.Mods&window.ModControl != 0 {
+				markDirty(state.Undo())
+			}
+		case window.KeyY:
+			if kev.Mods&window.ModControl != 0 {
+				markDirty(state.Redo())
+			}
 		case window.KeyEnter:
 			if state.Snapshot().Confirm != nil {
 				markDirty(state.ConfirmPending())

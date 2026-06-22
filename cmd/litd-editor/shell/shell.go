@@ -34,6 +34,7 @@ type App struct {
 	status      string
 	errText     string
 	confirm     *Confirm
+	commands    *CommandStack
 }
 
 type Confirm struct {
@@ -55,6 +56,7 @@ type Snapshot struct {
 	Confirm     *Confirm          `json:"confirm,omitempty"`
 	Labels      map[string]string `json:"labels"`
 	World       WorldSnapshot     `json:"world"`
+	Stack       StackSnapshot     `json:"stack"`
 }
 
 type WorldSnapshot struct {
@@ -69,7 +71,7 @@ type WorldSnapshot struct {
 }
 
 func New(table *locale.Table) *App {
-	return &App{table: table, mode: ModeTerrain, status: must(table, locale.EditorStatusReady)}
+	return &App{table: table, mode: ModeTerrain, status: must(table, locale.EditorStatusReady), commands: NewCommandStack(CommandStackLimit)}
 }
 
 func Modes() []Mode { return append([]Mode(nil), allModes...) }
@@ -123,6 +125,7 @@ func (a *App) createProject(dir string) error {
 	a.errText = ""
 	a.confirm = nil
 	a.status = must(a.table, locale.EditorStatusProjectCreated)
+	a.resetCommandStack()
 	return nil
 }
 
@@ -145,6 +148,7 @@ func (a *App) OpenProject(path string) error {
 		a.errText = ""
 		a.confirm = nil
 		a.status = must(a.table, locale.EditorStatusProjectOpened)
+		a.resetCommandStack()
 		return nil
 	}
 	if filepath.Ext(path) == ".litdworld" {
@@ -179,8 +183,41 @@ func (a *App) EditTerrainHeight(x, y, value int) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
 	}
-	a.errText = ""
-	return a.world.SetGridCell(sourceform.GridHeight, x, y, value)
+	before, err := gridCellValue(a.world, sourceform.GridHeight, x, y)
+	if err != nil {
+		return err
+	}
+	return a.executeCommand(gridCellCommand{kind: sourceform.GridHeight, x: x, y: y, before: before, after: value})
+}
+
+func (a *App) MoveEntity(id uint32, pos [2]int, facing int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	beforePos, beforeFacing, err := entityPlacement(a.world, id)
+	if err != nil {
+		return err
+	}
+	return a.executeCommand(entityMoveCommand{id: id, beforePos: beforePos, beforeFacing: beforeFacing, afterPos: pos, afterFacing: facing})
+}
+
+func (a *App) SetMetadataName(name string) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.executeCommand(metadataNameCommand{before: a.world.Metadata.Name, after: name})
+}
+
+func (a *App) Undo() error {
+	return a.ensureCommandStack().Undo(a)
+}
+
+func (a *App) Redo() error {
+	return a.ensureCommandStack().Redo(a)
+}
+
+func (a *App) StackSnapshot() StackSnapshot {
+	return a.ensureCommandStack().Snapshot()
 }
 
 func (a *App) Save() error {
@@ -247,6 +284,7 @@ func (a *App) Snapshot() Snapshot {
 		Error:       a.errText,
 		Confirm:     a.confirm,
 		Labels:      labels,
+		Stack:       a.StackSnapshot(),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -263,6 +301,80 @@ func (a *App) Snapshot() Snapshot {
 		}
 	}
 	return s
+}
+
+func (a *App) executeCommand(cmd Command) error {
+	if err := a.ensureCommandStack().Execute(a, cmd); err != nil {
+		a.errText = err.Error()
+		return err
+	}
+	a.errText = ""
+	return nil
+}
+
+func (a *App) ensureCommandStack() *CommandStack {
+	if a.commands == nil {
+		a.commands = NewCommandStack(CommandStackLimit)
+	}
+	return a.commands
+}
+
+func (a *App) resetCommandStack() {
+	a.commands = NewCommandStack(CommandStackLimit)
+}
+
+func (a *App) setGridCellDirect(kind sourceform.GridKind, x, y, value int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.SetGridCell(kind, x, y, value)
+}
+
+func (a *App) moveEntityDirect(id uint32, pos [2]int, facing int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.MoveEntity(id, pos, facing)
+}
+
+func (a *App) setMetadataNameDirect(name string) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.SetMetadataName(name)
+}
+
+func gridCellValue(w *sourceform.World, kind sourceform.GridKind, x, y int) (int, error) {
+	if w == nil {
+		return 0, errors.New("editor shell: no project loaded")
+	}
+	var grid [][]int
+	switch kind {
+	case sourceform.GridHeight:
+		grid = w.Height
+	case sourceform.GridCliff:
+		grid = w.Cliff
+	case sourceform.GridSplat:
+		grid = w.Splat
+	default:
+		return 0, fmt.Errorf("editor shell: unknown grid %q", kind)
+	}
+	if y < 0 || y >= len(grid) || x < 0 || len(grid) == 0 || x >= len(grid[y]) {
+		return 0, fmt.Errorf("editor shell: %s cell (%d,%d) outside %dx%d grid", kind, x, y, w.Terrain.Width, w.Terrain.Height)
+	}
+	return grid[y][x], nil
+}
+
+func entityPlacement(w *sourceform.World, id uint32) ([2]int, int, error) {
+	if w == nil {
+		return [2]int{}, 0, errors.New("editor shell: no project loaded")
+	}
+	for _, ent := range w.Entities {
+		if ent.ID == id {
+			return ent.Pos, ent.Facing, nil
+		}
+	}
+	return [2]int{}, 0, fmt.Errorf("editor shell: entity id %d not found", id)
 }
 
 func (s Snapshot) JSON() string {
