@@ -81,6 +81,7 @@ type renderDemoDump struct {
 	Atlas     *atlasRuntimeDump       `json:"atlas,omitempty"`
 	TeamColor *teamColorRuntimeDump   `json:"teamColor,omitempty"`
 	Lighting  *lightingRuntimeDump    `json:"lighting,omitempty"`
+	Batching  *batchingRuntimeDump    `json:"batching,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -180,6 +181,31 @@ type atlasSwatchDump struct {
 	G     uint8  `json:"g"`
 	B     uint8  `json:"b"`
 	A     uint8  `json:"a"`
+}
+
+type batchingRuntimeDump struct {
+	Scene                      string                             `json:"scene"`
+	Preset                     litasset.AtlasPreset               `json:"preset"`
+	SpawnOrder                 string                             `json:"spawnOrder"`
+	UnitCount                  int                                `json:"unitCount"`
+	AtlasPairs                 int                                `json:"atlasPairs"`
+	PreRebindMaterialInstances int                                `json:"preRebindMaterialInstances"`
+	Batcher                    litrender.MaterialBatcherSnapshot  `json:"batcher"`
+	MaterialCeiling            litrender.MaterialInstanceSnapshot `json:"materialCeiling"`
+	CloneAssertion             string                             `json:"cloneAssertion"`
+	FrameVisibleCapacity       int                                `json:"frameVisibleCapacity"`
+	FrameVisibleCount          int                                `json:"frameVisibleCount"`
+	FirstUnits                 []batchingUnitDump                 `json:"firstUnits"`
+	OK                         bool                               `json:"ok"`
+	Errors                     []string                           `json:"errors,omitempty"`
+}
+
+type batchingUnitDump struct {
+	Index       int    `json:"index"`
+	Atlas       string `json:"atlas"`
+	RenderOrder int    `json:"renderOrder"`
+	X           int    `json:"x"`
+	Z           int    `json:"z"`
 }
 
 type teamColorRuntimeDump struct {
@@ -660,7 +686,7 @@ type campaignMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -797,6 +823,7 @@ func main() {
 	var atlasFSV *atlasRuntimeDump
 	var teamColorFSV *teamColorRuntimeDump
 	var lightingFSV *lightingRuntimeDump
+	var batchingFSV *batchingRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -887,6 +914,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: atlas-two: %v\n", err)
 				os.Exit(1)
 			}
+		} else if strings.HasPrefix(sceneKey, "units100") {
+			spec, batchingFSV, err = buildBatchingFSV(scene, atlasPreset, sceneKey)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: batching: %v\n", err)
+				os.Exit(1)
+			}
 		} else if strings.HasPrefix(sceneKey, "lit") || sceneKey == "unlit" {
 			spec, lightingFSV, err = buildLightingFSV(scene, atlasPreset, sceneKey, *bakedSun)
 			if err != nil {
@@ -951,10 +984,12 @@ func main() {
 				pass = pass && teamColorFSV.OK && stats == spec.expected
 			} else if lightingFSV != nil {
 				pass = pass && lightingFSV.OK && stats == spec.expected
+			} else if batchingFSV != nil {
+				pass = pass && batchingFSV.OK && stats == spec.expected
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1496,6 +1531,146 @@ func buildAtlasTwoFSV(scene *core.Node, preset litasset.AtlasPreset) (sceneSpec,
 		dump.Errors = append(dump.Errors, "two-atlas scene did not create exactly two distinct material/texture entries")
 	}
 	return sceneSpec{name: "atlas-two-" + string(preset), expected: expectedStats(2, 0, 2, 0, 2, 0)}, dump, nil
+}
+
+func buildBatchingFSV(scene *core.Node, preset litasset.AtlasPreset, name string) (sceneSpec, *batchingRuntimeDump, error) {
+	switch name {
+	case "units100", "units100-sorted":
+	default:
+		return sceneSpec{}, nil, fmt.Errorf("unknown batching scene %q", name)
+	}
+	srcA, err := syntheticAtlasSource("synthetic/faction-vigil.atlas.png", atlasPaletteVigil())
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	srcB, err := syntheticAtlasSource("synthetic/faction-ember.atlas.png", atlasPaletteEmber())
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cache := litrender.NewAtlasMaterialCache()
+	matA, err := cache.Material(srcA, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	matB, err := cache.Material(srcB, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	batcher := litrender.NewMaterialBatcher("units100-batches", 2, 100)
+	scene.Add(batcher.Root)
+	keyA := litrender.BatchMaterialKey{Atlas: srcA.Name, Preset: preset, Shader: "standard"}
+	keyB := litrender.BatchMaterialKey{Atlas: srcB.Name, Preset: preset, Shader: "standard"}
+	dump := &batchingRuntimeDump{
+		Scene:                name,
+		Preset:               preset,
+		SpawnOrder:           "interleaved",
+		UnitCount:            100,
+		AtlasPairs:           cache.Count(),
+		FrameVisibleCapacity: 100,
+		OK:                   true,
+	}
+	if name == "units100-sorted" {
+		dump.SpawnOrder = "sorted"
+	}
+
+	unitGeom := geometry.NewBox(72, 116, 72)
+	units := make([]core.INode, 0, dump.UnitCount)
+	for i := 0; i < dump.UnitCount; i++ {
+		useB := i%2 == 1
+		if dump.SpawnOrder == "sorted" {
+			useB = i >= dump.UnitCount/2
+		}
+		key, sharedMat, atlas := keyA, matA.Material, srcA.Name
+		if useB {
+			key, sharedMat, atlas = keyB, matB.Material, srcB.Name
+		}
+
+		importMat := material.NewStandard(&math32.Color{R: float32((i%10)+1) / 10, G: 0.42, B: 0.28})
+		mesh := graphic.NewMesh(unitGeom, importMat)
+		col, row := i%10, i/10
+		x, z := (col-4)*130, (row-4)*130
+		mesh.SetPosition(float32(x), 58, float32(z))
+		group, rebind, err := batcher.Add(key, sharedMat, mesh)
+		if err != nil {
+			return sceneSpec{}, nil, err
+		}
+		dump.PreRebindMaterialInstances += rebind.Before.MaterialInstances
+		if len(dump.FirstUnits) < 12 {
+			dump.FirstUnits = append(dump.FirstUnits, batchingUnitDump{
+				Index:       i,
+				Atlas:       atlas,
+				RenderOrder: group.RenderOrder,
+				X:           x,
+				Z:           z,
+			})
+		}
+		units = append(units, mesh)
+	}
+	batcher.ResetFrameVisible()
+	for _, unit := range units {
+		if err := batcher.StageVisible(unit); err != nil {
+			dump.OK = false
+			dump.Errors = append(dump.Errors, err.Error())
+		}
+	}
+	dump.Batcher = batcher.Snapshot()
+	dump.FrameVisibleCount = dump.Batcher.FrameVisibleCount
+	ceiling, err := litrender.AssertMaterialInstanceCeiling(batcher.Root, cache.Count())
+	dump.MaterialCeiling = ceiling
+	if err != nil {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, err.Error())
+	}
+	dump.CloneAssertion = batchingCloneAssertion(keyA, matA.Material)
+	if dump.CloneAssertion == "" {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "clone assertion did not reject a second material instance for the same key")
+	}
+	validateBatchingDump(dump)
+	expected := expectedStats(100, 0, 100, 0, cache.Count(), 0)
+	expected.Others = 4 // scene root + batch root + two material group nodes
+	return sceneSpec{name: name + "-" + string(preset), expected: expected}, dump, nil
+}
+
+func batchingCloneAssertion(key litrender.BatchMaterialKey, shared material.IMaterial) string {
+	b := litrender.NewMaterialBatcher("clone-assert", 1, 2)
+	if _, _, err := b.Add(key, shared, graphic.NewMesh(geometry.NewBox(1, 1, 1), nil)); err != nil {
+		return err.Error()
+	}
+	clone := material.NewStandard(&math32.Color{R: 1, G: 1, B: 1})
+	_, _, err := b.Add(key, clone, graphic.NewMesh(geometry.NewBox(1, 1, 1), nil))
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
+func validateBatchingDump(dump *batchingRuntimeDump) {
+	if dump.AtlasPairs != 2 {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("atlas pairs = %d, want 2", dump.AtlasPairs))
+	}
+	if dump.PreRebindMaterialInstances != dump.UnitCount {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("pre-rebind material instances = %d, want %d", dump.PreRebindMaterialInstances, dump.UnitCount))
+	}
+	if dump.Batcher.GroupCount != dump.AtlasPairs || dump.Batcher.Entities != dump.UnitCount || dump.Batcher.Graphics != dump.UnitCount || dump.Batcher.MaterialInstances != dump.AtlasPairs {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("batcher snapshot invalid: %+v", dump.Batcher))
+	}
+	if dump.MaterialCeiling.MaterialInstances != dump.AtlasPairs {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("material ceiling snapshot invalid: %+v", dump.MaterialCeiling))
+	}
+	if dump.FrameVisibleCapacity != dump.UnitCount || dump.FrameVisibleCount != dump.UnitCount {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("frame visible list = %d/%d, want %d/%d", dump.FrameVisibleCount, dump.FrameVisibleCapacity, dump.UnitCount, dump.UnitCount))
+	}
+	if !strings.Contains(dump.CloneAssertion, "different material instance") {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("clone assertion text invalid: %q", dump.CloneAssertion))
+	}
+	for _, group := range dump.Batcher.Groups {
+		if group.Entities != dump.UnitCount/dump.AtlasPairs || group.GraphicMaterials != group.Entities {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("batch group invalid: %+v", group))
+		}
+	}
+	dump.OK = len(dump.Errors) == 0
 }
 
 func buildLightingFSV(scene *core.Node, preset litasset.AtlasPreset, name string, bakedSun bool) (sceneSpec, *lightingRuntimeDump, error) {

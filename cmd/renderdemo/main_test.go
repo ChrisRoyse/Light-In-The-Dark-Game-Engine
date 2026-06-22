@@ -423,6 +423,41 @@ func TestBuildTerrainChunksFSV(t *testing.T) {
 	}
 }
 
+func TestBuildBatchingFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	scene := core.NewNode()
+	spec, dump, err := buildBatchingFSV(scene, litasset.AtlasPresetHigh, "units100")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo batching interleaved spec=%+v batcher=%+v clone=%q first=%+v", spec, dump.Batcher, dump.CloneAssertion, dump.FirstUnits)
+	if !dump.OK || dump.UnitCount != 100 || dump.AtlasPairs != 2 || dump.PreRebindMaterialInstances != 100 {
+		t.Fatalf("batching dump wrong: %+v", dump)
+	}
+	if dump.Batcher.GroupCount != 2 || dump.Batcher.Entities != 100 || dump.Batcher.MaterialInstances != 2 || dump.FrameVisibleCount != 100 {
+		t.Fatalf("batching groups wrong: %+v", dump.Batcher)
+	}
+	if spec.expected.VisibleGraphics != 100 || spec.expected.OpaqueDrawCalls != 100 || spec.expected.OpaqueStates != 2 {
+		t.Fatalf("batching expected stats wrong: %+v", spec.expected)
+	}
+	if spec.expected.Others != 4 {
+		t.Fatalf("batching group nodes should be counted as scene others: %+v", spec.expected)
+	}
+	if len(dump.Batcher.Groups) != 2 || dump.Batcher.Groups[0].RenderOrder == dump.Batcher.Groups[1].RenderOrder {
+		t.Fatalf("batch render order buckets wrong: %+v", dump.Batcher.Groups)
+	}
+
+	sortedScene := core.NewNode()
+	sortedSpec, sorted, err := buildBatchingFSV(sortedScene, litasset.AtlasPresetHigh, "units100-sorted")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo batching sorted spec=%+v batcher=%+v first=%+v", sortedSpec, sorted.Batcher, sorted.FirstUnits)
+	if !sorted.OK || sorted.SpawnOrder != "sorted" || sorted.Batcher.GroupCount != dump.Batcher.GroupCount || sortedSpec.expected != spec.expected {
+		t.Fatalf("sorted batching dump should match interleaved counters: sorted=%+v interleaved=%+v", sorted, dump)
+	}
+}
+
 func TestBuildLightingFSV(t *testing.T) {
 	defer chdirRepoRoot(t)()
 	scene := core.NewNode()
