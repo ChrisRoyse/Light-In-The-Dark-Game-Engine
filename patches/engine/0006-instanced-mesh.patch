@@ -1,0 +1,749 @@
+diff --git a/graphic/graphic.go b/graphic/graphic.go
+index 12787dd..6bfd7ec 100644
+--- a/graphic/graphic.go
++++ b/graphic/graphic.go
+@@ -30,6 +30,12 @@ type IGraphic interface {
+ 	RenderSetup(gs *gls.GLS, rinfo *core.RenderInfo)
+ }
+ 
++// LITD-PATCH: GraphicMaterialRenderer lets specialized graphics keep the
++// renderer's material/shader traversal while owning their draw submission.
++type GraphicMaterialRenderer interface {
++	RenderGraphicMaterial(gs *gls.GLS, rinfo *core.RenderInfo, grmat *GraphicMaterial)
++}
++
+ // Graphic is a Node which has a visible representation in the scene.
+ // It has an associated geometry and one or more materials.
+ // It is the base type used by other graphics such as lines, line_strip,
+@@ -297,6 +303,11 @@ func (grmat *GraphicMaterial) IGraphic() IGraphic {
+ // Render is called by the renderer to render this graphic material.
+ func (grmat *GraphicMaterial) Render(gs *gls.GLS, rinfo *core.RenderInfo) {
+ 
++	if renderer, ok := grmat.igraphic.(GraphicMaterialRenderer); ok {
++		renderer.RenderGraphicMaterial(gs, rinfo, grmat)
++		return
++	}
++
+ 	// Setup the associated material (set states and transfer material uniforms and textures)
+ 	grmat.imat.RenderSetup(gs)
+ 
+diff --git a/graphic/instanced_mesh.go b/graphic/instanced_mesh.go
+new file mode 100644
+index 0000000..ed15284
+--- /dev/null
++++ b/graphic/instanced_mesh.go
+@@ -0,0 +1,262 @@
++// Copyright 2016 The G3N Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++package graphic
++
++import (
++	"github.com/g3n/engine/core"
++	"github.com/g3n/engine/geometry"
++	"github.com/g3n/engine/gls"
++	"github.com/g3n/engine/material"
++	"github.com/g3n/engine/math32"
++)
++
++const (
++	instanceMatrixFloats = 16
++	instanceMatrixAttrib = uint32(8)
++)
++
++// InstancedMesh renders many rigid instances of one geometry and material.
++//
++// LITD-PATCH: G3N has no Go-level instanced graphic. This type is the
++// renderer-facing primitive LitD uses before higher-level batching builds
++// persistent per-instance mirrors and team-color attributes.
++type InstancedMesh struct {
++	Mesh
++
++	instanceCount  int
++	instanceBuffer math32.ArrayF32
++	instanceDirty  bool
++
++	instanceGS     *gls.GLS
++	instanceHandle uint32
++
++	bounds      math32.Box3
++	boundsValid bool
++}
++
++// NewInstancedMesh creates a mesh that draws instanceCount copies.
++func NewInstancedMesh(igeom geometry.IGeometry, imat material.IMaterial, instanceCount int) *InstancedMesh {
++
++	m := new(InstancedMesh)
++	m.Init(igeom, imat, instanceCount)
++	return m
++}
++
++// Init initializes this instanced mesh.
++func (m *InstancedMesh) Init(igeom geometry.IGeometry, imat material.IMaterial, instanceCount int) {
++
++	m.Graphic.Init(m, igeom, gls.TRIANGLES)
++	m.ShaderDefines.Set("LITD_INSTANCING", "1")
++
++	m.uniMm.Init("ModelMatrix")
++	m.uniMVm.Init("ModelViewMatrix")
++	m.uniMVPm.Init("MVP")
++	m.uniNm.Init("NormalMatrix")
++
++	m.bounds.MakeEmpty()
++	m.SetInstanceCount(instanceCount)
++
++	if imat != nil {
++		m.AddMaterial(imat, 0, 0)
++	}
++}
++
++// Dispose releases the instance buffer and embedded graphic resources.
++func (m *InstancedMesh) Dispose() {
++
++	if m.instanceGS != nil && m.instanceHandle != 0 {
++		m.instanceGS.DeleteBuffers(m.instanceHandle)
++	}
++	m.instanceGS = nil
++	m.instanceHandle = 0
++	m.Graphic.Dispose()
++}
++
++// Clone clones this instanced mesh and its instance matrix data.
++func (m *InstancedMesh) Clone() core.INode {
++
++	clone := new(InstancedMesh)
++	clone.Mesh = *m.Mesh.Clone().(*Mesh)
++	clone.SetIGraphic(clone)
++	clone.instanceCount = m.instanceCount
++	clone.instanceBuffer = make(math32.ArrayF32, len(m.instanceBuffer))
++	copy(clone.instanceBuffer, m.instanceBuffer)
++	clone.instanceDirty = true
++	clone.bounds = m.bounds
++	clone.boundsValid = m.boundsValid
++	return clone
++}
++
++// SetMaterial clears all materials and assigns one material to all vertices.
++func (m *InstancedMesh) SetMaterial(imat material.IMaterial) {
++
++	m.Graphic.ClearMaterials()
++	m.Graphic.AddMaterial(m, imat, 0, 0)
++}
++
++// AddMaterial adds a material for a vertex subset.
++func (m *InstancedMesh) AddMaterial(imat material.IMaterial, start, count int) {
++
++	m.Graphic.AddMaterial(m, imat, start, count)
++}
++
++// AddGroupMaterial adds a material for a geometry group.
++func (m *InstancedMesh) AddGroupMaterial(imat material.IMaterial, gindex int) {
++
++	m.Graphic.AddGroupMaterial(m, imat, gindex)
++}
++
++// InstanceCount returns the current number of rendered instances.
++func (m *InstancedMesh) InstanceCount() int {
++
++	return m.instanceCount
++}
++
++// SetInstanceCount resizes the instance list. New entries are identity matrices.
++func (m *InstancedMesh) SetInstanceCount(count int) {
++
++	if count < 0 {
++		panic("InstancedMesh.SetInstanceCount: negative count")
++	}
++	old := m.instanceCount
++	required := count * instanceMatrixFloats
++	if cap(m.instanceBuffer) < required {
++		next := make(math32.ArrayF32, required)
++		copy(next, m.instanceBuffer)
++		m.instanceBuffer = next
++	} else {
++		m.instanceBuffer = m.instanceBuffer[:required]
++	}
++	m.instanceCount = count
++
++	var ident math32.Matrix4
++	ident.Identity()
++	for i := old; i < count; i++ {
++		m.SetInstanceMatrix(i, &ident)
++	}
++	m.instanceDirty = true
++	m.boundsValid = false
++}
++
++// SetInstanceMatrix copies matrix into the specified instance slot.
++func (m *InstancedMesh) SetInstanceMatrix(index int, matrix *math32.Matrix4) {
++
++	if index < 0 || index >= m.instanceCount {
++		panic("InstancedMesh.SetInstanceMatrix: index out of range")
++	}
++	if matrix == nil {
++		panic("InstancedMesh.SetInstanceMatrix: nil matrix")
++	}
++	copy(m.instanceBuffer[index*instanceMatrixFloats:], matrix[:])
++	m.instanceDirty = true
++	m.boundsValid = false
++}
++
++// SetInstanceMatrices replaces all instance transforms.
++func (m *InstancedMesh) SetInstanceMatrices(matrices []math32.Matrix4) {
++
++	m.SetInstanceCount(len(matrices))
++	for i := range matrices {
++		m.SetInstanceMatrix(i, &matrices[i])
++	}
++}
++
++// InstanceMatrix copies one instance matrix into target and returns target.
++func (m *InstancedMesh) InstanceMatrix(index int, target *math32.Matrix4) *math32.Matrix4 {
++
++	if index < 0 || index >= m.instanceCount {
++		panic("InstancedMesh.InstanceMatrix: index out of range")
++	}
++	if target == nil {
++		target = math32.NewMatrix4()
++	}
++	m.instanceBuffer.GetMatrix4(index*instanceMatrixFloats, target)
++	return target
++}
++
++// LocalBoundingBox returns a conservative box around all local instances.
++func (m *InstancedMesh) LocalBoundingBox() math32.Box3 {
++
++	if !m.boundsValid {
++		m.recalculateBounds()
++	}
++	return m.bounds
++}
++
++// RenderGraphicMaterial is called by GraphicMaterial.Render for this type.
++func (m *InstancedMesh) RenderGraphicMaterial(gs *gls.GLS, rinfo *core.RenderInfo, grmat *GraphicMaterial) {
++
++	if m.instanceCount == 0 {
++		return
++	}
++
++	grmat.imat.RenderSetup(gs)
++
++	gr := grmat.igraphic.GetGraphic()
++	gr.igeom.RenderSetup(gs)
++	m.transferInstances(gs)
++	grmat.igraphic.RenderSetup(gs, rinfo)
++
++	count := grmat.count
++	geom := gr.igeom.GetGeometry()
++	indices := geom.Indices()
++	if indices.Size() > 0 {
++		if count == 0 {
++			count = indices.Size()
++		}
++		gs.DrawElementsInstanced(gr.mode, int32(count), gls.UNSIGNED_INT, 4*uint32(grmat.start), int32(m.instanceCount))
++	} else {
++		if count == 0 {
++			count = geom.Items()
++		}
++		gs.DrawArraysInstanced(gr.mode, int32(grmat.start), int32(count), int32(m.instanceCount))
++	}
++}
++
++func (m *InstancedMesh) transferInstances(gs *gls.GLS) {
++
++	if m.instanceGS != gs {
++		m.instanceGS = gs
++		m.instanceHandle = 0
++		m.instanceDirty = true
++	}
++	if m.instanceHandle == 0 {
++		m.instanceHandle = gs.GenBuffer()
++		m.instanceDirty = true
++	}
++
++	gs.BindBuffer(gls.ARRAY_BUFFER, m.instanceHandle)
++	if m.instanceDirty {
++		gs.BufferData(gls.ARRAY_BUFFER, m.instanceBuffer.Bytes(), m.instanceBuffer.ToFloat32(), gls.DYNAMIC_DRAW)
++		m.instanceDirty = false
++	}
++
++	stride := int32(instanceMatrixFloats) * gls.FloatSize
++	for col := uint32(0); col < 4; col++ {
++		loc := instanceMatrixAttrib + col
++		gs.EnableVertexAttribArray(loc)
++		gs.VertexAttribPointer(loc, 4, gls.FLOAT, false, stride, col*4*uint32(gls.FloatSize))
++		gs.VertexAttribDivisor(loc, 1)
++	}
++}
++
++func (m *InstancedMesh) recalculateBounds() {
++
++	m.bounds.MakeEmpty()
++	if m.instanceCount == 0 {
++		m.boundsValid = true
++		return
++	}
++
++	base := m.GetGeometry().BoundingBox()
++	var mat math32.Matrix4
++	var instBox math32.Box3
++	for i := 0; i < m.instanceCount; i++ {
++		m.instanceBuffer.GetMatrix4(i*instanceMatrixFloats, &mat)
++		instBox.Copy(&base).ApplyMatrix4(&mat)
++		m.bounds.Union(&instBox)
++	}
++	m.boundsValid = true
++}
+diff --git a/graphic/instanced_mesh_litd_test.go b/graphic/instanced_mesh_litd_test.go
+new file mode 100644
+index 0000000..ad5e677
+--- /dev/null
++++ b/graphic/instanced_mesh_litd_test.go
+@@ -0,0 +1,92 @@
++package graphic
++
++import (
++	"testing"
++
++	"github.com/g3n/engine/geometry"
++	"github.com/g3n/engine/material"
++	"github.com/g3n/engine/math32"
++)
++
++func TestLITDInstancedMeshBoundsAndMatricesFSV(t *testing.T) {
++	geom := geometry.NewPlane(2, 2)
++	mat := material.NewBasic()
++	mesh := NewInstancedMesh(geom, mat, 0)
++
++	before := mesh.LocalBoundingBox()
++	t.Logf("FSV before count=%d bounds=%+v", mesh.InstanceCount(), before)
++	if !before.Empty() {
++		t.Fatalf("empty instanced mesh bounds = %+v, want empty", before)
++	}
++
++	mesh.SetInstanceCount(2)
++	var translated math32.Matrix4
++	translated.MakeTranslation(3, 4, 0)
++	mesh.SetInstanceMatrix(1, &translated)
++	after := mesh.LocalBoundingBox()
++	t.Logf("FSV after count=%d bounds=%+v", mesh.InstanceCount(), after)
++
++	if mesh.InstanceCount() != 2 {
++		t.Fatalf("count=%d, want 2", mesh.InstanceCount())
++	}
++	if after.Min.X != -1 || after.Min.Y != -1 || after.Max.X != 4 || after.Max.Y != 5 {
++		t.Fatalf("merged bounds=%+v, want min(-1,-1) max(4,5)", after)
++	}
++
++	var readback math32.Matrix4
++	mesh.InstanceMatrix(1, &readback)
++	if readback != translated {
++		t.Fatalf("matrix readback=%v, want %v", readback, translated)
++	}
++}
++
++func TestLITDInstancedMeshMaterialOwnershipFSV(t *testing.T) {
++	mesh := NewInstancedMesh(geometry.NewPlane(1, 1), material.NewBasic(), 1)
++	before := mesh.Materials()[0].IGraphic()
++	t.Logf("FSV before material graphic=%T", before)
++	if _, ok := before.(GraphicMaterialRenderer); !ok {
++		t.Fatalf("initial material graphic %T does not render instanced", before)
++	}
++
++	mesh.SetMaterial(material.NewBasic())
++	afterSet := mesh.Materials()[0].IGraphic()
++	t.Logf("FSV after SetMaterial graphic=%T", afterSet)
++	if _, ok := afterSet.(GraphicMaterialRenderer); !ok {
++		t.Fatalf("SetMaterial graphic %T does not render instanced", afterSet)
++	}
++
++	mesh.ClearMaterials()
++	mesh.AddMaterial(material.NewBasic(), 0, 0)
++	afterAdd := mesh.Materials()[0].IGraphic()
++	t.Logf("FSV after AddMaterial graphic=%T", afterAdd)
++	if _, ok := afterAdd.(GraphicMaterialRenderer); !ok {
++		t.Fatalf("AddMaterial graphic %T does not render instanced", afterAdd)
++	}
++}
++
++func TestLITDInstancedMeshInvalidInputsFSV(t *testing.T) {
++	mesh := NewInstancedMesh(geometry.NewPlane(1, 1), material.NewBasic(), 1)
++	cases := []struct {
++		name string
++		fn   func()
++	}{
++		{name: "negative-count", fn: func() { mesh.SetInstanceCount(-1) }},
++		{name: "nil-matrix", fn: func() { mesh.SetInstanceMatrix(0, nil) }},
++		{name: "index-out-of-range", fn: func() {
++			var m math32.Matrix4
++			m.Identity()
++			mesh.SetInstanceMatrix(1, &m)
++		}},
++	}
++	for _, tc := range cases {
++		t.Run(tc.name, func(t *testing.T) {
++			defer func() {
++				if recover() == nil {
++					t.Fatalf("%s did not panic", tc.name)
++				}
++				t.Logf("FSV edge %s panic observed; count=%d", tc.name, mesh.InstanceCount())
++			}()
++			tc.fn()
++		})
++	}
++}
+diff --git a/renderer/instanced_mesh_litd_test.go b/renderer/instanced_mesh_litd_test.go
+new file mode 100644
+index 0000000..c588eba
+--- /dev/null
++++ b/renderer/instanced_mesh_litd_test.go
+@@ -0,0 +1,56 @@
++package renderer
++
++import (
++	"testing"
++
++	"github.com/g3n/engine/camera"
++	"github.com/g3n/engine/core"
++	"github.com/g3n/engine/geometry"
++	"github.com/g3n/engine/graphic"
++	"github.com/g3n/engine/material"
++	"github.com/g3n/engine/math32"
++)
++
++func TestLITDInstancedMeshCullingUsesMergedLocalBoundsFSV(t *testing.T) {
++	scene := core.NewNode()
++	mesh := graphic.NewInstancedMesh(geometry.NewPlane(1, 1), material.NewBasic(), 2)
++	var near math32.Matrix4
++	near.MakeTranslation(0, 0, 0)
++	var far math32.Matrix4
++	far.MakeTranslation(1000, 0, 0)
++	mesh.SetInstanceMatrix(0, &near)
++	mesh.SetInstanceMatrix(1, &far)
++	scene.Add(mesh)
++	scene.UpdateMatrixWorld()
++
++	cam := camera.New(1)
++	cam.SetPosition(0, 0, 8)
++	cam.LookAt(&math32.Vector3{}, &math32.Vector3{X: 0, Y: 1, Z: 0})
++
++	r := litdTestRenderer()
++	before := r.stats
++	bounds := mesh.LocalBoundingBox()
++	r.classifyAndCull(scene, litdTestFrustum(cam), 0)
++	after := r.stats
++	t.Logf("FSV before=%+v bounds=%+v after=%+v queue=%d", before, bounds, after, len(r.graphics))
++
++	if after.VisibleGraphics != 1 || after.CulledGraphics != 0 || len(r.graphics) != 1 {
++		t.Fatalf("mixed near/far instances got visible=%d culled=%d queued=%d, want 1/0/1",
++			after.VisibleGraphics, after.CulledGraphics, len(r.graphics))
++	}
++
++	mesh.SetInstanceMatrix(0, &far)
++	mesh.SetInstanceMatrix(1, &far)
++	scene.UpdateMatrixWorld()
++	r = litdTestRenderer()
++	before = r.stats
++	bounds = mesh.LocalBoundingBox()
++	r.classifyAndCull(scene, litdTestFrustum(cam), 0)
++	after = r.stats
++	t.Logf("FSV edge before=%+v bounds=%+v after=%+v queue=%d", before, bounds, after, len(r.graphics))
++
++	if after.VisibleGraphics != 0 || after.CulledGraphics != 1 || len(r.graphics) != 0 {
++		t.Fatalf("all far instances got visible=%d culled=%d queued=%d, want 0/1/0",
++			after.VisibleGraphics, after.CulledGraphics, len(r.graphics))
++	}
++}
+diff --git a/renderer/renderer.go b/renderer/renderer.go
+index 95de243..24d371a 100644
+--- a/renderer/renderer.go
++++ b/renderer/renderer.go
+@@ -73,6 +73,12 @@ type renderStateKey struct {
+ 	transparent  bool
+ }
+ 
++// LITD-PATCH: localBoundingBoxer lets graphics with generated draw payloads
++// expose culling bounds that differ from their source geometry.
++type localBoundingBoxer interface {
++	LocalBoundingBox() math32.Box3
++}
++
+ // Stats describes how many objects of each type are being rendered.
+ // It is cleared at the start of each render.
+ type Stats struct {
+@@ -281,6 +287,9 @@ func (r *Renderer) classifyAndCull(inode core.INode, frustum *math32.Frustum, zL
+ 			if igr.Cullable() {
+ 				mw := gr.MatrixWorld()
+ 				bb := igr.GetGeometry().BoundingBox()
++				if local, ok := igr.(localBoundingBoxer); ok {
++					bb = local.LocalBoundingBox()
++				}
+ 				bb.ApplyMatrix4(&mw)
+ 				if frustum.IntersectsBox(&bb) {
+ 					// Append graphic to list of graphics to be rendered
+diff --git a/renderer/shaders/basic_vertex.glsl b/renderer/shaders/basic_vertex.glsl
+index 032a568..c41a347 100644
+--- a/renderer/shaders/basic_vertex.glsl
++++ b/renderer/shaders/basic_vertex.glsl
+@@ -1,4 +1,5 @@
+ #include <attributes>
++#include <litd_instancing>
+ 
+ // Model uniforms
+ uniform mat4 MVP;
+@@ -9,5 +10,5 @@ out vec3 Color;
+ void main() {
+ 
+     Color = VertexColor;
+-    gl_Position = MVP * vec4(VertexPosition, 1.0);
++    gl_Position = MVP * LitdInstanceMatrix() * vec4(VertexPosition, 1.0);
+ }
+diff --git a/renderer/shaders/include/litd_instancing.glsl b/renderer/shaders/include/litd_instancing.glsl
+new file mode 100644
+index 0000000..ad98700
+--- /dev/null
++++ b/renderer/shaders/include/litd_instancing.glsl
+@@ -0,0 +1,15 @@
++#ifdef LITD_INSTANCING
++    // LITD-PATCH: per-instance rigid transform columns.
++    layout(location = 8) in vec4 LitdInstanceMatrix0;
++    layout(location = 9) in vec4 LitdInstanceMatrix1;
++    layout(location = 10) in vec4 LitdInstanceMatrix2;
++    layout(location = 11) in vec4 LitdInstanceMatrix3;
++
++    mat4 LitdInstanceMatrix() {
++        return mat4(LitdInstanceMatrix0, LitdInstanceMatrix1, LitdInstanceMatrix2, LitdInstanceMatrix3);
++    }
++#else
++    mat4 LitdInstanceMatrix() {
++        return mat4(1.0);
++    }
++#endif
+diff --git a/renderer/shaders/physical_vertex.glsl b/renderer/shaders/physical_vertex.glsl
+index ac56863..51923b0 100644
+--- a/renderer/shaders/physical_vertex.glsl
++++ b/renderer/shaders/physical_vertex.glsl
+@@ -3,6 +3,7 @@
+ // Modified from reference implementation at https://github.com/KhronosGroup/glTF-WebGL-PBR
+ //
+ #include <attributes>
++#include <litd_instancing>
+ 
+ // Model uniforms
+ uniform mat4 ModelViewMatrix;
+@@ -20,16 +21,6 @@ out vec2 FragTexcoord;
+ 
+ void main() {
+ 
+-    // Transform this vertex position to camera coordinates.
+-    Position = vec3(ModelViewMatrix * vec4(VertexPosition, 1.0));
+-
+-    // Transform this vertex normal to camera coordinates.
+-    Normal = normalize(NormalMatrix * VertexNormal);
+-
+-    // Calculate the direction vector from the vertex to the camera
+-    // The camera is at 0,0,0
+-    CamDir = normalize(-Position.xyz);
+-
+     // Output texture coordinates to fragment shader
+     FragTexcoord = VertexTexcoord;
+ 
+@@ -38,6 +29,19 @@ void main() {
+     #include <morphtarget_vertex>
+     #include <bones_vertex>
+ 
+-    gl_Position = MVP * finalWorld * vec4(vPosition, 1.0);
++    mat4 litdInstanceMatrix = LitdInstanceMatrix();
++    vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
++
++    // Transform this vertex position to camera coordinates.
++    Position = vec3(ModelViewMatrix * litdWorldPosition);
++
++    // Transform this vertex normal to camera coordinates.
++    Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
++
++    // Calculate the direction vector from the vertex to the camera
++    // The camera is at 0,0,0
++    CamDir = normalize(-Position.xyz);
++
++    gl_Position = MVP * litdWorldPosition;
+ 
+ }
+diff --git a/renderer/shaders/sources.go b/renderer/shaders/sources.go
+index 7e5b5fb..97c3ab7 100644
+--- a/renderer/shaders/sources.go
++++ b/renderer/shaders/sources.go
+@@ -188,6 +188,23 @@ layout(location = 2) in  vec3  VertexColor;
+ layout(location = 3) in  vec2  VertexTexcoord;
+ `
+ 
++const include_litd_instancing_source = `#ifdef LITD_INSTANCING
++    // LITD-PATCH: per-instance rigid transform columns.
++    layout(location = 8) in vec4 LitdInstanceMatrix0;
++    layout(location = 9) in vec4 LitdInstanceMatrix1;
++    layout(location = 10) in vec4 LitdInstanceMatrix2;
++    layout(location = 11) in vec4 LitdInstanceMatrix3;
++
++    mat4 LitdInstanceMatrix() {
++        return mat4(LitdInstanceMatrix0, LitdInstanceMatrix1, LitdInstanceMatrix2, LitdInstanceMatrix3);
++    }
++#else
++    mat4 LitdInstanceMatrix() {
++        return mat4(1.0);
++    }
++#endif
++`
++
+ const include_material_source = `//
+ // Material properties uniform
+ //
+@@ -342,6 +359,7 @@ const physical_vertex_source = `//
+ // Modified from reference implementation at https://github.com/KhronosGroup/glTF-WebGL-PBR
+ //
+ #include <attributes>
++#include <litd_instancing>
+ 
+ // Model uniforms
+ uniform mat4 ModelViewMatrix;
+@@ -359,16 +377,6 @@ out vec2 FragTexcoord;
+ 
+ void main() {
+ 
+-    // Transform this vertex position to camera coordinates.
+-    Position = vec3(ModelViewMatrix * vec4(VertexPosition, 1.0));
+-
+-    // Transform this vertex normal to camera coordinates.
+-    Normal = normalize(NormalMatrix * VertexNormal);
+-
+-    // Calculate the direction vector from the vertex to the camera
+-    // The camera is at 0,0,0
+-    CamDir = normalize(-Position.xyz);
+-
+     // Output texture coordinates to fragment shader
+     FragTexcoord = VertexTexcoord;
+ 
+@@ -377,7 +385,20 @@ void main() {
+     #include <morphtarget_vertex>
+     #include <bones_vertex>
+ 
+-    gl_Position = MVP * finalWorld * vec4(vPosition, 1.0);
++    mat4 litdInstanceMatrix = LitdInstanceMatrix();
++    vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
++
++    // Transform this vertex position to camera coordinates.
++    Position = vec3(ModelViewMatrix * litdWorldPosition);
++
++    // Transform this vertex normal to camera coordinates.
++    Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
++
++    // Calculate the direction vector from the vertex to the camera
++    // The camera is at 0,0,0
++    CamDir = normalize(-Position.xyz);
++
++    gl_Position = MVP * litdWorldPosition;
+ 
+ }
+ `
+@@ -832,6 +853,7 @@ void main() {
+ `
+ 
+ const standard_vertex_source = `#include <attributes>
++#include <litd_instancing>
+ 
+ // Model uniforms
+ uniform mat4 ModelViewMatrix;
+@@ -849,12 +871,6 @@ out vec2 FragTexcoord;
+ 
+ void main() {
+ 
+-    // Transform vertex position to camera coordinates
+-    Position = ModelViewMatrix * vec4(VertexPosition, 1.0);
+-
+-    // Transform vertex normal to camera coordinates
+-    Normal = normalize(NormalMatrix * VertexNormal);
+-
+     vec2 texcoord = VertexTexcoord;
+ #if MAT_TEXTURES > 0
+     // Flip texture coordinate Y if requested.
+@@ -868,12 +884,22 @@ void main() {
+     #include <morphtarget_vertex>
+     #include <bones_vertex>
+ 
++    mat4 litdInstanceMatrix = LitdInstanceMatrix();
++    vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
++
++    // Transform vertex position to camera coordinates
++    Position = ModelViewMatrix * litdWorldPosition;
++
++    // Transform vertex normal to camera coordinates
++    Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
++
+     // Output projected and transformed vertex position
+-    gl_Position = MVP * finalWorld * vec4(vPosition, 1.0);
++    gl_Position = MVP * litdWorldPosition;
+ }
+ `
+ 
+ const basic_vertex_source = `#include <attributes>
++#include <litd_instancing>
+ 
+ // Model uniforms
+ uniform mat4 MVP;
+@@ -884,7 +910,7 @@ out vec3 Color;
+ void main() {
+ 
+     Color = VertexColor;
+-    gl_Position = MVP * vec4(VertexPosition, 1.0);
++    gl_Position = MVP * LitdInstanceMatrix() * vec4(VertexPosition, 1.0);
+ }
+ `
+ 
+@@ -1136,6 +1162,7 @@ var includeMap = map[string]string{
+ 	"bones_vertex":                    include_bones_vertex_source,
+ 	"phong_model":                     include_phong_model_source,
+ 	"attributes":                      include_attributes_source,
++	"litd_instancing":                 include_litd_instancing_source,
+ 	"material":                        include_material_source,
+ 	"lights":                          include_lights_source,
+ 	"bones_vertex_declaration":        include_bones_vertex_declaration_source,
+diff --git a/renderer/shaders/standard_vertex.glsl b/renderer/shaders/standard_vertex.glsl
+index ac87ef7..f12df7c 100644
+--- a/renderer/shaders/standard_vertex.glsl
++++ b/renderer/shaders/standard_vertex.glsl
+@@ -1,4 +1,5 @@
+ #include <attributes>
++#include <litd_instancing>
+ 
+ // Model uniforms
+ uniform mat4 ModelViewMatrix;
+@@ -16,12 +17,6 @@ out vec2 FragTexcoord;
+ 
+ void main() {
+ 
+-    // Transform vertex position to camera coordinates
+-    Position = ModelViewMatrix * vec4(VertexPosition, 1.0);
+-
+-    // Transform vertex normal to camera coordinates
+-    Normal = normalize(NormalMatrix * VertexNormal);
+-
+     vec2 texcoord = VertexTexcoord;
+ #if MAT_TEXTURES > 0
+     // Flip texture coordinate Y if requested.
+@@ -35,6 +30,15 @@ void main() {
+     #include <morphtarget_vertex>
+     #include <bones_vertex>
+ 
++    mat4 litdInstanceMatrix = LitdInstanceMatrix();
++    vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
++
++    // Transform vertex position to camera coordinates
++    Position = ModelViewMatrix * litdWorldPosition;
++
++    // Transform vertex normal to camera coordinates
++    Normal = normalize(NormalMatrix * mat3(litdInstanceMatrix) * VertexNormal);
++
+     // Output projected and transformed vertex position
+-    gl_Position = MVP * finalWorld * vec4(vPosition, 1.0);
++    gl_Position = MVP * litdWorldPosition;
+ }
