@@ -32,16 +32,19 @@ func main() {
 	seed := flag.Int64("seed", 1, "deterministic PRNG seed (R-SIM-2)")
 	budget := flag.Int64("budget", 50_000_000, "per-eval Lua instruction budget (R-SEC-1 quota)")
 	autotestOrder := flag.Bool("autotest-order", false, "under -autotest, issue a deterministic move order to the first unit before advancing")
+	autotestOrderDX := flag.Float64("autotest-order-dx", 128, "x delta for the deterministic -autotest-order target")
+	autotestOrderDY := flag.Float64("autotest-order-dy", 0, "y delta for the deterministic -autotest-order target")
 	shot := flag.String("shot", "", "write a headless playtest screenshot after -autotest")
 	flag.Parse()
 
-	if err := run(*world, *archive, *autotest, *autotestOrder, *ticks, *seed, *budget, *shot); err != nil {
+	orderDelta := api.Vec2{X: *autotestOrderDX, Y: *autotestOrderDY}
+	if err := run(*world, *archive, *autotest, *autotestOrder, orderDelta, *ticks, *seed, *budget, *shot); err != nil {
 		fmt.Fprintln(os.Stderr, "litd:", err)
 		os.Exit(1)
 	}
 }
 
-func run(world, archive string, autotest, autotestOrder bool, ticks int, seed, budget int64, shot string) error {
+func run(world, archive string, autotest, autotestOrder bool, orderDelta api.Vec2, ticks int, seed, budget int64, shot string) error {
 	g, cleanup, err := loadWorldInput(world, archive, seed, budget)
 	if err != nil {
 		return err
@@ -54,7 +57,7 @@ func run(world, archive string, autotest, autotestOrder bool, ticks int, seed, b
 	if autotest {
 		order := orderState{}
 		if autotestOrder {
-			order = orderFirstUnit(g)
+			order = orderFirstUnit(g, orderDelta)
 		}
 		g.Advance(ticks)
 		if shot != "" {
@@ -106,14 +109,18 @@ func loadWorldFull(world string, seed, budget int64) (*api.Game, *lua.LState, *l
 }
 
 type unitState struct {
+	ID     uint32  `json:"id"`
+	Owner  int     `json:"owner"`
 	X      float64 `json:"x"`
 	Y      float64 `json:"y"`
 	Facing float64 `json:"facing"`
 	Life   float64 `json:"life"`
+	Alive  bool    `json:"alive"`
 }
 
 type orderState struct {
 	Issued bool    `json:"issued"`
+	UnitID uint32  `json:"unitId,omitempty"`
 	Before Vec2DTO `json:"before"`
 	Target Vec2DTO `json:"target"`
 }
@@ -123,36 +130,59 @@ type Vec2DTO struct {
 	Y float64 `json:"y"`
 }
 
+type stateDump struct {
+	TimeOfDay float64     `json:"tod"`
+	Ticks     int         `json:"ticks"`
+	StateHash string      `json:"stateHash"`
+	UnitCount int         `json:"unitCount"`
+	Alive     int         `json:"alive"`
+	Order     orderState  `json:"order,omitempty"`
+	Units     []unitState `json:"units"`
+}
+
 // printState writes the sim state as the JSON line an FSV reader inspects (the
 // "state:" convention firstlight uses). Units are enumerated by a whole-map
 // range query (no all-units iterator on the public surface yet).
 func printState(g *api.Game, ticks int, order orderState) {
-	units := sortedUnits(g)
-	us := make([]unitState, 0, len(units))
-	for _, u := range units {
-		p := u.Position()
-		us = append(us, unitState{X: p.X, Y: p.Y, Facing: u.Facing().Degrees(), Life: u.Life()})
-	}
-	s := struct {
-		TimeOfDay float64     `json:"tod"`
-		Ticks     int         `json:"ticks"`
-		Order     orderState  `json:"order,omitempty"`
-		Units     []unitState `json:"units"`
-	}{g.TimeOfDay(), ticks, order, us}
+	s := gameState(g, ticks, order)
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
 }
 
-func orderFirstUnit(g *api.Game) orderState {
+func gameState(g *api.Game, ticks int, order orderState) stateDump {
+	units := sortedUnits(g)
+	us := make([]unitState, 0, len(units))
+	alive := 0
+	for _, u := range units {
+		p := u.Position()
+		valid := u.Valid()
+		if valid {
+			alive++
+		}
+		us = append(us, unitState{ID: u.ID(), Owner: u.Owner().Slot(), X: p.X, Y: p.Y, Facing: u.Facing().Degrees(), Life: u.Life(), Alive: valid})
+	}
+	return stateDump{
+		TimeOfDay: g.TimeOfDay(),
+		Ticks:     ticks,
+		StateHash: fmt.Sprintf("0x%016x", g.StateHash()),
+		UnitCount: len(us),
+		Alive:     alive,
+		Order:     order,
+		Units:     us,
+	}
+}
+
+func orderFirstUnit(g *api.Game, delta api.Vec2) orderState {
 	units := sortedUnits(g)
 	if len(units) == 0 {
 		return orderState{}
 	}
 	p := units[0].Position()
-	target := api.Vec2{X: p.X + 128, Y: p.Y}
+	target := api.Vec2{X: p.X + delta.X, Y: p.Y + delta.Y}
 	issued := units[0].Order(api.OrderMove, api.TargetPoint(target))
 	return orderState{
 		Issued: issued,
+		UnitID: units[0].ID(),
 		Before: Vec2DTO{X: p.X, Y: p.Y},
 		Target: Vec2DTO{X: target.X, Y: target.Y},
 	}

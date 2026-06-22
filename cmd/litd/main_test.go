@@ -240,16 +240,23 @@ func TestLoadWorldInputArchiveFSV(t *testing.T) {
 	if p.X != 300 || p.Y != 400 {
 		t.Fatalf("archive-backed unit position=(%v,%v), want 300,400", p.X, p.Y)
 	}
+	dump := gameState(g, 0, orderState{})
+	if dump.StateHash == "" || dump.StateHash == "0x0000000000000000" || dump.UnitCount != 1 || dump.Alive != 1 {
+		t.Fatalf("archive-backed state dump missing SoT fields: %+v", dump)
+	}
+	if dump.Units[0].ID == 0 || dump.Units[0].Owner != 1 || !dump.Units[0].Alive {
+		t.Fatalf("archive-backed unit state wrong: %+v", dump.Units[0])
+	}
 
 	shot := filepath.Join(t.TempDir(), "archive-autotest.png")
-	if err := run("", archive, true, true, 5, 1, 50_000_000, shot); err != nil {
+	if err := run("", archive, true, true, api.Vec2{X: 128}, 5, 1, 50_000_000, shot); err != nil {
 		t.Fatalf("archive autotest run: %v", err)
 	}
 	st, err := os.Stat(shot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("FSV #134 archive entrypoint: verified archive=%s unit=(%.0f,%.0f) shot=%s bytes=%d", archive, p.X, p.Y, shot, st.Size())
+	t.Logf("FSV #134 archive entrypoint: verified archive=%s stateHash=%s unit=(%.0f,%.0f owner=%d alive=%v) shot=%s bytes=%d", archive, dump.StateHash, p.X, p.Y, dump.Units[0].Owner, dump.Units[0].Alive, shot, st.Size())
 }
 
 // TestLoadWorldInstallsCombatMatrix — #406: the world's required damage table

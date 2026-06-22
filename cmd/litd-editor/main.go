@@ -3,11 +3,16 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"image/png"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -152,6 +157,9 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runPlaytestFSV(app, outDir); err != nil {
 		return err
 	}
+	if err := runM8EndToEndFSV(app, outDir); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -257,6 +265,9 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 		return err
 	}
 	if err := runPlaytestFSV(app, outDir); err != nil {
+		return err
+	}
+	if err := runM8EndToEndFSV(app, outDir); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -1821,6 +1832,526 @@ func runPlaytestFSV(app *shell.App, outDir string) error {
 		return err
 	}
 	return os.WriteFile(filepath.Join(outDir, "playtest-dump.json"), append(body, '\n'), 0o644)
+}
+
+type m8EndToEndFSVState struct {
+	SourceDir                string           `json:"sourceDir"`
+	Archive                  string           `json:"archive"`
+	ArchiveSHA256            string           `json:"archiveSha256"`
+	ReopenedArchive          string           `json:"reopenedArchive"`
+	ReopenedArchiveSHA256    string           `json:"reopenedArchiveSha256"`
+	SourceHashes             []fileHashRecord `json:"sourceHashes"`
+	ArchiveHashes            []string         `json:"archiveHashes"`
+	ReopenedArchiveHashes    []string         `json:"reopenedArchiveHashes"`
+	ArchiveHashesEqual       bool             `json:"archiveHashesEqual"`
+	Screenshots              []screenshotInfo `json:"screenshots"`
+	Initial                  m8GameRunRecord  `json:"initial"`
+	SecondIndependentLoad    m8GameRunRecord  `json:"secondIndependentLoad"`
+	Played                   m8GameRunRecord  `json:"played"`
+	Replay                   m8GameRunRecord  `json:"replay"`
+	MovementVerified         bool             `json:"movementVerified"`
+	CombatResolved           bool             `json:"combatResolved"`
+	LocalIndependentHashEdge bool             `json:"localIndependentHashEdge"`
+	Notes                    []string         `json:"notes,omitempty"`
+}
+
+type fileHashRecord struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
+	Size   int64  `json:"size"`
+}
+
+type screenshotInfo struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
+	Size   int64  `json:"size"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+}
+
+type m8GameRunRecord struct {
+	Name       string         `json:"name"`
+	Command    []string       `json:"command"`
+	ExitCode   int            `json:"exitCode"`
+	Stdout     string         `json:"stdout"`
+	Stderr     string         `json:"stderr"`
+	State      m8GameState    `json:"state"`
+	Screenshot screenshotInfo `json:"screenshot,omitempty"`
+}
+
+type m8GameState struct {
+	TimeOfDay float64       `json:"tod"`
+	Ticks     int           `json:"ticks"`
+	StateHash string        `json:"stateHash"`
+	UnitCount int           `json:"unitCount"`
+	Alive     int           `json:"alive"`
+	Order     m8OrderState  `json:"order"`
+	Units     []m8UnitState `json:"units"`
+}
+
+type m8OrderState struct {
+	Issued bool   `json:"issued"`
+	UnitID uint32 `json:"unitId"`
+	Before m8Vec2 `json:"before"`
+	Target m8Vec2 `json:"target"`
+}
+
+type m8Vec2 struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+type m8UnitState struct {
+	ID     uint32  `json:"id"`
+	Owner  int     `json:"owner"`
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Facing float64 `json:"facing"`
+	Life   float64 `json:"life"`
+	Alive  bool    `json:"alive"`
+}
+
+func runM8EndToEndFSV(app *shell.App, outDir string) error {
+	root := filepath.Join(outDir, "m8-e2e")
+	if err := os.RemoveAll(root); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return err
+	}
+	state := m8EndToEndFSVState{
+		SourceDir: filepath.Join(root, "source"),
+		Archive:   filepath.Join(root, "editor-e2e.litdworld"),
+		Notes: []string{
+			"Autotest performs two independent local production-loader processes; the second-machine/OS edge remains a manual runbook step.",
+			"Runtime sim pathing currently consumes data/ placement and scripts from the archive; source-form map terrain/cliff bytes are verified as archive SoT.",
+		},
+	}
+
+	if err := createFreshM8Project(app, state.SourceDir); err != nil {
+		return err
+	}
+	if err := authorM8EndToEndMap(app); err != nil {
+		return err
+	}
+	if err := app.InstallPlayableRuntime(); err != nil {
+		return err
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+	if err := renderState(outDir, "43-m8-e2e-authored.png", app); err != nil {
+		return err
+	}
+	shot, err := inspectScreenshot(filepath.Join(outDir, "43-m8-e2e-authored.png"))
+	if err != nil {
+		return err
+	}
+	state.Screenshots = append(state.Screenshots, shot)
+	hashes, err := sourceFileHashList(state.SourceDir, m8SourceRelPaths())
+	if err != nil {
+		return err
+	}
+	state.SourceHashes = hashes
+
+	if err := app.SaveArchive(state.Archive); err != nil {
+		return err
+	}
+	state.ArchiveSHA256, err = sha256Path(state.Archive)
+	if err != nil {
+		return err
+	}
+	state.ArchiveHashes, err = archiveMemberHashList(state.Archive)
+	if err != nil {
+		return err
+	}
+
+	reopenDir := filepath.Join(root, "reopened-source")
+	if err := app.OpenArchive(state.Archive, reopenDir); err != nil {
+		return err
+	}
+	if err := renderState(outDir, "44-m8-e2e-reopened.png", app); err != nil {
+		return err
+	}
+	shot, err = inspectScreenshot(filepath.Join(outDir, "44-m8-e2e-reopened.png"))
+	if err != nil {
+		return err
+	}
+	state.Screenshots = append(state.Screenshots, shot)
+	state.ReopenedArchive = filepath.Join(root, "editor-e2e-reopened.litdworld")
+	if err := app.SaveArchive(state.ReopenedArchive); err != nil {
+		return err
+	}
+	state.ReopenedArchiveSHA256, err = sha256Path(state.ReopenedArchive)
+	if err != nil {
+		return err
+	}
+	state.ReopenedArchiveHashes, err = archiveMemberHashList(state.ReopenedArchive)
+	if err != nil {
+		return err
+	}
+	state.ArchiveHashesEqual = reflect.DeepEqual(state.ArchiveHashes, state.ReopenedArchiveHashes)
+	if !state.ArchiveHashesEqual {
+		return fmt.Errorf("m8 e2e FSV: reopened archive member hashes differ")
+	}
+
+	state.Initial, err = runM8GameFSV("initial", state.Archive, filepath.Join(outDir, "45-m8-e2e-initial.png"), 0, false, 0, 0)
+	if err != nil {
+		return err
+	}
+	state.Screenshots = append(state.Screenshots, state.Initial.Screenshot)
+	state.SecondIndependentLoad, err = runM8GameFSV("second-independent-load", state.Archive, "", 0, false, 0, 0)
+	if err != nil {
+		return err
+	}
+	state.Played, err = runM8GameFSV("played", state.Archive, filepath.Join(outDir, "46-m8-e2e-played.png"), 700, true, 8192, 0)
+	if err != nil {
+		return err
+	}
+	state.Screenshots = append(state.Screenshots, state.Played.Screenshot)
+	state.Replay, err = runM8GameFSV("replay", state.Archive, filepath.Join(outDir, "47-m8-e2e-replay.png"), 700, true, 8192, 0)
+	if err != nil {
+		return err
+	}
+	state.Screenshots = append(state.Screenshots, state.Replay.Screenshot)
+
+	if state.Initial.State.UnitCount != 5 || state.Initial.State.Alive != 5 {
+		return fmt.Errorf("m8 e2e FSV: initial unit state count/alive=%d/%d, want 5/5", state.Initial.State.UnitCount, state.Initial.State.Alive)
+	}
+	state.LocalIndependentHashEdge = state.SecondIndependentLoad.State.StateHash == state.Initial.State.StateHash
+	if !state.LocalIndependentHashEdge {
+		return fmt.Errorf("m8 e2e FSV: independent local load hash %s, want %s", state.SecondIndependentLoad.State.StateHash, state.Initial.State.StateHash)
+	}
+	if !state.Played.State.Order.Issued {
+		return fmt.Errorf("m8 e2e FSV: played run did not issue deterministic order")
+	}
+	if state.Played.State.StateHash == state.Initial.State.StateHash {
+		return fmt.Errorf("m8 e2e FSV: played hash did not change from initial %s", state.Initial.State.StateHash)
+	}
+	if state.Replay.State.StateHash != state.Played.State.StateHash {
+		return fmt.Errorf("m8 e2e FSV: replay hash %s, want played hash %s", state.Replay.State.StateHash, state.Played.State.StateHash)
+	}
+	state.MovementVerified = m8OrderMovedCloser(state.Played.State)
+	if !state.MovementVerified {
+		return fmt.Errorf("m8 e2e FSV: ordered unit did not move closer to target: %+v", state.Played.State.Order)
+	}
+	state.CombatResolved = m8CombatResolved(state.Initial.State, state.Played.State)
+	if !state.CombatResolved {
+		return fmt.Errorf("m8 e2e FSV: combat cluster did not change life/alive state")
+	}
+
+	body, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(root, "m8-e2e-dump.json"), append(body, '\n'), 0o644); err != nil {
+		return err
+	}
+	fmt.Printf("event: m8-e2e archive=%s hash=%s initial=%s played=%s replay=%s\n", state.Archive, state.ArchiveSHA256, state.Initial.State.StateHash, state.Played.State.StateHash, state.Replay.State.StateHash)
+	return nil
+}
+
+func authorM8EndToEndMap(app *shell.App) error {
+	if err := clearM8DefaultObjects(app); err != nil {
+		return err
+	}
+	players := sourceform.Players{Min: 2, Max: 2, Suggested: 2}
+	if err := app.SetMapMetadata("Editor End-to-End FSV", "M8 authored save-load-play verification", ">=0.1.0 <0.2.0", players, "vigil-lowlands", "dawn-splat"); err != nil {
+		return err
+	}
+	if err := app.SwitchMode(shell.ModeTerrain); err != nil {
+		return err
+	}
+	if err := app.SetTerrainBrush(shell.BrushRaise); err != nil {
+		return err
+	}
+	if err := app.SetBrushSize(1); err != nil {
+		return err
+	}
+	if err := app.SetBrushStrength(2); err != nil {
+		return err
+	}
+	if err := app.ApplyTerrainBrush(2, 2); err != nil {
+		return err
+	}
+	if err := app.SetTerrainBrush(shell.BrushLevel); err != nil {
+		return err
+	}
+	app.SetBrushLevelTarget(3)
+	if err := app.SetBrushSize(0); err != nil {
+		return err
+	}
+	if err := app.ApplyTerrainBrush(5, 5); err != nil {
+		return err
+	}
+	if err := app.SetTerrainBrush(shell.BrushRamp); err != nil {
+		return err
+	}
+	if err := app.SetBrushRampDirection(shell.RampEast); err != nil {
+		return err
+	}
+	if err := app.SetBrushStrength(1); err != nil {
+		return err
+	}
+	if err := app.ApplyTerrainBrush(3, 4); err != nil {
+		return err
+	}
+	if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
+		return err
+	}
+	if err := app.SetBrushSize(0); err != nil {
+		return err
+	}
+	if err := app.ApplyTerrainBrush(6, 2); err != nil {
+		return err
+	}
+	if err := app.SetTerrainBrush(shell.BrushCliffLevel); err != nil {
+		return err
+	}
+	app.SetBrushLevelTarget(1)
+	if err := app.ApplyTerrainBrush(6, 3); err != nil {
+		return err
+	}
+	if err := app.SetPaintLayer(1); err != nil {
+		return err
+	}
+	if err := app.SetPaintSize(1); err != nil {
+		return err
+	}
+	if err := app.ApplyPaintStroke([][2]int{{1, 1}, {2, 1}, {2, 2}}); err != nil {
+		return err
+	}
+	if err := app.SetPaintLayer(2); err != nil {
+		return err
+	}
+	if err := app.ApplyPaintStroke([][2]int{{5, 5}, {6, 5}, {6, 6}}); err != nil {
+		return err
+	}
+	if _, err := app.PlaceDoodadCell("kaykit-hexagon/tree_single_A.glb", 1, 6, 0, 1000); err != nil {
+		return err
+	}
+	if _, err := app.PlaceDoodadCell("kaykit-hexagon/rock_single_A.glb", 2, 6, 8192, 1000); err != nil {
+		return err
+	}
+	if _, err := app.PlaceDoodadCell("kaykit-hexagon/barrel.glb", 3, 6, 16384, 1000); err != nil {
+		return err
+	}
+	if _, err := app.PlaceUnitCell("footman", 0, 2, 4, 0, 1000, false); err != nil {
+		return err
+	}
+	u1, err := app.PlaceUnitCell("footman", 0, 5, 5, 0, 1000, false)
+	if err != nil {
+		return err
+	}
+	u2, err := app.PlaceUnitCell("archer", 0, 5, 6, 0, 1000, false)
+	if err != nil {
+		return err
+	}
+	u3, err := app.PlaceUnitCell("footman", 1, 6, 5, 32768, 1000, false)
+	if err != nil {
+		return err
+	}
+	u4, err := app.PlaceUnitCell("archer", 1, 6, 6, 32768, 1000, false)
+	if err != nil {
+		return err
+	}
+	for _, move := range []struct {
+		id  uint32
+		pos [2]int
+		rot int
+	}{
+		{id: u1.ID, pos: [2]int{24000, 12000}, rot: 0},
+		{id: u2.ID, pos: [2]int{24000, 12100}, rot: 0},
+		{id: u3.ID, pos: [2]int{24050, 12000}, rot: 32768},
+		{id: u4.ID, pos: [2]int{24050, 12100}, rot: 32768},
+	} {
+		if err := app.TransformEntity(move.id, move.pos, move.rot, 1000); err != nil {
+			return err
+		}
+	}
+	if err := app.PutStartLocationCell(1, 1, 1); err != nil {
+		return err
+	}
+	if err := app.PutStartLocationCell(2, 6, 6); err != nil {
+		return err
+	}
+	return app.SwitchMode(shell.ModeObjects)
+}
+
+func clearM8DefaultObjects(app *shell.App) error {
+	snap := app.Snapshot()
+	for _, ent := range snap.Objects.Units {
+		if err := app.DeleteEntity(ent.ID); err != nil {
+			return err
+		}
+	}
+	for _, d := range snap.Objects.Doodads {
+		if err := app.DeleteDoodad(d.ID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func createFreshM8Project(app *shell.App, dir string) error {
+	if err := app.NewProject(dir); err != nil {
+		return err
+	}
+	if err := app.ConfirmPending(); err != nil && !strings.Contains(err.Error(), "no confirmation pending") {
+		return err
+	}
+	return nil
+}
+
+func m8SourceRelPaths() []string {
+	return []string{
+		"world.toml",
+		"map/terrain.toml",
+		"map/pathing.txt",
+		"map/height.txt",
+		"map/cliff.txt",
+		"map/splat.txt",
+		"map/entities.toml",
+		"map/doodads.toml",
+		"data/combat/damage-table.toml",
+		"data/units/editor.toml",
+		"data/placement/editor.toml",
+		"scripts/main.lua",
+	}
+}
+
+func runM8GameFSV(name, archive, shot string, ticks int, order bool, dx, dy float64) (m8GameRunRecord, error) {
+	args := []string{"run", "./cmd/litd", "-archive", archive, "-autotest", "-ticks", fmt.Sprint(ticks)}
+	if order {
+		args = append(args, "-autotest-order", "-autotest-order-dx", fmt.Sprintf("%g", dx), "-autotest-order-dy", fmt.Sprintf("%g", dy))
+	}
+	if shot != "" {
+		args = append(args, "-shot", shot)
+	}
+	cmd := exec.Command("go", args...)
+	cmd.Dir = "."
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	exitCode := 0
+	if err != nil {
+		exitCode = 1
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		}
+	}
+	rec := m8GameRunRecord{
+		Name:     name,
+		Command:  append([]string{"go"}, args...),
+		ExitCode: exitCode,
+		Stdout:   stdout.String(),
+		Stderr:   stderr.String(),
+	}
+	if err != nil {
+		return rec, fmt.Errorf("m8 e2e FSV %s: %w\nstdout=%s\nstderr=%s", name, err, rec.Stdout, rec.Stderr)
+	}
+	raw, err := playtestStateLine(rec.Stdout)
+	if err != nil {
+		return rec, err
+	}
+	if err := json.Unmarshal(raw, &rec.State); err != nil {
+		return rec, err
+	}
+	if shot != "" {
+		rec.Screenshot, err = inspectScreenshot(shot)
+		if err != nil {
+			return rec, err
+		}
+	}
+	return rec, nil
+}
+
+func sourceFileHashList(root string, rels []string) ([]fileHashRecord, error) {
+	records := make([]fileHashRecord, 0, len(rels))
+	for _, rel := range rels {
+		abs := filepath.Join(root, rel)
+		sum, err := sha256Path(abs)
+		if err != nil {
+			return nil, err
+		}
+		st, err := os.Stat(abs)
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, fileHashRecord{Path: rel, SHA256: sum, Size: st.Size()})
+	}
+	return records, nil
+}
+
+func inspectScreenshot(path string) (screenshotInfo, error) {
+	sum, err := sha256Path(path)
+	if err != nil {
+		return screenshotInfo{}, err
+	}
+	st, err := os.Stat(path)
+	if err != nil {
+		return screenshotInfo{}, err
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return screenshotInfo{}, err
+	}
+	defer f.Close()
+	cfg, err := png.DecodeConfig(f)
+	if err != nil {
+		return screenshotInfo{}, err
+	}
+	return screenshotInfo{Path: path, SHA256: sum, Size: st.Size(), Width: cfg.Width, Height: cfg.Height}, nil
+}
+
+func sha256Path(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func m8OrderMovedCloser(state m8GameState) bool {
+	if !state.Order.Issued || state.Order.UnitID == 0 {
+		return false
+	}
+	for _, unit := range state.Units {
+		if unit.ID != state.Order.UnitID {
+			continue
+		}
+		before := m8DistSq(state.Order.Before.X, state.Order.Before.Y, state.Order.Target.X, state.Order.Target.Y)
+		after := m8DistSq(unit.X, unit.Y, state.Order.Target.X, state.Order.Target.Y)
+		return after < before
+	}
+	return false
+}
+
+func m8CombatResolved(before, after m8GameState) bool {
+	if after.Alive < before.Alive || after.UnitCount < before.UnitCount {
+		return true
+	}
+	beforeLife := map[uint32]float64{}
+	for _, unit := range before.Units {
+		beforeLife[unit.ID] = unit.Life
+	}
+	for _, unit := range after.Units {
+		if life, ok := beforeLife[unit.ID]; ok && unit.Life < life-0.5 {
+			return true
+		}
+	}
+	return false
+}
+
+func m8DistSq(ax, ay, bx, by float64) float64 {
+	dx, dy := ax-bx, ay-by
+	return dx*dx + dy*dy
 }
 
 func playtestFSVOptions(tempRoot, shot string, ticks int, killAfter time.Duration) shell.PlaytestOptions {

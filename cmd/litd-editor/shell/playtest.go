@@ -105,6 +105,33 @@ func (a *App) Playtest(opts PlaytestOptions) (rec PlaytestSnapshot, err error) {
 	return rec, nil
 }
 
+// InstallPlayableRuntime persists the minimal runtime tables needed for the
+// production game client to load this authored source-form archive directly.
+func (a *App) InstallPlayableRuntime() error {
+	if a.world == nil {
+		err := errors.New("editor playtest: no project loaded")
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	if a.archiveReadOnly {
+		err := errors.New("editor playtest: source-form project required")
+		a.errText = err.Error()
+		a.status = a.errText
+		return err
+	}
+	for _, file := range playtestRuntimeFiles(a.world, "scripts/main.lua") {
+		if err := a.world.SetPassthroughFile(file.rel, file.body); err != nil {
+			a.errText = err.Error()
+			a.status = a.errText
+			return err
+		}
+	}
+	a.errText = ""
+	a.status = "Playable runtime installed"
+	return nil
+}
+
 func (a *App) buildPlaytestArchive(opts PlaytestOptions) (tempDir, archivePath, shotPath string, err error) {
 	if a.world == nil {
 		return "", "", "", errors.New("editor playtest: no project loaded")
@@ -178,17 +205,27 @@ func (a *App) SetStartLocationsForFSV(starts []sourceform.StartLocation) {
 	a.world.Terrain.StartLocations = append([]sourceform.StartLocation(nil), starts...)
 }
 
+type playtestRuntimeFile struct {
+	rel  string
+	body []byte
+}
+
+func playtestRuntimeFiles(w *sourceform.World, scriptRel string) []playtestRuntimeFile {
+	return []playtestRuntimeFile{
+		{rel: "data/combat/damage-table.toml", body: []byte(playtestDamageTable)},
+		{rel: "data/units/editor.toml", body: []byte(playtestUnitsTOML(w.Entities))},
+		{rel: "data/placement/editor.toml", body: []byte(playtestPlacementTOML(w.Entities))},
+		{rel: scriptRel, body: []byte("Game_SetTimeOfDay(12.0)\n")},
+	}
+}
+
 func writePlaytestRuntime(stage string, w *sourceform.World) error {
-	if err := writeFile(filepath.Join(stage, "data", "combat", "damage-table.toml"), []byte(playtestDamageTable)); err != nil {
-		return err
+	for _, file := range playtestRuntimeFiles(w, "main.lua") {
+		if err := writeFile(filepath.Join(stage, file.rel), file.body); err != nil {
+			return err
+		}
 	}
-	if err := writeFile(filepath.Join(stage, "data", "units", "editor.toml"), []byte(playtestUnitsTOML(w.Entities))); err != nil {
-		return err
-	}
-	if err := writeFile(filepath.Join(stage, "data", "placement", "editor.toml"), []byte(playtestPlacementTOML(w.Entities))); err != nil {
-		return err
-	}
-	return writeFile(filepath.Join(stage, "main.lua"), []byte("Game_SetTimeOfDay(12.0)\n"))
+	return nil
 }
 
 const playtestDamageTable = `attack-types = ["normal", "piercing"]
@@ -218,6 +255,7 @@ func playtestUnitsTOML(entities []sourceform.Entity) string {
 			attack = "piercing"
 		}
 		fmt.Fprintf(&b, "[[unit]]\nid = %s\nlife = 100\narmor-type = %s\nmove-speed = 270\nturn-rate = 0.6\ncollision-size = 16\npathing = \"ground\"\n\n", strconv.Quote(typ), strconv.Quote(armor))
+		fmt.Fprintf(&b, "acquisition-range = 600\n\n")
 		fmt.Fprintf(&b, "[[unit.attack]]\ntype = %s\nrange = 90\ndamage-base = 10\ncooldown = 1.0\ndelivery = \"instant\"\ntargets-allowed = [\"ground\"]\n\n", strconv.Quote(attack))
 	}
 	return b.String()

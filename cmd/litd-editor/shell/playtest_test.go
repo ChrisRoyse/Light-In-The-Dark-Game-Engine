@@ -9,7 +9,72 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 )
+
+func TestInstallPlayableRuntimePersistsSourceAndArchiveFSV(t *testing.T) {
+	app := newCommandTestApp(t)
+	if _, err := app.PlaceUnitCell("footman", 0, 1, 2, 0, 1000, false); err != nil {
+		t.Fatal(err)
+	}
+	placementPath := filepath.Join(app.projectPath, "data", "placement", "editor.toml")
+	if _, err := os.Stat(placementPath); !os.IsNotExist(err) {
+		t.Fatalf("FSV before install: placement source should not exist yet, stat err=%v", err)
+	}
+	if err := app.InstallPlayableRuntime(); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.Save(); err != nil {
+		t.Fatal(err)
+	}
+	placement, err := os.ReadFile(placementPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	script, err := os.ReadFile(filepath.Join(app.projectPath, "scripts", "main.lua"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(placement), "type = \"footman\"") || !strings.Contains(string(placement), "owner = 0") {
+		t.Fatalf("FSV after install: placement TOML missing unit row:\n%s", placement)
+	}
+	if string(script) != "Game_SetTimeOfDay(12.0)\n" {
+		t.Fatalf("FSV after install: scripts/main.lua=%q", script)
+	}
+
+	archive := filepath.Join(t.TempDir(), "playable-runtime.litdworld")
+	if err := app.SaveArchive(archive); err != nil {
+		t.Fatal(err)
+	}
+	opened, err := worldarchive.Open(archive, EditorEngineVersion())
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifestFiles := make([]string, 0, len(opened.Manifest.Files))
+	for rel := range opened.Manifest.Files {
+		manifestFiles = append(manifestFiles, rel)
+	}
+	opened.Close()
+	for _, rel := range []string{"data/combat/damage-table.toml", "data/units/editor.toml", "data/placement/editor.toml", "scripts/main.lua"} {
+		if !containsString(manifestFiles, rel) {
+			t.Fatalf("FSV archive manifest missing %s in %v", rel, manifestFiles)
+		}
+	}
+	if containsString(manifestFiles, "main.lua") {
+		t.Fatalf("FSV archive should carry source-form scripts/main.lua, not root main.lua: %v", manifestFiles)
+	}
+	t.Logf("FSV playable runtime: source placement=%q script=%q archive=%s manifest=%v", string(placement), string(script), archive, manifestFiles)
+}
+
+func TestInstallPlayableRuntimeRefusesNoProjectFSV(t *testing.T) {
+	app := newTestApp(t)
+	err := app.InstallPlayableRuntime()
+	t.Logf("FSV playable runtime no-project: err=%v status=%q", err, app.Snapshot().Status)
+	if err == nil || !strings.Contains(err.Error(), "no project") {
+		t.Fatalf("InstallPlayableRuntime without a project should fail closed, got %v", err)
+	}
+}
 
 func TestEditorPlaytestRoundTripPreservesDirtyStateFSV(t *testing.T) {
 	app := newCommandTestApp(t)
