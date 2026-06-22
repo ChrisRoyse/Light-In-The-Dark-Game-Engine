@@ -72,6 +72,8 @@ func OpenDevice() (Backend, error) {
 
 func (b *openALBackend) Name() string { return "openal" }
 
+func (b *openALBackend) SourceCount() int { return len(b.sources) }
+
 // assign returns the source for cue, round-robin allocating one on first use.
 func (b *openALBackend) assign(cue uint32) (uint32, bool) {
 	if s, ok := b.byCue[cue]; ok {

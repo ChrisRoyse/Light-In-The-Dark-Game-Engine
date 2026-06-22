@@ -54,6 +54,9 @@ type Voice struct {
 type Backend interface {
 	// Name identifies the backend in the state dump ("null", "openal").
 	Name() string
+	// SourceCount reports the number of concrete device sources owned by this
+	// backend. The null backend reports 0; OpenAL reports the preallocated pool.
+	SourceCount() int
 	// Play emits a resolved voice on the device. The null backend no-ops.
 	Play(v Voice)
 	// Stop silences any device voices for cue.
@@ -92,6 +95,7 @@ type CueBufferBackend interface {
 type nullBackend struct{}
 
 func (nullBackend) Name() string     { return "null" }
+func (nullBackend) SourceCount() int { return 0 }
 func (nullBackend) Play(Voice)       {}
 func (nullBackend) Stop(uint32)      {}
 func (nullBackend) SetListener(Vec3) {}

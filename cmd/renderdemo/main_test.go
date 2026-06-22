@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
@@ -100,6 +101,50 @@ func TestBuildCameraProjectionModeFSV(t *testing.T) {
 	} else {
 		t.Logf("FSV renderdemo invalid camera projection err=%v", err)
 	}
+}
+
+func TestBuildAudioInitDumpNullFSV(t *testing.T) {
+	before := litaudio.NewManager(nil).Dump()
+	dump, err := buildAudioInitDump("null")
+	if err != nil {
+		t.Fatalf("audio init null rejected: %v", err)
+	}
+	if !dump.OK {
+		t.Fatalf("audio init null failed: %+v", dump.Errors)
+	}
+	if dump.Backend != "null" || dump.BackendSources != 0 || dump.Snapshot.BackendSources != 0 {
+		t.Fatalf("null backend/source SoT mismatch: %+v", dump)
+	}
+	if dump.AccountingMaxVoices != litaudio.MaxVoices || dump.Snapshot.MaxVoices != litaudio.MaxVoices || dump.Snapshot.VoiceCount != 3 {
+		t.Fatalf("accounting counts wrong: %+v", dump.Snapshot)
+	}
+	if !dump.ListenerMatchesFocus || dump.ListenerMatchesEye || dump.Listener != dump.CameraFocus {
+		t.Fatalf("listener should bind camera focus, not eye: focus=%+v eye=%+v listener=%+v", dump.CameraFocus, dump.CameraEye, dump.Listener)
+	}
+	if !dump.AccountingMatchesNull || dump.NullAccountingHash != dump.BackendAccountingHash {
+		t.Fatalf("null accounting should self-match: null=%s backend=%s", dump.NullAccountingHash, dump.BackendAccountingHash)
+	}
+	if !dump.PanSignFlipped || len(dump.PanTrace) != 2 || dump.PanTrace[0].Pan <= 0 || dump.PanTrace[1].Pan >= 0 {
+		t.Fatalf("pan trace did not flip sign: %+v", dump.PanTrace)
+	}
+	if !dump.SimHash.Equal || dump.SimHash.AudioCalls != 2 {
+		t.Fatalf("audio-on/off hash pair wrong: %+v", dump.SimHash)
+	}
+	t.Logf("FSV #227 renderdemo audio-init null BEFORE backend=%s sources=%d voices=%d AFTER backend=%s sources=%d voices=%d listener=%+v focus=%+v eye=%+v pan=%+.3f→%+.3f hash=%s",
+		before.Backend, before.BackendSources, before.VoiceCount,
+		dump.Backend, dump.BackendSources, dump.Snapshot.VoiceCount,
+		dump.Listener, dump.CameraFocus, dump.CameraEye, dump.PanTrace[0].Pan, dump.PanTrace[1].Pan, dump.SimHash.AudioOn)
+}
+
+func TestBuildAudioInitDumpInvalidModeFSV(t *testing.T) {
+	dump, err := buildAudioInitDump("bogus")
+	if err == nil {
+		t.Fatalf("invalid audio backend mode accepted: %+v", dump)
+	}
+	if dump.OK || len(dump.Errors) == 0 {
+		t.Fatalf("invalid mode should produce a failed dump with an error: %+v", dump)
+	}
+	t.Logf("FSV #227 renderdemo audio-init invalid mode BEFORE mode=%q AFTER ok=%v errors=%v", "bogus", dump.OK, dump.Errors)
 }
 
 func TestBuildGroupFSVFSV(t *testing.T) {

@@ -74,3 +74,34 @@ func TestOpenALCueBufferBindingFSV(t *testing.T) {
 	t.Logf("FSV #228 OpenAL cue buffer: before=absent after=buffer{id=%d bytes=%d ch=%d rate=%d} play={source=%d state=%d playing=%v}",
 		loaded.BufferID, loaded.Bytes, loaded.Channels, loaded.SampleRate, playing.SourceID, playing.SourceState, playing.Playing)
 }
+
+func TestBuildAudioInitDumpOpenALFSV(t *testing.T) {
+	t.Setenv("ALSOFT_DRIVERS", "null")
+	dump, err := buildAudioInitDump("openal")
+	if err != nil {
+		t.Fatalf("OpenAL audio init dump failed: %v", err)
+	}
+	if !dump.OK {
+		t.Fatalf("OpenAL audio init dump not OK: %+v", dump.Errors)
+	}
+	if dump.Backend != "openal" || dump.BackendSources != litaudio.MaxVoices || dump.Snapshot.BackendSources != litaudio.MaxVoices {
+		t.Fatalf("OpenAL backend/source SoT mismatch: %+v", dump)
+	}
+	if dump.AccountingMaxVoices != litaudio.MaxVoices || dump.Snapshot.MaxVoices != litaudio.MaxVoices || dump.Snapshot.VoiceCount != 3 {
+		t.Fatalf("OpenAL accounting counts wrong: %+v", dump.Snapshot)
+	}
+	if !dump.ListenerMatchesFocus || dump.ListenerMatchesEye || dump.Listener != dump.CameraFocus {
+		t.Fatalf("OpenAL listener should bind camera focus, not eye: focus=%+v eye=%+v listener=%+v", dump.CameraFocus, dump.CameraEye, dump.Listener)
+	}
+	if !dump.AccountingMatchesNull || dump.NullAccountingHash != dump.BackendAccountingHash {
+		t.Fatalf("OpenAL/null accounting diverged: null=%s backend=%s", dump.NullAccountingHash, dump.BackendAccountingHash)
+	}
+	if !dump.PanSignFlipped || len(dump.PanTrace) != 2 || dump.PanTrace[0].Pan <= 0 || dump.PanTrace[1].Pan >= 0 {
+		t.Fatalf("pan trace did not flip sign: %+v", dump.PanTrace)
+	}
+	if !dump.SimHash.Equal || dump.SimHash.AudioCalls != 2 {
+		t.Fatalf("audio-on/off hash pair wrong: %+v", dump.SimHash)
+	}
+	t.Logf("FSV #227 renderdemo audio-init OpenAL null-driver backend=%s sources=%d listener=%+v focus=%+v pan=%+.3f→%+.3f accountingHash=%s simHash=%s",
+		dump.Backend, dump.BackendSources, dump.Listener, dump.CameraFocus, dump.PanTrace[0].Pan, dump.PanTrace[1].Pan, dump.BackendAccountingHash, dump.SimHash.AudioOn)
+}

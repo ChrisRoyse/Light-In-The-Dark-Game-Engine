@@ -12,6 +12,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -23,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
@@ -69,6 +71,55 @@ type renderDemoDump struct {
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
 	VFXLights *vfxLightsRuntimeDump   `json:"vfxLights,omitempty"`
 	OK        bool                    `json:"ok"`
+}
+
+type audioInitRuntimeDump struct {
+	OK                    bool                 `json:"ok"`
+	Mode                  string               `json:"mode"`
+	RequestedBackend      string               `json:"requestedBackend"`
+	DeviceError           string               `json:"deviceError,omitempty"`
+	Backend               string               `json:"backend"`
+	BackendSources        int                  `json:"backendSources"`
+	AccountingMaxVoices   int                  `json:"accountingMaxVoices"`
+	CameraFocus           litaudio.Vec3        `json:"cameraFocus"`
+	CameraEye             litaudio.Vec3        `json:"cameraEye"`
+	Listener              litaudio.Vec3        `json:"listener"`
+	ListenerMatchesFocus  bool                 `json:"listenerMatchesFocus"`
+	ListenerMatchesEye    bool                 `json:"listenerMatchesEye"`
+	Snapshot              litaudio.Snapshot    `json:"snapshot"`
+	NullAccountingHash    string               `json:"nullAccountingHash"`
+	BackendAccountingHash string               `json:"backendAccountingHash"`
+	AccountingMatchesNull bool                 `json:"accountingMatchesNull"`
+	PanTrace              []audioPanTraceDump  `json:"panTrace"`
+	PanSignFlipped        bool                 `json:"panSignFlipped"`
+	SimHash               audioSimHashPairDump `json:"simHash"`
+	Errors                []string             `json:"errors,omitempty"`
+}
+
+type audioPanTraceDump struct {
+	Step     string        `json:"step"`
+	Listener litaudio.Vec3 `json:"listener"`
+	Emitter  litaudio.Vec3 `json:"emitter"`
+	Pan      float64       `json:"pan"`
+	Gain     float64       `json:"gain"`
+}
+
+type audioSimHashPairDump struct {
+	AudioOff   string `json:"audioOff"`
+	AudioOn    string `json:"audioOn"`
+	AudioCalls int    `json:"audioCalls"`
+	Equal      bool   `json:"equal"`
+}
+
+type audioAccountingState struct {
+	Listener   litaudio.Vec3    `json:"listener"`
+	VoiceCount int              `json:"voiceCount"`
+	MaxVoices  int              `json:"maxVoices"`
+	Culled     int              `json:"culled"`
+	Dropped    int              `json:"dropped"`
+	Voices     []litaudio.Voice `json:"voices"`
+	ChannelVol []float64        `json:"channelVol"`
+	GroupVol   []float64        `json:"groupVol"`
 }
 
 type vfxLightsRuntimeDump struct {
@@ -487,6 +538,7 @@ func main() {
 	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
+	dumpAudioInitMode := flag.String("dump-audio-init", "", "print audio init/accounting JSON for backend mode: null, openal, or auto")
 	shotPath := flag.String("shot", "artifacts/stats-hud.png", "screenshot output path")
 	dumpPath := flag.String("dump", "artifacts/stats.json", "stats JSON output path")
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
@@ -533,6 +585,24 @@ func main() {
 		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+	if strings.TrimSpace(*dumpAudioInitMode) != "" {
+		dump, err := buildAudioInitDump(*dumpAudioInitMode)
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if encErr := enc.Encode(dump); encErr != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio-init: %v\n", encErr)
+			os.Exit(1)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio-init: %v\n", err)
+			os.Exit(1)
+		}
+		if !dump.OK {
+			fmt.Fprintf(os.Stderr, "renderdemo: dump-audio-init failed: %s\n", strings.Join(dump.Errors, "; "))
 			os.Exit(1)
 		}
 		return
@@ -785,6 +855,234 @@ func buildMapDataDump(dir string) (mapDataRuntimeDump, error) {
 
 func buildAudioLoadDump(dir string) (litaudio.LoadDump, error) {
 	return litaudio.LoadRuntimeAssetsDir(dir)
+}
+
+func buildAudioInitDump(mode string) (audioInitRuntimeDump, error) {
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = "auto"
+	}
+	dump := audioInitRuntimeDump{Mode: mode, RequestedBackend: mode}
+
+	var backend litaudio.Backend
+	switch mode {
+	case "null":
+	case "openal":
+		b, err := openAudioBackendForDemo()
+		if err != nil {
+			dump.Errors = append(dump.Errors, err.Error())
+			return dump, err
+		}
+		backend = b
+	case "auto":
+		b, err := openAudioBackendForDemo()
+		if err != nil {
+			dump.DeviceError = err.Error()
+		} else {
+			backend = b
+		}
+	default:
+		err := fmt.Errorf("unknown audio init backend mode %q (want null, openal, or auto)", mode)
+		dump.Errors = append(dump.Errors, err.Error())
+		return dump, err
+	}
+
+	m := litaudio.NewManager(backend)
+	focus, eye, err := audioInitCameraFocus()
+	if err != nil {
+		dump.Errors = append(dump.Errors, err.Error())
+		_ = m.Close()
+		return dump, err
+	}
+	applyAudioInitSequence(m, focus)
+	snap := m.Dump()
+	closeErr := m.Close()
+	if closeErr != nil {
+		dump.Errors = append(dump.Errors, closeErr.Error())
+	}
+
+	nullSnap := audioInitNullSnapshot(focus)
+	hashPair, hashErr := audioInitSimHashPair()
+	if hashErr != nil {
+		dump.Errors = append(dump.Errors, hashErr.Error())
+	}
+	panTrace := buildAudioPanTrace()
+	panFlipped := len(panTrace) == 2 && panTrace[0].Pan > 0 && panTrace[1].Pan < 0
+
+	nullHash := audioAccountingHash(nullSnap)
+	backendHash := audioAccountingHash(snap)
+	dump.Backend = snap.Backend
+	dump.BackendSources = snap.BackendSources
+	dump.AccountingMaxVoices = snap.MaxVoices
+	dump.CameraFocus = focus
+	dump.CameraEye = eye
+	dump.Listener = snap.Listener
+	dump.ListenerMatchesFocus = snap.Listener == focus
+	dump.ListenerMatchesEye = snap.Listener == eye
+	dump.Snapshot = snap
+	dump.NullAccountingHash = nullHash
+	dump.BackendAccountingHash = backendHash
+	dump.AccountingMatchesNull = nullHash == backendHash
+	dump.PanTrace = panTrace
+	dump.PanSignFlipped = panFlipped
+	dump.SimHash = hashPair
+
+	if !dump.ListenerMatchesFocus {
+		dump.Errors = append(dump.Errors, "listener does not match camera focus")
+	}
+	if dump.ListenerMatchesEye {
+		dump.Errors = append(dump.Errors, "listener matched camera eye instead of focus")
+	}
+	if snap.MaxVoices != litaudio.MaxVoices {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("manager max voices=%d want %d", snap.MaxVoices, litaudio.MaxVoices))
+	}
+	if mode == "null" && snap.Backend != "null" {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("null mode selected backend %q", snap.Backend))
+	}
+	if mode == "openal" && snap.Backend != "openal" {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("openal mode selected backend %q", snap.Backend))
+	}
+	if snap.Backend == "openal" && snap.BackendSources != litaudio.MaxVoices {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("OpenAL source pool=%d want %d", snap.BackendSources, litaudio.MaxVoices))
+	}
+	if snap.Backend == "null" && snap.BackendSources != 0 {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("null backend sources=%d want 0", snap.BackendSources))
+	}
+	if !dump.AccountingMatchesNull {
+		dump.Errors = append(dump.Errors, "backend accounting does not match null accounting for the same event sequence")
+	}
+	if !panFlipped {
+		dump.Errors = append(dump.Errors, "pan trace did not flip sign")
+	}
+	if !hashPair.Equal {
+		dump.Errors = append(dump.Errors, "audio-on and audio-off state hashes differ")
+	}
+	dump.OK = len(dump.Errors) == 0
+	if hashErr != nil {
+		return dump, hashErr
+	}
+	if closeErr != nil {
+		return dump, closeErr
+	}
+	return dump, nil
+}
+
+func audioInitCameraFocus() (focus, eye litaudio.Vec3, err error) {
+	rig, err := buildCamera(defaultWidth, defaultHeight, "default", "persp")
+	if err != nil {
+		return litaudio.Vec3{}, litaudio.Vec3{}, err
+	}
+	rig.SetAnchor(math32.Vector3{X: 120, Y: 8, Z: 80})
+	s := rig.Snapshot()
+	return renderGroundVecToAudio(s.Anchor), renderGroundVecToAudio(s.Eye), nil
+}
+
+func renderGroundVecToAudio(v litrender.Vec3Snapshot) litaudio.Vec3 {
+	return litaudio.Vec3{X: float64(v.X), Y: float64(v.Z), Z: float64(v.Y)}
+}
+
+func applyAudioInitSequence(m *litaudio.Manager, focus litaudio.Vec3) {
+	m.SetListener(focus)
+	m.Handle(api.AudioEvent{
+		Kind: api.AudioPlayAt, Cue: api.CueID("renderdemo/audio-init-world"), Volume: 1, Pitch: 1,
+		HasPos: true, Pos: api.Vec2{X: focus.X + 300, Y: focus.Y}, Z: focus.Z, Channel: api.ChannelEffects,
+	})
+	m.Handle(api.AudioEvent{
+		Kind: api.AudioPlay, Cue: api.CueID("renderdemo/audio-init-ui"), Volume: 0.5, Pitch: 1,
+		Channel: api.ChannelUI,
+	})
+	m.Handle(api.AudioEvent{
+		Kind: api.AudioPlayMusic, Cue: api.CueID("renderdemo/audio-init-music"), Volume: 0.8, Pitch: 1,
+		Channel: api.ChannelMusic,
+	})
+}
+
+func audioInitNullSnapshot(focus litaudio.Vec3) litaudio.Snapshot {
+	m := litaudio.NewManager(nil)
+	applyAudioInitSequence(m, focus)
+	s := m.Dump()
+	_ = m.Close()
+	return s
+}
+
+func buildAudioPanTrace() []audioPanTraceDump {
+	m := litaudio.NewManager(nil)
+	emitter := litaudio.Vec3{X: 300}
+	m.Handle(api.AudioEvent{
+		Kind: api.AudioPlayAt, Cue: api.CueID("renderdemo/audio-pan-fixed"), Volume: 1, Pitch: 1,
+		HasPos: true, Pos: api.Vec2{X: emitter.X, Y: emitter.Y}, Z: emitter.Z, Channel: api.ChannelEffects,
+	})
+	before := m.Dump()
+	m.SetListener(litaudio.Vec3{X: 600})
+	after := m.Dump()
+	_ = m.Close()
+	trace := make([]audioPanTraceDump, 0, 2)
+	if len(before.Voices) > 0 {
+		trace = append(trace, audioPanTraceDump{
+			Step: "listener-left-of-emitter", Listener: before.Listener, Emitter: emitter,
+			Pan: before.Voices[0].Pan, Gain: before.Voices[0].Gain,
+		})
+	}
+	if len(after.Voices) > 0 {
+		trace = append(trace, audioPanTraceDump{
+			Step: "listener-right-of-emitter", Listener: after.Listener, Emitter: emitter,
+			Pan: after.Voices[0].Pan, Gain: after.Voices[0].Gain,
+		})
+	}
+	return trace
+}
+
+func audioInitSimHashPair() (audioSimHashPairDump, error) {
+	off, _, err := audioInitStateHash(false)
+	if err != nil {
+		return audioSimHashPairDump{}, err
+	}
+	on, calls, err := audioInitStateHash(true)
+	if err != nil {
+		return audioSimHashPairDump{}, err
+	}
+	return audioSimHashPairDump{
+		AudioOff:   fmt.Sprintf("%016x", off),
+		AudioOn:    fmt.Sprintf("%016x", on),
+		AudioCalls: calls,
+		Equal:      off == on,
+	}, nil
+}
+
+func audioInitStateHash(withSink bool) (uint64, int, error) {
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 8, Seed: 227})
+	if err != nil {
+		return 0, 0, err
+	}
+	calls := 0
+	if withSink {
+		m := litaudio.NewManager(nil)
+		defer m.Close()
+		g.OnAudio(func(ev api.AudioEvent) {
+			calls++
+			m.Handle(ev)
+		})
+	}
+	snd := g.CreateSound("renderdemo/audio-init-statehash")
+	snd.PlayAt(api.Vec2{X: litaudio.PanWidth, Y: 0}, 0)
+	g.SetChannelVolume(api.ChannelUI, 0.3)
+	return g.StateHash(), calls, nil
+}
+
+func audioAccountingHash(s litaudio.Snapshot) string {
+	state := audioAccountingState{
+		Listener:   s.Listener,
+		VoiceCount: s.VoiceCount,
+		MaxVoices:  s.MaxVoices,
+		Culled:     s.Culled,
+		Dropped:    s.Dropped,
+		Voices:     s.Voices,
+		ChannelVol: s.ChannelVol,
+		GroupVol:   s.GroupVol,
+	}
+	body, _ := json.Marshal(state)
+	sum := sha256.Sum256(body)
+	return fmt.Sprintf("%x", sum[:])
 }
 
 func mapDataPathingSampleAt(m *litmapdata.Map, x, y int) (mapDataPathingSample, bool) {

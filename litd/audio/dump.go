@@ -6,15 +6,16 @@ package audio
 // OpenAL backends for the same event sequence (only Backend differs), which is
 // exactly the "audio-on == audio-off" determinism guarantee.
 type Snapshot struct {
-	Backend    string    `json:"backend"`    // "null" | "openal"
-	Listener   Vec3      `json:"listener"`   // current listener position
-	VoiceCount int       `json:"voiceCount"` // active voices
-	MaxVoices  int       `json:"maxVoices"`  // device source-pool size
-	Culled     int       `json:"culled"`     // world voices dropped by distance cull
-	Dropped    int       `json:"dropped"`    // voices dropped by admission (full partition, lost eviction; #230)
-	Voices     []Voice   `json:"voices"`     // active voices with final gain/pan
-	ChannelVol []float64 `json:"channelVol"` // per-channel master volumes
-	GroupVol   []float64 `json:"groupVol"`   // World / UI / Music master groups
+	Backend        string    `json:"backend"`        // "null" | "openal"
+	BackendSources int       `json:"backendSources"` // concrete device source count (0 on null, 32 on OpenAL)
+	Listener       Vec3      `json:"listener"`       // current listener position
+	VoiceCount     int       `json:"voiceCount"`     // active voices
+	MaxVoices      int       `json:"maxVoices"`      // manager accounting budget
+	Culled         int       `json:"culled"`         // world voices dropped by distance cull
+	Dropped        int       `json:"dropped"`        // voices dropped by admission (full partition, lost eviction; #230)
+	Voices         []Voice   `json:"voices"`         // active voices with final gain/pan
+	ChannelVol     []float64 `json:"channelVol"`     // per-channel master volumes
+	GroupVol       []float64 `json:"groupVol"`       // World / UI / Music master groups
 }
 
 // Dump returns a deep copy of the current audio state. Callers may serialize or
@@ -27,14 +28,15 @@ func (m *Manager) Dump() Snapshot {
 	groups := make([]float64, len(m.groupVol))
 	copy(groups, m.groupVol[:])
 	return Snapshot{
-		Backend:    m.backend.Name(),
-		Listener:   m.listener,
-		VoiceCount: len(m.voices),
-		MaxVoices:  MaxVoices,
-		Culled:     m.culled,
-		Dropped:    m.dropped,
-		Voices:     voices,
-		ChannelVol: chans,
-		GroupVol:   groups,
+		Backend:        m.backend.Name(),
+		BackendSources: m.backend.SourceCount(),
+		Listener:       m.listener,
+		VoiceCount:     len(m.voices),
+		MaxVoices:      MaxVoices,
+		Culled:         m.culled,
+		Dropped:        m.dropped,
+		Voices:         voices,
+		ChannelVol:     chans,
+		GroupVol:       groups,
 	}
 }
