@@ -76,7 +76,8 @@ mechanically, and `tools/worldpack` validates them.
 4. **Grid files are row-per-line.** `height.txt`, `cliff.txt`, `splat.txt` write one
    map row per line, values space-separated, fixed formatting (no scientific
    notation; heights are the fixed-point integers the sim uses — floats never appear
-   in map data). Editing one region touches only that region's lines.
+   in map data). `splat.txt` cells are canonical four-way blend weights
+   (`a,b,c,d`) that sum to 255. Editing one region touches only that region's lines.
 5. **No timestamps, no machine names, no editor versions** anywhere in source form.
    Provenance lives in the VCS, not the files.
 6. **Numbers are written canonically.** Integers without leading zeros; fixed-point

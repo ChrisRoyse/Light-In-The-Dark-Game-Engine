@@ -117,6 +117,9 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runBrushFSV(app, outDir); err != nil {
 		return err
 	}
+	if err := runPaintFSV(app, outDir); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -180,10 +183,17 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 	for _, step := range brushWindowSteps(app, outDir) {
 		steps = append(steps, step)
 	}
+	var paintBeforeHash string
+	for _, step := range paintWindowSteps(app, outDir, &paintBeforeHash) {
+		steps = append(steps, step)
+	}
 	if err := shell.RunWindowCaptureSequence(app, steps); err != nil {
 		return err
 	}
 	if err := writeBrushDump(app, outDir); err != nil {
+		return err
+	}
+	if err := writePaintDump(app, outDir, paintBeforeHash); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -274,6 +284,80 @@ func runBrushFSV(app *shell.App, outDir string) error {
 	return writeBrushDump(app, outDir)
 }
 
+type editorPaintStep struct {
+	Name  string
+	Apply func() error
+}
+
+func paintSteps(app *shell.App) []editorPaintStep {
+	return []editorPaintStep{
+		{
+			Name: "paint-layer-b",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
+					return err
+				}
+				if err := app.SetPaintSize(0); err != nil {
+					return err
+				}
+				if err := app.SetPaintStrength(255); err != nil {
+					return err
+				}
+				if err := app.SetPaintLayer(1); err != nil {
+					return err
+				}
+				return app.ApplyPaintBrush(2, 2)
+			},
+		},
+		{
+			Name: "paint-layer-c-overlap",
+			Apply: func() error {
+				if err := app.SetPaintLayer(2); err != nil {
+					return err
+				}
+				return app.ApplyPaintBrush(2, 2)
+			},
+		},
+		{
+			Name: "paint-boundary",
+			Apply: func() error {
+				if err := app.SetPaintLayer(3); err != nil {
+					return err
+				}
+				if err := app.SetPaintSize(1); err != nil {
+					return err
+				}
+				return app.ApplyPaintBrush(4, 4)
+			},
+		},
+		{
+			Name: "paint-border",
+			Apply: func() error {
+				if err := app.SetPaintLayer(1); err != nil {
+					return err
+				}
+				if err := app.SetPaintSize(2); err != nil {
+					return err
+				}
+				return app.ApplyPaintBrush(0, 0)
+			},
+		},
+	}
+}
+
+func runPaintFSV(app *shell.App, outDir string) error {
+	beforeHash := app.SimRelevantHash()
+	for i, step := range paintSteps(app) {
+		if err := step.Apply(); err != nil {
+			return err
+		}
+		if err := renderState(outDir, fmt.Sprintf("%02d-%s.png", i+11, step.Name), app); err != nil {
+			return err
+		}
+	}
+	return writePaintDump(app, outDir, beforeHash)
+}
+
 func brushWindowSteps(app *shell.App, outDir string) []shell.WindowCaptureStep {
 	steps := brushSteps(app)
 	out := make([]shell.WindowCaptureStep, 0, len(steps))
@@ -283,6 +367,25 @@ func brushWindowSteps(app *shell.App, outDir string) []shell.WindowCaptureStep {
 			Name:     step.Name,
 			ShotPath: filepath.Join(outDir, fmt.Sprintf("%02d-%s.png", i+7, step.Name)),
 			BeforeCapture: func() error {
+				return step.Apply()
+			},
+		})
+	}
+	return out
+}
+
+func paintWindowSteps(app *shell.App, outDir string, beforeHash *string) []shell.WindowCaptureStep {
+	steps := paintSteps(app)
+	out := make([]shell.WindowCaptureStep, 0, len(steps))
+	for i, step := range steps {
+		step := step
+		out = append(out, shell.WindowCaptureStep{
+			Name:     step.Name,
+			ShotPath: filepath.Join(outDir, fmt.Sprintf("%02d-%s.png", i+11, step.Name)),
+			BeforeCapture: func() error {
+				if beforeHash != nil && *beforeHash == "" {
+					*beforeHash = app.SimRelevantHash()
+				}
 				return step.Apply()
 			},
 		})
@@ -324,6 +427,43 @@ func writeBrushDump(app *shell.App, outDir string) error {
 		return err
 	}
 	return os.WriteFile(filepath.Join(outDir, "brush-grid-dump.json"), append(body, '\n'), 0o644)
+}
+
+func writePaintDump(app *shell.App, outDir, beforeHash string) error {
+	if beforeHash == "" {
+		return fmt.Errorf("paint FSV missing pre-paint sim-relevant hash")
+	}
+	snap := app.Snapshot()
+	dump := struct {
+		SplatRows             [][][]int                `json:"splatRows"`
+		Paint                 shell.PaintBrushSnapshot `json:"paint"`
+		Stack                 shell.StackSnapshot      `json:"stack"`
+		SimRelevantHashBefore string                   `json:"simRelevantHashBefore"`
+		SimRelevantHashAfter  string                   `json:"simRelevantHashAfter"`
+		Cells                 map[string][]int         `json:"cells"`
+	}{
+		SplatRows:             snap.World.SplatRows,
+		Paint:                 snap.Paint,
+		Stack:                 snap.Stack,
+		SimRelevantHashBefore: beforeHash,
+		SimRelevantHashAfter:  app.SimRelevantHash(),
+		Cells: map[string][]int{
+			"overlap_2_2":  snap.World.SplatRows[2][2],
+			"boundary_3_4": snap.World.SplatRows[4][3],
+			"boundary_4_4": snap.World.SplatRows[4][4],
+			"boundary_5_4": snap.World.SplatRows[4][5],
+			"border_0_0":   snap.World.SplatRows[0][0],
+			"border_1_0":   snap.World.SplatRows[0][1],
+		},
+	}
+	body, err := json.MarshalIndent(dump, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "paint-grid-dump.json"), append(body, '\n'), 0o644)
 }
 
 func renderState(outDir, name string, app *shell.App) error {

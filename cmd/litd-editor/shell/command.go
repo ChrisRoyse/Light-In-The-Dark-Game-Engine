@@ -237,6 +237,25 @@ func (c cliffCellCommand) Revert(app *App) error {
 
 func (c cliffCellCommand) Noop() bool { return c.before == c.after }
 
+type splatCellCommand struct {
+	x, y          int
+	before, after sourceform.SplatWeight
+}
+
+func (c splatCellCommand) Label() string {
+	return fmt.Sprintf("splat[%d,%d]:%s->%s", c.x, c.y, splatCellLabel(c.before), splatCellLabel(c.after))
+}
+
+func (c splatCellCommand) Apply(app *App) error {
+	return app.setSplatCellDirect(c.x, c.y, c.after)
+}
+
+func (c splatCellCommand) Revert(app *App) error {
+	return app.setSplatCellDirect(c.x, c.y, c.before)
+}
+
+func (c splatCellCommand) Noop() bool { return c.before == c.after }
+
 type entityMoveCommand struct {
 	id                        uint32
 	beforePos, afterPos       [2]int

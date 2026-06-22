@@ -78,6 +78,14 @@ func RunWindow(state *App, opts WindowOptions) error {
 			markDirty(state.SwitchMode(ModeObjects))
 		case window.Key3:
 			markDirty(state.SwitchMode(ModeMetadata))
+		case window.Key4:
+			markDirty(state.SetPaintLayer(0))
+		case window.Key5:
+			markDirty(state.SetPaintLayer(1))
+		case window.Key6:
+			markDirty(state.SetPaintLayer(2))
+		case window.Key7:
+			markDirty(state.SetPaintLayer(3))
 		case window.KeyQ:
 			markDirty(state.SetTerrainBrush(BrushRaise))
 		case window.KeyW:
@@ -139,9 +147,15 @@ func RunWindow(state *App, opts WindowOptions) error {
 		}
 		x, y, ok := terrainCellAt(state.Snapshot(), mev.Xpos, mev.Ypos)
 		if ok {
-			stroke, err := state.BeginTerrainStroke(x, y)
-			if err == nil {
-				activeStroke = stroke
+			var err error
+			if state.Snapshot().TerrainTool == TerrainToolPaint {
+				err = state.ApplyPaintBrush(x, y)
+			} else {
+				var stroke *TerrainStroke
+				stroke, err = state.BeginTerrainStroke(x, y)
+				if err == nil {
+					activeStroke = stroke
+				}
 			}
 			markDirty(err)
 		}

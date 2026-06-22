@@ -80,6 +80,7 @@ func (a *App) SetTerrainBrush(op BrushOp) error {
 	}
 	a.brush = a.ensureBrush()
 	a.brush.Op = op
+	a.terrainTool = TerrainToolSculpt
 	a.errText = ""
 	a.status = fmt.Sprintf("Brush: %s", a.brush.label())
 	return nil
@@ -194,6 +195,7 @@ func (a *App) ApplyTerrainStroke(points [][2]int) error {
 		a.status = fmt.Sprintf("Brush %s stroke: no cells changed", brush.Op)
 		return nil
 	}
+	a.terrainTool = TerrainToolSculpt
 	a.status = fmt.Sprintf("Brush %s stroke applied (%d point(s))", brush.Op, len(points))
 	return nil
 }

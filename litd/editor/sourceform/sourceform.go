@@ -64,6 +64,15 @@ type CliffCell struct {
 	Ramp  bool
 }
 
+// SplatWeight is one source-form terrain texture blend cell. The four weights
+// are normalized to sum to 255, matching mapdata.SplatWeight.
+type SplatWeight struct {
+	A uint8 `json:"a"`
+	B uint8 `json:"b"`
+	C uint8 `json:"c"`
+	D uint8 `json:"d"`
+}
+
 // Entity is one placed map entity. IDs are stable and sorted on save.
 type Entity struct {
 	ID     uint32
@@ -89,7 +98,7 @@ type World struct {
 	Terrain  Terrain
 	Height   [][]int
 	Cliff    [][]CliffCell
-	Splat    [][]int
+	Splat    [][]SplatWeight
 	Entities []Entity
 
 	files map[string][]byte
@@ -162,7 +171,7 @@ func Load(dir string) (*World, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", cliffFile, err)
 	}
-	splat, err := parseGrid(all[splatFile], terrain.Width, terrain.Height)
+	splat, err := parseSplatGrid(all[splatFile], terrain.Width, terrain.Height)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", splatFile, err)
 	}
@@ -233,6 +242,13 @@ func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
 	if kind == GridCliff {
 		return w.SetCliffCell(x, y, CliffCell{Level: value})
 	}
+	if kind == GridSplat {
+		cell, err := SplatWeightForLayer(value)
+		if err != nil {
+			return err
+		}
+		return w.SetSplatCell(x, y, cell)
+	}
 	grid, err := w.grid(kind)
 	if err != nil {
 		return err
@@ -244,6 +260,25 @@ func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
 		return nil
 	}
 	grid[y][x] = value
+	w.dirty = true
+	return nil
+}
+
+// SetSplatCell edits one texture-blend grid cell.
+func (w *World) SetSplatCell(x, y int, cell SplatWeight) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set splat cell on nil world")
+	}
+	if err := validateSplatCell(cell); err != nil {
+		return err
+	}
+	if y < 0 || y >= len(w.Splat) || x < 0 || x >= len(w.Splat[y]) {
+		return fmt.Errorf("sourceform: splat cell (%d,%d) outside %dx%d grid", x, y, w.Terrain.Width, w.Terrain.Height)
+	}
+	if w.Splat[y][x] == cell {
+		return nil
+	}
+	w.Splat[y][x] = cell
 	w.dirty = true
 	return nil
 }
@@ -367,8 +402,6 @@ func (w *World) grid(kind GridKind) ([][]int, error) {
 	switch kind {
 	case GridHeight:
 		return w.Height, nil
-	case GridSplat:
-		return w.Splat, nil
 	default:
 		return nil, fmt.Errorf("sourceform: unknown grid %q", kind)
 	}
@@ -651,6 +684,63 @@ func parseCliffCell(text string) (CliffCell, error) {
 	return cell, nil
 }
 
+func parseSplatGrid(body []byte, width, height int) ([][]SplatWeight, error) {
+	text := string(body)
+	if strings.HasPrefix(text, "\ufeff") {
+		return nil, fmt.Errorf("UTF-8 BOM is not allowed")
+	}
+	text = strings.TrimSuffix(text, "\n")
+	if text == "" {
+		if height == 0 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("grid is empty, want %d rows", height)
+	}
+	lines := strings.Split(text, "\n")
+	if len(lines) != height {
+		return nil, fmt.Errorf("got %d rows, want %d", len(lines), height)
+	}
+	grid := make([][]SplatWeight, height)
+	for y, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) != width {
+			return nil, fmt.Errorf("row %d has %d columns, want %d", y, len(fields), width)
+		}
+		row := make([]SplatWeight, width)
+		for x, f := range fields {
+			cell, err := parseSplatCell(f)
+			if err != nil {
+				return nil, fmt.Errorf("row %d col %d: %w", y, x, err)
+			}
+			row[x] = cell
+		}
+		grid[y] = row
+	}
+	return grid, nil
+}
+
+func parseSplatCell(text string) (SplatWeight, error) {
+	parts := strings.Split(text, ",")
+	if len(parts) != 4 {
+		return SplatWeight{}, fmt.Errorf("splat %q must have four comma-separated weights", text)
+	}
+	var vals [4]uint8
+	sum := 0
+	for i, p := range parts {
+		v, err := strconv.ParseUint(p, 10, 8)
+		if err != nil {
+			return SplatWeight{}, fmt.Errorf("splat %q: %w", text, err)
+		}
+		vals[i] = uint8(v)
+		sum += int(v)
+	}
+	cell := SplatWeight{A: vals[0], B: vals[1], C: vals[2], D: vals[3]}
+	if sum != 255 {
+		return SplatWeight{}, fmt.Errorf("splat %q weights sum to %d, want 255", text, sum)
+	}
+	return cell, nil
+}
+
 func rejectUndecoded(md toml.MetaData) error {
 	if undecoded := md.Undecoded(); len(undecoded) > 0 {
 		return fmt.Errorf("unsupported key %q", strings.Join([]string(undecoded[0]), "."))
@@ -671,7 +761,7 @@ func validateWorld(w *World) error {
 	if err := validateCliffGrid(w.Cliff, w.Terrain.Width, w.Terrain.Height); err != nil {
 		return err
 	}
-	if err := validateGrid(w.Splat, w.Terrain.Width, w.Terrain.Height, "splat"); err != nil {
+	if err := validateSplatGrid(w.Splat, w.Terrain.Width, w.Terrain.Height); err != nil {
 		return err
 	}
 	seen := map[uint32]bool{}
@@ -726,6 +816,68 @@ func validateCliffCell(cell CliffCell) error {
 		return fmt.Errorf("sourceform: cliff level %d outside 0..126", cell.Level)
 	}
 	return nil
+}
+
+func validateSplatGrid(grid [][]SplatWeight, width, height int) error {
+	if len(grid) != height {
+		return fmt.Errorf("sourceform: splat grid has %d rows, want %d", len(grid), height)
+	}
+	for y, row := range grid {
+		if len(row) != width {
+			return fmt.Errorf("sourceform: splat grid row %d has %d columns, want %d", y, len(row), width)
+		}
+		for x, cell := range row {
+			if err := validateSplatCell(cell); err != nil {
+				return fmt.Errorf("sourceform: splat cell (%d,%d): %w", x, y, err)
+			}
+		}
+	}
+	return nil
+}
+
+func validateSplatCell(cell SplatWeight) error {
+	sum := int(cell.A) + int(cell.B) + int(cell.C) + int(cell.D)
+	if sum != 255 {
+		return fmt.Errorf("sourceform: splat weights sum to %d, want 255", sum)
+	}
+	return nil
+}
+
+// SplatCell returns one texture-blend cell.
+func (w *World) SplatCell(x, y int) (SplatWeight, error) {
+	if w == nil {
+		return SplatWeight{}, fmt.Errorf("sourceform: splat cell on nil world")
+	}
+	if y < 0 || y >= len(w.Splat) || x < 0 || x >= len(w.Splat[y]) {
+		return SplatWeight{}, fmt.Errorf("sourceform: splat cell (%d,%d) outside %dx%d grid", x, y, w.Terrain.Width, w.Terrain.Height)
+	}
+	return w.Splat[y][x], nil
+}
+
+// SplatWeightForLayer returns a fully painted one-hot splat cell.
+func SplatWeightForLayer(layer int) (SplatWeight, error) {
+	if layer < 0 || layer > 3 {
+		return SplatWeight{}, fmt.Errorf("sourceform: splat layer %d outside 0..3", layer)
+	}
+	var weights [4]uint8
+	weights[layer] = 255
+	return SplatWeight{A: weights[0], B: weights[1], C: weights[2], D: weights[3]}, nil
+}
+
+// SplatWeightAt returns one of the four normalized weights by layer index.
+func SplatWeightAt(cell SplatWeight, layer int) (uint8, error) {
+	switch layer {
+	case 0:
+		return cell.A, nil
+	case 1:
+		return cell.B, nil
+	case 2:
+		return cell.C, nil
+	case 3:
+		return cell.D, nil
+	default:
+		return 0, fmt.Errorf("sourceform: splat layer %d outside 0..3", layer)
+	}
 }
 
 func validateCliffRamps(grid [][]CliffCell) error {
@@ -804,7 +956,7 @@ func (w *World) renderFiles() map[string][]byte {
 	files[terrainFile] = renderTerrain(w.Terrain)
 	files[heightFile] = renderGrid(w.Height)
 	files[cliffFile] = renderCliffGrid(w.Cliff)
-	files[splatFile] = renderGrid(w.Splat)
+	files[splatFile] = renderSplatGrid(w.Splat)
 	files[entitiesFile] = renderEntities(w.Entities)
 	return files
 }
@@ -861,6 +1013,26 @@ func renderCliffGrid(grid [][]CliffCell) []byte {
 				b.WriteByte('r')
 			}
 			b.WriteString(strconv.Itoa(cell.Level))
+		}
+		b.WriteByte('\n')
+	}
+	return []byte(b.String())
+}
+
+func renderSplatGrid(grid [][]SplatWeight) []byte {
+	var b strings.Builder
+	for _, row := range grid {
+		for x, cell := range row {
+			if x > 0 {
+				b.WriteByte(' ')
+			}
+			b.WriteString(strconv.Itoa(int(cell.A)))
+			b.WriteByte(',')
+			b.WriteString(strconv.Itoa(int(cell.B)))
+			b.WriteByte(',')
+			b.WriteString(strconv.Itoa(int(cell.C)))
+			b.WriteByte(',')
+			b.WriteString(strconv.Itoa(int(cell.D)))
 		}
 		b.WriteByte('\n')
 	}

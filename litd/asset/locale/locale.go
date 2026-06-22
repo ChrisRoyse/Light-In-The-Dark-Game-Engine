@@ -77,6 +77,9 @@ const (
 	EditorFieldEntities           Key = "editor.field.entities"
 	EditorFieldBrush              Key = "editor.field.brush"
 	EditorFieldCliff              Key = "editor.field.cliff"
+	EditorFieldSplat              Key = "editor.field.splat"
+	EditorFieldTool               Key = "editor.field.tool"
+	EditorFieldPaint              Key = "editor.field.paint"
 	EditorFieldID                 Key = "editor.field.id"
 	EditorFieldName               Key = "editor.field.name"
 	EditorFieldEngine             Key = "editor.field.engine"
@@ -150,6 +153,9 @@ var requiredKeys = []string{
 	string(EditorFieldEntities),
 	string(EditorFieldBrush),
 	string(EditorFieldCliff),
+	string(EditorFieldSplat),
+	string(EditorFieldTool),
+	string(EditorFieldPaint),
 	string(EditorFieldID),
 	string(EditorFieldName),
 	string(EditorFieldEngine),

@@ -131,7 +131,7 @@ func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
 		Terrain: Terrain{Width: 3, Height: 1, Tileset: "test"},
 		Height:  [][]int{{0, 0, 0}},
 		Cliff:   [][]CliffCell{{{Level: 0}, {Level: 0, Ramp: true}, {Level: 1}}},
-		Splat:   [][]int{{0, 0, 0}},
+		Splat:   [][]SplatWeight{{{A: 255}, {A: 255}, {A: 255}}},
 	}
 	if err := w.Save(dir); err != nil {
 		t.Fatal(err)
@@ -172,13 +172,52 @@ func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(cliffFile)), []byte("0 r0 0\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(splatFile)), []byte("0 0 0\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(splatFile)), []byte("255,0,0,0 255,0,0,0 255,0,0,0\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	_, err = Load(bad)
 	t.Logf("FSV invalid ramp load: row=%q err=%v", "0 r0 0", err)
 	if err == nil || !strings.Contains(err.Error(), "ramp at (1,0)") {
 		t.Fatalf("invalid ramp should fail closed, got %v", err)
+	}
+}
+
+func TestSourceFormSplatWeightsRoundTripFSV(t *testing.T) {
+	dir := t.TempDir()
+	writeSyntheticWorld(t, dir, 1)
+	w, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetSplatCell(0, 0, SplatWeight{A: 10, B: 20, C: 30, D: 195}); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Save(""); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(splatFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV splat source bytes: %q", strings.TrimSpace(string(body)))
+	t.Logf("FSV splat cell after load: %+v", loaded.Splat[0][0])
+	if strings.TrimSpace(string(body)) != "10,20,30,195" || loaded.Splat[0][0] != (SplatWeight{A: 10, B: 20, C: 30, D: 195}) {
+		t.Fatalf("splat did not round-trip canonically: body=%q cell=%+v", string(body), loaded.Splat[0][0])
+	}
+
+	bad := t.TempDir()
+	writeSyntheticWorld(t, bad, 1)
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(splatFile)), []byte("10,20,30,40\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = Load(bad)
+	t.Logf("FSV invalid splat load: row=%q err=%v", "10,20,30,40", err)
+	if err == nil || !strings.Contains(err.Error(), "weights sum to 100, want 255") {
+		t.Fatalf("invalid splat should fail closed, got %v", err)
 	}
 }
 
@@ -438,7 +477,7 @@ func writeSyntheticWorld(t *testing.T, dir string, nEntities int) {
 		terrainFile:  renderTerrain(terrain),
 		heightFile:   []byte("0\n"),
 		cliffFile:    []byte("0\n"),
-		splatFile:    []byte("0\n"),
+		splatFile:    []byte("255,0,0,0\n"),
 		entitiesFile: renderEntities(entities),
 	}
 	for rel, body := range files {

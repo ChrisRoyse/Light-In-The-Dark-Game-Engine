@@ -36,6 +36,8 @@ type App struct {
 	confirm     *Confirm
 	commands    *CommandStack
 	brush       TerrainBrush
+	terrainTool TerrainTool
+	paint       PaintBrush
 }
 
 type Confirm struct {
@@ -59,6 +61,8 @@ type Snapshot struct {
 	World       WorldSnapshot        `json:"world"`
 	Stack       StackSnapshot        `json:"stack"`
 	Brush       TerrainBrushSnapshot `json:"brush"`
+	TerrainTool TerrainTool          `json:"terrainTool"`
+	Paint       PaintBrushSnapshot   `json:"paint"`
 }
 
 type WorldSnapshot struct {
@@ -69,14 +73,24 @@ type WorldSnapshot struct {
 	Entities    int        `json:"entities"`
 	HeightCell  int        `json:"heightCell"`
 	CliffCell   string     `json:"cliffCell"`
+	SplatCell   string     `json:"splatCell"`
 	SeedPolicy  string     `json:"seedPolicy"`
 	EngineRange string     `json:"engineRange"`
 	HeightRows  [][]int    `json:"heightRows,omitempty"`
 	CliffRows   [][]string `json:"cliffRows,omitempty"`
+	SplatRows   [][][]int  `json:"splatRows,omitempty"`
 }
 
 func New(table *locale.Table) *App {
-	return &App{table: table, mode: ModeTerrain, status: must(table, locale.EditorStatusReady), commands: NewCommandStack(CommandStackLimit), brush: DefaultTerrainBrush()}
+	return &App{
+		table:       table,
+		mode:        ModeTerrain,
+		status:      must(table, locale.EditorStatusReady),
+		commands:    NewCommandStack(CommandStackLimit),
+		brush:       DefaultTerrainBrush(),
+		terrainTool: TerrainToolSculpt,
+		paint:       DefaultPaintBrush(),
+	}
 }
 
 func Modes() []Mode { return append([]Mode(nil), allModes...) }
@@ -267,6 +281,9 @@ func (a *App) Snapshot() Snapshot {
 		"fieldEntities":     must(a.table, locale.EditorFieldEntities),
 		"fieldBrush":        must(a.table, locale.EditorFieldBrush),
 		"fieldCliff":        must(a.table, locale.EditorFieldCliff),
+		"fieldSplat":        must(a.table, locale.EditorFieldSplat),
+		"fieldTool":         must(a.table, locale.EditorFieldTool),
+		"fieldPaint":        must(a.table, locale.EditorFieldPaint),
 		"fieldID":           must(a.table, locale.EditorFieldID),
 		"fieldName":         must(a.table, locale.EditorFieldName),
 		"fieldEngine":       must(a.table, locale.EditorFieldEngine),
@@ -300,6 +317,8 @@ func (a *App) Snapshot() Snapshot {
 		Labels:      labels,
 		Stack:       a.StackSnapshot(),
 		Brush:       a.BrushSnapshot(),
+		TerrainTool: a.ensureTerrainTool(),
+		Paint:       a.PaintSnapshot(),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -312,12 +331,16 @@ func (a *App) Snapshot() Snapshot {
 			EngineRange: a.world.Metadata.Engine,
 			HeightRows:  cloneIntGrid(a.world.Height),
 			CliffRows:   cliffGridStrings(a.world.Cliff),
+			SplatRows:   splatGridWeights(a.world.Splat),
 		}
 		if len(a.world.Height) > 1 && len(a.world.Height[1]) > 1 {
 			s.World.HeightCell = a.world.Height[1][1]
 		}
 		if len(a.world.Cliff) > 1 && len(a.world.Cliff[1]) > 1 {
 			s.World.CliffCell = cliffCellLabel(a.world.Cliff[1][1])
+		}
+		if len(a.world.Splat) > 1 && len(a.world.Splat[1]) > 1 {
+			s.World.SplatCell = splatCellLabel(a.world.Splat[1][1])
 		}
 	}
 	return s
@@ -366,6 +389,13 @@ func (a *App) setCliffCellDirect(x, y int, cell sourceform.CliffCell) error {
 	return a.world.SetCliffCell(x, y, cell)
 }
 
+func (a *App) setSplatCellDirect(x, y int, cell sourceform.SplatWeight) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.SetSplatCell(x, y, cell)
+}
+
 func (a *App) moveEntityDirect(id uint32, pos [2]int, facing int) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
@@ -395,7 +425,11 @@ func gridCellValue(w *sourceform.World, kind sourceform.GridKind, x, y int) (int
 		}
 		return cell.Level, nil
 	case sourceform.GridSplat:
-		grid = w.Splat
+		cell, err := w.SplatCell(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return splatDominantLayer(cell), nil
 	default:
 		return 0, fmt.Errorf("editor shell: unknown grid %q", kind)
 	}
@@ -410,6 +444,13 @@ func cliffCellValue(w *sourceform.World, x, y int) (sourceform.CliffCell, error)
 		return sourceform.CliffCell{}, errors.New("editor shell: no project loaded")
 	}
 	return w.CliffCell(x, y)
+}
+
+func splatCellValue(w *sourceform.World, x, y int) (sourceform.SplatWeight, error) {
+	if w == nil {
+		return sourceform.SplatWeight{}, errors.New("editor shell: no project loaded")
+	}
+	return w.SplatCell(x, y)
 }
 
 func entityPlacement(w *sourceform.World, id uint32) ([2]int, int, error) {
@@ -444,6 +485,16 @@ func defaultWorld(name string) *sourceform.World {
 		}
 		return rows
 	}
+	splatGrid := func() [][]sourceform.SplatWeight {
+		rows := make([][]sourceform.SplatWeight, 8)
+		for y := range rows {
+			rows[y] = make([]sourceform.SplatWeight, 8)
+			for x := range rows[y] {
+				rows[y][x] = sourceform.SplatWeight{A: 255}
+			}
+		}
+		return rows
+	}
 	return &sourceform.World{
 		Metadata: sourceform.Metadata{
 			Format:      1,
@@ -458,7 +509,7 @@ func defaultWorld(name string) *sourceform.World {
 		Terrain: sourceform.Terrain{Width: 8, Height: 8, Tileset: "vigil-lowlands"},
 		Height:  grid(),
 		Cliff:   cliffGrid(),
-		Splat:   grid(),
+		Splat:   splatGrid(),
 		Entities: []sourceform.Entity{
 			{ID: 1, Type: "vigil-footman", Player: 0, Pos: [2]int{4096, 4096}, Facing: 0},
 		},
@@ -484,11 +535,45 @@ func cliffGridStrings(grid [][]sourceform.CliffCell) [][]string {
 	return out
 }
 
+func cloneSplatGrid(grid [][]sourceform.SplatWeight) [][]sourceform.SplatWeight {
+	out := make([][]sourceform.SplatWeight, len(grid))
+	for y := range grid {
+		out[y] = append([]sourceform.SplatWeight(nil), grid[y]...)
+	}
+	return out
+}
+
+func splatGridWeights(grid [][]sourceform.SplatWeight) [][][]int {
+	out := make([][][]int, len(grid))
+	for y := range grid {
+		out[y] = make([][]int, len(grid[y]))
+		for x, cell := range grid[y] {
+			out[y][x] = []int{int(cell.A), int(cell.B), int(cell.C), int(cell.D)}
+		}
+	}
+	return out
+}
+
 func cliffCellLabel(cell sourceform.CliffCell) string {
 	if cell.Ramp {
 		return fmt.Sprintf("r%d", cell.Level)
 	}
 	return fmt.Sprint(cell.Level)
+}
+
+func splatCellLabel(cell sourceform.SplatWeight) string {
+	return fmt.Sprintf("%d,%d,%d,%d", cell.A, cell.B, cell.C, cell.D)
+}
+
+func splatDominantLayer(cell sourceform.SplatWeight) int {
+	weights := []uint8{cell.A, cell.B, cell.C, cell.D}
+	best := 0
+	for i := 1; i < len(weights); i++ {
+		if weights[i] > weights[best] {
+			best = i
+		}
+	}
+	return best
 }
 
 func must(t *locale.Table, key locale.Key) string {

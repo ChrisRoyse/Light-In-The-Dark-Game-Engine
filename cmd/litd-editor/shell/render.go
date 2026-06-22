@@ -109,6 +109,11 @@ func drawTerrain(img *image.RGBA, snap Snapshot) {
 		for x := 0; x < len(rows[y]) && x < 8; x++ {
 			h := rows[y][x]
 			c := heightColor(h)
+			if y < len(snap.World.SplatRows) && x < len(snap.World.SplatRows[y]) {
+				if sc, ok := splatColor(snap.World.SplatRows[y][x]); ok {
+					c = sc
+				}
+			}
 			fill(img, terrainGridX+x*terrainGridStepX, terrainGridY+y*terrainGridStepY, terrainGridCellW, terrainGridCellH, c)
 			if y < len(snap.World.CliffRows) && x < len(snap.World.CliffRows[y]) && strings.HasPrefix(snap.World.CliffRows[y][x], "r") {
 				fill(img, terrainGridX+x*terrainGridStepX+terrainGridCellW-7, terrainGridY+y*terrainGridStepY, 7, terrainGridCellH, brass)
@@ -117,8 +122,20 @@ func drawTerrain(img *image.RGBA, snap Snapshot) {
 	}
 	text(img, 640, 226, snap.Labels["fieldCell"]+"[1,1]="+fmt.Sprint(snap.World.HeightCell), brass)
 	text(img, 640, 258, snap.Labels["fieldCliff"]+"[1,1]="+snap.World.CliffCell, muted)
-	text(img, 640, 306, snap.Labels["fieldBrush"]+": "+snap.Brush.Label, ink)
-	text(img, 640, 338, snap.Labels["hintTerrain"], muted)
+	text(img, 640, 290, snap.Labels["fieldSplat"]+"[1,1]="+snap.World.SplatCell, muted)
+	text(img, 640, 338, snap.Labels["fieldTool"]+": "+string(snap.TerrainTool), brass)
+	text(img, 640, 370, snap.Labels["fieldBrush"]+": "+snap.Brush.Label, ink)
+	text(img, 640, 402, snap.Labels["fieldPaint"]+": "+snap.Paint.Label, ink)
+	for i, layer := range snap.Paint.Palette {
+		x := 640 + i*72
+		y := 442
+		fill(img, x, y, 42, 24, paintLayerColor(layer.Layer))
+		if layer.Active {
+			fill(img, x, y+26, 42, 3, brass)
+		}
+		text(img, x+50, y+18, string(rune('A'+layer.Layer)), muted)
+	}
+	text(img, 640, 502, snap.Labels["hintTerrain"], muted)
 }
 
 func drawObjects(img *image.RGBA, snap Snapshot) {
@@ -170,6 +187,37 @@ func heightColor(height int) color.RGBA {
 	}
 	v := 84 + clampInt(height*12, 0, 132)
 	return color.RGBA{R: 70, G: uint8(v), B: 83, A: 255}
+}
+
+func splatColor(weights []int) (color.RGBA, bool) {
+	if len(weights) != 4 {
+		return color.RGBA{}, false
+	}
+	if weights[0] == 255 && weights[1] == 0 && weights[2] == 0 && weights[3] == 0 {
+		return color.RGBA{}, false
+	}
+	best := 0
+	for i := 1; i < len(weights); i++ {
+		if weights[i] > weights[best] {
+			best = i
+		}
+	}
+	return paintLayerColor(best), true
+}
+
+func paintLayerColor(layer int) color.RGBA {
+	switch layer {
+	case 0:
+		return color.RGBA{R: 74, G: 138, B: 83, A: 255}
+	case 1:
+		return color.RGBA{R: 143, G: 125, B: 79, A: 255}
+	case 2:
+		return color.RGBA{R: 82, G: 124, B: 140, A: 255}
+	case 3:
+		return color.RGBA{R: 154, G: 93, B: 79, A: 255}
+	default:
+		return panelAlt
+	}
 }
 
 func clampInt(v, lo, hi int) int {
