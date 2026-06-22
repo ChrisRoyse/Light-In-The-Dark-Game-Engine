@@ -27,18 +27,20 @@ const (
 var allModes = []Mode{ModeTerrain, ModeObjects, ModeMetadata}
 
 type App struct {
-	table       *locale.Table
-	world       *sourceform.World
-	projectPath string
-	mode        Mode
-	status      string
-	errText     string
-	confirm     *Confirm
-	commands    *CommandStack
-	brush       TerrainBrush
-	terrainTool TerrainTool
-	paint       PaintBrush
-	cliffFlags  []CliffFlagSnapshot
+	table           *locale.Table
+	world           *sourceform.World
+	projectPath     string
+	mode            Mode
+	status          string
+	errText         string
+	confirm         *Confirm
+	commands        *CommandStack
+	brush           TerrainBrush
+	terrainTool     TerrainTool
+	paint           PaintBrush
+	cliffFlags      []CliffFlagSnapshot
+	objectPalette   []ObjectPaletteItem
+	objectSelection ObjectSelection
 }
 
 type Confirm struct {
@@ -65,6 +67,7 @@ type Snapshot struct {
 	TerrainTool TerrainTool          `json:"terrainTool"`
 	Paint       PaintBrushSnapshot   `json:"paint"`
 	CliffFlags  []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
+	Objects     ObjectSnapshot       `json:"objects"`
 }
 
 type WorldSnapshot struct {
@@ -73,6 +76,7 @@ type WorldSnapshot struct {
 	Width       int        `json:"width"`
 	Height      int        `json:"height"`
 	Entities    int        `json:"entities"`
+	Doodads     int        `json:"doodads"`
 	HeightCell  int        `json:"heightCell"`
 	CliffCell   string     `json:"cliffCell"`
 	SplatCell   string     `json:"splatCell"`
@@ -217,11 +221,23 @@ func (a *App) MoveEntity(id uint32, pos [2]int, facing int) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
 	}
-	beforePos, beforeFacing, err := entityPlacement(a.world, id)
+	beforePos, beforeRotation, beforeScale, err := entityTransform(a.world, id)
 	if err != nil {
 		return err
 	}
-	return a.executeCommand(entityMoveCommand{id: id, beforePos: beforePos, beforeFacing: beforeFacing, afterPos: pos, afterFacing: facing})
+	return a.executeCommand(entityMoveCommand{id: id, beforePos: beforePos, beforeRotation: beforeRotation, beforeScale: beforeScale, afterPos: pos, afterRotation: facing, afterScale: beforeScale})
+}
+
+func (a *App) TransformEntity(id uint32, pos [2]int, rotation, scale int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	beforePos, beforeRotation, beforeScale, err := entityTransform(a.world, id)
+	if err != nil {
+		return err
+	}
+	scale = ClampPlacementScale(scale)
+	return a.executeCommand(entityMoveCommand{id: id, beforePos: beforePos, beforeRotation: beforeRotation, beforeScale: beforeScale, afterPos: pos, afterRotation: rotation, afterScale: scale})
 }
 
 func (a *App) SetMetadataName(name string) error {
@@ -283,6 +299,10 @@ func (a *App) Snapshot() Snapshot {
 		"statusPrefix":      must(a.table, locale.EditorStatusPrefix),
 		"fieldCell":         must(a.table, locale.EditorFieldCell),
 		"fieldEntities":     must(a.table, locale.EditorFieldEntities),
+		"fieldDoodads":      must(a.table, locale.EditorFieldDoodads),
+		"fieldPalette":      must(a.table, locale.EditorFieldPalette),
+		"fieldSelection":    must(a.table, locale.EditorFieldSelection),
+		"fieldOverride":     must(a.table, locale.EditorFieldOverride),
 		"fieldBrush":        must(a.table, locale.EditorFieldBrush),
 		"fieldCliff":        must(a.table, locale.EditorFieldCliff),
 		"fieldSplat":        must(a.table, locale.EditorFieldSplat),
@@ -325,6 +345,7 @@ func (a *App) Snapshot() Snapshot {
 		TerrainTool: a.ensureTerrainTool(),
 		Paint:       a.PaintSnapshot(),
 		CliffFlags:  cloneCliffFlags(a.cliffFlags),
+		Objects:     a.ObjectSnapshot(),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -333,6 +354,7 @@ func (a *App) Snapshot() Snapshot {
 			Width:       a.world.Terrain.Width,
 			Height:      a.world.Terrain.Height,
 			Entities:    len(a.world.Entities),
+			Doodads:     len(a.world.Doodads),
 			SeedPolicy:  a.world.Metadata.SeedPolicy,
 			EngineRange: a.world.Metadata.Engine,
 			HeightRows:  cloneIntGrid(a.world.Height),
@@ -410,11 +432,46 @@ func (a *App) setSplatCellDirect(x, y int, cell sourceform.SplatWeight) error {
 	return a.world.SetSplatCell(x, y, cell)
 }
 
-func (a *App) moveEntityDirect(id uint32, pos [2]int, facing int) error {
+func (a *App) moveEntityDirect(id uint32, pos [2]int, rotation, scale int) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
 	}
-	return a.world.MoveEntity(id, pos, facing)
+	return a.world.SetEntityTransform(id, pos, rotation, scale)
+}
+
+func (a *App) addEntityDirect(ent sourceform.Entity) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.AddEntity(ent)
+}
+
+func (a *App) deleteEntityDirect(id uint32) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.DeleteEntity(id)
+}
+
+func (a *App) addDoodadDirect(d sourceform.Doodad) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.AddDoodad(d)
+}
+
+func (a *App) moveDoodadDirect(id uint32, pos [2]int, rotation, scale int) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.SetDoodadTransform(id, pos, rotation, scale)
+}
+
+func (a *App) deleteDoodadDirect(id uint32) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.DeleteDoodad(id)
 }
 
 func (a *App) setMetadataNameDirect(name string) error {
@@ -467,16 +524,16 @@ func splatCellValue(w *sourceform.World, x, y int) (sourceform.SplatWeight, erro
 	return w.SplatCell(x, y)
 }
 
-func entityPlacement(w *sourceform.World, id uint32) ([2]int, int, error) {
+func entityTransform(w *sourceform.World, id uint32) ([2]int, int, int, error) {
 	if w == nil {
-		return [2]int{}, 0, errors.New("editor shell: no project loaded")
+		return [2]int{}, 0, 0, errors.New("editor shell: no project loaded")
 	}
 	for _, ent := range w.Entities {
 		if ent.ID == id {
-			return ent.Pos, ent.Facing, nil
+			return ent.Pos, ent.Rotation, ent.Scale, nil
 		}
 	}
-	return [2]int{}, 0, fmt.Errorf("editor shell: entity id %d not found", id)
+	return [2]int{}, 0, 0, fmt.Errorf("editor shell: entity id %d not found", id)
 }
 
 func (s Snapshot) JSON() string {
@@ -525,7 +582,7 @@ func defaultWorld(name string) *sourceform.World {
 		Cliff:   cliffGrid(),
 		Splat:   splatGrid(),
 		Entities: []sourceform.Entity{
-			{ID: 1, Type: "vigil-footman", Player: 0, Pos: [2]int{4096, 4096}, Facing: 0},
+			{ID: 1, Type: "footman", Player: 0, Pos: [2]int{4096, 4096}, Rotation: 0, Scale: sourceform.PlacementScaleDefault},
 		},
 	}
 }

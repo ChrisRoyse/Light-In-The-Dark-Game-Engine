@@ -1,0 +1,3 @@
+# one element per line; ordered by id; ids never reused
+doodads = [
+]

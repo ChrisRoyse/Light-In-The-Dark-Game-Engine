@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/cmd/litd-editor/shell"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
 
 func main() {
@@ -27,6 +29,9 @@ func main() {
 		fatalf("load locale: %v", err)
 	}
 	app := shell.New(table)
+	if err := app.LoadObjectPalette(os.DirFS("data")); err != nil {
+		fatalf("load object palette: %v", err)
+	}
 	if *autotest {
 		var err error
 		if *capture {
@@ -124,6 +129,10 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runCliffFSV(app, outDir, cliffState); err != nil {
 		return err
 	}
+	objectState := newObjectFSVState()
+	if err := runObjectFSV(app, outDir, objectState); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -196,6 +205,10 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 	for _, step := range cliffWindowSteps(app, outDir, cliffState) {
 		steps = append(steps, step)
 	}
+	objectState := newObjectFSVState()
+	for _, step := range objectWindowSteps(app, outDir, objectState) {
+		steps = append(steps, step)
+	}
 	if err := shell.RunWindowCaptureSequence(app, steps); err != nil {
 		return err
 	}
@@ -206,6 +219,9 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 		return err
 	}
 	if err := writeCliffDump(app, outDir, cliffState); err != nil {
+		return err
+	}
+	if err := writeObjectDump(app, outDir, objectState); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -732,6 +748,340 @@ func writePaintDump(app *shell.App, outDir, beforeHash, afterHash string, stackO
 		return err
 	}
 	return os.WriteFile(filepath.Join(outDir, "paint-grid-dump.json"), append(body, '\n'), 0o644)
+}
+
+const objectFSVCellWorld = 4096
+
+type objectFSVState struct {
+	Rejected         objectRejectRecord        `json:"rejected"`
+	PlacedUnits      []objectPlacementRecord   `json:"placedUnits"`
+	PlacedDoodads    []objectPlacementRecord   `json:"placedDoodads"`
+	TransformedUnit  objectTransformRecord     `json:"transformedUnit"`
+	ScaleClamp       objectScaleClampRecord    `json:"scaleClamp"`
+	DeleteUndo       objectDeleteUndoRecord    `json:"deleteUndo"`
+	Palette          []shell.ObjectPaletteItem `json:"palette"`
+	Stack            shell.StackSnapshot       `json:"stack"`
+	SavedSourceFiles map[string]string         `json:"savedSourceFiles"`
+}
+
+type objectRejectRecord struct {
+	BeforeUnits   int    `json:"beforeUnits"`
+	BeforeDoodads int    `json:"beforeDoodads"`
+	AfterUnits    int    `json:"afterUnits"`
+	AfterDoodads  int    `json:"afterDoodads"`
+	Cell          [2]int `json:"cell"`
+	Error         string `json:"error"`
+	Status        string `json:"status"`
+}
+
+type objectPlacementRecord struct {
+	Kind     string `json:"kind"`
+	ID       uint32 `json:"id"`
+	Type     string `json:"type"`
+	Owner    int    `json:"owner,omitempty"`
+	Cell     [2]int `json:"cell"`
+	Pos      [2]int `json:"pos"`
+	Rotation int    `json:"rotation"`
+	Scale    int    `json:"scale"`
+	Override bool   `json:"override,omitempty"`
+}
+
+type objectTransformRecord struct {
+	Before objectPlacementRecord `json:"before"`
+	After  objectPlacementRecord `json:"after"`
+}
+
+type objectScaleClampRecord struct {
+	DoodadID       uint32                `json:"doodadID"`
+	RequestedScale int                   `json:"requestedScale"`
+	Before         objectPlacementRecord `json:"before"`
+	After          objectPlacementRecord `json:"after"`
+}
+
+type objectDeleteUndoRecord struct {
+	BeforeDelete      objectPlacementRecord `json:"beforeDelete"`
+	AfterDeleteExists bool                  `json:"afterDeleteExists"`
+	AfterUndo         objectPlacementRecord `json:"afterUndo"`
+	RestoredIdentical bool                  `json:"restoredIdentical"`
+}
+
+type editorObjectStep struct {
+	Name  string
+	Apply func() error
+}
+
+func newObjectFSVState() *objectFSVState {
+	return &objectFSVState{SavedSourceFiles: map[string]string{}}
+}
+
+func objectSteps(app *shell.App, state *objectFSVState) []editorObjectStep {
+	return []editorObjectStep{
+		{
+			Name: "objects-reject-unwalkable",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
+					return err
+				}
+				if err := app.SetTerrainBrush(shell.BrushCliffRaise); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(0); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.ApplyTerrainBrush(7, 7); err != nil {
+					return err
+				}
+				if err := app.SwitchMode(shell.ModeObjects); err != nil {
+					return err
+				}
+				before := app.Snapshot()
+				_, err := app.PlaceUnitCell("footman", 3, 7, 7, 0, shell.ClampPlacementScale(1000), false)
+				after := app.Snapshot()
+				if err == nil {
+					return fmt.Errorf("object FSV: unwalkable unit placement unexpectedly succeeded")
+				}
+				state.Rejected = objectRejectRecord{
+					BeforeUnits:   before.World.Entities,
+					BeforeDoodads: before.World.Doodads,
+					AfterUnits:    after.World.Entities,
+					AfterDoodads:  after.World.Doodads,
+					Cell:          [2]int{7, 7},
+					Error:         err.Error(),
+					Status:        after.Status,
+				}
+				return nil
+			},
+		},
+		{
+			Name: "objects-place-units",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeObjects); err != nil {
+					return err
+				}
+				u1, err := app.PlaceUnitCell("footman", 0, 1, 2, 1024, 1000, false)
+				if err != nil {
+					return err
+				}
+				u2, err := app.PlaceUnitCell("archer", 1, 2, 2, 8192, 1250, false)
+				if err != nil {
+					return err
+				}
+				u3, err := app.PlaceUnitCell("footman", 2, 7, 7, 16384, 900, true)
+				if err != nil {
+					return err
+				}
+				before := entityRecord(mustEntityRecord(app, u2.ID), false)
+				if err := app.TransformEntity(u2.ID, [2]int{5 * objectFSVCellWorld, 2 * objectFSVCellWorld}, 24576, 1100); err != nil {
+					return err
+				}
+				after := entityRecord(mustEntityRecord(app, u2.ID), false)
+				state.PlacedUnits = []objectPlacementRecord{
+					entityRecord(u1, false),
+					after,
+					entityRecord(u3, true),
+				}
+				state.TransformedUnit = objectTransformRecord{Before: before, After: after}
+				return nil
+			},
+		},
+		{
+			Name: "objects-place-doodads",
+			Apply: func() error {
+				placements := []struct {
+					typ      string
+					x, y     int
+					rotation int
+					scale    int
+				}{
+					{"kaykit-hexagon/tree_single_A.glb", 0, 3, 0, 1000},
+					{"kaykit-hexagon/rock_single_A.glb", 1, 3, 4096, 750},
+					{"kaykit-hexagon/barrel.glb", 2, 3, 8192, 1250},
+					{"kaykit-hexagon/tree_single_A.glb", 3, 3, 32768, 500},
+					{"kaykit-hexagon/rock_single_A.glb", 4, 3, 65535, 1500},
+				}
+				state.PlacedDoodads = state.PlacedDoodads[:0]
+				for _, p := range placements {
+					d, err := app.PlaceDoodadCell(p.typ, p.x, p.y, p.rotation, p.scale)
+					if err != nil {
+						return err
+					}
+					state.PlacedDoodads = append(state.PlacedDoodads, doodadRecord(d))
+				}
+				return nil
+			},
+		},
+		{
+			Name: "objects-scale-clamp",
+			Apply: func() error {
+				if len(state.PlacedDoodads) == 0 {
+					return fmt.Errorf("object FSV: scale clamp requires placed doodads")
+				}
+				id := state.PlacedDoodads[0].ID
+				before := mustDoodadRecord(app, id)
+				if err := app.TransformDoodad(id, before.Pos, before.Rotation, -25); err != nil {
+					return err
+				}
+				after := mustDoodadRecord(app, id)
+				state.ScaleClamp = objectScaleClampRecord{
+					DoodadID:       id,
+					RequestedScale: -25,
+					Before:         doodadRecord(before),
+					After:          doodadRecord(after),
+				}
+				for i := range state.PlacedDoodads {
+					if state.PlacedDoodads[i].ID == id {
+						state.PlacedDoodads[i] = doodadRecord(after)
+					}
+				}
+				return nil
+			},
+		},
+		{
+			Name: "objects-delete-undo",
+			Apply: func() error {
+				if len(state.PlacedDoodads) < 3 {
+					return fmt.Errorf("object FSV: delete/undo requires at least three doodads")
+				}
+				id := state.PlacedDoodads[2].ID
+				before := mustDoodadRecord(app, id)
+				if err := app.DeleteDoodad(id); err != nil {
+					return err
+				}
+				_, err := doodadRecordByID(app.Snapshot(), id)
+				existsAfterDelete := err == nil
+				if err := app.Undo(); err != nil {
+					return err
+				}
+				after := mustDoodadRecord(app, id)
+				state.DeleteUndo = objectDeleteUndoRecord{
+					BeforeDelete:      doodadRecord(before),
+					AfterDeleteExists: existsAfterDelete,
+					AfterUndo:         doodadRecord(after),
+					RestoredIdentical: reflect.DeepEqual(before, after),
+				}
+				return nil
+			},
+		},
+	}
+}
+
+func runObjectFSV(app *shell.App, outDir string, state *objectFSVState) error {
+	for i, step := range objectSteps(app, state) {
+		if err := step.Apply(); err != nil {
+			return err
+		}
+		if err := renderState(outDir, fmt.Sprintf("%02d-%s.png", i+20, step.Name), app); err != nil {
+			return err
+		}
+	}
+	return writeObjectDump(app, outDir, state)
+}
+
+func objectWindowSteps(app *shell.App, outDir string, state *objectFSVState) []shell.WindowCaptureStep {
+	steps := objectSteps(app, state)
+	out := make([]shell.WindowCaptureStep, 0, len(steps))
+	for i, step := range steps {
+		step := step
+		out = append(out, shell.WindowCaptureStep{
+			Name:     step.Name,
+			ShotPath: filepath.Join(outDir, fmt.Sprintf("%02d-%s.png", i+20, step.Name)),
+			BeforeCapture: func() error {
+				return step.Apply()
+			},
+		})
+	}
+	return out
+}
+
+func writeObjectDump(app *shell.App, outDir string, state *objectFSVState) error {
+	if state == nil {
+		state = newObjectFSVState()
+	}
+	if err := app.Save(); err != nil {
+		return err
+	}
+	snap := app.Snapshot()
+	state.Palette = snap.Objects.Palette
+	state.Stack = snap.Stack
+	state.SavedSourceFiles = map[string]string{}
+	for _, rel := range []string{"map/entities.toml", "map/doodads.toml"} {
+		body, err := os.ReadFile(filepath.Join(snap.ProjectPath, filepath.FromSlash(rel)))
+		if err != nil {
+			return err
+		}
+		state.SavedSourceFiles[rel] = string(body)
+	}
+	body, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "object-placement-dump.json"), append(body, '\n'), 0o644)
+}
+
+func entityRecord(ent sourceform.Entity, override bool) objectPlacementRecord {
+	return objectPlacementRecord{
+		Kind:     "unit",
+		ID:       ent.ID,
+		Type:     ent.Type,
+		Owner:    ent.Player,
+		Cell:     [2]int{ent.Pos[0] / objectFSVCellWorld, ent.Pos[1] / objectFSVCellWorld},
+		Pos:      ent.Pos,
+		Rotation: ent.Rotation,
+		Scale:    ent.Scale,
+		Override: override,
+	}
+}
+
+func doodadRecord(d sourceform.Doodad) objectPlacementRecord {
+	return objectPlacementRecord{
+		Kind:     "doodad",
+		ID:       d.ID,
+		Type:     d.Type,
+		Cell:     [2]int{d.Pos[0] / objectFSVCellWorld, d.Pos[1] / objectFSVCellWorld},
+		Pos:      d.Pos,
+		Rotation: d.Rotation,
+		Scale:    d.Scale,
+	}
+}
+
+func mustEntityRecord(app *shell.App, id uint32) sourceform.Entity {
+	ent, err := entityRecordByID(app.Snapshot(), id)
+	if err != nil {
+		panic(err)
+	}
+	return ent
+}
+
+func mustDoodadRecord(app *shell.App, id uint32) sourceform.Doodad {
+	d, err := doodadRecordByID(app.Snapshot(), id)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
+
+func entityRecordByID(snap shell.Snapshot, id uint32) (sourceform.Entity, error) {
+	for _, ent := range snap.Objects.Units {
+		if ent.ID == id {
+			return ent, nil
+		}
+	}
+	return sourceform.Entity{}, fmt.Errorf("entity %d not found", id)
+}
+
+func doodadRecordByID(snap shell.Snapshot, id uint32) (sourceform.Doodad, error) {
+	for _, d := range snap.Objects.Doodads {
+		if d.ID == id {
+			return d, nil
+		}
+	}
+	return sourceform.Doodad{}, fmt.Errorf("doodad %d not found", id)
 }
 
 func renderState(outDir, name string, app *shell.App) error {

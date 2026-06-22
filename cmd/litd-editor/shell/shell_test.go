@@ -151,7 +151,11 @@ func newTestApp(t *testing.T) *App {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return New(table)
+	app := New(table)
+	if err := app.LoadObjectPalette(os.DirFS(repoRoot(t, 3, "data"))); err != nil {
+		t.Fatal(err)
+	}
+	return app
 }
 
 func repoRoot(t *testing.T, ups int, parts ...string) string {

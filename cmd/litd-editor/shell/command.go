@@ -275,26 +275,122 @@ func (c splatCellCommand) Revert(app *App) error {
 func (c splatCellCommand) Noop() bool { return c.before == c.after }
 
 type entityMoveCommand struct {
-	id                        uint32
-	beforePos, afterPos       [2]int
-	beforeFacing, afterFacing int
+	id                            uint32
+	beforePos, afterPos           [2]int
+	beforeRotation, afterRotation int
+	beforeScale, afterScale       int
 }
 
 func (c entityMoveCommand) Label() string {
-	return fmt.Sprintf("entity[%d]:pos(%d,%d)->(%d,%d),facing:%d->%d", c.id, c.beforePos[0], c.beforePos[1], c.afterPos[0], c.afterPos[1], c.beforeFacing, c.afterFacing)
+	return fmt.Sprintf("entity[%d]:pos(%d,%d)->(%d,%d),rotation:%d->%d,scale:%d->%d", c.id, c.beforePos[0], c.beforePos[1], c.afterPos[0], c.afterPos[1], c.beforeRotation, c.afterRotation, c.beforeScale, c.afterScale)
 }
 
 func (c entityMoveCommand) Apply(app *App) error {
-	return app.moveEntityDirect(c.id, c.afterPos, c.afterFacing)
+	return app.moveEntityDirect(c.id, c.afterPos, c.afterRotation, c.afterScale)
 }
 
 func (c entityMoveCommand) Revert(app *App) error {
-	return app.moveEntityDirect(c.id, c.beforePos, c.beforeFacing)
+	return app.moveEntityDirect(c.id, c.beforePos, c.beforeRotation, c.beforeScale)
 }
 
 func (c entityMoveCommand) Noop() bool {
-	return c.beforePos == c.afterPos && c.beforeFacing == c.afterFacing
+	return c.beforePos == c.afterPos && c.beforeRotation == c.afterRotation && c.beforeScale == c.afterScale
 }
+
+type entityPlaceCommand struct {
+	after sourceform.Entity
+}
+
+func (c entityPlaceCommand) Label() string {
+	return fmt.Sprintf("entity[%d]:place:%s", c.after.ID, c.after.Type)
+}
+
+func (c entityPlaceCommand) Apply(app *App) error {
+	return app.addEntityDirect(c.after)
+}
+
+func (c entityPlaceCommand) Revert(app *App) error {
+	return app.deleteEntityDirect(c.after.ID)
+}
+
+func (c entityPlaceCommand) Noop() bool { return false }
+
+type entityDeleteCommand struct {
+	before sourceform.Entity
+}
+
+func (c entityDeleteCommand) Label() string {
+	return fmt.Sprintf("entity[%d]:delete:%s", c.before.ID, c.before.Type)
+}
+
+func (c entityDeleteCommand) Apply(app *App) error {
+	return app.deleteEntityDirect(c.before.ID)
+}
+
+func (c entityDeleteCommand) Revert(app *App) error {
+	return app.addEntityDirect(c.before)
+}
+
+func (c entityDeleteCommand) Noop() bool { return false }
+
+type doodadPlaceCommand struct {
+	after sourceform.Doodad
+}
+
+func (c doodadPlaceCommand) Label() string {
+	return fmt.Sprintf("doodad[%d]:place:%s", c.after.ID, c.after.Type)
+}
+
+func (c doodadPlaceCommand) Apply(app *App) error {
+	return app.addDoodadDirect(c.after)
+}
+
+func (c doodadPlaceCommand) Revert(app *App) error {
+	return app.deleteDoodadDirect(c.after.ID)
+}
+
+func (c doodadPlaceCommand) Noop() bool { return false }
+
+type doodadTransformCommand struct {
+	id                            uint32
+	beforePos, afterPos           [2]int
+	beforeRotation, afterRotation int
+	beforeScale, afterScale       int
+}
+
+func (c doodadTransformCommand) Label() string {
+	return fmt.Sprintf("doodad[%d]:pos(%d,%d)->(%d,%d),rotation:%d->%d,scale:%d->%d", c.id, c.beforePos[0], c.beforePos[1], c.afterPos[0], c.afterPos[1], c.beforeRotation, c.afterRotation, c.beforeScale, c.afterScale)
+}
+
+func (c doodadTransformCommand) Apply(app *App) error {
+	return app.moveDoodadDirect(c.id, c.afterPos, c.afterRotation, c.afterScale)
+}
+
+func (c doodadTransformCommand) Revert(app *App) error {
+	return app.moveDoodadDirect(c.id, c.beforePos, c.beforeRotation, c.beforeScale)
+}
+
+func (c doodadTransformCommand) Noop() bool {
+	return c.beforePos == c.afterPos && c.beforeRotation == c.afterRotation && c.beforeScale == c.afterScale
+}
+
+type doodadDeleteCommand struct {
+	before sourceform.Doodad
+}
+
+func (c doodadDeleteCommand) Label() string {
+	return fmt.Sprintf("doodad[%d]:delete:%s", c.before.ID, c.before.Type)
+}
+
+func (c doodadDeleteCommand) Apply(app *App) error {
+	return app.deleteDoodadDirect(c.before.ID)
+}
+
+func (c doodadDeleteCommand) Revert(app *App) error {
+	return app.addDoodadDirect(c.before)
+}
+
+func (c doodadDeleteCommand) Noop() bool { return false }
 
 type metadataNameCommand struct {
 	before, after string

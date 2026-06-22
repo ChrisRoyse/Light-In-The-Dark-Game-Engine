@@ -28,7 +28,8 @@ build step.
 │   ├── height.txt          # height grid, one row per line
 │   ├── cliff.txt           # cliff-level grid, one row per line
 │   ├── splat.txt           # texture blend-weight grid, one row per line
-│   └── entities.toml       # one entity placement per [[entity]] table
+│   ├── entities.toml       # one unit/entity placement per line
+│   └── doodads.toml        # one scenery placement per line
 ├── locale/                 # string tables, D-17 (optional)
 │   └── en.toml
 └── assets/                 # binary GLB/OGG/PNG (optional)
@@ -67,12 +68,14 @@ mechanically, and `tools/worldpack` validates them.
 1. **Canonical key order.** TOML keys within a table are written in the order this
    spec defines for that table (not alphabetical, not insertion). Re-saving an
    unmodified file is byte-identical — a save with no edits produces an empty diff.
-2. **One entity per line.** `map/entities.toml` holds a single `entities` array of
-   inline tables, one element per line. Moving one unit changes exactly one line;
-   merging two authors' placements conflicts only when they touched the same entity.
-3. **Stable entity identity.** Every placement carries an `id` (u32, unique within
-   the file, assigned once by the editor and never reused). Entities are ordered by
-   `id` ascending in the file — insertion order never reshuffles neighbours.
+2. **One placement per line.** `map/entities.toml` and `map/doodads.toml` hold
+   single arrays of inline tables, one element per line. Moving one object changes
+   exactly one line; merging two authors' placements conflicts only when they
+   touched the same placement.
+3. **Stable placement identity.** Every placement carries an `id` (u32, unique
+   within its file, assigned once by the editor and never reused). Placements are
+   ordered by `id` ascending in the file — insertion order never reshuffles
+   neighbours.
 4. **Grid files are row-per-line.** `height.txt`, `cliff.txt`, `splat.txt` write one
    map row per line, values space-separated, fixed formatting (no scientific
    notation; heights are the fixed-point integers the sim uses — floats never appear
@@ -92,14 +95,28 @@ mechanically, and `tools/worldpack` validates them.
 ```toml
 # one element per line; ordered by id; ids never reused
 entities = [
-  { id = 1, type = "vigil-footman", player = 0, pos = [4096, 4096], facing = 16384 },
-  { id = 2, type = "beacon", player = 255, pos = [8192, 8192], facing = 0 },
+  { id = 1, type = "footman", player = 0, pos = [4096, 4096], rotation = 16384, scale = 1000 },
+  { id = 2, type = "beacon", player = 255, pos = [8192, 8192], rotation = 0, scale = 1000 },
 ]
 ```
 
-`pos` is sim fixed-point world units (integers); `facing` is a BAM angle. Standard
-`[[entities]]` block tables are legal hand-authored input; the editor normalizes to
-the one-line inline form on save. Both parse identically.
+`pos` is sim fixed-point world units (integers); `rotation` is a BAM angle;
+`scale` is an integer per-mille transform scale where `1000` means 1.0x. Legacy
+hand-authored `facing` is accepted as an alias for `rotation` and normalized on
+save.
+
+### map/doodads.toml — worked example
+
+```toml
+# one element per line; ordered by id; ids never reused
+doodads = [
+  { id = 1, type = "kaykit-hexagon/tree_single_A.glb", pos = [4096, 8192], rotation = 0, scale = 1000 },
+]
+```
+
+`type` is the doodad/scenery type ID from the data doodad tables; for the current
+asset-backed tables this is the referenced asset path. Doodads are render-only by
+default and become gameplay state only if runtime scripting promotes them.
 
 ## 4. Binary assets
 

@@ -148,7 +148,17 @@ func RunWindow(state *App, opts WindowOptions) error {
 	var activeStroke *TerrainStroke
 	surface.win.Subscribe(window.OnMouseDown, func(_ string, ev interface{}) {
 		mev := ev.(*window.MouseEvent)
-		if mev.Button != window.MouseButtonLeft || state.Snapshot().Mode != ModeTerrain {
+		if mev.Button != window.MouseButtonLeft {
+			return
+		}
+		if state.Snapshot().Mode == ModeObjects {
+			x, y, ok := terrainCellAt(state.Snapshot(), mev.Xpos, mev.Ypos)
+			if ok {
+				markDirty(state.PlaceSelectedObjectCell(x, y))
+			}
+			return
+		}
+		if state.Snapshot().Mode != ModeTerrain {
 			return
 		}
 		x, y, ok := terrainCellAt(state.Snapshot(), mev.Xpos, mev.Ypos)

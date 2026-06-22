@@ -146,10 +146,30 @@ func drawTerrain(img *image.RGBA, snap Snapshot) {
 func drawObjects(img *image.RGBA, snap Snapshot) {
 	text(img, 236, 132, snap.Labels["panelObjects"], ink)
 	text(img, 236, 166, snap.Labels["hintObjects"], muted)
-	fill(img, 238, 208, 740, 42, panelAlt)
-	text(img, 258, 235, fmt.Sprintf("%s: %d", snap.Labels["fieldEntities"], snap.World.Entities), ink)
-	fill(img, 238, 264, 740, 42, panelAlt)
-	text(img, 258, 291, snap.Labels["scopeNoTriggerGUI"], brass)
+	fill(img, 238, 208, 890, 42, panelAlt)
+	text(img, 258, 235, fmt.Sprintf("%s: %d   %s: %d", snap.Labels["fieldEntities"], snap.World.Entities, snap.Labels["fieldDoodads"], snap.World.Doodads), ink)
+	fill(img, 238, 264, 890, 42, panelAlt)
+	selection := snap.Objects.Selection
+	textFit(img, 258, 291, 820, fmt.Sprintf("%s: %s %s owner=%d rot=%d scale=%d", snap.Labels["fieldSelection"], selection.Kind, shortObjectType(selection.Type), selection.Owner, selection.Rotation, selection.Scale), brass)
+	fill(img, 238, 320, 890, 42, panelAlt)
+	textFit(img, 258, 347, 820, fmt.Sprintf("%s: %v", snap.Labels["fieldOverride"], selection.OverrideWalkability), muted)
+	fill(img, 238, 376, 890, 42, panelAlt)
+	textFit(img, 258, 403, 820, snap.Labels["fieldPalette"]+": "+paletteLabel(snap.Objects.Palette), ink)
+	y := 458
+	for i, ent := range snap.Objects.Units {
+		if i >= 4 {
+			break
+		}
+		fill(img, 238, y+i*36, 430, 28, panelAlt)
+		textFit(img, 258, y+20+i*36, 390, fmt.Sprintf("U#%d p%d %s @%s r%d s%d", ent.ID, ent.Player, shortObjectType(ent.Type), objectCellLabel(ent.Pos), ent.Rotation, ent.Scale), ink)
+	}
+	for i, d := range snap.Objects.Doodads {
+		if i >= 5 {
+			break
+		}
+		fill(img, 690, y+i*36, 430, 28, panelAlt)
+		textFit(img, 710, y+20+i*36, 390, fmt.Sprintf("D#%d %s @%s r%d s%d", d.ID, shortObjectType(d.Type), objectCellLabel(d.Pos), d.Rotation, d.Scale), ink)
+	}
 }
 
 func drawMetadata(img *image.RGBA, snap Snapshot) {
@@ -279,6 +299,42 @@ func flagTextColor(flags []CliffFlagSnapshot) color.RGBA {
 		return muted
 	}
 	return errorColor
+}
+
+func paletteLabel(items []ObjectPaletteItem) string {
+	if len(items) == 0 {
+		return "not loaded"
+	}
+	limit := len(items)
+	if limit > 5 {
+		limit = 5
+	}
+	parts := make([]string, 0, limit+1)
+	for i := 0; i < limit; i++ {
+		prefix := string(items[i].Kind)
+		if items[i].Active {
+			prefix += "*"
+		}
+		parts = append(parts, prefix+":"+shortObjectType(items[i].Type))
+	}
+	if len(items) > limit {
+		parts = append(parts, fmt.Sprintf("+%d", len(items)-limit))
+	}
+	return strings.Join(parts, " ")
+}
+
+func objectCellLabel(pos [2]int) string {
+	return fmt.Sprintf("%d,%d", pos[0]/editorTerrainCellWorldUnit, pos[1]/editorTerrainCellWorldUnit)
+}
+
+func shortObjectType(s string) string {
+	if s == "" {
+		return "none"
+	}
+	if len(s) <= 28 {
+		return s
+	}
+	return "..." + s[len(s)-25:]
 }
 
 func clampInt(v, lo, hi int) int {

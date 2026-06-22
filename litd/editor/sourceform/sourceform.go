@@ -25,9 +25,16 @@ const (
 	cliffFile    = "map/cliff.txt"
 	splatFile    = "map/splat.txt"
 	entitiesFile = "map/entities.toml"
+	doodadsFile  = "map/doodads.toml"
 )
 
 var worldIDRE = regexp.MustCompile(`^[a-z0-9-]+$`)
+
+const (
+	PlacementScaleDefault = 1000
+	PlacementScaleMin     = 1
+	PlacementScaleMax     = 1_000_000
+)
 
 // Metadata is the canonical world.toml state.
 type Metadata struct {
@@ -75,11 +82,21 @@ type SplatWeight struct {
 
 // Entity is one placed map entity. IDs are stable and sorted on save.
 type Entity struct {
-	ID     uint32
-	Type   string
-	Player int
-	Pos    [2]int
-	Facing int
+	ID       uint32
+	Type     string
+	Player   int
+	Pos      [2]int
+	Rotation int
+	Scale    int
+}
+
+// Doodad is one plain scenery placement. IDs are stable and sorted on save.
+type Doodad struct {
+	ID       uint32
+	Type     string
+	Pos      [2]int
+	Rotation int
+	Scale    int
 }
 
 // GridKind names one row-per-line map grid.
@@ -100,6 +117,7 @@ type World struct {
 	Cliff    [][]CliffCell
 	Splat    [][]SplatWeight
 	Entities []Entity
+	Doodads  []Doodad
 
 	files map[string][]byte
 	dirty bool
@@ -129,11 +147,25 @@ type rawEntities struct {
 }
 
 type rawEntity struct {
-	ID     uint32 `toml:"id"`
-	Type   string `toml:"type"`
-	Player int    `toml:"player"`
-	Pos    []int  `toml:"pos"`
-	Facing int    `toml:"facing"`
+	ID       uint32 `toml:"id"`
+	Type     string `toml:"type"`
+	Player   int    `toml:"player"`
+	Pos      []int  `toml:"pos"`
+	Facing   *int   `toml:"facing"`
+	Rotation *int   `toml:"rotation"`
+	Scale    *int   `toml:"scale"`
+}
+
+type rawDoodads struct {
+	Doodads []rawDoodad `toml:"doodads"`
+}
+
+type rawDoodad struct {
+	ID       uint32 `toml:"id"`
+	Type     string `toml:"type"`
+	Pos      []int  `toml:"pos"`
+	Rotation *int   `toml:"rotation"`
+	Scale    *int   `toml:"scale"`
 }
 
 // Load reads and validates a source-form world directory.
@@ -149,7 +181,7 @@ func Load(dir string) (*World, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, rel := range []string{worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile} {
+	for _, rel := range []string{worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile} {
 		if _, ok := all[rel]; !ok {
 			return nil, fmt.Errorf("sourceform: load %q: missing required file %s", dir, rel)
 		}
@@ -179,11 +211,15 @@ func Load(dir string) (*World, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", entitiesFile, err)
 	}
+	doodads, err := parseDoodads(all[doodadsFile])
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", doodadsFile, err)
+	}
 
 	files := make(map[string][]byte, len(all))
 	for rel, body := range all {
 		switch rel {
-		case worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile:
+		case worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile:
 			continue
 		default:
 			files[rel] = cloneBytes(body)
@@ -197,6 +233,7 @@ func Load(dir string) (*World, error) {
 		Cliff:    cliff,
 		Splat:    splat,
 		Entities: entities,
+		Doodads:  doodads,
 		files:    files,
 	}, nil
 }
@@ -204,21 +241,139 @@ func Load(dir string) (*World, error) {
 // Dirty reports whether the editor state has unsaved changes.
 func (w *World) Dirty() bool { return w != nil && w.dirty }
 
-// MoveEntity changes a placement position/facing without reshuffling other rows.
-func (w *World) MoveEntity(id uint32, pos [2]int, facing int) error {
+// MoveEntity changes a placement position/rotation without reshuffling other rows.
+func (w *World) MoveEntity(id uint32, pos [2]int, rotation int) error {
 	for i := range w.Entities {
 		if w.Entities[i].ID != id {
 			continue
 		}
-		if w.Entities[i].Pos == pos && w.Entities[i].Facing == facing {
+		scale := w.Entities[i].Scale
+		if scale == 0 {
+			scale = PlacementScaleDefault
+		}
+		return w.SetEntityTransform(id, pos, rotation, scale)
+	}
+	return fmt.Errorf("sourceform: entity id %d not found", id)
+}
+
+// AddEntity inserts one entity placement without reusing IDs.
+func (w *World) AddEntity(ent Entity) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: add entity on nil world")
+	}
+	if err := validateEntity(ent); err != nil {
+		return err
+	}
+	for _, existing := range w.Entities {
+		if existing.ID == ent.ID {
+			return fmt.Errorf("sourceform: duplicate entity id %d", ent.ID)
+		}
+	}
+	w.Entities = append(w.Entities, ent)
+	sortEntities(w.Entities)
+	w.dirty = true
+	return nil
+}
+
+// SetEntityTransform changes one entity's transform fields without reshuffling rows.
+func (w *World) SetEntityTransform(id uint32, pos [2]int, rotation, scale int) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set entity transform on nil world")
+	}
+	if err := validatePlacementTransform("entity", id, pos, rotation, scale); err != nil {
+		return err
+	}
+	for i := range w.Entities {
+		if w.Entities[i].ID != id {
+			continue
+		}
+		if w.Entities[i].Pos == pos && w.Entities[i].Rotation == rotation && w.Entities[i].Scale == scale {
 			return nil
 		}
 		w.Entities[i].Pos = pos
-		w.Entities[i].Facing = facing
+		w.Entities[i].Rotation = rotation
+		w.Entities[i].Scale = scale
 		w.dirty = true
 		return nil
 	}
 	return fmt.Errorf("sourceform: entity id %d not found", id)
+}
+
+// DeleteEntity removes one entity placement while preserving the caller's copy
+// for undo/redo restoration.
+func (w *World) DeleteEntity(id uint32) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: delete entity on nil world")
+	}
+	for i := range w.Entities {
+		if w.Entities[i].ID != id {
+			continue
+		}
+		w.Entities = append(w.Entities[:i], w.Entities[i+1:]...)
+		w.dirty = true
+		return nil
+	}
+	return fmt.Errorf("sourceform: entity id %d not found", id)
+}
+
+// AddDoodad inserts one scenery placement without reusing IDs.
+func (w *World) AddDoodad(d Doodad) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: add doodad on nil world")
+	}
+	if err := validateDoodad(d); err != nil {
+		return err
+	}
+	for _, existing := range w.Doodads {
+		if existing.ID == d.ID {
+			return fmt.Errorf("sourceform: duplicate doodad id %d", d.ID)
+		}
+	}
+	w.Doodads = append(w.Doodads, d)
+	sortDoodads(w.Doodads)
+	w.dirty = true
+	return nil
+}
+
+// SetDoodadTransform changes one scenery placement's transform fields.
+func (w *World) SetDoodadTransform(id uint32, pos [2]int, rotation, scale int) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set doodad transform on nil world")
+	}
+	if err := validatePlacementTransform("doodad", id, pos, rotation, scale); err != nil {
+		return err
+	}
+	for i := range w.Doodads {
+		if w.Doodads[i].ID != id {
+			continue
+		}
+		if w.Doodads[i].Pos == pos && w.Doodads[i].Rotation == rotation && w.Doodads[i].Scale == scale {
+			return nil
+		}
+		w.Doodads[i].Pos = pos
+		w.Doodads[i].Rotation = rotation
+		w.Doodads[i].Scale = scale
+		w.dirty = true
+		return nil
+	}
+	return fmt.Errorf("sourceform: doodad id %d not found", id)
+}
+
+// DeleteDoodad removes one scenery placement while preserving the caller's copy
+// for undo/redo restoration.
+func (w *World) DeleteDoodad(id uint32) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: delete doodad on nil world")
+	}
+	for i := range w.Doodads {
+		if w.Doodads[i].ID != id {
+			continue
+		}
+		w.Doodads = append(w.Doodads[:i], w.Doodads[i+1:]...)
+		w.dirty = true
+		return nil
+	}
+	return fmt.Errorf("sourceform: doodad id %d not found", id)
 }
 
 // SetMetadataName edits the user-facing world name.
@@ -472,7 +627,7 @@ func isAllowedDir(rel string) bool {
 
 func isAllowedRel(rel string) bool {
 	switch rel {
-	case worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile:
+	case worldFile, terrainFile, heightFile, cliffFile, splatFile, entitiesFile, doodadsFile:
 		return true
 	}
 	return isPassthroughRel(rel)
@@ -588,10 +743,85 @@ func parseEntities(body []byte) ([]Entity, error) {
 		if len(e.Pos) != 2 {
 			return nil, fmt.Errorf("entity %d pos must have exactly two integers", e.ID)
 		}
-		out = append(out, Entity{ID: e.ID, Type: e.Type, Player: e.Player, Pos: [2]int{e.Pos[0], e.Pos[1]}, Facing: e.Facing})
+		rotation, err := parsePlacementRotation("entity", e.ID, e.Rotation, e.Facing)
+		if err != nil {
+			return nil, err
+		}
+		scale, err := parsePlacementScale("entity", e.ID, e.Scale)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, Entity{ID: e.ID, Type: e.Type, Player: e.Player, Pos: [2]int{e.Pos[0], e.Pos[1]}, Rotation: rotation, Scale: scale})
 	}
 	sortEntities(out)
 	return out, nil
+}
+
+func parseDoodads(body []byte) ([]Doodad, error) {
+	var raw rawDoodads
+	md, err := toml.Decode(string(body), &raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := rejectUndecoded(md); err != nil {
+		return nil, err
+	}
+	out := make([]Doodad, 0, len(raw.Doodads))
+	seen := map[uint32]bool{}
+	for _, d := range raw.Doodads {
+		if d.ID == 0 {
+			return nil, fmt.Errorf("doodad id must be non-zero")
+		}
+		if seen[d.ID] {
+			return nil, fmt.Errorf("duplicate doodad id %d", d.ID)
+		}
+		seen[d.ID] = true
+		if d.Type == "" {
+			return nil, fmt.Errorf("doodad %d type is required", d.ID)
+		}
+		if len(d.Pos) != 2 {
+			return nil, fmt.Errorf("doodad %d pos must have exactly two integers", d.ID)
+		}
+		rotation, err := parsePlacementRotation("doodad", d.ID, d.Rotation, nil)
+		if err != nil {
+			return nil, err
+		}
+		scale, err := parsePlacementScale("doodad", d.ID, d.Scale)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, Doodad{ID: d.ID, Type: d.Type, Pos: [2]int{d.Pos[0], d.Pos[1]}, Rotation: rotation, Scale: scale})
+	}
+	sortDoodads(out)
+	return out, nil
+}
+
+func parsePlacementRotation(kind string, id uint32, rotation, legacyFacing *int) (int, error) {
+	if rotation != nil && legacyFacing != nil {
+		return 0, fmt.Errorf("%s %d must not set both rotation and legacy facing", kind, id)
+	}
+	v := 0
+	if legacyFacing != nil {
+		v = *legacyFacing
+	}
+	if rotation != nil {
+		v = *rotation
+	}
+	if v < 0 || v > 65535 {
+		return 0, fmt.Errorf("%s %d rotation %d outside 0..65535", kind, id, v)
+	}
+	return v, nil
+}
+
+func parsePlacementScale(kind string, id uint32, raw *int) (int, error) {
+	scale := PlacementScaleDefault
+	if raw != nil {
+		scale = *raw
+	}
+	if scale < PlacementScaleMin || scale > PlacementScaleMax {
+		return 0, fmt.Errorf("%s %d scale %d outside %d..%d", kind, id, scale, PlacementScaleMin, PlacementScaleMax)
+	}
+	return scale, nil
 }
 
 func parseGrid(body []byte, width, height int) ([][]int, error) {
@@ -766,18 +996,55 @@ func validateWorld(w *World) error {
 	}
 	seen := map[uint32]bool{}
 	for _, e := range w.Entities {
-		if e.ID == 0 || e.Type == "" || e.Player < 0 || e.Player > 255 {
-			return fmt.Errorf("sourceform: invalid entity %+v", e)
-		}
 		if seen[e.ID] {
 			return fmt.Errorf("sourceform: duplicate entity id %d", e.ID)
 		}
+		if err := validateEntity(e); err != nil {
+			return err
+		}
 		seen[e.ID] = true
+	}
+	seenDoodads := map[uint32]bool{}
+	for _, d := range w.Doodads {
+		if seenDoodads[d.ID] {
+			return fmt.Errorf("sourceform: duplicate doodad id %d", d.ID)
+		}
+		if err := validateDoodad(d); err != nil {
+			return err
+		}
+		seenDoodads[d.ID] = true
 	}
 	for rel := range w.files {
 		if !isPassthroughRel(rel) {
 			return fmt.Errorf("sourceform: invalid passthrough file %q", rel)
 		}
+	}
+	return nil
+}
+
+func validateEntity(e Entity) error {
+	if e.ID == 0 || e.Type == "" || e.Player < 0 || e.Player > 255 {
+		return fmt.Errorf("sourceform: invalid entity %+v", e)
+	}
+	return validatePlacementTransform("entity", e.ID, e.Pos, e.Rotation, e.Scale)
+}
+
+func validateDoodad(d Doodad) error {
+	if d.ID == 0 || d.Type == "" {
+		return fmt.Errorf("sourceform: invalid doodad %+v", d)
+	}
+	return validatePlacementTransform("doodad", d.ID, d.Pos, d.Rotation, d.Scale)
+}
+
+func validatePlacementTransform(kind string, id uint32, pos [2]int, rotation, scale int) error {
+	if rotation < 0 || rotation > 65535 {
+		return fmt.Errorf("sourceform: %s %d rotation %d outside 0..65535", kind, id, rotation)
+	}
+	if scale < PlacementScaleMin || scale > PlacementScaleMax {
+		return fmt.Errorf("sourceform: %s %d scale %d outside %d..%d", kind, id, scale, PlacementScaleMin, PlacementScaleMax)
+	}
+	if pos[0] < 0 || pos[1] < 0 {
+		return fmt.Errorf("sourceform: %s %d pos [%d,%d] must be non-negative", kind, id, pos[0], pos[1])
 	}
 	return nil
 }
@@ -948,7 +1215,7 @@ func (w *World) CliffCell(x, y int) (CliffCell, error) {
 }
 
 func (w *World) renderFiles() map[string][]byte {
-	files := make(map[string][]byte, len(w.files)+6)
+	files := make(map[string][]byte, len(w.files)+7)
 	for rel, body := range w.files {
 		files[rel] = cloneBytes(body)
 	}
@@ -958,6 +1225,7 @@ func (w *World) renderFiles() map[string][]byte {
 	files[cliffFile] = renderCliffGrid(w.Cliff)
 	files[splatFile] = renderSplatGrid(w.Splat)
 	files[entitiesFile] = renderEntities(w.Entities)
+	files[doodadsFile] = renderDoodads(w.Doodads)
 	return files
 }
 
@@ -1046,7 +1314,20 @@ func renderEntities(entities []Entity) []byte {
 	b.WriteString("# one element per line; ordered by id; ids never reused\n")
 	b.WriteString("entities = [\n")
 	for _, e := range sorted {
-		fmt.Fprintf(&b, "  { id = %d, type = %s, player = %d, pos = [%d, %d], facing = %d },\n", e.ID, strconv.Quote(e.Type), e.Player, e.Pos[0], e.Pos[1], e.Facing)
+		fmt.Fprintf(&b, "  { id = %d, type = %s, player = %d, pos = [%d, %d], rotation = %d, scale = %d },\n", e.ID, strconv.Quote(e.Type), e.Player, e.Pos[0], e.Pos[1], e.Rotation, e.Scale)
+	}
+	b.WriteString("]\n")
+	return []byte(b.String())
+}
+
+func renderDoodads(doodads []Doodad) []byte {
+	sorted := append([]Doodad(nil), doodads...)
+	sortDoodads(sorted)
+	var b strings.Builder
+	b.WriteString("# one element per line; ordered by id; ids never reused\n")
+	b.WriteString("doodads = [\n")
+	for _, d := range sorted {
+		fmt.Fprintf(&b, "  { id = %d, type = %s, pos = [%d, %d], rotation = %d, scale = %d },\n", d.ID, strconv.Quote(d.Type), d.Pos[0], d.Pos[1], d.Rotation, d.Scale)
 	}
 	b.WriteString("]\n")
 	return []byte(b.String())
@@ -1067,6 +1348,10 @@ func renderStringSlice(v []string) string {
 
 func sortEntities(entities []Entity) {
 	sort.Slice(entities, func(i, j int) bool { return entities[i].ID < entities[j].ID })
+}
+
+func sortDoodads(doodads []Doodad) {
+	sort.Slice(doodads, func(i, j int) bool { return doodads[i].ID < doodads[j].ID })
 }
 
 func writeFileIfChanged(root, rel string, body []byte) error {

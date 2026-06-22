@@ -75,6 +75,10 @@ const (
 	EditorStatusPrefix            Key = "editor.status.prefix"
 	EditorFieldCell               Key = "editor.field.cell"
 	EditorFieldEntities           Key = "editor.field.entities"
+	EditorFieldDoodads            Key = "editor.field.doodads"
+	EditorFieldPalette            Key = "editor.field.palette"
+	EditorFieldSelection          Key = "editor.field.selection"
+	EditorFieldOverride           Key = "editor.field.override"
 	EditorFieldBrush              Key = "editor.field.brush"
 	EditorFieldCliff              Key = "editor.field.cliff"
 	EditorFieldSplat              Key = "editor.field.splat"
@@ -152,6 +156,10 @@ var requiredKeys = []string{
 	string(EditorStatusPrefix),
 	string(EditorFieldCell),
 	string(EditorFieldEntities),
+	string(EditorFieldDoodads),
+	string(EditorFieldPalette),
+	string(EditorFieldSelection),
+	string(EditorFieldOverride),
 	string(EditorFieldBrush),
 	string(EditorFieldCliff),
 	string(EditorFieldSplat),

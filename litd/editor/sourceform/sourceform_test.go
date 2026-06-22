@@ -64,7 +64,7 @@ func TestSourceFormMoveEntityLocalizedDiffFSV(t *testing.T) {
 	line, oldLine, newLine := singleChangedLine(t, string(before[entitiesFile]), string(after[entitiesFile]))
 	t.Logf("FSV entity move before line %d: %s", line, oldLine)
 	t.Logf("FSV entity move after  line %d: %s", line, newLine)
-	if !strings.Contains(newLine, `id = 2`) || !strings.Contains(newLine, `pos = [12288, 4096]`) || !strings.Contains(newLine, `facing = 8192`) {
+	if !strings.Contains(newLine, `id = 2`) || !strings.Contains(newLine, `pos = [12288, 4096]`) || !strings.Contains(newLine, `rotation = 8192`) {
 		t.Fatalf("changed line does not contain moved entity state: %s", newLine)
 	}
 }
@@ -221,6 +221,73 @@ func TestSourceFormSplatWeightsRoundTripFSV(t *testing.T) {
 	}
 }
 
+func TestSourceFormPlacementTransformRoundTripFSV(t *testing.T) {
+	dir := t.TempDir()
+	writeSyntheticWorld(t, dir, 1)
+	legacy := `# one element per line; ordered by id; ids never reused
+entities = [
+  { id = 1, type = "footman", player = 0, pos = [4096, 4096], facing = 8192 },
+]
+`
+	doodads := `# hand-authored unsorted scenery
+doodads = [
+  { id = 2, type = "kaykit-hexagon/rock_single_A.glb", pos = [8192, 4096], rotation = 4096, scale = 750 },
+  { id = 1, type = "kaykit-hexagon/tree_single_A.glb", pos = [4096, 8192], rotation = 0, scale = 1250 },
+]
+`
+	if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(entitiesFile)), []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(doodadsFile)), []byte(doodads), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	w, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV legacy entity after load: %+v", w.Entities[0])
+	t.Logf("FSV doodads after load sorted: %+v", w.Doodads)
+	if w.Entities[0].Rotation != 8192 || w.Entities[0].Scale != PlacementScaleDefault {
+		t.Fatalf("legacy facing/default scale did not normalize: %+v", w.Entities[0])
+	}
+	if len(w.Doodads) != 2 || w.Doodads[0].ID != 1 || w.Doodads[1].Scale != 750 {
+		t.Fatalf("doodads did not parse/sort with exact scale: %+v", w.Doodads)
+	}
+	if err := w.Save(""); err != nil {
+		t.Fatal(err)
+	}
+	entitiesBody, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(entitiesFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doodadsBody, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(doodadsFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV canonical entities.toml:\n%s", entitiesBody)
+	t.Logf("FSV canonical doodads.toml:\n%s", doodadsBody)
+	if bytes.Contains(entitiesBody, []byte("facing")) || !bytes.Contains(entitiesBody, []byte(`rotation = 8192, scale = 1000`)) {
+		t.Fatalf("entities did not canonicalize rotation/scale:\n%s", entitiesBody)
+	}
+	if !bytes.Contains(doodadsBody, []byte(`id = 1`)) || !bytes.Contains(doodadsBody, []byte(`scale = 1250`)) {
+		t.Fatalf("doodads canonical source missing expected records:\n%s", doodadsBody)
+	}
+
+	bad := t.TempDir()
+	writeSyntheticWorld(t, bad, 1)
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(doodadsFile)), []byte(`doodads = [
+  { id = 1, type = "tree", pos = [0, 0], rotation = 0, scale = 0 },
+]
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = Load(bad)
+	t.Logf("FSV invalid doodad scale: err=%v", err)
+	if err == nil || !strings.Contains(err.Error(), "scale 0 outside") {
+		t.Fatalf("invalid doodad scale should fail closed, got %v", err)
+	}
+}
+
 func TestSourceFormRejectsMalformedEdgesFSV(t *testing.T) {
 	_, err := Load(filepath.Join(t.TempDir(), "missing"))
 	t.Logf("FSV missing directory edge: before=no directory after=err %v", err)
@@ -353,10 +420,10 @@ func TestSourceFormConcurrentNonOverlappingMergeFSV(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("FSV non-overlapping merge output:\n%s", mergeOut)
-	if !bytes.Contains(body, []byte(`id = 10, type = "unit-010", player = 0, pos = [10, 9900], facing = 10`)) {
+	if !bytes.Contains(body, []byte(`id = 10, type = "unit-010", player = 0, pos = [10, 9900], rotation = 10, scale = 1000`)) {
 		t.Fatal("merged source of truth missing branch-a entity 10 edit")
 	}
-	if !bytes.Contains(body, []byte(`id = 490, type = "unit-490", player = 0, pos = [490, 9900], facing = 490`)) {
+	if !bytes.Contains(body, []byte(`id = 490, type = "unit-490", player = 0, pos = [490, 9900], rotation = 490, scale = 1000`)) {
 		t.Fatal("merged source of truth missing branch-b entity 490 edit")
 	}
 }
@@ -465,11 +532,12 @@ func writeSyntheticWorld(t *testing.T, dir string, nEntities int) {
 	entities := make([]Entity, 0, nEntities)
 	for i := 1; i <= nEntities; i++ {
 		entities = append(entities, Entity{
-			ID:     uint32(i),
-			Type:   fmt.Sprintf("unit-%03d", i),
-			Player: 0,
-			Pos:    [2]int{i, i},
-			Facing: 0,
+			ID:       uint32(i),
+			Type:     fmt.Sprintf("unit-%03d", i),
+			Player:   0,
+			Pos:      [2]int{i, i},
+			Rotation: 0,
+			Scale:    PlacementScaleDefault,
 		})
 	}
 	files := map[string][]byte{
@@ -479,6 +547,7 @@ func writeSyntheticWorld(t *testing.T, dir string, nEntities int) {
 		cliffFile:    []byte("0\n"),
 		splatFile:    []byte("255,0,0,0\n"),
 		entitiesFile: renderEntities(entities),
+		doodadsFile:  renderDoodads(nil),
 	}
 	for rel, body := range files {
 		if err := writeFileIfChanged(dir, rel, body); err != nil {
