@@ -5,6 +5,7 @@
 //	renderdemo -scene counted -autotest -shot artifacts/stats-hud.png -dump artifacts/stats.json
 //	renderdemo -scene camera-rig -camera ortho -autotest -shot artifacts/ortho-zmax.png -dump artifacts/ortho.json
 //	renderdemo -hud -res 1920x1080 -autotest -shot artifacts/canvas.png -dump artifacts/canvas.json
+//	renderdemo -hud -scene campaign-menu -campaign-scenario unlocked -autotest -shot artifacts/campaign-menu.png -dump artifacts/campaign-menu.json
 //
 // Scenes are synthetic and hand-countable. Each scene includes one GUI label
 // so screenshots show a stats line; world counts remain separated in the JSON
@@ -12,6 +13,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"flag"
@@ -22,12 +24,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"testing/fstest"
 	"time"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
+	litcampaign "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/campaign"
 	litdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
@@ -291,14 +295,15 @@ type canvasSnapshot struct {
 }
 
 type canvasDump struct {
-	Mode        string                  `json:"mode"`
-	Before      *canvasSnapshot         `json:"before,omitempty"`
-	After       canvasSnapshot          `json:"after"`
-	HUD         hudRuntimeDump          `json:"hud,omitempty"`
-	CommandCard *commandCardRuntimeDump `json:"commandCard,omitempty"`
-	ResourceBar *resourceBarRuntimeDump `json:"resourceBar,omitempty"`
-	OK          bool                    `json:"ok"`
-	Errors      []string                `json:"errors,omitempty"`
+	Mode         string                   `json:"mode"`
+	Before       *canvasSnapshot          `json:"before,omitempty"`
+	After        canvasSnapshot           `json:"after"`
+	HUD          hudRuntimeDump           `json:"hud,omitempty"`
+	CommandCard  *commandCardRuntimeDump  `json:"commandCard,omitempty"`
+	ResourceBar  *resourceBarRuntimeDump  `json:"resourceBar,omitempty"`
+	CampaignMenu *campaignMenuRuntimeDump `json:"campaignMenu,omitempty"`
+	OK           bool                     `json:"ok"`
+	Errors       []string                 `json:"errors,omitempty"`
 }
 
 type hudRuntimeDump struct {
@@ -533,10 +538,25 @@ type resourceBarValues struct {
 	Upkeep   int `json:"upkeep"`
 }
 
+type campaignMenuRuntimeDump struct {
+	Scenario       string                     `json:"scenario"`
+	Locale         string                     `json:"locale"`
+	Screen         lithud.CampaignMenuScreen  `json:"screen"`
+	Layout         lithud.CampaignMenuLayout  `json:"layout"`
+	Catalog        *litcampaign.CatalogView   `json:"catalog,omitempty"`
+	View           *litcampaign.View          `json:"view,omitempty"`
+	BeforeStore    *litcampaign.StoreSnapshot `json:"beforeStore,omitempty"`
+	AfterStore     litcampaign.StoreSnapshot  `json:"afterStore"`
+	Checkpoint     string                     `json:"checkpoint,omitempty"`
+	CheckpointRead bool                       `json:"checkpointRead,omitempty"`
+	OK             bool                       `json:"ok"`
+	Errors         []string                   `json:"errors,omitempty"`
+}
+
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
 	dumpAudioInitMode := flag.String("dump-audio-init", "", "print audio init/accounting JSON for backend mode: null, openal, or auto")
@@ -557,6 +577,7 @@ func main() {
 	localeTag := flag.String("locale", "en", "locale tag for HUD strings when -hud is set")
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
 	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
+	campaignScenario := flag.String("campaign-scenario", "", "campaign-menu FSV scenario for -hud -scene campaign-menu: campaign-select, fresh, unlocked, save-load, missing-archive")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
@@ -668,7 +689,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table))
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -2590,10 +2611,13 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
+	}
+	if strings.EqualFold(strings.TrimSpace(sceneName), "campaign-menu") || strings.TrimSpace(campaignScenario) != "" {
+		return buildCampaignMenuHUD(scene, canvas, campaignScenario, localeTag, localeTable)
 	}
 	hud := lithud.NewDefaultHUDWithStrings(canvas, labels)
 	after := canvasSnapshotFor(canvas, hud.Widgets())
@@ -2644,6 +2668,194 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	}
 	drawCanvasHUD(scene, after, &hud, card, atlasTex, dump.OK)
 	return dump, nil
+}
+
+func buildCampaignMenuHUD(scene *core.Node, canvas lithud.Canvas, scenario, localeTag string, localeTable *litlocale.Table) (canvasDump, error) {
+	runtimeDump, err := buildCampaignMenuRuntime(canvas, scenario, localeTag, localeTable)
+	after := canvasSnapshotFor(canvas, runtimeDump.Layout.Widgets)
+	dump := canvasDump{
+		Mode:  "campaign-menu",
+		After: after,
+		HUD: hudRuntimeDump{
+			Locale:               localeTag,
+			WidgetPanels:         len(runtimeDump.Layout.Widgets),
+			Labels:               len(runtimeDump.Layout.Labels),
+			ExpectedGUIDrawCalls: runtimeDump.Layout.ExpectedDrawCalls,
+			DrawCallBudget:       runtimeDump.Layout.ExpectedDrawCalls,
+		},
+		CampaignMenu: runtimeDump,
+		OK:           runtimeDump.OK,
+		Errors:       append([]string{}, runtimeDump.Errors...),
+	}
+	drawCampaignMenu(scene, runtimeDump.Layout, runtimeDump.OK)
+	return dump, err
+}
+
+const renderDemoCampaignTOML = `
+id = "vigil-render"
+title = "Vigil Render Campaign"
+faction = "The Vigil"
+
+[[mission]]
+id = "m1"
+title = "Kindle the Gate"
+summary = "Secure the first beacon."
+archive = "worlds/m1.litdworld"
+
+[[mission]]
+id = "m2"
+title = "Hold the Dawn"
+summary = "Carry the hero into the counterattack."
+archive = "worlds/m2.litdworld"
+requires = ["m1"]
+`
+
+func buildCampaignMenuRuntime(canvas lithud.Canvas, scenario, localeTag string, localeTable *litlocale.Table) (*campaignMenuRuntimeDump, error) {
+	scenario = strings.ToLower(strings.TrimSpace(scenario))
+	if scenario == "" {
+		scenario = "fresh"
+	}
+	def, err := litcampaign.ReadDefinition("renderdemo-campaign.toml", []byte(renderDemoCampaignTOML))
+	if err != nil {
+		return nil, err
+	}
+	g, err := api.NewGame(api.GameOptions{})
+	if err != nil {
+		return nil, err
+	}
+	labels := lithud.CampaignMenuStringsFromLocale(localeTable)
+	archives := renderDemoCampaignArchives(true)
+	dump := &campaignMenuRuntimeDump{Scenario: scenario, Locale: localeTag, OK: true}
+	var layout lithud.CampaignMenuLayout
+	switch scenario {
+	case "campaign-select":
+		catalog, err := litcampaign.BuildCatalogView([]litcampaign.Definition{def}, g.Storage(), def.ID)
+		if err != nil {
+			return nil, err
+		}
+		store, err := litcampaign.SnapshotStore(def, g.Storage())
+		if err != nil {
+			return nil, err
+		}
+		layout = lithud.NewCampaignSelectLayout(canvas, catalog, labels)
+		dump.Catalog = &catalog
+		dump.AfterStore = store
+	case "fresh":
+		view, err := litcampaign.BuildMissionView(def, g.Storage(), archives, "")
+		if err != nil {
+			return nil, err
+		}
+		store, err := litcampaign.SnapshotStore(def, g.Storage())
+		if err != nil {
+			return nil, err
+		}
+		layout = lithud.NewMissionSelectLayout(canvas, view, labels)
+		dump.View = &view
+		dump.AfterStore = store
+	case "unlocked":
+		before, err := litcampaign.SnapshotStore(def, g.Storage())
+		if err != nil {
+			return nil, err
+		}
+		if err := litcampaign.CompleteMission(g.Storage(), def, "m1", renderDemoCarryOver("Ser Caldus", 4, "Ember Ward", "Dawnwater Flask")); err != nil {
+			return nil, err
+		}
+		view, err := litcampaign.BuildMissionView(def, g.Storage(), archives, "")
+		if err != nil {
+			return nil, err
+		}
+		after, err := litcampaign.SnapshotStore(def, g.Storage())
+		if err != nil {
+			return nil, err
+		}
+		layout = lithud.NewMissionSelectLayout(canvas, view, labels)
+		dump.BeforeStore = &before
+		dump.AfterStore = after
+		dump.View = &view
+	case "save-load":
+		g.Storage().SetString("campaign:"+def.ID, "mission:m1:checkpoint", "inside-the-gate")
+		before, err := litcampaign.SnapshotStore(def, g.Storage())
+		if err != nil {
+			return nil, err
+		}
+		var buf bytes.Buffer
+		if err := g.Storage().Save(&buf); err != nil {
+			return nil, err
+		}
+		reloaded, err := api.NewGame(api.GameOptions{})
+		if err != nil {
+			return nil, err
+		}
+		if err := reloaded.Storage().Load(bytes.NewReader(buf.Bytes())); err != nil {
+			return nil, err
+		}
+		dump.Checkpoint, dump.CheckpointRead = reloaded.Storage().GetString("campaign:"+def.ID, "mission:m1:checkpoint")
+		if err := litcampaign.CompleteMission(reloaded.Storage(), def, "m1", renderDemoCarryOver("Mira Vale", 2, "Signal Charm")); err != nil {
+			return nil, err
+		}
+		view, err := litcampaign.BuildMissionView(def, reloaded.Storage(), archives, "")
+		if err != nil {
+			return nil, err
+		}
+		after, err := litcampaign.SnapshotStore(def, reloaded.Storage())
+		if err != nil {
+			return nil, err
+		}
+		layout = lithud.NewMissionSelectLayout(canvas, view, labels)
+		dump.BeforeStore = &before
+		dump.AfterStore = after
+		dump.View = &view
+	case "missing-archive":
+		view, err := litcampaign.BuildMissionView(def, g.Storage(), renderDemoCampaignArchives(false), "")
+		if err != nil {
+			return nil, err
+		}
+		store, err := litcampaign.SnapshotStore(def, g.Storage())
+		if err != nil {
+			return nil, err
+		}
+		layout = lithud.NewMissionSelectLayout(canvas, view, labels)
+		dump.AfterStore = store
+		dump.View = &view
+	default:
+		return nil, fmt.Errorf("campaign-menu: unknown scenario %q", scenario)
+	}
+	dump.Layout = layout
+	dump.Screen = layout.Screen
+	if len(layout.Issues) > 0 {
+		dump.OK = false
+		for _, issue := range layout.Issues {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("%s %s: %s", issue.Widget, issue.Rule, issue.Msg))
+		}
+	}
+	if scenario == "save-load" && (!dump.CheckpointRead || dump.Checkpoint != "inside-the-gate") {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("checkpoint read = (%q,%v), want inside-the-gate,true", dump.Checkpoint, dump.CheckpointRead))
+	}
+	return dump, nil
+}
+
+func renderDemoCampaignArchives(complete bool) fstest.MapFS {
+	if complete {
+		return fstest.MapFS{
+			"worlds/m1.litdworld": {Data: []byte("m1")},
+			"worlds/m2.litdworld": {Data: []byte("m2")},
+		}
+	}
+	return fstest.MapFS{
+		"worlds/m2.litdworld": {Data: []byte("m2")},
+	}
+}
+
+func renderDemoCarryOver(name string, level int, items ...string) litcampaign.CarryOver {
+	return litcampaign.CarryOver{
+		MissionID: "m2",
+		Heroes: []litcampaign.HeroCarryOver{{
+			Name:  name,
+			Level: level,
+			Items: append([]string{}, items...),
+		}},
+	}
 }
 
 func buildResourceBarFSV(hud *lithud.DefaultHUD, scenario string) (*resourceBarRuntimeDump, error) {
@@ -3053,6 +3265,40 @@ func drawCanvasHUD(scene *core.Node, snap canvasSnapshot, hud *lithud.DefaultHUD
 		}
 		label.SetPosition(float32(rect.X+6), float32(y))
 		scene.Add(label)
+	}
+}
+
+func drawCampaignMenu(scene *core.Node, layout lithud.CampaignMenuLayout, ok bool) {
+	for _, widget := range layout.Widgets {
+		rect := widget.Rect
+		panel := gui.NewPanel(float32(rect.W), float32(rect.H))
+		color := campaignMenuColor(widget.Name, ok)
+		panel.SetColor4(&color)
+		panel.SetPosition(float32(rect.X), float32(rect.Y))
+		scene.Add(panel)
+	}
+	for _, entry := range layout.Labels {
+		label := gui.NewLabel(entry.Text)
+		fg := math32.Color4{R: 0.88, G: 0.91, B: 0.88, A: 1}
+		label.SetColor4(&fg)
+		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
+		scene.Add(label)
+	}
+}
+
+func campaignMenuColor(name string, ok bool) math32.Color4 {
+	if !ok && name == "campaign-header" {
+		return math32.Color4{R: 0.42, G: 0.10, B: 0.10, A: 0.94}
+	}
+	switch name {
+	case "campaign-header":
+		return math32.Color4{R: 0.09, G: 0.14, B: 0.19, A: 0.96}
+	case "campaign-list", "mission-list":
+		return math32.Color4{R: 0.12, G: 0.16, B: 0.20, A: 0.94}
+	case "carry-over":
+		return math32.Color4{R: 0.18, G: 0.16, B: 0.10, A: 0.94}
+	default:
+		return math32.Color4{R: 0.15, G: 0.19, B: 0.23, A: 0.94}
 	}
 }
 

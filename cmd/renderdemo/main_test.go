@@ -4,12 +4,14 @@ import (
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
+	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/g3n/engine/core"
 )
@@ -288,6 +290,49 @@ func TestBuildMapDataDumpFSV(t *testing.T) {
 	}
 	if len(dump.SplatSamples) < 2 || dump.SplatSamples[1].Weight.C != 255 {
 		t.Fatalf("map dump splat samples wrong: %+v", dump.SplatSamples)
+	}
+}
+
+func TestBuildCampaignMenuRuntimeFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	canvas, err := lithud.NewCanvas(1366, 768, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	table := mustRenderDemoLocale(t)
+	for _, scenario := range []string{"campaign-select", "fresh", "unlocked", "save-load", "missing-archive"} {
+		dump, err := buildCampaignMenuRuntime(canvas, scenario, "en", table)
+		if err != nil {
+			t.Fatalf("%s: %v", scenario, err)
+		}
+		t.Logf("FSV renderdemo campaign scenario=%s screen=%s ok=%v store=%+v labels=%+v errors=%v",
+			scenario, dump.Screen, dump.OK, dump.AfterStore, dump.Layout.Labels, dump.Errors)
+		if !dump.OK || len(dump.Layout.Issues) != 0 || dump.AfterStore.Bytes == 0 || dump.AfterStore.SHA256 == "" {
+			t.Fatalf("%s dump not OK: %+v", scenario, dump)
+		}
+		switch scenario {
+		case "campaign-select":
+			if dump.Catalog == nil || dump.Catalog.SelectedCampaignID != "vigil-render" || dump.Screen != lithud.CampaignMenuScreenCampaignSelect {
+				t.Fatalf("campaign select wrong: %+v", dump)
+			}
+		case "fresh":
+			if dump.View == nil || dump.View.Missions[0].Status != "available" || dump.View.Missions[1].Status != "locked" {
+				t.Fatalf("fresh statuses wrong: %+v", dump.View)
+			}
+		case "unlocked":
+			if dump.BeforeStore == nil || dump.View == nil || dump.View.Missions[0].Status != "complete" || dump.View.Missions[1].Status != "available" ||
+				len(dump.View.CarryOver.Heroes) != 1 || dump.View.CarryOver.Heroes[0].Name != "Ser Caldus" {
+				t.Fatalf("unlocked carry-over wrong: %+v", dump)
+			}
+		case "save-load":
+			if !dump.CheckpointRead || dump.Checkpoint != "inside-the-gate" || dump.View == nil || dump.View.CarryOver.Heroes[0].Name != "Mira Vale" {
+				t.Fatalf("save-load checkpoint/carry wrong: %+v", dump)
+			}
+		case "missing-archive":
+			if dump.View == nil || dump.View.Missions[0].Status != "missing-archive" || !strings.Contains(dump.View.Missions[0].Error, "worlds/m1.litdworld") {
+				t.Fatalf("missing archive wrong: %+v", dump.View)
+			}
+		}
 	}
 }
 

@@ -46,6 +46,20 @@ const (
 	HUDCommandTrainArcherTooltip  Key = "hud.command.train_archer.tooltip"
 	HUDCommandRallyLabel          Key = "hud.command.rally.label"
 	HUDCommandRallyTooltip        Key = "hud.command.rally.tooltip"
+	CampaignMenuCampaignSelect    Key = "campaign.menu.campaign_select"
+	CampaignMenuMissionSelect     Key = "campaign.menu.mission_select"
+	CampaignMenuCarryOver         Key = "campaign.menu.carry_over"
+	CampaignMenuNoCarryOver       Key = "campaign.menu.no_carry_over"
+	CampaignMenuLocked            Key = "campaign.menu.locked"
+	CampaignMenuAvailable         Key = "campaign.menu.available"
+	CampaignMenuComplete          Key = "campaign.menu.complete"
+	CampaignMenuMissingArchive    Key = "campaign.menu.missing_archive"
+	CampaignMenuLevel             Key = "campaign.menu.level"
+	CampaignMenuItems             Key = "campaign.menu.items"
+	CampaignMenuArchive           Key = "campaign.menu.archive"
+	CampaignMenuRequires          Key = "campaign.menu.requires"
+	CampaignMenuError             Key = "campaign.menu.error"
+	CampaignMenuFaction           Key = "campaign.menu.faction"
 	EditorTitle                   Key = "editor.title"
 	EditorProjectUntitled         Key = "editor.project.untitled"
 	EditorModeLabel               Key = "editor.mode.label"
@@ -135,6 +149,20 @@ var requiredKeys = []string{
 	string(HUDCommandTrainArcherTooltip),
 	string(HUDCommandRallyLabel),
 	string(HUDCommandRallyTooltip),
+	string(CampaignMenuCampaignSelect),
+	string(CampaignMenuMissionSelect),
+	string(CampaignMenuCarryOver),
+	string(CampaignMenuNoCarryOver),
+	string(CampaignMenuLocked),
+	string(CampaignMenuAvailable),
+	string(CampaignMenuComplete),
+	string(CampaignMenuMissingArchive),
+	string(CampaignMenuLevel),
+	string(CampaignMenuItems),
+	string(CampaignMenuArchive),
+	string(CampaignMenuRequires),
+	string(CampaignMenuError),
+	string(CampaignMenuFaction),
 	string(EditorTitle),
 	string(EditorProjectUntitled),
 	string(EditorModeLabel),
