@@ -1,6 +1,10 @@
 package render
 
-import "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+import (
+	"fmt"
+
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
+)
 
 // Snapshot interpolation — the one-way sim→render bridge (PRD R-SIM-1, §4.1;
 // batching-and-draw-calls.md §6.3; M4 deliverable 1).
@@ -23,21 +27,53 @@ const fixedOne = float64(int64(1) << 32)
 // remains the source of truth.
 func fixedToF32(v fixed.F64) float32 { return float32(float64(v) / fixedOne) }
 
-// Snapshot is one 20 Hz sim frame's entity transforms, SoA and slot-indexed.
+// Snapshot is one 20 Hz sim frame's entity state, SoA and slot-indexed.
 // Present[i] marks slot i as a live entity this frame; Snap[i] marks it as
 // spawn/teleport/death — render takes the current value without interpolating.
+// EntityKey[i] is the stable, nonzero entity identity used by ModelMirror; key
+// zero is reserved and skipped. Model[i] is the render model the scene layer
+// should instantiate for the entity, with ModelNone meaning "track but render
+// nothing".
 type Snapshot struct {
-	Tick    uint64
-	X       []fixed.F64
-	Y       []fixed.F64
-	Z       []fixed.F64
-	Facing  []fixed.F64
-	Present []bool
-	Snap    []bool
+	Tick      uint64
+	X         []fixed.F64
+	Y         []fixed.F64
+	Z         []fixed.F64
+	Facing    []fixed.F64
+	Present   []bool
+	Snap      []bool
+	EntityKey []uint32
+	Model     []ModelID
 }
 
 // Len returns the slot count of the snapshot (by the Present column).
 func (s *Snapshot) Len() int { return len(s.Present) }
+
+// MirrorEntries appends the live, mirrorable snapshot slots to dst and returns
+// the resliced buffer. It validates the identity/model columns before reading
+// them so a malformed published snapshot fails closed instead of silently
+// dropping live entities. Key zero is still skipped because it is the reserved
+// invalid entity key, matching ModelMirror.Sync.
+func (s *Snapshot) MirrorEntries(dst []MirrorEntry) ([]MirrorEntry, error) {
+	dst = dst[:0]
+	if s == nil {
+		return dst, fmt.Errorf("render snapshot: nil snapshot")
+	}
+	n := s.Len()
+	if len(s.EntityKey) < n {
+		return dst, fmt.Errorf("render snapshot: entity key column length %d below present length %d", len(s.EntityKey), n)
+	}
+	if len(s.Model) < n {
+		return dst, fmt.Errorf("render snapshot: model column length %d below present length %d", len(s.Model), n)
+	}
+	for i := 0; i < n; i++ {
+		if !s.Present[i] || s.EntityKey[i] == 0 {
+			continue
+		}
+		dst = append(dst, MirrorEntry{Key: s.EntityKey[i], Model: s.Model[i]})
+	}
+	return dst, nil
+}
 
 // InterpBuffer holds the render-rate interpolated transforms, SoA float32.
 // Reused across frames; grown only when the slot count rises, so steady-state
