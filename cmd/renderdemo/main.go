@@ -70,6 +70,7 @@ type renderDemoDump struct {
 	Queue     *queueRuntimeDump       `json:"queue,omitempty"`
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
 	VFXLights *vfxLightsRuntimeDump   `json:"vfxLights,omitempty"`
+	Voices    *voiceBattleRuntimeDump `json:"voices,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -535,7 +536,7 @@ type resourceBarValues struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, terrain, terrain-units, terrain-chunks, spellstorm, battle500")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
 	dumpAudioInitMode := flag.String("dump-audio-init", "", "print audio init/accounting JSON for backend mode: null, openal, or auto")
@@ -635,6 +636,7 @@ func main() {
 	var queueFSV *queueRuntimeDump
 	var terrainFSV *terrainRuntimeDump
 	var vfxFSV *vfxLightsRuntimeDump
+	var voiceFSV *voiceBattleRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -704,6 +706,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "renderdemo: spellstorm: %v\n", err)
 				os.Exit(1)
 			}
+		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "battle500" {
+			spec, voiceFSV, err = buildBattle500FSV(scene)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: battle500: %v\n", err)
+				os.Exit(1)
+			}
 		} else {
 			spec, err = buildScene(scene, *sceneName)
 			if err != nil {
@@ -748,10 +756,12 @@ func main() {
 				pass = pass && terrainFSV.OK
 			} else if vfxFSV != nil {
 				pass = pass && vfxFSV.OK
+			} else if voiceFSV != nil {
+				pass = pass && voiceFSV.OK && stats == spec.expected
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {

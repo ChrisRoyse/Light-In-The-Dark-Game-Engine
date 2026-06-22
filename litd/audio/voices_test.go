@@ -59,6 +59,37 @@ func TestVolleyCoalesceFSV(t *testing.T) {
 		admitted, coalesced, a.ActiveIn(PartitionWorld), a.slots[bumped].bump, CoalesceGainCap, a.slots[bumped].gain)
 }
 
+// Edge: the retrigger window is part of the coalescing rule. Once an asset has
+// three active instances, an excess trigger inside 50 ms merges into the newest;
+// an excess trigger after that window must not keep bumping the old voice.
+func TestRetriggerWindowFSV(t *testing.T) {
+	a := NewAllocator(FalloffRadius)
+	for i := 0; i < MaxConcurrentPerAsset; i++ {
+		d := a.Admit(VoiceRequest{Cue: 17, Asset: 17, Partition: PartitionWorld,
+			Priority: PrioAttackImpact, HasPos: true, Pos: Vec3{}, Volume: 0.4, TimeMs: int64(i)})
+		if d.Outcome != Admitted {
+			t.Fatalf("setup admit %d got %s", i, d.Outcome)
+		}
+	}
+	inside := a.Admit(VoiceRequest{Cue: 17, Asset: 17, Partition: PartitionWorld,
+		Priority: PrioAttackImpact, HasPos: true, Pos: Vec3{}, Volume: 0.4, TimeMs: RetriggerWindowMs})
+	if inside.Outcome != Coalesced {
+		t.Fatalf("same-asset overflow inside retrigger window must coalesce, got %s", inside.Outcome)
+	}
+	before := a.ActiveIn(PartitionWorld)
+	lateTime := int64(MaxConcurrentPerAsset-1) + RetriggerWindowMs + 1
+	late := a.Admit(VoiceRequest{Cue: 17, Asset: 17, Partition: PartitionWorld,
+		Priority: PrioAttackImpact, HasPos: true, Pos: Vec3{}, Volume: 0.4, TimeMs: lateTime})
+	if late.Outcome != Dropped {
+		t.Fatalf("same-asset overflow after retrigger window must drop, got %s", late.Outcome)
+	}
+	if after := a.ActiveIn(PartitionWorld); after != before || after != MaxConcurrentPerAsset {
+		t.Fatalf("late overflow mutated active voices: before=%d after=%d", before, after)
+	}
+	t.Logf("FSV #230 retrigger window: active=%d; t=%d coalesced, t=%d dropped (no late gain bump/restart)",
+		a.ActiveIn(PartitionWorld), RetriggerWindowMs, lateTime)
+}
+
 // Edge 2: UI click during a saturated world — the UI partition is separate, so a
 // full battle never starves UI feedback.
 func TestPartitionIsolationFSV(t *testing.T) {

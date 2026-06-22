@@ -45,7 +45,7 @@ const (
 type Priority uint8
 
 const (
-	PrioAmbient     Priority = iota // Footstep / Ambient — lowest
+	PrioAmbient Priority = iota // Footstep / Ambient — lowest
 	PrioAttackImpact
 	PrioDeath
 	PrioAbilityCast
@@ -119,11 +119,11 @@ type Decision struct {
 
 // vslot is one preallocated source.
 type vslot struct {
-	active   bool
-	req      VoiceRequest
-	gain     float64 // current gain (grows on coalesce, capped)
-	bump     float64 // accumulated coalesce bump
-	startMs  int64
+	active  bool
+	req     VoiceRequest
+	gain    float64 // current gain (grows on coalesce, capped)
+	bump    float64 // accumulated coalesce bump
+	startMs int64
 }
 
 // Allocator is the fixed-budget voice pool with admission control.
@@ -221,6 +221,9 @@ func (a *Allocator) Admit(req VoiceRequest) Decision {
 		}
 	}
 	if concurrent >= MaxConcurrentPerAsset && newest >= 0 {
+		if !withinRetriggerWindow(req.TimeMs, newestStart) {
+			return Decision{Outcome: Dropped, Slot: -1, Victim: -1}
+		}
 		s := &a.slots[newest]
 		bump := CoalesceGainBump
 		if s.bump+bump > CoalesceGainCap {
@@ -254,6 +257,17 @@ func (a *Allocator) Admit(req VoiceRequest) Decision {
 
 	// (4) Silent drop.
 	return Decision{Outcome: Dropped, Slot: -1, Victim: -1}
+}
+
+// withinRetriggerWindow reports whether now is close enough to newestStart to
+// merge instead of starting/restarting another same-asset instance. A backwards
+// timestamp is treated as inside the window, which keeps the allocator
+// conservative when callers supply a non-wall-clock monotonic sequence.
+func withinRetriggerWindow(now, newestStart int64) bool {
+	if now < newestStart {
+		return true
+	}
+	return now-newestStart <= RetriggerWindowMs
 }
 
 // weakest returns the index of the lowest-priority active voice in [lo,hi);
