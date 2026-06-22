@@ -15,6 +15,86 @@ const (
 	InstanceUpdateBytes     = InstanceTransformBytes + InstanceTeamColorBytes
 )
 
+const SkinnedInstancingFollowupIssue = 308
+
+type InstancingVariant string
+
+const (
+	InstancingVariantRigidOnlyFloor InstancingVariant = "rigid-only-floor"
+)
+
+type InstancingPolicySnapshot struct {
+	Variant              InstancingVariant        `json:"variant"`
+	RigidInstanced       bool                     `json:"rigidInstanced"`
+	SkinnedInstanced     bool                     `json:"skinnedInstanced"`
+	SkinnedStrategy      string                   `json:"skinnedStrategy"`
+	SkinnedFollowupIssue int                      `json:"skinnedFollowupIssue"`
+	BaselineWorldDraws   int                      `json:"baselineWorldDraws"`
+	FloorWorldDraws      int                      `json:"floorWorldDraws"`
+	RecoveredDraws       int                      `json:"recoveredDraws"`
+	Classes              []InstancingClassSummary `json:"classes"`
+}
+
+type InstancingClassSummary struct {
+	Class         string `json:"class"`
+	Instances     int    `json:"instances"`
+	ModelTypes    int    `json:"modelTypes"`
+	BaselineDraws int    `json:"baselineDraws"`
+	FloorDraws    int    `json:"floorDraws"`
+	Instanced     bool   `json:"instanced"`
+}
+
+func PlanRigidOnlyInstancing(rigidInstances, rigidModelTypes, skinnedInstances int) (InstancingPolicySnapshot, error) {
+	if rigidInstances < 0 {
+		return InstancingPolicySnapshot{}, fmt.Errorf("rigid instance count is negative")
+	}
+	if rigidModelTypes < 0 {
+		return InstancingPolicySnapshot{}, fmt.Errorf("rigid model type count is negative")
+	}
+	if skinnedInstances < 0 {
+		return InstancingPolicySnapshot{}, fmt.Errorf("skinned instance count is negative")
+	}
+	if rigidInstances > 0 && rigidModelTypes == 0 {
+		return InstancingPolicySnapshot{}, fmt.Errorf("rigid model type count is zero for %d rigid instances", rigidInstances)
+	}
+
+	rigidFloorDraws := rigidModelTypes
+	if rigidFloorDraws > rigidInstances {
+		rigidFloorDraws = rigidInstances
+	}
+	rigidBaselineDraws := rigidInstances
+	baseline := rigidBaselineDraws + skinnedInstances
+	floor := rigidFloorDraws + skinnedInstances
+	return InstancingPolicySnapshot{
+		Variant:              InstancingVariantRigidOnlyFloor,
+		RigidInstanced:       rigidInstances > 0,
+		SkinnedInstanced:     false,
+		SkinnedStrategy:      "per-draw via AnimDriver until GLB skinning sink and VAT/cohort evaluation land",
+		SkinnedFollowupIssue: SkinnedInstancingFollowupIssue,
+		BaselineWorldDraws:   baseline,
+		FloorWorldDraws:      floor,
+		RecoveredDraws:       baseline - floor,
+		Classes: []InstancingClassSummary{
+			{
+				Class:         "rigid",
+				Instances:     rigidInstances,
+				ModelTypes:    rigidModelTypes,
+				BaselineDraws: rigidBaselineDraws,
+				FloorDraws:    rigidFloorDraws,
+				Instanced:     rigidInstances > 0,
+			},
+			{
+				Class:         "skinned",
+				Instances:     skinnedInstances,
+				ModelTypes:    skinnedInstances,
+				BaselineDraws: skinnedInstances,
+				FloorDraws:    skinnedInstances,
+				Instanced:     false,
+			},
+		},
+	}, nil
+}
+
 type InstanceBufferSnapshot struct {
 	Count              int              `json:"count"`
 	Capacity           int              `json:"capacity"`

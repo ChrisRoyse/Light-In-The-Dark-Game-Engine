@@ -59,7 +59,9 @@ G3N has **no documented GPU instancing path** at the Go level ([PRD §3.4](../..
 
 ### 4.2 Why instancing matters here
 
-An RTS is the canonical instancing workload: hundreds of entities sharing a handful of meshes. With instancing, all visible footmen become **one draw call** carrying a per-instance buffer (transform + team color + animation parameters), turning the unit sub-budget from ~150 calls into ~10–20 (one per distinct visible model type per material). At the D-18 stretch case — 1,000 visible units — instancing is not an optimization but the only way the 300-call ceiling is reachable at all.
+An RTS is the canonical instancing workload: hundreds of entities sharing a handful of meshes. With instancing, rigid content classes become **one draw call per visible model type** carrying a per-instance buffer (transform + team color), turning buildings, doodads, missiles, decals, and rigid props from one call per entity into one call per class. At the D-18 stretch case — 1,000 visible units — this is not an optimization but the only way the 300-call ceiling is reachable at all.
+
+Skinned units are deliberately handled separately. They remain per-draw in the guaranteed floor because each visible unit may be in a different clip, phase, fade, death, or attack-impact state. VAT or shared-pose cohorts are still candidates, but they require the product GLB skinning sink from #308 and the scripted benchmark harness from #233 before they can be selected with real evidence.
 
 ### 4.3 Implementation plan (planning in M3; patch lands in M4)
 
@@ -71,9 +73,36 @@ An RTS is the canonical instancing workload: hundreds of entities sharing a hand
 4. **Prototype + benchmark.** Implement the smallest variant that covers the 1,000-unit stretch case per the baseline; re-run the M3 scenes; record draw calls, frame time, and CPU submission time.
 5. **Decision record.** Outcome (variant chosen, skinned-mesh answer, content classes covered) is written into this document and the vendored-fork patch list before the M4 render core builds on it. "Defer entirely" is no longer an outcome (D-2026-06-11-18); the floor is option (c) of step 3 — rigid-content instancing — with skinned coverage recorded as adopted or scheduled.
 
+### 4.3.5 Decision record — #107 rigid-only floor (2026-06-22)
+
+Issue #107 selects option (c), **rigid-only instancing**, as the shippable floor. Rigid content uses the vendored G3N `InstancedMesh` path and the LitD `InstanceBuffer` CPU mirror to submit transform + team-color attributes in one draw per visible rigid model type. Skinned units stay as individual draw submissions driven by `AnimDriver` state (`Idle`, `Walk`, `Attack`, `Death`) until #308 lands the product GLB model registry / skinning sink; VAT and shared-pose cohorts remain scheduled evaluation items after #308 and the #233 renderbench harness.
+
+The policy surface is `litd/render.PlanRigidOnlyInstancing`. It fails closed on negative counts and on rigid instances without any model type, caps rigid floor draws when model-type count exceeds instance count, and emits a JSON-ready snapshot with `variant="rigid-only-floor"`, `skinnedInstanced=false`, and `skinnedFollowupIssue=308`.
+
+FSV evidence from `cmd/renderbench`:
+
+| Scene | Variant | Opaque/world draws | Opaque state changes | Frame ms | Submission ms | Artifacts |
+|---|---:|---:|---:|---:|---:|---|
+| battle500 | baseline | 501 | 455 | 51.562 | 51.541 | `artifacts/skinned-inst-500-baseline.png`, `artifacts/skinned500-baseline.json` |
+| battle500 | rigid floor | 73 | 28 | 191.240 | 191.215 | `artifacts/skinned-inst-500.png`, `artifacts/skinned500.json` |
+| battle1000 | baseline | 1001 | 899 | 143.048 | 143.025 | `artifacts/skinned-inst-1000-baseline.png`, `artifacts/skinned1000-baseline.json` |
+| battle1000 | rigid floor | 133 | 31 | 108.112 | 108.092 | `artifacts/skinned-inst-1000.png`, `artifacts/skinned1000.json` |
+
+The single-frame timings above are raw headless-EGL samples and are kept as evidence dumps, not a controlled performance conclusion. The source-of-truth gate is the draw/state counter delta: the floor recovers 428 world draws in the 500 scene and 868 world draws in the 1,000 scene while keeping skinned actors per-draw.
+
+The renderbench JSON also records four animation samples (`Idle`, `Walk`, `Attack`, `Death` at t=0.35) and a death trace that clamps at 0.8s then fades, covering distinct phases, attack, death, and mixed rigid+skinned policy. Separate `cmd/animtest` smoke artifacts (`artifacts/skinned-inst-knight-walk-*.png`, `artifacts/skinned-inst-knight-attack-*.png`) verify the current KayKit Knight GLB path parses one skin with 41 joints and renders advancing walk/attack frames, but those screenshots are not the large-count instancing path; #308 remains the productization issue for GLB skinning in the render mirror.
+
+Vendored engine patch coverage for this floor is:
+
+- `patches/engine/0005-gls-instancing-wrappers.patch`
+- `patches/engine/0006-instanced-mesh.patch`
+- `patches/engine/0009-instance-team-color-buffer.patch`
+
+No additional engine patch is required for #107; the floor is a LitD policy/benchmark/doc layer over the existing tracked instancing patches.
+
 ### 4.4 Patch hygiene
 
-Any instancing patch lives in clearly-marked files/commits in `repoes/engine` (we own maintenance per PRD §8), behind a build tag where feasible, with an upstreamable diff kept rebase-clean.
+Any instancing patch lives in clearly-marked files/commits in `repoes/engine` (we own maintenance per PRD §8), behind a build tag where feasible, with an upstreamable diff kept rebase-clean. The tracked patch list lives under `patches/engine/`; reapplying the series must produce the same vendored engine behavior used by the FSV artifacts above.
 
 ## 5. R-RND-7: Team color via uniform
 
@@ -145,7 +174,7 @@ What to reach for, in order, if the M3/M4 benchmarks miss — pre-agreed so the 
 | Milestone | Deliverable |
 |---|---|
 | M3 | Baseline batching + merging benchmark; instancing implementation planning (§4.3) — viability already confirmed by spike *(Revised 2026-06-11 per D-2026-06-11-18/-30)* |
-| M4 | Team-color uniform path; chunked terrain merging; **instancing patch lands (D-2026-06-11-18)** — 1,000-unit stretch scene inside the 300-call ceiling on the recommended spec; draw-call counter gating CI; both camera projections benchmarked |
+| M4 | Team-color uniform path; chunked terrain merging; **instancing patch lands (D-2026-06-11-18) with #107 rigid-only floor** — 1,000-unit stretch policy scene inside the 300-call ceiling on the recommended spec; skinned-unit VAT/cohort choice follows #308/#233; draw-call counter gating CI; both camera projections benchmarked |
 | M6 | Full-match budget validation (vertical slice) with all overlays from [Fog of War, Minimap, Selection](./fog-of-war-minimap-selection.md) active |
 
 ## 12. Requirements traceability

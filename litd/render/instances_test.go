@@ -44,6 +44,79 @@ func TestInstanceBufferFSV(t *testing.T) {
 	}
 }
 
+func TestRigidOnlyInstancingPlanFSV(t *testing.T) {
+	plan, err := PlanRigidOnlyInstancing(440, 12, 60)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV rigid-only floor battle500 AFTER plan=%+v", plan)
+	if plan.Variant != InstancingVariantRigidOnlyFloor || !plan.RigidInstanced || plan.SkinnedInstanced {
+		t.Fatalf("policy flags wrong: %+v", plan)
+	}
+	if plan.BaselineWorldDraws != 500 || plan.FloorWorldDraws != 72 || plan.RecoveredDraws != 428 {
+		t.Fatalf("battle500 draw math wrong: %+v", plan)
+	}
+	if plan.Classes[0].FloorDraws != 12 || plan.Classes[1].FloorDraws != 60 {
+		t.Fatalf("class draw math wrong: %+v", plan.Classes)
+	}
+	if SkinnedInstancingFollowupIssue != 308 {
+		t.Fatalf("skinned follow-up issue constant = %d, want 308", SkinnedInstancingFollowupIssue)
+	}
+	if plan.SkinnedFollowupIssue != SkinnedInstancingFollowupIssue {
+		t.Fatalf("skinned follow-up issue not recorded: %+v", plan)
+	}
+
+	stress, err := PlanRigidOnlyInstancing(880, 12, 120)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV rigid-only floor battle1000 AFTER plan=%+v", stress)
+	if stress.BaselineWorldDraws != 1000 || stress.FloorWorldDraws != 132 || stress.RecoveredDraws != 868 {
+		t.Fatalf("battle1000 draw math wrong: %+v", stress)
+	}
+}
+
+func TestRigidOnlyInstancingPlanEdgesFSV(t *testing.T) {
+	empty, err := PlanRigidOnlyInstancing(0, 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV rigid-only floor empty BEFORE zero counts AFTER plan=%+v", empty)
+	if empty.BaselineWorldDraws != 0 || empty.FloorWorldDraws != 0 || empty.RigidInstanced {
+		t.Fatalf("empty plan wrong: %+v", empty)
+	}
+
+	moreTypes, err := PlanRigidOnlyInstancing(3, 9, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV rigid-only floor more-types AFTER plan=%+v", moreTypes)
+	if moreTypes.FloorWorldDraws != 5 || moreTypes.Classes[0].FloorDraws != 3 {
+		t.Fatalf("more-types plan should cap rigid draws at instance count: %+v", moreTypes)
+	}
+
+	cases := []struct {
+		name    string
+		rigid   int
+		types   int
+		skinned int
+	}{
+		{name: "negative-rigid", rigid: -1, types: 1, skinned: 0},
+		{name: "negative-types", rigid: 1, types: -1, skinned: 0},
+		{name: "negative-skinned", rigid: 1, types: 1, skinned: -1},
+		{name: "rigid-without-type", rigid: 1, types: 0, skinned: 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got, err := PlanRigidOnlyInstancing(tc.rigid, tc.types, tc.skinned); err == nil {
+				t.Fatalf("invalid plan accepted: %+v", got)
+			} else {
+				t.Logf("FSV rigid-only floor invalid %s AFTER err=%v", tc.name, err)
+			}
+		})
+	}
+}
+
 func TestInstanceBufferEdgesFSV(t *testing.T) {
 	if _, err := NewInstanceBuffer(nil, 1); err == nil {
 		t.Fatal("nil mesh accepted")
