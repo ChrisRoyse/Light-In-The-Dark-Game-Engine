@@ -18,10 +18,10 @@
 #   scripts/preflight.sh --fast     # quick inner-loop pass: runs the unit suite
 #                                    # with `go test -short` (heavy 10k/5k-tick
 #                                    # e2e + save/load + stress tests self-skip),
-#                                    # runs the 10k determinism fixtures once as
-#                                    # explicit steps, and skips -race/bench/
-#                                    # world-archive. ~2x faster, same correctness
-#                                    # coverage for the inner loop.
+#                                    # runs core 10k sim + AI golden subtest
+#                                    # once as explicit steps, and skips the
+#                                    # heavier AI save/restore + GOMAXPROCS edge
+#                                    # sweep, -race/bench/world-archive gates.
 #   scripts/preflight.sh --no-race  # full gate but skip the -race determinism cell
 #
 # Inner-loop tip: for a single package, `go test -short ./litd/<pkg>/` skips the
@@ -133,13 +133,15 @@ step "jassgen tests"        go test ./tools/jassgen/
 
 # --- determinism traces (determinism.yml) -----------------------------------
 # The 10k-tick sim+AI fixtures self-skip under -short. In FAST mode the main
-# `go test -short` step above skipped them, so run them explicitly here (once).
-# In FULL mode the main (no -short) `go test ./...` step already ran them once —
-# running them again here would be a wasteful ~60s double-pass, so FULL relies on
-# the main step for the non-race cell and the block below adds the -race cell.
+# `go test -short` step above skipped them, so run the core golden-hash gates
+# explicitly here. The heavier AI save/restore and GOMAXPROCS fixtures stay
+# full-gate only; they expand to several extra 10k-equivalent matches and are
+# already covered by the main no-short `go test ./...` step before main merges.
+# In FULL mode the main step already ran the non-race cell and the block below
+# adds the -race cell.
 if [ $FAST -eq 1 ]; then
   step "10k-tick sim determinism" go test ./litd/sim/ -run 'TestDeterminism10k$'
-  step "10k-tick AI determinism"  go test ./litd/ai/ -run 'TestAIDeterminism10k$|TestAISaveRestore$|TestAIDeterminismGOMAXPROCS$'
+  step "10k-tick AI determinism (golden)" go test ./litd/ai/ -run '^TestAIDeterminism10k$/^Golden$'
 fi
 
 if [ $FAST -eq 0 ]; then

@@ -29,10 +29,10 @@ const (
 	dMatchTicks = 10000
 	dSaveAt     = 5000
 
-	dWorker uint16 = 0
+	dWorker  uint16 = 0
 	dSoldier uint16 = 1
-	dTown   uint16 = 2
-	dBarr   uint16 = 3
+	dTown    uint16 = 2
+	dBarr    uint16 = 3
 
 	dResGold = 0
 	dResWood = 1
@@ -175,9 +175,9 @@ func dSpawnWorker(t *testing.T, w *sim.World, player uint8, x, y int32) {
 func dSetupUnits(t *testing.T, w *sim.World, baseShift int32) {
 	t.Helper()
 	type base struct {
-		p          uint8
-		bx, by     int32
-		workers    int
+		p       uint8
+		bx, by  int32
+		workers int
 	}
 	for _, b := range []base{{1, 1500, 1500, 7}, {2, 3500, 1500, 5}} {
 		town, ok := w.SpawnFromTable(dTown, b.p, b.p, dpt(b.bx, b.by))
@@ -290,12 +290,13 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // constant TopHash shift (empty arena here). run1==run2 unchanged.
 const dGolden uint64 = 0x60d4d3e1e67b0acd
 
-// TestAIDeterminism10k — the gate. Two internal 10k-tick runs are bit-identical
-// and (once the golden is committed) equal the golden hash. FSV runs this with
-// -count=100 to confirm 100 identical hashes.
+// TestAIDeterminism10k — the gate. The Golden subtest is the fast preflight SoT:
+// one full 10k-tick match must equal the committed golden hash. The default full
+// run also executes Repeat, proving a second 10k-tick run is bit-identical.
+// FSV runs this with -count=100 to confirm 100 identical hashes.
 func TestAIDeterminism10k(t *testing.T) {
 	if testing.Short() {
-		t.Skip("10k-tick AI fixture skipped in -short (runs as the explicit determinism gate step)")
+		t.Skip("10k-tick AI fixture skipped in -short (Golden subtest runs as the explicit determinism gate step)")
 	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
@@ -305,16 +306,35 @@ func TestAIDeterminism10k(t *testing.T) {
 		dStep(m, dMatchTicks)
 		return dHash(reg, m)
 	}
-	h1 := run()
-	h2 := run()
-	t.Logf("10k-tick match hash: run1=%016x run2=%016x", h1, h2)
-	if h1 != h2 {
-		t.Fatalf("AI match NOT deterministic across two runs: %016x vs %016x", h1, h2)
+	var baseline uint64
+	var haveBaseline bool
+	runBaseline := func() uint64 {
+		if !haveBaseline {
+			baseline = run()
+			haveBaseline = true
+		}
+		return baseline
 	}
-	if dGolden != 0 && h1 != dGolden {
-		t.Fatalf("10k hash %016x != golden %016x (intended change? update dGolden)", h1, dGolden)
+	goldenOK := t.Run("Golden", func(t *testing.T) {
+		h1 := runBaseline()
+		t.Logf("10k-tick match hash: run=%016x", h1)
+		if dGolden != 0 && h1 != dGolden {
+			t.Fatalf("10k hash %016x != golden %016x (intended change? update dGolden)", h1, dGolden)
+		}
+		t.Logf("golden OK: hash=%016x", h1)
+	})
+	if !goldenOK && haveBaseline {
+		return
 	}
-	t.Logf("determinism OK: 2 runs identical (golden=%016x)", h1)
+	t.Run("Repeat", func(t *testing.T) {
+		h1 := runBaseline()
+		h2 := run()
+		t.Logf("10k-tick match hash: run1=%016x run2=%016x", h1, h2)
+		if h1 != h2 {
+			t.Fatalf("AI match NOT deterministic across two runs: %016x vs %016x", h1, h2)
+		}
+		t.Logf("determinism OK: 2 runs identical (golden=%016x)", h1)
+	})
 }
 
 // TestAISaveRestore — save the FULL match (sim + every controller's plan + the
@@ -322,7 +342,7 @@ func TestAIDeterminism10k(t *testing.T) {
 // the final hash equals the unbroken 10k run. Also probes tick-1 and tick-9999.
 func TestAISaveRestore(t *testing.T) {
 	if testing.Short() {
-		t.Skip("full 10k AI save/restore skipped in -short (runs as the explicit determinism gate step)")
+		t.Skip("full 10k AI save/restore skipped in -short (covered by the full preflight gate)")
 	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
@@ -386,7 +406,7 @@ func TestAISaveRestore(t *testing.T) {
 // same hash regardless of GOMAXPROCS.
 func TestAIDeterminismGOMAXPROCS(t *testing.T) {
 	if testing.Short() {
-		t.Skip("GOMAXPROCS determinism edge skipped in -short (runs as the explicit determinism gate step)")
+		t.Skip("GOMAXPROCS determinism edge skipped in -short (covered by the full preflight gate)")
 	}
 	reg := sim.NewHashRegistry()
 	vigil, unbound := dLoadFactions(t)
