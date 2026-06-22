@@ -238,6 +238,28 @@ func TestCleanAssetsPass(t *testing.T) {
 	}
 }
 
+func TestCreditsMetadataIgnoredFSV(t *testing.T) {
+	f := newFixture(t)
+	f.add(t, "music/theme.ogg", monoVorbisOgg(2, 44100, 44100), true)
+	credits := filepath.Join(f.dir, "CREDITS.md")
+	if err := os.WriteFile(credits, []byte("# Credits\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	files, err := listFiles(f.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV #101 credits metadata file list=%v", files)
+	for _, p := range files {
+		if p == "CREDITS.md" {
+			t.Fatalf("CREDITS.md should be metadata, not an asset input: %v", files)
+		}
+	}
+	if got := f.run(t); len(got) != 0 {
+		t.Fatalf("credits metadata should not need MANIFEST entry, got %v", got)
+	}
+}
+
 func TestUIAtlasPassesFromAssetsRootAndSubdir(t *testing.T) {
 	f := newFixture(t)
 	f.add(t, "ui/litd-default-ui.atlas.png", []byte("PNG-synthetic"), true)

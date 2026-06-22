@@ -226,7 +226,7 @@ func VerifyPrefix(assetsDir string, prefix string) ([]Violation, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if rel == "MANIFEST" {
+		if rel == "MANIFEST" || rel == "CREDITS.md" {
 			return nil
 		}
 		onDisk[rel] = true

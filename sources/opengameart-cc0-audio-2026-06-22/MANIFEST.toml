@@ -1,0 +1,61 @@
+# Source manifest for the v0.1 music and ambience batch (#101).
+# Runtime .ogg assets are written under assets/audio/music/ and tracked in
+# assets/MANIFEST. Original source files are downloaded from these URLs and
+# verified by SHA-256 before copying or transcoding.
+
+pack = "OpenGameArt CC0 audio batch"
+retrieved = "2026-06-22"
+license = "CC0-1.0"
+transcode = "ffmpeg -map_metadata -1 -fflags +bitexact -flags +bitexact -flags:a +bitexact -ar 44100 -ac 2 -codec:a libvorbis -q:a 5 -serial_offset 0"
+
+[[source]]
+asset = "audio/music/menu_theme.ogg"
+title = "Town Theme RPG"
+author = "cynicmusic"
+page = "https://opengameart.org/content/town-theme-rpg"
+download = "https://opengameart.org/sites/default/files/TownTheme.mp3"
+source_file = "originals/TownTheme.mp3"
+source_format = "mp3, stereo, 44100 Hz"
+source_sha256 = "2657861d5107d4a3c01ef81cb6a4d61ddd5e7a054b6da57e658373d79d0c3466"
+asset_sha256 = "b2821586c0fcbfd1b85b6a8a6dffd50d372324df472e9760ae8e9df089ae692e"
+role = "main-menu theme"
+conversion = "deterministic Vorbis transcode"
+
+[[source]]
+asset = "audio/music/vigil_match.ogg"
+title = "Heartfelt Battle (Loopable, fantasy, strings/piano/horn)"
+author = "request"
+page = "https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stringspianohorn"
+download = "https://opengameart.org/sites/default/files/heartfelt-battle_loop.ogg"
+source_file = "originals/heartfelt-battle_loop.ogg"
+source_format = "ogg vorbis, stereo, 44100 Hz"
+source_sha256 = "fbe7e37515e0e17a0c3b46df7c5c2977cd1b607e70d6f9494b09f1795a3ae4d3"
+asset_sha256 = "fbe7e37515e0e17a0c3b46df7c5c2977cd1b607e70d6f9494b09f1795a3ae4d3"
+role = "Vigil match track"
+conversion = "copied; source already compliant Ogg Vorbis/stereo/44100 Hz"
+
+[[source]]
+asset = "audio/music/unbound_match.ogg"
+title = "Determined Pursuit (epic orchestra loop)"
+author = "Emma_MA"
+page = "https://opengameart.org/content/determined-pursuit-epic-orchestra-loop"
+download = "https://opengameart.org/sites/default/files/determined_pursuit_loop.wav"
+source_file = "originals/determined_pursuit_loop.wav"
+source_format = "wav pcm_s16le, stereo, 44100 Hz"
+source_sha256 = "e4f3be098b50213b56a60aefe60fffae79cd9f7c9008088f93c187ef1bbc856b"
+asset_sha256 = "9163b4545334f31dee880acfdb5f7d3c8a30d79cb1c30cd3e2e6a842152cfe29"
+role = "Unbound match track"
+conversion = "deterministic Vorbis transcode"
+
+[[source]]
+asset = "audio/music/gloam_ambience.ogg"
+title = "Loopable Dungeon Ambience"
+author = "JaggedStone"
+page = "https://opengameart.org/content/loopable-dungeon-ambience"
+download = "https://opengameart.org/sites/default/files/dungeon_ambient_1.ogg"
+source_file = "originals/dungeon_ambient_1.ogg"
+source_format = "ogg vorbis, stereo, 48000 Hz"
+source_sha256 = "df491823e4877371c34dbda4e9321cd83a4a14fa7573cee0ebca1ae423b70e6e"
+asset_sha256 = "1d55b0deabd59f27b042f51ad3239ac7c1936984f40c04d081ff1daf580031f9"
+role = "Gloam ambience bed"
+conversion = "deterministic Vorbis transcode/resample to 44100 Hz"

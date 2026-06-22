@@ -52,6 +52,24 @@ func TestHappyPath(t *testing.T) {
 	}
 }
 
+func TestCreditsMetadataIgnoredFSV(t *testing.T) {
+	dir := t.TempDir()
+	sum := writeAsset(t, dir, "music/theme.ogg", "synthetic-ogg-bytes")
+	writeManifest(t, dir, "# header\n"+entry("music/theme.ogg", "CC0-1.0", sum))
+	if err := os.WriteFile(filepath.Join(dir, "CREDITS.md"), []byte("# Credits\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV #101 manifest before verify: asset=music/theme.ogg credits=CREDITS.md")
+	v, err := Verify(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV #101 manifest after verify: violations=%v", v)
+	if len(v) != 0 {
+		t.Fatalf("CREDITS.md should be root metadata, not an unlisted asset: %v", v)
+	}
+}
+
 func TestUnlistedFile(t *testing.T) {
 	dir := t.TempDir()
 	writeAsset(t, dir, "rogue.glb", "unlisted-bytes")
@@ -140,7 +158,12 @@ func TestParseRealManifest(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && filepath.Base(p) != "MANIFEST" {
+		rel, relErr := filepath.Rel("../../../assets", p)
+		if relErr != nil {
+			return relErr
+		}
+		rel = filepath.ToSlash(rel)
+		if !d.IsDir() && rel != "MANIFEST" && rel != "CREDITS.md" {
 			onDisk++
 		}
 		return nil

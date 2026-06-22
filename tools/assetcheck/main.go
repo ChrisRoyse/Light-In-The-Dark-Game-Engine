@@ -28,9 +28,9 @@ import (
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio/oggmeta"
-	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/tools/assetcheck/manifest"
 )
@@ -246,7 +246,7 @@ func listFiles(dir string) ([]string, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if rel == "MANIFEST" {
+		if rel == "MANIFEST" || rel == "CREDITS.md" {
 			return nil
 		}
 		files = append(files, rel)
