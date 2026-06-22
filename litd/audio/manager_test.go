@@ -188,3 +188,50 @@ func TestDeterministicDumpFSV(t *testing.T) {
 	}
 	t.Logf("FSV #227 determinism: identical JSON dump across two runs (%d bytes) — audio-on==audio-off", len(a))
 }
+
+func TestPlayMusicRoutesToStreamPartitionFSV(t *testing.T) {
+	m := NewManager(nil)
+	m.Handle(api.AudioEvent{Kind: api.AudioPlayMusic, Cue: 77})
+	s := m.Dump()
+	v, ok := voiceByCue(s, 77)
+	if !ok {
+		t.Fatal("AudioPlayMusic did not create a voice")
+	}
+	if api.SoundChannel(v.Channel) != api.ChannelMusic || v.Group != GroupMusic || v.Slot < MusicStreamSlot || v.Slot > AmbienceStreamSlot {
+		t.Fatalf("music voice must route to music stream slot/group, got %+v", v)
+	}
+	if !approx(v.Gain, 1.0) || partCount(s, PartitionStream) != 1 {
+		t.Fatalf("music default gain/partition wrong: gain=%v streamCount=%d dump=%+v", v.Gain, partCount(s, PartitionStream), s)
+	}
+	m.Handle(api.AudioEvent{Kind: api.AudioSetChannelVolume, Channel: api.ChannelMusic, Volume: 0.4})
+	v, _ = voiceByCue(m.Dump(), 77)
+	if !approx(v.Gain, 0.4) {
+		t.Fatalf("music channel volume must retune stream voice to 0.4, got %v", v.Gain)
+	}
+	t.Logf("FSV #314 manager: music cue=77 channel=%d slot=%d streamCount=%d gain %.1f→%.1f",
+		v.Channel, v.Slot, partCount(m.Dump(), PartitionStream), 1.0, v.Gain)
+}
+
+func TestStopMusicStopsOnlyMusicChannelFSV(t *testing.T) {
+	m := NewManager(nil)
+	m.Handle(api.AudioEvent{Kind: api.AudioPlayMusic, Cue: 11})
+	m.Handle(api.AudioEvent{Kind: api.AudioPlay, Cue: 22, Volume: 1, Channel: api.ChannelAmbient})
+	before := m.Dump()
+	if before.VoiceCount != 2 || partCount(before, PartitionStream) != 2 {
+		t.Fatalf("setup must occupy both stream slots, got %+v", before)
+	}
+	m.Handle(api.AudioEvent{Kind: api.AudioStopMusic})
+	after := m.Dump()
+	if after.VoiceCount != 1 || partCount(after, PartitionStream) != 1 {
+		t.Fatalf("StopMusic should leave ambience stream only, got %+v", after)
+	}
+	if _, ok := voiceByCue(after, 11); ok {
+		t.Fatal("music cue remained after StopMusic")
+	}
+	amb, ok := voiceByCue(after, 22)
+	if !ok || api.SoundChannel(amb.Channel) != api.ChannelAmbient || amb.Group != GroupAmbience {
+		t.Fatalf("ambience cue should remain on ambience group, got %+v ok=%v", amb, ok)
+	}
+	t.Logf("FSV #314 stop: before stream voices=%d, StopMusic -> music gone and ambience cue=%d remains group=%d",
+		partCount(before, PartitionStream), amb.Cue, amb.Group)
+}

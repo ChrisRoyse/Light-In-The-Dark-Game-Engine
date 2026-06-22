@@ -73,6 +73,9 @@ func TestDomainClassificationFSV(t *testing.T) {
 			t.Fatalf("channel %d must classify as World domain", ch)
 		}
 	}
+	if GroupOf(api.ChannelMusic) != GroupMusic || GroupOf(api.ChannelAmbient) != GroupAmbience {
+		t.Fatalf("music and ambience channels must have separate groups, got music=%d ambience=%d", GroupOf(api.ChannelMusic), GroupOf(api.ChannelAmbient))
+	}
 	t.Logf("FSV #231 classify: UI→UI; Effects/Voice/Ambient/Music→World")
 }
 

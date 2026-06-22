@@ -423,6 +423,9 @@ func checkData(dir string, files []string, prefix string) []finding {
 	if prefix == "" || prefix == "audio" || strings.HasPrefix(prefix, "audio/") {
 		checkSoundDataTable(dir, files, add)
 	}
+	if prefix == "" || prefix == "music" || strings.HasPrefix(prefix, "music/") {
+		checkMusicDataTables(dir, files, add)
+	}
 	if prefix == "" {
 		checkHardcodedRenderLabels(filepath.Dir(dir), add)
 	}
@@ -504,6 +507,17 @@ func checkSoundDataTable(dir string, files []string, add func(path, rule, msg st
 			add(rel, "SOUND-CLASS", err.Error())
 		}
 		return
+	}
+}
+
+func checkMusicDataTables(dir string, files []string, add func(path, rule, msg string)) {
+	for _, rel := range files {
+		if !strings.HasPrefix(rel, "music/") || strings.ToLower(filepath.Ext(rel)) != ".toml" {
+			continue
+		}
+		if _, err := litaudio.LoadMusicTable(os.DirFS(dir), rel); err != nil {
+			add(rel, "MUSIC-TABLE", err.Error())
+		}
 	}
 }
 

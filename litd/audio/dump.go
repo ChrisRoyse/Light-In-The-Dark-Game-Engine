@@ -15,7 +15,7 @@ type Snapshot struct {
 	Dropped        int       `json:"dropped"`        // voices dropped by admission (full partition, lost eviction; #230)
 	Voices         []Voice   `json:"voices"`         // active voices with final gain/pan
 	ChannelVol     []float64 `json:"channelVol"`     // per-channel master volumes
-	GroupVol       []float64 `json:"groupVol"`       // World / UI / Music master groups
+	GroupVol       []float64 `json:"groupVol"`       // World / UI / Music / Ambience master groups
 }
 
 // Dump returns a deep copy of the current audio state. Callers may serialize or

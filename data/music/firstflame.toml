@@ -1,0 +1,20 @@
+[[map]]
+id = "firstflame"
+ambience = "audio/music/gloam_ambience.ogg"
+ambience-loop = true
+crossfade-ms = 1500
+shuffle = true
+
+  [[map.playlist]]
+  faction = "vigil"
+  tracks = [
+    "audio/music/vigil_match.ogg",
+    "audio/music/menu_theme.ogg",
+  ]
+
+  [[map.playlist]]
+  faction = "unbound"
+  tracks = [
+    "audio/music/unbound_match.ogg",
+    "audio/music/menu_theme.ogg",
+  ]

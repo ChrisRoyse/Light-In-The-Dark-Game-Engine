@@ -31,7 +31,7 @@ type Manager struct {
 	voices     []Voice
 	voiceVol   []float64 // originally-requested [0,1] event volume, parallel to voices
 	channelVol [numChannels]float64
-	groupVol   [numGroups]float64 // World / UI / Music master groups (#231 §8)
+	groupVol   [numGroups]float64 // World / UI / Music / Ambience master groups (#231/#314)
 	culled     int                // world voices dropped by distance cull (observability)
 	dropped    int                // voices dropped by admission (partition full, lost eviction; #230)
 	table      *SoundTable        // per-asset domain/priority classifier (#428); nil → channel inference
@@ -140,8 +140,9 @@ func (m *Manager) SetListener(pos Vec3) {
 	}
 }
 
-// SetGroupVolume sets a domain master group (World / UI / Music) and re-resolves
-// every active voice in that group. This is the settings-menu volume control (#311).
+// SetGroupVolume sets a domain master group (World / UI / Music / Ambience) and
+// re-resolves every active voice in that group. This is the settings-menu volume
+// control (#311).
 func (m *Manager) SetGroupVolume(g VolumeGroup, vol float64) {
 	if int(g) < 0 || int(g) >= numGroups {
 		return
@@ -177,9 +178,15 @@ func (m *Manager) Handle(ev api.AudioEvent) {
 	case api.AudioPlayAt:
 		m.add(ev, true, Vec3{ev.Pos.X, ev.Pos.Y, ev.Z})
 	case api.AudioPlayMusic:
+		ev.Channel = api.ChannelMusic
+		if ev.Volume == 0 {
+			ev.Volume = 1
+		}
 		m.add(ev, false, Vec3{})
-	case api.AudioStop, api.AudioStopMusic:
+	case api.AudioStop:
 		m.stopCue(ev.Cue)
+	case api.AudioStopMusic:
+		m.stopChannel(api.ChannelMusic)
 	case api.AudioSetVolume:
 		m.retune(ev.Cue, ev.Volume)
 	case api.AudioSetPitch:
@@ -306,6 +313,26 @@ func (m *Manager) stopCue(cue uint32) {
 	dst := 0
 	for i := range m.voices {
 		if m.voices[i].Cue == cue {
+			if m.alloc != nil && m.voices[i].Slot >= 0 {
+				m.alloc.Release(m.voices[i].Slot)
+			}
+			continue
+		}
+		m.voices[dst] = m.voices[i]
+		m.voiceVol[dst] = m.voiceVol[i]
+		dst++
+	}
+	m.voices = m.voices[:dst]
+	m.voiceVol = m.voiceVol[:dst]
+}
+
+// stopChannel removes (and silences) every active voice on ch. StopMusic uses
+// this because its public API intentionally does not expose the current cue id.
+func (m *Manager) stopChannel(ch api.SoundChannel) {
+	dst := 0
+	for i := range m.voices {
+		if api.SoundChannel(m.voices[i].Channel) == ch {
+			m.backend.Stop(m.voices[i].Cue)
 			if m.alloc != nil && m.voices[i].Slot >= 0 {
 				m.alloc.Release(m.voices[i].Slot)
 			}

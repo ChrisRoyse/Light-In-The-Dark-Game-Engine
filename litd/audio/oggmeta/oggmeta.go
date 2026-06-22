@@ -12,8 +12,10 @@
 package oggmeta
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -59,41 +61,64 @@ func (i Info) DecodedBytes() int64 {
 
 const oggCapture = "OggS"
 
-// Parse reads the Ogg container metadata. Fails closed on a missing capture
-// pattern, truncation, or an unrecognized codec header.
+// Parse reads the Ogg container metadata from an in-memory byte slice. Fails
+// closed on a missing capture pattern, truncation, or an unrecognized codec
+// header.
 func Parse(data []byte) (Info, error) {
-	if len(data) < 4 || string(data[0:4]) != oggCapture {
-		return Info{}, fmt.Errorf("not an Ogg stream (missing %q capture pattern)", oggCapture)
-	}
+	return ParseReader(bytes.NewReader(data))
+}
+
+// ParseReader reads Ogg container metadata from r without retaining the full
+// stream. It is intended for streamed music indexing: the runtime needs duration
+// and layout information, not a preloaded compressed file or decoded PCM buffer.
+func ParseReader(r io.Reader) (Info, error) {
 	var firstPacket []byte
 	var lastGranule int64
-	pos := 0
 	pages := 0
-	for pos+27 <= len(data) {
-		if string(data[pos:pos+4]) != oggCapture {
-			return Info{}, fmt.Errorf("bad page capture pattern at offset %d", pos)
+	header := make([]byte, 27)
+	for {
+		_, err := io.ReadFull(r, header)
+		if err == io.EOF {
+			break
 		}
-		granule := int64(binary.LittleEndian.Uint64(data[pos+6 : pos+14]))
-		nseg := int(data[pos+26])
-		segStart := pos + 27
-		if segStart+nseg > len(data) {
+		if err == io.ErrUnexpectedEOF {
+			if pages == 0 {
+				return Info{}, fmt.Errorf("not an Ogg stream (missing %q capture pattern)", oggCapture)
+			}
+			return Info{}, fmt.Errorf("truncated page header at page %d", pages)
+		}
+		if err != nil {
+			return Info{}, err
+		}
+		if string(header[0:4]) != oggCapture {
+			if pages == 0 {
+				return Info{}, fmt.Errorf("not an Ogg stream (missing %q capture pattern)", oggCapture)
+			}
+			return Info{}, fmt.Errorf("bad page capture pattern at page %d", pages)
+		}
+		granule := int64(binary.LittleEndian.Uint64(header[6:14]))
+		nseg := int(header[26])
+		segs := make([]byte, nseg)
+		if _, err := io.ReadFull(r, segs); err != nil {
 			return Info{}, fmt.Errorf("truncated segment table at page %d", pages)
 		}
 		dataLen := 0
-		for _, s := range data[segStart : segStart+nseg] {
+		for _, s := range segs {
 			dataLen += int(s)
-		}
-		dataStart := segStart + nseg
-		if dataStart+dataLen > len(data) {
-			return Info{}, fmt.Errorf("truncated page data at page %d (need %d bytes)", pages, dataLen)
 		}
 		// The Vorbis/Opus identification header is required to sit alone on the BOS
 		// page, so the first page's payload IS the identification packet.
 		if firstPacket == nil && dataLen > 0 {
-			firstPacket = data[dataStart : dataStart+dataLen]
+			firstPacket = make([]byte, dataLen)
+			if _, err := io.ReadFull(r, firstPacket); err != nil {
+				return Info{}, fmt.Errorf("truncated page data at page %d (need %d bytes)", pages, dataLen)
+			}
+		} else if dataLen > 0 {
+			if _, err := io.CopyN(io.Discard, r, int64(dataLen)); err != nil {
+				return Info{}, fmt.Errorf("truncated page data at page %d (need %d bytes)", pages, dataLen)
+			}
 		}
 		lastGranule = granule
-		pos = dataStart + dataLen
 		pages++
 	}
 	if firstPacket == nil {

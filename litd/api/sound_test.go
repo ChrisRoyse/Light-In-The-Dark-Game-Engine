@@ -70,7 +70,7 @@ func TestAudioSimInertAndClampFSV(t *testing.T) {
 	}{
 		{AudioPlay, 1}, {AudioPlayAt, 1}, {AudioPlayOn, 1},
 		{AudioSetVolume, 1}, {AudioSetVolume, 0}, {AudioSetPitch, 0},
-		{AudioStop, 0}, {AudioPlayMusic, 0},
+		{AudioStop, 0}, {AudioPlayMusic, 1},
 		{AudioSetMusicVolume, 1}, {AudioSetChannelVolume, 0}, {AudioStopMusic, 0},
 	}
 	if len(rec) != len(want) {
@@ -96,6 +96,9 @@ func TestAudioSimInertAndClampFSV(t *testing.T) {
 	}
 	if rec[2].Target.id != u.id {
 		t.Fatal("PlayOn did not carry the target unit")
+	}
+	if rec[7].Cue != CueID("Music/vigil-theme") || rec[7].Volume != 1 || rec[7].Channel != ChannelMusic {
+		t.Fatalf("PlayMusic event must carry cue, volume=1, channel=music; got %+v", rec[7])
 	}
 }
 

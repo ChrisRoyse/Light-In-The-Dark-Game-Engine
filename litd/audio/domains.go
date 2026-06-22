@@ -32,16 +32,17 @@ const (
 	DomainUI                  // 2D flat, full volume, exempt from attenuation/cull
 )
 
-// VolumeGroup is one of the three independently-settable master groups (§8).
+// VolumeGroup is one of the independently-settable master groups (§8, #314).
 type VolumeGroup uint8
 
 const (
 	GroupWorld VolumeGroup = iota
 	GroupUI
 	GroupMusic
+	GroupAmbience
 )
 
-const numGroups = 3
+const numGroups = 4
 
 // Distance model (inverse-distance clamped, OpenAL AL_INVERSE_DISTANCE_CLAMPED).
 // Expressed in world units; the constants are sized to the camera so that one
@@ -98,14 +99,16 @@ func DomainOf(ch api.SoundChannel) Domain {
 	return DomainWorld
 }
 
-// GroupOf maps a mixer channel to its master volume group: UI→UI, Music/Ambient→
-// Music, everything else→World.
+// GroupOf maps a mixer channel to its master volume group: UI→UI, Music→Music,
+// Ambient→Ambience, everything else→World.
 func GroupOf(ch api.SoundChannel) VolumeGroup {
 	switch ch {
 	case api.ChannelUI:
 		return GroupUI
-	case api.ChannelMusic, api.ChannelAmbient:
+	case api.ChannelMusic:
 		return GroupMusic
+	case api.ChannelAmbient:
+		return GroupAmbience
 	default:
 		return GroupWorld
 	}

@@ -645,3 +645,47 @@ func TestSoundClassUnclassifiedRejectedFSV(t *testing.T) {
 	}
 	t.Logf("FSV #428 assetcheck gate: unclassified sound rejected — [%s] %s", got[0].Rule, got[0].Msg)
 }
+
+// TestMusicTableRejectedFSV — #314 fail-closed gate: music/ambience playlist
+// tables must declare map/faction tracks, safe audio/music .ogg paths, and
+// crossfade bounds. SoT = assetcheck findings over synthetic data/music files.
+func TestMusicTableRejectedFSV(t *testing.T) {
+	write := func(body string) []finding {
+		t.Helper()
+		root := t.TempDir()
+		data := filepath.Join(root, "data")
+		if err := os.MkdirAll(filepath.Join(data, "music"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(data, "music", "test.toml"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		files, err := listFiles(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return checkData(data, files, "music")
+	}
+
+	valid := `
+[[map]]
+id = "firstflame"
+ambience = "audio/music/gloam_ambience.ogg"
+ambience-loop = true
+crossfade-ms = 1500
+shuffle = true
+
+  [[map.playlist]]
+  faction = "vigil"
+  tracks = ["audio/music/vigil_match.ogg", "audio/music/menu_theme.ogg"]
+`
+	if got := write(valid); rulesContain(got, "MUSIC-TABLE") {
+		t.Fatalf("valid music table produced MUSIC-TABLE findings: %+v", got)
+	}
+
+	got := write(strings.Replace(valid, "crossfade-ms = 1500", "crossfade-ms = 30001", 1))
+	if len(got) != 1 || got[0].Rule != "MUSIC-TABLE" || !strings.Contains(got[0].Msg, "outside [0,30000]") {
+		t.Fatalf("overwide crossfade should be rejected with one MUSIC-TABLE finding, got %+v", got)
+	}
+	t.Logf("FSV #314 assetcheck music gate: invalid table rejected — [%s] %s", got[0].Rule, got[0].Msg)
+}

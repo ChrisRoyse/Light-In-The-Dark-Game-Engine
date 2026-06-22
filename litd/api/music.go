@@ -5,8 +5,6 @@ package litd
 // + clamp and no-op; the render driver hears them through the Game.OnAudio
 // sink. Music lives on Game (there is one music stream) rather than a noun.
 
-import "hash/fnv"
-
 // PlayMusic starts a music cue (looping by default at the render layer). An
 // empty cue is a no-op. JASS: PlayMusic, PlayMusicExBJ, PlayThematicMusic
 // collapse here (loop/offset/fade are render-layer concerns).
@@ -15,9 +13,7 @@ func (g *Game) PlayMusic(cue string) {
 	if g == nil || cue == "" {
 		return
 	}
-	h := fnv.New32a()
-	_, _ = h.Write([]byte(cue))
-	g.emitAudio(AudioEvent{Kind: AudioPlayMusic, Cue: h.Sum32()})
+	g.emitAudio(AudioEvent{Kind: AudioPlayMusic, Cue: CueID(cue), Volume: 1, Channel: ChannelMusic})
 }
 
 // StopMusic stops the current music stream. JASS: StopMusic,
