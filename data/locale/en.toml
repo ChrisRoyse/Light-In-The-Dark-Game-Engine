@@ -44,6 +44,7 @@
 "editor.action.open" = "Open"
 "editor.action.save" = "Save"
 "editor.action.export" = "Export"
+"editor.action.playtest" = "Playtest"
 "editor.status.ready" = "Ready"
 "editor.status.project_created" = "Project created"
 "editor.status.project_opened" = "Project opened"

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldpack"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 )
 
@@ -203,6 +204,52 @@ func TestLoadWorldPlacementSpawnsEntities(t *testing.T) {
 		}
 	}
 	t.Logf("FSV #403 placement: 2 units spawned at their declared coords %v + 1 node (load succeeded => node spawned), no main.lua spawns", got)
+}
+
+// TestLoadWorldInputArchiveFSV — #134: the game command can load the exact
+// production .litdworld archive format, not just source directories. SoT = the
+// sim holds the placement row read from the verified archive FS, and the
+// autotest screenshot path writes a PNG from that archive-backed game.
+func TestLoadWorldInputArchiveFSV(t *testing.T) {
+	w := writeWorld(t, tomlDamageTable, "Game_SetTimeOfDay(12.0)\n")
+	mk(t, filepath.Join(w, "data", "placement", "place.toml"), "[[unit]]\ntype = \"hfoo\"\nowner = 1\nx = 300\ny = 400\nfacing = 0\n")
+	archive := filepath.Join(t.TempDir(), "cmd-litd-archive-fsv.litdworld")
+	err := worldpack.Pack(w, archive, ">=0.1.0 <0.2.0", worldpack.Hosting{
+		Author:      "cmd/litd test",
+		Title:       "Archive FSV",
+		Description: "cmd/litd archive entrypoint",
+		Players:     worldpack.Players{Min: 1, Max: 1, Suggested: 1},
+		StartLocations: []worldpack.StartLocation{
+			{Player: 1, Cell: [2]int{1, 1}},
+		},
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g, cleanup, err := loadWorldInput("", archive, 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("archive load: %v", err)
+	}
+	defer cleanup()
+	units := g.UnitsInRange(api.Vec2{X: 300, Y: 400}, 1, nil)
+	if len(units) != 1 {
+		t.Fatalf("archive-backed load spawned %d units at 300,400, want 1", len(units))
+	}
+	p := units[0].Position()
+	if p.X != 300 || p.Y != 400 {
+		t.Fatalf("archive-backed unit position=(%v,%v), want 300,400", p.X, p.Y)
+	}
+
+	shot := filepath.Join(t.TempDir(), "archive-autotest.png")
+	if err := run("", archive, true, true, 5, 1, 50_000_000, shot); err != nil {
+		t.Fatalf("archive autotest run: %v", err)
+	}
+	st, err := os.Stat(shot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV #134 archive entrypoint: verified archive=%s unit=(%.0f,%.0f) shot=%s bytes=%d", archive, p.X, p.Y, shot, st.Size())
 }
 
 // TestLoadWorldInstallsCombatMatrix — #406: the world's required damage table

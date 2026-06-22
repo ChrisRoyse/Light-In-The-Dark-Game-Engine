@@ -122,6 +122,9 @@ func RunWindow(state *App, opts WindowOptions) error {
 			markDirty(state.NewProject(newTarget()))
 		case window.KeyS:
 			markDirty(state.Save())
+		case window.KeyP:
+			_, err := state.Playtest(PlaytestOptions{})
+			markDirty(err)
 		case window.KeyZ:
 			if kev.Mods&window.ModControl != 0 {
 				markDirty(state.Undo())
@@ -149,6 +152,11 @@ func RunWindow(state *App, opts WindowOptions) error {
 	surface.win.Subscribe(window.OnMouseDown, func(_ string, ev interface{}) {
 		mev := ev.(*window.MouseEvent)
 		if mev.Button != window.MouseButtonLeft {
+			return
+		}
+		if playtestButtonAt(mev.Xpos, mev.Ypos) {
+			_, err := state.Playtest(PlaytestOptions{})
+			markDirty(err)
 			return
 		}
 		if _, _, ok := minimapCellAt(state.Snapshot(), mev.Xpos, mev.Ypos); ok {

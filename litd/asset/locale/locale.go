@@ -58,6 +58,7 @@ const (
 	EditorActionOpen              Key = "editor.action.open"
 	EditorActionSave              Key = "editor.action.save"
 	EditorActionExport            Key = "editor.action.export"
+	EditorActionPlaytest          Key = "editor.action.playtest"
 	EditorStatusReady             Key = "editor.status.ready"
 	EditorStatusProjectCreated    Key = "editor.status.project_created"
 	EditorStatusProjectOpened     Key = "editor.status.project_opened"
@@ -146,6 +147,7 @@ var requiredKeys = []string{
 	string(EditorActionOpen),
 	string(EditorActionSave),
 	string(EditorActionExport),
+	string(EditorActionPlaytest),
 	string(EditorStatusReady),
 	string(EditorStatusProjectCreated),
 	string(EditorStatusProjectOpened),

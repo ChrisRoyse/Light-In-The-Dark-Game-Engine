@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/cmd/litd-editor/shell"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
@@ -147,6 +149,9 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := runMinimapFSV(app, outDir); err != nil {
 		return err
 	}
+	if err := runPlaytestFSV(app, outDir); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -249,6 +254,9 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 		return err
 	}
 	if err := runMinimapFSV(app, outDir); err != nil {
+		return err
+	}
+	if err := runPlaytestFSV(app, outDir); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -1632,6 +1640,254 @@ func runMinimapFSV(app *shell.App, outDir string) error {
 		return err
 	}
 	return app.OpenProject(filepath.Join(root, "preview-source"))
+}
+
+type playtestFSVState struct {
+	ZeroStarts playtestZeroStartsRecord `json:"zeroStarts"`
+	Happy      playtestRoundTripRecord  `json:"happy"`
+	Repeat     playtestRepeatRecord     `json:"repeat"`
+	Killed     playtestKilledRecord     `json:"killed"`
+}
+
+type playtestZeroStartsRecord struct {
+	BeforeHash string                     `json:"beforeHash"`
+	AfterHash  string                     `json:"afterHash"`
+	Before     []sourceform.StartLocation `json:"beforeStarts"`
+	After      []sourceform.StartLocation `json:"afterStarts"`
+	Error      string                     `json:"error"`
+	Status     string                     `json:"status"`
+	Screenshot string                     `json:"screenshot"`
+	Playtest   shell.PlaytestSnapshot     `json:"playtest"`
+}
+
+type playtestRoundTripRecord struct {
+	PlacedUnit       sourceform.Entity          `json:"placedUnit"`
+	EditorBeforeShot string                     `json:"editorBeforeShot"`
+	GameShot         string                     `json:"gameShot"`
+	EditorAfterShot  string                     `json:"editorAfterShot"`
+	BeforeHash       string                     `json:"beforeHash"`
+	AfterHash        string                     `json:"afterHash"`
+	BeforeDirty      bool                       `json:"beforeDirty"`
+	AfterDirty       bool                       `json:"afterDirty"`
+	BeforeUnits      []sourceform.Entity        `json:"beforeUnits"`
+	AfterUnits       []sourceform.Entity        `json:"afterUnits"`
+	BeforeStarts     []sourceform.StartLocation `json:"beforeStarts"`
+	AfterStarts      []sourceform.StartLocation `json:"afterStarts"`
+	State            json.RawMessage            `json:"state"`
+	Playtest         shell.PlaytestSnapshot     `json:"playtest"`
+}
+
+type playtestRepeatRecord struct {
+	FirstGameShot   string                 `json:"firstGameShot"`
+	SecondGameShot  string                 `json:"secondGameShot"`
+	DistinctTempDir bool                   `json:"distinctTempDir"`
+	First           shell.PlaytestSnapshot `json:"first"`
+	Second          shell.PlaytestSnapshot `json:"second"`
+}
+
+type playtestKilledRecord struct {
+	EditorAfterShot string                 `json:"editorAfterShot"`
+	BeforeHash      string                 `json:"beforeHash"`
+	AfterHash       string                 `json:"afterHash"`
+	Error           string                 `json:"error"`
+	Playtest        shell.PlaytestSnapshot `json:"playtest"`
+}
+
+func runPlaytestFSV(app *shell.App, outDir string) error {
+	root := filepath.Join(outDir, "playtest-fsv")
+	if err := os.RemoveAll(root); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return err
+	}
+	state := playtestFSVState{}
+
+	if err := app.NewProjectWithSize(filepath.Join(root, "zero-start-source"), 8, 8); err != nil {
+		return err
+	}
+	app.SetStartLocationsForFSV(nil)
+	zeroBefore := app.Snapshot()
+	zeroBeforeHash := app.SimRelevantHash()
+	zeroRec, zeroErr := app.Playtest(playtestFSVOptions(root, filepath.Join(outDir, "36-playtest-zero-game.png"), 1, 0))
+	zeroAfter := app.Snapshot()
+	zeroShot := filepath.Join(outDir, "36-playtest-zero-starts.png")
+	if err := renderState(outDir, "36-playtest-zero-starts.png", app); err != nil {
+		return err
+	}
+	if zeroErr == nil || !strings.Contains(zeroErr.Error(), "start location") {
+		return fmt.Errorf("playtest FSV: zero-start playtest should fail closed, got err=%v", zeroErr)
+	}
+	if zeroRec.TempDir != "" {
+		return fmt.Errorf("playtest FSV: zero-start playtest created temp dir %q", zeroRec.TempDir)
+	}
+	if zeroBeforeHash != app.SimRelevantHash() || zeroRec.StateHashAfter != zeroBeforeHash {
+		return fmt.Errorf("playtest FSV: zero-start hash changed before=%s recAfter=%s after=%s", zeroBeforeHash, zeroRec.StateHashAfter, app.SimRelevantHash())
+	}
+	state.ZeroStarts = playtestZeroStartsRecord{
+		BeforeHash: zeroBeforeHash,
+		AfterHash:  app.SimRelevantHash(),
+		Before:     append([]sourceform.StartLocation(nil), zeroBefore.World.Starts...),
+		After:      append([]sourceform.StartLocation(nil), zeroAfter.World.Starts...),
+		Error:      errorString(zeroErr),
+		Status:     zeroAfter.Status,
+		Screenshot: zeroShot,
+		Playtest:   zeroRec,
+	}
+
+	happySource := filepath.Join(root, "playtest-source")
+	if err := app.NewProjectWithSize(happySource, 8, 8); err != nil {
+		return err
+	}
+	placed, err := app.PlaceUnitCell("archer", 1, 2, 2, 8192, 1250, false)
+	if err != nil {
+		return err
+	}
+	if err := app.SwitchMode(shell.ModeObjects); err != nil {
+		return err
+	}
+	before := app.Snapshot()
+	beforeHash := app.SimRelevantHash()
+	if err := renderState(outDir, "37-playtest-editor-before.png", app); err != nil {
+		return err
+	}
+	happyShot := filepath.Join(outDir, "38-playtest-game.png")
+	happyRec, err := app.Playtest(playtestFSVOptions(root, happyShot, 80, 0))
+	if err != nil {
+		return fmt.Errorf("playtest FSV happy: %w\nstdout=%s\nstderr=%s", err, happyRec.Stdout, happyRec.Stderr)
+	}
+	after := app.Snapshot()
+	afterHash := app.SimRelevantHash()
+	if err := renderState(outDir, "39-playtest-editor-after.png", app); err != nil {
+		return err
+	}
+	if beforeHash != afterHash || !before.Dirty || !after.Dirty {
+		return fmt.Errorf("playtest FSV: editor dirty state/hash not preserved dirty %v->%v hash %s->%s", before.Dirty, after.Dirty, beforeHash, afterHash)
+	}
+	if err := assertPathRemoved(happyRec.TempDir); err != nil {
+		return err
+	}
+	stateLine, err := playtestStateLine(happyRec.Stdout)
+	if err != nil {
+		return err
+	}
+	state.Happy = playtestRoundTripRecord{
+		PlacedUnit:       placed,
+		EditorBeforeShot: filepath.Join(outDir, "37-playtest-editor-before.png"),
+		GameShot:         happyShot,
+		EditorAfterShot:  filepath.Join(outDir, "39-playtest-editor-after.png"),
+		BeforeHash:       beforeHash,
+		AfterHash:        afterHash,
+		BeforeDirty:      before.Dirty,
+		AfterDirty:       after.Dirty,
+		BeforeUnits:      append([]sourceform.Entity(nil), before.Objects.Units...),
+		AfterUnits:       append([]sourceform.Entity(nil), after.Objects.Units...),
+		BeforeStarts:     append([]sourceform.StartLocation(nil), before.World.Starts...),
+		AfterStarts:      append([]sourceform.StartLocation(nil), after.World.Starts...),
+		State:            stateLine,
+		Playtest:         happyRec,
+	}
+
+	firstShot := filepath.Join(outDir, "40-playtest-repeat-first.png")
+	first, err := app.Playtest(playtestFSVOptions(root, firstShot, 2, 0))
+	if err != nil {
+		return fmt.Errorf("playtest FSV first repeat: %w\nstdout=%s\nstderr=%s", err, first.Stdout, first.Stderr)
+	}
+	secondShot := filepath.Join(outDir, "41-playtest-repeat-second.png")
+	second, err := app.Playtest(playtestFSVOptions(root, secondShot, 2, 0))
+	if err != nil {
+		return fmt.Errorf("playtest FSV second repeat: %w\nstdout=%s\nstderr=%s", err, second.Stdout, second.Stderr)
+	}
+	if first.TempDir == second.TempDir {
+		return fmt.Errorf("playtest FSV: repeat playtests reused temp dir %q", first.TempDir)
+	}
+	if err := assertPathRemoved(first.TempDir); err != nil {
+		return err
+	}
+	if err := assertPathRemoved(second.TempDir); err != nil {
+		return err
+	}
+	state.Repeat = playtestRepeatRecord{
+		FirstGameShot:   firstShot,
+		SecondGameShot:  secondShot,
+		DistinctTempDir: true,
+		First:           first,
+		Second:          second,
+	}
+
+	killBeforeHash := app.SimRelevantHash()
+	killed, killErr := app.Playtest(playtestFSVOptions(root, filepath.Join(outDir, "42-playtest-killed-game.png"), 1_000_000, 50*time.Millisecond))
+	killAfterHash := app.SimRelevantHash()
+	if err := renderState(outDir, "42-playtest-killed-after.png", app); err != nil {
+		return err
+	}
+	if killErr == nil || !killed.Killed {
+		return fmt.Errorf("playtest FSV: killed playtest should return killed process error, got err=%v killed=%v", killErr, killed.Killed)
+	}
+	if killBeforeHash != killAfterHash || killed.StateHashAfter != killBeforeHash {
+		return fmt.Errorf("playtest FSV: killed playtest changed editor state before=%s recAfter=%s after=%s", killBeforeHash, killed.StateHashAfter, killAfterHash)
+	}
+	if err := assertPathRemoved(killed.TempDir); err != nil {
+		return err
+	}
+	state.Killed = playtestKilledRecord{
+		EditorAfterShot: filepath.Join(outDir, "42-playtest-killed-after.png"),
+		BeforeHash:      killBeforeHash,
+		AfterHash:       killAfterHash,
+		Error:           errorString(killErr),
+		Playtest:        killed,
+	}
+
+	body, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "playtest-dump.json"), append(body, '\n'), 0o644)
+}
+
+func playtestFSVOptions(tempRoot, shot string, ticks int, killAfter time.Duration) shell.PlaytestOptions {
+	return shell.PlaytestOptions{
+		TempRoot:  tempRoot,
+		Dir:       ".",
+		ShotPath:  shot,
+		Timeout:   45 * time.Second,
+		KillAfter: killAfter,
+		Command: []string{
+			"go", "run", "./cmd/litd",
+			"-archive", "{{archive}}",
+			"-autotest",
+			"-autotest-order",
+			"-ticks", fmt.Sprint(ticks),
+			"-shot", "{{shot}}",
+		},
+	}
+}
+
+func playtestStateLine(stdout string) (json.RawMessage, error) {
+	for _, line := range strings.Split(stdout, "\n") {
+		if !strings.HasPrefix(line, "state: ") {
+			continue
+		}
+		raw := json.RawMessage(strings.TrimPrefix(line, "state: "))
+		var probe any
+		if err := json.Unmarshal(raw, &probe); err != nil {
+			return nil, err
+		}
+		return raw, nil
+	}
+	return nil, fmt.Errorf("playtest FSV: child stdout had no state line: %s", stdout)
+}
+
+func assertPathRemoved(path string) error {
+	if path == "" {
+		return fmt.Errorf("playtest FSV: empty temp dir path")
+	}
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("playtest FSV: temp dir still exists: %s", path)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 func captureMinimapRecord(app *shell.App, outDir, shotName string, sample [2]int) (minimapSnapshotRecord, error) {

@@ -50,6 +50,7 @@ type App struct {
 	objectPalette   []ObjectPaletteItem
 	objectSelection ObjectSelection
 	cameraTarget    [2]int
+	playtest        PlaytestSnapshot
 }
 
 type Confirm struct {
@@ -80,6 +81,7 @@ type Snapshot struct {
 	CliffFlags      []CliffFlagSnapshot  `json:"cliffFlags,omitempty"`
 	Objects         ObjectSnapshot       `json:"objects"`
 	Camera          CameraSnapshot       `json:"camera"`
+	Playtest        PlaytestSnapshot     `json:"playtest,omitempty"`
 }
 
 type WorldSnapshot struct {
@@ -561,6 +563,7 @@ func (a *App) Snapshot() Snapshot {
 		"open":              must(a.table, locale.EditorActionOpen),
 		"save":              must(a.table, locale.EditorActionSave),
 		"export":            must(a.table, locale.EditorActionExport),
+		"playtest":          must(a.table, locale.EditorActionPlaytest),
 		"cancel":            must(a.table, locale.EditorConfirmCancel),
 		"proceed":           must(a.table, locale.EditorConfirmProceed),
 		"terrain":           must(a.table, locale.EditorModeTerrain),
@@ -632,6 +635,7 @@ func (a *App) Snapshot() Snapshot {
 		CliffFlags:      cloneCliffFlags(a.cliffFlags),
 		Objects:         a.ObjectSnapshot(),
 		Camera:          CameraSnapshot{TargetCell: a.clampedCameraTarget()},
+		Playtest:        a.playtest,
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{

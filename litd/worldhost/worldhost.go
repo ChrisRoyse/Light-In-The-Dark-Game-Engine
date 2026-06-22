@@ -14,10 +14,12 @@ package worldhost
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/luabind"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
@@ -50,9 +52,69 @@ func Load(world string, seed, budget int64) (*Host, error) {
 	if world == "" {
 		return nil, fmt.Errorf("missing world dir")
 	}
+	dataFS := os.DirFS(filepath.Join(world, "data"))
+	scriptFS := os.DirFS(world)
+	return loadFS(dataFS, scriptFS, world, seed, budget, nil)
+}
+
+// LoadArchive opens and verifies a .litdworld with the production archive
+// loader, then loads its data/ and Lua entry directly from the verified archive
+// filesystem. engineVersion, when non-empty, must satisfy the archive manifest.
+func LoadArchive(archivePath, engineVersion string, seed, budget int64) (*Host, error) {
+	if archivePath == "" {
+		return nil, fmt.Errorf("missing world archive")
+	}
+	arc, err := worldarchive.Open(archivePath, engineVersion)
+	if err != nil {
+		return nil, err
+	}
+	dataFS, err := fs.Sub(arc.FS(), "data")
+	if err != nil {
+		arc.Close()
+		return nil, fmt.Errorf("archive data mount: %w", err)
+	}
+	scriptFS, scriptLabel, err := archiveScriptFS(arc.FS(), archivePath)
+	if err != nil {
+		arc.Close()
+		return nil, err
+	}
+	return loadFS(dataFS, scriptFS, scriptLabel, seed, budget, func() { _ = arc.Close() })
+}
+
+func archiveScriptFS(archiveFS fs.FS, archivePath string) (fs.FS, string, error) {
+	if _, err := fs.Stat(archiveFS, luabind.WorldEntry); err == nil {
+		return archiveFS, archivePath, nil
+	} else if !os.IsNotExist(err) {
+		return nil, "", fmt.Errorf("archive script entry check: %w", err)
+	}
+	if _, err := fs.Stat(archiveFS, "scripts/"+luabind.WorldEntry); err == nil {
+		sub, subErr := fs.Sub(archiveFS, "scripts")
+		if subErr != nil {
+			return nil, "", fmt.Errorf("archive scripts mount: %w", subErr)
+		}
+		return sub, archivePath + "@scripts", nil
+	} else if !os.IsNotExist(err) {
+		return nil, "", fmt.Errorf("archive scripts entry check: %w", err)
+	}
+	return nil, "", fmt.Errorf("archive %q has no %s or scripts/%s", archivePath, luabind.WorldEntry, luabind.WorldEntry)
+}
+
+func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extraCleanup func()) (host *Host, err error) {
+	extraClosed := false
+	closeExtra := func() {
+		if extraCleanup != nil && !extraClosed {
+			extraClosed = true
+			extraCleanup()
+		}
+	}
+	defer func() {
+		if err != nil {
+			closeExtra()
+		}
+	}()
 
 	// 1. Load + validate the world's data tables.
-	tables, err := data.Load(os.DirFS(filepath.Join(world, "data")))
+	tables, err := data.Load(dataFS)
 	if err != nil {
 		return nil, fmt.Errorf("load data tables: %w", err)
 	}
@@ -184,13 +246,17 @@ func Load(world string, seed, budget int64) (*Host, error) {
 	// a raise. The game exists here (built above), so its draw is bindable.
 	interp := luabind.NewSandbox(luabind.SandboxOptions{InstructionBudget: budget, RandomSource: g.RandomFloat})
 	reg := luabind.NewChunkRegistry()
-	cleanup := func() { reg.Close(); interp.Close() }
+	cleanup := func() {
+		reg.Close()
+		interp.Close()
+		closeExtra()
+	}
 	if err := luabind.Register(interp.L, g); err != nil {
 		cleanup()
 		return nil, fmt.Errorf("register bindings: %w", err)
 	}
 	luabind.InstallWorldLoader(g, interp.L, reg)
-	if err := g.LoadWorld(world); err != nil {
+	if _, err := luabind.LoadWorldFS(interp.L, reg, scriptFS, scriptLabel); err != nil {
 		cleanup()
 		return nil, fmt.Errorf("load world: %w", err)
 	}

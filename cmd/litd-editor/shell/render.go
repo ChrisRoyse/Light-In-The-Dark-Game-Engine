@@ -27,6 +27,10 @@ const (
 	terrainGridStepY = 34
 	terrainGridCellW = 34
 	terrainGridCellH = 24
+	playtestButtonX  = 22
+	playtestButtonY  = 374
+	playtestButtonW  = 144
+	playtestButtonH  = 34
 	minimapPanelX    = 22
 	minimapPanelY    = 408
 	minimapPanelW    = 144
@@ -81,6 +85,7 @@ func RenderImage(snap Snapshot) *image.RGBA {
 	modeButton(img, 22, 228, snap.Labels["metadata"], snap.Mode == ModeMetadata)
 	text(img, 24, 330, snap.Labels["new"]+"   "+snap.Labels["open"], muted)
 	text(img, 24, 358, snap.Labels["save"]+"   "+snap.Labels["export"], muted)
+	modeButton(img, playtestButtonX, playtestButtonY, snap.Labels["playtest"], false)
 	drawMinimapPanel(img, snap)
 
 	switch snap.Mode {
@@ -104,6 +109,11 @@ func RenderImage(snap Snapshot) *image.RGBA {
 	}
 	textFit(img, 226, 686, 1000, snap.Labels["statusPrefix"]+": "+snap.Status, muted)
 	return img
+}
+
+func playtestButtonAt(xpos, ypos float32) bool {
+	p := image.Point{X: int(xpos), Y: int(ypos)}
+	return p.In(image.Rect(playtestButtonX, playtestButtonY, playtestButtonX+playtestButtonW, playtestButtonY+playtestButtonH))
 }
 
 func drawMinimapPanel(img *image.RGBA, snap Snapshot) {

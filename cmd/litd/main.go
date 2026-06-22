@@ -10,9 +10,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"os"
+	"path/filepath"
+	"sort"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/luabind"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	lua "github.com/yuin/gopher-lua"
@@ -20,20 +26,23 @@ import (
 
 func main() {
 	world := flag.String("world", "", "world directory to load (contains data/ and main.lua)")
+	archive := flag.String("archive", "", "verified .litdworld archive to load")
 	autotest := flag.Bool("autotest", false, "advance -ticks then print the sim state as JSON")
 	ticks := flag.Int("ticks", 40, "ticks to advance under -autotest")
 	seed := flag.Int64("seed", 1, "deterministic PRNG seed (R-SIM-2)")
 	budget := flag.Int64("budget", 50_000_000, "per-eval Lua instruction budget (R-SEC-1 quota)")
+	autotestOrder := flag.Bool("autotest-order", false, "under -autotest, issue a deterministic move order to the first unit before advancing")
+	shot := flag.String("shot", "", "write a headless playtest screenshot after -autotest")
 	flag.Parse()
 
-	if err := run(*world, *autotest, *ticks, *seed, *budget); err != nil {
+	if err := run(*world, *archive, *autotest, *autotestOrder, *ticks, *seed, *budget, *shot); err != nil {
 		fmt.Fprintln(os.Stderr, "litd:", err)
 		os.Exit(1)
 	}
 }
 
-func run(world string, autotest bool, ticks int, seed, budget int64) error {
-	g, cleanup, err := loadWorld(world, seed, budget)
+func run(world, archive string, autotest, autotestOrder bool, ticks int, seed, budget int64, shot string) error {
+	g, cleanup, err := loadWorldInput(world, archive, seed, budget)
 	if err != nil {
 		return err
 	}
@@ -43,10 +52,35 @@ func run(world string, autotest bool, ticks int, seed, budget int64) error {
 	// (by cleanup deferral) across Advance so any handlers the world registered
 	// can fire on later ticks.
 	if autotest {
+		order := orderState{}
+		if autotestOrder {
+			order = orderFirstUnit(g)
+		}
 		g.Advance(ticks)
-		printState(g, ticks)
+		if shot != "" {
+			if err := writePlaytestShot(shot, g, order); err != nil {
+				return err
+			}
+			fmt.Printf("event: screenshot saved path=%s\n", shot)
+		}
+		printState(g, ticks, order)
 	}
 	return nil
+}
+
+func loadWorldInput(world, archive string, seed, budget int64) (*api.Game, func(), error) {
+	switch {
+	case world != "" && archive != "":
+		return nil, nil, fmt.Errorf("pass either -world or -archive, not both")
+	case archive != "":
+		h, err := worldhost.LoadArchive(archive, engineVersion(), seed, budget)
+		if err != nil {
+			return nil, nil, err
+		}
+		return h.Game, h.Close, nil
+	default:
+		return loadWorld(world, seed, budget)
+	}
 }
 
 // loadWorld loads a world for headless run, returning just the game handle.
@@ -78,20 +112,196 @@ type unitState struct {
 	Life   float64 `json:"life"`
 }
 
+type orderState struct {
+	Issued bool    `json:"issued"`
+	Before Vec2DTO `json:"before"`
+	Target Vec2DTO `json:"target"`
+}
+
+type Vec2DTO struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
 // printState writes the sim state as the JSON line an FSV reader inspects (the
 // "state:" convention firstlight uses). Units are enumerated by a whole-map
 // range query (no all-units iterator on the public surface yet).
-func printState(g *api.Game, ticks int) {
-	var us []unitState
-	for _, u := range g.UnitsInRange(api.Vec2{}, 1e9, nil) {
+func printState(g *api.Game, ticks int, order orderState) {
+	units := sortedUnits(g)
+	us := make([]unitState, 0, len(units))
+	for _, u := range units {
 		p := u.Position()
 		us = append(us, unitState{X: p.X, Y: p.Y, Facing: u.Facing().Degrees(), Life: u.Life()})
 	}
 	s := struct {
 		TimeOfDay float64     `json:"tod"`
 		Ticks     int         `json:"ticks"`
+		Order     orderState  `json:"order,omitempty"`
 		Units     []unitState `json:"units"`
-	}{g.TimeOfDay(), ticks, us}
+	}{g.TimeOfDay(), ticks, order, us}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
+}
+
+func orderFirstUnit(g *api.Game) orderState {
+	units := sortedUnits(g)
+	if len(units) == 0 {
+		return orderState{}
+	}
+	p := units[0].Position()
+	target := api.Vec2{X: p.X + 128, Y: p.Y}
+	issued := units[0].Order(api.OrderMove, api.TargetPoint(target))
+	return orderState{
+		Issued: issued,
+		Before: Vec2DTO{X: p.X, Y: p.Y},
+		Target: Vec2DTO{X: target.X, Y: target.Y},
+	}
+}
+
+func sortedUnits(g *api.Game) []api.Unit {
+	units := append([]api.Unit(nil), g.UnitsInRange(api.Vec2{}, 1e9, nil)...)
+	sort.Slice(units, func(i, j int) bool {
+		pi, pj := units[i].Position(), units[j].Position()
+		if pi.X != pj.X {
+			return pi.X < pj.X
+		}
+		if pi.Y != pj.Y {
+			return pi.Y < pj.Y
+		}
+		return units[i].Facing().Degrees() < units[j].Facing().Degrees()
+	})
+	return units
+}
+
+func writePlaytestShot(path string, g *api.Game, order orderState) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	const w, h = 640, 360
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	fillImage(img, color.RGBA{R: 25, G: 30, B: 32, A: 255})
+	units := sortedUnits(g)
+	minX, minY, maxX, maxY := 0.0, 0.0, 8192.0, 8192.0
+	for _, u := range units {
+		p := u.Position()
+		if p.X < minX {
+			minX = p.X
+		}
+		if p.Y < minY {
+			minY = p.Y
+		}
+		if p.X > maxX {
+			maxX = p.X
+		}
+		if p.Y > maxY {
+			maxY = p.Y
+		}
+	}
+	if order.Issued {
+		if order.Target.X > maxX {
+			maxX = order.Target.X
+		}
+		if order.Target.Y > maxY {
+			maxY = order.Target.Y
+		}
+	}
+	if maxX <= minX {
+		maxX = minX + 1
+	}
+	if maxY <= minY {
+		maxY = minY + 1
+	}
+	project := func(x, y float64) (int, int) {
+		px := 32 + int((x-minX)/(maxX-minX)*float64(w-64))
+		py := 32 + int((y-minY)/(maxY-minY)*float64(h-64))
+		return px, py
+	}
+	if order.Issued {
+		bx, by := project(order.Before.X, order.Before.Y)
+		tx, ty := project(order.Target.X, order.Target.Y)
+		drawLine(img, bx, by, tx, ty, color.RGBA{R: 91, G: 142, B: 113, A: 255})
+		drawDot(img, tx, ty, 4, color.RGBA{R: 200, G: 156, B: 83, A: 255})
+	}
+	for _, u := range units {
+		p := u.Position()
+		x, y := project(p.X, p.Y)
+		drawDot(img, x, y, 5, color.RGBA{R: 225, G: 232, B: 218, A: 255})
+	}
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	return png.Encode(out, img)
+}
+
+func fillImage(img *image.RGBA, c color.RGBA) {
+	for y := img.Rect.Min.Y; y < img.Rect.Max.Y; y++ {
+		for x := img.Rect.Min.X; x < img.Rect.Max.X; x++ {
+			img.SetRGBA(x, y, c)
+		}
+	}
+}
+
+func drawDot(img *image.RGBA, cx, cy, r int, c color.RGBA) {
+	for y := cy - r; y <= cy+r; y++ {
+		for x := cx - r; x <= cx+r; x++ {
+			if x < img.Rect.Min.X || y < img.Rect.Min.Y || x >= img.Rect.Max.X || y >= img.Rect.Max.Y {
+				continue
+			}
+			dx, dy := x-cx, y-cy
+			if dx*dx+dy*dy <= r*r {
+				img.SetRGBA(x, y, c)
+			}
+		}
+	}
+}
+
+func drawLine(img *image.RGBA, x0, y0, x1, y1 int, c color.RGBA) {
+	dx := absInt(x1 - x0)
+	sx := -1
+	if x0 < x1 {
+		sx = 1
+	}
+	dy := -absInt(y1 - y0)
+	sy := -1
+	if y0 < y1 {
+		sy = 1
+	}
+	err := dx + dy
+	for {
+		if x0 >= img.Rect.Min.X && y0 >= img.Rect.Min.Y && x0 < img.Rect.Max.X && y0 < img.Rect.Max.Y {
+			img.SetRGBA(x0, y0, c)
+		}
+		if x0 == x1 && y0 == y1 {
+			return
+		}
+		e2 := 2 * err
+		if e2 >= dy {
+			err += dy
+			x0 += sx
+		}
+		if e2 <= dx {
+			err += dx
+			y0 += sy
+		}
+	}
+}
+
+func absInt(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+func engineVersion() string {
+	v := buildinfo.Get().Version
+	if len(v) > 0 && v[0] == 'v' {
+		v = v[1:]
+	}
+	if v == "" || v == "dev" {
+		return "0.1.0"
+	}
+	return v
 }

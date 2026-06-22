@@ -44,6 +44,7 @@
 "editor.action.open" = "[xx.43]"
 "editor.action.save" = "[xx.44]"
 "editor.action.export" = "[xx.45]"
+"editor.action.playtest" = "[xx.86]"
 "editor.status.ready" = "[xx.46]"
 "editor.status.project_created" = "[xx.47]"
 "editor.status.project_opened" = "[xx.48]"
