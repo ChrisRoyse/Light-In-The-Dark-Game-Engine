@@ -1,0 +1,127 @@
+diff --git a/gls/gls-browser.go b/gls/gls-browser.go
+index f63b892..e4f55a3 100644
+--- a/gls/gls-browser.go
++++ b/gls/gls-browser.go
+@@ -441,6 +441,16 @@ func (gs *GLS) DrawArrays(mode uint32, first int32, count int32) {
+ 	gs.stats.Drawcalls++
+ }
+ 
++// DrawArraysInstanced renders multiple instances of array data.
++//
++// LITD-PATCH: WebGL2 wrapper for the LitD instancing path.
++func (gs *GLS) DrawArraysInstanced(mode uint32, first int32, count int32, instanceCount int32) {
++
++	gs.gl.Call("drawArraysInstanced", int(mode), first, count, instanceCount)
++	gs.checkError("DrawArraysInstanced")
++	gs.stats.Drawcalls++
++}
++
+ // DrawElements renders primitives from array data.
+ func (gs *GLS) DrawElements(mode uint32, count int32, itype uint32, start uint32) {
+ 
+@@ -449,6 +459,25 @@ func (gs *GLS) DrawElements(mode uint32, count int32, itype uint32, start uint32
+ 	gs.stats.Drawcalls++
+ }
+ 
++// DrawElementsInstanced renders multiple instances of indexed array data.
++//
++// LITD-PATCH: WebGL2 wrapper for the LitD instancing path.
++func (gs *GLS) DrawElementsInstanced(mode uint32, count int32, itype uint32, start uint32, instanceCount int32) {
++
++	gs.gl.Call("drawElementsInstanced", int(mode), count, int(itype), start, instanceCount)
++	gs.checkError("DrawElementsInstanced")
++	gs.stats.Drawcalls++
++}
++
++// DrawElementsInstancedBaseVertex renders indexed instances with a base vertex.
++//
++// LITD-PATCH: this OpenGL entry point is not available through WebGL2; fail
++// loudly if a wasm build accidentally asks for the desktop-only path.
++func (gs *GLS) DrawElementsInstancedBaseVertex(mode uint32, count int32, itype uint32, start uint32, instanceCount int32, baseVertex int32) {
++
++	panic("gls: DrawElementsInstancedBaseVertex is not available on wasm/WebGL")
++}
++
+ // Enable enables the specified capability.
+ func (gs *GLS) Enable(cap int) {
+ 
+@@ -809,6 +838,15 @@ func (gs *GLS) VertexAttribPointer(index uint32, size int32, xtype uint32, norma
+ 	gs.checkError("VertexAttribPointer")
+ }
+ 
++// VertexAttribDivisor modifies the rate at which generic vertex attributes advance.
++//
++// LITD-PATCH: WebGL2 wrapper for per-instance attributes.
++func (gs *GLS) VertexAttribDivisor(index uint32, divisor uint32) {
++
++	gs.gl.Call("vertexAttribDivisor", index, divisor)
++	gs.checkError("VertexAttribDivisor")
++}
++
+ // Viewport sets the viewport.
+ func (gs *GLS) Viewport(x, y, width, height int32) {
+ 
+diff --git a/gls/gls-desktop.go b/gls/gls-desktop.go
+index 7b80d83..65b5005 100644
+--- a/gls/gls-desktop.go
++++ b/gls/gls-desktop.go
+@@ -412,6 +412,16 @@ func (gs *GLS) DrawArrays(mode uint32, first int32, count int32) {
+ 	gs.stats.Drawcalls++
+ }
+ 
++// DrawArraysInstanced renders multiple instances of array data.
++//
++// LITD-PATCH: Go-side wrapper over the already-loaded glDrawArraysInstanced
++// entry point for the LitD instancing path.
++func (gs *GLS) DrawArraysInstanced(mode uint32, first int32, count int32, instanceCount int32) {
++
++	C.glDrawArraysInstanced(C.GLenum(mode), C.GLint(first), C.GLsizei(count), C.GLsizei(instanceCount))
++	gs.stats.Drawcalls++
++}
++
+ // DrawElements renders primitives from array data.
+ func (gs *GLS) DrawElements(mode uint32, count int32, itype uint32, start uint32) {
+ 
+@@ -419,6 +429,26 @@ func (gs *GLS) DrawElements(mode uint32, count int32, itype uint32, start uint32
+ 	gs.stats.Drawcalls++
+ }
+ 
++// DrawElementsInstanced renders multiple instances of indexed array data.
++//
++// LITD-PATCH: Go-side wrapper over the already-loaded glDrawElementsInstanced
++// entry point for the LitD instancing path.
++func (gs *GLS) DrawElementsInstanced(mode uint32, count int32, itype uint32, start uint32, instanceCount int32) {
++
++	C.glDrawElementsInstanced(C.GLenum(mode), C.GLsizei(count), C.GLenum(itype), unsafe.Pointer(uintptr(start)), C.GLsizei(instanceCount))
++	gs.stats.Drawcalls++
++}
++
++// DrawElementsInstancedBaseVertex renders indexed instances with a base vertex.
++//
++// LITD-PATCH: Go-side wrapper over the already-loaded
++// glDrawElementsInstancedBaseVertex entry point for the LitD instancing path.
++func (gs *GLS) DrawElementsInstancedBaseVertex(mode uint32, count int32, itype uint32, start uint32, instanceCount int32, baseVertex int32) {
++
++	C.glDrawElementsInstancedBaseVertex(C.GLenum(mode), C.GLsizei(count), C.GLenum(itype), unsafe.Pointer(uintptr(start)), C.GLsizei(instanceCount), C.GLint(baseVertex))
++	gs.stats.Drawcalls++
++}
++
+ // DrawBuffer sets which color buffers are to be drawn into.
+ // Mode is one of NONE, FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT, FRONT, BACK, LEFT, RIGHT, and FRONT_AND_BACK.
+ func (gs *GLS) DrawBuffer(mode uint) {
+@@ -815,6 +845,15 @@ func (gs *GLS) VertexAttribPointer(index uint32, size int32, xtype uint32, norma
+ 	C.glVertexAttribPointer(C.GLuint(index), C.GLint(size), C.GLenum(xtype), bool2c(normalized), C.GLsizei(stride), C.GLsizeiptr(offset))
+ }
+ 
++// VertexAttribDivisor modifies the rate at which generic vertex attributes advance.
++//
++// LITD-PATCH: Go-side wrapper over the already-loaded glVertexAttribDivisor
++// entry point for per-instance attributes.
++func (gs *GLS) VertexAttribDivisor(index uint32, divisor uint32) {
++
++	C.glVertexAttribDivisor(C.GLuint(index), C.GLuint(divisor))
++}
++
+ // Viewport sets the viewport.
+ func (gs *GLS) Viewport(x, y, width, height int32) {
+ 
