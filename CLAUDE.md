@@ -62,10 +62,11 @@ is a determinism fixture, add it to the explicit determinism step in
 
 ## Pre-merge gate (no CI — runs locally)
 
-There is no GitHub Actions / hosted CI. All workflows were removed (2026-06-19;
-Actions billing is unresolved per #284 and the policy is gate-locally). Every
-gate the old workflows ran is consolidated into one script — run it green
-before merging any branch to main:
+There is no GitHub Actions / hosted CI, **permanently** — the operator decision
+(2026-06-21, closing #284/#317) is to NEVER use GitHub Actions and gate locally
+via `.githooks` only. All workflows were removed (2026-06-19); do not add a
+`.github/workflows/` directory. Every gate the old workflows ran is consolidated
+into one script — run it green before merging any branch to main:
 
 ```bash
 scripts/preflight.sh            # FULL gate (vet, build, test, assetcheck, zero-alloc,
