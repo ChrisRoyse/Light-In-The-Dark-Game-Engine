@@ -57,6 +57,13 @@ type Terrain struct {
 	Biome   string
 }
 
+// CliffCell is one source-form cliff grid cell. A ramp cell joins Level and
+// Level+1, matching mapdata.Cliff and the sim pathing cliff rule.
+type CliffCell struct {
+	Level int
+	Ramp  bool
+}
+
 // Entity is one placed map entity. IDs are stable and sorted on save.
 type Entity struct {
 	ID     uint32
@@ -81,7 +88,7 @@ type World struct {
 	Metadata Metadata
 	Terrain  Terrain
 	Height   [][]int
-	Cliff    [][]int
+	Cliff    [][]CliffCell
 	Splat    [][]int
 	Entities []Entity
 
@@ -151,7 +158,7 @@ func Load(dir string) (*World, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", heightFile, err)
 	}
-	cliff, err := parseGrid(all[cliffFile], terrain.Width, terrain.Height)
+	cliff, err := parseCliffGrid(all[cliffFile], terrain.Width, terrain.Height)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", cliffFile, err)
 	}
@@ -223,6 +230,9 @@ func (w *World) SetMetadataName(name string) error {
 
 // SetGridCell edits one terrain grid cell.
 func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
+	if kind == GridCliff {
+		return w.SetCliffCell(x, y, CliffCell{Level: value})
+	}
 	grid, err := w.grid(kind)
 	if err != nil {
 		return err
@@ -234,6 +244,25 @@ func (w *World) SetGridCell(kind GridKind, x, y, value int) error {
 		return nil
 	}
 	grid[y][x] = value
+	w.dirty = true
+	return nil
+}
+
+// SetCliffCell edits one cliff/ramp grid cell.
+func (w *World) SetCliffCell(x, y int, cell CliffCell) error {
+	if w == nil {
+		return fmt.Errorf("sourceform: set cliff cell on nil world")
+	}
+	if err := validateCliffCell(cell); err != nil {
+		return err
+	}
+	if y < 0 || y >= len(w.Cliff) || x < 0 || x >= len(w.Cliff[y]) {
+		return fmt.Errorf("sourceform: cliff cell (%d,%d) outside %dx%d grid", x, y, w.Terrain.Width, w.Terrain.Height)
+	}
+	if w.Cliff[y][x] == cell {
+		return nil
+	}
+	w.Cliff[y][x] = cell
 	w.dirty = true
 	return nil
 }
@@ -338,8 +367,6 @@ func (w *World) grid(kind GridKind) ([][]int, error) {
 	switch kind {
 	case GridHeight:
 		return w.Height, nil
-	case GridCliff:
-		return w.Cliff, nil
 	case GridSplat:
 		return w.Splat, nil
 	default:
@@ -569,6 +596,61 @@ func parseGrid(body []byte, width, height int) ([][]int, error) {
 	return grid, nil
 }
 
+func parseCliffGrid(body []byte, width, height int) ([][]CliffCell, error) {
+	text := string(body)
+	if strings.HasPrefix(text, "\ufeff") {
+		return nil, fmt.Errorf("UTF-8 BOM is not allowed")
+	}
+	text = strings.TrimSuffix(text, "\n")
+	if text == "" {
+		if height == 0 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("grid is empty, want %d rows", height)
+	}
+	lines := strings.Split(text, "\n")
+	if len(lines) != height {
+		return nil, fmt.Errorf("got %d rows, want %d", len(lines), height)
+	}
+	grid := make([][]CliffCell, height)
+	for y, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) != width {
+			return nil, fmt.Errorf("row %d has %d columns, want %d", y, len(fields), width)
+		}
+		row := make([]CliffCell, width)
+		for x, f := range fields {
+			cell, err := parseCliffCell(f)
+			if err != nil {
+				return nil, fmt.Errorf("row %d col %d: %w", y, x, err)
+			}
+			row[x] = cell
+		}
+		grid[y] = row
+	}
+	if err := validateCliffRamps(grid); err != nil {
+		return nil, err
+	}
+	return grid, nil
+}
+
+func parseCliffCell(text string) (CliffCell, error) {
+	ramp := false
+	if strings.HasPrefix(strings.ToLower(text), "r") {
+		ramp = true
+		text = text[1:]
+	}
+	n, err := strconv.Atoi(text)
+	if err != nil {
+		return CliffCell{}, err
+	}
+	cell := CliffCell{Level: n, Ramp: ramp}
+	if err := validateCliffCell(cell); err != nil {
+		return CliffCell{}, err
+	}
+	return cell, nil
+}
+
 func rejectUndecoded(md toml.MetaData) error {
 	if undecoded := md.Undecoded(); len(undecoded) > 0 {
 		return fmt.Errorf("unsupported key %q", strings.Join([]string(undecoded[0]), "."))
@@ -586,7 +668,7 @@ func validateWorld(w *World) error {
 	if err := validateGrid(w.Height, w.Terrain.Width, w.Terrain.Height, "height"); err != nil {
 		return err
 	}
-	if err := validateGrid(w.Cliff, w.Terrain.Width, w.Terrain.Height, "cliff"); err != nil {
+	if err := validateCliffGrid(w.Cliff, w.Terrain.Width, w.Terrain.Height); err != nil {
 		return err
 	}
 	if err := validateGrid(w.Splat, w.Terrain.Width, w.Terrain.Height, "splat"); err != nil {
@@ -622,6 +704,97 @@ func validateGrid(grid [][]int, width, height int, name string) error {
 	return nil
 }
 
+func validateCliffGrid(grid [][]CliffCell, width, height int) error {
+	if len(grid) != height {
+		return fmt.Errorf("sourceform: cliff grid has %d rows, want %d", len(grid), height)
+	}
+	for y, row := range grid {
+		if len(row) != width {
+			return fmt.Errorf("sourceform: cliff grid row %d has %d columns, want %d", y, len(row), width)
+		}
+		for x, cell := range row {
+			if err := validateCliffCell(cell); err != nil {
+				return fmt.Errorf("sourceform: cliff cell (%d,%d): %w", x, y, err)
+			}
+		}
+	}
+	return validateCliffRamps(grid)
+}
+
+func validateCliffCell(cell CliffCell) error {
+	if cell.Level < 0 || cell.Level > 126 {
+		return fmt.Errorf("sourceform: cliff level %d outside 0..126", cell.Level)
+	}
+	return nil
+}
+
+func validateCliffRamps(grid [][]CliffCell) error {
+	for y, row := range grid {
+		for x, cell := range row {
+			if !cell.Ramp {
+				continue
+			}
+			lo, hi := cell.Level, cell.Level+1
+			hasLo, hasHi := false, false
+			for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+d[0], y+d[1]
+				if ny < 0 || ny >= len(grid) || nx < 0 || nx >= len(grid[ny]) {
+					continue
+				}
+				nlo, nhi := cliffSpan(grid[ny][nx])
+				if nlo <= lo && lo <= nhi {
+					hasLo = true
+				}
+				if nlo <= hi && hi <= nhi {
+					hasHi = true
+				}
+			}
+			if !hasLo || !hasHi {
+				return fmt.Errorf("sourceform: ramp at (%d,%d) must touch both levels %d and %d", x, y, lo, hi)
+			}
+		}
+	}
+	return nil
+}
+
+func cliffSpan(cell CliffCell) (int, int) {
+	lo, hi := cell.Level, cell.Level
+	if cell.Ramp {
+		hi++
+	}
+	return lo, hi
+}
+
+// CliffStepLegal reports whether two adjacent cliff cells share at least one
+// walkable level span, the same pathing rule used by the sim grid.
+func (w *World) CliffStepLegal(ax, ay, bx, by int) (bool, error) {
+	if w == nil {
+		return false, fmt.Errorf("sourceform: cliff pathability on nil world")
+	}
+	a, err := w.CliffCell(ax, ay)
+	if err != nil {
+		return false, err
+	}
+	b, err := w.CliffCell(bx, by)
+	if err != nil {
+		return false, err
+	}
+	alo, ahi := cliffSpan(a)
+	blo, bhi := cliffSpan(b)
+	return alo <= bhi && blo <= ahi, nil
+}
+
+// CliffCell returns one cliff/ramp cell.
+func (w *World) CliffCell(x, y int) (CliffCell, error) {
+	if w == nil {
+		return CliffCell{}, fmt.Errorf("sourceform: cliff cell on nil world")
+	}
+	if y < 0 || y >= len(w.Cliff) || x < 0 || x >= len(w.Cliff[y]) {
+		return CliffCell{}, fmt.Errorf("sourceform: cliff cell (%d,%d) outside %dx%d grid", x, y, w.Terrain.Width, w.Terrain.Height)
+	}
+	return w.Cliff[y][x], nil
+}
+
 func (w *World) renderFiles() map[string][]byte {
 	files := make(map[string][]byte, len(w.files)+6)
 	for rel, body := range w.files {
@@ -630,7 +803,7 @@ func (w *World) renderFiles() map[string][]byte {
 	files[worldFile] = renderWorld(w.Metadata)
 	files[terrainFile] = renderTerrain(w.Terrain)
 	files[heightFile] = renderGrid(w.Height)
-	files[cliffFile] = renderGrid(w.Cliff)
+	files[cliffFile] = renderCliffGrid(w.Cliff)
 	files[splatFile] = renderGrid(w.Splat)
 	files[entitiesFile] = renderEntities(w.Entities)
 	return files
@@ -671,6 +844,23 @@ func renderGrid(grid [][]int) []byte {
 				b.WriteByte(' ')
 			}
 			b.WriteString(strconv.Itoa(n))
+		}
+		b.WriteByte('\n')
+	}
+	return []byte(b.String())
+}
+
+func renderCliffGrid(grid [][]CliffCell) []byte {
+	var b strings.Builder
+	for _, row := range grid {
+		for x, cell := range row {
+			if x > 0 {
+				b.WriteByte(' ')
+			}
+			if cell.Ramp {
+				b.WriteByte('r')
+			}
+			b.WriteString(strconv.Itoa(cell.Level))
 		}
 		b.WriteByte('\n')
 	}

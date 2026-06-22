@@ -78,6 +78,34 @@ func RunWindow(state *App, opts WindowOptions) error {
 			markDirty(state.SwitchMode(ModeObjects))
 		case window.Key3:
 			markDirty(state.SwitchMode(ModeMetadata))
+		case window.KeyQ:
+			markDirty(state.SetTerrainBrush(BrushRaise))
+		case window.KeyW:
+			markDirty(state.SetTerrainBrush(BrushLower))
+		case window.KeyE:
+			markDirty(state.SetTerrainBrush(BrushLevel))
+		case window.KeyR:
+			markDirty(state.SetTerrainBrush(BrushRamp))
+		case window.KeyLeftBracket:
+			b := state.BrushSnapshot()
+			markDirty(state.SetBrushSize(b.Size - 1))
+		case window.KeyRightBracket:
+			b := state.BrushSnapshot()
+			markDirty(state.SetBrushSize(b.Size + 1))
+		case window.KeyMinus:
+			b := state.BrushSnapshot()
+			markDirty(state.SetBrushStrength(b.Strength - 1))
+		case window.KeyEqual:
+			b := state.BrushSnapshot()
+			markDirty(state.SetBrushStrength(b.Strength + 1))
+		case window.KeyLeft:
+			markDirty(state.SetBrushRampDirection(RampWest))
+		case window.KeyRight:
+			markDirty(state.SetBrushRampDirection(RampEast))
+		case window.KeyUp:
+			markDirty(state.SetBrushRampDirection(RampNorth))
+		case window.KeyDown:
+			markDirty(state.SetBrushRampDirection(RampSouth))
 		case window.KeyN:
 			markDirty(state.NewProject(newTarget()))
 		case window.KeyS:
@@ -102,6 +130,40 @@ func RunWindow(state *App, opts WindowOptions) error {
 		case window.KeyF12:
 			shotPending = true
 		}
+	})
+	var activeStroke *TerrainStroke
+	surface.win.Subscribe(window.OnMouseDown, func(_ string, ev interface{}) {
+		mev := ev.(*window.MouseEvent)
+		if mev.Button != window.MouseButtonLeft || state.Snapshot().Mode != ModeTerrain {
+			return
+		}
+		x, y, ok := terrainCellAt(state.Snapshot(), mev.Xpos, mev.Ypos)
+		if ok {
+			stroke, err := state.BeginTerrainStroke(x, y)
+			if err == nil {
+				activeStroke = stroke
+			}
+			markDirty(err)
+		}
+	})
+	surface.win.Subscribe(window.OnCursor, func(_ string, ev interface{}) {
+		if activeStroke == nil || state.Snapshot().Mode != ModeTerrain {
+			return
+		}
+		cev := ev.(*window.CursorEvent)
+		x, y, ok := terrainCellAt(state.Snapshot(), cev.Xpos, cev.Ypos)
+		if ok {
+			markDirty(activeStroke.AddPoint(x, y))
+		}
+	})
+	surface.win.Subscribe(window.OnMouseUp, func(_ string, ev interface{}) {
+		mev := ev.(*window.MouseEvent)
+		if mev.Button != window.MouseButtonLeft || activeStroke == nil {
+			return
+		}
+		stroke := activeStroke
+		activeStroke = nil
+		markDirty(stroke.End())
 	})
 
 	if opts.CaptureFrame {
@@ -130,6 +192,23 @@ func RunWindow(state *App, opts WindowOptions) error {
 		}
 	})
 	return lastErr
+}
+
+func terrainCellAt(snap Snapshot, xpos, ypos float32) (int, int, bool) {
+	x := int(xpos) - terrainGridX
+	y := int(ypos) - terrainGridY
+	if x < 0 || y < 0 {
+		return 0, 0, false
+	}
+	cx, ox := x/terrainGridStepX, x%terrainGridStepX
+	cy, oy := y/terrainGridStepY, y%terrainGridStepY
+	if ox >= terrainGridCellW || oy >= terrainGridCellH {
+		return 0, 0, false
+	}
+	if cx < 0 || cy < 0 || cx >= snap.World.Width || cy >= snap.World.Height || cx >= 8 || cy >= 8 {
+		return 0, 0, false
+	}
+	return cx, cy, true
 }
 
 func RunWindowCaptureSequence(state *App, steps []WindowCaptureStep) error {

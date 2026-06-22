@@ -16,8 +16,14 @@ import (
 )
 
 const (
-	ShotWidth  = 1280
-	ShotHeight = 720
+	ShotWidth        = 1280
+	ShotHeight       = 720
+	terrainGridX     = 240
+	terrainGridY     = 210
+	terrainGridStepX = 44
+	terrainGridStepY = 34
+	terrainGridCellW = 34
+	terrainGridCellH = 24
 )
 
 var (
@@ -92,17 +98,27 @@ func RenderImage(snap Snapshot) *image.RGBA {
 func drawTerrain(img *image.RGBA, snap Snapshot) {
 	text(img, 236, 132, snap.Labels["panelTerrain"], ink)
 	text(img, 236, 166, fmt.Sprintf("%dx%d", snap.World.Width, snap.World.Height), muted)
-	for y := 0; y < 8; y++ {
-		for x := 0; x < 8; x++ {
-			c := panelAlt
-			if x == 1 && y == 1 && snap.World.HeightCell != 0 {
-				c = green
-			}
-			fill(img, 240+x*44, 210+y*34, 34, 24, c)
+	rows := snap.World.HeightRows
+	if len(rows) == 0 {
+		rows = make([][]int, min(8, snap.World.Height))
+		for y := range rows {
+			rows[y] = make([]int, min(8, snap.World.Width))
 		}
 	}
-	text(img, 640, 242, snap.Labels["fieldCell"]+"[1,1]="+fmt.Sprint(snap.World.HeightCell), brass)
-	text(img, 640, 274, snap.Labels["hintTerrain"], muted)
+	for y := 0; y < len(rows) && y < 8; y++ {
+		for x := 0; x < len(rows[y]) && x < 8; x++ {
+			h := rows[y][x]
+			c := heightColor(h)
+			fill(img, terrainGridX+x*terrainGridStepX, terrainGridY+y*terrainGridStepY, terrainGridCellW, terrainGridCellH, c)
+			if y < len(snap.World.CliffRows) && x < len(snap.World.CliffRows[y]) && strings.HasPrefix(snap.World.CliffRows[y][x], "r") {
+				fill(img, terrainGridX+x*terrainGridStepX+terrainGridCellW-7, terrainGridY+y*terrainGridStepY, 7, terrainGridCellH, brass)
+			}
+		}
+	}
+	text(img, 640, 226, snap.Labels["fieldCell"]+"[1,1]="+fmt.Sprint(snap.World.HeightCell), brass)
+	text(img, 640, 258, snap.Labels["fieldCliff"]+"[1,1]="+snap.World.CliffCell, muted)
+	text(img, 640, 306, snap.Labels["fieldBrush"]+": "+snap.Brush.Label, ink)
+	text(img, 640, 338, snap.Labels["hintTerrain"], muted)
 }
 
 func drawObjects(img *image.RGBA, snap Snapshot) {
@@ -142,6 +158,28 @@ func modeButton(img *image.RGBA, x, y int, label string, active bool) {
 		fill(img, x, y, 5, 34, brass)
 	}
 	text(img, x+16, y+23, label, fg)
+}
+
+func heightColor(height int) color.RGBA {
+	if height == 0 {
+		return panelAlt
+	}
+	if height < 0 {
+		v := 72 + clampInt(-height*12, 0, 96)
+		return color.RGBA{R: 48, G: uint8(v), B: 142, A: 255}
+	}
+	v := 84 + clampInt(height*12, 0, 132)
+	return color.RGBA{R: 70, G: uint8(v), B: 83, A: 255}
+}
+
+func clampInt(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
 }
 
 func fill(img *image.RGBA, x, y, w, h int, c color.RGBA) {

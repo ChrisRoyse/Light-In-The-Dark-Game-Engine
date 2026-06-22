@@ -75,6 +75,8 @@ const (
 	EditorStatusPrefix            Key = "editor.status.prefix"
 	EditorFieldCell               Key = "editor.field.cell"
 	EditorFieldEntities           Key = "editor.field.entities"
+	EditorFieldBrush              Key = "editor.field.brush"
+	EditorFieldCliff              Key = "editor.field.cliff"
 	EditorFieldID                 Key = "editor.field.id"
 	EditorFieldName               Key = "editor.field.name"
 	EditorFieldEngine             Key = "editor.field.engine"
@@ -146,6 +148,8 @@ var requiredKeys = []string{
 	string(EditorStatusPrefix),
 	string(EditorFieldCell),
 	string(EditorFieldEntities),
+	string(EditorFieldBrush),
+	string(EditorFieldCliff),
 	string(EditorFieldID),
 	string(EditorFieldName),
 	string(EditorFieldEngine),

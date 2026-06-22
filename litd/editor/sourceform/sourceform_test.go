@@ -115,6 +115,73 @@ func TestSourceFormTerrainAndScriptOnlyEdgesFSV(t *testing.T) {
 	t.Logf("FSV script-only after:\n%s", afterScript["scripts/main.lua"])
 }
 
+func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {
+	dir := t.TempDir()
+	w := &World{
+		Metadata: Metadata{
+			Format:      1,
+			ID:          "ramp-fsv",
+			Name:        "Ramp FSV",
+			Description: "Synthetic ramp source-form world",
+			Authors:     []string{"FSV"},
+			Engine:      ">=0.1 <0.2",
+			Players:     Players{Min: 1, Max: 2, Suggested: 1},
+			SeedPolicy:  "host",
+		},
+		Terrain: Terrain{Width: 3, Height: 1, Tileset: "test"},
+		Height:  [][]int{{0, 0, 0}},
+		Cliff:   [][]CliffCell{{{Level: 0}, {Level: 0, Ramp: true}, {Level: 1}}},
+		Splat:   [][]int{{0, 0, 0}},
+	}
+	if err := w.Save(dir); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(cliffFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lowToRamp, err := loaded.CliffStepLegal(0, 0, 1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rampToHigh, err := loaded.CliffStepLegal(1, 0, 2, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV ramp source bytes: %q", strings.TrimSpace(string(body)))
+	t.Logf("FSV ramp cells: low=%+v ramp=%+v high=%+v pathable low->ramp=%v ramp->high=%v", loaded.Cliff[0][0], loaded.Cliff[0][1], loaded.Cliff[0][2], lowToRamp, rampToHigh)
+	if strings.TrimSpace(string(body)) != "0 r0 1" {
+		t.Fatalf("cliff.txt = %q, want canonical ramp row", string(body))
+	}
+	if !loaded.Cliff[0][1].Ramp || !lowToRamp || !rampToHigh {
+		t.Fatalf("ramp did not round-trip as pathable: %+v", loaded.Cliff[0])
+	}
+
+	bad := t.TempDir()
+	writeSyntheticWorld(t, bad, 1)
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(terrainFile)), []byte("width = 3\nheight = 1\ntileset = \"test\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(heightFile)), []byte("0 0 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(cliffFile)), []byte("0 r0 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bad, filepath.FromSlash(splatFile)), []byte("0 0 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = Load(bad)
+	t.Logf("FSV invalid ramp load: row=%q err=%v", "0 r0 0", err)
+	if err == nil || !strings.Contains(err.Error(), "ramp at (1,0)") {
+		t.Fatalf("invalid ramp should fail closed, got %v", err)
+	}
+}
+
 func TestSourceFormRejectsMalformedEdgesFSV(t *testing.T) {
 	_, err := Load(filepath.Join(t.TempDir(), "missing"))
 	t.Logf("FSV missing directory edge: before=no directory after=err %v", err)

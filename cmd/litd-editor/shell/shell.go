@@ -35,6 +35,7 @@ type App struct {
 	errText     string
 	confirm     *Confirm
 	commands    *CommandStack
+	brush       TerrainBrush
 }
 
 type Confirm struct {
@@ -45,33 +46,37 @@ type Confirm struct {
 }
 
 type Snapshot struct {
-	Title       string            `json:"title"`
-	ProjectPath string            `json:"projectPath"`
-	Mode        Mode              `json:"mode"`
-	ModeLabel   string            `json:"modeLabel"`
-	Dirty       bool              `json:"dirty"`
-	DirtyLabel  string            `json:"dirtyLabel"`
-	Status      string            `json:"status"`
-	Error       string            `json:"error,omitempty"`
-	Confirm     *Confirm          `json:"confirm,omitempty"`
-	Labels      map[string]string `json:"labels"`
-	World       WorldSnapshot     `json:"world"`
-	Stack       StackSnapshot     `json:"stack"`
+	Title       string               `json:"title"`
+	ProjectPath string               `json:"projectPath"`
+	Mode        Mode                 `json:"mode"`
+	ModeLabel   string               `json:"modeLabel"`
+	Dirty       bool                 `json:"dirty"`
+	DirtyLabel  string               `json:"dirtyLabel"`
+	Status      string               `json:"status"`
+	Error       string               `json:"error,omitempty"`
+	Confirm     *Confirm             `json:"confirm,omitempty"`
+	Labels      map[string]string    `json:"labels"`
+	World       WorldSnapshot        `json:"world"`
+	Stack       StackSnapshot        `json:"stack"`
+	Brush       TerrainBrushSnapshot `json:"brush"`
 }
 
 type WorldSnapshot struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Width       int    `json:"width"`
-	Height      int    `json:"height"`
-	Entities    int    `json:"entities"`
-	HeightCell  int    `json:"heightCell"`
-	SeedPolicy  string `json:"seedPolicy"`
-	EngineRange string `json:"engineRange"`
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Width       int        `json:"width"`
+	Height      int        `json:"height"`
+	Entities    int        `json:"entities"`
+	HeightCell  int        `json:"heightCell"`
+	CliffCell   string     `json:"cliffCell"`
+	SeedPolicy  string     `json:"seedPolicy"`
+	EngineRange string     `json:"engineRange"`
+	HeightRows  [][]int    `json:"heightRows,omitempty"`
+	CliffRows   [][]string `json:"cliffRows,omitempty"`
 }
 
 func New(table *locale.Table) *App {
-	return &App{table: table, mode: ModeTerrain, status: must(table, locale.EditorStatusReady), commands: NewCommandStack(CommandStackLimit)}
+	return &App{table: table, mode: ModeTerrain, status: must(table, locale.EditorStatusReady), commands: NewCommandStack(CommandStackLimit), brush: DefaultTerrainBrush()}
 }
 
 func Modes() []Mode { return append([]Mode(nil), allModes...) }
@@ -220,6 +225,13 @@ func (a *App) StackSnapshot() StackSnapshot {
 	return a.ensureCommandStack().Snapshot()
 }
 
+func (a *App) CliffStepLegal(ax, ay, bx, by int) (bool, error) {
+	if a.world == nil {
+		return false, errors.New("editor shell: no project loaded")
+	}
+	return a.world.CliffStepLegal(ax, ay, bx, by)
+}
+
 func (a *App) Save() error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
@@ -253,6 +265,8 @@ func (a *App) Snapshot() Snapshot {
 		"statusPrefix":      must(a.table, locale.EditorStatusPrefix),
 		"fieldCell":         must(a.table, locale.EditorFieldCell),
 		"fieldEntities":     must(a.table, locale.EditorFieldEntities),
+		"fieldBrush":        must(a.table, locale.EditorFieldBrush),
+		"fieldCliff":        must(a.table, locale.EditorFieldCliff),
 		"fieldID":           must(a.table, locale.EditorFieldID),
 		"fieldName":         must(a.table, locale.EditorFieldName),
 		"fieldEngine":       must(a.table, locale.EditorFieldEngine),
@@ -285,6 +299,7 @@ func (a *App) Snapshot() Snapshot {
 		Confirm:     a.confirm,
 		Labels:      labels,
 		Stack:       a.StackSnapshot(),
+		Brush:       a.BrushSnapshot(),
 	}
 	if a.world != nil {
 		s.World = WorldSnapshot{
@@ -295,9 +310,14 @@ func (a *App) Snapshot() Snapshot {
 			Entities:    len(a.world.Entities),
 			SeedPolicy:  a.world.Metadata.SeedPolicy,
 			EngineRange: a.world.Metadata.Engine,
+			HeightRows:  cloneIntGrid(a.world.Height),
+			CliffRows:   cliffGridStrings(a.world.Cliff),
 		}
 		if len(a.world.Height) > 1 && len(a.world.Height[1]) > 1 {
 			s.World.HeightCell = a.world.Height[1][1]
+		}
+		if len(a.world.Cliff) > 1 && len(a.world.Cliff[1]) > 1 {
+			s.World.CliffCell = cliffCellLabel(a.world.Cliff[1][1])
 		}
 	}
 	return s
@@ -305,6 +325,15 @@ func (a *App) Snapshot() Snapshot {
 
 func (a *App) executeCommand(cmd Command) error {
 	if err := a.ensureCommandStack().Execute(a, cmd); err != nil {
+		a.errText = err.Error()
+		return err
+	}
+	a.errText = ""
+	return nil
+}
+
+func (a *App) recordAppliedCommand(cmd Command) error {
+	if err := a.ensureCommandStack().RecordApplied(cmd); err != nil {
 		a.errText = err.Error()
 		return err
 	}
@@ -330,6 +359,13 @@ func (a *App) setGridCellDirect(kind sourceform.GridKind, x, y, value int) error
 	return a.world.SetGridCell(kind, x, y, value)
 }
 
+func (a *App) setCliffCellDirect(x, y int, cell sourceform.CliffCell) error {
+	if a.world == nil {
+		return errors.New("editor shell: no project loaded")
+	}
+	return a.world.SetCliffCell(x, y, cell)
+}
+
 func (a *App) moveEntityDirect(id uint32, pos [2]int, facing int) error {
 	if a.world == nil {
 		return errors.New("editor shell: no project loaded")
@@ -353,7 +389,11 @@ func gridCellValue(w *sourceform.World, kind sourceform.GridKind, x, y int) (int
 	case sourceform.GridHeight:
 		grid = w.Height
 	case sourceform.GridCliff:
-		grid = w.Cliff
+		cell, err := w.CliffCell(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return cell.Level, nil
 	case sourceform.GridSplat:
 		grid = w.Splat
 	default:
@@ -363,6 +403,13 @@ func gridCellValue(w *sourceform.World, kind sourceform.GridKind, x, y int) (int
 		return 0, fmt.Errorf("editor shell: %s cell (%d,%d) outside %dx%d grid", kind, x, y, w.Terrain.Width, w.Terrain.Height)
 	}
 	return grid[y][x], nil
+}
+
+func cliffCellValue(w *sourceform.World, x, y int) (sourceform.CliffCell, error) {
+	if w == nil {
+		return sourceform.CliffCell{}, errors.New("editor shell: no project loaded")
+	}
+	return w.CliffCell(x, y)
 }
 
 func entityPlacement(w *sourceform.World, id uint32) ([2]int, int, error) {
@@ -390,6 +437,13 @@ func defaultWorld(name string) *sourceform.World {
 		}
 		return rows
 	}
+	cliffGrid := func() [][]sourceform.CliffCell {
+		rows := make([][]sourceform.CliffCell, 8)
+		for y := range rows {
+			rows[y] = make([]sourceform.CliffCell, 8)
+		}
+		return rows
+	}
 	return &sourceform.World{
 		Metadata: sourceform.Metadata{
 			Format:      1,
@@ -403,12 +457,38 @@ func defaultWorld(name string) *sourceform.World {
 		},
 		Terrain: sourceform.Terrain{Width: 8, Height: 8, Tileset: "vigil-lowlands"},
 		Height:  grid(),
-		Cliff:   grid(),
+		Cliff:   cliffGrid(),
 		Splat:   grid(),
 		Entities: []sourceform.Entity{
 			{ID: 1, Type: "vigil-footman", Player: 0, Pos: [2]int{4096, 4096}, Facing: 0},
 		},
 	}
+}
+
+func cloneIntGrid(grid [][]int) [][]int {
+	out := make([][]int, len(grid))
+	for y := range grid {
+		out[y] = append([]int(nil), grid[y]...)
+	}
+	return out
+}
+
+func cliffGridStrings(grid [][]sourceform.CliffCell) [][]string {
+	out := make([][]string, len(grid))
+	for y := range grid {
+		out[y] = make([]string, len(grid[y]))
+		for x, cell := range grid[y] {
+			out[y][x] = cliffCellLabel(cell)
+		}
+	}
+	return out
+}
+
+func cliffCellLabel(cell sourceform.CliffCell) string {
+	if cell.Ramp {
+		return fmt.Sprintf("r%d", cell.Level)
+	}
+	return fmt.Sprint(cell.Level)
 }
 
 func must(t *locale.Table, key locale.Key) string {

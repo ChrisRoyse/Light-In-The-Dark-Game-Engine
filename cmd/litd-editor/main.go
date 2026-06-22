@@ -114,6 +114,9 @@ func runAutotest(app *shell.App, outDir string) error {
 	if err := renderState(outDir, "06-new-cancel-preserves-dirty.png", app); err != nil {
 		return err
 	}
+	if err := runBrushFSV(app, outDir); err != nil {
+		return err
+	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
 	if err := os.WriteFile(filepath.Join(outDir, "final-state.json"), append(body, '\n'), 0o644); err != nil {
 		return err
@@ -174,7 +177,13 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 			},
 		},
 	}
+	for _, step := range brushWindowSteps(app, outDir) {
+		steps = append(steps, step)
+	}
 	if err := shell.RunWindowCaptureSequence(app, steps); err != nil {
+		return err
+	}
+	if err := writeBrushDump(app, outDir); err != nil {
 		return err
 	}
 	body, _ := json.MarshalIndent(app.Snapshot(), "", "  ")
@@ -183,6 +192,138 @@ func runWindowAutotest(app *shell.App, outDir string) error {
 	}
 	fmt.Printf("state: %s\n", app.Snapshot().JSON())
 	return nil
+}
+
+type editorBrushStep struct {
+	Name  string
+	Apply func() error
+}
+
+func brushSteps(app *shell.App) []editorBrushStep {
+	return []editorBrushStep{
+		{
+			Name: "brush-raise",
+			Apply: func() error {
+				if err := app.SwitchMode(shell.ModeTerrain); err != nil {
+					return err
+				}
+				if err := app.SetBrushSize(0); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(2); err != nil {
+					return err
+				}
+				if err := app.SetTerrainBrush(shell.BrushRaise); err != nil {
+					return err
+				}
+				return app.ApplyTerrainBrush(2, 2)
+			},
+		},
+		{
+			Name: "brush-lower",
+			Apply: func() error {
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.SetTerrainBrush(shell.BrushLower); err != nil {
+					return err
+				}
+				return app.ApplyTerrainBrush(2, 2)
+			},
+		},
+		{
+			Name: "brush-level",
+			Apply: func() error {
+				if err := app.SetBrushSize(1); err != nil {
+					return err
+				}
+				app.SetBrushLevelTarget(5)
+				if err := app.SetTerrainBrush(shell.BrushLevel); err != nil {
+					return err
+				}
+				return app.ApplyTerrainBrush(4, 4)
+			},
+		},
+		{
+			Name: "brush-ramp",
+			Apply: func() error {
+				if err := app.SetTerrainBrush(shell.BrushRamp); err != nil {
+					return err
+				}
+				if err := app.SetBrushStrength(1); err != nil {
+					return err
+				}
+				if err := app.SetBrushRampDirection(shell.RampEast); err != nil {
+					return err
+				}
+				return app.ApplyTerrainBrush(4, 6)
+			},
+		},
+	}
+}
+
+func runBrushFSV(app *shell.App, outDir string) error {
+	for i, step := range brushSteps(app) {
+		if err := step.Apply(); err != nil {
+			return err
+		}
+		if err := renderState(outDir, fmt.Sprintf("%02d-%s.png", i+7, step.Name), app); err != nil {
+			return err
+		}
+	}
+	return writeBrushDump(app, outDir)
+}
+
+func brushWindowSteps(app *shell.App, outDir string) []shell.WindowCaptureStep {
+	steps := brushSteps(app)
+	out := make([]shell.WindowCaptureStep, 0, len(steps))
+	for i, step := range steps {
+		step := step
+		out = append(out, shell.WindowCaptureStep{
+			Name:     step.Name,
+			ShotPath: filepath.Join(outDir, fmt.Sprintf("%02d-%s.png", i+7, step.Name)),
+			BeforeCapture: func() error {
+				return step.Apply()
+			},
+		})
+	}
+	return out
+}
+
+func writeBrushDump(app *shell.App, outDir string) error {
+	lowRamp, err := app.CliffStepLegal(3, 6, 4, 6)
+	if err != nil {
+		return err
+	}
+	rampHigh, err := app.CliffStepLegal(4, 6, 5, 6)
+	if err != nil {
+		return err
+	}
+	snap := app.Snapshot()
+	dump := struct {
+		HeightRows [][]int                    `json:"heightRows"`
+		CliffRows  [][]string                 `json:"cliffRows"`
+		Brush      shell.TerrainBrushSnapshot `json:"brush"`
+		Stack      shell.StackSnapshot        `json:"stack"`
+		Pathable   map[string]bool            `json:"pathable"`
+	}{
+		HeightRows: snap.World.HeightRows,
+		CliffRows:  snap.World.CliffRows,
+		Brush:      snap.Brush,
+		Stack:      snap.Stack,
+		Pathable: map[string]bool{
+			"low_to_ramp":  lowRamp,
+			"ramp_to_high": rampHigh,
+		},
+	}
+	body, err := json.MarshalIndent(dump, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(outDir, "brush-grid-dump.json"), append(body, '\n'), 0o644)
 }
 
 func renderState(outDir, name string, app *shell.App) error {

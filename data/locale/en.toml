@@ -61,6 +61,8 @@
 "editor.status.prefix" = "status"
 "editor.field.cell" = "cell"
 "editor.field.entities" = "entities"
+"editor.field.brush" = "brush"
+"editor.field.cliff" = "cliff"
 "editor.field.id" = "id"
 "editor.field.name" = "name"
 "editor.field.engine" = "engine"
