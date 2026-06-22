@@ -28,6 +28,63 @@ archive = "worlds/m2.litdworld"
 requires = ["m1"]
 `
 
+const twoMissionCampaignHooksTOML = `
+id = "vigil-test"
+title = "Vigil Test Campaign"
+faction = "The Vigil"
+
+[hooks]
+on-complete = "OnMissionComplete"
+on-fail = "OnMissionFail"
+
+[carry]
+heroes = ["Ser Caldus"]
+items = ["Ember Ward", "Dawnwater Flask"]
+cache-keys = ["checkpoint"]
+
+[[mission]]
+id = "m1"
+title = "Kindle the Gate"
+archive = "worlds/m1.litdworld"
+
+[[mission]]
+id = "m2"
+title = "Hold the Dawn"
+archive = "worlds/m2.litdworld"
+requires = ["m1"]
+`
+
+func TestCampaignHooksAndCarryManifestParseFSV(t *testing.T) {
+	def, err := ReadDefinition("hooks.toml", []byte(twoMissionCampaignHooksTOML))
+	if err != nil {
+		t.Fatalf("read hooks definition: %v", err)
+	}
+	t.Logf("FSV hooks definition AFTER parse: hooks=%+v carry=%+v", def.Hooks, def.Carry)
+	if def.Hooks.OnComplete != "OnMissionComplete" || def.Hooks.OnFail != "OnMissionFail" {
+		t.Fatalf("hooks did not parse: %+v", def.Hooks)
+	}
+	if strings.Join(def.Carry.Heroes, ",") != "Ser Caldus" || strings.Join(def.Carry.Items, ",") != "Ember Ward,Dawnwater Flask" || strings.Join(def.Carry.CacheKeys, ",") != "checkpoint" {
+		t.Fatalf("carry manifest did not parse: %+v", def.Carry)
+	}
+
+	edges := []struct {
+		name string
+		body string
+		want string
+	}{
+		{name: "bad-hook-name", body: strings.Replace(twoMissionCampaignHooksTOML, "OnMissionComplete", "bad hook", 1), want: "on-complete"},
+		{name: "duplicate-cache", body: strings.Replace(twoMissionCampaignHooksTOML, `cache-keys = ["checkpoint"]`, `cache-keys = ["checkpoint", "checkpoint"]`, 1), want: "duplicated"},
+		{name: "newline-item", body: strings.Replace(twoMissionCampaignHooksTOML, "Dawnwater Flask", "Dawnwater\\nFlask", 1), want: "newlines"},
+	}
+	for _, tc := range edges {
+		_, err := ReadDefinition(tc.name+".toml", []byte(tc.body))
+		t.Logf("FSV hook manifest edge=%s BEFORE invalid AFTER err=%v", tc.name, err)
+		if err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Fatalf("%s err=%v, want substring %q", tc.name, err, tc.want)
+		}
+	}
+}
+
 func TestCampaignUnlockCarryOverFSV(t *testing.T) {
 	def := loadFixtureDefinition(t)
 	archives := completeArchives()

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -113,6 +114,69 @@ func TestSourceFormTerrainAndScriptOnlyEdgesFSV(t *testing.T) {
 	}
 	t.Logf("FSV script-only before:\n%s", beforeScript["scripts/main.lua"])
 	t.Logf("FSV script-only after:\n%s", afterScript["scripts/main.lua"])
+}
+
+func TestSourceFormCampaignDefinitionArchiveFSV(t *testing.T) {
+	dir := copySampleWorld(t)
+	before := mustReadTree(t, dir)
+	w, err := Load(dir)
+	if err != nil {
+		t.Fatalf("load sample: %v", err)
+	}
+	body := []byte(`id = "vigil-hooks"
+title = "Vigil Hook Campaign"
+faction = "The Vigil"
+
+[hooks]
+on-complete = "OnMissionComplete"
+
+[carry]
+heroes = ["Ser Caldus"]
+items = ["Ember Ward"]
+cache-keys = ["checkpoint"]
+
+[[mission]]
+id = "m1"
+title = "Kindle"
+archive = "worlds/m1.litdworld"
+`)
+	if err := w.SetCampaignDefinition("campaigns/vigil-hooks.toml", body); err != nil {
+		t.Fatalf("set campaign definition: %v", err)
+	}
+	if err := w.Save(""); err != nil {
+		t.Fatalf("save campaign definition: %v", err)
+	}
+	after := mustReadTree(t, dir)
+	if diff := changedFiles(before, after); !slices.Equal(diff, []string{"campaigns/vigil-hooks.toml"}) {
+		t.Fatalf("campaign definition changed files %v, want only campaigns/vigil-hooks.toml", diff)
+	}
+	arc := filepath.Join(t.TempDir(), "campaign-source.litdworld")
+	if err := w.ExportArchive(arc, ExportOptions{EngineRange: ">=0.1.0 <0.2.0"}); err != nil {
+		t.Fatalf("export archive: %v", err)
+	}
+	opened, err := worldarchive.Open(arc, "")
+	if err != nil {
+		t.Fatalf("open archive: %v", err)
+	}
+	defer opened.Close()
+	archived, err := fs.ReadFile(opened.FS(), "campaigns/vigil-hooks.toml")
+	if err != nil {
+		t.Fatalf("read archived campaign definition: %v", err)
+	}
+	entry, ok := opened.Manifest.Files["campaigns/vigil-hooks.toml"]
+	t.Logf("FSV campaign definition archive BEFORE absent AFTER file=%q manifestEntry=%+v", string(after["campaigns/vigil-hooks.toml"]), entry)
+	if !ok {
+		t.Fatal("archive manifest missing campaigns/vigil-hooks.toml")
+	}
+	if !bytes.Equal(archived, body) {
+		t.Fatalf("archived campaign definition bytes differ:\n%s", archived)
+	}
+
+	if err := w.SetCampaignDefinition("scripts/not-campaign.toml", body); err == nil {
+		t.Fatal("campaign definition outside campaigns/ should fail")
+	} else {
+		t.Logf("FSV campaign path edge outside campaigns AFTER err=%v", err)
+	}
 }
 
 func TestSourceFormCliffRampRoundTripFSV(t *testing.T) {

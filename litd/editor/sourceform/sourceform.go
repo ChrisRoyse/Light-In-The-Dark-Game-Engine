@@ -639,7 +639,19 @@ func (w *World) SetScript(rel string, body []byte) error {
 	return w.setPassthrough(clean, body)
 }
 
-// SetPassthroughFile updates an optional data/scripts/locale/assets file.
+// SetCampaignDefinition updates a campaign TOML definition under campaigns/.
+func (w *World) SetCampaignDefinition(rel string, body []byte) error {
+	clean, err := cleanRel(rel)
+	if err != nil {
+		return err
+	}
+	if !strings.HasPrefix(clean, "campaigns/") || clean == "campaigns/" || filepath.Ext(clean) != ".toml" {
+		return fmt.Errorf("sourceform: campaign definition path %q must be a .toml file under campaigns/", rel)
+	}
+	return w.setPassthrough(clean, body)
+}
+
+// SetPassthroughFile updates an optional data/scripts/campaigns/locale/assets file.
 func (w *World) SetPassthroughFile(rel string, body []byte) error {
 	clean, err := cleanRel(rel)
 	if err != nil {
@@ -826,11 +838,11 @@ func isVCSMetadataRel(rel string) bool {
 
 func isAllowedDir(rel string) bool {
 	switch rel {
-	case "map", "data", "scripts", "locale", "assets":
+	case "map", "data", "scripts", "campaigns", "locale", "assets":
 		return true
 	}
 	top := strings.Split(rel, "/")[0]
-	return top == "data" || top == "scripts" || top == "locale" || top == "assets"
+	return top == "data" || top == "scripts" || top == "campaigns" || top == "locale" || top == "assets"
 }
 
 func isAllowedRel(rel string) bool {
@@ -842,7 +854,7 @@ func isAllowedRel(rel string) bool {
 }
 
 func isPassthroughRel(rel string) bool {
-	for _, prefix := range []string{"data/", "scripts/", "locale/", "assets/"} {
+	for _, prefix := range []string{"data/", "scripts/", "campaigns/", "locale/", "assets/"} {
 		if strings.HasPrefix(rel, prefix) && rel != prefix {
 			return true
 		}

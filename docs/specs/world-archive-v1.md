@@ -9,11 +9,12 @@ D-23 (hosting metadata present from day one). **Posture:** R-FMT-2 (loud refusal
 no partial load), R-SEC-1 (Lua sandbox lint).
 
 A world archive (`.litdworld`) is the single-file distribution unit for a
-playable world: its map data, Lua scripts, and custom assets, plus a manifest
-that makes the bundle content-addressed and tamper-evident. One file packs,
-ships (hub / LAN join), and loads. The format is **deterministic**: a given
-source directory always packs to byte-identical archive bytes, so the archive's
-own SHA-256 is a stable identity across machines and OSes.
+playable world: its map data, Lua scripts, campaign definitions, and custom
+assets, plus a manifest that makes the bundle content-addressed and
+tamper-evident. One file packs, ships (hub / LAN join), and loads. The format is
+**deterministic**: a given source directory always packs to byte-identical
+archive bytes, so the archive's own SHA-256 is a stable identity across machines
+and OSes.
 
 ## Container
 
@@ -53,6 +54,12 @@ files: 2
 8c10d11872b51bca…7de605af 5 scripts/main.lua
 afeea2a0126e2a1c…6cb93856 11 world.toml
 ```
+
+Campaign mission-flow definitions live under `campaigns/*.toml` when present.
+They are payload files covered by the same per-entry and aggregate hashes as
+scripts and map data. A definition may name sandboxed Lua hooks (`on-complete`,
+`on-fail`) and an explicit carry manifest (`heroes`, `items`, `cache-keys`); the
+runtime commits only validated hook results into campaign storage.
 
 ### Header fields
 

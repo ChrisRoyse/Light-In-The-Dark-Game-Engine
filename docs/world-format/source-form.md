@@ -23,6 +23,8 @@ build step.
 │   └── upgrades.toml
 ├── scripts/                # Lua, runs in the R-SEC-1 sandbox (optional)
 │   └── main.lua            # entry point; required iff scripts/ exists
+├── campaigns/              # campaign definitions with mission-flow hooks (optional)
+│   └── first-flame.toml
 ├── map/                    # terrain + placements, line-stable text (required)
 │   ├── terrain.toml        # dimensions, tileset ref, biome
 │   ├── pathing.txt         # walk/build/water flags, one pathing row per line
@@ -41,6 +43,57 @@ build step.
 Required: `world.toml`, `map/`. Everything else is optional; absence means "none",
 never an error. Unknown files and directories are a **load error** in the engine and
 `tools/worldpack` (fail closed — typos must not silently vanish from the archive).
+
+### campaigns/*.toml — mission-flow surface
+
+Campaign definitions are ordinary source-form passthrough files packed into the
+archive. The runtime loads them through `litd/campaign`; Lua hooks are resolved
+from the world's sandboxed `scripts/main.lua` environment.
+
+```toml
+id = "first-flame"
+title = "First Flame"
+faction = "The Vigil"
+
+[hooks]
+on-complete = "OnMissionComplete"
+on-fail = "OnMissionFail"
+
+[carry]
+heroes = ["Ser Caldus"]
+items = ["Ember Ward"]
+cache-keys = ["checkpoint"]
+
+[[mission]]
+id = "m1"
+title = "Kindle the Gate"
+archive = "worlds/m1.litdworld"
+
+[[mission]]
+id = "m2"
+title = "Hold the Dawn"
+archive = "worlds/m2.litdworld"
+requires = ["m1"]
+```
+
+Hook functions return a table such as:
+
+```lua
+return {
+  next = "m2",
+  heroes = {
+    { name = "Ser Caldus", level = 4, items = { "Ember Ward" } },
+  },
+  cache = { "checkpoint" },
+  log = { "complete:m1->m2" },
+}
+```
+
+The carry manifest is an allow-list. Returned heroes, items, and cache keys not
+listed there are rejected; listed items/cache keys that are absent at transition
+time are skipped with a deterministic hook-log entry. Hooks run in the same
+no-io/no-os/no-net Lua sandbox and commit to campaign storage only after the
+returned next mission and carry-over data validate.
 
 ## 2. world.toml
 

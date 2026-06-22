@@ -17,17 +17,33 @@ import (
 )
 
 const (
-	MaxCarryHeroes = 8
-	MaxCarryItems  = 6
+	MaxCarryHeroes    = 8
+	MaxCarryItems     = 6
+	MaxCarryCacheKeys = 32
 )
 
 var idPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,63}$`)
+var hookPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
 
 type Definition struct {
 	ID       string
 	Title    string
 	Faction  string
 	Missions []Mission
+	Hooks    Hooks
+	Carry    CarryManifest
+}
+
+type Hooks struct {
+	OnStart    string
+	OnComplete string
+	OnFail     string
+}
+
+type CarryManifest struct {
+	Heroes    []string
+	Items     []string
+	CacheKeys []string
 }
 
 type Mission struct {
@@ -113,6 +129,20 @@ type rawDefinition struct {
 	Title   string       `toml:"title"`
 	Faction string       `toml:"faction"`
 	Mission []rawMission `toml:"mission"`
+	Hooks   rawHooks     `toml:"hooks"`
+	Carry   rawCarry     `toml:"carry"`
+}
+
+type rawHooks struct {
+	OnStart    string `toml:"on-start"`
+	OnComplete string `toml:"on-complete"`
+	OnFail     string `toml:"on-fail"`
+}
+
+type rawCarry struct {
+	Heroes    []string `toml:"heroes"`
+	Items     []string `toml:"items"`
+	CacheKeys []string `toml:"cache-keys"`
 }
 
 type rawMission struct {
@@ -173,6 +203,16 @@ func ReadDefinition(name string, blob []byte) (Definition, error) {
 		Title:    strings.TrimSpace(raw.Title),
 		Faction:  strings.TrimSpace(raw.Faction),
 		Missions: make([]Mission, 0, len(raw.Mission)),
+		Hooks: Hooks{
+			OnStart:    strings.TrimSpace(raw.Hooks.OnStart),
+			OnComplete: strings.TrimSpace(raw.Hooks.OnComplete),
+			OnFail:     strings.TrimSpace(raw.Hooks.OnFail),
+		},
+		Carry: CarryManifest{
+			Heroes:    trimStrings(raw.Carry.Heroes),
+			Items:     trimStrings(raw.Carry.Items),
+			CacheKeys: trimStrings(raw.Carry.CacheKeys),
+		},
 	}
 	for _, m := range raw.Mission {
 		def.Missions = append(def.Missions, Mission{
@@ -201,6 +241,12 @@ func Validate(def Definition) error {
 	}
 	if len(def.Missions) == 0 {
 		return fmt.Errorf("campaign %s must define at least one mission", def.ID)
+	}
+	if err := validateHooks(def.Hooks); err != nil {
+		return fmt.Errorf("campaign %s hooks: %w", def.ID, err)
+	}
+	if err := validateCarryManifest(def.Carry); err != nil {
+		return fmt.Errorf("campaign %s carry manifest: %w", def.ID, err)
 	}
 
 	seen := map[string]int{}
@@ -231,6 +277,74 @@ func Validate(def Definition) error {
 	}
 	if err := detectRequirementCycle(def); err != nil {
 		return err
+	}
+	return nil
+}
+
+func validateHooks(h Hooks) error {
+	for _, hook := range []struct {
+		name string
+		fn   string
+	}{
+		{"on-start", h.OnStart},
+		{"on-complete", h.OnComplete},
+		{"on-fail", h.OnFail},
+	} {
+		if hook.fn == "" {
+			continue
+		}
+		if !hookPattern.MatchString(hook.fn) {
+			return fmt.Errorf("%s function %q must match %s", hook.name, hook.fn, hookPattern.String())
+		}
+	}
+	return nil
+}
+
+func validateCarryManifest(m CarryManifest) error {
+	if len(m.Heroes) > MaxCarryHeroes {
+		return fmt.Errorf("heroes has %d entries, max %d", len(m.Heroes), MaxCarryHeroes)
+	}
+	if len(m.Items) > MaxCarryItems {
+		return fmt.Errorf("items has %d entries, max %d", len(m.Items), MaxCarryItems)
+	}
+	if len(m.CacheKeys) > MaxCarryCacheKeys {
+		return fmt.Errorf("cache-keys has %d entries, max %d", len(m.CacheKeys), MaxCarryCacheKeys)
+	}
+	if err := validateUniqueNames("hero", m.Heroes); err != nil {
+		return err
+	}
+	if err := validateUniqueNames("item", m.Items); err != nil {
+		return err
+	}
+	if err := validateUniqueNames("cache key", m.CacheKeys); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateUniqueNames(kind string, values []string) error {
+	seen := map[string]bool{}
+	for i, v := range values {
+		if err := validateManifestName(kind, v); err != nil {
+			return fmt.Errorf("%s[%d]: %w", kind, i, err)
+		}
+		if seen[v] {
+			return fmt.Errorf("%s %q is duplicated", kind, v)
+		}
+		seen[v] = true
+	}
+	return nil
+}
+
+func validateManifestName(kind, v string) error {
+	if strings.TrimSpace(v) == "" {
+		return fmt.Errorf("%s is empty", kind)
+	}
+	if strings.ContainsAny(v, "\x00\r\n") {
+		return fmt.Errorf("%s %q must not contain NUL or newlines", kind, v)
+	}
+	if len(v) > 128 {
+		return fmt.Errorf("%s %q is longer than 128 bytes", kind, v)
 	}
 	return nil
 }
@@ -589,9 +703,25 @@ func trimStrings(in []string) []string {
 	return out
 }
 
-func category(campaignID string) string { return "campaign:" + campaignID }
+func StorageCategory(campaignID string) string { return "campaign:" + campaignID }
+
+func category(campaignID string) string { return StorageCategory(campaignID) }
 
 func completeKey(missionID string) string { return "mission:" + missionID + ":complete" }
+
+func failedKey(missionID string) string { return "mission:" + missionID + ":failed" }
+
+func nextMissionKey(missionID string) string { return "mission:" + missionID + ":next" }
+
+func hookLogKey(missionID string, outcome HookOutcome) string {
+	return "hook:" + missionID + ":" + string(outcome) + ":log"
+}
+
+func CacheSourceKey(key string) string { return "cache:" + key }
+
+func CarryCacheKey(missionID, key string) string {
+	return "carry:" + missionID + ":cache:" + key
+}
 
 func carryHeroCountKey(missionID string) string {
 	return "carry:" + missionID + ":hero-count"
