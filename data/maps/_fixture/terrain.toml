@@ -9,6 +9,14 @@ height = 8
 biome = "vigil-lowlands"
 pathing-scale = 4
 
+[lighting]
+ambient-color = [0.36, 0.40, 0.48]
+ambient-intensity = 0.08
+sun-color = [1.0, 0.92, 0.78]
+sun-intensity = 1.25
+sun-azimuth = 180
+sun-elevation = 24
+
 [[start]]
 player = 0
 cell = [4, 4]

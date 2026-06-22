@@ -102,6 +102,90 @@ func TestAtlasMaterialEdgesFSV(t *testing.T) {
 	}
 }
 
+func TestPBRAtlasMaterialDefaultsFSV(t *testing.T) {
+	src := mustRenderAtlasSource(t, "pbr-vigil.atlas.png", color.RGBA{140, 170, 205, 255})
+	cache := NewPBRAtlasMaterialCache()
+	t.Logf("FSV pbr atlas BEFORE count=%d", cache.Count())
+	entry, err := cache.Material(src, litasset.AtlasPresetHigh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, err := cache.Material(src, litasset.AtlasPresetHigh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snap := cache.Snapshot(entry)
+	defines := entry.Material.GetMaterial().ShaderDefines
+	t.Logf("FSV pbr atlas AFTER snapshot=%+v same=%v textures=%d defines=%v", snap, entry == again, entry.Material.GetMaterial().TextureCount(), defines)
+	if entry != again || cache.Count() != 1 {
+		t.Fatalf("same atlas+preset should reuse one PBR material: same=%v count=%d", entry == again, cache.Count())
+	}
+	if snap.Factors.MetallicFactor != DefaultPBRMetallicFactor || snap.Factors.RoughnessFactor != DefaultPBRRoughnessFactor {
+		t.Fatalf("PBR factors wrong: %+v", snap.Factors)
+	}
+	if !snap.Factors.BaseColorMap || snap.Factors.MetallicRoughnessMap || snap.Factors.NormalMap || snap.Factors.OcclusionMap || snap.Factors.EmissiveMap {
+		t.Fatalf("PBR map flags violate core atlas-only path: %+v", snap.Factors)
+	}
+	if entry.Material.GetMaterial().TextureCount() != 1 {
+		t.Fatalf("PBR material texture count=%d, want only base-color atlas", entry.Material.GetMaterial().TextureCount())
+	}
+	if _, ok := defines["HAS_BASECOLORMAP"]; !ok {
+		t.Fatalf("PBR material missing base-color map define: %v", defines)
+	}
+	for _, forbidden := range []string{"HAS_METALROUGHNESSMAP", "HAS_NORMALMAP", "HAS_OCCLUSIONMAP", "HAS_EMISSIVEMAP"} {
+		if _, ok := defines[forbidden]; ok {
+			t.Fatalf("PBR material has forbidden map define %s: %v", forbidden, defines)
+		}
+	}
+}
+
+func TestPBRMaterialEdgesFSV(t *testing.T) {
+	if _, _, err := NewPBRMaterial(nil, PBRMaterialOptions{}); err == nil {
+		t.Fatal("nil base-color texture accepted")
+	} else {
+		t.Logf("FSV pbr material nil texture AFTER err=%v", err)
+	}
+
+	src := mustRenderAtlasSource(t, "pbr-emissive.atlas.png", color.RGBA{60, 90, 150, 255})
+	cache := NewPBRAtlasMaterialCache()
+	entry, err := cache.Material(src, litasset.AtlasPresetMedium)
+	if err != nil {
+		t.Fatal(err)
+	}
+	emissive := [3]float32{0.2, 0.7, 1.0}
+	mat, factors, err := NewPBRMaterial(entry.Texture, PBRMaterialOptions{EmissiveFactor: emissive})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV pbr material emissive BEFORE base=%+v AFTER factors=%+v textures=%d defines=%v", entry.Factors, factors, mat.GetMaterial().TextureCount(), mat.GetMaterial().ShaderDefines)
+	if factors.EmissiveFactor != emissive || !factors.BaseColorMap || factors.EmissiveMap {
+		t.Fatalf("emissive-factor PBR flags wrong: %+v", factors)
+	}
+	if mat.GetMaterial().TextureCount() != 1 {
+		t.Fatalf("emissive-factor material should still bind only base-color map, got %d textures", mat.GetMaterial().TextureCount())
+	}
+	if _, ok := mat.GetMaterial().ShaderDefines["HAS_EMISSIVEMAP"]; ok {
+		t.Fatalf("emissive factor must not create emissive map define: %v", mat.GetMaterial().ShaderDefines)
+	}
+
+	var nilCache *PBRAtlasMaterialCache
+	if _, err := nilCache.Material(src, litasset.AtlasPresetHigh); err == nil {
+		t.Fatal("nil PBR cache accepted")
+	} else {
+		t.Logf("FSV pbr material nil cache AFTER err=%v", err)
+	}
+	if _, err := cache.Material(nil, litasset.AtlasPresetHigh); err == nil {
+		t.Fatal("nil source accepted")
+	} else {
+		t.Logf("FSV pbr material nil source BEFORE count=%d AFTER err=%v count=%d", cache.Count(), err, cache.Count())
+	}
+	if _, err := cache.Material(src, litasset.AtlasPreset("bad")); err == nil {
+		t.Fatal("invalid preset accepted")
+	} else {
+		t.Logf("FSV pbr material bad preset BEFORE count=%d AFTER err=%v count=%d", cache.Count(), err, cache.Count())
+	}
+}
+
 func mustRenderAtlasSource(t *testing.T, name string, c color.RGBA) *litasset.AtlasSource {
 	t.Helper()
 	img := image.NewRGBA(image.Rect(0, 0, 1024, 1024))

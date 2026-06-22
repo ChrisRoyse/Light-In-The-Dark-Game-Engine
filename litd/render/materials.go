@@ -28,6 +28,38 @@ type AtlasMaterialSnapshot struct {
 	MaterialCount int              `json:"materialCount"`
 }
 
+const (
+	DefaultPBRMetallicFactor  float32 = 0
+	DefaultPBRRoughnessFactor float32 = 0.9
+)
+
+type PBRMaterialFactors struct {
+	MetallicFactor       float32    `json:"metallicFactor"`
+	RoughnessFactor      float32    `json:"roughnessFactor"`
+	BaseColorMap         bool       `json:"baseColorMap"`
+	MetallicRoughnessMap bool       `json:"metallicRoughnessMap"`
+	NormalMap            bool       `json:"normalMap"`
+	OcclusionMap         bool       `json:"occlusionMap"`
+	EmissiveMap          bool       `json:"emissiveMap"`
+	EmissiveFactor       [3]float32 `json:"emissiveFactor"`
+}
+
+type PBRMaterialOptions struct {
+	EmissiveFactor [3]float32
+	Transparent    bool
+}
+
+type PBRAtlasMaterialSnapshot struct {
+	Key           AtlasMaterialKey   `json:"key"`
+	SourceWidth   int                `json:"sourceWidth"`
+	SourceHeight  int                `json:"sourceHeight"`
+	TextureWidth  int                `json:"textureWidth"`
+	TextureHeight int                `json:"textureHeight"`
+	UploadSHA256  string             `json:"uploadSHA256"`
+	MaterialCount int                `json:"materialCount"`
+	Factors       PBRMaterialFactors `json:"factors"`
+}
+
 type AtlasMaterial struct {
 	Key      AtlasMaterialKey
 	Upload   litasset.AtlasUpload
@@ -35,12 +67,28 @@ type AtlasMaterial struct {
 	Material *material.Standard
 }
 
+type PBRAtlasMaterial struct {
+	Key      AtlasMaterialKey
+	Upload   litasset.AtlasUpload
+	Texture  *texture.Texture2D
+	Material *material.Physical
+	Factors  PBRMaterialFactors
+}
+
 type AtlasMaterialCache struct {
 	entries map[AtlasMaterialKey]*AtlasMaterial
 }
 
+type PBRAtlasMaterialCache struct {
+	entries map[AtlasMaterialKey]*PBRAtlasMaterial
+}
+
 func NewAtlasMaterialCache() *AtlasMaterialCache {
 	return &AtlasMaterialCache{entries: make(map[AtlasMaterialKey]*AtlasMaterial)}
+}
+
+func NewPBRAtlasMaterialCache() *PBRAtlasMaterialCache {
+	return &PBRAtlasMaterialCache{entries: make(map[AtlasMaterialKey]*PBRAtlasMaterial)}
 }
 
 func (c *AtlasMaterialCache) Material(src *litasset.AtlasSource, preset litasset.AtlasPreset) (*AtlasMaterial, error) {
@@ -74,7 +122,65 @@ func (c *AtlasMaterialCache) Material(src *litasset.AtlasSource, preset litasset
 	return entry, nil
 }
 
+func (c *PBRAtlasMaterialCache) Material(src *litasset.AtlasSource, preset litasset.AtlasPreset) (*PBRAtlasMaterial, error) {
+	if c == nil {
+		return nil, fmt.Errorf("pbr atlas material cache is nil")
+	}
+	if src == nil {
+		return nil, fmt.Errorf("atlas source is nil")
+	}
+	key := AtlasMaterialKey{Atlas: src.Name, Preset: preset}
+	if existing := c.entries[key]; existing != nil {
+		return existing, nil
+	}
+	img, upload, err := litasset.BuildAtlasUpload(src, preset)
+	if err != nil {
+		return nil, err
+	}
+	tex := texture.NewTexture2DFromRGBA(img)
+	tex.SetMagFilter(gls.LINEAR)
+	tex.SetMinFilter(gls.LINEAR_MIPMAP_LINEAR)
+	tex.SetWrapS(gls.CLAMP_TO_EDGE)
+	tex.SetWrapT(gls.CLAMP_TO_EDGE)
+
+	mat, factors, err := NewPBRMaterial(tex, PBRMaterialOptions{})
+	if err != nil {
+		return nil, err
+	}
+	entry := &PBRAtlasMaterial{Key: key, Upload: upload, Texture: tex, Material: mat, Factors: factors}
+	c.entries[key] = entry
+	return entry, nil
+}
+
+func NewPBRMaterial(tex *texture.Texture2D, opts PBRMaterialOptions) (*material.Physical, PBRMaterialFactors, error) {
+	if tex == nil {
+		return nil, PBRMaterialFactors{}, fmt.Errorf("pbr material base-color texture is nil")
+	}
+	factors := PBRMaterialFactors{
+		MetallicFactor:  DefaultPBRMetallicFactor,
+		RoughnessFactor: DefaultPBRRoughnessFactor,
+		BaseColorMap:    true,
+		EmissiveFactor:  opts.EmissiveFactor,
+	}
+	mat := material.NewPhysical()
+	mat.SetBaseColorMap(tex)
+	mat.SetMetallicFactor(factors.MetallicFactor)
+	mat.SetRoughnessFactor(factors.RoughnessFactor)
+	mat.SetEmissiveFactor(&math32.Color{R: factors.EmissiveFactor[0], G: factors.EmissiveFactor[1], B: factors.EmissiveFactor[2]})
+	if opts.Transparent {
+		mat.SetTransparent(true)
+	}
+	return mat, factors, nil
+}
+
 func (c *AtlasMaterialCache) Count() int {
+	if c == nil {
+		return 0
+	}
+	return len(c.entries)
+}
+
+func (c *PBRAtlasMaterialCache) Count() int {
 	if c == nil {
 		return 0
 	}
@@ -93,6 +199,22 @@ func (c *AtlasMaterialCache) Snapshot(m *AtlasMaterial) AtlasMaterialSnapshot {
 		TextureHeight: m.Texture.Height(),
 		UploadSHA256:  m.Upload.SHA256,
 		MaterialCount: c.Count(),
+	}
+}
+
+func (c *PBRAtlasMaterialCache) Snapshot(m *PBRAtlasMaterial) PBRAtlasMaterialSnapshot {
+	if m == nil {
+		return PBRAtlasMaterialSnapshot{MaterialCount: c.Count()}
+	}
+	return PBRAtlasMaterialSnapshot{
+		Key:           m.Key,
+		SourceWidth:   m.Upload.SourceWidth,
+		SourceHeight:  m.Upload.SourceHeight,
+		TextureWidth:  m.Texture.Width(),
+		TextureHeight: m.Texture.Height(),
+		UploadSHA256:  m.Upload.SHA256,
+		MaterialCount: c.Count(),
+		Factors:       m.Factors,
 	}
 }
 

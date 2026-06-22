@@ -1,6 +1,7 @@
 package mapdata
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -23,6 +24,9 @@ func TestLoadTest64FSV(t *testing.T) {
 	}
 	if m.Fingerprint == 0 || m.Fingerprint != again.Fingerprint {
 		t.Fatalf("fingerprint unstable: %016x vs %016x", m.Fingerprint, again.Fingerprint)
+	}
+	if m.Lighting != DefaultLighting() {
+		t.Fatalf("default lighting mismatch: %+v want %+v", m.Lighting, DefaultLighting())
 	}
 	checkFlag(t, m, 10, 10, PathWalkable|PathBuildable)
 	checkFlag(t, m, 64, 124, PathWater)
@@ -116,6 +120,17 @@ func TestLoadFixtureBeaconsFSV(t *testing.T) {
 		m.Width, m.Height, m.PathingWidth, m.PathingHeight, m.Starts(), beacons)
 	if m.Width != 8 || m.Height != 8 || m.PathingWidth != 32 || m.PathingHeight != 32 {
 		t.Fatalf("fixture dimensions wrong: %+v", m)
+	}
+	wantLighting := Lighting{
+		AmbientColor:     [3]float32{0.36, 0.40, 0.48},
+		AmbientIntensity: 0.08,
+		SunColor:         [3]float32{1.0, 0.92, 0.78},
+		SunIntensity:     1.25,
+		SunAzimuth:       180,
+		SunElevation:     24,
+	}
+	if m.Lighting != wantLighting {
+		t.Fatalf("fixture lighting wrong: %+v want %+v", m.Lighting, wantLighting)
 	}
 	// Authored: id 1 neutral @ (16,16), id 2 owner 0 @ (16,8); returned sorted by id.
 	want := []Beacon{
@@ -264,6 +279,142 @@ cell = [1, 1]
 	t.Logf("FSV beacon fingerprint neutral=%016x owned=%016x", neutral.Fingerprint, owned.Fingerprint)
 	if neutral.Fingerprint == owned.Fingerprint {
 		t.Fatalf("beacon owner change did not change fingerprint (beacons absent from map identity hash)")
+	}
+}
+
+func TestMapDataLightingDefaultsAndExplicitFSV(t *testing.T) {
+	base, err := Load(tinyMapFS(), "data/maps/tiny")
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := base.Lighting
+	wantDefault := DefaultLighting()
+	t.Logf("FSV lighting default BEFORE canonical=%+v AFTER loaded=%+v fp=%016x", wantDefault, before, base.Fingerprint)
+	if before != wantDefault {
+		t.Fatalf("omitted lighting must load canonical default: %+v want %+v", before, wantDefault)
+	}
+
+	fsys := tinyMapFS()
+	fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+[lighting]
+ambient-color = [0.1, 0.2, 0.3]
+ambient-intensity = 0.4
+sun-color = [0.9, 0.8, 0.7]
+sun-intensity = 1.6
+sun-azimuth = 45
+sun-elevation = 25
+
+[[start]]
+player = 0
+cell = [0, 0]
+`)}
+	explicit, err := Load(fsys, "data/maps/tiny")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Lighting{
+		AmbientColor:     [3]float32{0.1, 0.2, 0.3},
+		AmbientIntensity: 0.4,
+		SunColor:         [3]float32{0.9, 0.8, 0.7},
+		SunIntensity:     1.6,
+		SunAzimuth:       45,
+		SunElevation:     25,
+	}
+	body, err := json.Marshal(explicit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV lighting explicit BEFORE default=%+v AFTER lighting=%+v fp=%016x json=%s", before, explicit.Lighting, explicit.Fingerprint, body)
+	if explicit.Lighting != want {
+		t.Fatalf("explicit lighting mismatch: %+v want %+v", explicit.Lighting, want)
+	}
+	if explicit.Fingerprint == base.Fingerprint {
+		t.Fatalf("lighting change did not change fingerprint: %016x", explicit.Fingerprint)
+	}
+	if !strings.Contains(string(body), `"sunAzimuth":45`) || !strings.Contains(string(body), `"ambientColor":[0.1,0.2,0.3]`) {
+		t.Fatalf("lighting missing from map JSON: %s", body)
+	}
+}
+
+func TestMapDataRejectsBadLightingFSV(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want string
+	}{
+		{
+			name: "missing-sun-color",
+			body: `[lighting]
+ambient-color = [1, 1, 1]
+ambient-intensity = 0.5
+sun-intensity = 1
+sun-azimuth = 180
+sun-elevation = 45
+`,
+			want: "lighting sun-color is required",
+		},
+		{
+			name: "bad-color-length",
+			body: `[lighting]
+ambient-color = [1, 1]
+ambient-intensity = 0.5
+sun-color = [1, 1, 1]
+sun-intensity = 1
+sun-azimuth = 180
+sun-elevation = 45
+`,
+			want: "ambient-color must have exactly 3 components",
+		},
+		{
+			name: "negative-intensity",
+			body: `[lighting]
+ambient-color = [1, 1, 1]
+ambient-intensity = -0.1
+sun-color = [1, 1, 1]
+sun-intensity = 1
+sun-azimuth = 180
+sun-elevation = 45
+`,
+			want: "ambient-intensity -0.1 out of range",
+		},
+		{
+			name: "bad-elevation",
+			body: `[lighting]
+ambient-color = [1, 1, 1]
+ambient-intensity = 0.5
+sun-color = [1, 1, 1]
+sun-intensity = 1
+sun-azimuth = 180
+sun-elevation = 91
+`,
+			want: "sun-elevation 91 out of range",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fsys := tinyMapFS()
+			fsys["data/maps/tiny/terrain.toml"] = &fstest.MapFile{Data: []byte(`version = 1
+width = 1
+height = 1
+biome = "tiny"
+pathing-scale = 4
+
+` + tc.body + `
+[[start]]
+player = 0
+cell = [0, 0]
+`)}
+			_, err := Load(fsys, "data/maps/tiny")
+			t.Logf("FSV bad lighting %s BEFORE body=%q AFTER err=%v", tc.name, tc.body, err)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("bad lighting %s error=%v, want substring %q", tc.name, err, tc.want)
+			}
+		})
 	}
 }
 

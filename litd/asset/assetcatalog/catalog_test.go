@@ -54,6 +54,7 @@ func TestCheckGLBCatalogFSV(t *testing.T) {
 		{"draco compression", makeGLB(t, map[string]any{"asset": v20(), "extensionsUsed": []string{"KHR_draco_mesh_compression"}}), "GLTF-COMPRESS"},
 		{"meshopt compression", makeGLB(t, map[string]any{"asset": v20(), "extensionsRequired": []string{"EXT_meshopt_compression"}}), "GLTF-COMPRESS"},
 		{"forbidden extension", makeGLB(t, map[string]any{"asset": v20(), "extensionsUsed": []string{"KHR_lights_punctual"}}), "GLTF-EXT"},
+		{"forbidden clearcoat", makeGLB(t, map[string]any{"asset": v20(), "extensionsUsed": []string{"KHR_materials_clearcoat"}}), "GLTF-EXT"},
 		{"external buffer URI", makeGLB(t, map[string]any{"asset": v20(), "buffers": []any{map[string]any{"uri": "geo.bin"}}}), "GLTF-URI"},
 		{"over-ceiling geometry", makeGLB(t, overBudget), "GEO-MAX"},
 		{"malformed (bad magic)", []byte("NOTAGLBNOTAGLBNOTAGLB"), "GLTF-CORE"},

@@ -134,15 +134,7 @@ func applyDayNight(d *DayNight, a, b dayNightKey, t float32) {
 }
 
 func setSunPosition(sun *light.Directional, azimuth, elevation float32) {
-	az := math32.DegToRad(azimuth)
-	el := math32.DegToRad(elevation)
-	r := float32(100)
-	cosEl := math32.Cos(el)
-	sun.SetPosition(
-		r*cosEl*math32.Sin(az),
-		r*math32.Sin(el),
-		r*cosEl*math32.Cos(az),
-	)
+	SetDirectionalSunPosition(sun, azimuth, elevation)
 }
 
 func lerp32(a, b, t float32) float32 {

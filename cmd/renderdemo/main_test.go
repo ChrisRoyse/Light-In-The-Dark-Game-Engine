@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	litasset "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
@@ -419,6 +420,51 @@ func TestBuildTerrainChunksFSV(t *testing.T) {
 	}
 	if len(dump.BorderVertices) != 4 || len(dump.ChunkTris) != 16 {
 		t.Fatalf("coverage wrong: border=%d chunkTris=%d", len(dump.BorderVertices), len(dump.ChunkTris))
+	}
+}
+
+func TestBuildLightingFSV(t *testing.T) {
+	defer chdirRepoRoot(t)()
+	scene := core.NewNode()
+	spec, dump, err := buildLightingFSV(scene, litasset.AtlasPresetHigh, "lit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo lighting lit spec=%+v lights=%+v material=%+v clearcoat=%+v", spec, dump.SceneLights.Lights, dump.Material.Factors, dump.ClearcoatRejection)
+	if !dump.OK || !dump.SceneLights.OK || len(dump.SceneLights.Lights) != 2 || dump.SceneLights.Lights[0].Kind != "Directional" || dump.SceneLights.Lights[1].Kind != "Ambient" {
+		t.Fatalf("lit dump light SoT wrong: %+v", dump)
+	}
+	if spec.expected.VisibleGraphics != 4 || spec.expected.OpaqueDrawCalls != 4 || spec.expected.Lights != 8 || spec.expected.OpaqueStates != 2 || dump.MaterialInstances != 1 {
+		t.Fatalf("lit expected stats/material instances wrong: spec=%+v dump=%+v", spec.expected, dump)
+	}
+	if !dump.ClearcoatRejection.OK || !strings.Contains(strings.Join(dump.ClearcoatRejection.Findings, " "), "KHR_materials_clearcoat") {
+		t.Fatalf("clearcoat rejection missing: %+v", dump.ClearcoatRejection)
+	}
+
+	eastScene := core.NewNode()
+	_, east, err := buildLightingFSV(eastScene, litasset.AtlasPresetHigh, "lit-east")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo lighting east sun=%+v baseSun=%+v", east.SceneLights.Lights[0].Position, dump.SceneLights.Lights[0].Position)
+	if east.SceneLights.Lights[0].Position == dump.SceneLights.Lights[0].Position {
+		t.Fatalf("lit-east did not flip sun position: base=%+v east=%+v", dump.SceneLights.Lights[0].Position, east.SceneLights.Lights[0].Position)
+	}
+
+	ambientScene := core.NewNode()
+	ambientSpec, ambient, err := buildLightingFSV(ambientScene, litasset.AtlasPresetHigh, "lit-ambient0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("FSV renderdemo lighting ambient0 spec=%+v lights=%+v extras=%+v", ambientSpec, ambient.SceneLights.Lights, ambient.AdditionalMaterials)
+	if !ambient.OK || ambient.SceneLights.Config.AmbientIntensity != 0 || ambient.SceneLights.Lights[1].Intensity != 0 {
+		t.Fatalf("ambient0 light SoT wrong: %+v", ambient.SceneLights)
+	}
+	if ambientSpec.expected.VisibleGraphics != 5 || ambientSpec.expected.OpaqueStates != 3 || ambient.MaterialInstances != 2 || len(ambient.AdditionalMaterials) != 1 {
+		t.Fatalf("ambient0 material/stats wrong: spec=%+v dump=%+v", ambientSpec.expected, ambient)
+	}
+	if ambient.AdditionalMaterials[0].Factors.EmissiveFactor == [3]float32{} || ambient.AdditionalMaterials[0].Factors.EmissiveMap {
+		t.Fatalf("emissive edge did not use textureless emissive factor: %+v", ambient.AdditionalMaterials[0])
 	}
 }
 

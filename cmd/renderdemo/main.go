@@ -15,6 +15,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -30,6 +31,7 @@ import (
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	litasset "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset"
+	litassetcatalog "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/assetcatalog"
 	litlocale "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
@@ -48,7 +50,6 @@ import (
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/gui"
-	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
@@ -79,6 +80,7 @@ type renderDemoDump struct {
 	Voices    *voiceBattleRuntimeDump `json:"voices,omitempty"`
 	Atlas     *atlasRuntimeDump       `json:"atlas,omitempty"`
 	TeamColor *teamColorRuntimeDump   `json:"teamColor,omitempty"`
+	Lighting  *lightingRuntimeDump    `json:"lighting,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -199,6 +201,33 @@ type teamColorUnitDump struct {
 	X     float32                  `json:"x"`
 	Z     float32                  `json:"z"`
 	State litrender.TeamColorState `json:"state"`
+}
+
+type lightingRuntimeDump struct {
+	Scene               string                             `json:"scene"`
+	MapPath             string                             `json:"mapPath"`
+	MapFingerprint      string                             `json:"mapFingerprint"`
+	Preset              litasset.AtlasPreset               `json:"preset"`
+	Material            litrender.PBRAtlasMaterialSnapshot `json:"material"`
+	AdditionalMaterials []lightingMaterialDump             `json:"additionalMaterials,omitempty"`
+	MaterialInstances   int                                `json:"materialInstances"`
+	SceneLights         litrender.SceneLightingSnapshot    `json:"sceneLights"`
+	ClearcoatRejection  rejectedGLBDump                    `json:"clearcoatRejection"`
+	OK                  bool                               `json:"ok"`
+	Errors              []string                           `json:"errors,omitempty"`
+}
+
+type lightingMaterialDump struct {
+	Name          string                       `json:"name"`
+	TextureWidth  int                          `json:"textureWidth"`
+	TextureHeight int                          `json:"textureHeight"`
+	Factors       litrender.PBRMaterialFactors `json:"factors"`
+}
+
+type rejectedGLBDump struct {
+	Asset    string   `json:"asset"`
+	Findings []string `json:"findings"`
+	OK       bool     `json:"ok"`
 }
 
 type mapDataRuntimeDump struct {
@@ -613,7 +642,7 @@ type campaignMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, lit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -748,6 +777,7 @@ func main() {
 	var voiceFSV *voiceBattleRuntimeDump
 	var atlasFSV *atlasRuntimeDump
 	var teamColorFSV *teamColorRuntimeDump
+	var lightingFSV *lightingRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -803,39 +833,48 @@ func main() {
 		spec = sceneSpec{name: "queue-" + queueFSV.Scenario, expected: expectedStats(0, 0, 0, 0, 0, 0)}
 		addStatsHUD(scene, spec)
 	} else {
-		buildLights(scene)
 		var err error
-		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(*sceneName)), "terrain") {
+		sceneKey := strings.ToLower(strings.TrimSpace(*sceneName))
+		if !strings.HasPrefix(sceneKey, "lit") {
+			buildLights(scene)
+		}
+		if strings.HasPrefix(sceneKey, "terrain") {
 			spec, terrainFSV, err = buildTerrainFSV(scene, *sceneName, *wireframe)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: terrain: %v\n", err)
 				os.Exit(1)
 			}
-		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "spellstorm" {
+		} else if sceneKey == "spellstorm" {
 			spec, vfxFSV, err = buildSpellstormFSV(scene, *vfxLowPreset)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: spellstorm: %v\n", err)
 				os.Exit(1)
 			}
-		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "battle500" {
+		} else if sceneKey == "battle500" {
 			spec, voiceFSV, err = buildBattle500FSV(scene)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: battle500: %v\n", err)
 				os.Exit(1)
 			}
-		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "atlas" {
+		} else if sceneKey == "atlas" {
 			spec, atlasFSV, err = buildAtlasFSV(scene, atlasPreset)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: atlas: %v\n", err)
 				os.Exit(1)
 			}
-		} else if strings.ToLower(strings.TrimSpace(*sceneName)) == "atlas-two" {
+		} else if sceneKey == "atlas-two" {
 			spec, atlasFSV, err = buildAtlasTwoFSV(scene, atlasPreset)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: atlas-two: %v\n", err)
 				os.Exit(1)
 			}
-		} else if strings.HasPrefix(strings.ToLower(strings.TrimSpace(*sceneName)), "teamcolors") {
+		} else if strings.HasPrefix(sceneKey, "lit") {
+			spec, lightingFSV, err = buildLightingFSV(scene, atlasPreset, sceneKey)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: lighting: %v\n", err)
+				os.Exit(1)
+			}
+		} else if strings.HasPrefix(sceneKey, "teamcolors") {
 			spec, teamColorFSV, err = buildTeamColorsFSV(scene, atlasPreset, strings.ToLower(strings.TrimSpace(*sceneName)))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: teamcolors: %v\n", err)
@@ -891,10 +930,12 @@ func main() {
 				pass = pass && atlasFSV.OK && stats == spec.expected
 			} else if teamColorFSV != nil {
 				pass = pass && teamColorFSV.OK && stats == spec.expected
+			} else if lightingFSV != nil {
+				pass = pass && lightingFSV.OK && stats == spec.expected
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -1293,10 +1334,9 @@ func cameraZoomRequest(zoomText string, cfg litrender.RTSCameraConfig) (float32,
 }
 
 func buildLights(scene *core.Node) {
-	scene.Add(light.NewAmbient(&math32.Color{R: 1, G: 1, B: 1}, 0.55))
-	sun := light.NewDirectional(&math32.Color{R: 1, G: 1, B: 1}, 0.75)
-	sun.SetPosition(3, 8, 5)
-	scene.Add(sun)
+	if _, err := litrender.AddSunAmbient(scene, litrender.DefaultLightingConfig()); err != nil {
+		panic(err)
+	}
 }
 
 func buildScene(scene *core.Node, name string) (sceneSpec, error) {
@@ -1439,6 +1479,162 @@ func buildAtlasTwoFSV(scene *core.Node, preset litasset.AtlasPreset) (sceneSpec,
 	return sceneSpec{name: "atlas-two-" + string(preset), expected: expectedStats(2, 0, 2, 0, 2, 0)}, dump, nil
 }
 
+func buildLightingFSV(scene *core.Node, preset litasset.AtlasPreset, name string) (sceneSpec, *lightingRuntimeDump, error) {
+	switch name {
+	case "lit", "lit-east", "lit-ambient0", "lit-emissive":
+	default:
+		return sceneSpec{}, nil, fmt.Errorf("unknown lighting scene %q", name)
+	}
+	const mapPath = "data/maps/_fixture"
+	m, err := litmapdata.Load(os.DirFS("."), mapPath)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cfg, err := litrender.LightingConfigFromMap(m)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	switch name {
+	case "lit-east":
+		cfg.SunAzimuth = 90
+	case "lit-ambient0", "lit-emissive":
+		cfg.AmbientIntensity = 0
+		cfg.SunAzimuth = 125
+		cfg.SunElevation = 24
+	}
+	if _, err := litrender.AddSunAmbient(scene, cfg); err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	src, err := syntheticAtlasSource("synthetic/pbr-lighting-probe.atlas.png", atlasPaletteLightingProbe())
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cache := litrender.NewPBRAtlasMaterialCache()
+	entry, err := cache.Material(src, preset)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	visible, states := addLightingPBRPrimitives(scene, entry.Material), 2
+	dump := &lightingRuntimeDump{
+		Scene:              name,
+		MapPath:            mapPath,
+		MapFingerprint:     fmt.Sprintf("%016x", m.Fingerprint),
+		Preset:             preset,
+		Material:           cache.Snapshot(entry),
+		MaterialInstances:  cache.Count(),
+		SceneLights:        litrender.SnapshotSceneLighting(scene, cfg),
+		ClearcoatRejection: clearcoatRejectionDump(),
+		OK:                 true,
+	}
+	if name == "lit-ambient0" || name == "lit-emissive" {
+		emissiveMat, factors, err := litrender.NewPBRMaterial(entry.Texture, litrender.PBRMaterialOptions{EmissiveFactor: [3]float32{1, 0.42, 0.12}})
+		if err != nil {
+			return sceneSpec{}, nil, err
+		}
+		beacon := graphic.NewMesh(geometry.NewBox(105, 150, 105), emissiveMat)
+		beacon.SetPosition(0, 75, -310)
+		scene.Add(beacon)
+		visible++
+		states++
+		dump.AdditionalMaterials = append(dump.AdditionalMaterials, lightingMaterialDump{
+			Name:          "emissive-factor-fx",
+			TextureWidth:  entry.Texture.Width(),
+			TextureHeight: entry.Texture.Height(),
+			Factors:       factors,
+		})
+		dump.MaterialInstances++
+	}
+	validateLightingDump(dump)
+	return sceneSpec{name: name + "-" + string(preset), expected: expectedStats(visible, 0, visible, 0, states, 0)}, dump, nil
+}
+
+func addLightingPBRPrimitives(scene *core.Node, mat material.IMaterial) int {
+	unitGeom := geometry.NewBox(150, 170, 150)
+	addMesh(scene, unitGeom, mat, -255, 85, 20)
+	addMesh(scene, unitGeom, mat, 0, 85, 20)
+	addMesh(scene, unitGeom, mat, 255, 85, 20)
+
+	cliff := graphic.NewMesh(geometry.NewBox(620, 120, 140), mat)
+	cliff.SetPosition(0, 60, 280)
+	scene.Add(cliff)
+	return 4
+}
+
+func validateLightingDump(dump *lightingRuntimeDump) {
+	if !dump.SceneLights.OK {
+		dump.Errors = append(dump.Errors, dump.SceneLights.Errors...)
+	}
+	if len(dump.SceneLights.Lights) != 2 || dump.SceneLights.Lights[0].Kind != "Directional" || dump.SceneLights.Lights[1].Kind != "Ambient" {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("scene lights = %+v, want exactly [Directional, Ambient]", dump.SceneLights.Lights))
+	}
+	factors := dump.Material.Factors
+	if factors.MetallicFactor != litrender.DefaultPBRMetallicFactor || factors.RoughnessFactor != litrender.DefaultPBRRoughnessFactor || !factors.BaseColorMap {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("base material factors invalid: %+v", factors))
+	}
+	if factors.MetallicRoughnessMap || factors.NormalMap || factors.OcclusionMap || factors.EmissiveMap {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("base material has forbidden texture map flags: %+v", factors))
+	}
+	if !dump.ClearcoatRejection.OK {
+		dump.Errors = append(dump.Errors, fmt.Sprintf("clearcoat rejection failed: %+v", dump.ClearcoatRejection.Findings))
+	}
+	for _, extra := range dump.AdditionalMaterials {
+		if extra.Name == "emissive-factor-fx" && (extra.Factors.EmissiveMap || extra.Factors.EmissiveFactor == [3]float32{}) {
+			dump.Errors = append(dump.Errors, fmt.Sprintf("emissive FX material factors invalid: %+v", extra.Factors))
+		}
+	}
+	dump.OK = len(dump.Errors) == 0
+}
+
+func clearcoatRejectionDump() rejectedGLBDump {
+	const asset = "synthetic/clearcoat.glb"
+	data, err := syntheticGLB(map[string]any{
+		"asset":          map[string]any{"version": "2.0"},
+		"extensionsUsed": []string{"KHR_materials_clearcoat"},
+	})
+	if err != nil {
+		return rejectedGLBDump{Asset: asset, Findings: []string{err.Error()}}
+	}
+	findings := litassetcatalog.CheckGLB(data)
+	ok := false
+	for _, finding := range findings {
+		if strings.Contains(finding, "GLTF-EXT") && strings.Contains(finding, "KHR_materials_clearcoat") {
+			ok = true
+			break
+		}
+	}
+	return rejectedGLBDump{Asset: asset, Findings: findings, OK: ok}
+}
+
+func syntheticGLB(doc map[string]any) ([]byte, error) {
+	j, err := json.Marshal(doc)
+	if err != nil {
+		return nil, err
+	}
+	for len(j)%4 != 0 {
+		j = append(j, ' ')
+	}
+	var b bytes.Buffer
+	write := func(v uint32) error {
+		return binary.Write(&b, binary.LittleEndian, v)
+	}
+	for _, v := range []uint32{
+		0x46546C67,
+		2,
+		uint32(12 + 8 + len(j)),
+		uint32(len(j)),
+		0x4E4F534A,
+	} {
+		if err := write(v); err != nil {
+			return nil, err
+		}
+	}
+	if _, err := b.Write(j); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
 func addAtlasPlane(scene *core.Node, mat material.IMaterial, x, z, size float32) {
 	plane := graphic.NewMesh(geometry.NewPlane(size, size), mat)
 	plane.SetRotationX(-math32.Pi / 2)
@@ -1482,6 +1678,15 @@ func atlasPaletteEmber() []color.RGBA {
 		{44, 174, 190, 255},
 		{231, 127, 42, 255},
 		{236, 236, 232, 255},
+	}
+}
+
+func atlasPaletteLightingProbe() []color.RGBA {
+	return []color.RGBA{
+		{214, 214, 208, 255},
+		{168, 174, 178, 255},
+		{232, 224, 206, 255},
+		{108, 116, 124, 255},
 	}
 }
 

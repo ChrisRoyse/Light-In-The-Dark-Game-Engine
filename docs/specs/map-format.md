@@ -118,6 +118,14 @@ height = 8                 # tiles, 1..512
 biome = "vigil-lowlands"   # required, non-empty
 pathing-scale = 4          # optional; only 4 supported (default 4)
 
+[lighting]                  # optional; omitted => documented canonical noon default
+ambient-color = [0.82, 0.88, 1.0]   # RGB floats, each 0..1
+ambient-intensity = 0.62            # 0..8
+sun-color = [1.0, 0.96, 0.86]       # RGB floats, each 0..1
+sun-intensity = 1.05                # 0..8
+sun-azimuth = 180                   # degrees, [0,360)
+sun-elevation = 65                  # degrees, [-90,90]
+
 [[start]]                  # ≥1 required
 player = 0                 # 0..15, unique per map
 cell = [4, 4]              # pathing-grid cell; must be buildable, non-water
@@ -138,6 +146,14 @@ owner = 0                  # 0..15: a player starts holding this beacon
 - **Start locations:** ≥1 required; `player` in `[0,15]` and unique; `cell` in
   pathing bounds and on buildable, non-water ground (a start on water/unbuildable
   is an error). Returned sorted by player.
+- **Lighting:** optional table. Omission loads the canonical noon-like default
+  shown above. When `[lighting]` is present, every field is required so a partial
+  authored override cannot accidentally mix a new sun with old ambient values.
+  Colors are normalized RGB floats in `[0,1]`; intensities are finite floats in
+  `[0,8]`; `sun-azimuth` is degrees in `[0,360)`; `sun-elevation` is degrees in
+  `[-90,90]`. Lighting is part of map identity — the `Fingerprint` covers every
+  lighting field because two peers with different sun/ambient values would render
+  a different match presentation.
 - **Beacons:** optional; `id` unique; `cell` in pathing bounds; `owner` is
   `BeaconNeutral` (`-1`) when omitted, else a player index `[0,15]`. Out-of-bounds
   cell, out-of-range owner, or duplicate id is an error. Returned sorted by id.

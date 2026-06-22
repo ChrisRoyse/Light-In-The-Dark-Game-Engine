@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"math"
 	"path"
 	"sort"
 	"strconv"
@@ -19,8 +20,19 @@ import (
 )
 
 const (
-	FormatVersion = 1
-	PathingScale  = 4
+	FormatVersion        = 1
+	PathingScale         = 4
+	MaxLightingIntensity = 8
+	defaultAmbientR      = 0.82
+	defaultAmbientG      = 0.88
+	defaultAmbientB      = 1.00
+	defaultAmbientI      = 0.62
+	defaultSunR          = 1.00
+	defaultSunG          = 0.96
+	defaultSunB          = 0.86
+	defaultSunI          = 1.05
+	defaultSunAzimuth    = 180
+	defaultSunElevation  = 65
 )
 
 type PathFlags uint8
@@ -74,14 +86,40 @@ type Doodad struct {
 	FootprintH   int    `json:"footprintH"`
 }
 
+// Lighting is the persistent per-map gameplay lighting authored in
+// terrain.toml. It is immutable after load: the renderer converts it to one
+// directional sun plus one ambient light.
+type Lighting struct {
+	AmbientColor     [3]float32 `json:"ambientColor"`
+	AmbientIntensity float32    `json:"ambientIntensity"`
+	SunColor         [3]float32 `json:"sunColor"`
+	SunIntensity     float32    `json:"sunIntensity"`
+	SunAzimuth       float32    `json:"sunAzimuth"`
+	SunElevation     float32    `json:"sunElevation"`
+}
+
+// DefaultLighting is the canonical noon-like lighting used by maps that have
+// not authored an explicit [lighting] table yet.
+func DefaultLighting() Lighting {
+	return Lighting{
+		AmbientColor:     [3]float32{defaultAmbientR, defaultAmbientG, defaultAmbientB},
+		AmbientIntensity: defaultAmbientI,
+		SunColor:         [3]float32{defaultSunR, defaultSunG, defaultSunB},
+		SunIntensity:     defaultSunI,
+		SunAzimuth:       defaultSunAzimuth,
+		SunElevation:     defaultSunElevation,
+	}
+}
+
 type Map struct {
-	Path          string `json:"path"`
-	Width         int    `json:"width"`
-	Height        int    `json:"height"`
-	PathingWidth  int    `json:"pathingWidth"`
-	PathingHeight int    `json:"pathingHeight"`
-	Biome         string `json:"biome"`
-	Fingerprint   uint64 `json:"fingerprint"`
+	Path          string   `json:"path"`
+	Width         int      `json:"width"`
+	Height        int      `json:"height"`
+	PathingWidth  int      `json:"pathingWidth"`
+	PathingHeight int      `json:"pathingHeight"`
+	Biome         string   `json:"biome"`
+	Fingerprint   uint64   `json:"fingerprint"`
+	Lighting      Lighting `json:"lighting"`
 
 	pathing []PathFlags
 	cliffs  []Cliff
@@ -93,13 +131,23 @@ type Map struct {
 }
 
 type rawTerrain struct {
-	Version      int         `toml:"version"`
-	Width        int         `toml:"width"`
-	Height       int         `toml:"height"`
-	Biome        string      `toml:"biome"`
-	PathingScale int         `toml:"pathing-scale"`
-	Start        []rawStart  `toml:"start"`
-	Beacon       []rawBeacon `toml:"beacon"`
+	Version      int          `toml:"version"`
+	Width        int          `toml:"width"`
+	Height       int          `toml:"height"`
+	Biome        string       `toml:"biome"`
+	PathingScale int          `toml:"pathing-scale"`
+	Lighting     *rawLighting `toml:"lighting"`
+	Start        []rawStart   `toml:"start"`
+	Beacon       []rawBeacon  `toml:"beacon"`
+}
+
+type rawLighting struct {
+	AmbientColor     []float64 `toml:"ambient-color"`
+	AmbientIntensity *float64  `toml:"ambient-intensity"`
+	SunColor         []float64 `toml:"sun-color"`
+	SunIntensity     *float64  `toml:"sun-intensity"`
+	SunAzimuth       *float64  `toml:"sun-azimuth"`
+	SunElevation     *float64  `toml:"sun-elevation"`
 }
 
 type rawStart struct {
@@ -161,6 +209,10 @@ func Load(fsys fs.FS, dir string) (*Map, error) {
 		Biome:         strings.TrimSpace(raw.Biome),
 	}
 	var err error
+	m.Lighting, err = compileLighting(terrainFile, raw.Lighting)
+	if err != nil {
+		return nil, err
+	}
 	m.pathing, err = readGrid(fsys, path.Join(dir, "pathing.txt"), m.PathingWidth, m.PathingHeight, parsePathFlags)
 	if err != nil {
 		return nil, err
@@ -245,6 +297,7 @@ func (m *Map) MarshalJSON() ([]byte, error) {
 		PathingHeight int             `json:"pathingHeight"`
 		Biome         string          `json:"biome"`
 		Fingerprint   uint64          `json:"fingerprint"`
+		Lighting      Lighting        `json:"lighting"`
 		Starts        []StartLocation `json:"starts"`
 		Beacons       []Beacon        `json:"beacons"`
 		Doodads       []Doodad        `json:"doodads"`
@@ -257,6 +310,7 @@ func (m *Map) MarshalJSON() ([]byte, error) {
 		PathingHeight: m.PathingHeight,
 		Biome:         m.Biome,
 		Fingerprint:   m.Fingerprint,
+		Lighting:      m.Lighting,
 		Starts:        m.Starts(),
 		Beacons:       m.Beacons(),
 		Doodads:       m.Doodads(),
@@ -424,6 +478,88 @@ func parseSplat(atom string) (SplatWeight, error) {
 		return SplatWeight{}, fmt.Errorf("splat %q weights sum to %d, want 255", atom, sum)
 	}
 	return SplatWeight{A: vals[0], B: vals[1], C: vals[2], D: vals[3]}, nil
+}
+
+func compileLighting(file string, raw *rawLighting) (Lighting, error) {
+	if raw == nil {
+		return DefaultLighting(), nil
+	}
+	ambientColor, err := compileColor3(file, "ambient-color", raw.AmbientColor)
+	if err != nil {
+		return Lighting{}, err
+	}
+	sunColor, err := compileColor3(file, "sun-color", raw.SunColor)
+	if err != nil {
+		return Lighting{}, err
+	}
+	ambientIntensity, err := compileScalar(file, "ambient-intensity", raw.AmbientIntensity, 0, MaxLightingIntensity)
+	if err != nil {
+		return Lighting{}, err
+	}
+	sunIntensity, err := compileScalar(file, "sun-intensity", raw.SunIntensity, 0, MaxLightingIntensity)
+	if err != nil {
+		return Lighting{}, err
+	}
+	sunAzimuth, err := compileScalar(file, "sun-azimuth", raw.SunAzimuth, 0, 360)
+	if err != nil {
+		return Lighting{}, err
+	}
+	if sunAzimuth == 360 {
+		return Lighting{}, fmt.Errorf("mapdata: %s: lighting sun-azimuth 360 out of range [0,360)", file)
+	}
+	sunElevation, err := compileScalar(file, "sun-elevation", raw.SunElevation, -90, 90)
+	if err != nil {
+		return Lighting{}, err
+	}
+	return Lighting{
+		AmbientColor:     ambientColor,
+		AmbientIntensity: ambientIntensity,
+		SunColor:         sunColor,
+		SunIntensity:     sunIntensity,
+		SunAzimuth:       sunAzimuth,
+		SunElevation:     sunElevation,
+	}, nil
+}
+
+func compileColor3(file, field string, raw []float64) ([3]float32, error) {
+	if raw == nil {
+		return [3]float32{}, fmt.Errorf("mapdata: %s: lighting %s is required", file, field)
+	}
+	if len(raw) != 3 {
+		return [3]float32{}, fmt.Errorf("mapdata: %s: lighting %s must have exactly 3 components, got %d", file, field, len(raw))
+	}
+	var out [3]float32
+	for i, v := range raw {
+		if err := validateFiniteRange(file, fmt.Sprintf("%s[%d]", field, i), v, 0, 1, "range [0,1]"); err != nil {
+			return [3]float32{}, err
+		}
+		out[i] = float32(v)
+	}
+	return out, nil
+}
+
+func compileScalar(file, field string, raw *float64, lo, hi float64) (float32, error) {
+	if raw == nil {
+		return 0, fmt.Errorf("mapdata: %s: lighting %s is required", file, field)
+	}
+	rangeText := fmt.Sprintf("range [%g,%g]", lo, hi)
+	if field == "sun-azimuth" {
+		rangeText = "range [0,360)"
+	}
+	if err := validateFiniteRange(file, field, *raw, lo, hi, rangeText); err != nil {
+		return 0, err
+	}
+	return float32(*raw), nil
+}
+
+func validateFiniteRange(file, field string, v, lo, hi float64, rangeText string) error {
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return fmt.Errorf("mapdata: %s: lighting %s must be finite", file, field)
+	}
+	if v < lo || v > hi {
+		return fmt.Errorf("mapdata: %s: lighting %s %g out of %s", file, field, v, rangeText)
+	}
+	return nil
 }
 
 func compileStarts(file string, raw []rawStart, m *Map) ([]StartLocation, error) {
@@ -596,6 +732,7 @@ func (m *Map) fingerprint() uint64 {
 	h.WriteU32(uint32(m.Height))
 	h.WriteU32(uint32(PathingScale))
 	writeString(h, m.Biome)
+	writeLighting(h, m.Lighting)
 	h.WriteU32(uint32(len(m.pathing)))
 	for _, f := range m.pathing {
 		h.WriteU8(uint8(f))
@@ -646,4 +783,21 @@ func (m *Map) fingerprint() uint64 {
 func writeString(h *statehash.Hasher, s string) {
 	h.WriteU32(uint32(len(s)))
 	h.WriteBytes([]byte(s))
+}
+
+func writeLighting(h *statehash.Hasher, l Lighting) {
+	for _, v := range l.AmbientColor {
+		writeFloat32(h, v)
+	}
+	writeFloat32(h, l.AmbientIntensity)
+	for _, v := range l.SunColor {
+		writeFloat32(h, v)
+	}
+	writeFloat32(h, l.SunIntensity)
+	writeFloat32(h, l.SunAzimuth)
+	writeFloat32(h, l.SunElevation)
+}
+
+func writeFloat32(h *statehash.Hasher, v float32) {
+	h.WriteU32(math.Float32bits(v))
 }
