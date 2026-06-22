@@ -145,6 +145,9 @@ func run10k() uint64 {
 // (The cross-OS/arch matrix runs this same test in CI later; fixed-point is
 // integer-only so divergence is structurally impossible.)
 func TestReproducibility(t *testing.T) {
+	if testing.Short() {
+		t.Skip("10x 10k-tick historical fixed-point spike skipped in -short")
+	}
 	want := run10k()
 	for i := 0; i < 9; i++ {
 		if got := run10k(); got != want {
