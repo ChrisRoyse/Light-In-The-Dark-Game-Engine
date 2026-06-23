@@ -73,7 +73,32 @@ func main() {
 	case "buffs":
 		out["buffs"] = tables.BuffTypes
 	case "items":
-		out["items"] = tables.Items
+		// Resolve recipe component indices + acquisition/stat enums to names.
+		acq := []string{"unspecified", "found", "bought", "crafted"}
+		stat := []string{"move-speed", "armor", "attack-cooldown", "attack-damage"}
+		rows := make([]map[string]any, 0, len(tables.Items))
+		for i := range tables.Items {
+			it := &tables.Items[i]
+			recipe := make([]string, 0, len(it.Recipe))
+			for _, c := range it.Recipe {
+				if int(c) < len(tables.Items) {
+					recipe = append(recipe, tables.Items[c].ID)
+				}
+			}
+			mods := make([]map[string]any, 0, len(it.Mods))
+			for j := range it.Mods {
+				mods = append(mods, map[string]any{"stat": stat[it.Mods[j].Stat], "add": it.Mods[j].Add})
+			}
+			a := "unspecified"
+			if int(it.Acquisition) < len(acq) {
+				a = acq[it.Acquisition]
+			}
+			rows = append(rows, map[string]any{
+				"id": it.ID, "tier": it.Tier, "acquisition": a, "costs": it.Costs,
+				"recipe": recipe, "mods": mods,
+			})
+		}
+		out["items"] = rows
 	case "nodes":
 		out["nodes"] = tables.Nodes
 	case "heroes":

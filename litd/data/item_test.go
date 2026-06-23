@@ -157,3 +157,108 @@ func TestItemFingerprintSensitivity(t *testing.T) {
 		t.Logf("%s: base=%016x changed=%016x", name, base.Fingerprint, changed.Fingerprint)
 	}
 }
+
+// --- tiered gear: tier/acquisition/recipe (#157) ---
+
+const gearTOML = `
+[[item]]
+id = "t1_edge"
+name = "Edge"
+class = "permanent"
+tier = 1
+acquisition = "bought"
+costs = { gold = 50 }
+[[item.mod]]
+stat = "attack-damage"
+add = 3
+
+[[item]]
+id = "t1_guard"
+name = "Guard"
+class = "permanent"
+tier = 1
+acquisition = "found"
+[[item.mod]]
+stat = "armor"
+add = 2
+
+[[item]]
+id = "t2_blade"
+name = "Blade"
+class = "permanent"
+tier = 2
+acquisition = "crafted"
+recipe = ["t1_edge", "t1_guard"]
+[[item.mod]]
+stat = "attack-damage"
+add = 7
+`
+
+func TestGearTiersHappyPath(t *testing.T) {
+	tb, err := loadItemTables(t, gearTOML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tb.Items) != 3 {
+		t.Fatalf("items: %d", len(tb.Items))
+	}
+	// sorted by id: t1_edge, t1_guard, t2_blade
+	blade := &tb.Items[tb.itemIndex("t2_blade")]
+	if blade.Tier != 2 || blade.Acquisition != 3 /* crafted */ {
+		t.Fatalf("t2_blade tier/acq: %+v", blade)
+	}
+	if len(blade.Recipe) != 2 ||
+		tb.Items[blade.Recipe[0]].ID != "t1_edge" || tb.Items[blade.Recipe[1]].ID != "t1_guard" {
+		t.Fatalf("t2_blade recipe did not resolve: %+v", blade.Recipe)
+	}
+	bought := &tb.Items[tb.itemIndex("t1_edge")]
+	if bought.Acquisition != 2 /* bought */ || bought.Costs[0] != 50 {
+		t.Fatalf("t1_edge acquisition/costs: %+v", bought)
+	}
+}
+
+func TestGearTiersFailClosed(t *testing.T) {
+	cases := map[string]string{
+		"tier range":         strings.Replace(gearTOML, "tier = 2", "tier = 9", 1),
+		"undefined comp":     strings.Replace(gearTOML, `recipe = ["t1_edge", "t1_guard"]`, `recipe = ["t1_edge", "ghost"]`, 1),
+		"bought no cost":     strings.Replace(gearTOML, "acquisition = \"bought\"\ncosts = { gold = 50 }", "acquisition = \"bought\"", 1),
+		"recipe not crafted": strings.Replace(gearTOML, "acquisition = \"found\"", "acquisition = \"found\"\nrecipe = [\"t1_edge\"]", 1),
+	}
+	for name, bad := range cases {
+		if _, err := loadItemTables(t, bad); err == nil {
+			t.Errorf("%s: want load error, got nil", name)
+		} else {
+			t.Logf("%s: %v", name, err)
+		}
+	}
+}
+
+func TestGearCraftingCycleRejected(t *testing.T) {
+	cyclic := `
+[[item]]
+id = "a_part"
+name = "A"
+class = "permanent"
+tier = 2
+acquisition = "crafted"
+recipe = ["b_part"]
+[[item.mod]]
+stat = "armor"
+add = 1
+
+[[item]]
+id = "b_part"
+name = "B"
+class = "permanent"
+tier = 2
+acquisition = "crafted"
+recipe = ["a_part"]
+[[item.mod]]
+stat = "armor"
+add = 1
+`
+	_, err := loadItemTables(t, cyclic)
+	if err == nil || !strings.Contains(err.Error(), "crafting cycle") {
+		t.Fatalf("want crafting-cycle error, got %v", err)
+	}
+}

@@ -28,6 +28,10 @@ var ItemClasses = [ItemClassCount]string{
 	"purchasable", "campaign", "miscellaneous",
 }
 
+// ItemAcquisitions is the closed acquisition vocabulary (#157): how a
+// hero gets the item. Index = Item.Acquisition+1 (0 = unspecified).
+var ItemAcquisitions = [...]string{"found", "bought", "crafted"}
+
 // Item is one converted item row. Sim units throughout.
 type Item struct {
 	ID            string
@@ -43,6 +47,9 @@ type Item struct {
 	Consumable    bool       // removed when charges reach 0
 	DropOnDeath   bool       // carrier death grounds the item
 	PowerUp       bool       // consumed instantly on pickup (effect fires, item destroyed)
+	Tier          uint8      // 1..4 for tiered gear; 0 = untiered (#157)
+	Acquisition   uint8      // 0 = unspecified, else ItemAcquisitions[Acquisition-1]
+	Recipe        []uint16   // sorted component item indices (crafted only)
 }
 
 type rawItemFile struct {
@@ -63,6 +70,9 @@ type rawItem struct {
 	Consumable  bool             `toml:"consumable" json:"consumable"`
 	DropOnDeath bool             `toml:"drop-on-death" json:"drop-on-death"`
 	PowerUp     bool             `toml:"power-up" json:"power-up"`
+	Tier        int64            `toml:"tier" json:"tier"`               // 1..4 for tiered gear; 0 = untiered (#157)
+	Acquisition string           `toml:"acquisition" json:"acquisition"` // found|bought|crafted; "" = unspecified
+	Recipe      []string         `toml:"recipe" json:"recipe"`           // crafted-from component item IDs
 }
 
 // loadItems reads items/*.toml|json (optional directory). The caller
@@ -145,6 +155,68 @@ func (t *Tables) loadItems(fsys fs.FS, comp *effectCompiler) error {
 		}
 		t.Items = append(t.Items, it)
 	}
+
+	// Resolve crafted recipes to item indices now that every item is known and
+	// t.Items is sorted by ID (pending was sorted before conversion). A
+	// component must be a defined item; self-reference and cycles are rejected.
+	for pi := range pending {
+		rec := pending[pi].raw.Recipe
+		if len(rec) == 0 {
+			continue
+		}
+		ii := t.itemIndex(pending[pi].raw.ID)
+		for _, comp := range rec {
+			ci := t.itemIndex(comp)
+			if ci < 0 {
+				return fmt.Errorf("data: %s: item %q: recipe component %q is not a defined item",
+					pending[pi].file, pending[pi].raw.ID, comp)
+			}
+			if ci == ii {
+				return fmt.Errorf("data: %s: item %q: recipe lists itself", pending[pi].file, pending[pi].raw.ID)
+			}
+			t.Items[ii].Recipe = append(t.Items[ii].Recipe, uint16(ci))
+		}
+		sort.Slice(t.Items[ii].Recipe, func(a, b int) bool { return t.Items[ii].Recipe[a] < t.Items[ii].Recipe[b] })
+	}
+	if err := t.checkRecipeAcyclic(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// checkRecipeAcyclic rejects any crafting cycle (a 3-color DFS over the
+// item -> recipe-components graph). A cycle would make the items mutually
+// uncraftable, so it is a load error, not a runtime surprise (#157).
+func (t *Tables) checkRecipeAcyclic() error {
+	const (
+		white = 0
+		gray  = 1
+		black = 2
+	)
+	color := make([]uint8, len(t.Items))
+	var visit func(i int) error
+	visit = func(i int) error {
+		color[i] = gray
+		for _, c := range t.Items[i].Recipe {
+			switch color[c] {
+			case gray:
+				return fmt.Errorf("data: item %q: crafting cycle through %q", t.Items[i].ID, t.Items[c].ID)
+			case white:
+				if err := visit(int(c)); err != nil {
+					return err
+				}
+			}
+		}
+		color[i] = black
+		return nil
+	}
+	for i := range t.Items {
+		if color[i] == white {
+			if err := visit(i); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -198,6 +270,46 @@ func (t *Tables) convertItem(file string, r *rawItem) (Item, error) {
 		sm.Add = add
 		it.Mods = append(it.Mods, sm)
 	}
+
+	// tiered-gear fields (#157). All optional for back-compat; when present they
+	// fail closed on range/enum and on cross-field coherence. Recipe IDs are
+	// resolved to indices in loadItems once every item is known.
+	if r.Tier != 0 {
+		if r.Tier < 1 || r.Tier > 4 {
+			return fail("tier", fmt.Errorf("%d out of range [1, 4]", r.Tier))
+		}
+		it.Tier = uint8(r.Tier)
+	}
+	if r.Acquisition != "" {
+		ai := indexOf(ItemAcquisitions[:], r.Acquisition)
+		if ai < 0 {
+			return fail("acquisition", fmt.Errorf("%q is not one of %v", r.Acquisition, ItemAcquisitions))
+		}
+		it.Acquisition = uint8(ai + 1)
+		var total int64
+		for _, c := range it.Costs {
+			total += c
+		}
+		switch r.Acquisition {
+		case "bought":
+			if total <= 0 {
+				return fail("acquisition", fmt.Errorf("bought item needs a positive cost"))
+			}
+			if len(r.Recipe) != 0 {
+				return fail("recipe", fmt.Errorf("bought item has no recipe"))
+			}
+		case "found":
+			if len(r.Recipe) != 0 {
+				return fail("recipe", fmt.Errorf("found item has no recipe"))
+			}
+		case "crafted":
+			if len(r.Recipe) == 0 {
+				return fail("recipe", fmt.Errorf("crafted item needs a non-empty recipe"))
+			}
+		}
+	} else if len(r.Recipe) != 0 {
+		return fail("recipe", fmt.Errorf("recipe requires acquisition = \"crafted\""))
+	}
 	return it, nil
 }
 
@@ -229,6 +341,12 @@ func (t *Tables) hashItems(h *statehash.Hasher) {
 		h.WriteBool(it.Consumable)
 		h.WriteBool(it.DropOnDeath)
 		h.WriteBool(it.PowerUp)
+		h.WriteU8(it.Tier)
+		h.WriteU8(it.Acquisition)
+		h.WriteU32(uint32(len(it.Recipe)))
+		for _, c := range it.Recipe {
+			h.WriteU16(c)
+		}
 	}
 }
 
