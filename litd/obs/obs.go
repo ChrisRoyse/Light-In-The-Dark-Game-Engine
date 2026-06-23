@@ -141,6 +141,10 @@ func (l *Logger) Register(format string) MsgID {
 // per-channel config). Entries more verbose than lvl are dropped.
 func (l *Logger) SetChannelLevel(ch Channel, lvl Level) { l.chanLevel[ch] = lvl }
 
+// ChannelLevel reports the most-verbose level ch currently records — the read
+// counterpart of SetChannelLevel (used by the obs.* debug-console knob, #399).
+func (l *Logger) ChannelLevel(ch Channel) Level { return l.chanLevel[ch] }
+
 // AttachSink opens path and streams every entry at level ≤ maxLevel
 // (Warn ⇒ ERROR/WARN, the release default) as binary records.
 func (l *Logger) AttachSink(path string, maxLevel Level) error {
