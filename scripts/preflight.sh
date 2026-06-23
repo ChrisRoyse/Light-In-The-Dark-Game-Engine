@@ -136,6 +136,11 @@ step "jassgen -revclosure"                go run ./tools/jassgen -revclosure
 step "jassgen -eventcov (EVENT_ coverage)" go run ./tools/jassgen -eventcov
 step "jassgen tests"        go test ./tools/jassgen/
 
+# Public Lua API reference (#187): the committed docs/api/lua-reference.md must
+# stay in sync with api-manifest.json. This is the no-CI equivalent of "drift
+# between manifest and published docs fails the build".
+step "lua-api-doc drift (#187)" go run ./tools/luadoc -check
+
 # --- determinism traces (determinism.yml) -----------------------------------
 # The 10k-tick sim+AI fixtures self-skip under -short. In FAST mode the main
 # `go test -short` step above skipped them, so run the core golden-hash gates
