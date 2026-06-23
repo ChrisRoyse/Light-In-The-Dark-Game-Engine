@@ -36,6 +36,7 @@ import (
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
 	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	litcampaign "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/campaign"
+	litconfig "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/config"
 	litdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
@@ -520,6 +521,7 @@ type canvasDump struct {
 	CampaignMenu *campaignMenuRuntimeDump `json:"campaignMenu,omitempty"`
 	MainMenu     *mainMenuRuntimeDump     `json:"mainMenu,omitempty"`
 	Terminal     *terminalRuntimeDump     `json:"terminal,omitempty"`
+	Settings     *settingsRuntimeDump     `json:"settings,omitempty"`
 	OK           bool                     `json:"ok"`
 	Errors       []string                 `json:"errors,omitempty"`
 }
@@ -832,7 +834,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal, settings")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -859,6 +861,7 @@ func main() {
 	campaignScenario := flag.String("campaign-scenario", "", "campaign-menu FSV scenario for -hud -scene campaign-menu: campaign-select, fresh, unlocked, save-load, missing-archive")
 	menuFocus := flag.Int("menu-focus", 0, "focused entry index for -hud -scene main-menu (keyboard-nav FSV)")
 	terminalResult := flag.String("terminal-result", "victory", "result for -hud -scene terminal: victory or defeat")
+	settingsScenario := flag.String("settings-scenario", "default", "settings FSV scenario for -hud -scene settings: default, custom")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
@@ -983,7 +986,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult)
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult, *settingsScenario)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -4548,7 +4551,7 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult string) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult, settingsScenario string) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
@@ -4558,6 +4561,9 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "terminal") {
 		return buildTerminalHUD(scene, canvas, localeTag, localeTable, terminalResult)
+	}
+	if strings.EqualFold(strings.TrimSpace(sceneName), "settings") {
+		return buildSettingsHUD(scene, canvas, localeTag, localeTable, settingsScenario, menuFocus)
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "campaign-menu") || strings.TrimSpace(campaignScenario) != "" {
 		return buildCampaignMenuHUD(scene, canvas, campaignScenario, localeTag, localeTable)
@@ -4948,6 +4954,114 @@ func drawTerminalScreen(scene *core.Node, layout lithud.TerminalScreenLayout, ok
 			} else {
 				fg = math32.Color4{R: 1, G: 0.60, B: 0.58, A: 1} // defeat red
 			}
+		}
+		label.SetColor4(&fg)
+		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
+		scene.Add(label)
+	}
+}
+
+// settingsRuntimeDump is the FSV record for the settings screen (#311): the live
+// settings, the resolved value-row layout, and the resolved key table.
+type settingsRuntimeDump struct {
+	Locale   string                      `json:"locale"`
+	Scenario string                      `json:"scenario"`
+	Settings litconfig.Settings          `json:"settings"`
+	Layout   lithud.SettingsScreenLayout `json:"layout"`
+	OK       bool                        `json:"ok"`
+	Errors   []string                    `json:"errors,omitempty"`
+}
+
+func buildSettingsHUD(scene *core.Node, canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, scenario string, focused int) (canvasDump, error) {
+	rt, err := buildSettingsRuntime(canvas, localeTag, localeTable, scenario, focused)
+	if err != nil {
+		return canvasDump{}, err
+	}
+	after := canvasSnapshotFor(canvas, rt.Layout.Widgets)
+	// drawSettingsScreen paints one extra palette-background panel behind the card
+	// that the layout does not model (as the terminal/menu scenes do).
+	const settingsBackgroundDrawCalls = 1
+	drawCalls := rt.Layout.ExpectedDrawCalls + settingsBackgroundDrawCalls
+	dump := canvasDump{
+		Mode:  "settings",
+		After: after,
+		HUD: hudRuntimeDump{
+			Locale:               localeTag,
+			WidgetPanels:         len(rt.Layout.Widgets),
+			Labels:               len(rt.Layout.Labels),
+			ExpectedGUIDrawCalls: drawCalls,
+			DrawCallBudget:       drawCalls,
+		},
+		Settings: rt,
+		OK:       rt.OK,
+		Errors:   append([]string{}, rt.Errors...),
+	}
+	drawSettingsScreen(scene, rt.Layout, rt.OK)
+	return dump, nil
+}
+
+// buildSettingsRuntime resolves the settings-screen chrome from the locale table
+// (D-17) and builds the validated value-row layout from the scenario's live
+// settings — the same config.Settings the persistence + reducer operate on, so the
+// rendered values are the real persisted state, not mock text.
+func buildSettingsRuntime(canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, scenario string, focused int) (*settingsRuntimeDump, error) {
+	scenario = strings.ToLower(strings.TrimSpace(scenario))
+	if scenario == "" {
+		scenario = "default"
+	}
+	var s litconfig.Settings
+	switch scenario {
+	case "default":
+		s = litconfig.DefaultSettings()
+	case "custom":
+		// A non-default profile that exercises every value formatting: low preset,
+		// a muted group, fractional gains, a non-en locale, the classic keymap.
+		s = litconfig.Settings{
+			Graphics: litconfig.PresetLow,
+			Audio:    litconfig.AudioVolumes{Master: 0.8, World: 1.0, UI: 0.0, Music: 0.3, Ambience: 0.5},
+			Locale:   "xx",
+			Keymap:   "classic",
+		}
+	default:
+		return nil, fmt.Errorf("unknown settings scenario %q (want default|custom)", scenario)
+	}
+
+	strs := lithud.SettingsScreenStringsFromLocale(localeTable)
+	layout := lithud.NewSettingsScreenLayout(canvas, s, strs, focused)
+	rt := &settingsRuntimeDump{
+		Locale:   localeTag,
+		Scenario: scenario,
+		Settings: s,
+		Layout:   layout,
+		OK:       len(layout.Issues) == 0,
+	}
+	for _, issue := range layout.Issues {
+		rt.Errors = append(rt.Errors, issue.Widget+": "+issue.Msg)
+	}
+	return rt, nil
+}
+
+func drawSettingsScreen(scene *core.Node, layout lithud.SettingsScreenLayout, ok bool) {
+	bg := gui.NewPanel(float32(layout.Canvas.Width), float32(layout.Canvas.Height))
+	bgColor := math32.Color4{R: 0.06, G: 0.08, B: 0.14, A: 1}
+	bg.SetColor4(&bgColor)
+	bg.SetPosition(0, 0)
+	scene.Add(bg)
+	for _, w := range layout.Widgets {
+		panel := gui.NewPanel(float32(w.Rect.W), float32(w.Rect.H))
+		c := math32.Color4{R: 0.12, G: 0.16, B: 0.24, A: 0.96}
+		if !ok {
+			c = math32.Color4{R: 0.42, G: 0.10, B: 0.10, A: 0.96}
+		}
+		panel.SetColor4(&c)
+		panel.SetPosition(float32(w.Rect.X), float32(w.Rect.Y))
+		scene.Add(panel)
+	}
+	for _, entry := range layout.Labels {
+		label := gui.NewLabel(entry.Text)
+		fg := math32.Color4{R: 0.82, G: 0.84, B: 0.90, A: 1} // settings rows: cool grey
+		if entry.Focused {
+			fg = math32.Color4{R: 0.96, G: 0.86, B: 0.46, A: 1} // focused row: gold cursor
 		}
 		label.SetColor4(&fg)
 		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
