@@ -1,0 +1,25 @@
+# Tech tree — admission requirements (#303). A [[require]] row gates one
+# build/train target on "alive" prerequisites (>= 1 owned alive unit of each
+# listed type) and/or minimum upgrade levels. Here it encodes the Vigil
+# building tech tree (identity.md §2): bastion is the tier-1 root; the supply
+# and barracks need a bastion standing; the defensive tower needs a barracks;
+# the research seat needs a bastion. No cycles (validator-enforced).
+#
+# Upgrade rows (the grimoire research tracks) are authored with the upgrade
+# tables (#121); this file currently carries only the building prerequisites.
+
+[[require]]
+unit = "hearth_hall"
+alive = ["bastion"]
+
+[[require]]
+unit = "muster_hall"
+alive = ["bastion"]
+
+[[require]]
+unit = "watchfire_tower"
+alive = ["muster_hall"]
+
+[[require]]
+unit = "scriptorium"
+alive = ["bastion"]

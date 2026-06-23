@@ -26,6 +26,13 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 )
 
+func unitName(t *data.Tables, idx uint16) string {
+	if int(idx) < len(t.Units) {
+		return t.Units[idx].ID
+	}
+	return fmt.Sprintf("#%d", idx)
+}
+
 func main() {
 	dir := flag.String("dir", "data", "game-data directory to load")
 	table := flag.String("table", "", "table to dump: units|upgrades|abilities|buffs|items|nodes|all (default: summary only)")
@@ -40,8 +47,9 @@ func main() {
 	}
 
 	out := map[string]any{
-		"dir":         *dir,
-		"fingerprint": fmt.Sprintf("0x%016x", tables.Fingerprint),
+		"dir":           *dir,
+		"fingerprint":   fmt.Sprintf("0x%016x", tables.Fingerprint),
+		"resourceTypes": tables.ResourceTypes,
 		"counts": map[string]int{
 			"units":     len(tables.Units),
 			"upgrades":  len(tables.Upgrades),
@@ -49,6 +57,7 @@ func main() {
 			"buffs":     len(tables.BuffTypes),
 			"items":     len(tables.Items),
 			"nodes":     len(tables.Nodes),
+			"requires":  len(tables.Requires),
 		},
 	}
 
@@ -67,6 +76,23 @@ func main() {
 		out["items"] = tables.Items
 	case "nodes":
 		out["nodes"] = tables.Nodes
+	case "tech", "requires":
+		// Resolve requirement rows back to names so the tech tree is readable:
+		// each row = which target is gated on which alive prerequisites.
+		rows := make([]map[string]any, 0, len(tables.Requires))
+		for _, r := range tables.Requires {
+			alive := make([]string, 0, len(r.Alive))
+			for _, idx := range r.Alive {
+				alive = append(alive, unitName(tables, idx))
+			}
+			target := unitName(tables, r.Target)
+			if r.IsUpgrade && int(r.Target) < len(tables.Upgrades) {
+				target = tables.Upgrades[r.Target].ID
+			}
+			rows = append(rows, map[string]any{"target": target, "isUpgrade": r.IsUpgrade, "alive": alive})
+		}
+		out["requires"] = rows
+		out["resourceTypes"] = tables.ResourceTypes
 	case "all":
 		out["units"] = tables.Units
 		out["upgrades"] = tables.Upgrades
