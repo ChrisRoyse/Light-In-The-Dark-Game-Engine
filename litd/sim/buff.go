@@ -416,6 +416,14 @@ func (w *World) BuffedRegen(id EntityID, base fixed.F64) fixed.F64 {
 	return fixed.F64(w.buffedStat(data.StatLifeRegen, id, int64(base)))
 }
 
+// BuffedManaRegen is the ability system's read: a unit's mana-per-tick
+// regeneration through the mana-regen cache (Add in per-tick fixed bits, same
+// units as Abilities.ManaRegen). Untouched-cache identity returns base
+// bit-exactly, so a unit with no mana-regen mod folds to its base unchanged.
+func (w *World) BuffedManaRegen(id EntityID, base fixed.F64) fixed.F64 {
+	return fixed.F64(w.buffedStat(data.StatManaRegen, id, int64(base)))
+}
+
 // BuffedCooldown is the attack system's read: weapon cooldown ticks
 // through the attack-cooldown cache (Add in signed integer ticks; the
 // multiply runs in fixed point and floors back), floored at one tick

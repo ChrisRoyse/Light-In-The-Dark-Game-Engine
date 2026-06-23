@@ -41,10 +41,11 @@ const (
 	StatAttackCooldown              // Add in seconds → ticks (signed)
 	StatAttackDamage                // Add in damage points → fixed bits (#303)
 	StatLifeRegen                   // Add in life/second → per-tick fixed (#520)
+	StatManaRegen                   // Add in mana/second → per-tick fixed (#522)
 	BuffStatCount
 )
 
-var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen"}
+var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen", "mana-regen"}
 
 // Buff flags.
 const (
@@ -321,6 +322,14 @@ func convertStatAdd(stat uint8, add float64) (int64, error) {
 		// field (loader.go perSecondToPerTick). Add is non-negative (like
 		// move-speed); a regen-slowing debuff uses permille < 1000, not a
 		// negative add.
+		v, err := perSecondToPerTick(add)
+		if err != nil {
+			return 0, err
+		}
+		return int64(v), nil
+	case StatManaRegen:
+		// mana/second → per-tick fixed bits, same units as the ability store's
+		// per-tick ManaRegen. Non-negative (slow via permille < 1000).
 		v, err := perSecondToPerTick(add)
 		if err != nil {
 			return 0, err
