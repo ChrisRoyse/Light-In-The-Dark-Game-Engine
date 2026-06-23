@@ -75,6 +75,7 @@ type game struct {
 	unitsRoot *core.Node
 	menuRoot  *core.Node
 	hud       *gui.Label
+	menuText  *gui.Label
 
 	world, archive, savePath, outDir string
 	tod                              float64
@@ -337,6 +338,13 @@ func (gm *game) buildMenu() {
 	gm.menuRoot.Add(strip)
 	gm.menuRoot.SetVisible(false)
 	gm.scene.Add(gm.menuRoot)
+
+	// Menu text (gui, screen-space) over the dark quad — the skeleton's entries.
+	gm.menuText = gui.NewLabel("— PAUSED —\n\n[Esc] Resume\n[F5] Save    [F9] Load\n[Q] Quit")
+	gm.menuText.SetPosition(540, 280)
+	gm.menuText.SetColor(&math32.Color{R: 1, G: 0.95, B: 0.8})
+	gm.menuText.SetVisible(false)
+	gm.scene.Add(gm.menuText)
 }
 
 // buildHUD adds the on-screen status/command bar: a gui label (built-in font, no
@@ -372,6 +380,7 @@ func (gm *game) hudText() string {
 func (gm *game) setPaused(p bool) {
 	gm.paused = p
 	gm.menuRoot.SetVisible(p)
+	gm.menuText.SetVisible(p)
 	if p {
 		fmt.Println("event: PAUSED — [F5] save  [F9] load  [Q] quit  [Esc] resume")
 	} else {
