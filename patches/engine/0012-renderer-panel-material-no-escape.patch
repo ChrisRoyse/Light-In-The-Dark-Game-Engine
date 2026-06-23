@@ -1,0 +1,26 @@
+--- a/renderer/renderer.go
++++ b/renderer/renderer.go
+@@ -217,12 +217,18 @@
+ 			// Set panel Z
+ 			ipan.SetPositionZ(panZ)
+ 			panZ -= deltaZ
+-			// Append the panel's graphic material to lists of graphic materials to be rendered
+-			mat := ipan.GetGraphic().Materials()[0]
+-			if mat.IMaterial().GetMaterial().Transparent() {
+-				r.grmatsTransp = append(r.grmatsTransp, &mat)
++			// LITD-PATCH (#537): append the address INTO the graphic's own materials
++			// slice, mirroring the opaque/transparent graphics path above (~line 195),
++			// instead of copying to a loop-local and taking its address. The copy
++			// escaped to the heap once per panel per frame (escape analysis:
++			// "moved to heap: mat") — the dominant per-frame allocation in the
++			// max-battle/overlays-on scene — with no behavioral purpose, since
++			// renderGraphicMaterial only reads the GraphicMaterial. R-GC-1.
++			mats := ipan.GetGraphic().Materials()
++			if mats[0].IMaterial().GetMaterial().Transparent() {
++				r.grmatsTransp = append(r.grmatsTransp, &mats[0])
+ 			} else {
+-				r.grmatsOpaque = append(r.grmatsOpaque, &mat)
++				r.grmatsOpaque = append(r.grmatsOpaque, &mats[0])
+ 			}
+ 		}
+ 	}
