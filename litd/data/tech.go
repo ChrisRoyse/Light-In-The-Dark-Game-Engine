@@ -292,6 +292,10 @@ func (t *Tables) loadTech(fsys fs.FS, pendingResearches map[string][]string) err
 		}
 	}
 
+	if err := t.checkRequireAcyclic(); err != nil {
+		return err
+	}
+
 	// building research lists (collected during unit decode)
 	for unitID, refs := range pendingResearches {
 		ui := t.unitIndex(unitID)
@@ -305,6 +309,66 @@ func (t *Tables) loadTech(fsys fs.FS, pendingResearches map[string][]string) err
 		sort.Slice(t.Units[ui].Researches, func(a, b int) bool {
 			return t.Units[ui].Researches[a] < t.Units[ui].Researches[b]
 		})
+	}
+	return nil
+}
+
+// checkRequireAcyclic rejects requirement cycles (#519). It walks one graph
+// over both node kinds — units [0,nU) and upgrades [nU,nU+nUpg) — with an edge
+// from each requirement's target to every term it depends on (alive units and
+// required upgrades). A back-edge is a mutually-unsatisfiable tech tree, so it
+// is a load error, not a runtime dead branch. 3-color DFS.
+func (t *Tables) checkRequireAcyclic() error {
+	nU := len(t.Units)
+	nodes := nU + len(t.Upgrades)
+	adj := make([][]int, nodes)
+	name := func(n int) string {
+		if n < nU {
+			return t.Units[n].ID
+		}
+		return t.Upgrades[n-nU].ID
+	}
+	for ri := range t.Requires {
+		r := &t.Requires[ri]
+		from := int(r.Target)
+		if r.IsUpgrade {
+			from = nU + int(r.Target)
+		}
+		for _, a := range r.Alive {
+			adj[from] = append(adj[from], int(a))
+		}
+		for _, term := range r.Upgrades {
+			adj[from] = append(adj[from], nU+int(term.Upgrade))
+		}
+	}
+	const (
+		white = 0
+		gray  = 1
+		black = 2
+	)
+	color := make([]uint8, nodes)
+	var visit func(n int) error
+	visit = func(n int) error {
+		color[n] = gray
+		for _, m := range adj[n] {
+			switch color[m] {
+			case gray:
+				return fmt.Errorf("data: requirement cycle through %q -> %q", name(n), name(m))
+			case white:
+				if err := visit(m); err != nil {
+					return err
+				}
+			}
+		}
+		color[n] = black
+		return nil
+	}
+	for n := 0; n < nodes; n++ {
+		if color[n] == white {
+			if err := visit(n); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

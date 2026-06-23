@@ -257,3 +257,63 @@ func TestUpgradeShardRejectsStrayRequire(t *testing.T) {
 		t.Fatalf("want unknown-field rejection of stray require in shard, got %v", err)
 	}
 }
+
+// --- requirement acyclicity (#519) ---
+
+func TestRequireCycleRejected(t *testing.T) {
+	units := `
+[[unit]]
+id = "fort_a"
+life = 100
+armor = 0
+armor-type = "none"
+move-speed = 0
+turn-rate = 0
+collision-size = 32
+pathing = "ground"
+acquisition-range = 0
+model = "a.glb"
+footprint = 2
+build-seconds = 10.0
+
+[[unit]]
+id = "fort_b"
+life = 100
+armor = 0
+armor-type = "none"
+move-speed = 0
+turn-rate = 0
+collision-size = 32
+pathing = "ground"
+acquisition-range = 0
+model = "b.glb"
+footprint = 2
+build-seconds = 10.0
+`
+	// fort_a requires fort_b alive and vice versa — mutually unsatisfiable.
+	cyclic := `
+[[require]]
+unit = "fort_a"
+alive = ["fort_b"]
+[[require]]
+unit = "fort_b"
+alive = ["fort_a"]
+`
+	fs := econFS(econBase, units)
+	fs["tech/upgrades.toml"] = &fstest.MapFile{Data: []byte(cyclic)}
+	if _, err := Load(fs); err == nil || !strings.Contains(err.Error(), "requirement cycle") {
+		t.Fatalf("want requirement-cycle error, got %v", err)
+	}
+
+	// the acyclic half alone must still load.
+	acyclic := `
+[[require]]
+unit = "fort_a"
+alive = ["fort_b"]
+`
+	fs2 := econFS(econBase, units)
+	fs2["tech/upgrades.toml"] = &fstest.MapFile{Data: []byte(acyclic)}
+	if _, err := Load(fs2); err != nil {
+		t.Fatalf("acyclic require should load: %v", err)
+	}
+}
