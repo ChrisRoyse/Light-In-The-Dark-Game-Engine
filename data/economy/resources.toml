@@ -1,0 +1,23 @@
+# Economy resource registry (#300; decision #397: economy is explicit data, not
+# auto-init). The harvested-resource vocabulary every faction's cost/harvest/
+# depot blocks resolve against — engine-shared, no per-faction special-casing
+# (identity.md §2). Names match the HUD locale keys (data/locale/en.toml:
+# hud.resource.gold / hud.resource.lumber). Food/upkeep are a separate
+# population mechanic (unit food-cost / food-provided), not harvested resources,
+# so they are NOT registry entries.
+resource-types = ["gold", "lumber"]
+
+# Gold lode — the dense, finite metal seam (worker mines, fixed pool).
+[[node]]
+id = "gold_lode"
+resource = "gold"
+amount = 15000
+exclusive = false
+
+# Timber stand — the renewable-feel wood source (worker chops; smaller per-node
+# pool, placed in groves).
+[[node]]
+id = "timber_stand"
+resource = "lumber"
+amount = 600
+exclusive = false
