@@ -239,7 +239,7 @@ func playtestRuntimeFiles(w *sourceform.World, scriptRel string) []playtestRunti
 		{rel: "data/combat/damage-table.toml", body: []byte(playtestDamageTable)},
 		{rel: "data/units/editor.toml", body: []byte(playtestUnitsTOML(w.Entities))},
 		{rel: "data/placement/editor.toml", body: []byte(playtestPlacementTOML(w.Entities))},
-		{rel: scriptRel, body: []byte(playtestMainLua)},
+		{rel: scriptRel, body: playtestMainLuaForWorld(w)},
 	}
 }
 
@@ -250,6 +250,28 @@ func writePlaytestRuntime(stage string, w *sourceform.World) error {
 		}
 	}
 	return w.WriteRuntimeMapFiles(stage)
+}
+
+func playtestMainLuaForWorld(w *sourceform.World) []byte {
+	body := []byte(playtestMainLua)
+	if w == nil {
+		return body
+	}
+	authored, ok, err := w.PassthroughFile("scripts/main.lua")
+	if err != nil || !ok || bytes.Equal(bytes.TrimSpace(authored), bytes.TrimSpace(body)) {
+		return body
+	}
+	out := make([]byte, 0, len(body)+len(authored)+64)
+	out = append(out, body...)
+	if len(out) == 0 || out[len(out)-1] != '\n' {
+		out = append(out, '\n')
+	}
+	out = append(out, []byte("\n-- Source-form scripts/main.lua\n")...)
+	out = append(out, authored...)
+	if len(out) == 0 || out[len(out)-1] != '\n' {
+		out = append(out, '\n')
+	}
+	return out
 }
 
 const playtestDamageTable = `attack-types = ["normal", "piercing"]

@@ -33,6 +33,7 @@ func main() {
 	newPath := flag.String("new", "", "create/open a source-form project at this directory")
 	openPath := flag.String("open", "", "open a source-form project directory")
 	shotPath := flag.String("shot", "", "screenshot path for F12, -capture, or -headless")
+	mode := flag.String("mode", "", "initial editor mode: terrain, objects, metadata, triggers, or faction")
 	flag.Parse()
 
 	table, err := locale.Load(os.DirFS("data"), "en")
@@ -68,6 +69,11 @@ func main() {
 		path := filepath.Join(*outDir, "scratch-world")
 		if err := app.NewProject(path); err != nil {
 			fatalf("new scratch project: %v", err)
+		}
+	}
+	if *mode != "" {
+		if err := app.SwitchMode(shell.Mode(*mode)); err != nil {
+			fatalf("mode: %v", err)
 		}
 	}
 	shot := *shotPath

@@ -672,6 +672,27 @@ func (w *World) SetPassthroughFile(rel string, body []byte) error {
 	return w.setPassthrough(clean, body)
 }
 
+// PassthroughFile returns a defensive copy of an optional data/scripts/
+// campaigns/locale/assets file loaded from or authored into this source-form
+// world.
+func (w *World) PassthroughFile(rel string) ([]byte, bool, error) {
+	if w == nil {
+		return nil, false, fmt.Errorf("sourceform: passthrough file on nil world")
+	}
+	clean, err := cleanRel(rel)
+	if err != nil {
+		return nil, false, err
+	}
+	if !isPassthroughRel(clean) {
+		return nil, false, fmt.Errorf("sourceform: %q is not an editable passthrough file", rel)
+	}
+	body, ok := w.files[clean]
+	if !ok {
+		return nil, false, nil
+	}
+	return cloneBytes(body), true, nil
+}
+
 func (w *World) setPassthrough(rel string, body []byte) error {
 	if w.files == nil {
 		w.files = map[string][]byte{}

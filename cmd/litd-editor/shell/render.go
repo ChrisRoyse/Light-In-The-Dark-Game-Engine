@@ -28,15 +28,15 @@ const (
 	terrainGridCellW = 34
 	terrainGridCellH = 24
 	playtestButtonX  = 22
-	playtestButtonY  = 374
+	playtestButtonY  = 396
 	playtestButtonW  = 144
 	playtestButtonH  = 34
 	minimapPanelX    = 22
-	minimapPanelY    = 408
+	minimapPanelY    = 438
 	minimapPanelW    = 144
 	minimapPanelH    = 184
 	minimapMapX      = 30
-	minimapMapY      = 438
+	minimapMapY      = 468
 	minimapMapSize   = 128
 )
 
@@ -81,11 +81,12 @@ func RenderImage(snap Snapshot) *image.RGBA {
 	text(img, 1060, 38, snap.DirtyLabel, dirtyColor(snap.Dirty))
 	text(img, 24, 100, strings.ToUpper(snap.ModeLabel), muted)
 	modeButton(img, 22, 124, snap.Labels["terrain"], snap.Mode == ModeTerrain)
-	modeButton(img, 22, 176, snap.Labels["objects"], snap.Mode == ModeObjects)
-	modeButton(img, 22, 228, snap.Labels["metadata"], snap.Mode == ModeMetadata)
-	modeButton(img, 22, 280, snap.Labels["faction"], snap.Mode == ModeFaction)
-	text(img, 24, 330, snap.Labels["new"]+"   "+snap.Labels["open"], muted)
-	text(img, 24, 358, snap.Labels["save"]+"   "+snap.Labels["export"], muted)
+	modeButton(img, 22, 168, snap.Labels["objects"], snap.Mode == ModeObjects)
+	modeButton(img, 22, 212, snap.Labels["metadata"], snap.Mode == ModeMetadata)
+	modeButton(img, 22, 256, snap.Labels["triggers"], snap.Mode == ModeTriggers)
+	modeButton(img, 22, 300, snap.Labels["faction"], snap.Mode == ModeFaction)
+	text(img, 24, 358, snap.Labels["new"]+"   "+snap.Labels["open"], muted)
+	text(img, 24, 386, snap.Labels["save"]+"   "+snap.Labels["export"], muted)
 	modeButton(img, playtestButtonX, playtestButtonY, snap.Labels["playtest"], false)
 	drawMinimapPanel(img, snap)
 
@@ -96,6 +97,8 @@ func RenderImage(snap Snapshot) *image.RGBA {
 		drawObjects(img, snap)
 	case ModeMetadata:
 		drawMetadata(img, snap)
+	case ModeTriggers:
+		drawTriggerEditor(img, snap)
 	case ModeFaction:
 		drawFactionCreator(img, snap)
 	}
@@ -408,6 +411,38 @@ func drawFactionCreator(img *image.RGBA, snap Snapshot) {
 	}
 }
 
+func drawTriggerEditor(img *image.RGBA, snap Snapshot) {
+	text(img, 236, 132, snap.Labels["panelTriggers"], ink)
+	textFit(img, 236, 166, 880, snap.Labels["hintTriggers"], muted)
+	tr := snap.Triggers
+	fill(img, 238, 208, 890, 42, panelAlt)
+	textFit(img, 258, 235, 820, fmt.Sprintf("%s: %d   %s: %d   %s: %d",
+		snap.Labels["triggers"], tr.Summary.Triggers,
+		snap.Labels["fieldEvents"], tr.Summary.Events,
+		snap.Labels["fieldActions"], tr.Summary.Actions), ink)
+	y := 274
+	for i, draft := range tr.Graph.Triggers {
+		if i >= 5 {
+			break
+		}
+		fill(img, 238, y+i*58, 890, 48, panelAlt)
+		state := fmt.Sprintf("%s=%t %s=%t", snap.Labels["fieldEnabled"], draft.Enabled, snap.Labels["fieldInitiallyOn"], draft.InitiallyOn)
+		textFit(img, 258, y+20+i*58, 400, fmt.Sprintf("%s: %s", snap.Labels["fieldName"], draft.Name), ink)
+		textFit(img, 670, y+20+i*58, 430, state, brass)
+		textFit(img, 258, y+42+i*58, 820, fmt.Sprintf("%s=%s %s=%d %s=%s %s=%d",
+			snap.Labels["fieldCategory"], emptyDash(draft.Category),
+			snap.Labels["fieldEvents"], len(draft.Events),
+			snap.Labels["fieldConditions"], conditionLabel(draft.Condition),
+			snap.Labels["fieldActions"], len(draft.Actions)), muted)
+	}
+	if len(tr.Errors) > 0 {
+		fill(img, 238, 566, 890, 58, color.RGBA{R: 83, G: 40, B: 38, A: 255})
+		textFit(img, 258, 590, 820, strings.Join(tr.Errors, "; "), ink)
+		return
+	}
+	textFit(img, 258, 616, 820, snap.Labels["fieldOutput"]+": "+joinOrDash(tr.Summary.Outputs), green)
+}
+
 func drawMetadataStartGrid(img *image.RGBA, snap Snapshot) {
 	starts := map[[2]int]int{}
 	for _, start := range snap.World.Starts {
@@ -466,6 +501,13 @@ func joinOrDash(values []string) string {
 		return "-"
 	}
 	return strings.Join(values, ", ")
+}
+
+func conditionLabel(cond *TriggerConditionDraft) string {
+	if cond == nil || cond.Kind == "" {
+		return string(TriggerConditionAlways)
+	}
+	return string(cond.Kind)
 }
 
 func modeButton(img *image.RGBA, x, y int, label string, active bool) {

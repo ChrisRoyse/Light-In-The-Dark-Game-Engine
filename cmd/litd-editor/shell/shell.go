@@ -29,10 +29,11 @@ const (
 	ModeTerrain  Mode = "terrain"
 	ModeObjects  Mode = "objects"
 	ModeMetadata Mode = "metadata"
+	ModeTriggers Mode = "triggers"
 	ModeFaction  Mode = "faction"
 )
 
-var allModes = []Mode{ModeTerrain, ModeObjects, ModeMetadata, ModeFaction}
+var allModes = []Mode{ModeTerrain, ModeObjects, ModeMetadata, ModeTriggers, ModeFaction}
 
 type App struct {
 	table           *locale.Table
@@ -54,6 +55,7 @@ type App struct {
 	unitData        map[string]data.Unit
 	cameraTarget    [2]int
 	playtest        PlaytestSnapshot
+	triggers        TriggerEditorState
 	faction         FactionCreatorState
 }
 
@@ -86,6 +88,7 @@ type Snapshot struct {
 	Objects         ObjectSnapshot         `json:"objects"`
 	Camera          CameraSnapshot         `json:"camera"`
 	Playtest        PlaytestSnapshot       `json:"playtest,omitempty"`
+	Triggers        TriggerEditorSnapshot  `json:"triggers"`
 	Faction         FactionCreatorSnapshot `json:"faction"`
 }
 
@@ -199,6 +202,7 @@ func (a *App) createProjectSized(dir string, width, height int) error {
 	a.errText = ""
 	a.confirm = nil
 	a.cliffFlags = nil
+	a.triggers = TriggerEditorState{}
 	a.status = must(a.table, locale.EditorStatusProjectCreated)
 	a.resetCameraTarget()
 	a.resetCommandStack()
@@ -226,6 +230,7 @@ func (a *App) OpenProject(path string) error {
 		a.errText = ""
 		a.confirm = nil
 		a.cliffFlags = nil
+		a.triggers = loadTriggerEditorState(w)
 		a.status = must(a.table, locale.EditorStatusProjectOpened)
 		a.resetCameraTarget()
 		a.resetCommandStack()
@@ -270,6 +275,7 @@ func (a *App) OpenArchive(archivePath, workDir string) error {
 		a.errText = ""
 		a.confirm = nil
 		a.cliffFlags = nil
+		a.triggers = loadTriggerEditorState(w)
 		a.status = fmt.Sprintf("Archive opened: %s", archivePath)
 		a.resetCameraTarget()
 		a.resetCommandStack()
@@ -288,6 +294,7 @@ func (a *App) OpenArchive(archivePath, workDir string) error {
 	a.errText = ""
 	a.confirm = nil
 	a.cliffFlags = nil
+	a.triggers = loadTriggerEditorState(w)
 	a.status = fmt.Sprintf("Archive opened read-only: %s", archivePath)
 	a.resetCameraTarget()
 	a.resetCommandStack()
@@ -302,7 +309,7 @@ func (a *App) openError(path string, err error) error {
 
 func (a *App) SwitchMode(mode Mode) error {
 	switch mode {
-	case ModeTerrain, ModeObjects, ModeMetadata, ModeFaction:
+	case ModeTerrain, ModeObjects, ModeMetadata, ModeTriggers, ModeFaction:
 		a.mode = mode
 		a.errText = ""
 		return nil
@@ -585,15 +592,18 @@ func (a *App) Snapshot() Snapshot {
 		"terrain":           must(a.table, locale.EditorModeTerrain),
 		"objects":           must(a.table, locale.EditorModeObjects),
 		"metadata":          must(a.table, locale.EditorModeMetadata),
+		"triggers":          must(a.table, locale.EditorModeTriggers),
 		"faction":           must(a.table, locale.EditorModeFaction),
 		"panelTerrain":      must(a.table, locale.EditorPanelTerrain),
 		"panelObjects":      must(a.table, locale.EditorPanelObjects),
 		"panelMetadata":     must(a.table, locale.EditorPanelMetadata),
+		"panelTriggers":     must(a.table, locale.EditorPanelTriggers),
 		"panelFaction":      must(a.table, locale.EditorPanelFaction),
 		"panelMinimap":      must(a.table, locale.EditorPanelMinimap),
 		"hintTerrain":       must(a.table, locale.EditorHintTerrain),
 		"hintObjects":       must(a.table, locale.EditorHintObjects),
 		"hintMetadata":      must(a.table, locale.EditorHintMetadata),
+		"hintTriggers":      must(a.table, locale.EditorHintTriggers),
 		"hintFaction":       must(a.table, locale.EditorHintFaction),
 		"statusPrefix":      must(a.table, locale.EditorStatusPrefix),
 		"fieldCell":         must(a.table, locale.EditorFieldCell),
@@ -622,6 +632,12 @@ func (a *App) Snapshot() Snapshot {
 		"fieldCulture":      must(a.table, locale.EditorFieldCulture),
 		"fieldTraits":       must(a.table, locale.EditorFieldTraits),
 		"fieldGrimoires":    must(a.table, locale.EditorFieldGrimoires),
+		"fieldCategory":     must(a.table, locale.EditorFieldCategory),
+		"fieldEvents":       must(a.table, locale.EditorFieldEvents),
+		"fieldConditions":   must(a.table, locale.EditorFieldConditions),
+		"fieldActions":      must(a.table, locale.EditorFieldActions),
+		"fieldEnabled":      must(a.table, locale.EditorFieldEnabled),
+		"fieldInitiallyOn":  must(a.table, locale.EditorFieldInitiallyOn),
 		"fieldWorker":       must(a.table, locale.EditorFieldWorker),
 		"fieldTownHall":     must(a.table, locale.EditorFieldTownHall),
 		"fieldOutput":       must(a.table, locale.EditorFieldOutput),
@@ -661,6 +677,7 @@ func (a *App) Snapshot() Snapshot {
 		Objects:         a.ObjectSnapshot(),
 		Camera:          CameraSnapshot{TargetCell: a.clampedCameraTarget()},
 		Playtest:        a.playtest,
+		Triggers:        a.TriggerEditorSnapshot(),
 		Faction:         a.FactionCreatorSnapshot(),
 	}
 	if a.world != nil {

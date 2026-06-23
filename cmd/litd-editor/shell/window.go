@@ -78,6 +78,8 @@ func RunWindow(state *App, opts WindowOptions) error {
 			markDirty(state.SwitchMode(ModeObjects))
 		case window.Key3:
 			markDirty(state.SwitchMode(ModeMetadata))
+		case window.KeyT:
+			markDirty(state.SwitchMode(ModeTriggers))
 		case window.Key4:
 			markDirty(state.SetPaintLayer(0))
 		case window.Key5:
