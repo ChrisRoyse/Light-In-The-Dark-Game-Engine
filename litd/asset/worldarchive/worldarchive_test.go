@@ -58,8 +58,12 @@ func packDir(t *testing.T, srcDir, out, engineRange, dropField string) {
 	}
 
 	var man strings.Builder
-	man.WriteString("litdworld-version: 1\n")
-	fmt.Fprintf(&man, "engine-range: %s\n", engineRange)
+	if dropField != "litdworld-version" {
+		man.WriteString("litdworld-version: 1\n")
+	}
+	if dropField != "engine-range" {
+		fmt.Fprintf(&man, "engine-range: %s\n", engineRange)
+	}
 	if dropField != "author" {
 		man.WriteString("author: Light in the Dark\n")
 	}
@@ -69,8 +73,12 @@ func packDir(t *testing.T, srcDir, out, engineRange, dropField string) {
 	if dropField != "description" {
 		man.WriteString("description: ashen-veil duel\n")
 	}
-	fmt.Fprintf(&man, "aggregate-sha256: %s\n", hex.EncodeToString(agg.Sum(nil)))
-	fmt.Fprintf(&man, "files: %d\n", len(ents))
+	if dropField != "aggregate-sha256" {
+		fmt.Fprintf(&man, "aggregate-sha256: %s\n", hex.EncodeToString(agg.Sum(nil)))
+	}
+	if dropField != "files" {
+		fmt.Fprintf(&man, "files: %d\n", len(ents))
+	}
 	for _, e := range ents {
 		fmt.Fprintf(&man, "%s %d %s\n", e.hash, e.size, e.rel)
 	}
