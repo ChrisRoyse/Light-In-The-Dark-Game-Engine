@@ -42,6 +42,21 @@ type SnapshotEntry struct {
 	Flags    uint8
 }
 
+// MissileSnapEntry is one in-flight missile's render state (#309).
+// Missiles are first-class entities (#158) with Transforms rows, so
+// Pos/Facing come from the same place as units; the presentation-only
+// Arc (parabola peak height — flight itself is straight) and the
+// guidance kind come from the missile store. Render draws these as
+// arced billboards, never as unit models, so they are published
+// separately from Entries — the model mirror never sees a missile.
+type MissileSnapEntry struct {
+	ID         EntityID
+	Pos        fixed.Vec2
+	Facing     fixed.Angle
+	Arc        fixed.F64
+	GuidanceID uint16
+}
+
 // RenderEvent is a one-shot presentation cue (attack impact sound,
 // death animation start) tagged with the tick it belongs to; render
 // fires it when crossing that tick boundary.
@@ -75,6 +90,7 @@ type Snapshot struct {
 	Tick      uint32
 	TimeOfDay uint16
 	Entries   []SnapshotEntry
+	Missiles  []MissileSnapEntry
 	Events    []RenderEvent
 }
 
@@ -91,6 +107,7 @@ func newSnapshotBuffers(entityCap, eventCap int) *SnapshotBuffers {
 	sb := &SnapshotBuffers{}
 	for i := range sb.bufs {
 		sb.bufs[i].Entries = make([]SnapshotEntry, 0, entityCap)
+		sb.bufs[i].Missiles = make([]MissileSnapEntry, 0, entityCap)
 		sb.bufs[i].Events = make([]RenderEvent, 0, eventCap)
 	}
 	return sb
@@ -196,6 +213,12 @@ func (w *World) publishSnapshot() {
 	back.Entries = back.Entries[:0]
 	for r := int32(0); r < w.Transforms.Count(); r++ {
 		id := w.Transforms.Entity[r]
+		// Missiles share the Transforms store but render as arced
+		// billboards, not unit models — publish them to back.Missiles
+		// below, never as a unit entry (#309).
+		if w.Missiles.Row(id) != -1 {
+			continue
+		}
 		idx := id.Index()
 		var flags uint8
 		if w.snapNoLerp[idx] {
@@ -221,6 +244,26 @@ func (w *World) publishSnapshot() {
 			Anim:     anim,
 			LifeFrac: frac,
 			Flags:    flags,
+		})
+	}
+
+	// missiles: arced billboards, Pos/Facing from the shared Transforms
+	// row, Arc/guidance from the missile store (#309). Render-only — this
+	// surface is never hashed (HashState is wholly separate), so the add
+	// is determinism-inert.
+	back.Missiles = back.Missiles[:0]
+	for r := int32(0); r < w.Missiles.Count(); r++ {
+		id := w.Missiles.Entity[r]
+		tr := w.Transforms.Row(id)
+		if tr == -1 {
+			continue
+		}
+		back.Missiles = append(back.Missiles, MissileSnapEntry{
+			ID:         id,
+			Pos:        w.Transforms.Pos[tr],
+			Facing:     w.Transforms.Facing[tr],
+			Arc:        w.Missiles.Arc[r],
+			GuidanceID: w.Missiles.GuidanceID[r],
 		})
 	}
 
