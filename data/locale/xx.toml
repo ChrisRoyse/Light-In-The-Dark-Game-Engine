@@ -144,3 +144,6 @@
 "settings.graphics.low" = "[xx.143]"
 "settings.keymap.grid" = "[xx.144]"
 "settings.keymap.classic" = "[xx.145]"
+"stall.title" = "[xx.146]"
+"stall.waiting" = "[xx.147]"
+"stall.dropping" = "[xx.148]"

@@ -144,3 +144,6 @@
 "settings.graphics.low" = "Low"
 "settings.keymap.grid" = "Grid"
 "settings.keymap.classic" = "Classic"
+"stall.title" = "Connection Stalled"
+"stall.waiting" = "Waiting for"
+"stall.dropping" = "Dropping in"

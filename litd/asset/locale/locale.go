@@ -165,6 +165,12 @@ const (
 	SettingsGraphicsLow   Key = "settings.graphics.low"
 	SettingsKeymapGrid    Key = "settings.keymap.grid"
 	SettingsKeymapClassic Key = "settings.keymap.classic"
+
+	// Stall waiting screen (#71): the netplay pause overlay shown while the
+	// lockstep gate is blocked on a lagging player during the grace window.
+	StallTitle    Key = "stall.title"
+	StallWaiting  Key = "stall.waiting"
+	StallDropping Key = "stall.dropping"
 )
 
 var requiredKeys = []string{
@@ -313,6 +319,9 @@ var requiredKeys = []string{
 	string(SettingsGraphicsLow),
 	string(SettingsKeymapGrid),
 	string(SettingsKeymapClassic),
+	string(StallTitle),
+	string(StallWaiting),
+	string(StallDropping),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)
