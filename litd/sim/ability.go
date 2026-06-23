@@ -172,13 +172,15 @@ func (w *World) castTransition(id EntityID, ar int32, slot int, to uint8) {
 func (w *World) abilitySystem() {
 	a := w.Abilities
 	for ar := int32(0); ar < a.count; ar++ {
-		// Fold any mana-regen buff/item/upgrade mod over the base per-tick rate
-		// (#522). Untouched-cache identity keeps a non-modded unit bit-exact.
+		// Fold any mana-regen / max-mana buff/item/upgrade mods over the base
+		// per-tick rate and cap (#522). Untouched-cache identity keeps a
+		// non-modded unit bit-exact.
 		regen := w.BuffedManaRegen(a.Entity[ar], a.ManaRegen[ar])
-		if regen > 0 && a.Mana[ar] < a.MaxMana[ar] {
+		maxMana := w.BuffedMaxMana(a.Entity[ar], a.MaxMana[ar])
+		if regen > 0 && a.Mana[ar] < maxMana {
 			m := a.Mana[ar].Add(regen)
-			if m > a.MaxMana[ar] {
-				m = a.MaxMana[ar]
+			if m > maxMana {
+				m = maxMana
 			}
 			a.Mana[ar] = m
 		}
@@ -343,8 +345,8 @@ func (w *World) cancelCast(ar int32, id EntityID, slot int) {
 			manaCost = 0
 		}
 		m := a.Mana[ar].Add(manaCost)
-		if m > a.MaxMana[ar] {
-			m = a.MaxMana[ar]
+		if maxMana := w.BuffedMaxMana(id, a.MaxMana[ar]); m > maxMana {
+			m = maxMana
 		}
 		a.Mana[ar] = m
 	}

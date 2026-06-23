@@ -319,7 +319,7 @@ func (u Unit) MaxMana() float64 {
 	if r < 0 {
 		return 0
 	}
-	return toFloat(u.g.w.Abilities.MaxMana[r])
+	return toFloat(u.g.w.BuffedMaxMana(u.id, u.g.w.Abilities.MaxMana[r]))
 }
 
 // SetMaxMana sets the unit's maximum mana (D5 typed accessor over the unitstate
@@ -342,8 +342,10 @@ func (u Unit) SetMaxMana(v float64) {
 		nv = 0
 	}
 	u.g.w.Abilities.MaxMana[r] = nv
-	if u.g.w.Abilities.Mana[r] > nv {
-		u.g.w.Abilities.Mana[r] = nv
+	// Clamp current mana to the buffed cap (a +max-mana mod can sit on top of
+	// the base we just set), so an active buff's headroom is preserved (#522).
+	if cap := u.g.w.BuffedMaxMana(u.id, nv); u.g.w.Abilities.Mana[r] > cap {
+		u.g.w.Abilities.Mana[r] = cap
 	}
 }
 
@@ -361,7 +363,7 @@ func (u Unit) ManaPercent() float64 {
 	if r < 0 {
 		return 0
 	}
-	max := u.g.w.Abilities.MaxMana[r]
+	max := u.g.w.BuffedMaxMana(u.id, u.g.w.Abilities.MaxMana[r])
 	if max == 0 {
 		return 0
 	}
@@ -384,7 +386,7 @@ func (u Unit) SetMana(v float64) {
 	if nv < 0 {
 		nv = 0
 	}
-	if max := u.g.w.Abilities.MaxMana[r]; nv > max {
+	if max := u.g.w.BuffedMaxMana(u.id, u.g.w.Abilities.MaxMana[r]); nv > max {
 		nv = max
 	}
 	u.g.w.Abilities.Mana[r] = nv

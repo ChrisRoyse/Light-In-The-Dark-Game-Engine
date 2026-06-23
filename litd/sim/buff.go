@@ -370,6 +370,15 @@ func (w *World) recomputeBuffStats(target EntityID) {
 		}
 	}
 	w.buffScratch = sel[:0]
+
+	// A dropped +max-mana modifier can leave current mana above the new
+	// (buffed) cap — clamp it down so the pool never exceeds its maximum
+	// (#522). A raise needs no action: regen fills toward the higher cap.
+	if ar := w.Abilities.Row(target); ar >= 0 {
+		if cap := w.BuffedMaxMana(target, w.Abilities.MaxMana[ar]); w.Abilities.Mana[ar] > cap {
+			w.Abilities.Mana[ar] = cap
+		}
+	}
 }
 
 // buffedStat folds one entity's cache into a base value:
@@ -414,6 +423,14 @@ func (w *World) BuffedArmor(id EntityID, base int) int {
 // bit-identical.
 func (w *World) BuffedRegen(id EntityID, base fixed.F64) fixed.F64 {
 	return fixed.F64(w.buffedStat(data.StatLifeRegen, id, int64(base)))
+}
+
+// BuffedMaxMana is the mana cap read: a unit's maximum mana through the
+// max-mana cache (Add in fixed bits / integer points). Untouched-cache identity
+// returns base bit-exactly. Like BuffedArmor, the BASE is what the store
+// persists and hashes; only reads fold the modifier.
+func (w *World) BuffedMaxMana(id EntityID, base fixed.F64) fixed.F64 {
+	return fixed.F64(w.buffedStat(data.StatMaxMana, id, int64(base)))
 }
 
 // BuffedManaRegen is the ability system's read: a unit's mana-per-tick

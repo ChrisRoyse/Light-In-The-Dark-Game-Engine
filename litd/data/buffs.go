@@ -42,10 +42,11 @@ const (
 	StatAttackDamage                // Add in damage points → fixed bits (#303)
 	StatLifeRegen                   // Add in life/second → per-tick fixed (#520)
 	StatManaRegen                   // Add in mana/second → per-tick fixed (#522)
+	StatMaxMana                     // Add in integer mana points → fixed bits (#522)
 	BuffStatCount
 )
 
-var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen", "mana-regen"}
+var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen", "mana-regen", "max-mana"}
 
 // Buff flags.
 const (
@@ -335,6 +336,13 @@ func convertStatAdd(stat uint8, add float64) (int64, error) {
 			return 0, err
 		}
 		return int64(v), nil
+	case StatMaxMana:
+		// integer mana points → 32.32 fixed bits (the Abilities store's MaxMana
+		// unit), like attack-damage.
+		if add != float64(int64(add)) {
+			return 0, fmt.Errorf("max-mana add must be an integer")
+		}
+		return int64(add) << 32, nil
 	}
 	return 0, fmt.Errorf("unknown stat %d", stat)
 }
