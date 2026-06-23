@@ -1,0 +1,7 @@
+# Kindle combat vocabulary: one melee type, one armor class — enough for Ser
+# Caldus to carry an attack. Coefficients in permille (1000 = 100%).
+attack-types = ["normal"]
+armor-types = ["unarmored"]
+
+[coefficients]
+normal = [1000]

@@ -1,0 +1,46 @@
+# Kindle roster (#312). Ser Caldus — the carried hero's base unit — plus a Dark
+# wisp to give the gate-beacon something to drive back. Authored in seconds /
+# units-per-second; the loader converts to 50 ms ticks + 32.32 fixed point.
+
+[[unit]]
+id = "caldus"
+life = 320
+regen = 1.0
+armor = 2
+armor-type = "unarmored"
+move-speed = 270
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 500
+sight-day = 1600
+sight-night = 800
+model = "units/hfoo.glb"
+name = "Ser Caldus"
+[[unit.attack]]
+type = "normal"
+range = 100
+damage-base = 18
+dice = 1
+sides = 1
+cooldown = 1.2
+damage-point = 0.3
+backswing = 0.3
+delivery = "instant"
+targets-allowed = ["ground"]
+
+[[unit]]
+id = "dark_wisp"
+life = 60
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 200
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 400
+sight-day = 800
+sight-night = 600
+model = "units/hfoo.glb"
+name = "Dark Wisp"

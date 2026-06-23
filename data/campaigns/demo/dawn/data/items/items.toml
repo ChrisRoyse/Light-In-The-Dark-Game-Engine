@@ -1,0 +1,11 @@
+# Kindle gear (#312/#157). The Ember Ward is the tier-1 item Ser Caldus earns at
+# the gate and carries into the dawn counterattack — the carry-over's item leg.
+[[item]]
+id = "ember_ward"
+name = "Ember Ward"
+class = "permanent"
+tier = 1
+acquisition = "found"
+[[item.mod]]
+stat = "armor"
+add = 2
