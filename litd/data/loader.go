@@ -93,6 +93,7 @@ type Tables struct {
 	Items         []Item             // item types, sorted by ID (#305)
 	Grimoires     []Grimoire         // themed research tracks, sorted by ID (#155/#156)
 	Placement     *PlacementTable    // declarative load-time entity placement; nil when placement/ absent (#403)
+	EffectModels  []EffectModel      // special-effect model registry, sorted by Key; empty when effects-models/ absent (#530)
 	Fingerprint   uint64             // canonical content hash (state-hash preamble)
 }
 
@@ -593,6 +594,12 @@ func Load(fsys fs.FS) (*Tables, error) {
 	}
 
 	if err := t.loadPlacement(fsys); err != nil {
+		return nil, err
+	}
+
+	// special-effect model registry (optional directory; absence is a visible
+	// empty registry — worldhost installs each as a deterministic ModelID) (#530)
+	if err := t.loadEffectModels(fsys); err != nil {
 		return nil, err
 	}
 
@@ -1100,6 +1107,7 @@ func (t *Tables) fingerprint() uint64 {
 		t.Smart.hashInto(h)
 	}
 	t.hashPlacement(h)
+	t.hashEffectModels(h)
 	return h.Sum64()
 }
 

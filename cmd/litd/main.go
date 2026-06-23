@@ -130,14 +130,21 @@ type Vec2DTO struct {
 	Y float64 `json:"y"`
 }
 
+type effectState struct {
+	ID uint32  `json:"id"`
+	X  float64 `json:"x"`
+	Y  float64 `json:"y"`
+}
+
 type stateDump struct {
-	TimeOfDay float64     `json:"tod"`
-	Ticks     int         `json:"ticks"`
-	StateHash string      `json:"stateHash"`
-	UnitCount int         `json:"unitCount"`
-	Alive     int         `json:"alive"`
-	Order     orderState  `json:"order,omitempty"`
-	Units     []unitState `json:"units"`
+	TimeOfDay float64       `json:"tod"`
+	Ticks     int           `json:"ticks"`
+	StateHash string        `json:"stateHash"`
+	UnitCount int           `json:"unitCount"`
+	Alive     int           `json:"alive"`
+	Order     orderState    `json:"order,omitempty"`
+	Units     []unitState   `json:"units"`
+	Effects   []effectState `json:"effects"`
 }
 
 // printState writes the sim state as the JSON line an FSV reader inspects (the
@@ -161,6 +168,15 @@ func gameState(g *api.Game, ticks int, order orderState) stateDump {
 		}
 		us = append(us, unitState{ID: u.ID(), Owner: u.Owner().Slot(), X: p.X, Y: p.Y, Facing: u.Facing().Degrees(), Life: u.Life(), Alive: valid})
 	}
+	// Special effects (#529/#530): the script-spawned effect set, enumerated in
+	// creation order — the SoT a reader checks to confirm a world's
+	// Game_AddSpecialEffect actually produced live handles.
+	effs := g.Effects()
+	es := make([]effectState, 0, len(effs))
+	for _, e := range effs {
+		p := e.Position()
+		es = append(es, effectState{ID: e.ID(), X: p.X, Y: p.Y})
+	}
 	return stateDump{
 		TimeOfDay: g.TimeOfDay(),
 		Ticks:     ticks,
@@ -169,6 +185,7 @@ func gameState(g *api.Game, ticks int, order orderState) stateDump {
 		Alive:     alive,
 		Order:     order,
 		Units:     us,
+		Effects:   es,
 	}
 }
 

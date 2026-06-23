@@ -1,0 +1,8 @@
+# Minimal combat vocabulary for the dev-sandbox world (#268). One attack type
+# and one armor type — the dev-sandbox does no combat; this table exists only
+# so unit armor-type references resolve at load (litd/data validates against it).
+attack-types = ["normal"]
+armor-types = ["unarmored"]
+
+[coefficients]
+normal = [1000]

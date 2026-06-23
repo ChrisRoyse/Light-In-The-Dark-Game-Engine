@@ -282,6 +282,15 @@ func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extr
 		}
 	}
 
+	// 3c. Special-effect model registry (#530): bind each declared model key to a
+	//     deterministic sim ModelID (1..N over the loader's Key-sorted rows) so the
+	//     world's main.lua can Game_AddSpecialEffect(key, pos) and get a live
+	//     handle. Without this the Lua-bound AddSpecialEffect fails closed on every
+	//     authored world (unknown model). Registered before the scripts run.
+	for i := range tables.EffectModels {
+		g.RegisterEffectModel(tables.EffectModels[i].Key, uint16(i+1))
+	}
+
 	// 4. Sandbox + bindings + world-loader seam, then run the world's scripts
 	//    through the public g.LoadWorld verb.
 	// RandomSource wires Lua math.random to the sim PRNG (#400/#263): a loaded

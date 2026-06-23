@@ -1,0 +1,12 @@
+# effect-demo special-effect model registry (#530). Each [[model]] binds a script
+# key — the string main.lua passes to Game_AddSpecialEffect — to a render asset
+# path. The loader sorts by key and worldhost assigns each a deterministic sim
+# ModelID (1..N) at load, so AddSpecialEffect resolves from authored Lua with no
+# Go rebuild. Sorted ids here: "fx/glow" -> 1, "fx/spark" -> 2.
+[[model]]
+key = "fx/glow"
+asset = "fx/glow.glb"
+
+[[model]]
+key = "fx/spark"
+asset = "fx/spark.glb"
