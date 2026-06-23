@@ -73,6 +73,7 @@ type renderDemoDump struct {
 	Camera    litrender.RTSCameraDump `json:"camera"`
 	Selection *selectionRuntimeDump   `json:"selection,omitempty"`
 	Groups    *groupRuntimeDump       `json:"groups,omitempty"`
+	InfoPanel *infoPanelRuntimeDump   `json:"infoPanel,omitempty"`
 	Orders    *orderRuntimeDump       `json:"orders,omitempty"`
 	Queue     *queueRuntimeDump       `json:"queue,omitempty"`
 	Terrain   *terrainRuntimeDump     `json:"terrain,omitempty"`
@@ -542,6 +543,29 @@ type groupRuntimeDump struct {
 	Errors  []string             `json:"errors,omitempty"`
 }
 
+// infoPanelRuntimeDump (#195) captures the info-panel widget across its three
+// modes: single-unit stat line, multi-select grid (with a re-select click), and
+// building production queue (with a cancel emitting an OpCancel record).
+type infoPanelRuntimeDump struct {
+	Single     infoPanelPhaseDump   `json:"single"`
+	Multi      infoPanelPhaseDump   `json:"multi"`
+	Building   infoPanelPhaseDump   `json:"building"`
+	CellClick  lithud.InfoCellClick `json:"cellClick"`
+	CancelOp   uint8                `json:"cancelOp"`
+	CancelUnit uint32               `json:"cancelUnit"`
+	CancelData uint16               `json:"cancelData"`
+	OK         bool                 `json:"ok"`
+	Errors     []string             `json:"errors,omitempty"`
+}
+
+type infoPanelPhaseDump struct {
+	Mode    uint8  `json:"mode"`
+	Text    string `json:"text,omitempty"`
+	Visible bool   `json:"visible"`
+	Cells   int    `json:"cells"`
+	Queue   int    `json:"queue"`
+}
+
 // groupBarRuntimeDump (#197) is the control-group bar + idle-worker button FSV:
 // the bar's visible badge model at two phases driven off real ControlGroups
 // counts (two groups, then half of group 2 dies and its badge count prunes),
@@ -731,6 +755,7 @@ func main() {
 	autotest := flag.Bool("autotest", false, "exit non-zero if dumped counters do not match the hand count")
 	autotestSelect := flag.Bool("autotest-select", false, "render the drag-select input FSV fixture")
 	autotestGroups := flag.Bool("autotest-groups", false, "render the control-group input FSV fixture")
+	autotestInfoPanel := flag.Bool("autotest-infopanel", false, "render the info-panel (#195) widget FSV fixture")
 	autotestOrders := flag.Bool("autotest-orders", false, "render the smart-right-click order FSV fixture")
 	autotestQueue := flag.Bool("autotest-queue", false, "render the shift-queue order FSV fixture")
 	autotestAudio := flag.Bool("autotest-audio", false, "run the basecamp audio domain FSV fixture and dump gain/pan/cull JSON")
@@ -850,6 +875,7 @@ func main() {
 	var canvasFSV canvasDump
 	var selectionFSV *selectionRuntimeDump
 	var groupFSV *groupRuntimeDump
+	var infoPanelFSV *infoPanelRuntimeDump
 	var orderFSV *orderRuntimeDump
 	var queueFSV *queueRuntimeDump
 	var terrainFSV *terrainRuntimeDump
@@ -885,6 +911,11 @@ func main() {
 		buildLights(scene)
 		groupFSV = buildGroupFSV(scene, cameraRig)
 		spec = sceneSpec{name: "group-recall", expected: expectedStats(0, 0, 0, 0, 0, 0)}
+		addStatsHUD(scene, spec)
+	} else if *autotestInfoPanel {
+		buildLights(scene)
+		infoPanelFSV = buildInfoPanelFSV()
+		spec = sceneSpec{name: "info-panel", expected: expectedStats(0, 0, 0, 0, 0, 0)}
 		addStatsHUD(scene, spec)
 	} else if *autotestOrders {
 		if strings.ToLower(strings.TrimSpace(*sceneName)) != "economy" {
@@ -1033,7 +1064,7 @@ func main() {
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, InfoPanel: infoPanelFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -3153,6 +3184,55 @@ func buildGroupFSV(scene *core.Node, cameraRig *litrender.RTSCamera) *groupRunti
 		dump.Errors = append(dump.Errors, dump.Bar.Errors...)
 	}
 	return dump
+}
+
+// buildInfoPanelFSV (#195) drives the InfoPanel widget through its three modes
+// with synthetic selection snapshots and dumps the computed model. SoT = the
+// dumped mode/text/cell/queue counts + the emitted cancel record.
+func buildInfoPanelFSV() *infoPanelRuntimeDump {
+	d := &infoPanelRuntimeDump{OK: true}
+	var text lithud.TextBuffer
+	p := lithud.NewInfoPanel(&text, lithud.InfoPanelStrings{Life: "HP", Mana: "MP", Armor: "AR", Attack: "AT", Level: "Lv"}, 1)
+
+	phase := func(u lithud.InfoPanelUpdate) infoPanelPhaseDump {
+		return infoPanelPhaseDump{Mode: uint8(u.Mode), Text: text.String(), Visible: u.Visible, Cells: u.Cells, Queue: u.Queue}
+	}
+
+	// Single unit.
+	d.Single = phase(p.Update(lithud.InfoPanelState{
+		SelectionVersion: 1, Mode: lithud.InfoSingle,
+		Stats: lithud.InfoUnitStats{Name: "knight", Level: 2, Life: 100, MaxLife: 120, Mana: 40, MaxMana: 60, Armor: 3, AttackMin: 12, AttackMax: 15},
+	}))
+	if d.Single.Text != "HP 100/120  MP 40/60  AR 3  AT 12-15  Lv 2" {
+		d.OK = false
+		d.Errors = append(d.Errors, "infopanel single text="+d.Single.Text)
+	}
+
+	// Multi-select grid + a re-select click on the third cell.
+	d.Multi = phase(p.Update(lithud.InfoPanelState{
+		SelectionVersion: 2, Mode: lithud.InfoMulti, ActiveSubgroup: 100,
+		Cells: []lithud.InfoSelCell{{ID: 11, Subgroup: 100}, {ID: 12, Subgroup: 100}, {ID: 20, Subgroup: 200}},
+	}))
+	d.CellClick = p.ClickCell(2)
+	if d.Multi.Cells != 3 || !d.CellClick.Accepted || d.CellClick.ID != 20 || d.CellClick.Subgroup != 200 {
+		d.OK = false
+		d.Errors = append(d.Errors, "infopanel multi/cell-click wrong")
+	}
+
+	// Building production queue + cancel slot 1.
+	building := sim.EntityID(77)
+	d.Building = phase(p.Update(lithud.InfoPanelState{
+		QueueVersion: 3, Mode: lithud.InfoBuilding, Building: building,
+		Queue: []lithud.InfoQueueSlot{{Slot: 0, Label: "footman", Progress: 45}, {Slot: 1, Label: "footman"}, {Slot: 2, Label: "rifle"}},
+	}))
+	if rec, ok := p.CancelSlot(1); ok {
+		d.CancelOp, d.CancelUnit, d.CancelData = rec.Opcode, uint32(rec.Units[0]), rec.Data
+	}
+	if d.Building.Queue != 3 || d.CancelOp != sim.OpCancel || d.CancelUnit != 77 || d.CancelData != 1 {
+		d.OK = false
+		d.Errors = append(d.Errors, "infopanel building/cancel wrong")
+	}
+	return d
 }
 
 // buildGroupBarFSV (#197) drives the GroupBar + IdleWorkerButton widgets off
