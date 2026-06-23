@@ -74,15 +74,16 @@ type RenderEvent struct {
 // RenderEvent kind values. Append-only: render consumers may switch on
 // these stable byte values in recorded snapshots.
 const (
-	RenderEffectSpawn   uint8 = 1 // Ent = effect, Data = ModelID
-	RenderEffectEnd     uint8 = 2 // Ent = effect, Data = ModelID
-	RenderUnitDeath     uint8 = 3 // Ent = dying unit, Data = unit-type id (#313 sound/anim cue)
-	RenderUnitReady     uint8 = 4 // Ent = trained unit, Data = unit-type id (#313 "ready" cue)
-	RenderUnitAttack    uint8 = 5 // Ent = attacker, Data = unit-type id (#313 attack-swing cue)
-	RenderSpellCue      uint8 = 6 // Ent = cued unit, Data = unit-type id (#479 script-emitted spell VFX cue)
-	RenderUnitOrderAck  uint8 = 7 // Ent = ordered unit, Data = unit-type id (#313 order-ack cue; render filters to local player)
-	RenderUnderAttack   uint8 = 8 // Ent = damaged unit, Data = unit-type id (#313 under-attack stinger; sim-throttled per defender, render filters to local player)
-	RenderMissileImpact uint8 = 9 // Ent = impacting missile, Data = MissileImpact* id, Pos = impact point (#309 impact one-shot VFX)
+	RenderEffectSpawn       uint8 = 1  // Ent = effect, Data = ModelID
+	RenderEffectEnd         uint8 = 2  // Ent = effect, Data = ModelID
+	RenderUnitDeath         uint8 = 3  // Ent = dying unit, Data = unit-type id (#313 sound/anim cue)
+	RenderUnitReady         uint8 = 4  // Ent = trained unit, Data = unit-type id (#313 "ready" cue)
+	RenderUnitAttack        uint8 = 5  // Ent = attacker, Data = unit-type id (#313 attack-swing cue)
+	RenderSpellCue          uint8 = 6  // Ent = cued unit, Data = unit-type id (#479 script-emitted spell VFX cue)
+	RenderUnitOrderAck      uint8 = 7  // Ent = ordered unit, Data = unit-type id (#313 order-ack cue; render filters to local player)
+	RenderUnderAttack       uint8 = 8  // Ent = damaged unit, Data = unit-type id (#313 under-attack stinger; sim-throttled per defender, render filters to local player)
+	RenderMissileImpact     uint8 = 9  // Ent = impacting missile, Data = MissileImpact* id, Pos = impact point (#309 impact one-shot VFX)
+	RenderDestructableDeath uint8 = 10 // Ent = dying destructable, Data = destructable type id, Pos = its location (#72 chunk doodad-mesh rebuild + death VFX)
 )
 
 // Snapshot is one published frame of sim state plus that tick's

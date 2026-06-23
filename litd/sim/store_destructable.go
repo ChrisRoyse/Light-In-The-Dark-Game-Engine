@@ -190,6 +190,9 @@ func (w *World) KillDestructable(id EntityID) bool {
 	if d.Blocks[r] && d.Footprint[r] > 0 {
 		w.clearStatic(w.destructableRect(r))
 	}
+	// Presentation cue (non-hashing): render learns the destructable died so it
+	// can swap/remove its merged doodad mesh and play a death burst (#72).
+	w.EmitRenderEventAt(RenderDestructableDeath, id, d.Type[r], d.Pos[r])
 	return true
 }
 
