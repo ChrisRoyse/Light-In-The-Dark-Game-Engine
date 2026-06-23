@@ -1,0 +1,38 @@
+--- a/renderer/renderer.go
++++ b/renderer/renderer.go
+@@ -50,6 +50,7 @@
+ 	grmatsTransp []*graphic.GraphicMaterial // Transparent graphic materials to be rendered
+ 	zLayers      map[int][]gui.IPanel       // All IPanels to be rendered organized by Z-layer
+ 	zLayerKeys   []int                      // Z-layers being used (initially in no particular order, sorted later)
++	frustum      *math32.Frustum            // LITD-PATCH (#537): reused culling frustum (planes set in place each frame)
+ }
+ 
+ // LITD-PATCH: renderPass identifies the coarse renderer bucket used for per-frame stats.
+@@ -119,6 +120,12 @@
+ 	r.zLayers = make(map[int][]gui.IPanel)
+ 	r.zLayers[0] = make([]gui.IPanel, 0)
+ 	r.zLayerKeys = append(r.zLayerKeys, 0)
++	// LITD-PATCH (#537): allocate the culling frustum's 6 planes once here so
++	// Render can re-set them in place each frame (SetFromMatrix) instead of
++	// NewFrustumFromMatrix allocating a fresh []Plane every frame. R-GC-1.
++	var identity math32.Matrix4
++	identity.Identity()
++	r.frustum = math32.NewFrustumFromMatrix(&identity)
+ 
+ 	return r
+ }
+@@ -181,10 +188,12 @@
+ 	// Prepare for frustum culling
+ 	var proj math32.Matrix4
+ 	proj.MultiplyMatrices(&r.rinfo.ProjMatrix, &r.rinfo.ViewMatrix)
+-	frustum := math32.NewFrustumFromMatrix(&proj)
++	// LITD-PATCH (#537): re-set the reused frustum's planes in place rather than
++	// allocating a new Frustum + []Plane each frame. R-GC-1.
++	r.frustum.SetFromMatrix(&proj)
+ 
+ 	// Classify scene and all scene nodes, culling renderable IGraphics which are fully outside of the camera frustum
+-	r.classifyAndCull(scene, frustum, 0)
++	r.classifyAndCull(scene, r.frustum, 0)
+ 
+ 	// Set light counts in shader specs
+ 	r.specs.AmbientLightsMax = len(r.ambLights)
