@@ -1,0 +1,34 @@
+# Synthetic FSV scenario: a periodic timer trigger kills a P1 victim; a P2
+# survivor is never touched. Known input -> known output (fsv.md X+X=Y):
+#   BEFORE (after setup, 0 ticks): victim alive, survivor alive.
+#   AFTER  (4 ticks; 0.1s timer = 2 ticks): timer fired -> victim dead, survivor alive.
+# Observable SoT delta: top hash changes; the entity sub-hash changes;
+# double-run hashes agree (deterministic).
+#
+# NOTE: top-level keys (name/seed/ticks/lua/expect) MUST precede the [[units]]
+# array — a top-level scalar written after [[units]] is nested under the array
+# element by TOML rules; the harness rejects that misplacement loudly.
+name = "timer-kill-p1"
+seed = 483
+ticks = 4
+
+lua = """
+local victim   = Game_CreateUnit(Game_Player(1), Game_UnitType("hfoo"), {x=0,  y=0}, 0)
+local survivor = Game_CreateUnit(Game_Player(2), Game_UnitType("hfoo"), {x=32, y=0}, 0)
+local t = CreateTrigger()
+TriggerRegisterTimerEvent(t, 0.1)
+function kill_victim(e)
+  Unit_Kill(victim)
+end
+TriggerAddAction(t, kill_victim)
+"""
+
+[expect]
+notes = "victim (P1) alive at before; after 4 ticks the 0.1s timer fires and kills it (dead). survivor (P2) untouched. Top hash + entity sub-hash change; deterministic double-run."
+
+[[units]]
+id = "hfoo"
+life = 100
+moveSpeed = 8
+turnRate = 65535
+collisionSize = 16

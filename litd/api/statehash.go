@@ -1,6 +1,8 @@
 package litd
 
 import (
+	"io"
+
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
@@ -43,4 +45,18 @@ func (g *Game) HashSnapshot() (top uint64, subs []uint64) {
 // index order: subs[i] from HashSnapshot is the digest of system HashSystemNames()[i].
 func HashSystemNames() []string {
 	return append([]string(nil), sim.HashSystems...)
+}
+
+// DumpState writes the full authoritative sim state as JSON (R-FSV-2) to wr —
+// the public-boundary accessor for sim.World.DumpState. It is the Source-of-Truth
+// read an FSV agent inspects after a trigger: the dump path allocates freely (it
+// is off the steady-state R-GC-1 gate) but NEVER mutates the world, so hashing
+// before and after a dump is bit-identical. A nil/uninitialized game writes the
+// empty-world dump. This is the structured-text SoT that lets FSV avoid the far
+// costlier screenshot read whenever the question is non-pixel (#516).
+func (g *Game) DumpState(wr io.Writer) error {
+	if g == nil || g.w == nil {
+		return nil
+	}
+	return g.w.DumpState(wr)
 }
