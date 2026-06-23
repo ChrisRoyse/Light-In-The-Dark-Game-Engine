@@ -12,3 +12,8 @@ tick_ms_max = 10
 
 # Heap allocations per sim tick at steady state (R-GC-1).
 allocs_per_tick = 0
+
+# Release binary + base assets hard byte ceiling (PRD §5.3: ≤300 MB).
+# Summed by tools/sizecheck (#310) = binary size + Σ asset Bytes from
+# assets/MANIFEST. 300 * 1024 * 1024.
+binary_assets_bytes_max = 314572800

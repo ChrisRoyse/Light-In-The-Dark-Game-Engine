@@ -45,6 +45,10 @@ var suites = []suite{
 type budgets struct {
 	tickMsMax     int64
 	allocsPerTick int64
+	// binaryAssetsBytesMax is consumed by tools/sizecheck (#310), not here; the
+	// harness accepts the key so the shared single-source budgets.toml stays
+	// readable by both tools (the file is THE place a budget literal lives).
+	binaryAssetsBytesMax int64
 }
 
 // parseBudgets is a strict TOML-subset reader: one [budgets] table,
@@ -100,6 +104,8 @@ func parseBudgets(path string) (budgets, error) {
 			b.tickMsMax = n
 		case "allocs_per_tick":
 			b.allocsPerTick = n
+		case "binary_assets_bytes_max":
+			b.binaryAssetsBytesMax = n // read by tools/sizecheck, not the harness
 		default:
 			return b, fmt.Errorf("%s:%d: unknown budget key %q", path, line, key)
 		}

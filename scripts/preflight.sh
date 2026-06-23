@@ -189,19 +189,19 @@ if [ $FAST -eq 0 ]; then
   # their own issues — see each issue body. We do NOT dress a headless proxy up
   # as a whole-game measurement.
   #
-  # #310 (binary size): the firstflame BINARY is measurable now; the 300 MB
-  # binary+assets target is asset-dominated and gated on assets-present + the
-  # MANIFEST byte-size field (#539). Gate the binary at a generous ceiling that
-  # catches gross bloat (current firstlight ~8 MiB).
-  step "binary-size gate (#310: firstlight <= 50 MiB)" bash -c '
+  # #310 (binary+assets size budget): tools/sizecheck sums the firstlight binary
+  # size + the per-category asset bytes declared in assets/MANIFEST (the Bytes
+  # field, #539 — so the gitignored asset files need not be present) and gates the
+  # total against binary_assets_bytes_max in budgets.toml (300 MB, the §5.3
+  # ceiling). The single budget literal lives ONLY in budgets.toml. Asset Bytes
+  # are largely unspecified today, so the number is binary-dominated (~8 MiB) and
+  # tightens automatically as MANIFEST entries gain Bytes. Cold-start/map-load
+  # timing stay gated on render + the firstflame archive (#209).
+  step "size budget binary+assets (#310)" bash -c '
     set -e
     out="$(mktemp -d)/firstlight"
     go build -o "$out" ./cmd/firstlight
-    sz=$(stat -c %s "$out"); ceil=$((50*1024*1024)); mib=$((sz/1024/1024))
-    if [ "$sz" -gt "$ceil" ]; then
-      echo "firstlight binary ${mib} MiB exceeds 50 MiB ceiling" >&2; exit 1
-    fi
-    echo "firstlight ${sz} bytes (${mib} MiB) <= 50 MiB"'
+    go run ./tools/sizecheck -bin "$out"'
 
   # #210 (full-match replay verified headlessly): the determinism MECHANISM —
   # record a command stream to a versioned .litdreplay, then re-simulate and
