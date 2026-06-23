@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"time"
 
+	litapi "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	litaudio "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/audio"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
@@ -100,6 +102,7 @@ func main() {
 	matPath := flag.String("material", matUnlit, "material path: pbr or unlit")
 	projection := flag.String("projection", projPersp, "camera projection: persp or ortho")
 	nogl := flag.Bool("nogl", false, "headless: replay the stream without GL; draw/ms/visible/culled columns are n/a")
+	audio := flag.Bool("audio", false, "drive an audio Manager per frame so the voiceCount column reports REAL concurrent-voice admission (null backend, no assets) instead of n/a")
 	genStream := flag.Bool("genstream", false, "author the canonical recorded streams under data/maps/bench/ and exit")
 	all := flag.Bool("all", false, "run every segment x {pbr,unlit}x{persp,ortho} combo (+ -nogl parity) into -shots dir")
 	gate := flag.Bool("gate", false, "evaluate M4 budget gates over the matrix; non-zero exit if an enforced gate fails")
@@ -210,6 +213,19 @@ func main() {
 	w, h := a.GetSize()
 	a.Gls().Viewport(0, 0, int32(w), int32(h))
 
+	// Optional audio-load model (#538): a real admission Manager so the voiceCount
+	// column reflects the live concurrent-voice count under this scene's spatial
+	// audio load, rather than a fabricated or n/a value. Null backend (no assets):
+	// each frame emits one positional cue per skinned unit at its grid position; the
+	// Manager coalesces the same cue across frames and caps concurrent voices at its
+	// 32-source pool, so VoiceCount is the steady saturation count for the scene.
+	var audioMgr *litaudio.Manager
+	if *audio {
+		audioMgr = litaudio.NewManager(nil)
+		audioMgr.SetListener(litaudio.Vec3{X: 0, Y: 0, Z: 0}) // scene center, where the camera looks
+		defer audioMgr.Close()
+	}
+
 	frame := 0
 	a.Run(func(rend *renderer.Renderer, dt time.Duration) {
 		if frame >= stream.Frames {
@@ -230,6 +246,10 @@ func main() {
 		var m1 runtime.MemStats
 		runtime.ReadMemStats(&m1)
 		fs := litrender.ReadFrameStats(rend)
+		var voiceCount *int // nil = n/a (no -audio); a real count when the Manager is driven
+		if audioMgr != nil {
+			voiceCount = intPtr(driveAudioLoad(audioMgr, sc))
+		}
 		dump.PerFrame = append(dump.PerFrame, frameStat{
 			Frame:        frame,
 			FrameMS:      frameMS,
@@ -239,7 +259,7 @@ func main() {
 			Visible:      intPtr(fs.VisibleGraphics),
 			Culled:       intPtr(fs.CulledGraphics),
 			Allocs:       int64(m1.Mallocs - m0.Mallocs),
-			VoiceCount:   nil, // n/a: render bench runs no audio admission manager
+			VoiceCount:   voiceCount,
 		})
 		// Last-frame stats stand in for the legacy single-frame top-level fields.
 		dump.Stats = fs
@@ -648,6 +668,27 @@ func benchMat(matPath string, c math32.Color) material.IMaterial {
 	m := material.NewStandard(&c)
 	m.SetUseLights(material.UseLightNone)
 	return m
+}
+
+// driveAudioLoad emits one positional cue per skinned unit at its grid position
+// into the Manager and returns the resulting live voice count (#538). Cues are
+// stable per unit, so re-driving the same scene each frame coalesces rather than
+// restarts; the count is therefore the steady saturation of the audio system's
+// world-voice partition for this scene's spatial load. Pure (no GL), so it is
+// unit-testable headlessly.
+func driveAudioLoad(m *litaudio.Manager, sc benchScenario) int {
+	for i := 0; i < sc.SkinnedUnits; i++ {
+		x, z := gridPos(i, sc.Columns, sc.SkinnedUnits, 26, 340)
+		m.Handle(litapi.AudioEvent{
+			Kind:    litapi.AudioPlayAt,
+			Cue:     uint32(i), // stable per-unit cue: coalesces across frames, never restarts
+			Volume:  1,
+			HasPos:  true,
+			Pos:     litapi.Vec2{X: float64(x), Y: float64(z)},
+			Channel: litapi.ChannelEffects,
+		})
+	}
+	return m.Dump().VoiceCount
 }
 
 func gridPos(i, columns, total int, spacing, zBase float32) (float32, float32) {
