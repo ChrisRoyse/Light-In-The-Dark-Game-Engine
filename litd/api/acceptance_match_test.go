@@ -14,6 +14,7 @@ package litd_test
 //   read straight from the result store).
 
 import (
+	"bytes"
 	"testing"
 
 	litd "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -77,15 +78,14 @@ func worldPt(cx, cy int32) fixed.Vec2 {
 // last-standing rule, drives combat, and returns the final tick reached, the two
 // results, and the world top-hash. seed governs nothing here except as a label;
 // the setup is fully deterministic so two calls return identical values.
-func playMatch(t *testing.T, capTicks, naSize, nbSize int) (tick int, r1, r2 litd.MatchResult, counts [2]int) {
+// setupMatch builds and arms an asymmetric match but does NOT step it. High life
+// so the battle is fought out over many attack cycles, not a one-shot stomp; the
+// size edge makes the larger force the deterministic winner (Lanchester's square
+// law: concentrated fire compounds the numbers edge).
+func setupMatch(t *testing.T, naSize, nbSize int) (*sim.World, *litd.Game, litd.Player, litd.Player) {
 	t.Helper()
 	w, g := matchWorld(t)
 	p1, p2 := g.Player(1), g.Player(2)
-
-	// Army A (player 1) vs Army B (player 2), facing. High life so the battle is
-	// fought out over many attack cycles, not a one-shot stomp; the size edge
-	// makes the larger force the deterministic winner (Lanchester's square law:
-	// concentrated fire compounds the numbers edge).
 	var armyA, armyB []sim.EntityID
 	for i := 0; i < naSize; i++ {
 		armyA = append(armyA, soldier(t, w, 1, 45, int32(47+i), 150))
@@ -101,11 +101,15 @@ func playMatch(t *testing.T, capTicks, naSize, nbSize int) (tick int, r1, r2 lit
 		w.IssueOrder(id, sim.Order{Kind: sim.OrderAttack, Point: worldPt(45, 49), Target: 0}, false)
 	}
 	melee.VictoryDefeatConditions(g, []litd.Player{p1, p2})
-
 	if p1.Result() != litd.ResultPlaying || p2.Result() != litd.ResultPlaying {
 		t.Fatalf("decided at setup: p1=%v p2=%v", p1.Result(), p2.Result())
 	}
+	return w, g, p1, p2
+}
 
+func playMatch(t *testing.T, capTicks, naSize, nbSize int) (tick int, r1, r2 litd.MatchResult, counts [2]int) {
+	t.Helper()
+	w, g, p1, p2 := setupMatch(t, naSize, nbSize)
 	for tick = 1; tick <= capTicks; tick++ {
 		w.Step()
 		if p1.Result() != litd.ResultPlaying || p2.Result() != litd.ResultPlaying {
@@ -151,6 +155,71 @@ func TestAcceptanceMatchDeterministicFSV(t *testing.T) {
 	t.Logf("FSV #212 determinism: runA=(tick %d,%v/%v,%v) runB=(tick %d,%v/%v,%v)", t1, a1, b1, c1, t2, a2, b2, c2)
 	if t1 != t2 || a1 != a2 || b1 != b2 || c1 != c2 {
 		t.Fatalf("non-deterministic match: runA tick=%d %v/%v %v vs runB tick=%d %v/%v %v", t1, a1, b1, c1, t2, a2, b2, c2)
+	}
+}
+
+// Mid-match save/load (issue edge 1): saving the sim state mid-battle and
+// restoring it into a fresh world resumes to the SAME victor in the SAME total
+// number of ticks — the match is just inputs+state, so a save is a faithful
+// snapshot. SoT = the resumed Player.Result and the terminal tick vs the
+// unbroken run.
+func TestAcceptanceMatchSaveLoadMidMatchFSV(t *testing.T) {
+	if testing.Short() {
+		t.Skip("acceptance match runs combat to elimination; -short skips")
+	}
+	const fp = 0xACCE55ED
+
+	// Unbroken reference.
+	refTick, refR1, refR2, _ := playMatch(t, 20000, 5, 3)
+
+	// Run an identical match to a mid-battle tick, then save the sim state.
+	w, _, p1, p2 := setupMatch(t, 5, 3)
+	const saveAt = 40
+	for i := 0; i < saveAt; i++ {
+		w.Step()
+	}
+	if p1.Result() != litd.ResultPlaying || p2.Result() != litd.ResultPlaying {
+		t.Fatalf("match already decided by tick %d; choose an earlier save point", saveAt)
+	}
+	var buf bytes.Buffer
+	if err := w.SaveState(&buf, fp); err != nil {
+		t.Fatalf("SaveState: %v", err)
+	}
+	saved := buf.Len()
+
+	// Fresh world (same world config). The save/load contract requires the
+	// loading world to RE-REGISTER the same handler set (same order) BEFORE
+	// LoadState, so the death-driven win condition is installed first; its
+	// immediate zero-unit eval stages spurious defeats on the still-empty world,
+	// but LoadState then overwrites the entire result store with the saved
+	// mid-battle state (both players still Playing).
+	w2, _ := matchWorld(t)
+	g2 := litd.NewGameForTest(w2)
+	q1, q2 := g2.Player(1), g2.Player(2)
+	melee.VictoryDefeatConditions(g2, []litd.Player{q1, q2})
+	if err := w2.LoadState(&buf, fp); err != nil {
+		t.Fatalf("LoadState: %v", err)
+	}
+	if q1.Result() != litd.ResultPlaying || q2.Result() != litd.ResultPlaying {
+		t.Fatalf("LoadState did not restore mid-battle results: p1=%v p2=%v", q1.Result(), q2.Result())
+	}
+
+	tick := saveAt
+	for tick < 20000 {
+		w2.Step()
+		tick++
+		if q1.Result() != litd.ResultPlaying || q2.Result() != litd.ResultPlaying {
+			break
+		}
+	}
+	t.Logf("FSV #212 save/load: unbroken terminal tick=%d (p1=%v p2=%v); saved %d bytes @tick %d; resumed terminal tick=%d (p1=%v p2=%v)",
+		refTick, refR1, refR2, saved, saveAt, tick, q1.Result(), q2.Result())
+
+	if tick != refTick {
+		t.Fatalf("save/load changed match length: resumed=%d vs unbroken=%d", tick, refTick)
+	}
+	if q1.Result() != refR1 || q2.Result() != refR2 {
+		t.Fatalf("save/load changed outcome: resumed %v/%v vs unbroken %v/%v", q1.Result(), q2.Result(), refR1, refR2)
 	}
 }
 
