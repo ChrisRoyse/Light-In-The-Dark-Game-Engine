@@ -169,17 +169,25 @@ type missilesRuntimeDump struct {
 	AuraActive    int                    `json:"auraActive"`
 	Dropped       int                    `json:"dropped"`
 	Billboards    []missileBillboardDump `json:"billboards"`
-	OK            bool                   `json:"ok"`
-	Errors        []string               `json:"errors,omitempty"`
+	// #528 part 2 — billboards are now camera-facing sprites sampling the
+	// procedural VFX atlas. These record the sub-rect each VFX type draws from
+	// (the SoT proving the atlas-UV contract is wired, not debug boxes).
+	Textured  bool       `json:"textured"`
+	MissileUV [4]float32 `json:"missileUV"`
+	ImpactUV  [4]float32 `json:"impactUV"`
+	AuraUV    [4]float32 `json:"auraUV"`
+	OK        bool       `json:"ok"`
+	Errors    []string   `json:"errors,omitempty"`
 }
 
 type missileBillboardDump struct {
-	Key      uint32  `json:"key"`
-	X        float32 `json:"x"`
-	Y        float32 `json:"y"` // arc height
-	Z        float32 `json:"z"`
-	Progress float32 `json:"progress"`
-	Guidance uint16  `json:"guidance"`
+	Key      uint32     `json:"key"`
+	X        float32    `json:"x"`
+	Y        float32    `json:"y"` // arc height
+	Z        float32    `json:"z"`
+	Progress float32    `json:"progress"`
+	Guidance uint16     `json:"guidance"`
+	SpriteUV [4]float32 `json:"spriteUV"` // atlas sub-rect this billboard samples
 }
 
 // scriptFXRuntimeDump is the FSV SoT for the scriptfx scene (#351): the pool
@@ -2772,16 +2780,22 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 	dump.MissilesBuilt = builder.BuildInto(inputs)
 	dump.Dropped = builder.Dropped()
 
-	// Draw the missile billboards (arc height baked into Y).
-	missileGeom := geometry.NewBox(90, 90, 90)
+	// #528 part 2 — VFX are now camera-facing atlas sprites, not debug boxes. The
+	// dump records the sub-rect each VFX type samples (the atlas-UV contract SoT).
+	dump.Textured = true
+	dump.MissileUV = vec4Arr(litrender.VFXAtlasSubRect(litrender.VFXSpriteMissile))
+	dump.ImpactUV = vec4Arr(litrender.VFXAtlasSubRect(litrender.VFXSpriteImpact))
+	dump.AuraUV = vec4Arr(litrender.VFXAtlasSubRect(litrender.VFXSpriteAura))
+
+	// Draw the missile billboards (arc height baked into Y) as glow sprites.
 	for _, b := range builder.Active() {
-		mat := material.NewStandard(&math32.Color{R: 0.5, G: 0.8, B: 1.0})
-		mat.SetEmissiveColor(&math32.Color{R: 0.2, G: 0.4, B: 0.7})
-		mesh := graphic.NewMesh(missileGeom, mat)
+		sprite := vfxSpriteForGuidance(b.Guidance)
+		mesh := newVFXSprite(sprite, 110, math32.Color{R: 0.6, G: 0.85, B: 1.0})
 		mesh.SetPosition(b.X, b.Y+40, b.Z)
 		scene.Add(mesh)
 		dump.Billboards = append(dump.Billboards, missileBillboardDump{
-			Key: b.Key, X: b.X, Y: b.Y, Z: b.Z, Progress: progressOf(inputs, b.Key), Guidance: b.Guidance,
+			Key: b.Key, X: b.X, Y: b.Y, Z: b.Z, Progress: progressOf(inputs, b.Key),
+			Guidance: b.Guidance, SpriteUV: vec4Arr(litrender.VFXAtlasSubRect(sprite)),
 		})
 	}
 
@@ -2792,24 +2806,20 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 			continue
 		}
 		dump.ImpactsActive++
-		side := 40 + 60*s.LifeFrac
-		mat := material.NewStandard(&math32.Color{R: 1, G: 0.6, B: 0.15})
-		mat.SetEmissiveColor(&math32.Color{R: 0.9, G: 0.4, B: 0.1})
-		mesh := graphic.NewMesh(geometry.NewBox(side, side, side), mat)
+		side := 60 + 90*s.LifeFrac
+		mesh := newVFXSprite(litrender.VFXSpriteImpact, side, math32.Color{R: 1, G: 0.6, B: 0.15})
 		mesh.SetPosition(s.Pos.X, s.Pos.Y, s.Pos.Z)
 		scene.Add(mesh)
 	}
 
-	// Draw the follow aura.
+	// Draw the follow aura as a ring sprite.
 	auras := auraPool.SnapshotInto(make([]litrender.BuffAuraSlotInfo, 0, litrender.MaxBuffAuras))
 	for _, s := range auras {
 		if !s.Active || !s.Visible {
 			continue
 		}
 		dump.AuraActive++
-		mat := material.NewStandard(&math32.Color{R: 0.4, G: 0.95, B: 0.55})
-		mat.SetEmissiveColor(&math32.Color{R: 0.15, G: 0.5, B: 0.2})
-		mesh := graphic.NewMesh(geometry.NewBox(s.Size, s.Size, s.Size), mat)
+		mesh := newVFXSprite(litrender.VFXSpriteAura, s.Size*2.2, math32.Color{R: 0.4, G: 0.95, B: 0.55})
 		mesh.SetPosition(s.Pos.X, s.Pos.Y, s.Pos.Z)
 		scene.Add(mesh)
 	}
@@ -2834,6 +2844,29 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 	}
 	return sceneSpec{name: "missiles", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
 }
+
+// newVFXSprite builds a camera-facing billboard quad (g3n Sprite always faces the
+// camera) that samples one cell of the procedural VFX atlas (#528 part 2). The
+// texture's alpha gives the round sprite shape (transparent quad corners);
+// emissive + no-lights make it self-glow on the dark ground regardless of scene
+// lighting, and transparent routes it through the alpha-blend pass.
+func newVFXSprite(sprite litrender.VFXSprite, size float32, tint math32.Color) *graphic.Sprite {
+	tex := litrender.NewVFXAtlasTexture(sprite)
+	mat := material.NewStandard(&tint)
+	mat.AddTexture(tex)
+	mat.SetEmissiveColor(&tint)
+	mat.SetUseLights(material.UseLightNone)
+	mat.SetTransparent(true)
+	return graphic.NewSprite(size, size, mat)
+}
+
+// vfxSpriteForGuidance maps a missile's guidance kind to its atlas sprite cell.
+// All current guidance kinds share the glow cell; the switch is the seam where a
+// pierce/homing-specific sprite would slot in.
+func vfxSpriteForGuidance(_ uint16) litrender.VFXSprite { return litrender.VFXSpriteMissile }
+
+// vec4Arr flattens a math32.Vector4 to a JSON-friendly [4]float32 for the dump.
+func vec4Arr(v math32.Vector4) [4]float32 { return [4]float32{v.X, v.Y, v.Z, v.W} }
 
 // buildScriptFXFSV exercises the #351 script-effect pool to exhaustion: it
 // spawns a grid of persistent effects, then floods one-shots past the free-slot
