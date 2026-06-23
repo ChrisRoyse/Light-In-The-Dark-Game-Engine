@@ -124,3 +124,115 @@ func (g *Game) emitUI(ev UIMessageEvent) {
 		g.onUI(ev)
 	}
 }
+
+// --- g.UI() screen surface (#526, R-UI-1) ---------------------------------
+//
+// The text-message surface above ships the sim-inert *event* half of the UI;
+// g.UI() extends the same posture to whole screens (main menu, skirmish setup,
+// victory/defeat terminal screen, HUD panels) so the menu / match-flow / settings
+// issues (#201, #211, #311) have the public surface their decks call for. It is
+// the API foundation only: like OnAudio/OnCamera/OnUI, a screen request is
+// validated, fanned to a resolved UIScreenEvent, and forwarded to an optional
+// sink the render layer installs (the G3N/hud canvas binding is the render-side
+// consumer, downstream of this surface). Strings are locale KEYS (D-17) — the
+// render layer resolves them; the API never carries resolved user-facing text
+// or any G3N type (R-API-6). Sim-inert: headless (nil sink) every call is a
+// deterministic no-op that can never touch the state hash.
+
+// UIScreenEventKind tags a UIScreenEvent.
+type UIScreenEventKind uint8
+
+const (
+	// UIScreenShow builds and shows a screen (replacing one with the same ID).
+	UIScreenShow UIScreenEventKind = iota
+	// UIScreenHide hides/destroys the screen with the carried ID.
+	UIScreenHide
+)
+
+// UIButton is one button on a screen: a stable ID for click routing, a locale
+// key for the label (D-17), and an optional application command tag the render
+// layer emits back through the input pipeline when the button is clicked.
+type UIButton struct {
+	ID       string // stable, screen-unique button id
+	LabelKey string // locale key for the label
+	Command  string // optional app command tag emitted on click
+}
+
+// UIScreen specifies a screen (menu / terminal / panel). All text fields are
+// locale KEYS, not resolved strings.
+type UIScreen struct {
+	ID          string     // stable screen id (Show replaces, Hide targets)
+	TitleKey    string     // locale key for the title
+	SubtitleKey string     // locale key for the subtitle (optional)
+	Buttons     []UIButton // ordered buttons (optional)
+}
+
+// UIScreenEvent is one resolved screen request forwarded to the sink. It
+// carries no sim or G3N state. For UIScreenHide only Screen.ID is meaningful.
+type UIScreenEvent struct {
+	Kind   UIScreenEventKind
+	Screen UIScreen
+}
+
+// OnUIScreen installs the render/test sink for the g.UI() screen surface. nil
+// restores headless no-op behavior. Sim-inert: installing a sink cannot change
+// the state hash.
+func (g *Game) OnUIScreen(f func(UIScreenEvent)) {
+	if g != nil {
+		g.onUIScreen = f
+	}
+}
+
+// UI is the screen-builder handle returned by Game.UI() (R-UI-1). Like every
+// public noun it is a small copyable handle (a back-pointer to the Game); its
+// methods forward resolved UIScreenEvents to the sink.
+type UI struct{ g *Game }
+
+// UI returns the screen-builder handle. JASS: the frame/dialog natives that
+// have a v1 backend collapse onto this surface.
+func (g *Game) UI() UI { return UI{g: g} }
+
+// Valid reports whether the handle is attached to a live game (R-API-5). A
+// zero-value UI{} (or one whose game was torn down) is invalid and makes every
+// screen verb a no-op returning false.
+func (u UI) Valid() bool { return u.g != nil && u.g.w != nil }
+
+// Show validates and shows a screen. It returns whether the spec was accepted
+// (stable id, non-empty title key, every button with a non-empty id+label and
+// no duplicate id); an invalid spec is rejected with no event (fail closed).
+// The accepted return is independent of whether a sink is installed, so a
+// headless caller still gets deterministic validation feedback.
+func (u UI) Show(s UIScreen) bool {
+	if u.g == nil || u.g.w == nil {
+		return false
+	}
+	if s.ID == "" || s.TitleKey == "" {
+		return false
+	}
+	seen := make(map[string]bool, len(s.Buttons))
+	for _, b := range s.Buttons {
+		if b.ID == "" || b.LabelKey == "" || seen[b.ID] {
+			return false
+		}
+		seen[b.ID] = true
+	}
+	u.g.emitUIScreen(UIScreenEvent{Kind: UIScreenShow, Screen: s})
+	return true
+}
+
+// Hide hides the screen with the given id. Returns false for an empty id or a
+// detached handle.
+func (u UI) Hide(id string) bool {
+	if u.g == nil || u.g.w == nil || id == "" {
+		return false
+	}
+	u.g.emitUIScreen(UIScreenEvent{Kind: UIScreenHide, Screen: UIScreen{ID: id}})
+	return true
+}
+
+// emitUIScreen forwards a resolved screen event to the sink if one is installed.
+func (g *Game) emitUIScreen(ev UIScreenEvent) {
+	if g.onUIScreen != nil {
+		g.onUIScreen(ev)
+	}
+}

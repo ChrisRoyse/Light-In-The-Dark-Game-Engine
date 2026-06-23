@@ -76,10 +76,18 @@ exact   Game.OnDefeat
 exact   Game.OnEvent
 exact   Game.OnInvalidHandle
 exact   Game.OnUI
+exact   Game.OnUIScreen
 exact   Game.OnVictory
 exact   Subscription.Cancel
 exact   UnitView.OwnerPlayer
 exact   UnitView.Position
+
+# g.UI() screen surface (#526, R-UI-1): LitD-original menu/screen builder — a
+# presentation sink like OnUI, no WC3 JASS native (the JASS frame/dialog family
+# is tombstoned deferred-v2).
+exact   Game.UI
+exact   UI.Show
+exact   UI.Hide
 
 # handle marshaling seam (#267, decision #385): the opaque handle<->HandleRef
 # codec the Lua binding layer and the coroutine save system (#264) cross.

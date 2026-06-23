@@ -109,6 +109,14 @@ type Game struct {
 	// makes Print a deterministic no-op.
 	onUI func(UIMessageEvent)
 
+	// onUIScreen is the optional presentation sink for the g.UI() screen
+	// surface (#526, R-UI-1): the menu / setup / terminal-screen / HUD-panel
+	// builder. Like onUI it is sim-inert — Game.UI().Show/Hide validate + fan
+	// their request to a resolved UIScreenEvent and forward it here; nil (the
+	// headless default) makes every screen verb a deterministic no-op. The
+	// render layer's G3N/hud canvas binding installs the sink.
+	onUIScreen func(UIScreenEvent)
+
 	// Trigger noun support (#461): pubKindRev reverses simKindOf so an
 	// action can recover the public kind of the event that fired it (built
 	// lazily); trigHandlerSeq names condition/action adapters registered
