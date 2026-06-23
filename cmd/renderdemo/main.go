@@ -86,6 +86,7 @@ type renderDemoDump struct {
 	Batching  *batchingRuntimeDump    `json:"batching,omitempty"`
 	Instances *instancesRuntimeDump   `json:"instances,omitempty"`
 	Missiles  *missilesRuntimeDump    `json:"missiles,omitempty"`
+	ScriptFX  *scriptFXRuntimeDump    `json:"scriptFX,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -179,6 +180,21 @@ type missileBillboardDump struct {
 	Z        float32 `json:"z"`
 	Progress float32 `json:"progress"`
 	Guidance uint16  `json:"guidance"`
+}
+
+// scriptFXRuntimeDump is the FSV SoT for the scriptfx scene (#351): the pool
+// class counts after a one-shot flood exhausts the pool — proving the priority
+// rule (persistents all survive, one-shots evict oldest-first) at the render seam.
+type scriptFXRuntimeDump struct {
+	Scene      string   `json:"scene"`
+	Capacity   int      `json:"capacity"`
+	Persistent int      `json:"persistent"`
+	OneShot    int      `json:"oneShot"`
+	Lights     int      `json:"lights"`
+	Evicted    int      `json:"evicted"`
+	Drawn      int      `json:"drawn"`
+	OK         bool     `json:"ok"`
+	Errors     []string `json:"errors,omitempty"`
 }
 
 type atlasRuntimeDump struct {
@@ -790,7 +806,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, missiles, battle500, basecamp, campaign-menu, main-menu, terminal")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -934,6 +950,7 @@ func main() {
 	var batchingFSV *batchingRuntimeDump
 	var instancesFSV *instancesRuntimeDump
 	var missilesFSV *missilesRuntimeDump
+	var scriptFXFSV *scriptFXRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -1015,6 +1032,12 @@ func main() {
 			spec, missilesFSV, err = buildMissilesFSV(scene)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: missiles: %v\n", err)
+				os.Exit(1)
+			}
+		} else if sceneKey == "scriptfx" {
+			spec, scriptFXFSV, err = buildScriptFXFSV(scene)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: scriptfx: %v\n", err)
 				os.Exit(1)
 			}
 		} else if sceneKey == "battle500" {
@@ -1117,10 +1140,12 @@ func main() {
 				pass = pass && instancesFSV.OK && stats == spec.expected
 			} else if missilesFSV != nil {
 				pass = pass && missilesFSV.OK
+			} else if scriptFXFSV != nil {
+				pass = pass && scriptFXFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, InfoPanel: infoPanelFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, Missiles: missilesFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, InfoPanel: infoPanelFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, Missiles: missilesFSV, ScriptFX: scriptFXFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -2802,6 +2827,90 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 		dump.Errors = append(dump.Errors, fmt.Sprintf("aura active = %d, want 1", dump.AuraActive))
 	}
 	return sceneSpec{name: "missiles", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
+}
+
+// buildScriptFXFSV exercises the #351 script-effect pool to exhaustion: it
+// spawns a grid of persistent effects, then floods one-shots past the free-slot
+// count so the priority rule fires (one-shots evict oldest-first, persistents are
+// never evicted). Every surviving slot is drawn as a lit box — persistent (green)
+// vs one-shot (orange) — proving the whole FX class renders while every
+// persistent survives the flood. SoT = the pool class counts + the screenshot.
+func buildScriptFXFSV(scene *core.Node) (sceneSpec, *scriptFXRuntimeDump, error) {
+	ground := graphic.NewMesh(geometry.NewPlane(4000, 4000), material.NewStandard(&math32.Color{R: 0.06, G: 0.07, B: 0.10}))
+	ground.SetRotationX(-math32.Pi / 2)
+	scene.Add(ground)
+
+	pool := litrender.NewScriptFXPool()
+	dump := &scriptFXRuntimeDump{Scene: "scriptfx", Capacity: litrender.MaxScriptFX, OK: true}
+
+	// 100 persistent effects on a 10×10 grid; remember each position for Update.
+	const grid = 10
+	const persistents = grid * grid
+	persistPos := make(map[uint32]math32.Vector3, persistents)
+	key := uint32(0)
+	for gx := 0; gx < grid; gx++ {
+		for gz := 0; gz < grid; gz++ {
+			key++
+			x := float32(gx-grid/2)*280 + 140
+			z := float32(gz-grid/2)*280 + 140
+			persistPos[key] = math32.Vector3{X: x, Y: 30, Z: z}
+			pool.Spawn(key, litrender.ScriptFXDesc{Model: 1, Scale: 60, Color: math32.Color{R: 0.4, G: 0.95, B: 0.55}, HasLight: false})
+		}
+	}
+
+	// Flood one-shots well past the free slots so eviction fires; count evictions.
+	flood := litrender.MaxScriptFX // far more than the (cap - persistents) free slots
+	for i := 0; i < flood; i++ {
+		x := float32((i*53)%2600 - 1300)
+		z := float32((i*97)%2600 - 1300)
+		_, d := pool.OneShot(math32.Vector3{X: x, Y: 30, Z: z}, litrender.ScriptFXDesc{Model: 2, Scale: 50, Color: math32.Color{R: 1, G: 0.6, B: 0.15}}, 600)
+		if d.Victim >= 0 {
+			dump.Evicted++
+		}
+	}
+
+	// Resolve persistent positions from the (synthetic) snapshot.
+	pool.Update(func(k uint32) (math32.Vector3, bool) { v, ok := persistPos[k]; return v, ok })
+
+	dump.Persistent = pool.PersistentCount()
+	dump.OneShot = pool.OneShotCount()
+	dump.Lights = pool.LightCount()
+
+	// Draw every active slot, sharing one geometry + two materials.
+	boxGeom := geometry.NewBox(50, 50, 50)
+	persistMat := material.NewStandard(&math32.Color{R: 0.4, G: 0.95, B: 0.55})
+	persistMat.SetEmissiveColor(&math32.Color{R: 0.12, G: 0.45, B: 0.2})
+	oneshotMat := material.NewStandard(&math32.Color{R: 1, G: 0.6, B: 0.15})
+	oneshotMat.SetEmissiveColor(&math32.Color{R: 0.85, G: 0.4, B: 0.08})
+	for _, s := range pool.SnapshotInto(make([]litrender.ScriptFXSlotInfo, 0, litrender.MaxScriptFX)) {
+		if !s.Active || !s.Visible {
+			continue
+		}
+		mat := oneshotMat
+		if s.Persistent {
+			mat = persistMat
+		}
+		mesh := graphic.NewMesh(boxGeom, mat)
+		mesh.SetPosition(s.Pos.X, s.Pos.Y, s.Pos.Z)
+		scene.Add(mesh)
+		dump.Drawn++
+	}
+
+	// Invariants: every persistent survived the one-shot flood, the pool is full,
+	// and the flood actually evicted one-shots (the priority rule fired).
+	if dump.Persistent != persistents {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("persistent = %d, want %d (a persistent was evicted!)", dump.Persistent, persistents))
+	}
+	if dump.Persistent+dump.OneShot != litrender.MaxScriptFX {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("pool not full: %d active, want %d", dump.Persistent+dump.OneShot, litrender.MaxScriptFX))
+	}
+	if dump.Evicted < 1 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "one-shot flood evicted nothing — priority rule never exercised")
+	}
+	return sceneSpec{name: "scriptfx", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
 }
 
 // dist2 is the Euclidean distance between two sim points, in float world units.
