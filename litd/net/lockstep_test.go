@@ -57,6 +57,23 @@ func stopRec(t *testing.T, tick uint32, seq uint16, unit uint32) []byte {
 	return b
 }
 
+// moveRec encodes an OpMove toward (x,y) world units for player 0's unit — used
+// to put the unit in motion so a later OpStop's TIMING is observable in state.
+func moveRec(t *testing.T, tick uint32, seq uint16, unit uint32, x, y int) []byte {
+	t.Helper()
+	r := sim.CommandRecord{
+		Version: sim.CommandVersion, Tick: tick, Player: 0, Seq: seq,
+		Opcode: sim.OpMove, UnitCount: 1,
+		Point: fixed.Vec2{X: fixed.FromInt(int32(x)), Y: fixed.FromInt(int32(y))},
+	}
+	r.Units[0] = sim.EntityID(unit)
+	b, ok := sim.AppendEncode(nil, &r)
+	if !ok {
+		t.Fatalf("encode move record tick=%d seq=%d", tick, seq)
+	}
+	return b
+}
+
 func turnAgg(t *testing.T, recs ...[]byte) []byte {
 	t.Helper()
 	p, err := EncodeTurn(recs)
@@ -153,6 +170,143 @@ func TestLockstepHashEqualAcrossTiming(t *testing.T) {
 		t.Fatalf("HASH MISMATCH despite identical aggregates: A=%#x B=%#x", hA, hB)
 	}
 	t.Logf("FSV timing-independent: bunched(A) and trickled(B) both reached tick 6, StateHash %#x == %#x", hA, hB)
+}
+
+// TestHostAggregateDrivesLockstepSimFSV — the FULL net→sim chain end to end: the
+// REAL host loop (Host.CollectRound) produces each round's aggregate, and two
+// independent clients feed that exact aggregate through their LockstepGate into a
+// real api.Game. Both must reach the same tick with equal StateHash, and both
+// must consume the host's commands at their explicit ticks. This is the
+// "lockstep sim integration" seam — Host aggregation wired to the deterministic
+// sim — verified without a network: the prior tests prove Host.CollectRound and
+// gate→sim separately; this proves they compose into a deterministic match.
+func TestHostAggregateDrivesLockstepSimFSV(t *testing.T) {
+	h, err := NewHost(HostOptions{BuildHash: hostBuild, Seed: hostSeed, Capacity: 2, TurnLen: 2})
+	if err != nil {
+		t.Fatalf("NewHost: %v", err)
+	}
+	defer h.Close()
+	if h.PlayerCount() != 1 {
+		t.Fatalf("host-only player count = %d, want 1", h.PlayerCount())
+	}
+
+	gA, uA, logA := newTwin(t)
+	gB, uB, logB := newTwin(t)
+	if uA != uB {
+		t.Fatalf("twins have different unit ids %d vs %d — not deterministic", uA, uB)
+	}
+	gateA, _ := NewLockstepGate(2)
+	gateB, _ := NewLockstepGate(2)
+
+	// Three rounds. Turn 0 puts the unit in MOTION (move far along +x at tick 1),
+	// turn 1 halts it at tick 3, turn 2 is an idempotent stop — so the state the
+	// hash covers is non-trivial (the unit actually travelled), not an idle no-op.
+	// The real Host.CollectRound aggregates each turn; BOTH clients deliver + pump.
+	recOf := func(turn int, unit uint32) []byte {
+		switch turn {
+		case 0:
+			return moveRec(t, 1, 0, unit, 5000, 100)
+		case 1:
+			return stopRec(t, 3, 1, unit)
+		default:
+			return stopRec(t, 5, 2, unit)
+		}
+	}
+	advA, advB := 0, 0
+	for turn := 0; turn < 3; turn++ {
+		hostRec := recOf(turn, uint32(uA))
+		payload, roster, err := h.CollectRound(uint64(turn), [][]byte{hostRec})
+		if err != nil {
+			t.Fatalf("CollectRound %d: %v", turn, err)
+		}
+		if !eq(roster, []uint8{HostPlayer}) {
+			t.Fatalf("turn %d roster %v, want [%d]", turn, roster, HostPlayer)
+		}
+		if err := gateA.Deliver(uint64(turn), payload); err != nil {
+			t.Fatalf("A deliver %d: %v", turn, err)
+		}
+		if err := gateB.Deliver(uint64(turn), payload); err != nil {
+			t.Fatalf("B deliver %d: %v", turn, err)
+		}
+		nA, _, _ := gateA.Pump(gA)
+		nB, _, _ := gateB.Pump(gB)
+		advA += nA
+		advB += nB
+	}
+
+	if gA.Tick() != 6 || gB.Tick() != 6 {
+		t.Fatalf("ticks A=%d B=%d, want both 6", gA.Tick(), gB.Tick())
+	}
+	if advA != 6 || advB != 6 {
+		t.Fatalf("advanced A=%d B=%d, want both 6", advA, advB)
+	}
+	hA, hB := gA.StateHash(), gB.StateHash()
+	if hA != hB {
+		t.Fatalf("HASH MISMATCH: the host-aggregated stream diverged the two sims A=%#x B=%#x", hA, hB)
+	}
+	if len(*logA) != 3 || len(*logB) != 3 {
+		t.Fatalf("consumed A=%d B=%d records, want 3 each (the host's per-round commands)", len(*logA), len(*logB))
+	}
+	t.Logf("FSV host→gate→sim: 3 rounds of real Host.CollectRound aggregates drove both api.Game clients to tick 6, StateHash %#x == %#x; %d records consumed each", hA, hB, len(*logA))
+}
+
+// TestHostAggregateMismatchDivergesFSV — the negative control for the test above:
+// if one client's host aggregate carries a command at a DIFFERENT tick, the two
+// sims MUST end with different StateHash. Without this, equal hashes above could
+// be a vacuous pass (e.g. commands that never reach the sim). Here client B's
+// round-1 stop is aggregated for tick 4 instead of tick 3, so B's unit halts one
+// tick later than A's → divergent state → divergent hash. SoT = the two hashes.
+func TestHostAggregateMismatchDivergesFSV(t *testing.T) {
+	h, err := NewHost(HostOptions{BuildHash: hostBuild, Seed: hostSeed, Capacity: 2, TurnLen: 2})
+	if err != nil {
+		t.Fatalf("NewHost: %v", err)
+	}
+	defer h.Close()
+
+	gA, uA, _ := newTwin(t)
+	gB, uB, _ := newTwin(t)
+	if uA != uB {
+		t.Fatalf("twins differ: %d vs %d", uA, uB)
+	}
+	gateA, _ := NewLockstepGate(2)
+	gateB, _ := NewLockstepGate(2)
+
+	// Turn 0 puts both units in motion (move at tick 1). Turn 1: A halts at tick
+	// 3, B halts at tick 4 — the one-tick shift means B travels one extra tick, so
+	// the units rest at different positions. Turn 2 is an idempotent stop.
+	recOf := func(turn int, unit uint32, stopTick uint32) []byte {
+		switch turn {
+		case 0:
+			return moveRec(t, 1, 0, unit, 5000, 100)
+		case 1:
+			return stopRec(t, stopTick, 1, unit)
+		default:
+			return stopRec(t, 5, 2, unit)
+		}
+	}
+	for turn := 0; turn < 3; turn++ {
+		payA, _, err := h.CollectRound(uint64(turn), [][]byte{recOf(turn, uint32(uA), 3)})
+		if err != nil {
+			t.Fatalf("A CollectRound %d: %v", turn, err)
+		}
+		payB := turnAgg(t, recOf(turn, uint32(uB), 4))
+		if err := gateA.Deliver(uint64(turn), payA); err != nil {
+			t.Fatalf("A deliver %d: %v", turn, err)
+		}
+		if err := gateB.Deliver(uint64(turn), payB); err != nil {
+			t.Fatalf("B deliver %d: %v", turn, err)
+		}
+		gateA.Pump(gA)
+		gateB.Pump(gB)
+	}
+	if gA.Tick() != 6 || gB.Tick() != 6 {
+		t.Fatalf("ticks A=%d B=%d, want both 6", gA.Tick(), gB.Tick())
+	}
+	hA, hB := gA.StateHash(), gB.StateHash()
+	if hA == hB {
+		t.Fatalf("expected divergence from the one-tick command shift, but hashes match: %#x", hA)
+	}
+	t.Logf("FSV divergence control: B's stop shifted tick 3→4 → StateHash %#x != %#x (the equality check has teeth)", hA, hB)
 }
 
 // TestLockstepOutOfOrderHeld — an aggregate for T+2 arriving before T+1 is held,
