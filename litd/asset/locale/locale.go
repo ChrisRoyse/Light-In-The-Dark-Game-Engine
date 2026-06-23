@@ -171,6 +171,15 @@ const (
 	StallTitle    Key = "stall.title"
 	StallWaiting  Key = "stall.waiting"
 	StallDropping Key = "stall.dropping"
+
+	// Lobby screen (#80): the 2-8 player session-bootstrap UI — per-slot status
+	// values and the start action.
+	LobbyTitle       Key = "lobby.title"
+	LobbySlotOpen    Key = "lobby.slot.open"
+	LobbySlotHost    Key = "lobby.slot.host"
+	LobbySlotReady   Key = "lobby.slot.ready"
+	LobbySlotWaiting Key = "lobby.slot.waiting"
+	LobbyStart       Key = "lobby.start"
 )
 
 var requiredKeys = []string{
@@ -322,6 +331,12 @@ var requiredKeys = []string{
 	string(StallTitle),
 	string(StallWaiting),
 	string(StallDropping),
+	string(LobbyTitle),
+	string(LobbySlotOpen),
+	string(LobbySlotHost),
+	string(LobbySlotReady),
+	string(LobbySlotWaiting),
+	string(LobbyStart),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)
