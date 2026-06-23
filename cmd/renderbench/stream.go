@@ -157,6 +157,7 @@ func applyCamKey(cam *camera.Camera, k camKey) {
 type frameStat struct {
 	Frame        int     `json:"frame"`
 	FrameMS      float64 `json:"frameMs"`
+	DrawCalls    *int    `json:"drawCalls"` // total (opaque+transparent+gui) — the ≤300 gate's SoT
 	OpaqueDraws  *int    `json:"opaqueDraws"`
 	StateChanges *int    `json:"stateChanges"`
 	Visible      *int    `json:"visible"`

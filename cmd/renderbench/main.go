@@ -102,7 +102,10 @@ func main() {
 	nogl := flag.Bool("nogl", false, "headless: replay the stream without GL; draw/ms/visible/culled columns are n/a")
 	genStream := flag.Bool("genstream", false, "author the canonical recorded streams under data/maps/bench/ and exit")
 	all := flag.Bool("all", false, "run every segment x {pbr,unlit}x{persp,ortho} combo (+ -nogl parity) into -shots dir")
-	shotsDir := flag.String("shots", "", "output directory for -all keyframes + combined report (default artifacts/)")
+	gate := flag.Bool("gate", false, "evaluate M4 budget gates over the matrix; non-zero exit if an enforced gate fails")
+	gateFPS := flag.Bool("gate-fps", false, "with -gate: also ENFORCE the FPS floors (only valid on the reference machine)")
+	farMult := flag.Float64("farmult", 1, "multiply the camera far plane (far-plane invariance gate, camera-and-culling §5.3)")
+	shotsDir := flag.String("shots", "", "output directory for -all/-gate keyframes + report (default artifacts/)")
 	shotPath := flag.String("shot", "", "write screenshot PNG (last replay frame)")
 	dumpPath := flag.String("dump", "", "write benchmark JSON")
 	flag.Parse()
@@ -110,6 +113,14 @@ func main() {
 	if *all {
 		if err := runAll(*shotsDir); err != nil {
 			fmt.Fprintf(os.Stderr, "renderbench: all: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	if *gate {
+		if err := runGate(*shotsDir, *variant, *gateFPS); err != nil {
+			fmt.Fprintf(os.Stderr, "renderbench: gate: %v\n", err)
 			os.Exit(1)
 		}
 		return
@@ -163,14 +174,15 @@ func main() {
 	a := app.App(1024, 576, "LitD renderbench")
 	scene := core.NewNode()
 	const aspect = 1024.0 / 576.0
+	far := float32(3800 * *farMult) // -farmult drives the far-plane invariance gate
 	var cam *camera.Camera
 	if *projection == projOrtho {
 		// Ortho size frames the ~1400-unit field along the vertical axis.
-		cam = camera.NewOrthographic(aspect, 250, 3800, 1100, camera.Vertical)
+		cam = camera.NewOrthographic(aspect, 250, far, 1100, camera.Vertical)
 	} else {
 		cam = camera.New(aspect)
 		cam.SetNear(250)
-		cam.SetFar(3800)
+		cam.SetFar(far)
 	}
 	cam.SetPosition(0, 1350, 920)
 	cam.LookAt(&math32.Vector3{X: 0, Y: 0, Z: 0}, &math32.Vector3{X: 0, Y: 1, Z: 0})
@@ -221,6 +233,7 @@ func main() {
 		dump.PerFrame = append(dump.PerFrame, frameStat{
 			Frame:        frame,
 			FrameMS:      frameMS,
+			DrawCalls:    intPtr(fs.DrawCalls),
 			OpaqueDraws:  intPtr(fs.OpaqueDrawCalls),
 			StateChanges: intPtr(fs.StateChanges),
 			Visible:      intPtr(fs.VisibleGraphics),
