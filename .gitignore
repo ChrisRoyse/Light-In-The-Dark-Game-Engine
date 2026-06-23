@@ -25,8 +25,30 @@ assets/**/*.glb
 assets/**/*.png
 assets/**/*.ogg
 
-# apilint build artifact (go build ./tools/apilint writes ./apilint) — never track
+# Tool build artifacts: `go build ./tools/<name>` (no -o) writes ./<name> into the
+# repo root — a 4-5 MB regenerable binary that must never be tracked (a stray
+# `git add .` would otherwise commit it). Root-anchored (leading /) so each entry
+# ignores ONLY the root binary, never the tracked tools/<name>/ source. One line per
+# tool dir; add new tools here. (apilint kept first for its original call-out.)
 /apilint
+/assetcheck
+/assetgen
+/benchharness
+/changelog
+/datadump
+/desyncbisect
+/determlint
+/fsv
+/godoclint
+/importcheck
+/jassgen
+/luadoc
+/presentlint
+/release
+/renderevidence
+/sizecheck
+/uiatlas
+/worldpack
 
 # worldrender FSV harness build artifact (go build -o worldrender ./cmd/worldrender,
 # #490) — regenerable binary, never track
