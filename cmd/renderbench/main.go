@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
@@ -69,13 +70,20 @@ type benchDump struct {
 	AnimationSamples   []animationSample                  `json:"animationSamples"`
 	DeathTrace         []animationSample                  `json:"deathTrace"`
 	// #233 slice 2 — max-battle overlay layers (all active per fog-of-war §7).
-	OverlayFog        bool     `json:"overlayFog,omitempty"`
-	OverlayBars       int      `json:"overlayBars,omitempty"`
-	OverlayMinimap    bool     `json:"overlayMinimap,omitempty"`
-	MinimapBlips      int      `json:"minimapBlips,omitempty"`
-	VisualDescription string   `json:"visualDescription"`
-	OK                bool     `json:"ok"`
-	Errors            []string `json:"errors,omitempty"`
+	OverlayFog     bool `json:"overlayFog,omitempty"`
+	OverlayBars    int  `json:"overlayBars,omitempty"`
+	OverlayMinimap bool `json:"overlayMinimap,omitempty"`
+	MinimapBlips   int  `json:"minimapBlips,omitempty"`
+	// #233 slice 4 — recorded command-stream replay. GL=false marks a headless
+	// -nogl run whose draw/state columns are n/a (nil), not fabricated.
+	GL                bool          `json:"gl"`
+	Frames            int           `json:"frames"`
+	StreamHash        string        `json:"streamHash"`
+	PerFrame          []frameStat   `json:"perFrame,omitempty"`
+	Summary           streamSummary `json:"summary"`
+	VisualDescription string        `json:"visualDescription"`
+	OK                bool          `json:"ok"`
+	Errors            []string      `json:"errors,omitempty"`
 }
 
 type animationSample struct {
@@ -91,9 +99,23 @@ func main() {
 	variant := flag.String("variant", variantFloor, "variant: baseline or floor")
 	matPath := flag.String("material", matUnlit, "material path: pbr or unlit")
 	projection := flag.String("projection", projPersp, "camera projection: persp or ortho")
-	shotPath := flag.String("shot", "", "write screenshot PNG")
+	nogl := flag.Bool("nogl", false, "headless: replay the stream without GL; draw/ms/visible/culled columns are n/a")
+	genStream := flag.Bool("genstream", false, "author the canonical recorded streams under data/maps/bench/ and exit")
+	shotPath := flag.String("shot", "", "write screenshot PNG (last replay frame)")
 	dumpPath := flag.String("dump", "", "write benchmark JSON")
 	flag.Parse()
+
+	if *genStream {
+		for _, seg := range []string{"typical", "max-battle", "stress"} {
+			s := generateStream(seg, projPersp, benchStreamFrames)
+			if err := s.write(seg); err != nil {
+				fmt.Fprintf(os.Stderr, "renderbench: genstream %s: %v\n", seg, err)
+				os.Exit(1)
+			}
+			fmt.Printf("renderbench: wrote %s (%d frames)\n", streamPath(seg), s.Frames)
+		}
+		return
+	}
 
 	sc, err := scenarioFor(*sceneName)
 	if err != nil {
@@ -112,6 +134,20 @@ func main() {
 	if *projection != projPersp && *projection != projOrtho {
 		fmt.Fprintf(os.Stderr, "renderbench: unknown projection %q\n", *projection)
 		os.Exit(1)
+	}
+
+	stream, err := loadStream(sc.Name, *projection)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "renderbench: stream: %v\n", err)
+		os.Exit(1)
+	}
+
+	if *nogl {
+		if err := runNoGL(sc, v, *matPath, *projection, stream, *dumpPath); err != nil {
+			fmt.Fprintf(os.Stderr, "renderbench: nogl: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	a := app.App(1024, 576, "LitD renderbench")
@@ -140,6 +176,9 @@ func main() {
 		os.Exit(1)
 	}
 	dump.Projection = *projection
+	dump.GL = true
+	dump.Frames = stream.Frames
+	dump.StreamHash = computeStreamHash(sc.Name, v, *matPath, dump.ExpectedWorldDraws, dump.OverlayBars, dump.MinimapBlips, stream)
 
 	a.Subscribe(window.OnWindowSize, func(string, interface{}) {
 		w, h := a.GetSize()
@@ -149,39 +188,94 @@ func main() {
 	w, h := a.GetSize()
 	a.Gls().Viewport(0, 0, int32(w), int32(h))
 
-	rendered := false
+	frame := 0
 	a.Run(func(rend *renderer.Renderer, dt time.Duration) {
-		if rendered {
+		if frame >= stream.Frames {
+			finishGL(a, dump, *shotPath, *dumpPath)
 			os.Exit(0)
 		}
-		rendered = true
+		applyCamKey(cam, stream.Camera[frame])
+
+		var m0 runtime.MemStats
+		runtime.ReadMemStats(&m0)
 		frameStart := time.Now()
 		a.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
-		submitStart := time.Now()
 		if err := rend.Render(scene, cam); err != nil {
 			fmt.Fprintf(os.Stderr, "renderbench: render: %v\n", err)
 			os.Exit(1)
 		}
-		dump.SubmissionMS = float64(time.Since(submitStart).Nanoseconds()) / 1e6
-		dump.FrameMS = float64(time.Since(frameStart).Nanoseconds()) / 1e6
-		dump.Stats = litrender.ReadFrameStats(rend)
-		validateDump(dump)
-		if *shotPath != "" {
+		frameMS := float64(time.Since(frameStart).Nanoseconds()) / 1e6
+		var m1 runtime.MemStats
+		runtime.ReadMemStats(&m1)
+		fs := litrender.ReadFrameStats(rend)
+		dump.PerFrame = append(dump.PerFrame, frameStat{
+			Frame:        frame,
+			FrameMS:      frameMS,
+			OpaqueDraws:  intPtr(fs.OpaqueDrawCalls),
+			StateChanges: intPtr(fs.StateChanges),
+			Visible:      intPtr(fs.VisibleGraphics),
+			Culled:       intPtr(fs.CulledGraphics),
+			Allocs:       int64(m1.Mallocs - m0.Mallocs),
+			VoiceCount:   nil, // n/a: render bench runs no audio admission manager
+		})
+		// Last-frame stats stand in for the legacy single-frame top-level fields.
+		dump.Stats = fs
+		dump.FrameMS = frameMS
+		// Screenshot the final (most zoomed-in) keyframe.
+		if frame == stream.Frames-1 && *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
 				fmt.Fprintf(os.Stderr, "renderbench: screenshot: %v\n", err)
 				os.Exit(1)
 			}
 		}
-		if *dumpPath != "" {
-			if err := writeJSON(*dumpPath, dump); err != nil {
-				fmt.Fprintf(os.Stderr, "renderbench: dump: %v\n", err)
-				os.Exit(1)
-			}
-		}
-		fmt.Printf("renderbench: scene=%s variant=%s stats=%+v expectedWorldDraws=%d frameMs=%.3f submissionMs=%.3f ok=%v shot=%s dump=%s\n",
-			dump.Scene, dump.Variant, dump.Stats, dump.ExpectedWorldDraws, dump.FrameMS, dump.SubmissionMS, dump.OK, *shotPath, *dumpPath)
-		os.Exit(0)
+		frame++
 	})
+}
+
+// finishGL validates the replayed run, summarizes the per-frame series, and
+// writes the dump. Called once after the last stream frame.
+func finishGL(a *app.Application, dump *benchDump, shotPath, dumpPath string) {
+	validateDump(dump)
+	dump.Summary = summarize(dump.PerFrame, true)
+	if dumpPath != "" {
+		if err := writeJSON(dumpPath, dump); err != nil {
+			fmt.Fprintf(os.Stderr, "renderbench: dump: %v\n", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Printf("renderbench: scene=%s variant=%s mat=%s proj=%s frames=%d hash=%s lastStats=%+v expectedWorldDraws=%d avgFrameMs=%.3f p99FrameMs=%.3f ok=%v shot=%s dump=%s\n",
+		dump.Scene, dump.Variant, dump.MaterialPath, dump.Projection, dump.Frames, dump.StreamHash,
+		dump.Stats, dump.ExpectedWorldDraws, dump.Summary.AvgFrameMS, dump.Summary.P99FrameMS, dump.OK, shotPath, dumpPath)
+}
+
+// runNoGL replays the same command stream with no GL context. The deterministic
+// scene definition (draw target, overlay counts, stream hash) is computed exactly
+// as in the GL run; the GL-only columns (frame ms, draws, visible, culled) are
+// left n/a (nil) — never fabricated. Parity is the matching stream hash.
+func runNoGL(sc benchScenario, variant, matPath, projection string, stream benchStream, dumpPath string) error {
+	dump, err := buildScene(core.NewNode(), sc, variant, matPath)
+	if err != nil {
+		return err
+	}
+	dump.Projection = projection
+	dump.GL = false
+	dump.Frames = stream.Frames
+	dump.StreamHash = computeStreamHash(sc.Name, variant, matPath, dump.ExpectedWorldDraws, dump.OverlayBars, dump.MinimapBlips, stream)
+	for f := 0; f < stream.Frames; f++ {
+		dump.PerFrame = append(dump.PerFrame, frameStat{
+			Frame:   f,
+			FrameMS: 0, // n/a without GL; summary frame-ms stats stay 0
+		})
+	}
+	dump.Summary = summarize(dump.PerFrame, false)
+	if dumpPath != "" {
+		if err := writeJSON(dumpPath, dump); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("renderbench: scene=%s variant=%s mat=%s proj=%s frames=%d hash=%s gl=false (draw/ms/visible/culled = n/a) expectedWorldDraws=%d dump=%s\n",
+		dump.Scene, dump.Variant, dump.MaterialPath, dump.Projection, dump.Frames, dump.StreamHash, dump.ExpectedWorldDraws, dumpPath)
+	return nil
 }
 
 func scenarioFor(name string) (benchScenario, error) {

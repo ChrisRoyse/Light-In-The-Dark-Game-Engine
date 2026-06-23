@@ -1,0 +1,223 @@
+{
+  "segment": "typical",
+  "frames": 24,
+  "dtPerFrame": 0.033333335,
+  "camera": [
+    {
+      "anchor": [
+        -120,
+        0,
+        0
+      ],
+      "zoom": 1640,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -109.565216,
+        0,
+        0
+      ],
+      "zoom": 1612.174,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -99.13043,
+        0,
+        0
+      ],
+      "zoom": 1584.3478,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -88.69565,
+        0,
+        0
+      ],
+      "zoom": 1556.5217,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -78.260864,
+        0,
+        0
+      ],
+      "zoom": 1528.6957,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -67.82609,
+        0,
+        0
+      ],
+      "zoom": 1500.8696,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -57.391304,
+        0,
+        0
+      ],
+      "zoom": 1473.0435,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -46.956528,
+        0,
+        0
+      ],
+      "zoom": 1445.2174,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -36.521736,
+        0,
+        0
+      ],
+      "zoom": 1417.3914,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -26.08696,
+        0,
+        0
+      ],
+      "zoom": 1389.5652,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -15.652176,
+        0,
+        0
+      ],
+      "zoom": 1361.7391,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        -5.217392,
+        0,
+        0
+      ],
+      "zoom": 1333.9131,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        5.217392,
+        0,
+        0
+      ],
+      "zoom": 1306.0869,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        15.652176,
+        0,
+        0
+      ],
+      "zoom": 1278.2609,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        26.086945,
+        0,
+        0
+      ],
+      "zoom": 1250.4348,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        36.521744,
+        0,
+        0
+      ],
+      "zoom": 1222.6086,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        46.956528,
+        0,
+        0
+      ],
+      "zoom": 1194.7826,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        57.39131,
+        0,
+        0
+      ],
+      "zoom": 1166.9565,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        67.82608,
+        0,
+        0
+      ],
+      "zoom": 1139.1304,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        78.260864,
+        0,
+        0
+      ],
+      "zoom": 1111.3044,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        88.69565,
+        0,
+        0
+      ],
+      "zoom": 1083.4783,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        99.13043,
+        0,
+        0
+      ],
+      "zoom": 1055.6521,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        109.565216,
+        0,
+        0
+      ],
+      "zoom": 1027.826,
+      "projection": "persp"
+    },
+    {
+      "anchor": [
+        120,
+        0,
+        0
+      ],
+      "zoom": 1000,
+      "projection": "persp"
+    }
+  ]
+}
