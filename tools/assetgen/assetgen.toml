@@ -1,0 +1,29 @@
+# assetgen.toml — build-time asset generation spec (#56; tooling.md §5.1).
+# Each [[gen]] entry fully specifies one asset to generate: its budget category,
+# the generating model/tool, the prompt + parameters, the output path under
+# assets/, and optional output constraints. This file lives in git; the pipeline
+# (tools/assetgen pipeline) generates each entry into a scratch area, requires a
+# per-asset human curate accept, runs the full tools/assetcheck gate, and only
+# then commits with a complete provenance entry. Build-time only — zero runtime
+# or CI AI.
+#
+# The image and TTS generation stages are pluggable and land in #57/#58; until
+# then the skeleton runs with a stub generator (a .png entry yields a valid 1x1
+# placeholder so the end-to-end flow — generate → curate → check → commit — is
+# exercisable). This sample doubles as the skeleton's smoke input.
+
+[[gen]]
+category = "icon"
+generator = "stub-0.1"
+prompt = "a golden vigil faction sigil, flat unlit, centered"
+params = "size=64x64"
+output = "icons/vigil.png"
+constraints = "64x64;unlit;atlas=ui"
+
+[[gen]]
+category = "icon"
+generator = "stub-0.1"
+prompt = "an ember-red unbound faction sigil, flat unlit, centered"
+params = "size=64x64"
+output = "icons/unbound.png"
+constraints = "64x64;unlit;atlas=ui"
