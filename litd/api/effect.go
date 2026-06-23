@@ -46,6 +46,42 @@ func (g *Game) AddSpecialEffect(model string, pos Vec2) Effect {
 	return Effect{id: id, g: g}
 }
 
+// Effects returns every live special effect in ascending creation order,
+// non-nil. Render harnesses and tools use this to draw or inspect
+// script-spawned effects the way AllUnits exposes units (#529).
+func (g *Game) Effects() []Effect {
+	return g.AppendEffects(make([]Effect, 0))
+}
+
+// AppendEffects appends every live special effect to dst and returns the
+// extended slice. Pass a reused backing slice for allocation-free enumeration.
+func (g *Game) AppendEffects(dst []Effect) []Effect {
+	if g == nil || g.w == nil {
+		return dst
+	}
+	es := g.w.Effects
+	n := es.Count()
+	for r := int32(0); r < n; r++ {
+		dst = append(dst, Effect{id: es.Entity[r], g: g})
+	}
+	return dst
+}
+
+// Position returns the effect's world position, or the zero Vec2 on an
+// invalid handle. JASS: BlzGetLocalSpecialEffectX, BlzGetLocalSpecialEffectY.
+func (e Effect) Position() Vec2 {
+	if !e.Valid() {
+		e.g.reportInvalid("Effect.Position")
+		return Vec2{}
+	}
+	r := e.g.w.Transforms.Row(e.id)
+	if r < 0 {
+		return Vec2{}
+	}
+	p := e.g.w.Transforms.Pos[r]
+	return Vec2{X: toFloat(p.X), Y: toFloat(p.Y)}
+}
+
 // Destroy removes the effect. It emits the sim-side end cue before the
 // row is freed, matching WC3 DestroyEffect's presentation lifetime.
 // JASS: DestroyEffect, DestroyEffectBJ

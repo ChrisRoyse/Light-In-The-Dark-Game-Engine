@@ -447,3 +447,11 @@ exact   Event.FromAura
 # agent can diff sim state directly. Debug/FSV authoring seam — JASS has no
 # whole-state serializer native (SyncStored* are piecemeal gamecache I/O).
 exact   Game.DumpState
+# live effect enumeration + read-back for render harnesses and tools (#529):
+# Game.Effects/AppendEffects list every live special effect, and Effect.Position
+# reads a placed effect's location. WC3 special effects are fire-and-forget — JASS
+# has no native that enumerates all effects, and BlzGetLocalSpecialEffect* are
+# local-only niche reads; this is the LitD render/tooling seam (mirrors AllUnits).
+exact   Game.Effects
+exact   Game.AppendEffects
+exact   Effect.Position
