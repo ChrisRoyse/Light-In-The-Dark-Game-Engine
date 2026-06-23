@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -119,6 +120,13 @@ func loadDoodadPalette(fsys fs.FS) ([]ObjectPaletteItem, error) {
 		rel := path.Join("maps", e.Name(), "doodads.toml")
 		body, err := fs.ReadFile(fsys, rel)
 		if err != nil {
+			// A subdirectory of data/maps without a doodads.toml is simply not a
+			// doodad-palette source (e.g. data/maps/bench holds render-bench scene
+			// streams, #233) — skip it. A palette that EXISTS but is unreadable or
+			// corrupt still fails closed below.
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
 			return nil, fmt.Errorf("editor objects: read doodad palette %s: %w", rel, err)
 		}
 		var raw rawPaletteDoodadFile

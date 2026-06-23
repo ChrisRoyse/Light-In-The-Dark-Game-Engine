@@ -6,10 +6,43 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/editor/sourceform"
 )
+
+// Regression for the #233 break: a sibling data/maps subdir without a doodads.toml
+// (e.g. data/maps/bench holding render-bench scene streams) must be SKIPPED by the
+// doodad-palette loader, not hard-fail the whole editor. A palette that exists but
+// is corrupt must still fail closed.
+func TestLoadDoodadPaletteSkipsPaletteLessSiblingFSV(t *testing.T) {
+	good := []byte("[[doodad]]\nid = 1\nasset = \"tree\"\n")
+	fsys := fstest.MapFS{
+		"maps/realmap/doodads.toml":         {Data: good},
+		"maps/bench/max-battle.stream.json": {Data: []byte("{\"frames\":24}")}, // no doodads.toml here
+	}
+	// BEFORE the fix this returned an error on maps/bench; now it loads realmap.
+	out, err := loadDoodadPalette(fsys)
+	if err != nil {
+		t.Fatalf("palette-less sibling not skipped: %v", err)
+	}
+	t.Logf("FSV palette AFTER skip-sibling rows=%d", len(out))
+	if len(out) != 1 || out[0].Type != "tree" {
+		t.Fatalf("expected the realmap 'tree' doodad only, got %+v", out)
+	}
+
+	// Edge: a doodads.toml that EXISTS but is corrupt must still fail closed.
+	corrupt := fstest.MapFS{
+		"maps/realmap/doodads.toml": {Data: good},
+		"maps/broken/doodads.toml":  {Data: []byte("this is = not valid = toml = =")},
+	}
+	if _, err := loadDoodadPalette(corrupt); err == nil {
+		t.Fatal("corrupt doodads.toml accepted; loader must fail closed on a present-but-broken palette")
+	} else {
+		t.Logf("FSV palette AFTER corrupt-rejected err=%v", err)
+	}
+}
 
 func TestObjectPlacementPaletteTransformsAndEdgesFSV(t *testing.T) {
 	app := newCommandTestApp(t)
