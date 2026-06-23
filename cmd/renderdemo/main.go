@@ -2675,11 +2675,6 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 
 	// Three point missiles. The first is close+fast (impacts ~tick 3); the others
 	// are far+slow (still in flight, mid-arc, at the capture tick).
-	type track struct {
-		id       sim.EntityID
-		launch   fixed.Vec2
-		guidance uint16
-	}
 	// Arc heights are kept modest so the mid-flight boxes stay inside the
 	// down-looking camera frame; the slow pair is timed to sit ~half-way (spread
 	// either side of the target) at the capture tick.
@@ -2692,16 +2687,13 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 		{fixed.Vec2{X: 1400 * fixed.One, Y: -560 * fixed.One}, 95 * fixed.One, 150 * fixed.One},  // slow → mid-flight, in frame
 		{fixed.Vec2{X: 0, Y: 1400 * fixed.One}, 88 * fixed.One, 160 * fixed.One},                 // slow → mid-flight, in frame
 	}
-	tracks := make(map[uint32]track, len(launches))
 	for _, l := range launches {
-		id, ok := w.SpawnMissile(sim.MissileSpec{
+		if _, ok := w.SpawnMissile(sim.MissileSpec{
 			Pos: l.from, Point: targetPos, Speed: l.speed, Arc: l.arc,
 			GuidanceID: sim.MissileGuidancePoint, ImpactID: sim.MissileImpactDetonate,
-		})
-		if !ok {
+		}); !ok {
 			return sceneSpec{}, nil, fmt.Errorf("spawn point missile failed")
 		}
-		tracks[id.Index()] = track{id: id, launch: l.from, guidance: sim.MissileGuidancePoint}
 	}
 
 	impactPool := litrender.NewImpactFXPool()
@@ -2749,15 +2741,11 @@ func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error)
 	inputs := make([]litrender.MissileBillboardInput, 0, len(snap.Missiles))
 	for _, m := range snap.Missiles {
 		key := m.ID.Index()
-		tr := tracks[key]
 		cur := m.Pos
-		// progress = distance travelled / total launch→goal distance.
-		travelled := dist2(tr.launch, cur)
-		total := dist2(tr.launch, targetPos)
-		var prog float32
-		if total > 0 {
-			prog = travelled / total
-		}
+		// progress comes straight from the sim snapshot now (#528): LifeFrac is the
+		// real flight fraction computed in publishSnapshot from missile state — no
+		// host-side launch→goal side channel.
+		prog := float32(m.LifeFrac) / 65535
 		inputs = append(inputs, litrender.MissileBillboardInput{
 			Key: key, GroundX: fixedToF(cur.X), GroundZ: fixedToF(cur.Y),
 			Arc: fixedToF(m.Arc), Progress: prog, Facing: float32(uint16(m.Facing)) / 65536 * 2 * math32.Pi, Guidance: m.GuidanceID,
@@ -2911,13 +2899,6 @@ func buildScriptFXFSV(scene *core.Node) (sceneSpec, *scriptFXRuntimeDump, error)
 		dump.Errors = append(dump.Errors, "one-shot flood evicted nothing — priority rule never exercised")
 	}
 	return sceneSpec{name: "scriptfx", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
-}
-
-// dist2 is the Euclidean distance between two sim points, in float world units.
-func dist2(a, b fixed.Vec2) float32 {
-	dx := fixedToF(a.X) - fixedToF(b.X)
-	dy := fixedToF(a.Y) - fixedToF(b.Y)
-	return math32.Sqrt(dx*dx + dy*dy)
 }
 
 // progressOf finds the flight progress recorded for a billboard key.

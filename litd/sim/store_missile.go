@@ -65,6 +65,7 @@ type MissileStore struct {
 	Speed      []fixed.F64       // world units per tick
 	Accel      []fixed.F64       // non-negative speed delta applied after each tick
 	Arc        []fixed.F64       // presentation arc height (render-only; flight is straight)
+	Span       []int32           // total flight distance in whole world units, captured at spawn (render-only arc-progress denominator, #528; never hashed)
 	Flags      []uint8           // Missile* bits
 	HitMask    []uint16          // MissileHit* bits; relation + target-class filter
 	GuidanceID []uint16          // MissileGuidance* built-in ID
@@ -97,6 +98,7 @@ func NewMissileStore(rowCap, entityCap int) *MissileStore {
 		Speed:      make([]fixed.F64, rowCap),
 		Accel:      make([]fixed.F64, rowCap),
 		Arc:        make([]fixed.F64, rowCap),
+		Span:       make([]int32, rowCap),
 		Flags:      make([]uint8, rowCap),
 		HitMask:    make([]uint16, rowCap),
 		GuidanceID: make([]uint16, rowCap),
@@ -137,6 +139,7 @@ func (s *MissileStore) Add(e *Entities, id EntityID) bool {
 	s.Speed[r] = 0
 	s.Accel[r] = 0
 	s.Arc[r] = 0
+	s.Span[r] = 0
 	s.Flags[r] = 0
 	s.HitMask[r] = 0
 	s.GuidanceID[r] = 0
@@ -173,6 +176,7 @@ func (s *MissileStore) Remove(id EntityID) bool {
 		s.Speed[r] = s.Speed[last]
 		s.Accel[r] = s.Accel[last]
 		s.Arc[r] = s.Arc[last]
+		s.Span[r] = s.Span[last]
 		s.Flags[r] = s.Flags[last]
 		s.HitMask[r] = s.HitMask[last]
 		s.GuidanceID[r] = s.GuidanceID[last]

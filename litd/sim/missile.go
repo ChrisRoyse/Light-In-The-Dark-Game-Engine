@@ -159,7 +159,27 @@ func (w *World) SpawnMissile(m MissileSpec) (EntityID, bool) {
 		}
 		s.GuideEnt[r] = 0
 	}
+	// Span: total flight distance in whole world units, captured once at spawn as
+	// the render-only arc-progress denominator (#528). A linear skillshot knows
+	// its range up front; a point/homing missile measures launch->goal. Never
+	// hashed (render-support; see MissileSnapEntry.LifeFrac).
+	if m.Flags&MissileLinear != 0 {
+		s.Span[r] = int32(m.Range.Floor())
+	} else {
+		s.Span[r] = int32(flightUnits(m.Pos, s.GuidePt[r]))
+	}
 	return id, true
+}
+
+// flightUnits is the whole-world-unit distance between two points — the
+// render-only metric behind missile arc progress (#528). Coordinates are floored
+// to whole units before squaring so the sum stays inside uint64 for any real map
+// (a fixed-precision squared distance needs 128 bits; this render metric does
+// not). Deterministic: integer ops + the sim's bit-exact SqrtU64.
+func flightUnits(a, b fixed.Vec2) int64 {
+	dx := a.X.Floor() - b.X.Floor()
+	dy := a.Y.Floor() - b.Y.Floor()
+	return int64(fixed.SqrtU64(uint64(dx*dx + dy*dy)))
 }
 
 func normalizeMissileGuidance(m MissileSpec) (uint16, bool) {

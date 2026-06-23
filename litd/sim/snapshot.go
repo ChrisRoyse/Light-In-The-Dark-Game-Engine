@@ -55,6 +55,11 @@ type MissileSnapEntry struct {
 	Facing     fixed.Angle
 	Arc        fixed.F64
 	GuidanceID uint16
+	// LifeFrac is flight progress on [0,65535] = launch..impact, derived from sim
+	// missile state (#528): the render places the billboard on its parabola via
+	// ArcHeight(Arc, LifeFrac/65535) without a host-side launch side channel.
+	// Render-only — this surface is never hashed.
+	LifeFrac uint16
 }
 
 // RenderEvent is a one-shot presentation cue (attack impact sound,
@@ -272,12 +277,34 @@ func (w *World) publishSnapshot() {
 		if tr == -1 {
 			continue
 		}
+		// flight progress (#528): (Span - remaining)/Span, render-only. remaining is
+		// the linear missile's RangeLeft or a point/homing missile's distance to its
+		// guide point. Span ≤ 0 (degenerate launch-on-goal) renders as arrived.
+		lifeFrac := uint16(65535)
+		if span := int64(w.Missiles.Span[r]); span > 0 {
+			var remaining int64
+			if w.Missiles.Flags[r]&MissileLinear != 0 {
+				remaining = w.Missiles.RangeLeft[r].Floor()
+			} else {
+				remaining = flightUnits(w.Transforms.Pos[tr], w.Missiles.GuidePt[r])
+			}
+			traveled := span - remaining
+			switch {
+			case traveled <= 0:
+				lifeFrac = 0
+			case traveled >= span:
+				lifeFrac = 65535
+			default:
+				lifeFrac = uint16(traveled * 65535 / span)
+			}
+		}
 		back.Missiles = append(back.Missiles, MissileSnapEntry{
 			ID:         id,
 			Pos:        w.Transforms.Pos[tr],
 			Facing:     w.Transforms.Facing[tr],
 			Arc:        w.Missiles.Arc[r],
 			GuidanceID: w.Missiles.GuidanceID[r],
+			LifeFrac:   lifeFrac,
 		})
 	}
 

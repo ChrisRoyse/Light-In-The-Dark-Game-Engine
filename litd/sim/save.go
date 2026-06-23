@@ -93,6 +93,8 @@ const SaveMagic = "LITDSAV\x01"
 // v18: region section appended after the subscription table: per region
 // (id order) gen/alive + ascending set-cell indices, then the free-list
 // order (#241).
+// v37: missile rows grow Span (whole-unit launch flight distance) after Arc —
+// the render-only arc-progress denominator; deterministic but never hashed (#528).
 // v17: visibility section appended after runtime ability definitions:
 // fog state/cycle bytes, entity detectability flags, last-seen buildings (#299).
 // v16: missile rows grow Accel, HitMask, GuidanceID, ImpactID after
@@ -124,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 36
+const SaveFormatVersion uint32 = 37
 
 // ---- little-endian writer / reader ----
 
@@ -522,6 +524,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.f64(ms.Speed[i])
 		s.f64(ms.Accel[i])
 		s.f64(ms.Arc[i])
+		s.i32(ms.Span[i])
 		s.u8(ms.Flags[i])
 		s.u16(ms.HitMask[i])
 		s.u16(ms.GuidanceID[i])
@@ -1165,6 +1168,7 @@ type decodedSave struct {
 	msSpeed  []fixed.F64
 	msAccel  []fixed.F64
 	msArc    []fixed.F64
+	msSpan   []int32
 	msFlags  []uint8
 	msHit    []uint16
 	msGuid   []uint16
@@ -1901,6 +1905,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	d.msSpeed = make([]fixed.F64, n)
 	d.msAccel = make([]fixed.F64, n)
 	d.msArc = make([]fixed.F64, n)
+	d.msSpan = make([]int32, n)
 	d.msFlags = make([]uint8, n)
 	d.msHit = make([]uint16, n)
 	d.msGuid = make([]uint16, n)
@@ -1920,6 +1925,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.msSpeed[i] = r.f64()
 		d.msAccel[i] = r.f64()
 		d.msArc[i] = r.f64()
+		d.msSpan[i] = r.i32()
 		d.msFlags[i] = r.u8()
 		d.msHit[i] = r.u16()
 		d.msGuid[i] = r.u16()
@@ -3630,6 +3636,7 @@ func applySave(d *decodedSave, w *World) {
 		ms.Speed[i] = d.msSpeed[i]
 		ms.Accel[i] = d.msAccel[i]
 		ms.Arc[i] = d.msArc[i]
+		ms.Span[i] = d.msSpan[i]
 		ms.Flags[i] = d.msFlags[i]
 		ms.HitMask[i] = d.msHit[i]
 		ms.GuidanceID[i] = d.msGuid[i]
