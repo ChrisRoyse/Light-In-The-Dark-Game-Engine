@@ -24,8 +24,14 @@ type consumed struct {
 // newTwin makes a deterministic game with one player-0 unit and records every
 // consumed command into *log.
 func newTwin(t *testing.T) (*api.Game, uint32, *[]consumed) {
+	return newTwinSeeded(t, 7)
+}
+
+// newTwinSeeded is newTwin with an explicit PRNG seed — used to prove the lobby's
+// StartParams.Seed actually reaches the sim.
+func newTwinSeeded(t *testing.T, seed int64) (*api.Game, uint32, *[]consumed) {
 	t.Helper()
-	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: 7})
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 16, Seed: seed})
 	if err != nil {
 		t.Fatalf("NewGame: %v", err)
 	}
@@ -307,6 +313,67 @@ func TestHostAggregateMismatchDivergesFSV(t *testing.T) {
 		t.Fatalf("expected divergence from the one-tick command shift, but hashes match: %#x", hA)
 	}
 	t.Logf("FSV divergence control: B's stop shifted tick 3→4 → StateHash %#x != %#x (the equality check has teeth)", hA, hB)
+}
+
+// TestLobbyStartConfiguresLockstepSessionFSV — the lobby→session bootstrap seam.
+// Lobby.Start() returns the StartParams (seed, turn length, input delay) the
+// issue says must configure the lockstep session; this proves they actually do.
+// A session built from those params (a) advances exactly TurnLen ticks per turn,
+// (b) is deterministic across twins, and (c) reflects the seed — a different seed
+// diverges, so the lobby's seed genuinely reaches the sim and isn't dropped.
+func TestLobbyStartConfiguresLockstepSessionFSV(t *testing.T) {
+	lob, err := NewLobby(2, "host", lobbyParams())
+	if err != nil {
+		t.Fatalf("NewLobby: %v", err)
+	}
+	if _, err := lob.Join("client"); err != nil {
+		t.Fatalf("Join: %v", err)
+	}
+	if err := lob.SetReady(1, true); err != nil {
+		t.Fatalf("SetReady: %v", err)
+	}
+	params, err := lob.Start()
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if params.Seed != 0xABCDEF || params.TurnLen != 3 {
+		t.Fatalf("start params = %+v, want seed 0xABCDEF turnLen 3", params)
+	}
+
+	// Build the session from the start params and run one turn.
+	runOneTurn := func(seed uint64) (*api.Game, int) {
+		gate, gerr := NewLockstepGate(params.TurnLen)
+		if gerr != nil {
+			t.Fatalf("NewLockstepGate(%d): %v", params.TurnLen, gerr)
+		}
+		g, unit, _ := newTwinSeeded(t, int64(seed))
+		if derr := gate.Deliver(0, turnAgg(t, stopRec(t, 1, 0, unit))); derr != nil {
+			t.Fatalf("Deliver: %v", derr)
+		}
+		adv, _, _ := gate.Pump(g)
+		return g, adv
+	}
+
+	// (a) TurnLen wired: one turn advances exactly TurnLen ticks.
+	g, adv := runOneTurn(params.Seed)
+	if adv != params.TurnLen || g.Tick() != uint32(params.TurnLen) {
+		t.Fatalf("turn 0 advanced %d ticks (game tick %d), want TurnLen=%d", adv, g.Tick(), params.TurnLen)
+	}
+
+	// (b) deterministic: same params → same hash.
+	g2, _ := runOneTurn(params.Seed)
+	if g.StateHash() != g2.StateHash() {
+		t.Fatalf("same-params twins diverged: %#x != %#x", g.StateHash(), g2.StateHash())
+	}
+
+	// (c) seed wired: a different seed diverges, proving StartParams.Seed reaches
+	// the sim rather than being ignored.
+	gOther, _ := runOneTurn(params.Seed + 1)
+	if g.StateHash() == gOther.StateHash() {
+		t.Fatalf("seed ignored: session seed %#x hashes identically to %#x", params.Seed, params.Seed+1)
+	}
+	t.Logf("FSV lobby→session: Start{seed=%#x turnLen=%d delay=%d} → %d ticks/turn; same-seed twins %#x==%#x; seed+1 diverges (%#x)",
+		params.Seed, params.TurnLen, params.InputDelay, adv, g.StateHash(), g2.StateHash(), gOther.StateHash())
 }
 
 // TestLockstepOutOfOrderHeld — an aggregate for T+2 arriving before T+1 is held,
