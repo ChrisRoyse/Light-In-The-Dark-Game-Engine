@@ -456,3 +456,12 @@ exact   Game.Effects
 exact   Game.AppendEffects
 exact   Effect.Position
 exact   Effect.ID
+# production replay recording of a real melee-AI match (#404): RecordReplay turns
+# on a tap that records the attached melee AI's economy/production/wave decisions
+# into the .litdreplay format (sim.ReplayCommand v3); ReplayCommands/BuildReplay
+# read the accumulated stream. A LitD-original determinism/observability seam —
+# WC3/JASS has no replay-recording native (its replays are an engine-level binary
+# format, not script-accessible).
+exact   Game.RecordReplay
+exact   Game.ReplayCommands
+exact   Game.BuildReplay

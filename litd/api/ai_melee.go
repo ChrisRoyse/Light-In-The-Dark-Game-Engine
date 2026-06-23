@@ -147,10 +147,49 @@ func (g *Game) AttachMeleeAI(p Player, strat *melee.Strategy, cfg melee.Config, 
 	cfg.Self = int(idx)
 	cfg.Difficulty = int(d) // Difficulty Easy/Normal/Insane == melee Diff consts 0/1/2
 	br := &aiBridge{g: g, player: idx}
-	c := melee.NewController(strat, cfg, br)
+	// When recording (RecordReplay), the controller drives a tap that records its
+	// decisions into the production replay format; the AI domain still reads and
+	// issues through the raw bridge (which carries the AICommander Issue surface
+	// the recorder's embedded interface does not), and the recorder delegates
+	// every call unchanged, so the sim is unperturbed (#404).
+	var ctrlBridge melee.Bridge = br
+	if g.replayRecording {
+		ctrlBridge = melee.NewRecordingBridge(br, &g.replayLog)
+	}
+	c := melee.NewController(strat, cfg, ctrlBridge)
 	if g.meleeControllers == nil {
 		g.meleeControllers = make(map[uint8]*melee.Controller)
 	}
 	g.meleeControllers[idx] = c
 	g.aiDomain.AddPlayer(int(idx), br, br, ai.NewFuncController(c.Step))
+}
+
+// RecordReplay turns on production replay recording (#404): every melee AI
+// attached after this call taps its bridge, recording its economy/production/
+// wave decisions into the replay format. ReplayCommands returns the accumulated
+// stream; BuildReplay wraps it into a verifiable *sim.Replay. Recording is
+// non-intrusive — the tap delegates unchanged, so the sim hashes identically.
+func (g *Game) RecordReplay() {
+	g.replayRecording = true
+	g.replayLog = g.replayLog[:0]
+}
+
+// ReplayCommands returns the recorded production command stream (nil if
+// RecordReplay was never called). The slice is owned by the Game — copy before
+// retaining across further recording.
+func (g *Game) ReplayCommands() []sim.ReplayCommand { return g.replayLog }
+
+// BuildReplay assembles the recorded stream into a *sim.Replay ready to Encode
+// to a .litdreplay, stamped with the tick count run so far. Seed/MapHash/
+// Fingerprint are left 0 for the caller to fill from the match setup (the same
+// posture the rest of the format uses until the map format lands) — the
+// recording replays on an identically-constructed world, not by reseeding from
+// the header.
+func (g *Game) BuildReplay() *sim.Replay {
+	return &sim.Replay{
+		Version:  sim.ReplayFormatVersion,
+		Interval: sim.DefaultCheckpointInterval,
+		Ticks:    g.w.Tick(),
+		Commands: append([]sim.ReplayCommand(nil), g.replayLog...),
+	}
 }

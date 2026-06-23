@@ -76,6 +76,15 @@ type Game struct {
 	aiDomain *ai.Domain
 	aiBudget int
 
+	// replayRecording, when set (RecordReplay), makes every melee AI attached
+	// afterward tap its bridge into replayLog as production sim.ReplayCommands
+	// (#404), so a real AI match records a .litdreplay that reproduces it with the
+	// controllers detached. api-runtime state, never hashed — the recording
+	// bridge delegates unchanged, so a recorded match hashes identically to an
+	// unrecorded one.
+	replayRecording bool
+	replayLog       []sim.ReplayCommand
+
 	// debug enables R-API-5 invalid-handle assertions; off in shipped
 	// maps (WC3 forgiveness), on in development (catch the swallowed
 	// bug). Toggled via SetDebug.
