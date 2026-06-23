@@ -148,6 +148,7 @@ func (w *World) phaseCombat() {
 		w.OnCombatPhase(w.tick)
 	}
 	w.damageApplySystem()
+	w.regenSystem() // after damage: this tick's lethal hits land before any heal (#520)
 }
 
 // Phase 6 — events: deterministically ordered dispatch (#88). Death

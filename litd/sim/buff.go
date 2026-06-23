@@ -406,6 +406,16 @@ func (w *World) BuffedArmor(id EntityID, base int) int {
 	return int(fixed.FromInt(int32(int64(base) + add)).Mul(mult).Floor())
 }
 
+// BuffedRegen is the regen system's read: a unit's base life-per-tick
+// regeneration through the life-regen cache (Add already in per-tick fixed
+// bits, same units as the unit `regen` field). The untouched-cache identity
+// returns base bit-exactly, so a unit with no life-regen mod folds to its base
+// regen unchanged — the property that keeps every regen-less determinism golden
+// bit-identical.
+func (w *World) BuffedRegen(id EntityID, base fixed.F64) fixed.F64 {
+	return fixed.F64(w.buffedStat(data.StatLifeRegen, id, int64(base)))
+}
+
 // BuffedCooldown is the attack system's read: weapon cooldown ticks
 // through the attack-cooldown cache (Add in signed integer ticks; the
 // multiply runs in fixed point and floors back), floored at one tick

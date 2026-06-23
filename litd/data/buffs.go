@@ -40,10 +40,11 @@ const (
 	StatArmor                       // Add in integer armor points
 	StatAttackCooldown              // Add in seconds → ticks (signed)
 	StatAttackDamage                // Add in damage points → fixed bits (#303)
+	StatLifeRegen                   // Add in life/second → per-tick fixed (#520)
 	BuffStatCount
 )
 
-var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage"}
+var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen"}
 
 // Buff flags.
 const (
@@ -315,6 +316,16 @@ func convertStatAdd(stat uint8, add float64) (int64, error) {
 			return 0, fmt.Errorf("attack-damage add must be an integer")
 		}
 		return int64(add) << 32, nil
+	case StatLifeRegen:
+		// life/second → per-tick fixed bits, same units as the unit `regen`
+		// field (loader.go perSecondToPerTick). Add is non-negative (like
+		// move-speed); a regen-slowing debuff uses permille < 1000, not a
+		// negative add.
+		v, err := perSecondToPerTick(add)
+		if err != nil {
+			return 0, err
+		}
+		return int64(v), nil
 	}
 	return 0, fmt.Errorf("unknown stat %d", stat)
 }
