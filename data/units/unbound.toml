@@ -111,8 +111,11 @@ projectile-speed = 850
 targets-allowed = ["ground", "air", "structure"]
 
 # Pyre_wagon — the portable-flame carrier (identity.md §3). Noncombat-leaning:
-# a token ram attack only; its real job is the LARGE sight radius (day AND
-# night) that the portable-flame aura mechanic (#171) consumes as moving vision.
+# a token ram attack only; its real job is the LARGE sight radius that the
+# portable-flame aura mechanic (#171) consumes as moving vision. sight-night ==
+# sight-day on purpose: the carried light is its own source, so the Flicker dim
+# (#170) does NOT shrink it (identity.md §2 "the point of carrying your own
+# light"). Every other unit's sight-night < sight-day and dims with the cycle.
 # Heavier and slower than the rest — the one Unbound unit that trades mobility
 # for the light it carries.
 [[unit]]
@@ -127,7 +130,7 @@ collision-size = 24
 pathing = "ground"
 acquisition-range = 300
 sight-day = 2400
-sight-night = 1800
+sight-night = 2400
 model = "units/unbound/pyre_wagon.glb"
 food-cost = 4
 costs = { gold = 180, lumber = 90 }

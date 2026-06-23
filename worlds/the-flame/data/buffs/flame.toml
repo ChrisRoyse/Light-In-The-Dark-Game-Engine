@@ -1,0 +1,40 @@
+# Portable-flame aura (#171), the data half of the mechanic. Two buffs:
+#
+#   flame_aura   — the PARENT, carried by the pyre_wagon. Its [buff.aura] block
+#                  makes the sim aura system (litd/sim/aura.go) maintain a
+#                  flame_warmth child on every ALLY within `radius` of the live
+#                  carrier, the carrier included. radius 200 wu; linger 0.5 s.
+#   flame_warmth — the CHILD granted to warmed allies: +1 armor while near the
+#                  flame. (Thematically "minor regen", but buff stat-mods cannot
+#                  touch life-regen yet — that vocabulary gap is tracked in #520 —
+#                  so the warmth is expressed as the nearest available stat,
+#                  armor. Swap the mod to a regen mod once #520 lands.)
+#
+# linger (0.5 s = 10 ticks) is the grace after an ally's last in-range
+# evaluation: walk out, or the wagon dies, and the child expires 0.5 s later
+# (the engine stops refreshing it). It is floored at MinAuraLingerSeconds (0.25)
+# so the child never lapses between the 5-tick aura evaluations. Both buffs use
+# `refresh` stacking → two overlapping wagons keep ONE shared child per ally
+# (non-stacking: armor +1, not +2).
+[[buff]]
+id = "flame_aura"
+name = "Portable Flame"
+duration = 1.0              # refreshed every tick while the wagon lives
+stacking = "refresh"
+dispellable = false
+
+[buff.aura]
+radius = 200.0
+child = "flame_warmth"
+linger = 0.5
+
+[[buff]]
+id = "flame_warmth"
+name = "Warmth"
+duration = 1.0             # >0 required; child lifetime is governed by linger, not duration
+stacking = "refresh"
+dispellable = false
+
+[[buff.mod]]
+stat = "armor"
+add = 1                    # +1 armor near the flame (regen unavailable — #520)

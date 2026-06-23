@@ -1,0 +1,38 @@
+# the-flame roster (#171). Two types are enough to exercise the portable flame:
+# the pyre_wagon carrier and a forager that walks in and out of its warmth.
+#
+# pyre_wagon: sight-night == sight-day → the carried light is Flicker-immune
+# (#170); its radius never shrinks in the dim phase. The forager is the contrast
+# unit: sight-night < sight-day, so a normal unit's vision DOES dim. That single
+# data difference is the whole "carry your own light" mechanic — no script owns
+# vision (the engine maintains unit sight as the unit moves). The script owns
+# only the data-driven AURA (buffs/flame.toml), applied to each live wagon.
+[[unit]]
+id = "pyre_wagon"
+life = 420
+regen = 0.25
+armor = 2
+armor-type = "medium"
+move-speed = 240
+turn-rate = 0.5
+collision-size = 24
+pathing = "ground"
+acquisition-range = 0
+sight-day = 2400
+sight-night = 2400          # == sight-day: Flicker-immune carried light
+name = "Pyre Wagon"
+
+[[unit]]
+id = "forager"
+life = 140
+regen = 0
+armor = 0
+armor-type = "unarmored"
+move-speed = 300
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 0
+sight-day = 600
+sight-night = 300           # < sight-day: a normal unit dims with the cycle
+name = "Forager"

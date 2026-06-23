@@ -1,0 +1,9 @@
+# Minimal combat vocabulary. the-flame does no combat (neither unit declares an
+# attack), but the loader requires exactly one combat table. The armor-types here
+# must cover every unit's armor-type (medium for the wagon, unarmored for the
+# forager); attack-types lists the single normal type.
+attack-types = ["normal"]
+armor-types = ["unarmored", "medium"]
+
+[coefficients]
+normal = [1000, 1000]
