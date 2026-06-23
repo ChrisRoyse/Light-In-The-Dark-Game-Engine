@@ -535,10 +535,30 @@ type selectionCaseDump struct {
 }
 
 type groupRuntimeDump struct {
-	Current groupCaseDump   `json:"current"`
-	Cases   []groupCaseDump `json:"cases"`
-	OK      bool            `json:"ok"`
-	Errors  []string        `json:"errors,omitempty"`
+	Current groupCaseDump        `json:"current"`
+	Cases   []groupCaseDump      `json:"cases"`
+	Bar     *groupBarRuntimeDump `json:"bar,omitempty"`
+	OK      bool                 `json:"ok"`
+	Errors  []string             `json:"errors,omitempty"`
+}
+
+// groupBarRuntimeDump (#197) is the control-group bar + idle-worker button FSV:
+// the bar's visible badge model at two phases driven off real ControlGroups
+// counts (two groups, then half of group 2 dies and its badge count prunes),
+// plus the idle-worker button visibility + round-robin cycle.
+type groupBarRuntimeDump struct {
+	Phases     []groupBarPhaseDump `json:"phases"`
+	IdleHidden bool                `json:"idleHidden"` // true when 0 idle workers
+	IdleCycle  []int               `json:"idleCycle"`  // 3 idle => indices [0 1 2 0]
+	OK         bool                `json:"ok"`
+	Errors     []string            `json:"errors,omitempty"`
+}
+
+type groupBarPhaseDump struct {
+	Name    string              `json:"name"`
+	Text    string              `json:"text"`
+	Visible int                 `json:"visible"`
+	Badges  []lithud.GroupBadge `json:"badges"`
 }
 
 type groupCaseDump struct {
@@ -3127,7 +3147,77 @@ func buildGroupFSV(scene *core.Node, cameraRig *litrender.RTSCamera) *groupRunti
 	addCase(genCase)
 
 	drawSelectionFixture(scene, liveAfterDeaths, selectionCaseDump{Name: "group-recall", Selection: dump.Current.Selection})
+	dump.Bar = buildGroupBarFSV()
+	if dump.Bar != nil && !dump.Bar.OK {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, dump.Bar.Errors...)
+	}
 	return dump
+}
+
+// buildGroupBarFSV (#197) drives the GroupBar + IdleWorkerButton widgets off
+// real ControlGroups state: two groups assigned, then half of group 2 dies and
+// the bar badge prunes; plus the idle-worker button hidden at 0 and cycling
+// 0,1,2,0 over 3 idle workers. SoT = the dumped badge text/model.
+func buildGroupBarFSV() *groupBarRuntimeDump {
+	d := &groupBarRuntimeDump{OK: true}
+	var text lithud.TextBuffer
+	bar := lithud.NewGroupBar(&text)
+	g := litinput.NewControlGroups(litinput.DefaultGroupConfig())
+
+	barCounts := func() lithud.GroupBarState {
+		var s lithud.GroupBarState
+		for grp := 0; grp < lithud.GroupBarSlots; grp++ {
+			s.Counts[grp] = g.Count(grp)
+		}
+		return s
+	}
+	phase := func(name string) {
+		bar.Update(barCounts())
+		badges := append([]lithud.GroupBadge(nil), bar.Badges()...)
+		d.Phases = append(d.Phases, groupBarPhaseDump{
+			Name: name, Text: text.String(), Visible: len(badges), Badges: badges,
+		})
+	}
+
+	g.Assign(1, groupSelection(1, 2, 3, 4, 5))
+	g.Assign(2, groupSelection(6, 7, 8, 9))
+	phase("two-groups") // "1:5  2:4"
+
+	// Half of group 2 (ids 6,7) die: recall with only 8,9 alive prunes count to 2.
+	g.Recall(2, []litinput.GroupEntity{{ID: sim.EntityID(8)}, {ID: sim.EntityID(9)}}, 1000)
+	phase("after-deaths") // "1:5  2:2"
+
+	if len(d.Phases) == 2 {
+		if d.Phases[0].Text != "1:5  2:4" {
+			d.OK = false
+			d.Errors = append(d.Errors, "groupbar two-groups text="+d.Phases[0].Text)
+		}
+		if d.Phases[1].Text != "1:5  2:2" {
+			d.OK = false
+			d.Errors = append(d.Errors, "groupbar after-deaths text="+d.Phases[1].Text)
+		}
+	}
+
+	// Idle-worker button: hidden at 0 idle, then cycles round-robin over 3.
+	var idle lithud.IdleWorkerButton
+	d.IdleHidden = !idle.Update(lithud.IdleWorkerState{IdleCount: 0}).Visible
+	idle.Update(lithud.IdleWorkerState{IdleCount: 3})
+	for i := 0; i < 4; i++ {
+		d.IdleCycle = append(d.IdleCycle, idle.Click().Index)
+	}
+	if !d.IdleHidden {
+		d.OK = false
+		d.Errors = append(d.Errors, "idle button not hidden at 0 idle")
+	}
+	for i, want := range []int{0, 1, 2, 0} {
+		if i >= len(d.IdleCycle) || d.IdleCycle[i] != want {
+			d.OK = false
+			d.Errors = append(d.Errors, "idle cycle not round-robin")
+			break
+		}
+	}
+	return d
 }
 
 func buildSmartOrderFSV(scene *core.Node) (*orderRuntimeDump, error) {
