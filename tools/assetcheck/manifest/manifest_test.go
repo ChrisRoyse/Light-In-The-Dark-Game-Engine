@@ -39,6 +39,71 @@ func entry(path, license, sha string) string {
 		"sha256 = \"" + sha + "\"\n"
 }
 
+// #539 FSV: the optional `bytes` field — correct size passes, a stale size is a
+// PROV-SIZE violation, malformed sizes fail closed at parse, and TotalBytes sums
+// the declared footprint (what the #310 size gate needs) while naming entries
+// that declare none. SoT = Verify's violation set + Parse's error + TotalBytes.
+func TestManifestBytesFieldFSV(t *testing.T) {
+	dir := t.TempDir()
+	content := "synthetic-glb-bytes-knight" // 26 bytes
+	sum := writeAsset(t, dir, "units/knight.glb", content)
+	withBytes := func(n string) string {
+		return entry("units/knight.glb", "CC0-1.0", sum) + "bytes = \"" + n + "\"\n"
+	}
+
+	// Correct declared size → no violation.
+	writeManifest(t, dir, withBytes("26"))
+	if v, err := Verify(dir); err != nil || len(v) != 0 {
+		t.Fatalf("correct bytes: violations=%v err=%v, want none", v, err)
+	}
+	t.Log("FSV bytes: declared size matching the file on disk → clean")
+
+	// Stale declared size → PROV-SIZE, naming both figures.
+	writeManifest(t, dir, withBytes("999"))
+	v, err := Verify(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v) != 1 || v[0].RuleID != "PROV-SIZE" {
+		t.Fatalf("stale bytes: violations=%v, want one PROV-SIZE", v)
+	}
+	if !strings.Contains(v[0].Msg, "999") || !strings.Contains(v[0].Msg, "26") {
+		t.Fatalf("PROV-SIZE msg %q should name MANIFEST=999 and file=26", v[0].Msg)
+	}
+	t.Logf("FSV bytes: stale size → %s", v[0])
+
+	// Malformed sizes fail closed at parse.
+	for _, bad := range []string{"abc", "-5", "1.5"} {
+		if _, err := Parse(strings.NewReader(withBytes(bad))); err == nil {
+			t.Fatalf("Parse accepted bytes=%q (want refusal)", bad)
+		}
+	}
+	t.Log("FSV bytes: non-negative-integer-only, malformed sizes refused at parse")
+
+	// TotalBytes: sum declared, report the undeclared.
+	assets := []Asset{
+		{Path: "a.glb", Bytes: 100},
+		{Path: "b.glb", Bytes: 250},
+		{Path: "c.glb"}, // undeclared
+	}
+	sum2, missing := TotalBytes(assets)
+	if sum2 != 350 {
+		t.Fatalf("TotalBytes sum=%d, want 350", sum2)
+	}
+	if len(missing) != 1 || missing[0] != "c.glb" {
+		t.Fatalf("TotalBytes missing=%v, want [c.glb]", missing)
+	}
+	t.Logf("FSV TotalBytes: sum=%d missing=%v (a size gate must refuse while any entry lacks a size)", sum2, missing)
+
+	// Omitting bytes stays valid (field is optional, back-compat with the
+	// 634 existing entries that predate it).
+	writeManifest(t, dir, entry("units/knight.glb", "CC0-1.0", sum))
+	if v, err := Verify(dir); err != nil || len(v) != 0 {
+		t.Fatalf("omitted bytes: violations=%v err=%v, want none (optional field)", v, err)
+	}
+	t.Log("FSV bytes: field optional — entries without it still verify")
+}
+
 func TestHappyPath(t *testing.T) {
 	dir := t.TempDir()
 	sum := writeAsset(t, dir, "units/knight.glb", "synthetic-glb-bytes-knight")

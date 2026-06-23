@@ -10,11 +10,16 @@
 #                                         # "free-commercial" allowed only with operator sign-off
 #   retrieved = "2026-06-11"              # date the file was downloaded (YYYY-MM-DD)
 #   sha256    = "<hex digest of the file as committed>"
+#   bytes     = "1048576"                  # OPTIONAL (#539): file size in bytes, quoted
+#                                          # integer. Lets the binary+assets size budget
+#                                          # (#310) be summed from this ledger WITHOUT the
+#                                          # gitignored files present. Omit if unknown.
 #
 # Invariants enforced by tools/assetcheck (provenance rule):
 #   - every file under assets/ (except this MANIFEST) MUST have exactly one entry
 #   - every entry MUST point at an existing file
 #   - recorded sha256 MUST match the file bytes
+#   - if bytes is declared, it MUST match the file size on disk (PROV-SIZE)
 #
 # No assets are in the tree yet. Pack ingestion (#30, #41, #42) appends entries here.
 
