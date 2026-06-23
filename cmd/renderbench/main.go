@@ -28,6 +28,13 @@ import (
 const (
 	variantBaseline = "baseline"
 	variantFloor    = "floor"
+
+	// #233 slice 3 — material path and camera projection, the two axes of the
+	// {PBR,unlit} x {persp,ortho} combo matrix.
+	matPBR    = "pbr"
+	matUnlit  = "unlit"
+	projPersp = "persp"
+	projOrtho = "ortho"
 )
 
 type benchScenario struct {
@@ -49,6 +56,8 @@ type benchDump struct {
 	Segment            string                             `json:"segment,omitempty"`
 	Lights             int                                `json:"lights,omitempty"`
 	Variant            string                             `json:"variant"`
+	MaterialPath       string                             `json:"materialPath"`
+	Projection         string                             `json:"projection"`
 	RigidInstances     int                                `json:"rigidInstances"`
 	RigidModelTypes    int                                `json:"rigidModelTypes"`
 	SkinnedUnits       int                                `json:"skinnedUnits"`
@@ -80,6 +89,8 @@ type animationSample struct {
 func main() {
 	sceneName := flag.String("scene", "battle500", "benchmark scene: battle500 or battle1000")
 	variant := flag.String("variant", variantFloor, "variant: baseline or floor")
+	matPath := flag.String("material", matUnlit, "material path: pbr or unlit")
+	projection := flag.String("projection", projPersp, "camera projection: persp or ortho")
 	shotPath := flag.String("shot", "", "write screenshot PNG")
 	dumpPath := flag.String("dump", "", "write benchmark JSON")
 	flag.Parse()
@@ -94,25 +105,41 @@ func main() {
 		fmt.Fprintf(os.Stderr, "renderbench: unknown variant %q\n", v)
 		os.Exit(1)
 	}
+	if *matPath != matPBR && *matPath != matUnlit {
+		fmt.Fprintf(os.Stderr, "renderbench: unknown material path %q\n", *matPath)
+		os.Exit(1)
+	}
+	if *projection != projPersp && *projection != projOrtho {
+		fmt.Fprintf(os.Stderr, "renderbench: unknown projection %q\n", *projection)
+		os.Exit(1)
+	}
 
 	a := app.App(1024, 576, "LitD renderbench")
 	scene := core.NewNode()
-	cam := camera.New(1024.0 / 576.0)
+	const aspect = 1024.0 / 576.0
+	var cam *camera.Camera
+	if *projection == projOrtho {
+		// Ortho size frames the ~1400-unit field along the vertical axis.
+		cam = camera.NewOrthographic(aspect, 250, 3800, 1100, camera.Vertical)
+	} else {
+		cam = camera.New(aspect)
+		cam.SetNear(250)
+		cam.SetFar(3800)
+	}
 	cam.SetPosition(0, 1350, 920)
 	cam.LookAt(&math32.Vector3{X: 0, Y: 0, Z: 0}, &math32.Vector3{X: 0, Y: 1, Z: 0})
-	cam.SetNear(250)
-	cam.SetFar(3800)
 	scene.Add(cam)
 	scene.Add(light.NewAmbient(&math32.Color{R: 1, G: 1, B: 1}, 0.85))
 	sun := light.NewDirectional(&math32.Color{R: 1, G: 1, B: 1}, 0.45)
 	sun.SetPosition(-300, 800, 600)
 	scene.Add(sun)
 
-	dump, err := buildScene(scene, sc, v)
+	dump, err := buildScene(scene, sc, v, *matPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "renderbench: %v\n", err)
 		os.Exit(1)
 	}
+	dump.Projection = *projection
 
 	a.Subscribe(window.OnWindowSize, func(string, interface{}) {
 		w, h := a.GetSize()
@@ -178,9 +205,12 @@ func scenarioFor(name string) (benchScenario, error) {
 	}
 }
 
-func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump, error) {
+func buildScene(scene *core.Node, sc benchScenario, variant, matPath string) (*benchDump, error) {
 	if variant != variantBaseline && variant != variantFloor {
 		return nil, fmt.Errorf("unknown variant %q", variant)
+	}
+	if matPath != matPBR && matPath != matUnlit {
+		return nil, fmt.Errorf("unknown material path %q", matPath)
 	}
 	if sc.Columns <= 0 {
 		return nil, fmt.Errorf("scene %q has non-positive column count %d", sc.Name, sc.Columns)
@@ -194,6 +224,7 @@ func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump,
 		Segment:           sc.Segment,
 		Lights:            sc.Lights,
 		Variant:           variant,
+		MaterialPath:      matPath,
 		RigidInstances:    sc.RigidInstances,
 		RigidModelTypes:   sc.RigidModelTypes,
 		SkinnedUnits:      sc.SkinnedUnits,
@@ -221,13 +252,13 @@ func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump,
 	}
 
 	if variant == variantBaseline {
-		addRigidBaseline(scene, sc)
+		addRigidBaseline(scene, sc, matPath)
 	} else {
-		if err := addRigidFloor(scene, sc); err != nil {
+		if err := addRigidFloor(scene, sc, matPath); err != nil {
 			return nil, err
 		}
 	}
-	dump.AnimationSamples, dump.DeathTrace = addSkinnedPerDraw(scene, sc)
+	dump.AnimationSamples, dump.DeathTrace = addSkinnedPerDraw(scene, sc, matPath)
 	addSpellStormLights(scene, sc.Lights)
 
 	if overlays {
@@ -351,9 +382,9 @@ func addSpellStormLights(scene *core.Node, n int) {
 	}
 }
 
-func addRigidBaseline(scene *core.Node, sc benchScenario) {
+func addRigidBaseline(scene *core.Node, sc benchScenario, matPath string) {
 	geom := geometry.NewBox(22, 36, 22)
-	mats := rigidMaterials(sc.RigidModelTypes)
+	mats := rigidMaterials(sc.RigidModelTypes, matPath)
 	for i := 0; i < sc.RigidInstances; i++ {
 		x, z := gridPos(i, sc.Columns, sc.RigidInstances, 34, -460)
 		mesh := graphic.NewMesh(geom, mats[i%len(mats)])
@@ -362,8 +393,8 @@ func addRigidBaseline(scene *core.Node, sc benchScenario) {
 	}
 }
 
-func addRigidFloor(scene *core.Node, sc benchScenario) error {
-	mats := rigidMaterials(sc.RigidModelTypes)
+func addRigidFloor(scene *core.Node, sc benchScenario, matPath string) error {
+	mats := rigidMaterials(sc.RigidModelTypes, matPath)
 	geom := geometry.NewBox(22, 36, 22)
 	for typ := 0; typ < sc.RigidModelTypes; typ++ {
 		count := sc.RigidInstances / sc.RigidModelTypes
@@ -396,7 +427,7 @@ func addRigidFloor(scene *core.Node, sc benchScenario) error {
 	return nil
 }
 
-func addSkinnedPerDraw(scene *core.Node, sc benchScenario) ([]animationSample, []animationSample) {
+func addSkinnedPerDraw(scene *core.Node, sc benchScenario, matPath string) ([]animationSample, []animationSample) {
 	clips := litrender.ClipSet{
 		litrender.ClipIdle:   {Duration: 1.0, Loop: true},
 		litrender.ClipWalk:   {Duration: 1.0, Loop: true},
@@ -423,11 +454,11 @@ func addSkinnedPerDraw(scene *core.Node, sc benchScenario) ([]animationSample, [
 	driver.Update(states, visible, 0.35, clips, 0.5)
 
 	geom := geometry.NewBox(18, 30, 18)
-	mats := []*material.Standard{
-		material.NewStandard(&math32.Color{R: 0.26, G: 0.45, B: 0.95}),
-		material.NewStandard(&math32.Color{R: 0.26, G: 0.78, B: 0.40}),
-		material.NewStandard(&math32.Color{R: 0.96, G: 0.62, B: 0.20}),
-		material.NewStandard(&math32.Color{R: 0.50, G: 0.50, B: 0.50}),
+	mats := []material.IMaterial{
+		benchMat(matPath, math32.Color{R: 0.26, G: 0.45, B: 0.95}),
+		benchMat(matPath, math32.Color{R: 0.26, G: 0.78, B: 0.40}),
+		benchMat(matPath, math32.Color{R: 0.96, G: 0.62, B: 0.20}),
+		benchMat(matPath, math32.Color{R: 0.50, G: 0.50, B: 0.50}),
 	}
 	samples := make([]animationSample, 0, 4)
 	for i := 0; i < sc.SkinnedUnits; i++ {
@@ -477,13 +508,29 @@ func addSkinnedPerDraw(scene *core.Node, sc benchScenario) ([]animationSample, [
 	return samples, trace
 }
 
-func rigidMaterials(n int) []*material.Standard {
-	mats := make([]*material.Standard, n)
+func rigidMaterials(n int, matPath string) []material.IMaterial {
+	mats := make([]material.IMaterial, n)
 	for i := range mats {
 		c := math32.Color{R: 0.35 + 0.04*float32(i%5), G: 0.26 + 0.05*float32((i+2)%5), B: 0.18 + 0.04*float32((i+4)%5)}
-		mats[i] = material.NewStandard(&c)
+		mats[i] = benchMat(matPath, c)
 	}
 	return mats
+}
+
+// benchMat builds a unit material on the selected combo-matrix path: PBR routes
+// to the metallic-roughness physical shader (lit, rough dielectric); unlit routes
+// to the standard shader with lighting off (flat base colour). Geometry and draw
+// counts are identical across paths — only the shader/cost differs.
+func benchMat(matPath string, c math32.Color) material.IMaterial {
+	if matPath == matPBR {
+		return material.NewPhysical().
+			SetBaseColorFactor(&math32.Color4{R: c.R, G: c.G, B: c.B, A: 1}).
+			SetMetallicFactor(0).
+			SetRoughnessFactor(1)
+	}
+	m := material.NewStandard(&c)
+	m.SetUseLights(material.UseLightNone)
+	return m
 }
 
 func gridPos(i, columns, total int, spacing, zBase float32) (float32, float32) {

@@ -27,7 +27,7 @@ func TestRenderBenchScenePoliciesFSV(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			dump, err := buildScene(core.NewNode(), sc, tc.variant)
+			dump, err := buildScene(core.NewNode(), sc, tc.variant, matUnlit)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -79,7 +79,7 @@ func TestRenderBenchSegmentsFSV(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			dump, err := buildScene(core.NewNode(), sc, variantFloor)
+			dump, err := buildScene(core.NewNode(), sc, variantFloor, matUnlit)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -114,6 +114,38 @@ func TestRenderBenchSegmentsFSV(t *testing.T) {
 	}
 }
 
+// #233 slice 3 — the {PBR,unlit} material axis. SoT = the dump material path +
+// the world-draw target, which must be identical across material paths (same
+// geometry, only the shader differs). The projection axis is camera-only and
+// exercised by the headless render path. Bad paths must reject.
+func TestRenderBenchMaterialMatrixFSV(t *testing.T) {
+	sc, err := scenarioFor("max-battle")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target int
+	for i, mp := range []string{matUnlit, matPBR} {
+		dump, err := buildScene(core.NewNode(), sc, variantFloor, mp)
+		if err != nil {
+			t.Fatalf("material %q: %v", mp, err)
+		}
+		t.Logf("FSV material %q AFTER matPath=%q expectedWorldDraws=%d", mp, dump.MaterialPath, dump.ExpectedWorldDraws)
+		if dump.MaterialPath != mp {
+			t.Fatalf("material path = %q, want %q", dump.MaterialPath, mp)
+		}
+		if i == 0 {
+			target = dump.ExpectedWorldDraws
+		} else if dump.ExpectedWorldDraws != target {
+			t.Fatalf("material %q world-draw target = %d, want %d (geometry must be path-invariant)", mp, dump.ExpectedWorldDraws, target)
+		}
+	}
+	if got, err := buildScene(core.NewNode(), sc, variantFloor, "ray-trace"); err == nil {
+		t.Fatalf("unknown material path accepted: %+v", got)
+	} else {
+		t.Logf("FSV unknown material path AFTER err=%v", err)
+	}
+}
+
 func TestRenderBenchEdgesFSV(t *testing.T) {
 	if _, err := scenarioFor("missing"); err == nil {
 		t.Fatal("unknown scene accepted")
@@ -124,13 +156,13 @@ func TestRenderBenchEdgesFSV(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, err := buildScene(core.NewNode(), sc, "vat"); err == nil {
+	if got, err := buildScene(core.NewNode(), sc, "vat", matUnlit); err == nil {
 		t.Fatalf("unknown variant accepted: %+v", got)
 	} else {
 		t.Logf("FSV renderbench unknown variant AFTER err=%v", err)
 	}
 	sc.Columns = 0
-	if got, err := buildScene(core.NewNode(), sc, variantFloor); err == nil {
+	if got, err := buildScene(core.NewNode(), sc, variantFloor, matUnlit); err == nil {
 		t.Fatalf("zero-column scene accepted: %+v", got)
 	} else {
 		t.Logf("FSV renderbench zero columns AFTER err=%v", err)
