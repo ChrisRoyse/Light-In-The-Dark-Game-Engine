@@ -101,9 +101,19 @@ func main() {
 	projection := flag.String("projection", projPersp, "camera projection: persp or ortho")
 	nogl := flag.Bool("nogl", false, "headless: replay the stream without GL; draw/ms/visible/culled columns are n/a")
 	genStream := flag.Bool("genstream", false, "author the canonical recorded streams under data/maps/bench/ and exit")
+	all := flag.Bool("all", false, "run every segment x {pbr,unlit}x{persp,ortho} combo (+ -nogl parity) into -shots dir")
+	shotsDir := flag.String("shots", "", "output directory for -all keyframes + combined report (default artifacts/)")
 	shotPath := flag.String("shot", "", "write screenshot PNG (last replay frame)")
 	dumpPath := flag.String("dump", "", "write benchmark JSON")
 	flag.Parse()
+
+	if *all {
+		if err := runAll(*shotsDir); err != nil {
+			fmt.Fprintf(os.Stderr, "renderbench: all: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	if *genStream {
 		for _, seg := range []string{"typical", "max-battle", "stress"} {
@@ -636,7 +646,23 @@ func gridPos(i, columns, total int, spacing, zBase float32) (float32, float32) {
 }
 
 func validateDump(d *benchDump) {
-	if d.Stats.OpaqueDrawCalls != d.ExpectedWorldDraws {
+	// The instancing-floor draw count (ExpectedWorldDraws) is the reference when
+	// every instanced batch has >=1 visible instance — i.e. the widest, fully
+	// framed view. Frame 0 of the recorded path is that view (far zoom). Later
+	// frames zoom in, and under ortho a whole batch can leave the frustum, so the
+	// correct invariant is: frame 0 == ExpectedWorldDraws, and no frame exceeds it
+	// (frustum culling can only reduce draws, never add them).
+	if len(d.PerFrame) > 0 {
+		if f0 := d.PerFrame[0].OpaqueDraws; f0 != nil && *f0 != d.ExpectedWorldDraws {
+			d.Errors = append(d.Errors, fmt.Sprintf("frame 0 opaque draw calls = %d, want %d (unculled reference frame)", *f0, d.ExpectedWorldDraws))
+		}
+		for _, fs := range d.PerFrame {
+			if fs.OpaqueDraws != nil && *fs.OpaqueDraws > d.ExpectedWorldDraws {
+				d.Errors = append(d.Errors, fmt.Sprintf("frame %d opaque draw calls = %d exceeds floor %d (culling must only reduce draws)", fs.Frame, *fs.OpaqueDraws, d.ExpectedWorldDraws))
+				break
+			}
+		}
+	} else if d.Stats.OpaqueDrawCalls != d.ExpectedWorldDraws {
 		d.Errors = append(d.Errors, fmt.Sprintf("opaque draw calls = %d, want %d", d.Stats.OpaqueDrawCalls, d.ExpectedWorldDraws))
 	}
 	if d.Policy.SkinnedInstanced {

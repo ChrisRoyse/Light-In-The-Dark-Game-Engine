@@ -146,6 +146,53 @@ func TestRenderBenchMaterialMatrixFSV(t *testing.T) {
 	}
 }
 
+// #233 slice 4c regression — validateDump must use the unculled reference frame,
+// not the last frame. Bug: asserting last-frame opaqueDrawCalls == ExpectedWorldDraws
+// flagged a false failure when an ortho zoom-in legitimately culled whole instanced
+// batches on later frames (stress/ortho: draws 133 -> 130). Correct invariant:
+// frame 0 == floor, and no frame exceeds the floor.
+func TestValidateDumpCullingInvariantFSV(t *testing.T) {
+	// A valid dump skeleton so only the draw invariant is under test.
+	base := func(perFrame []frameStat) *benchDump {
+		return &benchDump{
+			ExpectedWorldDraws: 133,
+			PerFrame:           perFrame,
+			AnimationSamples:   make([]animationSample, 4),
+			DeathTrace: []animationSample{
+				{Time: 0}, {Time: 0.8}, {Fade: 0.5},
+			},
+		}
+	}
+
+	// Happy path: frame 0 at the floor, later frames culled below it → accepted.
+	ok := base([]frameStat{
+		{Frame: 0, OpaqueDraws: intPtr(133)},
+		{Frame: 1, OpaqueDraws: intPtr(131)},
+		{Frame: 2, OpaqueDraws: intPtr(130)},
+	})
+	validateDump(ok)
+	t.Logf("FSV culling happy AFTER ok=%v errors=%v", ok.OK, ok.Errors)
+	if !ok.OK {
+		t.Fatalf("culled-below-floor run rejected: %v", ok.Errors)
+	}
+
+	// Edge 1: frame 0 below the floor → the reference frame is wrong, reject.
+	bad0 := base([]frameStat{{Frame: 0, OpaqueDraws: intPtr(130)}, {Frame: 1, OpaqueDraws: intPtr(130)}})
+	validateDump(bad0)
+	t.Logf("FSV culling bad-frame0 AFTER ok=%v errors=%v", bad0.OK, bad0.Errors)
+	if bad0.OK {
+		t.Fatal("frame-0-below-floor accepted; reference-frame invariant not enforced")
+	}
+
+	// Edge 2: a frame exceeding the floor → culling cannot add draws, reject.
+	over := base([]frameStat{{Frame: 0, OpaqueDraws: intPtr(133)}, {Frame: 1, OpaqueDraws: intPtr(140)}})
+	validateDump(over)
+	t.Logf("FSV culling over-floor AFTER ok=%v errors=%v", over.OK, over.Errors)
+	if over.OK {
+		t.Fatal("frame-above-floor accepted; culling-only-reduces invariant not enforced")
+	}
+}
+
 func TestRenderBenchEdgesFSV(t *testing.T) {
 	if _, err := scenarioFor("missing"); err == nil {
 		t.Fatal("unknown scene accepted")
