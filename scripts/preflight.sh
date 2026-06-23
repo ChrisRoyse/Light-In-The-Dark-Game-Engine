@@ -10,6 +10,11 @@
 #   - jassgen-audit.yml: manifest emit/check/audit/revclosure + jassgen tests
 #   - world-archive.yml: First Flame archive pack + repack reproducibility
 #
+# Plus the locally-measurable halves of the no-CI-framed gate issues (the render/
+# asset/multi-OS halves stay deferred on their own issues, never proxied here):
+#   - #310: firstlight binary-size ceiling
+#   - #210: headless .litdreplay record -> verify file round-trip determinism
+#
 # Fail-closed: the first failing gate aborts the run with a nonzero exit. Run
 # this and see "PREFLIGHT: ALL GATES GREEN" before merging any branch to main.
 #
@@ -171,6 +176,44 @@ if [ $FAST -eq 0 ]; then
       echo "world archive not reproducible (byte diff across repacks)" >&2; exit 1
     fi
     echo "repack reproducible: $(sha256sum /tmp/preflight-a.litdworld | cut -d" " -f1)"'
+
+  # --- local resource + replay gates (reframed from the no-CI #210/#237/#310) --
+  # There is no CI (operator decision, permanent); the gates those issues asked
+  # for live here, in the local preflight, for the parts that are honestly
+  # measurable headlessly. The render/asset/multi-OS halves stay deferred on
+  # their own issues — see each issue body. We do NOT dress a headless proxy up
+  # as a whole-game measurement.
+  #
+  # #310 (binary size): the firstflame BINARY is measurable now; the 300 MB
+  # binary+assets target is asset-dominated and gated on assets-present + the
+  # MANIFEST byte-size field (#539). Gate the binary at a generous ceiling that
+  # catches gross bloat (current firstlight ~8 MiB).
+  step "binary-size gate (#310: firstlight <= 50 MiB)" bash -c '
+    set -e
+    out="$(mktemp -d)/firstlight"
+    go build -o "$out" ./cmd/firstlight
+    sz=$(stat -c %s "$out"); ceil=$((50*1024*1024)); mib=$((sz/1024/1024))
+    if [ "$sz" -gt "$ceil" ]; then
+      echo "firstlight binary ${mib} MiB exceeds 50 MiB ceiling" >&2; exit 1
+    fi
+    echo "firstlight ${sz} bytes (${mib} MiB) <= 50 MiB"'
+
+  # #210 (full-match replay verified headlessly): the determinism MECHANISM —
+  # record a command stream to a versioned .litdreplay, then re-simulate and
+  # compare the full checkpoint trace, fail-closed on any divergence. This gates
+  # the replay-artifact round-trip (file write -> re-sim -> trace), distinct from
+  # the in-process TestDeterminism10k cells above. The "real First Flame match
+  # over 3 OSes" CI matrix is impossible under the no-CI policy on one platform;
+  # that part stays deferred on #210.
+  step "headless replay record+verify (#210: file round-trip determinism)" bash -c '
+    set -e
+    d=$(mktemp -d)
+    go build -o "$d/headless" ./cmd/headless
+    printf "%s\n" "10 0 0 40 40" "200 0 1 80 80" "500 0 2 60 20" > "$d/cmds.txt"
+    "$d/headless" -ticks 2000 -units 64 -seed 7 -cmds "$d/cmds.txt" -replay "$d/m.litdreplay" >/dev/null
+    out=$("$d/headless" -verify "$d/m.litdreplay")
+    echo "$out" | tail -1
+    echo "$out" | grep -q "verify: OK" || { echo "replay verify FAILED (determinism regression)" >&2; exit 1; }'
 else
   echo "FAST mode: skipped -race, benchharness, world-archive."
   echo
