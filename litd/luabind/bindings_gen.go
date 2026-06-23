@@ -408,6 +408,7 @@ var Bindings = []Binding{
 	{LuaName: "Unit_SkillPoints", Package: "litd/api", Symbol: "Unit.SkillPoints", GoSignature: "() int"},
 	{LuaName: "Unit_Strength", Package: "litd/api", Symbol: "Unit.Strength", GoSignature: "() int"},
 	{LuaName: "Unit_SuspendExperience", Package: "litd/api", Symbol: "Unit.SuspendExperience", GoSignature: "(suspend bool)"},
+	{LuaName: "Unit_Train", Package: "litd/api", Symbol: "Unit.Train", GoSignature: "(typ UnitType) bool"},
 	{LuaName: "Unit_TurnSpeed", Package: "litd/api", Symbol: "Unit.TurnSpeed", GoSignature: "() float64"},
 	{LuaName: "Unit_Type", Package: "litd/api", Symbol: "Unit.Type", GoSignature: "() UnitType"},
 	{LuaName: "Unit_UseItem", Package: "litd/api", Symbol: "Unit.UseItem", GoSignature: "(n int, opts ...UseOption) bool"},

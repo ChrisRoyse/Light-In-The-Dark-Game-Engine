@@ -7592,6 +7592,33 @@
       }
     },
     {
+      "name": "IssueTrainOrderByIdBJ",
+      "origin": "blizzard.j",
+      "signature": {
+        "params": [
+          {
+            "name": "whichUnit",
+            "jassType": "unit",
+            "tsType": "unit"
+          },
+          {
+            "name": "unitId",
+            "jassType": "integer",
+            "tsType": "number"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "classification": "D3",
+      "classifiedBy": "override",
+      "disposition": "mapped",
+      "goMapping": {
+        "symbol": "Unit.Train",
+        "package": "litd/api",
+        "goSignature": "(typ UnitType) bool"
+      }
+    },
+    {
       "name": "IssueUpgradeOrderByIdBJ",
       "origin": "blizzard.j",
       "signature": {
@@ -39904,8 +39931,7 @@
           "IssueNeutralPointOrder",
           "IssueNeutralPointOrderById",
           "IssueNeutralTargetOrder",
-          "IssueNeutralTargetOrderById",
-          "IssueTrainOrderByIdBJ"
+          "IssueNeutralTargetOrderById"
         ]
       }
     },

@@ -1910,7 +1910,7 @@ One row per source function across common.j, blizzard.j, and common.ai. `canonic
 | IssueHauntOrderAtLocBJFilter | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssueHauntOrderAtLocBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
 | IssueBuildOrderByIdLocBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
-| IssueTrainOrderByIdBJ | blizzard.j | D3 | `litd/api.Unit.Order` (D3 collapse → IssuePointOrder) |
+| IssueTrainOrderByIdBJ | blizzard.j | D3 | `litd/api.Unit.Train` |
 | GroupTrainOrderByIdBJ | blizzard.j | D1 | **tombstoned** (superseded): group train order superseded by ranging UnitSet.Units / the slice queries + per-Unit verbs (R-EXEC-4, #239) |
 | IssueUpgradeOrderByIdBJ | blizzard.j | D2 | **tombstoned** (deferred-v2): #234: player tech/upgrade research surface (counts, max-allowed, progress, upgrade orders, research events) deferred to the v2 tech surface (#303 backing). |
 | GetAttackedUnitBJ | blizzard.j | D3 | **tombstoned** (deferred-v2): #triggers: event-context getters for event kinds not in the v1 taxonomy (order point/target, attacked/decaying/killing/replaced/restored/reviving unit, last-created effect); deferred to v2 as those event kinds land. |

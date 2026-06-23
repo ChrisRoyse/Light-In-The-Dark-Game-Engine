@@ -68,6 +68,7 @@ func (e *DamageEvent) Amount() float64 {
 
 // SetAmount overrides the damage to apply (clamped to >= 0 — damage never
 // heals). JASS: SetEventDamage, BlzSetEventDamage.
+// JASS: BlzSetEventDamage
 func (e *DamageEvent) SetAmount(v float64) {
 	if v < 0 {
 		v = 0

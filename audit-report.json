@@ -8,9 +8,9 @@
     "D4": 93,
     "D5": 116
   },
-  "mapped": 409,
+  "mapped": 410,
   "tombstoned": 1835,
-  "collapsed": 398,
+  "collapsed": 397,
   "unclassified": 0,
   "unmapped": 0,
   "tombstonesByReason": {
@@ -22,7 +22,7 @@
   "duplicateTargets": [],
   "helperShadowsCore": [],
   "commonaiCapabilityTombstones": 0,
-  "exportedVerbs": 575,
+  "exportedVerbs": 581,
   "unaccountedExports": [],
   "unimplementedCanonicals": [],
   "violations": null

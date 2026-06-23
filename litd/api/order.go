@@ -129,7 +129,7 @@ func (u Unit) CurrentOrder() Order {
 //
 // Fail-closed: a target unit that is already invalid/dead makes the call a
 // no-op returning false rather than issuing an order against a stale entity.
-// JASS: IssueBuildOrder, IssueBuildOrderById, IssueBuildOrderByIdLocBJ, IssueHauntOrderAtLocBJ, IssueHauntOrderAtLocBJFilter, IssueImmediateOrder, IssueImmediateOrderBJ, IssueImmediateOrderById, IssueInstantPointOrder, IssueInstantPointOrderById, IssueInstantTargetOrder, IssueInstantTargetOrderById, IssueNeutralImmediateOrder, IssueNeutralImmediateOrderById, IssueNeutralPointOrder, IssueNeutralPointOrderById, IssueNeutralTargetOrder, IssueNeutralTargetOrderById, IssuePointOrder, IssuePointOrderById, IssuePointOrderByIdLoc, IssuePointOrderLoc, IssuePointOrderLocBJ, IssueTargetOrder, IssueTargetOrderBJ, IssueTargetOrderById, IssueTrainOrderByIdBJ
+// JASS: IssueBuildOrder, IssueBuildOrderById, IssueBuildOrderByIdLocBJ, IssueHauntOrderAtLocBJ, IssueHauntOrderAtLocBJFilter, IssueImmediateOrder, IssueImmediateOrderBJ, IssueImmediateOrderById, IssueInstantPointOrder, IssueInstantPointOrderById, IssueInstantTargetOrder, IssueInstantTargetOrderById, IssueNeutralImmediateOrder, IssueNeutralImmediateOrderById, IssueNeutralPointOrder, IssueNeutralPointOrderById, IssueNeutralTargetOrder, IssueNeutralTargetOrderById, IssuePointOrder, IssuePointOrderById, IssuePointOrderByIdLoc, IssuePointOrderLoc, IssuePointOrderLocBJ, IssueTargetOrder, IssueTargetOrderBJ, IssueTargetOrderById
 func (u Unit) Order(ord Order, target OrderTarget) bool {
 	if !u.Valid() {
 		u.g.reportInvalid("Unit.Order")

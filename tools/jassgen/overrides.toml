@@ -717,9 +717,17 @@ name = "IssuePointOrder"
 class = "D3"
 goMapping = "Unit.Order"
 goSignature = "(ord Order, target OrderTarget) bool"
-collapsesWith = ["IssueImmediateOrder", "IssueTargetOrder", "IssuePointOrderById", "IssueImmediateOrderById", "IssueTargetOrderById", "IssuePointOrderLoc", "IssueInstantPointOrder", "IssueInstantTargetOrder", "IssueInstantPointOrderById", "IssueInstantTargetOrderById", "IssuePointOrderByIdLoc", "IssuePointOrderLocBJ", "IssueTargetOrderBJ", "IssueImmediateOrderBJ", "IssueBuildOrder", "IssueBuildOrderById", "IssueBuildOrderByIdLocBJ", "IssueHauntOrderAtLocBJ", "IssueHauntOrderAtLocBJFilter", "IssueNeutralImmediateOrder", "IssueNeutralImmediateOrderById", "IssueNeutralPointOrder", "IssueNeutralPointOrderById", "IssueNeutralTargetOrder", "IssueNeutralTargetOrderById", "IssueTrainOrderByIdBJ"]
+collapsesWith = ["IssueImmediateOrder", "IssueTargetOrder", "IssuePointOrderById", "IssueImmediateOrderById", "IssueTargetOrderById", "IssuePointOrderLoc", "IssueInstantPointOrder", "IssueInstantTargetOrder", "IssueInstantPointOrderById", "IssueInstantTargetOrderById", "IssuePointOrderByIdLoc", "IssuePointOrderLocBJ", "IssueTargetOrderBJ", "IssueImmediateOrderBJ", "IssueBuildOrder", "IssueBuildOrderById", "IssueBuildOrderByIdLocBJ", "IssueHauntOrderAtLocBJ", "IssueHauntOrderAtLocBJFilter", "IssueNeutralImmediateOrder", "IssueNeutralImmediateOrderById", "IssueNeutralPointOrder", "IssueNeutralPointOrderById", "IssueNeutralTargetOrder", "IssueNeutralTargetOrderById"]
 package = "litd/api"
 reason = "the order matrix — immediate/point/target × string/ById × instant, plus the Loc and BJ variants — collapses onto one typed Order(ord, target) verb where OrderTarget is the none|point|unit sum (dedup §4 ex.3)"
+
+[[override]]
+name = "IssueTrainOrderByIdBJ"
+class = "D3"
+goMapping = "Unit.Train"
+goSignature = "(typ UnitType) bool"
+package = "litd/api"
+reason = "training is a production-queue command, not a unit Order (litd/sim/replay.go); the integer unitId collapses onto a typed UnitType, so the sole train-order function lands on its own verb Unit.Train rather than the generic Order matrix (#527, dedup §4)"
 
 # --- Render-only unit natives: tombstoned deferred-v2 per DECISION #364.
 # These touch only render state (tint, scale, animation playback); R-API-6 bars
