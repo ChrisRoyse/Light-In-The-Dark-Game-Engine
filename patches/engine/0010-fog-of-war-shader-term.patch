@@ -51,8 +51,55 @@ index 0000000..7974413
 +    return color;
 +#endif
 +}
+diff --git a/renderer/shaders/physical_fragment.glsl b/renderer/shaders/physical_fragment.glsl
+index 53fd4f9..bb4c54a 100644
+--- a/renderer/shaders/physical_fragment.glsl
++++ b/renderer/shaders/physical_fragment.glsl
+@@ -64,6 +64,7 @@ in vec3 LitdInstanceTeamColorVarying;
+ 
+ #include <lights>
+ #include <litd_teamcolor>
++#include <litd_fog>
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -417,4 +418,6 @@ void main() {
+ 
+     // Final fragment color
+     FragColor = vec4(pow(color,vec3(1.0/2.2)), baseColor.a);
++    // LITD-PATCH (#161): fog-of-war dim, sampled per-fragment by world position.
++    FragColor = LitdApplyFog(FragColor);
+ }
+diff --git a/renderer/shaders/physical_vertex.glsl b/renderer/shaders/physical_vertex.glsl
+index ec8b88c..58b4242 100644
+--- a/renderer/shaders/physical_vertex.glsl
++++ b/renderer/shaders/physical_vertex.glsl
+@@ -22,6 +22,10 @@ out vec3 LitdVertexColor;
+ #ifdef LITD_INSTANCE_TEAMCOLOR
+ out vec3 LitdInstanceTeamColorVarying;
+ #endif
++// LITD-PATCH (#161): world-space position for the fog-of-war texture term.
++#ifdef LITD_FOG
++out vec3 LitdWorldPos;
++#endif
+ 
+ void main() {
+ 
+@@ -44,6 +48,12 @@ void main() {
+     mat4 litdInstanceMatrix = LitdInstanceMatrix();
+     vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
+ 
++    // LITD-PATCH (#161): world-space XZ for the fog UV (terrain uses an identity
++    // model matrix, so this is world space; translated meshes are tracked by #536).
++#ifdef LITD_FOG
++    LitdWorldPos = litdWorldPosition.xyz;
++#endif
++
+     // Transform this vertex position to camera coordinates.
+     Position = vec3(ModelViewMatrix * litdWorldPosition);
+ 
 diff --git a/renderer/shaders/sources.go b/renderer/shaders/sources.go
-index 6293b2d..d1817a9 100644
+index 6293b2d..435fe69 100644
 --- a/renderer/shaders/sources.go
 +++ b/renderer/shaders/sources.go
 @@ -10,6 +10,55 @@ const include_morphtarget_vertex_declaration2_source = `	in vec3 MorphPosition{i
@@ -153,7 +200,48 @@ index 6293b2d..d1817a9 100644
      // Transform vertex position to camera coordinates
      Position = ModelViewMatrix * litdWorldPosition;
  
-@@ -1255,6 +1318,7 @@ void main() {
+@@ -570,6 +633,7 @@ in vec3 LitdInstanceTeamColorVarying;
+ 
+ #include <lights>
+ #include <litd_teamcolor>
++#include <litd_fog>
+ 
+ // Final fragment color
+ out vec4 FragColor;
+@@ -923,6 +987,8 @@ void main() {
+ 
+     // Final fragment color
+     FragColor = vec4(pow(color,vec3(1.0/2.2)), baseColor.a);
++    // LITD-PATCH (#161): fog-of-war dim, sampled per-fragment by world position.
++    FragColor = LitdApplyFog(FragColor);
+ }
+ `
+ 
+@@ -1153,6 +1219,10 @@ out vec3 LitdVertexColor;
+ #ifdef LITD_INSTANCE_TEAMCOLOR
+ out vec3 LitdInstanceTeamColorVarying;
+ #endif
++// LITD-PATCH (#161): world-space position for the fog-of-war texture term.
++#ifdef LITD_FOG
++out vec3 LitdWorldPos;
++#endif
+ 
+ void main() {
+ 
+@@ -1175,6 +1245,12 @@ void main() {
+     mat4 litdInstanceMatrix = LitdInstanceMatrix();
+     vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
+ 
++    // LITD-PATCH (#161): world-space XZ for the fog UV (terrain uses an identity
++    // model matrix, so this is world space; translated meshes are tracked by #536).
++#ifdef LITD_FOG
++    LitdWorldPos = litdWorldPosition.xyz;
++#endif
++
+     // Transform this vertex position to camera coordinates.
+     Position = vec3(ModelViewMatrix * litdWorldPosition);
+ 
+@@ -1255,6 +1331,7 @@ void main() {
  var includeMap = map[string]string{
  
  	"morphtarget_vertex_declaration2": include_morphtarget_vertex_declaration2_source,

@@ -816,7 +816,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -1026,7 +1026,7 @@ func main() {
 		if !strings.HasPrefix(sceneKey, "lit") && sceneKey != "unlit" {
 			buildLights(scene)
 		}
-		if strings.HasPrefix(sceneKey, "terrain") || sceneKey == "fogscout" {
+		if strings.HasPrefix(sceneKey, "terrain") || strings.HasPrefix(sceneKey, "fogscout") {
 			spec, terrainFSV, err = buildTerrainFSV(scene, *sceneName, *wireframe)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: terrain: %v\n", err)
@@ -2929,8 +2929,8 @@ func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, 
 	if name == "terrain-chunks" {
 		return buildTerrainChunksFSV(scene, wireframe)
 	}
-	if name == "fogscout" {
-		return buildFogScoutFSV(scene, wireframe)
+	if strings.HasPrefix(name, "fogscout") {
+		return buildFogScoutFSV(scene, wireframe, name == "fogscout-pbr")
 	}
 	if name != "terrain" && name != "terrain-units" {
 		return sceneSpec{}, nil, fmt.Errorf("unknown terrain scene %q", name)
@@ -3115,7 +3115,7 @@ func (g fogScoutGrid) FogStateAt(_ uint8, x, y int32) uint8 {
 // to the plain terrain-chunks scene (0 added calls). The dump records the fog
 // affine mapping and the luminance the texture holds in each zone — the SoT the
 // screenshot's hidden/explored/visible brightness must match.
-func buildFogScoutFSV(scene *core.Node, wireframe bool) (sceneSpec, *terrainRuntimeDump, error) {
+func buildFogScoutFSV(scene *core.Node, wireframe, pbr bool) (sceneSpec, *terrainRuntimeDump, error) {
 	const mapPath = "data/maps/test64"
 	m, err := litmapdata.Load(os.DirFS("."), mapPath)
 	if err != nil {
@@ -3151,12 +3151,28 @@ func buildFogScoutFSV(scene *core.Node, wireframe bool) (sceneSpec, *terrainRunt
 	fog := litrender.NewFogTexture(1) // blend=1: instant, buf == target exactly
 	fog.Update(fogScoutGrid{size: int32(fog.Size())}, 1)
 
-	mat := material.NewStandard(&math32.Color{R: 0.30, G: 0.52, B: 0.24})
-	mat.SetSpecularColor(&math32.Color{R: 0.06, G: 0.06, B: 0.05})
-	mat.SetWireframe(wireframe)
+	// The fog term lives in both the standard and physical shaders; selecting a
+	// Physical material here exercises the PBR path (#536 parity check), a
+	// Standard material the unlit path — same FogTerrainMesh, same fog texture.
+	var mat material.IMaterial
+	sceneName := "fogscout"
+	if pbr {
+		sceneName = "fogscout-pbr"
+		pm := material.NewPhysical()
+		pm.SetBaseColorFactor(&math32.Color4{R: 0.30, G: 0.52, B: 0.24, A: 1})
+		pm.SetMetallicFactor(0)
+		pm.SetRoughnessFactor(1)
+		pm.SetWireframe(wireframe)
+		mat = pm
+	} else {
+		sm := material.NewStandard(&math32.Color{R: 0.30, G: 0.52, B: 0.24})
+		sm.SetSpecularColor(&math32.Color{R: 0.06, G: 0.06, B: 0.05})
+		sm.SetWireframe(wireframe)
+		mat = sm
+	}
 
 	dump := &terrainRuntimeDump{
-		Scene:          "fogscout",
+		Scene:          sceneName,
 		MapPath:        mapPath,
 		Wireframe:      wireframe,
 		Chunked:        true,
@@ -3191,7 +3207,7 @@ func buildFogScoutFSV(scene *core.Node, wireframe bool) (sceneSpec, *terrainRunt
 	}
 
 	visible := len(cs.Chunks)
-	return sceneSpec{name: "fogscout", expected: expectedStats(visible, 0, visible, 0, 1, 0)}, dump, nil
+	return sceneSpec{name: sceneName, expected: expectedStats(visible, 0, visible, 0, 1, 0)}, dump, nil
 }
 
 // countSeamMismatches compares the shared edge between each chunk and its right
