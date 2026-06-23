@@ -120,6 +120,11 @@ func isNewer(latest, running string) bool {
 	return semver.Satisfies(stripV(latest), ">"+stripV(running))
 }
 
+// IsValidVersion reports whether v is a comparable semver (optionally v-prefixed).
+// Exported for the release packager (#182) so the producer and consumer share one
+// version validator.
+func IsValidVersion(v string) bool { return validVersion(v) }
+
 // validVersion reports whether v parses as a semver, by reusing semver's range
 // validator on a comparator built from v (no separate parser).
 func validVersion(v string) bool {
