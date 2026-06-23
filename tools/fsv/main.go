@@ -285,9 +285,7 @@ func runOnce(sc Scenario, withDump bool) (beforeTop uint64, beforeSubs []uint64,
 	beforeTop, beforeSubs = g.HashSnapshot()
 	if withDump {
 		var buf bytes.Buffer
-		if err := g.DumpState(&buf); err != nil {
-			return 0, nil, nil, 0, nil, nil, fmt.Errorf("dump before: %w", err)
-		}
+		g.DumpState(&buf)
 		beforeDump = append([]byte(nil), buf.Bytes()...)
 	}
 
@@ -296,9 +294,7 @@ func runOnce(sc Scenario, withDump bool) (beforeTop uint64, beforeSubs []uint64,
 	afterTop, afterSubs = g.HashSnapshot()
 	if withDump {
 		var buf bytes.Buffer
-		if err := g.DumpState(&buf); err != nil {
-			return 0, nil, nil, 0, nil, nil, fmt.Errorf("dump after: %w", err)
-		}
+		g.DumpState(&buf)
 		afterDump = append([]byte(nil), buf.Bytes()...)
 	}
 	return beforeTop, beforeSubs, beforeDump, afterTop, afterSubs, afterDump, nil

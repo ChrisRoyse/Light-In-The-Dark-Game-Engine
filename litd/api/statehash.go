@@ -54,9 +54,13 @@ func HashSystemNames() []string {
 // before and after a dump is bit-identical. A nil/uninitialized game writes the
 // empty-world dump. This is the structured-text SoT that lets FSV avoid the far
 // costlier screenshot read whenever the question is non-pixel (#516).
-func (g *Game) DumpState(wr io.Writer) error {
+//
+// Per R-API-5 the verb is infallible: a writer error (only possible for a
+// streaming sink, not the in-memory buffer FSV uses) is dropped, leaving a
+// short/empty dump the reading agent sees plainly — never a silent wrong answer.
+func (g *Game) DumpState(wr io.Writer) {
 	if g == nil || g.w == nil {
-		return nil
+		return
 	}
-	return g.w.DumpState(wr)
+	_ = g.w.DumpState(wr)
 }

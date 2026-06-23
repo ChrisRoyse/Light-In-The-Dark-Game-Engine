@@ -434,3 +434,8 @@ exact   Game.OnBuffRefreshed
 exact   Event.Buff
 exact   Event.BuffStacks
 exact   Event.FromAura
+# headless state-dump for full-state verification (#516): Game.DumpState writes
+# the deterministic world state (entities/resources/clock) to an io.Writer so an
+# agent can diff sim state directly. Debug/FSV authoring seam — JASS has no
+# whole-state serializer native (SyncStored* are piecemeal gamecache I/O).
+exact   Game.DumpState
