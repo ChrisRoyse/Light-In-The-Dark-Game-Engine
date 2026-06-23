@@ -1,0 +1,39 @@
+# Kindle hero ruleset (#312/#153). A trimmed shared hero file: the global XP
+# curve / attribute-growth / revive economy, plus one skill-less [[hero]] row for
+# Ser Caldus (the demo carries level + item, not a skill tree). Authored in
+# seconds / sim points / XP; loader converts to 50 ms ticks + 32.32 fixed point.
+xp-curve = [0, 240, 580, 1020, 1560]
+
+[xp]
+share-radius = 1200.0
+split = "equal"
+death-penalty-permille = 250
+start-skill-points = 1
+
+[attributes]
+str-hp = 25.0
+str-regen = 0.06
+agi-armor = 0.15
+int-mana = 15.0
+int-mana-regen = 0.05
+
+[revive]
+base-seconds = 40.0
+seconds-per-level = 8.0
+costs-base = { gold = 200, lumber = 40 }
+costs-per-level = { gold = 40, lumber = 10 }
+
+# Ser Caldus — the Vigil's gate-warden. Strength-leaning, no skill tree in the
+# demo slice.
+[[hero]]
+unit = "caldus"
+str = 24.0
+agi = 16.0
+int = 20.0
+str-per-level = 2.7
+agi-per-level = 1.5
+int-per-level = 2.3
+
+[[hero.skill]]
+ability = "wardens_vigil"
+min-hero-level = [1]

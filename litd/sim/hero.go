@@ -308,6 +308,23 @@ func (w *World) BindHeroes(h *data.HeroTables) bool {
 	return true
 }
 
+// HeroTypeForUnit reports the hero-table index whose HeroDef is backed by the
+// given unit type, and whether one exists. It lets the spawn seam mirror WC3
+// CreateUnit semantics: creating a unit of a hero type yields a level-1 hero,
+// not a plain unit (#532). The hero table is small and load-fixed, so a linear
+// scan is zero-alloc and deterministic (no map iteration in gameplay).
+func (w *World) HeroTypeForUnit(unitIdx uint16) (uint16, bool) {
+	if w.heroTables == nil {
+		return 0, false
+	}
+	for i := range w.heroTables.Heroes {
+		if w.heroTables.Heroes[i].Unit == unitIdx {
+			return uint16(i), true
+		}
+	}
+	return 0, false
+}
+
 // SpawnHero spawns the hero's unit row and attaches a fresh level-1
 // hero component (base attributes, the table's starting skill
 // points).

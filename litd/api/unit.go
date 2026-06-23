@@ -68,7 +68,18 @@ func (g *Game) CreateUnit(owner Player, typ UnitType, pos Vec2, facing Angle) Un
 		return Unit{}
 	}
 	slot := uint8(owner.idx)
-	id, ok := g.w.SpawnFromTable(typ.ref-1, slot, slot, vec(pos))
+	// WC3 parity (#532): creating a unit of a hero type yields a level-1 hero
+	// (its progression row), not a plain unit — otherwise SetHeroLevel/HeroLevel
+	// no-op and hero gameplay is unauthorable from api/Lua.
+	var (
+		id sim.EntityID
+		ok bool
+	)
+	if heroType, isHero := g.w.HeroTypeForUnit(typ.ref - 1); isHero {
+		id, ok = g.w.SpawnHero(heroType, slot, slot, vec(pos))
+	} else {
+		id, ok = g.w.SpawnFromTable(typ.ref-1, slot, slot, vec(pos))
+	}
 	if !ok {
 		g.reportInvalid("Game.CreateUnit (spawn failed: unit cap or unbound type)")
 		return Unit{}

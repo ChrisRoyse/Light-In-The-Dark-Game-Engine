@@ -1,0 +1,8 @@
+# Kindle abilities (#312). One passive marker skill so Ser Caldus satisfies the
+# hero schema (heroes carry 1-5 skills); the demo verifies level + item carry-
+# over, not a spell, so this ability has no effect/trigger behavior.
+[[ability]]
+id = "wardens_vigil"
+name = "Warden's Vigil"
+mana-cost = 0
+cooldown = 0
