@@ -58,6 +58,47 @@ func TestRenderBenchScenePoliciesFSV(t *testing.T) {
 	}
 }
 
+// #233 — the three M4 acceptance segments. SoT = the synthetic scenario counts
+// the bench will render (unit totals per segment) + the stress segment's
+// spell-storm light count. CPU-only (buildScene on a bare node); the GL keyframe
+// FSV is added with the headless render path in a later slice.
+func TestRenderBenchSegmentsFSV(t *testing.T) {
+	cases := []struct {
+		scene      string
+		segment    string
+		wantUnits  int // rigid + skinned
+		wantLights int
+	}{
+		{"typical", "typical", 200, 0},
+		{"max-battle", "max-battle", 500, 0},
+		{"stress", "stress", 1000, 8},
+	}
+	for _, tc := range cases {
+		t.Run(tc.scene, func(t *testing.T) {
+			sc, err := scenarioFor(tc.scene)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dump, err := buildScene(core.NewNode(), sc, variantFloor)
+			if err != nil {
+				t.Fatal(err)
+			}
+			units := dump.RigidInstances + dump.SkinnedUnits
+			t.Logf("FSV segment %s AFTER units=%d (rigid=%d skinned=%d) lights=%d segment=%q",
+				tc.scene, units, dump.RigidInstances, dump.SkinnedUnits, dump.Lights, dump.Segment)
+			if units != tc.wantUnits {
+				t.Fatalf("segment %s units = %d, want %d", tc.scene, units, tc.wantUnits)
+			}
+			if dump.Lights != tc.wantLights {
+				t.Fatalf("segment %s lights = %d, want %d", tc.scene, dump.Lights, tc.wantLights)
+			}
+			if dump.Segment != tc.segment {
+				t.Fatalf("segment label = %q, want %q", dump.Segment, tc.segment)
+			}
+		})
+	}
+}
+
 func TestRenderBenchEdgesFSV(t *testing.T) {
 	if _, err := scenarioFor("missing"); err == nil {
 		t.Fatal("unknown scene accepted")

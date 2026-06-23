@@ -35,10 +35,18 @@ type benchScenario struct {
 	RigidModelTypes int
 	SkinnedUnits    int
 	Columns         int
+	// #233 M4 bench segment fields. Segment is the named workload class
+	// (typical / max-battle / stress); Lights is the count of extra point lights
+	// the segment adds (the stress segment's 8-light spell-storm). Zero on the
+	// legacy #107 instancing scenes.
+	Segment string
+	Lights  int
 }
 
 type benchDump struct {
 	Scene              string                             `json:"scene"`
+	Segment            string                             `json:"segment,omitempty"`
+	Lights             int                                `json:"lights,omitempty"`
 	Variant            string                             `json:"variant"`
 	RigidInstances     int                                `json:"rigidInstances"`
 	RigidModelTypes    int                                `json:"rigidModelTypes"`
@@ -149,6 +157,16 @@ func scenarioFor(name string) (benchScenario, error) {
 		return benchScenario{Name: name, RigidInstances: 440, RigidModelTypes: 12, SkinnedUnits: 60, Columns: 25}, nil
 	case "battle1000":
 		return benchScenario{Name: name, RigidInstances: 880, RigidModelTypes: 12, SkinnedUnits: 120, Columns: 40}, nil
+	// #233 M4 acceptance segments. Counts: typical ~200 units (normal play
+	// density), max-battle 500 visible units (overlays added in a later slice),
+	// stress 1000 units + an 8-light spell-storm. Rigid+skinned split mirrors the
+	// battle scenes so the instancing floor stays the measured workload.
+	case "typical":
+		return benchScenario{Name: name, Segment: "typical", RigidInstances: 160, RigidModelTypes: 12, SkinnedUnits: 40, Columns: 16}, nil
+	case "max-battle":
+		return benchScenario{Name: name, Segment: "max-battle", RigidInstances: 440, RigidModelTypes: 12, SkinnedUnits: 60, Columns: 25}, nil
+	case "stress":
+		return benchScenario{Name: name, Segment: "stress", RigidInstances: 880, RigidModelTypes: 12, SkinnedUnits: 120, Columns: 40, Lights: 8}, nil
 	default:
 		return benchScenario{}, fmt.Errorf("unknown scene %q", name)
 	}
@@ -167,6 +185,8 @@ func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump,
 	}
 	dump := &benchDump{
 		Scene:             sc.Name,
+		Segment:           sc.Segment,
+		Lights:            sc.Lights,
 		Variant:           variant,
 		RigidInstances:    sc.RigidInstances,
 		RigidModelTypes:   sc.RigidModelTypes,
@@ -194,7 +214,30 @@ func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump,
 		}
 	}
 	dump.AnimationSamples, dump.DeathTrace = addSkinnedPerDraw(scene, sc)
+	addSpellStormLights(scene, sc.Lights)
 	return dump, nil
+}
+
+// addSpellStormLights adds the stress segment's spell-storm point lights, spread
+// in a ring over the unit field so several units fall in multiple light ranges
+// (the worst case for the lighting loop). Deterministic placement (no RNG).
+func addSpellStormLights(scene *core.Node, n int) {
+	if n <= 0 {
+		return
+	}
+	colors := []math32.Color{
+		{R: 0.9, G: 0.5, B: 0.2}, {R: 0.3, G: 0.6, B: 1.0}, {R: 0.8, G: 0.2, B: 0.9}, {R: 0.2, G: 0.9, B: 0.5},
+	}
+	const radius = 420
+	for i := 0; i < n; i++ {
+		ang := 2 * math32.Pi * float32(i) / float32(n)
+		c := colors[i%len(colors)]
+		l := light.NewPoint(&c, 900)
+		l.SetLinearDecay(1)
+		l.SetQuadraticDecay(1)
+		l.SetPosition(radius*math32.Cos(ang), 120, 200+radius*math32.Sin(ang))
+		scene.Add(l)
+	}
 }
 
 func addRigidBaseline(scene *core.Node, sc benchScenario) {
