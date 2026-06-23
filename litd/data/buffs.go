@@ -43,10 +43,11 @@ const (
 	StatLifeRegen                   // Add in life/second → per-tick fixed (#520)
 	StatManaRegen                   // Add in mana/second → per-tick fixed (#522)
 	StatMaxMana                     // Add in integer mana points → fixed bits (#522)
+	StatMaxLife                     // Add in integer life points → fixed bits (#522)
 	BuffStatCount
 )
 
-var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen", "mana-regen", "max-mana"}
+var buffStatNames = [BuffStatCount]string{"move-speed", "armor", "attack-cooldown", "attack-damage", "life-regen", "mana-regen", "max-mana", "max-life"}
 
 // Buff flags.
 const (
@@ -341,6 +342,13 @@ func convertStatAdd(stat uint8, add float64) (int64, error) {
 		// unit), like attack-damage.
 		if add != float64(int64(add)) {
 			return 0, fmt.Errorf("max-mana add must be an integer")
+		}
+		return int64(add) << 32, nil
+	case StatMaxLife:
+		// integer life points → 32.32 fixed bits (the Healths store's MaxLife
+		// unit), like max-mana.
+		if add != float64(int64(add)) {
+			return 0, fmt.Errorf("max-life add must be an integer")
 		}
 		return int64(add) << 32, nil
 	}

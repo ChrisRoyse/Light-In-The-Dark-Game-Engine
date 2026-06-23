@@ -119,7 +119,7 @@ func (u Unit) MaxLife() float64 {
 	if r < 0 {
 		return 0
 	}
-	return toFloat(u.g.w.Healths.MaxLife[r])
+	return toFloat(u.g.w.BuffedMaxLife(u.id, u.g.w.Healths.MaxLife[r]))
 }
 
 // SetMaxLife sets the unit's maximum life (D5 typed accessor over the unitstate
@@ -142,8 +142,10 @@ func (u Unit) SetMaxLife(v float64) {
 		nv = min
 	}
 	u.g.w.Healths.MaxLife[r] = nv
-	if u.g.w.Healths.Life[r] > nv {
-		u.g.w.Healths.Life[r] = nv
+	// Clamp current life to the buffed cap (a +max-life mod can sit on top of
+	// the base we just set), preserving an active buff's headroom (#522).
+	if cap := u.g.w.BuffedMaxLife(u.id, nv); u.g.w.Healths.Life[r] > cap {
+		u.g.w.Healths.Life[r] = cap
 	}
 }
 
@@ -161,7 +163,7 @@ func (u Unit) LifePercent() float64 {
 	if r < 0 {
 		return 0
 	}
-	max := u.g.w.Healths.MaxLife[r]
+	max := u.g.w.BuffedMaxLife(u.id, u.g.w.Healths.MaxLife[r])
 	if max == 0 {
 		return 0
 	}
@@ -190,7 +192,7 @@ func (u Unit) SetLife(v float64) {
 	if nv < 0 {
 		nv = 0
 	}
-	if max := u.g.w.Healths.MaxLife[r]; nv > max {
+	if max := u.g.w.BuffedMaxLife(u.id, u.g.w.Healths.MaxLife[r]); nv > max {
 		nv = max
 	}
 	u.g.w.Healths.Life[r] = nv

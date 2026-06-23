@@ -379,6 +379,13 @@ func (w *World) recomputeBuffStats(target EntityID) {
 			w.Abilities.Mana[ar] = cap
 		}
 	}
+	// Same for a dropped +max-life modifier — clamp current life down to the
+	// buffed cap (#522). A raise is handled by regen/heal filling toward it.
+	if hr := w.Healths.Row(target); hr >= 0 {
+		if cap := w.BuffedMaxLife(target, w.Healths.MaxLife[hr]); w.Healths.Life[hr] > cap {
+			w.Healths.Life[hr] = cap
+		}
+	}
 }
 
 // buffedStat folds one entity's cache into a base value:
@@ -429,6 +436,14 @@ func (w *World) BuffedRegen(id EntityID, base fixed.F64) fixed.F64 {
 // max-mana cache (Add in fixed bits / integer points). Untouched-cache identity
 // returns base bit-exactly. Like BuffedArmor, the BASE is what the store
 // persists and hashes; only reads fold the modifier.
+// BuffedMaxLife is the life cap read: a unit's maximum life through the
+// max-life cache (Add in fixed bits / integer points). Untouched-cache identity
+// returns base bit-exactly; like BuffedMaxMana, the store persists/hashes the
+// BASE and only reads fold the modifier.
+func (w *World) BuffedMaxLife(id EntityID, base fixed.F64) fixed.F64 {
+	return fixed.F64(w.buffedStat(data.StatMaxLife, id, int64(base)))
+}
+
 func (w *World) BuffedMaxMana(id EntityID, base fixed.F64) fixed.F64 {
 	return fixed.F64(w.buffedStat(data.StatMaxMana, id, int64(base)))
 }

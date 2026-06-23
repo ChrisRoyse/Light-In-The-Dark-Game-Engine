@@ -23,7 +23,7 @@ func (w *World) regenSystem() {
 			continue // dying / decaying: never regen a corpse
 		}
 		life := h.Life[r]
-		max := h.MaxLife[r]
+		max := w.BuffedMaxLife(h.Entity[r], h.MaxLife[r]) // fold any +max-life mod (#522)
 		if life <= 0 || life >= max {
 			continue // dead, or already full — nothing to add
 		}

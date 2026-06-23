@@ -106,7 +106,7 @@ func (w *World) HealUnit(id EntityID, amount fixed.F64) fixed.F64 {
 		return 0
 	}
 	before := w.Healths.Life[hr]
-	max := w.Healths.MaxLife[hr]
+	max := w.BuffedMaxLife(id, w.Healths.MaxLife[hr]) // heal fills toward the buffed cap (#522)
 	life := before.Add(amount)
 	if life > max {
 		life = max

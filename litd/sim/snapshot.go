@@ -210,7 +210,9 @@ func (w *World) publishSnapshot() {
 		}
 		frac := uint16(65535)
 		if hr := w.Healths.Row(id); hr != -1 {
-			frac = lifeFrac(w.Healths.Life[hr], w.Healths.MaxLife[hr])
+			// Health bar fills against the buffed cap so a +max-life unit reads
+			// proportionally (render mirror, not hashed) (#522).
+			frac = lifeFrac(w.Healths.Life[hr], w.BuffedMaxLife(id, w.Healths.MaxLife[hr]))
 		}
 		back.Entries = append(back.Entries, SnapshotEntry{
 			ID:       id,
