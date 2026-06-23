@@ -1,0 +1,82 @@
+# The Unbound — building tables (R-AST-1; identity.md §2: nomads who abandoned
+# the beacons — camp vernacular, cheap/fast structures). Buildings are
+# trainable-producer [[unit]] entries (footprint + build-seconds). Faction
+# texture = AGGRESSION: cheaper and faster to raise than the Vigil counterparts,
+# lighter (heavy, not fortified) armor, and NO static defense building — the
+# army is the wall. Tech gating lives in data/tech/upgrades.toml.
+
+# Fire_kraal — town hall (tier-1 root). Trains the forager; gold/lumber depot;
+# starting food. Cheaper and faster than the Vigil bastion.
+[[unit]]
+id = "fire_kraal"
+life = 1350
+armor = 3
+armor-type = "heavy"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 48
+pathing = "ground"
+sight-day = 1400
+sight-night = 1000
+model = "buildings/unbound/fire_kraal.glb"
+footprint = 4
+build-seconds = 80.0
+food-provided = 10
+costs = { gold = 350, lumber = 150 }
+depot-for = ["gold", "lumber"]
+trains = ["forager"]
+
+# Hide_tent — supply (food). Cheapest, fastest structure; pure population cap.
+[[unit]]
+id = "hide_tent"
+life = 450
+armor = 2
+armor-type = "heavy"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 32
+pathing = "ground"
+sight-day = 1000
+sight-night = 800
+model = "buildings/unbound/hide_tent.glb"
+footprint = 2
+build-seconds = 30.0
+food-provided = 10
+costs = { gold = 75 }
+
+# War_tent — barracks. Trains the whole Unbound army line including the
+# pyre_wagon flame-carrier.
+[[unit]]
+id = "war_tent"
+life = 1000
+armor = 3
+armor-type = "heavy"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 48
+pathing = "ground"
+sight-day = 1200
+sight-night = 900
+model = "buildings/unbound/war_tent.glb"
+footprint = 4
+build-seconds = 50.0
+costs = { gold = 150, lumber = 30 }
+trains = ["ashblade", "storm_caller", "pyre_wagon"]
+
+# Ember_shrine — grimoire research seat (Grimoire of the Ember Road, #156).
+# Research lists are wired with the upgrade tables (#124); stands as the seat.
+[[unit]]
+id = "ember_shrine"
+life = 800
+armor = 2
+armor-type = "heavy"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 32
+pathing = "ground"
+sight-day = 1100
+sight-night = 800
+model = "buildings/unbound/ember_shrine.glb"
+footprint = 3
+build-seconds = 50.0
+costs = { gold = 125, lumber = 125 }

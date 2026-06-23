@@ -23,3 +23,17 @@ alive = ["muster_hall"]
 [[require]]
 unit = "scriptorium"
 alive = ["bastion"]
+
+# Unbound building tech tree (#123): fire_kraal is the tier-1 root; supply,
+# barracks, and the grimoire shrine each need a fire_kraal standing.
+[[require]]
+unit = "hide_tent"
+alive = ["fire_kraal"]
+
+[[require]]
+unit = "war_tent"
+alive = ["fire_kraal"]
+
+[[require]]
+unit = "ember_shrine"
+alive = ["fire_kraal"]
