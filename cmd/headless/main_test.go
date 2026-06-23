@@ -16,11 +16,45 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
+
+// #404 fail-closed boundary: the unit-order text replay format cannot express
+// player-level AI economy kinds (train/harvest/place — they carry no orderer
+// unit and the loader never sets Player), so loadCommands must REFUSE such a
+// line, never mis-apply it with a dummy unit index. SoT = the parse result for
+// a hand-written .cmds file (a valid unit-order line accepted; a player-kind
+// line rejected with a named error).
+func TestLoadCommandsRejectsPlayerKindFSV(t *testing.T) {
+	dir := t.TempDir()
+	// Happy: a move (kind 0) line parses to one command.
+	ok := filepath.Join(dir, "ok.cmds")
+	if err := os.WriteFile(ok, []byte("5 0 1 100 200\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cmds, err := loadCommands(ok, 8)
+	if err != nil || len(cmds) != 1 || cmds[0].Kind != sim.ReplayMove {
+		t.Fatalf("happy unit-order line: cmds=%+v err=%v", cmds, err)
+	}
+	t.Logf("FSV #404 loader: unit-order move line accepted (kind=%d)", cmds[0].Kind)
+
+	// Player-level kind (ReplayTrain=8) must be refused with a named error.
+	bad := filepath.Join(dir, "bad.cmds")
+	if err := os.WriteFile(bad, []byte("6 8 0 0 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = loadCommands(bad, 8)
+	if err == nil || !strings.Contains(err.Error(), "player-level") {
+		t.Fatalf("player-kind line: err=%v, want a 'player-level' rejection", err)
+	}
+	t.Logf("FSV #404 loader fail-closed: player-kind line rejected: %v", err)
+}
 
 // finalTopHash recomputes the world's top state hash (the SoT read, separate from
 // any return value the run produced).

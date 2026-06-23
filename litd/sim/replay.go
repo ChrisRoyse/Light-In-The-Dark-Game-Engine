@@ -23,10 +23,13 @@ import (
 // ReplayMagic opens every replay file.
 const ReplayMagic = "LITDRPL\x01"
 
-// ReplayFormatVersion bumps on any layout change. v2 (#404) widened
-// ReplayCommand from move-only to the full order vocabulary (Target +
-// Data fields).
-const ReplayFormatVersion uint32 = 2
+// ReplayFormatVersion bumps on any layout change OR command-vocabulary
+// widening (so an older reader refuses a newer file up-front at the version
+// check, not deep in an "unknown kind" error). v2 (#404) widened ReplayCommand
+// from move-only to the full unit-order vocabulary (Target + Data fields); v3
+// (#404) added the player-level AI economy kinds (Train/HarvestAssign/
+// PlaceBuilding) so a real melee-AI match records into the production format.
+const ReplayFormatVersion uint32 = 3
 
 // DefaultCheckpointInterval is the §6 checkpoint cadence in ticks.
 const DefaultCheckpointInterval uint32 = 100
@@ -37,6 +40,7 @@ const DefaultCheckpointInterval uint32 = 100
 // a sim Order. Train/production is a queue command, not a unit Order, so it is
 // not representable here yet (tracked on #404).
 const (
+	// Unit-order kinds — addressed by Unit (roster index), applied via IssueOrder.
 	ReplayMove    uint8 = 0 // Point
 	ReplayStop    uint8 = 1
 	ReplayHold    uint8 = 2
@@ -45,17 +49,42 @@ const (
 	ReplayHarvest uint8 = 5 // Target node
 	ReplayFollow  uint8 = 6 // Target unit
 	ReplayBuild   uint8 = 7 // Point = site, Data = unit-type id
-	ReplayMaxKind uint8 = ReplayBuild
+
+	// Player-level AI economy kinds (#404) — addressed by Player, NO orderer unit,
+	// applied directly to the World (not via IssueOrder). These record what the
+	// melee-AI bridge issues (TrainForPlayer / HarvestAssign / PlaceBuildingNear)
+	// so a real AI match replays bit-for-bit with the controllers detached.
+	ReplayTrain         uint8 = 8  // Data = unit-type id
+	ReplayHarvestAssign uint8 = 9  // Data = resource id, Unit = desired harvester count
+	ReplayPlaceBuilding uint8 = 10 // Data = building-type id, Point = center
+
+	// ReplayFirstPlayerKind is the lowest player-level kind; kinds >= it carry no
+	// orderer unit and dispatch through Apply's economy path.
+	ReplayFirstPlayerKind uint8 = ReplayTrain
+	ReplayMaxKind         uint8 = ReplayPlaceBuilding
 )
+
+// IsPlayerCommand reports whether the command is a player-level AI economy
+// command (no orderer unit) rather than a unit order. Such kinds are applied
+// directly to the World, and are NOT authorable in the unit-order text replay
+// format.
+func (c *ReplayCommand) IsPlayerCommand() bool { return c.Kind >= ReplayFirstPlayerKind }
 
 // NoRosterRef is the ReplayCommand.Target value meaning "no target unit" — used
 // by point/none orders and by attack-move (attack with a point, no focus unit).
 const NoRosterRef = ^uint32(0)
 
-// ReplayCommand is one recorded input: spawn-roster index addressing (stable
-// across runs). Kind is a Replay* constant. Unit is the ordered unit; Target a
-// second roster index for target-taking orders (NoRosterRef = none); Data a
-// typed payload (ReplayBuild: unit-type id); X,Y a point in raw 32.32 bits.
+// ReplayCommand is one recorded input. Kind is a Replay* constant.
+//
+// For unit-order kinds (Kind < ReplayFirstPlayerKind): Unit is the ordered unit
+// as a spawn-roster index (stable across runs); Target a second roster index for
+// target-taking orders (NoRosterRef = none); Data a typed payload (ReplayBuild:
+// unit-type id); X,Y a point in raw 32.32 bits.
+//
+// For player-level economy kinds (Kind >= ReplayFirstPlayerKind): Player owns
+// the command and there is no orderer unit. Data carries the type/resource id;
+// Unit is reused as the harvester count (ReplayHarvestAssign); X,Y the placement
+// center (ReplayPlaceBuilding). See Apply for the exact dispatch.
 type ReplayCommand struct {
 	Tick   uint32
 	Player uint8
@@ -109,6 +138,39 @@ func (c *ReplayCommand) ToOrder(resolve func(idx uint32) (EntityID, bool)) (Orde
 		return Order{Kind: OrderBuild, Point: pt, Data: c.Data}, true
 	default:
 		return Order{}, false
+	}
+}
+
+// Apply executes one replay command against w, returning whether it was applied.
+// Unit-order kinds resolve the orderer (and any target) through resolve and go
+// via IssueOrder; a dead/out-of-range orderer or an unresolvable target is
+// skipped (false), exactly as the move-only path skipped a dead orderer.
+// Player-level economy kinds (Train/HarvestAssign/PlaceBuilding) dispatch
+// directly to the World's economy methods using the recorded Player + params.
+// This is the single apply path shared by the headless driver's record and
+// verify loops, so record and replay can never diverge on application.
+func (c *ReplayCommand) Apply(w *World, resolve func(idx uint32) (EntityID, bool)) bool {
+	switch c.Kind {
+	case ReplayTrain:
+		w.TrainForPlayer(c.Player, c.Data)
+		return true
+	case ReplayHarvestAssign:
+		w.HarvestAssign(c.Player, int(c.Data), int(c.Unit))
+		return true
+	case ReplayPlaceBuilding:
+		w.PlaceBuildingNear(c.Player, c.Data, fixed.Vec2{X: fixed.F64(c.X), Y: fixed.F64(c.Y)})
+		return true
+	default:
+		ord, ok := c.ToOrder(resolve)
+		if !ok {
+			return false
+		}
+		oid, ok := resolve(c.Unit)
+		if !ok {
+			return false
+		}
+		w.IssueOrder(oid, ord, false)
+		return true
 	}
 }
 

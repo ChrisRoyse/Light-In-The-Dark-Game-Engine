@@ -253,25 +253,19 @@ func buildWorld(seed uint64, n int) (*sim.World, []sim.EntityID) {
 // 0 = move, anything else fails closed) and capturing the checkpoint
 // trace when asked.
 // applyReplayCommand issues one replay command's order to the world, mapping it
-// through sim.ReplayCommand.ToOrder. Shared by runWorld + verifyReplay so the
+// through sim.ReplayCommand.Apply. Shared by runWorld + verifyReplay so the
 // record and verify paths apply a command identically — a divergence there
-// would be a self-inflicted desync, not a real one. A command whose orderer is
-// dead/out-of-range, or a target-taking order whose target cannot be resolved,
-// is skipped (matching the prior move-only dead-orderer skip).
+// would be a self-inflicted desync, not a real one. Apply skips a command whose
+// orderer is dead/out-of-range, or a target-taking order whose target cannot be
+// resolved (matching the prior move-only dead-orderer skip), and dispatches
+// player-level economy kinds (#404) directly to the world.
 func applyReplayCommand(w *sim.World, ids []sim.EntityID, c *sim.ReplayCommand) {
-	if int(c.Unit) >= len(ids) || !w.Ents.Alive(ids[c.Unit]) {
-		return
-	}
-	ord, ok := c.ToOrder(func(idx uint32) (sim.EntityID, bool) {
+	c.Apply(w, func(idx uint32) (sim.EntityID, bool) {
 		if int(idx) < len(ids) && w.Ents.Alive(ids[idx]) {
 			return ids[idx], true
 		}
 		return 0, false
 	})
-	if !ok {
-		return
-	}
-	w.IssueOrder(ids[c.Unit], ord, false)
 }
 
 func runWorld(w *sim.World, ids []sim.EntityID, cmds []sim.ReplayCommand, ticks int, trace bool, crashTest int, clog *obs.Logger) []sim.ReplayCheckpoint {
@@ -426,6 +420,12 @@ func loadCommands(path string, roster int) ([]sim.ReplayCommand, error) {
 			return nil, fmt.Errorf("%s:%d: unknown command kind %d (max %d)", path, line, kindN, sim.ReplayMaxKind)
 		}
 		kind := uint8(kindN)
+		// Player-level AI economy kinds (train/harvest/place) carry no orderer unit
+		// and are addressed by player — the unit-order text format cannot express
+		// them. Refuse rather than mis-apply with a dummy unit index.
+		if (&sim.ReplayCommand{Kind: kind}).IsPlayerCommand() {
+			return nil, fmt.Errorf("%s:%d: kind %d is a player-level AI command not authorable in the unit-order text format", path, line, kind)
+		}
 		if unitIdx < 0 || unitIdx >= roster {
 			return nil, fmt.Errorf("%s:%d: unit index %d out of range [0,%d)", path, line, unitIdx, roster)
 		}

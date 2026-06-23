@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/statehash"
 )
 
@@ -70,6 +71,10 @@ func TestReplayVocabularyRoundTrip(t *testing.T) {
 		{Tick: 6, Player: 1, Kind: ReplayHarvest, Unit: 5, Target: 12},
 		{Tick: 7, Player: 2, Kind: ReplayFollow, Unit: 6, Target: 13},
 		{Tick: 8, Player: 2, Kind: ReplayBuild, Unit: 7, Target: NoRosterRef, Data: 4242, X: 800 << 32, Y: 900 << 32},
+		// Player-level economy kinds (#404, v3): addressed by Player, no orderer.
+		{Tick: 9, Player: 1, Kind: ReplayTrain, Data: 17},                                      // train unit-type 17
+		{Tick: 10, Player: 1, Kind: ReplayHarvestAssign, Unit: 5, Data: 2},                     // 5 harvesters on resource 2
+		{Tick: 11, Player: 2, Kind: ReplayPlaceBuilding, Data: 33, X: 640 << 32, Y: 480 << 32}, // place building-type 33 at point
 	}
 	r := sampleReplay()
 	r.Commands = cmds
@@ -77,8 +82,8 @@ func TestReplayVocabularyRoundTrip(t *testing.T) {
 	if err := r.Encode(&buf); err != nil {
 		t.Fatal(err)
 	}
-	if r.Version != 2 {
-		t.Fatalf("expected format version 2, got %d", r.Version)
+	if r.Version != 3 {
+		t.Fatalf("expected format version 3, got %d", r.Version)
 	}
 	got, err := DecodeReplay(bytes.NewReader(buf.Bytes()))
 	if err != nil {
@@ -92,8 +97,66 @@ func TestReplayVocabularyRoundTrip(t *testing.T) {
 			t.Fatalf("command %d round-trip mismatch:\n got %+v\nwant %+v", i, got.Commands[i], cmds[i])
 		}
 	}
-	t.Logf("FSV #404 round-trip: %d kinds, %d bytes; build.Data=%d attack.Target=%d harvest.Target=%d (all match)",
-		len(got.Commands), buf.Len(), got.Commands[7].Data, got.Commands[4].Target, got.Commands[5].Target)
+	// Classification SoT: kinds 0-7 are unit orders, 8-10 are player commands.
+	for i := range got.Commands {
+		want := got.Commands[i].Kind >= ReplayTrain
+		if got.Commands[i].IsPlayerCommand() != want {
+			t.Fatalf("command %d kind %d IsPlayerCommand=%v, want %v", i, got.Commands[i].Kind, !want, want)
+		}
+	}
+	t.Logf("FSV #404 round-trip: %d kinds, %d bytes; build.Data=%d attack.Target=%d train.Data=%d harvestAssign.Unit=%d place.Data=%d (all match)",
+		len(got.Commands), buf.Len(), got.Commands[7].Data, got.Commands[4].Target, got.Commands[8].Data, got.Commands[9].Unit, got.Commands[10].Data)
+}
+
+// Apply dispatch (#404): the unified apply path issues a unit-order command to
+// the live world (SoT = the unit's CurrentOrder after Apply), skips an
+// out-of-range orderer, and routes a player-level economy kind without needing
+// an orderer unit. The economy kinds' world effects are FSV'd end-to-end in
+// litd/ai (real-match record→replay) where unit/build defs exist; here the SoT
+// is the dispatch itself (order installed / skipped / no panic).
+func TestReplayApplyDispatchFSV(t *testing.T) {
+	w := NewWorld(Caps{})
+	w.SetGrid(openGrid())
+	u := orderUnit(t, w, 10, 10, 16*fixed.One)
+	w.OccupyCell(u)
+	ids := []EntityID{u}
+	resolve := func(idx uint32) (EntityID, bool) {
+		if int(idx) < len(ids) && w.Ents.Alive(ids[idx]) {
+			return ids[idx], true
+		}
+		return 0, false
+	}
+
+	// BEFORE: default order is stop.
+	if o, ok := w.CurrentOrder(u); !ok || o.Kind != OrderStop {
+		t.Fatalf("BEFORE: current order = %+v ok=%v, want stop", o, ok)
+	}
+	dst := CellCenter(cellIdx(14, 10))
+	move := ReplayCommand{Tick: 1, Player: 0, Kind: ReplayMove, Unit: 0, Target: NoRosterRef, X: int64(dst.X), Y: int64(dst.Y)}
+	if !move.Apply(w, resolve) {
+		t.Fatal("Apply(move) returned false for a live orderer")
+	}
+	// AFTER: SoT shows the move order with the recorded destination.
+	o, ok := w.CurrentOrder(u)
+	if !ok || o.Kind != OrderMove || o.Point != dst {
+		t.Fatalf("AFTER: current order = %+v ok=%v, want move to (%d,%d)", o, ok, dst.X, dst.Y)
+	}
+	t.Logf("FSV #404 apply: unit-order move dispatched — order %d → %d, point=(%d,%d)", OrderStop, o.Kind, o.Point.X, o.Point.Y)
+
+	// Edge — out-of-range orderer: Apply skips it (false), no state change/panic.
+	bad := ReplayCommand{Tick: 2, Kind: ReplayMove, Unit: 99, Target: NoRosterRef}
+	if bad.Apply(w, resolve) {
+		t.Fatal("Apply with out-of-range orderer returned true, want skipped")
+	}
+	t.Log("FSV #404 apply: out-of-range orderer skipped (false)")
+
+	// Edge — player-level kind: routed without an orderer unit; returns true, no
+	// panic even on a world with no unit defs (TrainForPlayer no-ops early).
+	train := ReplayCommand{Tick: 3, Player: 1, Kind: ReplayTrain, Data: 7}
+	if !train.Apply(w, resolve) {
+		t.Fatal("Apply(train) returned false, want dispatched")
+	}
+	t.Log("FSV #404 apply: player-level Train routed to world economy path (no orderer needed)")
 }
 
 // Fail-closed: a command kind past the known max is REFUSED at decode (#404),
