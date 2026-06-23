@@ -523,6 +523,7 @@ type canvasDump struct {
 	Terminal     *terminalRuntimeDump     `json:"terminal,omitempty"`
 	Settings     *settingsRuntimeDump     `json:"settings,omitempty"`
 	Stall        *stallRuntimeDump        `json:"stall,omitempty"`
+	Lobby        *lobbyRuntimeDump        `json:"lobby,omitempty"`
 	OK           bool                     `json:"ok"`
 	Errors       []string                 `json:"errors,omitempty"`
 }
@@ -835,7 +836,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal, settings, stall")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal, settings, stall, lobby")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -864,6 +865,7 @@ func main() {
 	terminalResult := flag.String("terminal-result", "victory", "result for -hud -scene terminal: victory or defeat")
 	settingsScenario := flag.String("settings-scenario", "default", "settings FSV scenario for -hud -scene settings: default, custom")
 	stallScenario := flag.String("stall-scenario", "two", "stall FSV scenario for -hud -scene stall: single, two, imminent")
+	lobbyScenario := flag.String("lobby-scenario", "mixed", "lobby FSV scenario for -hud -scene lobby: mixed, ready")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
@@ -988,7 +990,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult, *settingsScenario, *stallScenario)
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult, *settingsScenario, *stallScenario, *lobbyScenario)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -4553,7 +4555,7 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult, settingsScenario, stallScenario string) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult, settingsScenario, stallScenario, lobbyScenario string) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
@@ -4569,6 +4571,9 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "stall") {
 		return buildStallHUD(scene, canvas, localeTag, localeTable, stallScenario)
+	}
+	if strings.EqualFold(strings.TrimSpace(sceneName), "lobby") {
+		return buildLobbyHUD(scene, canvas, localeTag, localeTable, lobbyScenario)
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "campaign-menu") || strings.TrimSpace(campaignScenario) != "" {
 		return buildCampaignMenuHUD(scene, canvas, campaignScenario, localeTag, localeTable)
@@ -5165,6 +5170,112 @@ func drawStallScreen(scene *core.Node, layout lithud.StallScreenLayout, ok bool)
 		fg := math32.Color4{R: 0.90, G: 0.82, B: 0.80, A: 1} // warm grey rows
 		if entry.Focused {                                   // the title
 			fg = math32.Color4{R: 1, G: 0.74, B: 0.52, A: 1} // amber alert
+		}
+		label.SetColor4(&fg)
+		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
+		scene.Add(label)
+	}
+}
+
+// lobbyRuntimeDump is the FSV record for the session-bootstrap lobby (#80).
+type lobbyRuntimeDump struct {
+	Locale   string                   `json:"locale"`
+	Scenario string                   `json:"scenario"`
+	Layout   lithud.LobbyScreenLayout `json:"layout"`
+	OK       bool                     `json:"ok"`
+	Errors   []string                 `json:"errors,omitempty"`
+}
+
+func buildLobbyHUD(scene *core.Node, canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, scenario string) (canvasDump, error) {
+	rt, err := buildLobbyRuntime(canvas, localeTag, localeTable, scenario)
+	if err != nil {
+		return canvasDump{}, err
+	}
+	after := canvasSnapshotFor(canvas, rt.Layout.Widgets)
+	const lobbyBackgroundDrawCalls = 1
+	drawCalls := rt.Layout.ExpectedDrawCalls + lobbyBackgroundDrawCalls
+	dump := canvasDump{
+		Mode:  "lobby",
+		After: after,
+		HUD: hudRuntimeDump{
+			Locale:               localeTag,
+			WidgetPanels:         len(rt.Layout.Widgets),
+			Labels:               len(rt.Layout.Labels),
+			ExpectedGUIDrawCalls: drawCalls,
+			DrawCallBudget:       drawCalls,
+		},
+		Lobby:  rt,
+		OK:     rt.OK,
+		Errors: append([]string{}, rt.Errors...),
+	}
+	drawLobbyScreen(scene, rt.Layout)
+	return dump, nil
+}
+
+// buildLobbyRuntime resolves the lobby chrome and builds one scenario's slot rows —
+// exactly what the game shell would derive from a net.Lobby snapshot.
+func buildLobbyRuntime(canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, scenario string) (*lobbyRuntimeDump, error) {
+	scenario = strings.ToLower(strings.TrimSpace(scenario))
+	if scenario == "" {
+		scenario = "mixed"
+	}
+	var slots []lithud.LobbyScreenSlot
+	var canStart bool
+	switch scenario {
+	case "mixed":
+		slots = []lithud.LobbyScreenSlot{
+			{Name: "Aldric", Status: lithud.LobbySlotStatusHost},
+			{Name: "Bryn", Status: lithud.LobbySlotStatusReady},
+			{Name: "Cael", Status: lithud.LobbySlotStatusWaiting},
+			{Status: lithud.LobbySlotStatusOpen},
+		}
+		canStart = false
+	case "ready":
+		slots = []lithud.LobbyScreenSlot{
+			{Name: "Aldric", Status: lithud.LobbySlotStatusHost},
+			{Name: "Bryn", Status: lithud.LobbySlotStatusReady},
+			{Name: "Cael", Status: lithud.LobbySlotStatusReady},
+		}
+		canStart = true
+	default:
+		return nil, fmt.Errorf("unknown lobby scenario %q (want mixed|ready)", scenario)
+	}
+
+	strs := lithud.LobbyScreenStringsFromLocale(localeTable)
+	layout := lithud.NewLobbyScreenLayout(canvas, slots, canStart, 1, strs)
+	rt := &lobbyRuntimeDump{
+		Locale:   localeTag,
+		Scenario: scenario,
+		Layout:   layout,
+		OK:       len(layout.Issues) == 0,
+	}
+	for _, issue := range layout.Issues {
+		rt.Errors = append(rt.Errors, issue.Widget+": "+issue.Msg)
+	}
+	return rt, nil
+}
+
+func drawLobbyScreen(scene *core.Node, layout lithud.LobbyScreenLayout) {
+	bg := gui.NewPanel(float32(layout.Canvas.Width), float32(layout.Canvas.Height))
+	bgColor := math32.Color4{R: 0.07, G: 0.08, B: 0.11, A: 1} // cool slate: a calm pre-game screen
+	bg.SetColor4(&bgColor)
+	bg.SetPosition(0, 0)
+	scene.Add(bg)
+	for _, w := range layout.Widgets {
+		panel := gui.NewPanel(float32(w.Rect.W), float32(w.Rect.H))
+		c := math32.Color4{R: 0.14, G: 0.16, B: 0.21, A: 0.96}
+		panel.SetColor4(&c)
+		panel.SetPosition(float32(w.Rect.X), float32(w.Rect.Y))
+		scene.Add(panel)
+	}
+	for _, entry := range layout.Labels {
+		label := gui.NewLabel(entry.Text)
+		fg := math32.Color4{R: 0.86, G: 0.88, B: 0.92, A: 1} // cool light grey rows
+		if entry.Name == lithud.LobbyStartName && layout.CanStart {
+			fg = math32.Color4{R: 0.45, G: 0.95, B: 0.55, A: 1} // green: ready to start
+		}
+		if entry.Focused {
+			fg = math32.Color4{R: 1, G: 0.84, B: 0.42, A: 1} // gold focus
 		}
 		label.SetColor4(&fg)
 		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
