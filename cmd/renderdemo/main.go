@@ -85,6 +85,7 @@ type renderDemoDump struct {
 	Lighting  *lightingRuntimeDump    `json:"lighting,omitempty"`
 	Batching  *batchingRuntimeDump    `json:"batching,omitempty"`
 	Instances *instancesRuntimeDump   `json:"instances,omitempty"`
+	Missiles  *missilesRuntimeDump    `json:"missiles,omitempty"`
 	OK        bool                    `json:"ok"`
 }
 
@@ -152,6 +153,32 @@ type vfxLightEventDump struct {
 	Request  string                `json:"request"`
 	Priority litrender.VFXPriority `json:"priority"`
 	Decision litrender.VFXDecision `json:"decision"`
+}
+
+// missilesRuntimeDump is the FSV SoT for the missiles scene (#309): the
+// per-frame counts the render pools produced from the live sim missile pipeline
+// at the capture tick — in-flight billboards, fired/active impact one-shots, and
+// the follow aura — plus each billboard's resolved arc position.
+type missilesRuntimeDump struct {
+	Scene         string                 `json:"scene"`
+	CaptureTick   int                    `json:"captureTick"`
+	MissilesBuilt int                    `json:"missilesBuilt"`
+	ImpactsFired  int                    `json:"impactsFired"`
+	ImpactsActive int                    `json:"impactsActive"`
+	AuraActive    int                    `json:"auraActive"`
+	Dropped       int                    `json:"dropped"`
+	Billboards    []missileBillboardDump `json:"billboards"`
+	OK            bool                   `json:"ok"`
+	Errors        []string               `json:"errors,omitempty"`
+}
+
+type missileBillboardDump struct {
+	Key      uint32  `json:"key"`
+	X        float32 `json:"x"`
+	Y        float32 `json:"y"` // arc height
+	Z        float32 `json:"z"`
+	Progress float32 `json:"progress"`
+	Guidance uint16  `json:"guidance"`
 }
 
 type atlasRuntimeDump struct {
@@ -763,7 +790,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu, main-menu, terminal")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, missiles, battle500, basecamp, campaign-menu, main-menu, terminal")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -906,6 +933,7 @@ func main() {
 	var lightingFSV *lightingRuntimeDump
 	var batchingFSV *batchingRuntimeDump
 	var instancesFSV *instancesRuntimeDump
+	var missilesFSV *missilesRuntimeDump
 	if *hudMode {
 		table, err := litlocale.Load(os.DirFS("data"), *localeTag)
 		if err != nil {
@@ -981,6 +1009,12 @@ func main() {
 			spec, vfxFSV, err = buildSpellstormFSV(scene, *vfxLowPreset)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: spellstorm: %v\n", err)
+				os.Exit(1)
+			}
+		} else if sceneKey == "missiles" {
+			spec, missilesFSV, err = buildMissilesFSV(scene)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "renderdemo: missiles: %v\n", err)
 				os.Exit(1)
 			}
 		} else if sceneKey == "battle500" {
@@ -1081,10 +1115,12 @@ func main() {
 				pass = pass && batchingFSV.OK && stats == spec.expected
 			} else if instancesFSV != nil {
 				pass = pass && instancesFSV.OK && stats == spec.expected
+			} else if missilesFSV != nil {
+				pass = pass && missilesFSV.OK
 			} else {
 				pass = pass && stats == spec.expected
 			}
-			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, InfoPanel: infoPanelFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, OK: pass}
+			sceneDump = renderDemoDump{FrameStats: stats, Scene: spec.name, Camera: cameraDump, Selection: selectionFSV, Groups: groupFSV, InfoPanel: infoPanelFSV, Orders: orderFSV, Queue: queueFSV, Terrain: terrainFSV, VFXLights: vfxFSV, Voices: voiceFSV, Atlas: atlasFSV, TeamColor: teamColorFSV, Lighting: lightingFSV, Batching: batchingFSV, Instances: instancesFSV, Missiles: missilesFSV, OK: pass}
 		}
 		if *shotPath != "" {
 			if err := screenshot(a, *shotPath); err != nil {
@@ -2582,6 +2618,207 @@ func buildSpellstormFSV(scene *core.Node, lowPreset bool) (sceneSpec, *vfxLights
 	// Hard build failures would return an error; invariant failures live in
 	// dump.OK and surface through the autotest verdict.
 	return sceneSpec{name: "spellstorm", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
+}
+
+// fixedToF converts a sim fixed-point scalar to float32 world units (the
+// sim→render seam — render itself never sees fixed types).
+func fixedToF(v fixed.F64) float32 { return float32(float64(v) / float64(fixed.One)) }
+
+// buildMissilesFSV drives the full #309 missile pipeline through the sim and the
+// three render pools, then draws the capture frame. Point missiles fly from
+// spread sources at a target unit; a fast one impacts early (its RenderMissileImpact
+// cue spawns an ImpactFXPool burst at the impact point) while two slower ones are
+// still mid-arc; a permanent BuffAuraPool aura rides the target. The capture frame
+// renders the in-flight billboards (ProjectileBillboards, arc height baked in),
+// the active impact bursts, and the aura — each as a lit box.
+func buildMissilesFSV(scene *core.Node) (sceneSpec, *missilesRuntimeDump, error) {
+	// Dark ground so the bright VFX boxes read clearly.
+	ground := graphic.NewMesh(geometry.NewPlane(4000, 4000), material.NewStandard(&math32.Color{R: 0.06, G: 0.07, B: 0.10}))
+	ground.SetRotationX(-math32.Pi / 2)
+	scene.Add(ground)
+
+	w := sim.NewWorld(sim.Caps{})
+	dump := &missilesRuntimeDump{Scene: "missiles", OK: true}
+
+	// Target unit at the origin — the missile goal and the aura host.
+	targetPos := fixed.Vec2{X: 0, Y: 0}
+	target, ok := w.CreateUnit(targetPos, 0)
+	if !ok {
+		return sceneSpec{}, nil, fmt.Errorf("create target unit failed")
+	}
+	targetKey := target.Index()
+
+	// Three point missiles. The first is close+fast (impacts ~tick 3); the others
+	// are far+slow (still in flight, mid-arc, at the capture tick).
+	type track struct {
+		id       sim.EntityID
+		launch   fixed.Vec2
+		guidance uint16
+	}
+	// Arc heights are kept modest so the mid-flight boxes stay inside the
+	// down-looking camera frame; the slow pair is timed to sit ~half-way (spread
+	// either side of the target) at the capture tick.
+	launches := []struct {
+		from  fixed.Vec2
+		speed fixed.F64
+		arc   fixed.F64
+	}{
+		{fixed.Vec2{X: -600 * fixed.One, Y: -300 * fixed.One}, 250 * fixed.One, 120 * fixed.One}, // close+fast → impacts ~tick 3
+		{fixed.Vec2{X: 1400 * fixed.One, Y: -560 * fixed.One}, 95 * fixed.One, 150 * fixed.One},  // slow → mid-flight, in frame
+		{fixed.Vec2{X: 0, Y: 1400 * fixed.One}, 88 * fixed.One, 160 * fixed.One},                 // slow → mid-flight, in frame
+	}
+	tracks := make(map[uint32]track, len(launches))
+	for _, l := range launches {
+		id, ok := w.SpawnMissile(sim.MissileSpec{
+			Pos: l.from, Point: targetPos, Speed: l.speed, Arc: l.arc,
+			GuidanceID: sim.MissileGuidancePoint, ImpactID: sim.MissileImpactDetonate,
+		})
+		if !ok {
+			return sceneSpec{}, nil, fmt.Errorf("spawn point missile failed")
+		}
+		tracks[id.Index()] = track{id: id, launch: l.from, guidance: sim.MissileGuidancePoint}
+	}
+
+	impactPool := litrender.NewImpactFXPool()
+	auraPool := litrender.NewBuffAuraPool()
+	builder := litrender.NewProjectileBillboards()
+
+	// Permanent aura on the target unit.
+	auraPool.Acquire(litrender.BuffAuraRequest{
+		UnitKey: targetKey, Offset: math32.Vector3{Y: 80}, Size: 50,
+		Color: math32.Color{R: 0.4, G: 0.95, B: 0.55}, UV: math32.Vector4{Z: 1, W: 1}, Lifetime: 0,
+	})
+	auraLookup := func(k uint32) (math32.Vector3, bool) {
+		if k != targetKey {
+			return math32.Vector3{}, false
+		}
+		r := w.Transforms.Row(target)
+		if r == -1 {
+			return math32.Vector3{}, false
+		}
+		p := w.Transforms.Pos[r]
+		return math32.Vector3{X: fixedToF(p.X), Y: 0, Z: fixedToF(p.Y)}, true
+	}
+
+	const captureTick = 8
+	dump.CaptureTick = captureTick
+	for t := 0; t < captureTick; t++ {
+		w.Step()
+		impactPool.Tick()
+		for _, ev := range w.Snaps.Curr().Events {
+			if ev.Kind != sim.RenderMissileImpact {
+				continue
+			}
+			impactPool.Acquire(litrender.ImpactRequest{
+				Pos:  math32.Vector3{X: fixedToF(ev.Pos.X), Y: 30, Z: fixedToF(ev.Pos.Y)},
+				Size: 90, Color: math32.Color{R: 1, G: 0.7, B: 0.2},
+				UV: math32.Vector4{Z: 1, W: 1}, Lifetime: 40,
+			})
+			dump.ImpactsFired++
+		}
+		auraPool.Update(auraLookup)
+	}
+
+	// Build the in-flight missile billboards from the capture snapshot.
+	snap := w.Snaps.Curr()
+	inputs := make([]litrender.MissileBillboardInput, 0, len(snap.Missiles))
+	for _, m := range snap.Missiles {
+		key := m.ID.Index()
+		tr := tracks[key]
+		cur := m.Pos
+		// progress = distance travelled / total launch→goal distance.
+		travelled := dist2(tr.launch, cur)
+		total := dist2(tr.launch, targetPos)
+		var prog float32
+		if total > 0 {
+			prog = travelled / total
+		}
+		inputs = append(inputs, litrender.MissileBillboardInput{
+			Key: key, GroundX: fixedToF(cur.X), GroundZ: fixedToF(cur.Y),
+			Arc: fixedToF(m.Arc), Progress: prog, Facing: float32(uint16(m.Facing)) / 65536 * 2 * math32.Pi, Guidance: m.GuidanceID,
+		})
+	}
+	dump.MissilesBuilt = builder.BuildInto(inputs)
+	dump.Dropped = builder.Dropped()
+
+	// Draw the missile billboards (arc height baked into Y).
+	missileGeom := geometry.NewBox(90, 90, 90)
+	for _, b := range builder.Active() {
+		mat := material.NewStandard(&math32.Color{R: 0.5, G: 0.8, B: 1.0})
+		mat.SetEmissiveColor(&math32.Color{R: 0.2, G: 0.4, B: 0.7})
+		mesh := graphic.NewMesh(missileGeom, mat)
+		mesh.SetPosition(b.X, b.Y+40, b.Z)
+		scene.Add(mesh)
+		dump.Billboards = append(dump.Billboards, missileBillboardDump{
+			Key: b.Key, X: b.X, Y: b.Y, Z: b.Z, Progress: progressOf(inputs, b.Key), Guidance: b.Guidance,
+		})
+	}
+
+	// Draw the active impact bursts (size fades with LifeFrac).
+	impacts := impactPool.SnapshotInto(make([]litrender.ImpactSlotInfo, 0, litrender.MaxImpactFX))
+	for _, s := range impacts {
+		if !s.Active {
+			continue
+		}
+		dump.ImpactsActive++
+		side := 40 + 60*s.LifeFrac
+		mat := material.NewStandard(&math32.Color{R: 1, G: 0.6, B: 0.15})
+		mat.SetEmissiveColor(&math32.Color{R: 0.9, G: 0.4, B: 0.1})
+		mesh := graphic.NewMesh(geometry.NewBox(side, side, side), mat)
+		mesh.SetPosition(s.Pos.X, s.Pos.Y, s.Pos.Z)
+		scene.Add(mesh)
+	}
+
+	// Draw the follow aura.
+	auras := auraPool.SnapshotInto(make([]litrender.BuffAuraSlotInfo, 0, litrender.MaxBuffAuras))
+	for _, s := range auras {
+		if !s.Active || !s.Visible {
+			continue
+		}
+		dump.AuraActive++
+		mat := material.NewStandard(&math32.Color{R: 0.4, G: 0.95, B: 0.55})
+		mat.SetEmissiveColor(&math32.Color{R: 0.15, G: 0.5, B: 0.2})
+		mesh := graphic.NewMesh(geometry.NewBox(s.Size, s.Size, s.Size), mat)
+		mesh.SetPosition(s.Pos.X, s.Pos.Y, s.Pos.Z)
+		scene.Add(mesh)
+	}
+
+	// Invariants: at least the two slow missiles are still arcing, at least one
+	// impact fired and is still bursting, and the aura is riding the target.
+	if dump.MissilesBuilt < 2 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("missiles in flight = %d, want >= 2", dump.MissilesBuilt))
+	}
+	if dump.ImpactsFired < 1 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "no missile impact fired by the capture tick")
+	}
+	if dump.ImpactsActive < 1 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, "no impact burst active at the capture tick")
+	}
+	if dump.AuraActive != 1 {
+		dump.OK = false
+		dump.Errors = append(dump.Errors, fmt.Sprintf("aura active = %d, want 1", dump.AuraActive))
+	}
+	return sceneSpec{name: "missiles", expected: expectedStats(1, 0, 1, 0, 1, 0)}, dump, nil
+}
+
+// dist2 is the Euclidean distance between two sim points, in float world units.
+func dist2(a, b fixed.Vec2) float32 {
+	dx := fixedToF(a.X) - fixedToF(b.X)
+	dy := fixedToF(a.Y) - fixedToF(b.Y)
+	return math32.Sqrt(dx*dx + dy*dy)
+}
+
+// progressOf finds the flight progress recorded for a billboard key.
+func progressOf(inputs []litrender.MissileBillboardInput, key uint32) float32 {
+	for i := range inputs {
+		if inputs[i].Key == key {
+			return inputs[i].Progress
+		}
+	}
+	return 0
 }
 
 func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, *terrainRuntimeDump, error) {
