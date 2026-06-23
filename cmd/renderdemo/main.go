@@ -448,6 +448,7 @@ type canvasDump struct {
 	CommandCard  *commandCardRuntimeDump  `json:"commandCard,omitempty"`
 	ResourceBar  *resourceBarRuntimeDump  `json:"resourceBar,omitempty"`
 	CampaignMenu *campaignMenuRuntimeDump `json:"campaignMenu,omitempty"`
+	MainMenu     *mainMenuRuntimeDump     `json:"mainMenu,omitempty"`
 	OK           bool                     `json:"ok"`
 	Errors       []string                 `json:"errors,omitempty"`
 }
@@ -742,10 +743,25 @@ type campaignMenuRuntimeDump struct {
 	Errors         []string                   `json:"errors,omitempty"`
 }
 
+// mainMenuRuntimeDump is the #211 FSV record: the g.UI()→render path for the
+// main menu. It carries the resolved layout + the locale key→string table (the
+// D-17 evidence) + whether the g.UI().Show event was accepted and captured.
+type mainMenuRuntimeDump struct {
+	Locale   string                  `json:"locale"`
+	ScreenID string                  `json:"screenId"`
+	Layout   lithud.MenuScreenLayout `json:"layout"`
+	KeyTable map[string]string       `json:"keyTable"`
+	Commands map[string]string       `json:"commands"`
+	Emitted  bool                    `json:"emitted"`
+	Focused  int                     `json:"focused"`
+	OK       bool                    `json:"ok"`
+	Errors   []string                `json:"errors,omitempty"`
+}
+
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu, main-menu")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -770,6 +786,7 @@ func main() {
 	cardScenario := flag.String("card-scenario", "", "command-card FSV scenario for -hud -scene basecamp: unit, building, subgroup, enemy, cooldown, empty")
 	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
 	campaignScenario := flag.String("campaign-scenario", "", "campaign-menu FSV scenario for -hud -scene campaign-menu: campaign-select, fresh, unlocked, save-load, missing-archive")
+	menuFocus := flag.Int("menu-focus", 0, "focused entry index for -hud -scene main-menu (keyboard-nav FSV)")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
@@ -892,7 +909,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table))
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -3974,10 +3991,13 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
+	}
+	if strings.EqualFold(strings.TrimSpace(sceneName), "main-menu") {
+		return buildMainMenuHUD(scene, canvas, localeTag, localeTable, menuFocus)
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "campaign-menu") || strings.TrimSpace(campaignScenario) != "" {
 		return buildCampaignMenuHUD(scene, canvas, campaignScenario, localeTag, localeTable)
@@ -4052,6 +4072,135 @@ func buildCampaignMenuHUD(scene *core.Node, canvas lithud.Canvas, scenario, loca
 	}
 	drawCampaignMenu(scene, runtimeDump.Layout, runtimeDump.OK)
 	return dump, err
+}
+
+func buildMainMenuHUD(scene *core.Node, canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, menuFocus int) (canvasDump, error) {
+	rt, err := buildMainMenuRuntime(canvas, localeTag, localeTable, menuFocus)
+	if err != nil {
+		return canvasDump{}, err
+	}
+	after := canvasSnapshotFor(canvas, rt.Layout.Widgets)
+	// drawMenuScreen paints one extra palette-background panel behind the card
+	// (identity §6) that the layout itself does not model, so the rendered GUI
+	// draw count is the layout's ExpectedDrawCalls + that background.
+	const menuBackgroundDrawCalls = 1
+	drawCalls := rt.Layout.ExpectedDrawCalls + menuBackgroundDrawCalls
+	dump := canvasDump{
+		Mode:  "main-menu",
+		After: after,
+		HUD: hudRuntimeDump{
+			Locale:               localeTag,
+			WidgetPanels:         len(rt.Layout.Widgets),
+			Labels:               len(rt.Layout.Labels),
+			ExpectedGUIDrawCalls: drawCalls,
+			DrawCallBudget:       drawCalls,
+		},
+		MainMenu: rt,
+		OK:       rt.OK,
+		Errors:   append([]string{}, rt.Errors...),
+	}
+	drawMenuScreen(scene, rt.Layout, rt.OK)
+	return dump, nil
+}
+
+// buildMainMenuRuntime drives the full #211 path end to end: define the menu via
+// g.UI().Show(UIScreen{...}) carrying locale KEYS + command tags, capture the
+// emitted UIScreenEvent in a render-side OnUIScreen sink, resolve the keys
+// through the locale table (D-17), and build the validated render layout.
+func buildMainMenuRuntime(canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, focused int) (*mainMenuRuntimeDump, error) {
+	g, err := api.NewGame(api.GameOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	keyTable := map[string]string{}
+	resolveKey := func(k string) string {
+		s := localeTable.Must(litlocale.Key(k))
+		keyTable[k] = s
+		return s
+	}
+
+	// Capture the screen the game requests through the public g.UI() surface.
+	var captured api.UIScreen
+	var emitted bool
+	g.OnUIScreen(func(ev api.UIScreenEvent) {
+		if ev.Kind == api.UIScreenShow {
+			captured = ev.Screen
+			emitted = true
+		}
+	})
+	spec := api.UIScreen{
+		ID:          "main-menu",
+		TitleKey:    string(litlocale.MenuTitle),
+		SubtitleKey: string(litlocale.MenuSubtitle),
+		Buttons: []api.UIButton{
+			{ID: "new-skirmish", LabelKey: string(litlocale.MenuNewSkirmish), Command: "flow.skirmish"},
+			{ID: "load-game", LabelKey: string(litlocale.MenuLoadGame), Command: "flow.load"},
+			{ID: "quit", LabelKey: string(litlocale.MenuQuit), Command: "flow.quit"},
+		},
+	}
+	accepted := g.UI().Show(spec)
+
+	// Render side: resolve the captured screen's keys into the layout strings.
+	strs := lithud.MenuScreenStrings{
+		Title:    resolveKey(captured.TitleKey),
+		Subtitle: resolveKey(captured.SubtitleKey),
+		Version:  resolveKey(string(litlocale.MenuVersion)),
+	}
+	commands := map[string]string{}
+	buttons := make([]lithud.MenuButton, 0, len(captured.Buttons))
+	for _, b := range captured.Buttons {
+		buttons = append(buttons, lithud.MenuButton{ID: b.ID, Label: resolveKey(b.LabelKey)})
+		commands[b.ID] = b.Command
+	}
+
+	layout := lithud.NewMenuScreenLayout(canvas, captured.ID, strs, buttons, focused)
+	rt := &mainMenuRuntimeDump{
+		Locale:   localeTag,
+		ScreenID: captured.ID,
+		Layout:   layout,
+		KeyTable: keyTable,
+		Commands: commands,
+		Emitted:  emitted && accepted,
+		Focused:  focused,
+		OK:       emitted && accepted && len(layout.Issues) == 0,
+	}
+	if !emitted || !accepted {
+		rt.Errors = append(rt.Errors, "g.UI().Show was not accepted or no event captured")
+	}
+	for _, iss := range layout.Issues {
+		rt.Errors = append(rt.Errors, iss.Widget+": "+iss.Rule+": "+iss.Msg)
+	}
+	return rt, nil
+}
+
+func drawMenuScreen(scene *core.Node, layout lithud.MenuScreenLayout, ok bool) {
+	// Palette background fill (identity §6: saturated/bold — Vigil deep blue).
+	bg := gui.NewPanel(float32(layout.Canvas.Width), float32(layout.Canvas.Height))
+	bgColor := math32.Color4{R: 0.06, G: 0.08, B: 0.14, A: 1}
+	bg.SetColor4(&bgColor)
+	bg.SetPosition(0, 0)
+	scene.Add(bg)
+	for _, w := range layout.Widgets {
+		panel := gui.NewPanel(float32(w.Rect.W), float32(w.Rect.H))
+		c := math32.Color4{R: 0.12, G: 0.16, B: 0.24, A: 0.96}
+		if !ok {
+			c = math32.Color4{R: 0.42, G: 0.10, B: 0.10, A: 0.96}
+		}
+		panel.SetColor4(&c)
+		panel.SetPosition(float32(w.Rect.X), float32(w.Rect.Y))
+		scene.Add(panel)
+	}
+	for _, entry := range layout.Labels {
+		label := gui.NewLabel(entry.Text)
+		fg := math32.Color4{R: 0.86, G: 0.78, B: 0.42, A: 1} // Vigil gold
+		if entry.Focused {
+			fg = math32.Color4{R: 1, G: 0.96, B: 0.64, A: 1}
+		}
+		label.SetColor4(&fg)
+		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
+		scene.Add(label)
+	}
 }
 
 const renderDemoCampaignTOML = `

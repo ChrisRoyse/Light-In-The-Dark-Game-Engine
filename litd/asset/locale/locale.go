@@ -131,6 +131,13 @@ const (
 	EditorFieldTownHall           Key = "editor.field.town_hall"
 	EditorFieldOutput             Key = "editor.field.output"
 	EditorScopeNoTriggerGUI       Key = "editor.scope.no_trigger_gui"
+
+	MenuTitle       Key = "menu.title"
+	MenuSubtitle    Key = "menu.subtitle"
+	MenuNewSkirmish Key = "menu.new_skirmish"
+	MenuLoadGame    Key = "menu.load_game"
+	MenuQuit        Key = "menu.quit"
+	MenuVersion     Key = "menu.version"
 )
 
 var requiredKeys = []string{
@@ -252,6 +259,12 @@ var requiredKeys = []string{
 	string(EditorFieldTownHall),
 	string(EditorFieldOutput),
 	string(EditorScopeNoTriggerGUI),
+	string(MenuTitle),
+	string(MenuSubtitle),
+	string(MenuNewSkirmish),
+	string(MenuLoadGame),
+	string(MenuQuit),
+	string(MenuVersion),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)
