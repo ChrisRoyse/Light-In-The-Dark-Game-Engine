@@ -151,6 +151,20 @@ const (
 	SettingsKeymap   Key = "settings.keymap"
 	SettingsLocale   Key = "settings.locale"
 	SettingsBack     Key = "settings.back"
+
+	// Settings-screen value rows (#311): the audio volume group labels and the
+	// localized graphics-preset / keymap-profile value names shown next to the
+	// current setting (cf. the campaign menu localizing its status enum values).
+	SettingsAudio         Key = "settings.audio"
+	SettingsAudioMaster   Key = "settings.audio.master"
+	SettingsAudioWorld    Key = "settings.audio.world"
+	SettingsAudioUI       Key = "settings.audio.ui"
+	SettingsAudioMusic    Key = "settings.audio.music"
+	SettingsAudioAmbience Key = "settings.audio.ambience"
+	SettingsGraphicsHigh  Key = "settings.graphics.high"
+	SettingsGraphicsLow   Key = "settings.graphics.low"
+	SettingsKeymapGrid    Key = "settings.keymap.grid"
+	SettingsKeymapClassic Key = "settings.keymap.classic"
 )
 
 var requiredKeys = []string{
@@ -289,6 +303,16 @@ var requiredKeys = []string{
 	string(SettingsKeymap),
 	string(SettingsLocale),
 	string(SettingsBack),
+	string(SettingsAudio),
+	string(SettingsAudioMaster),
+	string(SettingsAudioWorld),
+	string(SettingsAudioUI),
+	string(SettingsAudioMusic),
+	string(SettingsAudioAmbience),
+	string(SettingsGraphicsHigh),
+	string(SettingsGraphicsLow),
+	string(SettingsKeymapGrid),
+	string(SettingsKeymapClassic),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)
