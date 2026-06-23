@@ -68,8 +68,11 @@ func TestRunDemoCampaignFSV(t *testing.T) {
 	carriedLvl, _ := store.GetInt(cat, "carry:dawn:hero:0:level")
 	dawnLvl, okDawn := store.GetInt(cat, "dawn:caldus:level")
 	held, _ := store.GetInt(cat, "dawn:held")
-	t.Logf("FSV final store: kindle-earned=%d carried-to-dawn=%d dawn-instantiated=(%d,%v) held=%d",
-		kindleLvl, carriedLvl, dawnLvl, okDawn, held)
+	// dawn reconstructs the carried hero's identity from the string carry keys.
+	dawnName, _ := store.GetString(cat, "dawn:caldus:name")
+	dawnItem, _ := store.GetString(cat, "dawn:caldus:item")
+	t.Logf("FSV final store: kindle-earned=%d carried-to-dawn=%d dawn-instantiated=(%d,%v) held=%d name=%q item=%q",
+		kindleLvl, carriedLvl, dawnLvl, okDawn, held, dawnName, dawnItem)
 
 	if kindleLvl != 3 {
 		t.Fatalf("kindle did not record Caldus level 3: %d", kindleLvl)
@@ -82,6 +85,13 @@ func TestRunDemoCampaignFSV(t *testing.T) {
 	}
 	if held != 1 {
 		t.Fatalf("dawn hold not completed: held=%d", held)
+	}
+	// The string carry leg: dawn read the carried hero name + item back from Lua.
+	if dawnName != "Ser Caldus" {
+		t.Fatalf("dawn reconstructed hero name = %q, want Ser Caldus", dawnName)
+	}
+	if dawnItem != "Ember Ward" {
+		t.Fatalf("dawn reconstructed carried item = %q, want Ember Ward", dawnItem)
 	}
 }
 
