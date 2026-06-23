@@ -25,6 +25,10 @@ acquisition-range = 400
 sight-day = 1600
 sight-night = 800
 model = "units/unbound/forager.glb"
+food-cost = 1
+costs = { gold = 50 }
+train-seconds = 11.0
+harvest = { gather-seconds = 1.0, capacity = 10, resources = ["gold", "lumber"] }
 
 [[unit.attack]]
 type = "normal"
@@ -56,6 +60,9 @@ sight-day = 1800
 sight-night = 800
 model = "units/unbound/ashblade.glb"
 abilities = ["sprint"]
+food-cost = 2
+costs = { gold = 130, lumber = 10 }
+train-seconds = 20.0
 
 [[unit.attack]]
 type = "normal"
@@ -86,6 +93,9 @@ sight-day = 1800
 sight-night = 900
 model = "units/unbound/storm_caller.glb"
 abilities = ["firebolt"]
+food-cost = 3
+costs = { gold = 125, lumber = 35 }
+train-seconds = 26.0
 
 [[unit.attack]]
 type = "magic"
@@ -119,6 +129,9 @@ acquisition-range = 300
 sight-day = 2400
 sight-night = 1800
 model = "units/unbound/pyre_wagon.glb"
+food-cost = 4
+costs = { gold = 180, lumber = 90 }
+train-seconds = 32.0
 
 [[unit.attack]]
 type = "siege"

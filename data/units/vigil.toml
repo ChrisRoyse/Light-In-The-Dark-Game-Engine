@@ -25,6 +25,10 @@ acquisition-range = 400
 sight-day = 1600
 sight-night = 800
 model = "units/vigil/lamplighter.glb"
+food-cost = 1
+costs = { gold = 50 }
+train-seconds = 12.0
+harvest = { gather-seconds = 1.0, capacity = 10, resources = ["gold", "lumber"] }
 
 [[unit.attack]]
 type = "normal"
@@ -56,6 +60,9 @@ sight-day = 1800
 sight-night = 800
 model = "units/vigil/oathsworn.glb"
 abilities = ["defend"]
+food-cost = 3
+costs = { gold = 135, lumber = 20 }
+train-seconds = 24.0
 
 [[unit.attack]]
 type = "normal"
@@ -85,6 +92,9 @@ acquisition-range = 700
 sight-day = 1800
 sight-night = 800
 model = "units/vigil/pyre_archer.glb"
+food-cost = 2
+costs = { gold = 140, lumber = 30 }
+train-seconds = 22.0
 
 [[unit.attack]]
 type = "piercing"
@@ -118,6 +128,9 @@ sight-day = 1700
 sight-night = 900
 model = "units/vigil/flame_cleric.glb"
 abilities = ["firebolt"]
+food-cost = 3
+costs = { gold = 120, lumber = 40 }
+train-seconds = 28.0
 
 [[unit.attack]]
 type = "magic"
