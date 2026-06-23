@@ -1,0 +1,31 @@
+# "First Light" — the M8 exit-criterion demo campaign (#312): two missions, played
+# through the campaign UI, with Ser Caldus carried from the first map into the
+# second (level + items intact) and across a mid-mission save/load. The mission
+# world archives (archive = "kindle" / "dawn") are authored as a follow-up slice;
+# this file + hooks/main.lua define the campaign wiring + the hero carry-over.
+id = "demo"
+title = "First Light"
+faction = "The Vigil"
+
+[hooks]
+on-complete = "OnMissionComplete"
+on-fail = "OnMissionFail"
+
+# Carry manifest: only these heroes/items/cache-keys may cross a mission boundary.
+[carry]
+heroes = ["Ser Caldus"]
+items = ["Ember Ward", "Dawnwater Flask"]
+cache-keys = ["checkpoint"]
+
+[[mission]]
+id = "kindle"
+title = "Kindle the Gate"
+summary = "Ser Caldus relights the gate-beacon and routs the first Dark wave."
+archive = "kindle"
+
+[[mission]]
+id = "dawn"
+title = "Hold the Dawn"
+summary = "Carry Ser Caldus into the dawn counterattack and hold the line."
+archive = "dawn"
+requires = ["kindle"]
