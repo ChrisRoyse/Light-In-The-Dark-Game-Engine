@@ -39,6 +39,7 @@ import (
 	litdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	litinput "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/input"
+	litmatch "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/match"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	lithud "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/hud"
 	litterrain "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render/terrain"
@@ -449,6 +450,7 @@ type canvasDump struct {
 	ResourceBar  *resourceBarRuntimeDump  `json:"resourceBar,omitempty"`
 	CampaignMenu *campaignMenuRuntimeDump `json:"campaignMenu,omitempty"`
 	MainMenu     *mainMenuRuntimeDump     `json:"mainMenu,omitempty"`
+	Terminal     *terminalRuntimeDump     `json:"terminal,omitempty"`
 	OK           bool                     `json:"ok"`
 	Errors       []string                 `json:"errors,omitempty"`
 }
@@ -761,7 +763,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu, main-menu")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, battle500, basecamp, campaign-menu, main-menu, terminal")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -787,6 +789,7 @@ func main() {
 	resbarScenario := flag.String("resbar-scenario", "", "resource-bar FSV scenario for -hud -scene basecamp: initial, after-spend, foodcap, insufficient, large")
 	campaignScenario := flag.String("campaign-scenario", "", "campaign-menu FSV scenario for -hud -scene campaign-menu: campaign-select, fresh, unlocked, save-load, missing-archive")
 	menuFocus := flag.Int("menu-focus", 0, "focused entry index for -hud -scene main-menu (keyboard-nav FSV)")
+	terminalResult := flag.String("terminal-result", "victory", "result for -hud -scene terminal: victory or defeat")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
@@ -909,7 +912,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus)
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -3991,13 +3994,16 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult string) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "main-menu") {
 		return buildMainMenuHUD(scene, canvas, localeTag, localeTable, menuFocus)
+	}
+	if strings.EqualFold(strings.TrimSpace(sceneName), "terminal") {
+		return buildTerminalHUD(scene, canvas, localeTag, localeTable, terminalResult)
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "campaign-menu") || strings.TrimSpace(campaignScenario) != "" {
 		return buildCampaignMenuHUD(scene, canvas, campaignScenario, localeTag, localeTable)
@@ -4196,6 +4202,198 @@ func drawMenuScreen(scene *core.Node, layout lithud.MenuScreenLayout, ok bool) {
 		fg := math32.Color4{R: 0.86, G: 0.78, B: 0.42, A: 1} // Vigil gold
 		if entry.Focused {
 			fg = math32.Color4{R: 1, G: 0.96, B: 0.64, A: 1}
+		}
+		label.SetColor4(&fg)
+		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
+		scene.Add(label)
+	}
+}
+
+// terminalRuntimeDump is the #201 FSV record: the match-flow → g.UI() → render
+// path for the end-match terminal screen. It carries the resolved layout, the
+// locale key→string table (D-17 evidence), the real flow Stats, and whether the
+// terminal UIScreen the flow showed was captured.
+type terminalRuntimeDump struct {
+	Locale   string                      `json:"locale"`
+	ScreenID string                      `json:"screenId"`
+	Result   string                      `json:"result"`
+	Layout   lithud.TerminalScreenLayout `json:"layout"`
+	KeyTable map[string]string           `json:"keyTable"`
+	Stats    lithud.TerminalStats        `json:"stats"`
+	Emitted  bool                        `json:"emitted"`
+	OK       bool                        `json:"ok"`
+	Errors   []string                    `json:"errors,omitempty"`
+}
+
+func buildTerminalHUD(scene *core.Node, canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, resultName string) (canvasDump, error) {
+	rt, err := buildTerminalRuntime(canvas, localeTag, localeTable, resultName)
+	if err != nil {
+		return canvasDump{}, err
+	}
+	after := canvasSnapshotFor(canvas, rt.Layout.Widgets)
+	// drawTerminalScreen paints one extra palette-background panel behind the
+	// card that the layout does not model (as the menu scene does).
+	const terminalBackgroundDrawCalls = 1
+	drawCalls := rt.Layout.ExpectedDrawCalls + terminalBackgroundDrawCalls
+	dump := canvasDump{
+		Mode:  "terminal",
+		After: after,
+		HUD: hudRuntimeDump{
+			Locale:               localeTag,
+			WidgetPanels:         len(rt.Layout.Widgets),
+			Labels:               len(rt.Layout.Labels),
+			ExpectedGUIDrawCalls: drawCalls,
+			DrawCallBudget:       drawCalls,
+		},
+		Terminal: rt,
+		OK:       rt.OK,
+		Errors:   append([]string{}, rt.Errors...),
+	}
+	drawTerminalScreen(scene, rt.Layout, rt.OK)
+	return dump, nil
+}
+
+// buildTerminalRuntime drives a real synthetic match (#201) to its terminal
+// phase: define a footman/barracks roster, train 3 footmen, lose 1, then win or
+// lose; the match.Flow shows the terminal UIScreen (locale-key chrome) which a
+// render-side OnUIScreen sink captures, and the dynamic Stats come straight off
+// flow.Stats(). The keys resolve through the locale table (D-17), the stat-row
+// labels resolve directly (they are values, not in the UIScreen), and the
+// validated TerminalScreenLayout is built — the full flow→render path.
+func buildTerminalRuntime(canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, resultName string) (*terminalRuntimeDump, error) {
+	want := strings.ToLower(strings.TrimSpace(resultName))
+	if want == "" {
+		want = "victory"
+	}
+	g, err := api.NewGame(api.GameOptions{MaxUnits: 64, Seed: 7})
+	if err != nil {
+		return nil, err
+	}
+	if err := g.DefineEconomy(2); err != nil {
+		return nil, err
+	}
+	if err := g.DefineUnits([]litdata.Unit{
+		{ID: "footman", Life: 100, CollisionSize: 16, Costs: []int64{50, 0}, TrainTicks: 40, FoodCost: 2},
+		{ID: "barracks", Life: 1000, CollisionSize: 64, FoodProvided: 20, Trains: []uint16{0}},
+	}); err != nil {
+		return nil, err
+	}
+	p0 := g.Player(0)
+	p0.SetGold(1000)
+	footman := g.UnitType("footman")
+	barracks := g.CreateUnit(p0, g.UnitType("barracks"), api.Vec2{X: 200, Y: 200}, api.Deg(0))
+
+	var captured api.UIScreen
+	var emitted bool
+	g.OnUIScreen(func(ev api.UIScreenEvent) {
+		if ev.Kind == api.UIScreenShow {
+			captured = ev.Screen
+			emitted = true
+		}
+	})
+
+	flow := litmatch.NewFlow(g, p0)
+	flow.Begin(litmatch.Setup{Faction: litmatch.FactionVigil, Opponent: litmatch.FactionUnbound})
+	flow.StartPlay()
+	for i := 0; i < 3; i++ {
+		barracks.Train(footman)
+	}
+	for i := 0; i < 3*40+20; i++ {
+		g.Advance(1)
+		flow.Poll()
+	}
+	for _, u := range g.AllUnits(func(api.UnitView) bool { return true }) {
+		if u.Type() == footman && u.Owner().Slot() == p0.Slot() {
+			u.Kill()
+			break
+		}
+	}
+	for i := 0; i < 5; i++ {
+		g.Advance(1)
+		flow.Poll()
+	}
+	if want == "defeat" {
+		g.Defeat(p0, "routed")
+	} else {
+		g.Victory(p0)
+	}
+	for i := 0; i < 10; i++ {
+		g.Advance(1)
+		if flow.Poll() {
+			break
+		}
+	}
+
+	keyTable := map[string]string{}
+	resolveKey := func(k string) string {
+		s := localeTable.Must(litlocale.Key(k))
+		keyTable[k] = s
+		return s
+	}
+	result := lithud.TerminalDefeat
+	if flow.Result() == api.ResultWon {
+		result = lithud.TerminalVictory
+	}
+	strs := lithud.TerminalScreenStrings{
+		Title:         resolveKey(captured.TitleKey),
+		DurationLabel: resolveKey(string(litlocale.TerminalDuration)),
+		TrainedLabel:  resolveKey(string(litlocale.TerminalUnitsTrained)),
+		LostLabel:     resolveKey(string(litlocale.TerminalUnitsLost)),
+	}
+	for _, b := range captured.Buttons {
+		strs.ExitLabel = resolveKey(b.LabelKey)
+	}
+	st := flow.Stats()
+	stats := lithud.TerminalStats{DurationTicks: st.DurationTicks, UnitsTrained: st.UnitsTrained, UnitsLost: st.UnitsLost}
+	layout := lithud.NewTerminalScreenLayout(canvas, captured.ID, result, stats, strs)
+	rt := &terminalRuntimeDump{
+		Locale:   localeTag,
+		ScreenID: captured.ID,
+		Result:   want,
+		Layout:   layout,
+		KeyTable: keyTable,
+		Stats:    stats,
+		Emitted:  emitted,
+		OK:       emitted && len(layout.Issues) == 0,
+	}
+	if !emitted {
+		rt.Errors = append(rt.Errors, "no terminal UIScreen captured from the flow")
+	}
+	for _, iss := range layout.Issues {
+		rt.Errors = append(rt.Errors, iss.Widget+": "+iss.Rule+": "+iss.Msg)
+	}
+	return rt, nil
+}
+
+func drawTerminalScreen(scene *core.Node, layout lithud.TerminalScreenLayout, ok bool) {
+	// Palette background: victory = Vigil deep blue, defeat = dim crimson.
+	bg := gui.NewPanel(float32(layout.Canvas.Width), float32(layout.Canvas.Height))
+	bgColor := math32.Color4{R: 0.06, G: 0.08, B: 0.14, A: 1}
+	if !layout.Result.Won() {
+		bgColor = math32.Color4{R: 0.12, G: 0.05, B: 0.06, A: 1}
+	}
+	bg.SetColor4(&bgColor)
+	bg.SetPosition(0, 0)
+	scene.Add(bg)
+	for _, w := range layout.Widgets {
+		panel := gui.NewPanel(float32(w.Rect.W), float32(w.Rect.H))
+		c := math32.Color4{R: 0.12, G: 0.16, B: 0.24, A: 0.96}
+		if !ok {
+			c = math32.Color4{R: 0.42, G: 0.10, B: 0.10, A: 0.96}
+		}
+		panel.SetColor4(&c)
+		panel.SetPosition(float32(w.Rect.X), float32(w.Rect.Y))
+		scene.Add(panel)
+	}
+	for _, entry := range layout.Labels {
+		label := gui.NewLabel(entry.Text)
+		fg := math32.Color4{R: 0.86, G: 0.78, B: 0.42, A: 1} // gold stat rows
+		if entry.Focused {                                   // the headline
+			if layout.Result.Won() {
+				fg = math32.Color4{R: 0.66, G: 1, B: 0.70, A: 1} // victory green
+			} else {
+				fg = math32.Color4{R: 1, G: 0.60, B: 0.58, A: 1} // defeat red
+			}
 		}
 		label.SetColor4(&fg)
 		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))

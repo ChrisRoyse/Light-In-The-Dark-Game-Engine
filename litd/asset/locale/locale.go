@@ -138,6 +138,13 @@ const (
 	MenuLoadGame    Key = "menu.load_game"
 	MenuQuit        Key = "menu.quit"
 	MenuVersion     Key = "menu.version"
+
+	TerminalVictory      Key = "terminal.victory"
+	TerminalDefeat       Key = "terminal.defeat"
+	TerminalDuration     Key = "terminal.duration"
+	TerminalUnitsTrained Key = "terminal.units_trained"
+	TerminalUnitsLost    Key = "terminal.units_lost"
+	TerminalExit         Key = "terminal.exit"
 )
 
 var requiredKeys = []string{
@@ -265,6 +272,12 @@ var requiredKeys = []string{
 	string(MenuLoadGame),
 	string(MenuQuit),
 	string(MenuVersion),
+	string(TerminalVictory),
+	string(TerminalDefeat),
+	string(TerminalDuration),
+	string(TerminalUnitsTrained),
+	string(TerminalUnitsLost),
+	string(TerminalExit),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)
