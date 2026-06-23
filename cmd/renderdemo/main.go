@@ -408,6 +408,16 @@ type terrainRuntimeDump struct {
 	ChunkTris      []int `json:"chunkTris,omitempty"`
 	SeamMismatches int   `json:"seamMismatches"`
 
+	// Fog fields are populated only for the fogscout scene (#161): the affine
+	// world->fog mapping and the luminance the fog texture actually holds in each
+	// of the three zones (the SoT the screenshot's brightness must match).
+	Fog            bool       `json:"fog,omitempty"`
+	FogEnabled     bool       `json:"fogEnabled,omitempty"`
+	FogOrigin      [2]float32 `json:"fogOrigin,omitempty"`
+	FogWorldSize   [2]float32 `json:"fogWorldSize,omitempty"`
+	FogZoneLum     [3]uint8   `json:"fogZoneLum,omitempty"`     // hidden / explored / visible
+	FogBoundaryUVs []float32  `json:"fogBoundaryUVs,omitempty"` // zone boundary UVs
+
 	OK     bool     `json:"ok"`
 	Errors []string `json:"errors,omitempty"`
 }
@@ -806,7 +816,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -1016,7 +1026,7 @@ func main() {
 		if !strings.HasPrefix(sceneKey, "lit") && sceneKey != "unlit" {
 			buildLights(scene)
 		}
-		if strings.HasPrefix(sceneKey, "terrain") {
+		if strings.HasPrefix(sceneKey, "terrain") || sceneKey == "fogscout" {
 			spec, terrainFSV, err = buildTerrainFSV(scene, *sceneName, *wireframe)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "renderdemo: terrain: %v\n", err)
@@ -2919,6 +2929,9 @@ func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, 
 	if name == "terrain-chunks" {
 		return buildTerrainChunksFSV(scene, wireframe)
 	}
+	if name == "fogscout" {
+		return buildFogScoutFSV(scene, wireframe)
+	}
 	if name != "terrain" && name != "terrain-units" {
 		return sceneSpec{}, nil, fmt.Errorf("unknown terrain scene %q", name)
 	}
@@ -3072,6 +3085,113 @@ func buildTerrainChunksFSV(scene *core.Node, wireframe bool) (sceneSpec, *terrai
 
 	visible := len(cs.Chunks)
 	return sceneSpec{name: "terrain-chunks", expected: expectedStats(visible, 0, visible, 0, 1, 0)}, dump, nil
+}
+
+// fogScoutGrid is a synthetic FogGridSource (#161 FSV): three vertical zones by
+// fog-cell X — left third hidden, middle third explored, right third visible —
+// so the rendered terrain shows all three fog states across one frame with the
+// explored/visible boundary cutting through the terrain. The player arg is
+// ignored (a single synthetic viewer). This is the X+X=Y input: a known fog
+// pattern whose luminance the rendered brightness must match.
+type fogScoutGrid struct{ size int32 }
+
+func (g fogScoutGrid) FogStateAt(_ uint8, x, y int32) uint8 {
+	if x < 0 || y < 0 || x >= g.size || y >= g.size {
+		return 0 // hidden out of range
+	}
+	switch {
+	case x < g.size/3:
+		return 0 // hidden
+	case x < 2*g.size/3:
+		return 1 // explored
+	default:
+		return 2 // visible
+	}
+}
+
+// buildFogScoutFSV renders the chunked terrain through FogTerrainMesh with a
+// synthetic three-zone fog texture (#161). The fog term is a per-fragment
+// sample inside each chunk's existing draw, so the draw-call count is identical
+// to the plain terrain-chunks scene (0 added calls). The dump records the fog
+// affine mapping and the luminance the texture holds in each zone — the SoT the
+// screenshot's hidden/explored/visible brightness must match.
+func buildFogScoutFSV(scene *core.Node, wireframe bool) (sceneSpec, *terrainRuntimeDump, error) {
+	const mapPath = "data/maps/test64"
+	m, err := litmapdata.Load(os.DirFS("."), mapPath)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+	cs, err := litterrain.BuildChunks(m, litterrain.ChunkCellSpan)
+	if err != nil {
+		return sceneSpec{}, nil, err
+	}
+
+	// World rectangle the fog texture covers = union of chunk AABBs (XZ plane).
+	ux0, uz0 := cs.Chunks[0].AABB.Min.X, cs.Chunks[0].AABB.Min.Z
+	ux1, uz1 := cs.Chunks[0].AABB.Max.X, cs.Chunks[0].AABB.Max.Z
+	for i := range cs.Chunks {
+		b := &cs.Chunks[i].AABB
+		if b.Min.X < ux0 {
+			ux0 = b.Min.X
+		}
+		if b.Min.Z < uz0 {
+			uz0 = b.Min.Z
+		}
+		if b.Max.X > ux1 {
+			ux1 = b.Max.X
+		}
+		if b.Max.Z > uz1 {
+			uz1 = b.Max.Z
+		}
+	}
+	origin := math32.Vector2{X: ux0, Y: uz0}
+	worldSize := math32.Vector2{X: ux1 - ux0, Y: uz1 - uz0}
+
+	// Build the synthetic 3-zone fog texture through the real consumer path.
+	fog := litrender.NewFogTexture(1) // blend=1: instant, buf == target exactly
+	fog.Update(fogScoutGrid{size: int32(fog.Size())}, 1)
+
+	mat := material.NewStandard(&math32.Color{R: 0.30, G: 0.52, B: 0.24})
+	mat.SetSpecularColor(&math32.Color{R: 0.06, G: 0.06, B: 0.05})
+	mat.SetWireframe(wireframe)
+
+	dump := &terrainRuntimeDump{
+		Scene:          "fogscout",
+		MapPath:        mapPath,
+		Wireframe:      wireframe,
+		Chunked:        true,
+		ChunkCells:     cs.ChunkCells,
+		ChunkCount:     len(cs.Chunks),
+		ChunkCols:      cs.Cols,
+		ChunkRows:      cs.Rows,
+		Fog:            true,
+		FogEnabled:     true,
+		FogOrigin:      [2]float32{origin.X, origin.Y},
+		FogWorldSize:   [2]float32{worldSize.X, worldSize.Y},
+		FogBoundaryUVs: []float32{1.0 / 3.0, 2.0 / 3.0},
+		OK:             true,
+	}
+	// Fog SoT: the luminance the texture actually holds at a cell in each zone.
+	sz := fog.Size()
+	dump.FogZoneLum = [3]uint8{
+		fog.At(sz/6, sz/2),   // hidden zone   -> expect FogHiddenLum (0)
+		fog.At(sz/2, sz/2),   // explored zone -> expect FogExploredLum (~102)
+		fog.At(5*sz/6, sz/2), // visible zone  -> expect FogVisibleLum (255)
+	}
+
+	for i := range cs.Chunks {
+		c := &cs.Chunks[i]
+		scene.Add(litrender.NewFogTerrainMesh(c.Geometry, mat, fog, origin, worldSize))
+		dump.ChunkTris = append(dump.ChunkTris, c.TriangleCount)
+		if c.TriangleCount > dump.MaxChunkTris {
+			dump.MaxChunkTris = c.TriangleCount
+		}
+		dump.VertexCount += c.VertexCount
+		dump.TriangleCount += c.TriangleCount
+	}
+
+	visible := len(cs.Chunks)
+	return sceneSpec{name: "fogscout", expected: expectedStats(visible, 0, visible, 0, 1, 0)}, dump, nil
 }
 
 // countSeamMismatches compares the shared edge between each chunk and its right
