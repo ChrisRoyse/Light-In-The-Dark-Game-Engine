@@ -1,0 +1,20 @@
+--- a/renderer/renderer.go
++++ b/renderer/renderer.go
+@@ -164,7 +164,16 @@
+ 	r.graphics = r.graphics[0:0]
+ 	r.grmatsOpaque = r.grmatsOpaque[0:0]
+ 	r.grmatsTransp = r.grmatsTransp[0:0]
+-	r.zLayers = make(map[int][]gui.IPanel)
++	// LITD-PATCH (#537): clear+reuse the zLayers map instead of reallocating it
++	// every frame. The `for k := range m { delete(m, k) }` idiom is compiled to a
++	// no-alloc map-clear (runtime.mapclear) — the engine go.mod is go1.13 so the
++	// clear() builtin is unavailable. The map ends empty, so the gather's new-layer
++	// (!ok) detection is unchanged, while the backing is kept, dropping the
++	// per-frame hmap allocation (escape analysis confirmed make() allocated here).
++	// R-GC-1.
++	for k := range r.zLayers {
++		delete(r.zLayers, k)
++	}
+ 	r.zLayers[0] = make([]gui.IPanel, 0)
+ 	r.zLayerKeys = r.zLayerKeys[0:1]
+ 	r.zLayerKeys[0] = 0
