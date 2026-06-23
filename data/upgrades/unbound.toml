@@ -1,0 +1,71 @@
+# The Unbound — upgrade tables (#303; validation-and-data.md §3.3). Researched
+# at Unbound buildings (see researches lists in data/units/unbound_buildings.toml).
+# Aggression/mobility faction texture (identity.md §2), the mirror of the Vigil:
+# the two faction techs add SPEED and attack tempo rather than armor. Same
+# schema/conversions as the Vigil shard; per-level contribution is Add x L.
+
+# Whetted Ember — the Unbound weapon line (1-3). +2 damage/level on the army
+# line; pairs with the faction's speed to dictate fights.
+[[upgrade]]
+id = "unbound_weapon"
+applies-to = ["ashblade", "storm_caller", "pyre_wagon"]
+[[upgrade.level]]
+research-seconds = 50.0
+costs = { gold = 95, lumber = 35 }
+[[upgrade.level]]
+research-seconds = 65.0
+costs = { gold = 165, lumber = 80 }
+[[upgrade.level]]
+research-seconds = 80.0
+costs = { gold = 235, lumber = 135 }
+[[upgrade.mod]]
+stat = "attack-damage"
+add = 2
+
+# Hide Lacquer — the Unbound armor line (1-3). +1 armor/level; cheaper and
+# faster than the Vigil's but the Unbound stay flimsier by base stats.
+[[upgrade]]
+id = "unbound_armor"
+applies-to = ["ashblade", "storm_caller", "pyre_wagon"]
+[[upgrade.level]]
+research-seconds = 50.0
+costs = { gold = 85, lumber = 45 }
+[[upgrade.level]]
+research-seconds = 65.0
+costs = { gold = 140, lumber = 95 }
+[[upgrade.level]]
+research-seconds = 80.0
+costs = { gold = 200, lumber = 150 }
+[[upgrade.mod]]
+stat = "armor"
+add = 1
+
+# Emberwind Stride (faction tech, 1-2) — the mobility identity. +20 wu/s move
+# speed/level to EVERY owned unit (applies-to omitted = army-wide). The Unbound
+# get faster; the Vigil get tougher.
+[[upgrade]]
+id = "emberwind_stride"
+[[upgrade.level]]
+research-seconds = 60.0
+costs = { gold = 120, lumber = 60 }
+[[upgrade.level]]
+research-seconds = 85.0
+costs = { gold = 210, lumber = 130 }
+[[upgrade.mod]]
+stat = "move-speed"
+add = 20
+
+# Raiders' Frenzy (faction tech, 1-2) — the aggression identity. The ashblade
+# raider attacks faster: -0.05 s cooldown/level (one tick quicker per level).
+[[upgrade]]
+id = "raiders_frenzy"
+applies-to = ["ashblade"]
+[[upgrade.level]]
+research-seconds = 65.0
+costs = { gold = 105, lumber = 80 }
+[[upgrade.level]]
+research-seconds = 90.0
+costs = { gold = 190, lumber = 150 }
+[[upgrade.mod]]
+stat = "attack-cooldown"
+add = -0.05

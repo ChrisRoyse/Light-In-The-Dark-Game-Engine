@@ -63,6 +63,7 @@ footprint = 4
 build-seconds = 60.0
 costs = { gold = 160, lumber = 40 }
 trains = ["oathsworn", "pyre_archer", "flame_cleric"]
+researches = ["vigil_weapon", "vigil_armor"]
 
 # Watchfire_tower — defensive tower (the faction texture). Piercing attack,
 # long range, fortified; cannot move or train.
@@ -113,3 +114,4 @@ model = "buildings/vigil/scriptorium.glb"
 footprint = 3
 build-seconds = 55.0
 costs = { gold = 130, lumber = 130 }
+researches = ["beacon_warding", "votive_tempering"]

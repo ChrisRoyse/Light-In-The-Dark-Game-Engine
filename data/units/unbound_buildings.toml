@@ -62,6 +62,7 @@ footprint = 4
 build-seconds = 50.0
 costs = { gold = 150, lumber = 30 }
 trains = ["ashblade", "storm_caller", "pyre_wagon"]
+researches = ["unbound_weapon", "unbound_armor"]
 
 # Ember_shrine — grimoire research seat (Grimoire of the Ember Road, #156).
 # Research lists are wired with the upgrade tables (#124); stands as the seat.
@@ -80,3 +81,4 @@ model = "buildings/unbound/ember_shrine.glb"
 footprint = 3
 build-seconds = 50.0
 costs = { gold = 125, lumber = 125 }
+researches = ["emberwind_stride", "raiders_frenzy"]

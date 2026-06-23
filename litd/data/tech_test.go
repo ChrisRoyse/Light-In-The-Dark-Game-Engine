@@ -172,3 +172,88 @@ func TestTechFingerprintSensitivity(t *testing.T) {
 		t.Logf("%s: base=%016x changed=%016x", name, base.Fingerprint, changed.Fingerprint)
 	}
 }
+
+// --- upgrades/*.toml shard support (#121/#124; validation-and-data.md §3.3) ---
+
+// loadShardTables places the upgrade rows in an upgrades/<name>.toml shard
+// instead of tech/upgrades.toml; tech/upgrades.toml (if given) carries only the
+// require rows. Mirrors the real per-faction layout.
+func loadShardTables(t *testing.T, units, shard, tech string) (*Tables, error) {
+	t.Helper()
+	fs := econFS(econBase, units)
+	if shard != "" {
+		fs["upgrades/faction.toml"] = &fstest.MapFile{Data: []byte(shard)}
+	}
+	if tech != "" {
+		fs["tech/upgrades.toml"] = &fstest.MapFile{Data: []byte(tech)}
+	}
+	return Load(fs)
+}
+
+// the upgrade row alone (no [[require]]) — a faction upgrade shard.
+const shardUpgrade = `
+[[upgrade]]
+id = "iron-blades"
+applies-to = ["worker"]
+[[upgrade.level]]
+research-seconds = 20.0
+[upgrade.level.costs]
+gold = 100
+[[upgrade.mod]]
+stat = "attack-damage"
+add = 2
+`
+
+// require rows reference the shard upgrade by name from tech/upgrades.toml.
+const shardRequire = `
+[[require]]
+unit = "worker"
+alive = ["barracks"]
+[require.upgrades]
+iron-blades = 1
+`
+
+func TestUpgradeShardLoads(t *testing.T) {
+	tb, err := loadShardTables(t, techUnits, shardUpgrade, shardRequire)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tb.Upgrades) != 1 || tb.Upgrades[0].ID != "iron-blades" {
+		t.Fatalf("upgrade from shard not loaded: %+v", tb.Upgrades)
+	}
+	if tb.Upgrades[0].Levels[0].ResearchTicks != 400 || tb.Upgrades[0].Mods[0].Add != 2<<32 {
+		t.Fatalf("shard upgrade not converted: %+v", tb.Upgrades[0])
+	}
+	// the building's researches list must resolve against the shard upgrade.
+	var br *Unit
+	for i := range tb.Units {
+		if tb.Units[i].ID == "barracks" {
+			br = &tb.Units[i]
+		}
+	}
+	if br == nil || len(br.Researches) != 1 || tb.Upgrades[br.Researches[0]].ID != "iron-blades" {
+		t.Fatalf("building researches did not resolve to the shard upgrade: %+v", br)
+	}
+	// the require term referencing the shard upgrade must resolve too.
+	if len(tb.Requires) != 1 || len(tb.Requires[0].Upgrades) != 1 {
+		t.Fatalf("require term did not resolve against shard upgrade: %+v", tb.Requires)
+	}
+}
+
+func TestUpgradeShardDuplicateRejected(t *testing.T) {
+	// same id in the shard AND in tech/upgrades.toml — must fail closed.
+	_, err := loadShardTables(t, techUnits, shardUpgrade, shardUpgrade+shardRequire)
+	if err == nil || !strings.Contains(err.Error(), "duplicate upgrade id") {
+		t.Fatalf("want duplicate-upgrade error across sources, got %v", err)
+	}
+}
+
+func TestUpgradeShardRejectsStrayRequire(t *testing.T) {
+	// a [[require]] row in an upgrade shard is an unknown key — shards are
+	// upgrade-only; the tech tree stays in tech/upgrades.toml.
+	stray := shardUpgrade + "\n[[require]]\nunit = \"worker\"\nalive = [\"barracks\"]\n"
+	_, err := loadShardTables(t, techUnits, stray, "")
+	if err == nil || !strings.Contains(err.Error(), "unknown field") {
+		t.Fatalf("want unknown-field rejection of stray require in shard, got %v", err)
+	}
+}

@@ -64,6 +64,14 @@ type rawTechFile struct {
 	Require []rawRequire `toml:"require" json:"require"`
 }
 
+// rawUpgradeShard is one per-faction upgrade table under upgrades/*.toml
+// (validation-and-data.md §3.3). Shards carry ONLY upgrade rows — a stray
+// [[require]] (or any other key) is rejected by decodeStrict, so the tech
+// tree stays authoritative in tech/upgrades.toml.
+type rawUpgradeShard struct {
+	Upgrade []rawUpgrade `toml:"upgrade" json:"upgrade"`
+}
+
 type rawUpgrade struct {
 	ID        string            `toml:"id" json:"id"`
 	AppliesTo []string          `toml:"applies-to" json:"applies-to"`
@@ -104,24 +112,20 @@ func (t *Tables) upgradeIndex(id string) int {
 // tech tree) and resolves the units' researches lists (collected
 // during unit decode, resolvable only once upgrades exist).
 func (t *Tables) loadTech(fsys fs.FS, pendingResearches map[string][]string) error {
-	files, err := listTables(fsys, "tech")
-	if err != nil || len(files) == 0 {
+	techFiles, _ := listTables(fsys, "tech")
+	upgFiles, _ := listTables(fsys, "upgrades")
+	if len(techFiles) == 0 && len(upgFiles) == 0 {
 		if len(pendingResearches) > 0 {
-			return fmt.Errorf("data: units declare researches but no tech/upgrades table exists")
+			return fmt.Errorf("data: units declare researches but no tech/upgrade table exists")
 		}
 		return nil
 	}
-	file, blob, err := readOne(fsys, "tech", "upgrades")
-	if err != nil {
-		return err
-	}
-	var raw rawTechFile
-	if err := decodeStrict(file, blob, &raw); err != nil {
-		return err
-	}
 
-	for i := range raw.Upgrade {
-		r := &raw.Upgrade[i]
+	// addUpgrade converts one raw upgrade row from any source (the tech file or
+	// an upgrades/*.toml shard) and appends it. Sort + cross-source dedup run
+	// once after every source is read, so the fingerprint is independent of
+	// which file a row came from (rows fold in sorted-by-ID order).
+	addUpgrade := func(file string, r *rawUpgrade) error {
 		fail := func(field string, e error) error {
 			return fmt.Errorf("data: %s: upgrade %q: %s: %w", file, r.ID, field, e)
 		}
@@ -183,18 +187,54 @@ func (t *Tables) loadTech(fsys fs.FS, pendingResearches map[string][]string) err
 		}
 		sort.Slice(u.AppliesTo, func(a, b int) bool { return u.AppliesTo[a] < u.AppliesTo[b] })
 		t.Upgrades = append(t.Upgrades, u)
+		return nil
+	}
+
+	// tech/upgrades.toml carries the requirement rows (tech tree) and MAY also
+	// carry upgrade rows; per-faction upgrade shards live in upgrades/*.toml.
+	var raw rawTechFile
+	techFile := ""
+	if len(techFiles) > 0 {
+		f, blob, err := readOne(fsys, "tech", "upgrades")
+		if err != nil {
+			return err
+		}
+		techFile = f
+		if err := decodeStrict(f, blob, &raw); err != nil {
+			return err
+		}
+		for i := range raw.Upgrade {
+			if err := addUpgrade(f, &raw.Upgrade[i]); err != nil {
+				return err
+			}
+		}
+	}
+	for _, sf := range upgFiles {
+		blob, err := fs.ReadFile(fsys, sf)
+		if err != nil {
+			return fmt.Errorf("data: %s: %w", sf, err)
+		}
+		var shard rawUpgradeShard
+		if err := decodeStrict(sf, blob, &shard); err != nil {
+			return err
+		}
+		for i := range shard.Upgrade {
+			if err := addUpgrade(sf, &shard.Upgrade[i]); err != nil {
+				return err
+			}
+		}
 	}
 	sort.Slice(t.Upgrades, func(i, j int) bool { return t.Upgrades[i].ID < t.Upgrades[j].ID })
 	for i := 1; i < len(t.Upgrades); i++ {
 		if t.Upgrades[i].ID == t.Upgrades[i-1].ID {
-			return fmt.Errorf("data: %s: duplicate upgrade id %q", file, t.Upgrades[i].ID)
+			return fmt.Errorf("data: duplicate upgrade id %q (across tech/upgrades.toml + upgrades/*.toml)", t.Upgrades[i].ID)
 		}
 	}
 
 	// requirement rows (resolve after the upgrade sort)
 	for i := range raw.Require {
 		r := &raw.Require[i]
-		fail := func(e error) error { return fmt.Errorf("data: %s: require[%d]: %w", file, i, e) }
+		fail := func(e error) error { return fmt.Errorf("data: %s: require[%d]: %w", techFile, i, e) }
 		var req Require
 		switch {
 		case r.Unit != "" && r.Upgrade != "":
@@ -248,7 +288,7 @@ func (t *Tables) loadTech(fsys fs.FS, pendingResearches map[string][]string) err
 	})
 	for i := 1; i < len(t.Requires); i++ {
 		if t.Requires[i].IsUpgrade == t.Requires[i-1].IsUpgrade && t.Requires[i].Target == t.Requires[i-1].Target {
-			return fmt.Errorf("data: %s: duplicate requirement target (isUpgrade=%v index=%d)", file, t.Requires[i].IsUpgrade, t.Requires[i].Target)
+			return fmt.Errorf("data: %s: duplicate requirement target (isUpgrade=%v index=%d)", techFile, t.Requires[i].IsUpgrade, t.Requires[i].Target)
 		}
 	}
 
