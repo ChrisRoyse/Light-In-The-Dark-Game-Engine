@@ -418,6 +418,14 @@ type terrainRuntimeDump struct {
 	FogZoneLum     [3]uint8   `json:"fogZoneLum,omitempty"`     // hidden / explored / visible
 	FogBoundaryUVs []float32  `json:"fogBoundaryUVs,omitempty"` // zone boundary UVs
 
+	// #536: translated unit boxes placed one per fog zone. Each is a
+	// FogTerrainMesh with a non-identity model matrix; the fog UV is taken from
+	// its world position, so each box must dim to its zone's luminance — the SoT
+	// the screenshot's three box brightnesses must match.
+	FogUnitCount  int       `json:"fogUnitCount,omitempty"`
+	FogUnitWorldX []float32 `json:"fogUnitWorldX,omitempty"`
+	FogUnitLum    []uint8   `json:"fogUnitLum,omitempty"` // fog lum sampled at each box's world XZ
+
 	OK     bool     `json:"ok"`
 	Errors []string `json:"errors,omitempty"`
 }
@@ -816,7 +824,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -2930,7 +2938,7 @@ func buildTerrainFSV(scene *core.Node, name string, wireframe bool) (sceneSpec, 
 		return buildTerrainChunksFSV(scene, wireframe)
 	}
 	if strings.HasPrefix(name, "fogscout") {
-		return buildFogScoutFSV(scene, wireframe, name == "fogscout-pbr")
+		return buildFogScoutFSV(scene, wireframe, name == "fogscout-pbr", name == "fogscout-unit")
 	}
 	if name != "terrain" && name != "terrain-units" {
 		return sceneSpec{}, nil, fmt.Errorf("unknown terrain scene %q", name)
@@ -3115,7 +3123,7 @@ func (g fogScoutGrid) FogStateAt(_ uint8, x, y int32) uint8 {
 // to the plain terrain-chunks scene (0 added calls). The dump records the fog
 // affine mapping and the luminance the texture holds in each zone — the SoT the
 // screenshot's hidden/explored/visible brightness must match.
-func buildFogScoutFSV(scene *core.Node, wireframe, pbr bool) (sceneSpec, *terrainRuntimeDump, error) {
+func buildFogScoutFSV(scene *core.Node, wireframe, pbr, unit bool) (sceneSpec, *terrainRuntimeDump, error) {
 	const mapPath = "data/maps/test64"
 	m, err := litmapdata.Load(os.DirFS("."), mapPath)
 	if err != nil {
@@ -3195,18 +3203,68 @@ func buildFogScoutFSV(scene *core.Node, wireframe, pbr bool) (sceneSpec, *terrai
 		fog.At(5*sz/6, sz/2), // visible zone  -> expect FogVisibleLum (255)
 	}
 
-	for i := range cs.Chunks {
-		c := &cs.Chunks[i]
-		scene.Add(litrender.NewFogTerrainMesh(c.Geometry, mat, fog, origin, worldSize))
-		dump.ChunkTris = append(dump.ChunkTris, c.TriangleCount)
-		if c.TriangleCount > dump.MaxChunkTris {
-			dump.MaxChunkTris = c.TriangleCount
+	// The unit scene focuses on a single translated mesh so its fog gradient is
+	// not visually masked by the terrain (terrain fog is covered by fogscout /
+	// fogscout-pbr). For all other scenes, add the world-baked terrain chunks.
+	if !unit {
+		for i := range cs.Chunks {
+			c := &cs.Chunks[i]
+			scene.Add(litrender.NewFogTerrainMesh(c.Geometry, mat, fog, origin, worldSize))
+			dump.ChunkTris = append(dump.ChunkTris, c.TriangleCount)
+			if c.TriangleCount > dump.MaxChunkTris {
+				dump.MaxChunkTris = c.TriangleCount
+			}
+			dump.VertexCount += c.VertexCount
+			dump.TriangleCount += c.TriangleCount
 		}
-		dump.VertexCount += c.VertexCount
-		dump.TriangleCount += c.TriangleCount
 	}
 
 	visible := len(cs.Chunks)
+	if unit {
+		visible = 0
+	}
+
+	// #536 part 2 — per-fragment fog on a translated (non-identity ModelMatrix)
+	// mesh, the unit-rendering case terrain's identity-matrix path did not cover.
+	if unit {
+		sceneName = "fogscout-unit"
+		dump.Scene = sceneName
+		// A single light slab translated to the terrain centre, wide enough in X to
+		// straddle all three fog zones. Because it is ONE mesh with ONE non-identity
+		// model matrix, a left-to-right black->grey->white gradient across its face
+		// can only come from a PER-FRAGMENT fog sample taken at each fragment's WORLD
+		// position — the exact #536 part-2 capability. A mesh fogging from its local
+		// XZ, or from a single per-mesh value, could not produce the gradient.
+		slabMat := material.NewStandard(&math32.Color{R: 0.85, G: 0.85, B: 0.88})
+		slabMat.SetSpecularColor(&math32.Color{R: 0.1, G: 0.1, B: 0.1})
+		const spanFrac = 0.85
+		slabW := worldSize.X * spanFrac
+		// Thin and low so the 34°-from-vertical RTS camera sees the whole top face
+		// instead of the slab sticking into the near field. The slab's world-X axis
+		// projects diagonally under the camera yaw, so the hidden->visible gradient
+		// runs along the slab's far edge (verified by pixel readback, not the eye).
+		geom := geometry.NewBox(slabW, 60, 1400)
+		slab := litrender.NewFogTerrainMesh(geom, slabMat, fog, origin, worldSize)
+		slab.SetPosition(origin.X+worldSize.X*0.5, 260, origin.Y+worldSize.Y*0.5)
+		scene.Add(slab)
+
+		// SoT: the fog luminance at the slab's left edge / centre / right edge in
+		// world space — the brightness the slab must show at those points.
+		sz := fog.Size()
+		leftFrac := float32(0.5 - spanFrac/2)
+		rightFrac := float32(0.5 + spanFrac/2)
+		for _, f := range []float32{leftFrac, 0.5, rightFrac} {
+			dump.FogUnitWorldX = append(dump.FogUnitWorldX, origin.X+worldSize.X*f)
+			cx := int(f * float32(sz))
+			if cx >= sz {
+				cx = sz - 1
+			}
+			dump.FogUnitLum = append(dump.FogUnitLum, fog.At(cx, sz/2))
+		}
+		dump.FogUnitCount = 1
+		visible++
+	}
+
 	return sceneSpec{name: sceneName, expected: expectedStats(visible, 0, visible, 0, 1, 0)}, dump, nil
 }
 

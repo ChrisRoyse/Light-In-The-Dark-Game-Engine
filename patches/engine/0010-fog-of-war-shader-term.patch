@@ -71,10 +71,21 @@ index 53fd4f9..bb4c54a 100644
 +    FragColor = LitdApplyFog(FragColor);
  }
 diff --git a/renderer/shaders/physical_vertex.glsl b/renderer/shaders/physical_vertex.glsl
-index ec8b88c..58b4242 100644
+index ec8b88c..5bd2ef9 100644
 --- a/renderer/shaders/physical_vertex.glsl
 +++ b/renderer/shaders/physical_vertex.glsl
-@@ -22,6 +22,10 @@ out vec3 LitdVertexColor;
+@@ -9,6 +9,10 @@
+ uniform mat4 ModelViewMatrix;
+ uniform mat3 NormalMatrix;
+ uniform mat4 MVP;
++// LITD-PATCH (#161/#536): model->world matrix for the fog UV on translated meshes.
++#ifdef LITD_FOG
++uniform mat4 ModelMatrix;
++#endif
+ 
+ #include <morphtarget_vertex_declaration>
+ #include <bones_vertex_declaration>
+@@ -22,6 +26,10 @@ out vec3 LitdVertexColor;
  #ifdef LITD_INSTANCE_TEAMCOLOR
  out vec3 LitdInstanceTeamColorVarying;
  #endif
@@ -85,21 +96,22 @@ index ec8b88c..58b4242 100644
  
  void main() {
  
-@@ -44,6 +48,12 @@ void main() {
+@@ -44,6 +52,13 @@ void main() {
      mat4 litdInstanceMatrix = LitdInstanceMatrix();
      vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
  
-+    // LITD-PATCH (#161): world-space XZ for the fog UV (terrain uses an identity
-+    // model matrix, so this is world space; translated meshes are tracked by #536).
++    // LITD-PATCH (#161/#536): world-space XZ for the fog UV. ModelMatrix is
++    // identity for world-baked terrain and the placement transform for a
++    // translated unit, so this is correct world XZ in both cases.
 +#ifdef LITD_FOG
-+    LitdWorldPos = litdWorldPosition.xyz;
++    LitdWorldPos = (ModelMatrix * litdWorldPosition).xyz;
 +#endif
 +
      // Transform this vertex position to camera coordinates.
      Position = vec3(ModelViewMatrix * litdWorldPosition);
  
 diff --git a/renderer/shaders/sources.go b/renderer/shaders/sources.go
-index 6293b2d..435fe69 100644
+index 6293b2d..cdce1d1 100644
 --- a/renderer/shaders/sources.go
 +++ b/renderer/shaders/sources.go
 @@ -10,6 +10,55 @@ const include_morphtarget_vertex_declaration2_source = `	in vec3 MorphPosition{i
@@ -175,7 +187,18 @@ index 6293b2d..435fe69 100644
  }
  `
  
-@@ -466,6 +518,10 @@ out vec3 LitdVertexColor;
+@@ -453,6 +505,10 @@ const standard_vertex_source = `#include <attributes>
+ uniform mat4 ModelViewMatrix;
+ uniform mat3 NormalMatrix;
+ uniform mat4 MVP;
++// LITD-PATCH (#161/#536): model->world matrix for the fog UV on translated meshes.
++#ifdef LITD_FOG
++uniform mat4 ModelMatrix;
++#endif
+ 
+ #include <material>
+ #include <morphtarget_vertex_declaration>
+@@ -466,6 +522,10 @@ out vec3 LitdVertexColor;
  #ifdef LITD_INSTANCE_TEAMCOLOR
  out vec3 LitdInstanceTeamColorVarying;
  #endif
@@ -186,21 +209,21 @@ index 6293b2d..435fe69 100644
  
  void main() {
  
-@@ -493,6 +549,13 @@ void main() {
+@@ -493,6 +553,13 @@ void main() {
      mat4 litdInstanceMatrix = LitdInstanceMatrix();
      vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
  
-+    // LITD-PATCH (#161): terrain geometry is baked in world space with an
-+    // identity model matrix, so this position's XZ is the world XZ the fog UV
-+    // transform expects.
++    // LITD-PATCH (#161/#536): world-space position for the fog UV. ModelMatrix is
++    // identity for world-baked terrain and the placement transform for a
++    // translated unit, so this is correct world XZ in both cases.
 +#ifdef LITD_FOG
-+    LitdWorldPos = litdWorldPosition.xyz;
++    LitdWorldPos = (ModelMatrix * litdWorldPosition).xyz;
 +#endif
 +
      // Transform vertex position to camera coordinates
      Position = ModelViewMatrix * litdWorldPosition;
  
-@@ -570,6 +633,7 @@ in vec3 LitdInstanceTeamColorVarying;
+@@ -570,6 +637,7 @@ in vec3 LitdInstanceTeamColorVarying;
  
  #include <lights>
  #include <litd_teamcolor>
@@ -208,7 +231,7 @@ index 6293b2d..435fe69 100644
  
  // Final fragment color
  out vec4 FragColor;
-@@ -923,6 +987,8 @@ void main() {
+@@ -923,6 +991,8 @@ void main() {
  
      // Final fragment color
      FragColor = vec4(pow(color,vec3(1.0/2.2)), baseColor.a);
@@ -217,7 +240,18 @@ index 6293b2d..435fe69 100644
  }
  `
  
-@@ -1153,6 +1219,10 @@ out vec3 LitdVertexColor;
+@@ -1140,6 +1210,10 @@ const physical_vertex_source = `//
+ uniform mat4 ModelViewMatrix;
+ uniform mat3 NormalMatrix;
+ uniform mat4 MVP;
++// LITD-PATCH (#161/#536): model->world matrix for the fog UV on translated meshes.
++#ifdef LITD_FOG
++uniform mat4 ModelMatrix;
++#endif
+ 
+ #include <morphtarget_vertex_declaration>
+ #include <bones_vertex_declaration>
+@@ -1153,6 +1227,10 @@ out vec3 LitdVertexColor;
  #ifdef LITD_INSTANCE_TEAMCOLOR
  out vec3 LitdInstanceTeamColorVarying;
  #endif
@@ -228,20 +262,21 @@ index 6293b2d..435fe69 100644
  
  void main() {
  
-@@ -1175,6 +1245,12 @@ void main() {
+@@ -1175,6 +1253,13 @@ void main() {
      mat4 litdInstanceMatrix = LitdInstanceMatrix();
      vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
  
-+    // LITD-PATCH (#161): world-space XZ for the fog UV (terrain uses an identity
-+    // model matrix, so this is world space; translated meshes are tracked by #536).
++    // LITD-PATCH (#161/#536): world-space XZ for the fog UV. ModelMatrix is
++    // identity for world-baked terrain and the placement transform for a
++    // translated unit, so this is correct world XZ in both cases.
 +#ifdef LITD_FOG
-+    LitdWorldPos = litdWorldPosition.xyz;
++    LitdWorldPos = (ModelMatrix * litdWorldPosition).xyz;
 +#endif
 +
      // Transform this vertex position to camera coordinates.
      Position = vec3(ModelViewMatrix * litdWorldPosition);
  
-@@ -1255,6 +1331,7 @@ void main() {
+@@ -1255,6 +1340,7 @@ void main() {
  var includeMap = map[string]string{
  
  	"morphtarget_vertex_declaration2": include_morphtarget_vertex_declaration2_source,
@@ -269,10 +304,21 @@ index 79cd134..1c5a309 100644
 +    FragColor = LitdApplyFog(FragColor);
  }
 diff --git a/renderer/shaders/standard_vertex.glsl b/renderer/shaders/standard_vertex.glsl
-index e097cf0..ebd0482 100644
+index e097cf0..b7a3c10 100644
 --- a/renderer/shaders/standard_vertex.glsl
 +++ b/renderer/shaders/standard_vertex.glsl
-@@ -18,6 +18,10 @@ out vec3 LitdVertexColor;
+@@ -5,6 +5,10 @@
+ uniform mat4 ModelViewMatrix;
+ uniform mat3 NormalMatrix;
+ uniform mat4 MVP;
++// LITD-PATCH (#161/#536): model->world matrix for the fog UV on translated meshes.
++#ifdef LITD_FOG
++uniform mat4 ModelMatrix;
++#endif
+ 
+ #include <material>
+ #include <morphtarget_vertex_declaration>
+@@ -18,6 +22,10 @@ out vec3 LitdVertexColor;
  #ifdef LITD_INSTANCE_TEAMCOLOR
  out vec3 LitdInstanceTeamColorVarying;
  #endif
@@ -283,15 +329,15 @@ index e097cf0..ebd0482 100644
  
  void main() {
  
-@@ -45,6 +49,13 @@ void main() {
+@@ -45,6 +53,13 @@ void main() {
      mat4 litdInstanceMatrix = LitdInstanceMatrix();
      vec4 litdWorldPosition = litdInstanceMatrix * finalWorld * vec4(vPosition, 1.0);
  
-+    // LITD-PATCH (#161): terrain geometry is baked in world space with an
-+    // identity model matrix, so this position's XZ is the world XZ the fog UV
-+    // transform expects.
++    // LITD-PATCH (#161/#536): world-space position for the fog UV. ModelMatrix is
++    // identity for world-baked terrain and the placement transform for a
++    // translated unit, so this is correct world XZ in both cases.
 +#ifdef LITD_FOG
-+    LitdWorldPos = litdWorldPosition.xyz;
++    LitdWorldPos = (ModelMatrix * litdWorldPosition).xyz;
 +#endif
 +
      // Transform vertex position to camera coordinates

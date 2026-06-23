@@ -23,10 +23,11 @@ const fogTextureSlot = 6
 // adds zero draw calls — exactly like TeamColorMesh layers the team-color term
 // onto a unit's draw.
 //
-// The mesh assumes its geometry is baked in world space under an identity model
-// matrix (terrain chunks are — see litd/render/terrain.BuildChunks), so the
-// vertex shader's litdWorldPosition.xz equals the world XZ the fog UV transform
-// expects. The affine UV is uv = (worldXZ - origin) * invSize.
+// The fog UV is taken from the fragment's true world XZ: the vertex shader maps
+// the local position through this mesh's ModelMatrix before the affine UV, so a
+// world-baked terrain chunk (identity model matrix) and a translated unit box
+// (#536) both fog by their world position. The affine UV is
+// uv = (worldXZ - origin) * invSize.
 type FogTerrainMesh struct {
 	graphic.Graphic
 

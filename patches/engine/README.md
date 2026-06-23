@@ -13,6 +13,6 @@
 | `0007-team-color-uniform-shader.patch` | Per-graphic team color and presentation scalar shader channel. |
 | `0008-vertex-color-base-color.patch` | Vertex color contribution to base color. |
 | `0009-instance-team-color-buffer.patch` | Per-instance team-color buffer and shader plumbing for instanced draws. |
-| `0010-fog-of-war-shader-term.patch` | Per-fragment fog-of-war texture term (`LITD_FOG`): samples the visibility-grid fog texture by world XZ and dims terrain in three zones (hidden/explored/visible). Drives `litd/render.FogTerrainMesh` (#161). |
+| `0010-fog-of-war-shader-term.patch` | Per-fragment fog-of-war texture term (`LITD_FOG`) in both the standard and physical (PBR) shaders: samples the visibility-grid fog texture by world XZ (`ModelMatrix * localPos`, so world-baked terrain and translated unit meshes both fog by world position) and dims in three zones (hidden/explored/visible). Drives `litd/render.FogTerrainMesh` (#161, #536). |
 
 Issue #107 does not add a new engine patch. Its rigid-only instancing floor uses patches `0005`, `0006`, and `0009`, with policy/FSV evidence in `litd/render` and `cmd/renderbench`; skinned GLB sink work remains tracked by #308.

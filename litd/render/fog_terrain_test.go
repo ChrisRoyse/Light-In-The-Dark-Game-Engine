@@ -63,6 +63,43 @@ func TestFogTerrainMeshFailClosedFSV(t *testing.T) {
 	t.Log("FSV SetFogEnabled fail-closed: nil-fog mesh stays disabled even when toggled on")
 }
 
+// #536 regression — the translated-mesh fog path. Per-fragment fog on a unit is
+// taken from each fragment's WORLD position, which the shader computes as
+// ModelMatrix * localPosition. The ModelMatrix uniform is fed from the mesh's
+// MatrixWorld(); if that does not reflect SetPosition (e.g. stays identity or a
+// zero matrix), every fragment collapses to one world point and the whole mesh
+// fogs to a single flat value instead of a gradient. SoT = the mesh's
+// MatrixWorld translation column (what the shader's ModelMatrix uniform will be).
+func TestFogTerrainMeshTranslatedModelMatrixFSV(t *testing.T) {
+	geom := geometry.NewBox(100, 10, 100)
+	mat := material.NewStandard(&math32.Color{R: 0.8, G: 0.8, B: 0.8})
+	fog := NewFogTexture(1)
+	fog.Update(synthFogAllVisible{size: int32(fog.Size())}, 1)
+	origin := math32.Vector2{X: -4096, Y: -4096}
+	size := math32.Vector2{X: 8192, Y: 8192}
+
+	const wx, wy, wz = 2730.0, 260.0, -1000.0
+	m := NewFogTerrainMesh(geom, mat, fog, origin, size)
+	m.SetPosition(wx, wy, wz)
+	m.UpdateMatrixWorld()
+	mw := m.MatrixWorld() // column-major mat4; translation at [12],[13],[14]
+
+	t.Logf("FSV translated mesh: MatrixWorld translation=(%.1f,%.1f,%.1f) scaleX=%.3f",
+		mw[12], mw[13], mw[14], mw[0])
+	if mw[12] != wx || mw[13] != wy || mw[14] != wz {
+		t.Fatalf("MatrixWorld translation=(%.1f,%.1f,%.1f), want (%.1f,%.1f,%.1f) — "+
+			"shader ModelMatrix would not place fragments at the unit's world position",
+			mw[12], mw[13], mw[14], float32(wx), float32(wy), float32(wz))
+	}
+	// A zero/degenerate upper-3x3 would map every local position to the same world
+	// point (the bug class: whole mesh fogs to one flat value). Identity scale = 1.
+	if mw[0] == 0 || mw[5] == 0 || mw[10] == 0 {
+		t.Fatalf("MatrixWorld upper-3x3 has a zero diagonal (%.3f,%.3f,%.3f) — "+
+			"local positions collapse and per-fragment fog degenerates to one sample",
+			mw[0], mw[5], mw[10])
+	}
+}
+
 // synthFogAllVisible is a trivial all-visible fog source for the enable-logic
 // test (the zone content is exercised by fog_test.go; here only enable matters).
 type synthFogAllVisible struct{ size int32 }
