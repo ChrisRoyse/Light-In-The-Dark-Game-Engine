@@ -145,6 +145,12 @@ const (
 	TerminalUnitsTrained Key = "terminal.units_trained"
 	TerminalUnitsLost    Key = "terminal.units_lost"
 	TerminalExit         Key = "terminal.exit"
+
+	SettingsTitle    Key = "settings.title"
+	SettingsGraphics Key = "settings.graphics"
+	SettingsKeymap   Key = "settings.keymap"
+	SettingsLocale   Key = "settings.locale"
+	SettingsBack     Key = "settings.back"
 )
 
 var requiredKeys = []string{
@@ -278,6 +284,11 @@ var requiredKeys = []string{
 	string(TerminalUnitsTrained),
 	string(TerminalUnitsLost),
 	string(TerminalExit),
+	string(SettingsTitle),
+	string(SettingsGraphics),
+	string(SettingsKeymap),
+	string(SettingsLocale),
+	string(SettingsBack),
 }
 
 var tagPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,15}$`)

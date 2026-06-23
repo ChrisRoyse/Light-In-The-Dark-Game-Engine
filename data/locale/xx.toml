@@ -129,3 +129,8 @@
 "terminal.units_trained" = "[xx.128]"
 "terminal.units_lost" = "[xx.129]"
 "terminal.exit" = "[xx.130]"
+"settings.title" = "[xx.131]"
+"settings.graphics" = "[xx.132]"
+"settings.keymap" = "[xx.133]"
+"settings.locale" = "[xx.134]"
+"settings.back" = "[xx.135]"

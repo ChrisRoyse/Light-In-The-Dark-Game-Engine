@@ -129,3 +129,8 @@
 "terminal.units_trained" = "Units Trained"
 "terminal.units_lost" = "Units Lost"
 "terminal.exit" = "Exit to Menu"
+"settings.title" = "Settings"
+"settings.graphics" = "Graphics"
+"settings.keymap" = "Hotkeys"
+"settings.locale" = "Language"
+"settings.back" = "Back"
