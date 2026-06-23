@@ -20,8 +20,8 @@ func TestMissileSnapshotPublishFSV(t *testing.T) {
 	w, a, v := msWorld(t) // 2 units: attacker team0, victim team1
 	const arc = 64 * fixed.One
 	mid, ok := w.SpawnMissile(MissileSpec{
-		Pos:        fixed.Vec2{X: 1000 * fixed.One, Y: 1000 * fixed.One},
-		Source:     a, Target: v,
+		Pos:    fixed.Vec2{X: 1000 * fixed.One, Y: 1000 * fixed.One},
+		Source: a, Target: v,
 		Speed:      50 * fixed.One,
 		Arc:        arc,
 		GuidanceID: MissileGuidanceHoming,
@@ -76,6 +76,51 @@ func TestMissileSnapshotPublishFSV(t *testing.T) {
 	}
 	if !sawA || !sawV {
 		t.Fatalf("real units missing from Entries: sawA=%v sawV=%v", sawA, sawV)
+	}
+}
+
+func TestMissileImpactCueFSV(t *testing.T) {
+	w, a, v := msWorld(t) // victim at x=1400, attacker at x=1000
+	mid, _ := w.SpawnMissile(MissileSpec{
+		Pos:    fixed.Vec2{X: 1000 * fixed.One, Y: 1000 * fixed.One},
+		Source: a, Target: v, Speed: 100 * fixed.One,
+		Packet: DamagePacket{Source: a, Target: v, Amount: 10 * fixed.One},
+	})
+	// Capture the authoritative impact point from the sim callback (SoT to
+	// cross-check against the render cue's Pos).
+	var impactAt fixed.Vec2
+	var impacted bool
+	w.OnMissileImpact = func(_ uint32, _ EntityID, at fixed.Vec2, _ EntityID) {
+		impactAt, impacted = at, true
+	}
+
+	var cue RenderEvent
+	var found bool
+	for i := 0; i < 10 && !impacted; i++ {
+		w.Step()
+		// The impact tick's snapshot carries the staged cue.
+		for _, ev := range w.Snaps.Curr().Events {
+			if ev.Kind == RenderMissileImpact {
+				cue, found = ev, true
+			}
+		}
+	}
+	if !impacted {
+		t.Fatal("missile never impacted")
+	}
+	t.Logf("FSV impact cue: found=%v kind=%d ent=%d pos=(%d,%d) impactAt=(%d,%d)",
+		found, cue.Kind, cue.Ent, cue.Pos.X.Floor(), cue.Pos.Y.Floor(),
+		impactAt.X.Floor(), impactAt.Y.Floor())
+	if !found {
+		t.Fatal("no RenderMissileImpact cue published for the impact")
+	}
+	// SoT: the cue identifies the missile and carries the exact impact point —
+	// the position the render ImpactFXPool burst will spawn at.
+	if cue.Ent != mid {
+		t.Fatalf("cue Ent = %d, want missile %d", cue.Ent, mid)
+	}
+	if cue.Pos != impactAt {
+		t.Fatalf("cue Pos %v != sim impact point %v", cue.Pos, impactAt)
 	}
 }
 

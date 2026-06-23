@@ -295,6 +295,9 @@ func (w *World) impactMissile(id EntityID, r int32, at fixed.Vec2) {
 	if w.OnMissileImpact != nil {
 		w.OnMissileImpact(w.tick, id, at, tgt)
 	}
+	// Presentation cue (non-hashing): the impact point won't be in the next
+	// snapshot — the missile dies this tick — so carry it on the event (#309).
+	w.EmitRenderEventAt(RenderMissileImpact, id, s.ImpactID[r], at)
 	w.Emit(Event{Kind: EvMissileImpact, Src: id, Dst: tgt})
 	w.KillUnit(id)
 }
@@ -454,6 +457,8 @@ func (w *World) deliverLinearHit(id EntityID, r int32, victim EntityID, at fixed
 	if w.OnMissileImpact != nil {
 		w.OnMissileImpact(w.tick, id, at, victim)
 	}
+	// Presentation cue (non-hashing); carry the impact point (#309).
+	w.EmitRenderEventAt(RenderMissileImpact, id, s.ImpactID[r], at)
 	w.Emit(Event{Kind: EvMissileImpact, Src: id, Dst: victim})
 }
 

@@ -59,25 +59,30 @@ type MissileSnapEntry struct {
 
 // RenderEvent is a one-shot presentation cue (attack impact sound,
 // death animation start) tagged with the tick it belongs to; render
-// fires it when crossing that tick boundary.
+// fires it when crossing that tick boundary. Pos carries a world point
+// for cues whose render reaction needs a position that won't survive in
+// the next snapshot — e.g. a missile impact removes its missile that
+// tick (#309); it is the zero vector for cues that don't use it.
 type RenderEvent struct {
 	Tick uint32
 	Kind uint8
 	Ent  EntityID
 	Data uint16
+	Pos  fixed.Vec2
 }
 
 // RenderEvent kind values. Append-only: render consumers may switch on
 // these stable byte values in recorded snapshots.
 const (
-	RenderEffectSpawn  uint8 = 1 // Ent = effect, Data = ModelID
-	RenderEffectEnd    uint8 = 2 // Ent = effect, Data = ModelID
-	RenderUnitDeath    uint8 = 3 // Ent = dying unit, Data = unit-type id (#313 sound/anim cue)
-	RenderUnitReady    uint8 = 4 // Ent = trained unit, Data = unit-type id (#313 "ready" cue)
-	RenderUnitAttack   uint8 = 5 // Ent = attacker, Data = unit-type id (#313 attack-swing cue)
-	RenderSpellCue     uint8 = 6 // Ent = cued unit, Data = unit-type id (#479 script-emitted spell VFX cue)
-	RenderUnitOrderAck uint8 = 7 // Ent = ordered unit, Data = unit-type id (#313 order-ack cue; render filters to local player)
-	RenderUnderAttack  uint8 = 8 // Ent = damaged unit, Data = unit-type id (#313 under-attack stinger; sim-throttled per defender, render filters to local player)
+	RenderEffectSpawn   uint8 = 1 // Ent = effect, Data = ModelID
+	RenderEffectEnd     uint8 = 2 // Ent = effect, Data = ModelID
+	RenderUnitDeath     uint8 = 3 // Ent = dying unit, Data = unit-type id (#313 sound/anim cue)
+	RenderUnitReady     uint8 = 4 // Ent = trained unit, Data = unit-type id (#313 "ready" cue)
+	RenderUnitAttack    uint8 = 5 // Ent = attacker, Data = unit-type id (#313 attack-swing cue)
+	RenderSpellCue      uint8 = 6 // Ent = cued unit, Data = unit-type id (#479 script-emitted spell VFX cue)
+	RenderUnitOrderAck  uint8 = 7 // Ent = ordered unit, Data = unit-type id (#313 order-ack cue; render filters to local player)
+	RenderUnderAttack   uint8 = 8 // Ent = damaged unit, Data = unit-type id (#313 under-attack stinger; sim-throttled per defender, render filters to local player)
+	RenderMissileImpact uint8 = 9 // Ent = impacting missile, Data = MissileImpact* id, Pos = impact point (#309 impact one-shot VFX)
 )
 
 // Snapshot is one published frame of sim state plus that tick's
@@ -153,11 +158,19 @@ func (w *World) TeleportUnit(id EntityID, pos fixed.Vec2) bool {
 // snapshot. Fails closed (dropped, counted) when the staging buffer
 // is full — presentation cues never block the sim.
 func (w *World) EmitRenderEvent(kind uint8, ent EntityID, data uint16) bool {
+	return w.EmitRenderEventAt(kind, ent, data, fixed.Vec2{})
+}
+
+// EmitRenderEventAt stages a positioned presentation cue — for events whose
+// render reaction needs a world point not present in the next snapshot (a
+// missile impact removes its missile that tick, #309). Fails closed (dropped,
+// counted) like EmitRenderEvent.
+func (w *World) EmitRenderEventAt(kind uint8, ent EntityID, data uint16, pos fixed.Vec2) bool {
 	if len(w.renderEvStaging) == cap(w.renderEvStaging) {
 		w.renderEvDropped++
 		return false
 	}
-	w.renderEvStaging = append(w.renderEvStaging, RenderEvent{Kind: kind, Ent: ent, Data: data})
+	w.renderEvStaging = append(w.renderEvStaging, RenderEvent{Kind: kind, Ent: ent, Data: data, Pos: pos})
 	return true
 }
 
