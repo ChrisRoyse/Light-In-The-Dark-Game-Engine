@@ -228,6 +228,65 @@ func (gm *game) simToWorld(p api.Vec2) (x, z float32) {
 	return float32((p.X - gm.cx) * gm.scale), float32((p.Y - gm.cy) * gm.scale)
 }
 
+// worldToSim is the inverse of simToWorld: a ground-plane (x,z) back to sim units.
+func (gm *game) worldToSim(x, z float32) api.Vec2 {
+	return api.Vec2{X: float64(x)/gm.scale + gm.cx, Y: float64(z)/gm.scale + gm.cy}
+}
+
+// screenToGround casts the camera ray through window pixel (sx,sy) of a w×h
+// viewport and intersects the y=0 ground plane, returning the sim-space point.
+// It fails closed (ok=false) when the ray is parallel to the ground or the hit is
+// behind the near point — callers must not act on a bogus point. Pure camera math:
+// headless-verifiable via a project→unproject round-trip, no GL context needed.
+func (gm *game) screenToGround(sx, sy float64, w, h int) (api.Vec2, bool) {
+	if w <= 0 || h <= 0 {
+		return api.Vec2{}, false
+	}
+	ndcX := float32(2*sx/float64(w) - 1)
+	ndcY := float32(1 - 2*sy/float64(h)) // window Y grows downward; NDC Y grows up
+	gm.cam.UpdateMatrixWorld()
+	near := gm.cam.Unproject(&math32.Vector3{X: ndcX, Y: ndcY, Z: -1})
+	far := gm.cam.Unproject(&math32.Vector3{X: ndcX, Y: ndcY, Z: 1})
+	dy := far.Y - near.Y
+	if math32.Abs(dy) < 1e-6 {
+		return api.Vec2{}, false // ray parallel to the ground
+	}
+	t := -near.Y / dy
+	if t < 0 {
+		return api.Vec2{}, false // ground intersection is behind the near point
+	}
+	hitX := near.X + t*(far.X-near.X)
+	hitZ := near.Z + t*(far.Z-near.Z)
+	return gm.worldToSim(hitX, hitZ), true
+}
+
+// selectNearest selects the unit closest to a picked sim point (left-click).
+func (gm *game) selectNearest(pt api.Vec2) {
+	us := gm.g.AllUnits(nil)
+	best, bestD := -1, 0.0
+	for i, u := range us {
+		p := u.Position()
+		d := (p.X-pt.X)*(p.X-pt.X) + (p.Y-pt.Y)*(p.Y-pt.Y)
+		if best < 0 || d < bestD {
+			best, bestD = i, d
+		}
+	}
+	if best >= 0 {
+		gm.selected = best
+		fmt.Printf("event: select-pick unit index=%d at (%.0f,%.0f)\n", best, pt.X, pt.Y)
+	}
+}
+
+// orderSelectedTo orders the selected unit to move to a picked point (right-click).
+func (gm *game) orderSelectedTo(pt api.Vec2) {
+	us := gm.g.AllUnits(nil)
+	if gm.selected < 0 || gm.selected >= len(us) {
+		return
+	}
+	ok := us[gm.selected].Order(api.OrderMove, api.TargetPoint(pt))
+	fmt.Printf("event: order-pick unit=%d to (%.0f,%.0f) accepted=%v\n", gm.selected, pt.X, pt.Y, ok)
+}
+
 // rebuildUnits mirrors the live sim units as team-tinted boxes; the selected unit
 // gets a bright emissive cap so the selection is visible on screen.
 func (gm *game) rebuildUnits() {
@@ -308,6 +367,26 @@ func (gm *game) bindInput() {
 				fmt.Println("event: quit")
 				os.Exit(0)
 			}
+		}
+	})
+	// Mouse: left-click selects the unit nearest the picked ground point,
+	// right-click orders the selected unit there. Picking is suspended while the
+	// pause menu is open.
+	gm.app.Subscribe(window.OnMouseDown, func(_ string, ev interface{}) {
+		if gm.paused {
+			return
+		}
+		me := ev.(*window.MouseEvent)
+		w, h := gm.app.GetSize()
+		pt, ok := gm.screenToGround(float64(me.Xpos), float64(me.Ypos), w, h)
+		if !ok {
+			return
+		}
+		switch me.Button {
+		case window.MouseButtonLeft:
+			gm.selectNearest(pt)
+		case window.MouseButtonRight:
+			gm.orderSelectedTo(pt)
 		}
 	})
 }
