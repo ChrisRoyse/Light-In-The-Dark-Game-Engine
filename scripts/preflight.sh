@@ -136,6 +136,15 @@ step "jassgen -revclosure"                go run ./tools/jassgen -revclosure
 step "jassgen -eventcov (EVENT_ coverage)" go run ./tools/jassgen -eventcov
 step "jassgen tests"        go test ./tools/jassgen/
 
+# Generated-artifact drift guard. The -emit/-audit/-eventcov steps above REGENERATE
+# these tracked files IN PLACE, so a prior commit that changed the API without
+# regenerating them leaves them dirty vs HEAD now. `jassgen -check` alone is masked
+# when a local -audit run already overwrote the on-disk file (it then compares disk
+# vs regenerated, never the committed blob) — which is exactly how audit-report.json
+# reached main stale at 585 exported verbs while the real surface was 588. Comparing
+# the post-regen working tree against HEAD is immune to that: a stale commit goes red.
+step "generated artifacts in sync" git diff --exit-code HEAD -- api-manifest.json audit-report.json audit-report.md docs/api/event-coverage.json
+
 # Public Lua API reference (#187): the committed docs/api/lua-reference.md must
 # stay in sync with api-manifest.json. This is the no-CI equivalent of "drift
 # between manifest and published docs fails the build".
