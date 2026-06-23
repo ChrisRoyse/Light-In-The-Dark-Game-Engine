@@ -225,7 +225,14 @@ type World struct {
 	// buff-set change.
 	buffAdd     [data.BuffStatCount][]int64
 	buffMult    [data.BuffStatCount][]fixed.F64
-	buffScratch []int32    // recompute gather scratch, cap = BuffInstances
+	// WC3 "current rises/falls with the cap" bookkeeping (#523): the
+	// max-life / max-mana BONUS (buffed cap − base) currently reflected in
+	// each entity's pool. On a live buff-set change, current life/mana moves
+	// by the change in this bonus; reconstructed on load (derived, not
+	// serialized), so it stays out of the state hash.
+	appliedMaxLife []fixed.F64
+	appliedMaxMana []fixed.F64
+	buffScratch    []int32    // recompute gather scratch, cap = BuffInstances
 	auraScratch []EntityID // aura candidate scratch (#164), cap = Units
 	// spatial bucket grid (buckets.go) — derived from Transform
 	// positions, excluded from the state hash
@@ -503,6 +510,8 @@ func NewWorld(requested Caps) *World {
 			w.buffMult[s][i] = fixed.One
 		}
 	}
+	w.appliedMaxLife = make([]fixed.F64, idxSpace)
+	w.appliedMaxMana = make([]fixed.F64, idxSpace)
 	for i := range w.orderPool {
 		w.orderPool[i].next = int32(i) + 1
 	}
@@ -670,6 +679,10 @@ func (w *World) DestroyUnit(id EntityID) bool {
 		w.buffAdd[s][id.Index()] = 0
 		w.buffMult[s][id.Index()] = fixed.One
 	}
+	// clear the max-pool bonus bookkeeping too, so a recycled index starts
+	// with a zero applied bonus (#523)
+	w.appliedMaxLife[id.Index()] = 0
+	w.appliedMaxMana[id.Index()] = 0
 	if !w.Ents.Destroy(id) {
 		return false
 	}

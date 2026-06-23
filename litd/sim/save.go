@@ -4031,9 +4031,12 @@ func applySave(d *decodedSave, w *World) {
 			w.buffMult[st][i] = fixed.One
 		}
 	}
+	// LOAD path uses restoreBuffCache (rebuild + seed the max-pool bonus),
+	// never the live recomputeBuffStats — the loaded pools already carry any
+	// bonus, so a live current-rises delta here would double-apply it (#523).
 	for i := range p.rows {
 		if p.live[i] {
-			w.recomputeBuffStats(p.rows[i].Target)
+			w.restoreBuffCache(p.rows[i].Target)
 		}
 	}
 	// upgrade contributions live in the same cache: re-derive every
@@ -4041,14 +4044,14 @@ func applySave(d *decodedSave, w *World) {
 	if len(w.upgradeDefs) > 0 {
 		ut := w.UnitTypes
 		for i := int32(0); i < ut.Count(); i++ {
-			w.recomputeBuffStats(ut.Entity[i])
+			w.restoreBuffCache(ut.Entity[i])
 		}
 	}
 	// carried-item modifiers too: re-derive every carrier (#305 —
 	// carriers may be untyped, the loops above can miss them)
 	for i := int32(0); i < its.count; i++ {
 		if c := its.Carrier[i]; c != 0 {
-			w.recomputeBuffStats(c)
+			w.restoreBuffCache(c)
 		}
 	}
 }

@@ -328,11 +328,88 @@ func (w *World) buffExpirySystem() {
 	}
 }
 
-// recomputeBuffStats rebuilds one entity's derived-stat cache from
-// its live instances, folded in canonical (BuffID, pool index) order:
-// per instance, per mod row, per stack — Add sums, Permille
-// multiplies. Runs only on buff-set change, never per tick.
+// recomputeBuffStats is the LIVE buff-set-change entrypoint: rebuild the
+// entity's derived-stat cache, then apply the WC3 "current rises/falls with the
+// cap" policy for max-life/max-mana (#523). Runs only on buff-set change, never
+// per tick.
 func (w *World) recomputeBuffStats(target EntityID) {
+	w.foldBuffCache(target)
+	w.applyMaxPoolDelta(target)
+}
+
+// restoreBuffCache is the LOAD-rebuild entrypoint: rebuild the cache and SEED
+// the max-pool bonus bookkeeping to match the loaded pools (which already carry
+// any bonus), WITHOUT moving current life/mana. Using the live recompute here
+// would re-add the bonus on top of the saved pool — a double-apply that would
+// corrupt every damaged buffed unit across a save/load. appliedMax* is derived,
+// so it is reconstructed here rather than serialized/hashed.
+func (w *World) restoreBuffCache(target EntityID) {
+	w.foldBuffCache(target)
+	w.seedMaxPoolApplied(target)
+}
+
+// applyMaxPoolDelta moves current life/mana by the change in buffed-max bonus
+// since the last recompute, then reseats the applied bonus (#523). Life floors
+// at 1 so a max drop never kills (WC3); a corpse (life ≤ 0) is never revived.
+// Mana floors at 0. A non-modded entity has a zero bonus and is never touched,
+// which is what keeps every determinism golden bit-identical.
+func (w *World) applyMaxPoolDelta(target EntityID) {
+	idx := target.Index()
+	if hr := w.Healths.Row(target); hr >= 0 {
+		base := w.Healths.MaxLife[hr]
+		capL := w.BuffedMaxLife(target, base)
+		bonus := capL.Sub(base)
+		if d := bonus.Sub(w.appliedMaxLife[idx]); d != 0 {
+			if life := w.Healths.Life[hr]; life > 0 {
+				life = life.Add(d)
+				if life > capL {
+					life = capL
+				}
+				if life < fixed.One {
+					life = fixed.One
+				}
+				w.Healths.Life[hr] = life
+			}
+			w.appliedMaxLife[idx] = bonus
+		}
+	}
+	if ar := w.Abilities.Row(target); ar >= 0 {
+		base := w.Abilities.MaxMana[ar]
+		capM := w.BuffedMaxMana(target, base)
+		bonus := capM.Sub(base)
+		if d := bonus.Sub(w.appliedMaxMana[idx]); d != 0 {
+			mana := w.Abilities.Mana[ar].Add(d)
+			if mana > capM {
+				mana = capM
+			}
+			if mana < 0 {
+				mana = 0
+			}
+			w.Abilities.Mana[ar] = mana
+			w.appliedMaxMana[idx] = bonus
+		}
+	}
+}
+
+// seedMaxPoolApplied records the current buffed-max bonus as already-applied,
+// without moving any pool — the load path's reconstruction of derived state.
+func (w *World) seedMaxPoolApplied(target EntityID) {
+	idx := target.Index()
+	if hr := w.Healths.Row(target); hr >= 0 {
+		base := w.Healths.MaxLife[hr]
+		w.appliedMaxLife[idx] = w.BuffedMaxLife(target, base).Sub(base)
+	}
+	if ar := w.Abilities.Row(target); ar >= 0 {
+		base := w.Abilities.MaxMana[ar]
+		w.appliedMaxMana[idx] = w.BuffedMaxMana(target, base).Sub(base)
+	}
+}
+
+// foldBuffCache rebuilds one entity's derived-stat cache from its live
+// instances, folded in canonical (BuffID, pool index) order: per instance, per
+// mod row, per stack — Add sums, Permille multiplies. Pure cache write — no pool
+// adjustment; both the live and load paths build the cache through it.
+func (w *World) foldBuffCache(target EntityID) {
 	idx := target.Index()
 	for s := 0; s < int(data.BuffStatCount); s++ {
 		w.buffAdd[s][idx] = 0
@@ -370,22 +447,6 @@ func (w *World) recomputeBuffStats(target EntityID) {
 		}
 	}
 	w.buffScratch = sel[:0]
-
-	// A dropped +max-mana modifier can leave current mana above the new
-	// (buffed) cap — clamp it down so the pool never exceeds its maximum
-	// (#522). A raise needs no action: regen fills toward the higher cap.
-	if ar := w.Abilities.Row(target); ar >= 0 {
-		if cap := w.BuffedMaxMana(target, w.Abilities.MaxMana[ar]); w.Abilities.Mana[ar] > cap {
-			w.Abilities.Mana[ar] = cap
-		}
-	}
-	// Same for a dropped +max-life modifier — clamp current life down to the
-	// buffed cap (#522). A raise is handled by regen/heal filling toward it.
-	if hr := w.Healths.Row(target); hr >= 0 {
-		if cap := w.BuffedMaxLife(target, w.Healths.MaxLife[hr]); w.Healths.Life[hr] > cap {
-			w.Healths.Life[hr] = cap
-		}
-	}
 }
 
 // buffedStat folds one entity's cache into a base value:
