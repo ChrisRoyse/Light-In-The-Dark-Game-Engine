@@ -67,6 +67,16 @@ func (g *Game) AppendEffects(dst []Effect) []Effect {
 	return dst
 }
 
+// ID returns the effect's stable entity id (0 for an invalid handle) — the
+// effect counterpart of Unit.ID, for FSV dumps and render-side keying. JASS:
+// GetHandleId.
+func (e Effect) ID() uint32 {
+	if !e.Valid() {
+		return 0
+	}
+	return uint32(e.id)
+}
+
 // Position returns the effect's world position, or the zero Vec2 on an
 // invalid handle. JASS: BlzGetLocalSpecialEffectX, BlzGetLocalSpecialEffectY.
 func (e Effect) Position() Vec2 {

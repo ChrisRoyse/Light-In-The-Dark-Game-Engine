@@ -455,3 +455,4 @@ exact   Game.DumpState
 exact   Game.Effects
 exact   Game.AppendEffects
 exact   Effect.Position
+exact   Effect.ID

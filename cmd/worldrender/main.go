@@ -84,8 +84,14 @@ type harness struct {
 	day   *litrender.DayNight
 	g     *api.Game
 
-	unitsRoot  *core.Node // re-parented each beat
-	beaconNode *core.Node
+	unitsRoot   *core.Node // re-parented each beat
+	beaconNode  *core.Node
+	effectsRoot *core.Node // re-parented each beat (#357)
+
+	effectAt          api.Vec2 // -effect sim coordinate for the harness-driven public-API effect
+	effectSet         bool
+	effectHandle      api.Effect
+	effectDestroyBeat int // -effect-destroy-beat: destroy the effect when this beat is reached (-1 = never)
 
 	world     string
 	outDir    string
@@ -102,7 +108,8 @@ type harness struct {
 	curTick     int
 	shotPending bool
 	done        bool
-	beatRows    []unitState // rows captured for the current beat's state line
+	beatRows    []unitState   // rows captured for the current beat's state line
+	beatEffects []effectState // effect rows captured for the current beat (#357)
 }
 
 // unitState mirrors cmd/litd's per-unit FSV row so a reader can diff the two.
@@ -112,6 +119,14 @@ type unitState struct {
 	Facing float64 `json:"facing"`
 	Life   float64 `json:"life"`
 	Owner  int     `json:"owner"`
+}
+
+// effectState is one live special effect's FSV row (#357): its stable id and
+// sim-space position, enumerated through the public Game.Effects() API.
+type effectState struct {
+	ID uint32  `json:"id"`
+	X  float64 `json:"x"`
+	Y  float64 `json:"y"`
 }
 
 func fatalf(format string, a ...any) {
@@ -131,6 +146,8 @@ func main() {
 	beaconKeyStr := flag.String("beacon-key", "", "storage int CAT:KEY read per beat; >0 lights a beacon marker")
 	dimKeyStr := flag.String("dim-key", "", "storage int CAT:KEY read per beat; >0 dims ambient+sun (Flicker, #500)")
 	flag.Float64Var(&h.dimFactor, "dim-factor", 0.30, "light multiplier applied on a dim beat [0,1]")
+	effectStr := flag.String("effect", "", "spawn a persistent special effect at sim \"x,y\" via the public api (#357), rendered as an emissive glow")
+	effectDestroyBeat := flag.Int("effect-destroy-beat", -1, "destroy the -effect when this beat is reached (FSV destroy edge); -1 = never")
 	flag.Parse()
 
 	if err := h.validateSource(); err != nil {
@@ -160,6 +177,17 @@ func main() {
 	if h.dimFactor < 0 || h.dimFactor > 1 {
 		fatalf("-dim-factor must be in [0,1], got %v", h.dimFactor)
 	}
+	h.effectDestroyBeat = *effectDestroyBeat
+	if *effectStr != "" {
+		xs, ys, ok := strings.Cut(*effectStr, ",")
+		ex, errx := strconv.ParseFloat(strings.TrimSpace(xs), 64)
+		ey, erry := strconv.ParseFloat(strings.TrimSpace(ys), 64)
+		if !ok || errx != nil || erry != nil {
+			fatalf("-effect must be \"x,y\", got %q", *effectStr)
+		}
+		h.effectAt = api.Vec2{X: ex, Y: ey}
+		h.effectSet = true
+	}
 
 	host, err := h.loadHost(*seed, *budget)
 	if err != nil {
@@ -180,8 +208,28 @@ func main() {
 	h.scene.Add(h.unitsRoot)
 	h.beaconNode = core.NewNode()
 	h.scene.Add(h.beaconNode)
+	h.effectsRoot = core.NewNode()
+	h.scene.Add(h.effectsRoot)
+	h.spawnDemoEffect()
 
 	h.app.Run(h.update)
+}
+
+// spawnDemoEffect spawns the -effect persistent special effect through the
+// public api (Game.RegisterEffectModel + Game.AddSpecialEffect), exactly as a
+// script would (#357). The harness drives it directly — the authored-world path
+// (effect-model registration from world data) is #530.
+func (h *harness) spawnDemoEffect() {
+	if !h.effectSet {
+		return
+	}
+	const glowModel = "fsv/glow"
+	h.g.RegisterEffectModel(glowModel, 1)
+	h.effectHandle = h.g.AddSpecialEffect(glowModel, h.effectAt)
+	if !h.effectHandle.Valid() {
+		fatalf("AddSpecialEffect(%s) returned an invalid handle", glowModel)
+	}
+	fmt.Printf("event: effect spawned id=%d at sim=(%.1f,%.1f)\n", h.effectHandle.ID(), h.effectAt.X, h.effectAt.Y)
 }
 
 func parseBeats(s string) []int {
@@ -335,6 +383,33 @@ func (h *harness) rebuildUnits() []unitState {
 	return rows
 }
 
+// rebuildEffects mirrors every live special effect (enumerated through the
+// public Game.Effects() API, #529) as an emissive glow marker at its mapped
+// position, and returns the per-effect FSV rows. Re-parented each beat like the
+// units, so a destroyed effect vanishes from the next screenshot (#357).
+func (h *harness) rebuildEffects() []effectState {
+	h.scene.Remove(h.effectsRoot)
+	h.effectsRoot = core.NewNode()
+	h.scene.Add(h.effectsRoot)
+
+	var rows []effectState
+	for _, e := range h.g.Effects() {
+		p := e.Position()
+		mat := material.NewStandard(&math32.Color{R: 0.45, G: 0.85, B: 1.0})
+		mat.SetEmissiveColor(&math32.Color{R: 0.35, G: 0.7, B: 1.0}) // self-lit so it glows against a night scene
+		orb := graphic.NewMesh(geometry.NewSphere(0.45, 16, 12), mat)
+		x, z := h.simToWorld(p)
+		orb.SetPosition(x, 0.9, z)
+		h.effectsRoot.Add(orb)
+		// A small point light so the glow casts onto the dark ground at night.
+		pl := light.NewPoint(&math32.Color{R: 0.4, G: 0.75, B: 1.0}, 3.0)
+		pl.SetPosition(x, 1.4, z)
+		h.effectsRoot.Add(pl)
+		rows = append(rows, effectState{ID: e.ID(), X: p.X, Y: p.Y})
+	}
+	return rows
+}
+
 // updateBeacon lights a marker at the unit centroid when the world's control
 // point flag (-beacon-key) is set (#169 VFX hook). World-agnostic: the world
 // names the storage category/key; we only read it.
@@ -393,7 +468,12 @@ func (h *harness) update(rend *renderer.Renderer, _ time.Duration) {
 			h.curTick = target
 		}
 		h.updateFlickerDim() // set the dim before the beacon is (re)built so its VFX dims too
+		if h.effectDestroyBeat >= 0 && target >= h.effectDestroyBeat && h.effectHandle.Valid() {
+			fmt.Printf("event: effect destroyed id=%d at beat=%d\n", h.effectHandle.ID(), target)
+			h.effectHandle.Destroy()
+		}
 		h.beatRows = h.rebuildUnits()
+		h.beatEffects = h.rebuildEffects()
 		h.shotPending = true
 	}
 
@@ -433,12 +513,13 @@ func engineVersion() string {
 // beatRows holds the rows captured for the current beat's state line.
 func (h *harness) printState() {
 	s := struct {
-		TimeOfDay float64     `json:"tod"`
-		Tick      int         `json:"tick"`
-		Lighting  float64     `json:"lit_hour"`
-		Dim       float64     `json:"flicker_dim"` // applied light multiplier (1 = bright)
-		Units     []unitState `json:"units"`
-	}{h.g.TimeOfDay(), h.curTick, h.tod, float64(h.day.FlickerDim()), h.beatRows}
+		TimeOfDay float64       `json:"tod"`
+		Tick      int           `json:"tick"`
+		Lighting  float64       `json:"lit_hour"`
+		Dim       float64       `json:"flicker_dim"` // applied light multiplier (1 = bright)
+		Units     []unitState   `json:"units"`
+		Effects   []effectState `json:"effects"`
+	}{h.g.TimeOfDay(), h.curTick, h.tod, float64(h.day.FlickerDim()), h.beatRows, h.beatEffects}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
 }
