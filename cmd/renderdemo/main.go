@@ -522,6 +522,7 @@ type canvasDump struct {
 	MainMenu     *mainMenuRuntimeDump     `json:"mainMenu,omitempty"`
 	Terminal     *terminalRuntimeDump     `json:"terminal,omitempty"`
 	Settings     *settingsRuntimeDump     `json:"settings,omitempty"`
+	Stall        *stallRuntimeDump        `json:"stall,omitempty"`
 	OK           bool                     `json:"ok"`
 	Errors       []string                 `json:"errors,omitempty"`
 }
@@ -834,7 +835,7 @@ type mainMenuRuntimeDump struct {
 func main() {
 	res := resolutionFlag{W: defaultWidth, H: defaultHeight}
 	resizeFrom := resolutionFlag{}
-	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal, settings")
+	sceneName := flag.String("scene", "counted", "scene to render: empty, single, counted, culled, shared, twomats, transparent, camera-rig, atlas, atlas-two, units100, units100-sorted, mixedteams, mixedteams-one, mixedteams-plain-one, mixedteams-moving, mixedteams-1000, mixedteams-culled, lit, unlit, lit-east, lit-ambient0, lit-emissive, teamcolors, teamcolors-one, teamcolors-flash, teamcolors-fade, teamcolors-fog, terrain, terrain-units, terrain-chunks, fogscout, fogscout-pbr, fogscout-unit, spellstorm, missiles, scriptfx, battle500, basecamp, campaign-menu, main-menu, terminal, settings, stall")
 	presetText := flag.String("preset", "high", "atlas texture preset: high, medium, or low")
 	dumpMapPath := flag.String("dump-map", "", "load map data directory and print decoded terrain JSON, e.g. data/maps/test64")
 	dumpAudioPath := flag.String("dump-audio", "", "load an audio asset directory and print decoded/resident/streamed JSON")
@@ -862,6 +863,7 @@ func main() {
 	menuFocus := flag.Int("menu-focus", 0, "focused entry index for -hud -scene main-menu (keyboard-nav FSV)")
 	terminalResult := flag.String("terminal-result", "victory", "result for -hud -scene terminal: victory or defeat")
 	settingsScenario := flag.String("settings-scenario", "default", "settings FSV scenario for -hud -scene settings: default, custom")
+	stallScenario := flag.String("stall-scenario", "two", "stall FSV scenario for -hud -scene stall: single, two, imminent")
 	selectScenario := flag.String("select-scenario", "mixed", "selection FSV scenario for -autotest-select: mixed, cap, typesel")
 	keymapPath := flag.String("keymap", "", "optional TOML keymap override for HUD command-card hotkeys")
 	uiScale := flag.Float64("uiscale", 1, "HUD user UI scale multiplier; clamped to [0.75,1.5]")
@@ -986,7 +988,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "renderdemo: locale: %v\n", err)
 			os.Exit(1)
 		}
-		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult, *settingsScenario)
+		canvasFSV, err = buildCanvasHUD(scene, res, *uiScale, resizeFrom, *sceneName, *cardScenario, *resbarScenario, *campaignScenario, *localeTag, *keymapPath, table, lithud.HUDStringsFromLocale(table), *menuFocus, *terminalResult, *settingsScenario, *stallScenario)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "renderdemo: %v\n", err)
 			os.Exit(1)
@@ -4551,7 +4553,7 @@ func groupCase(name, gesture string, groups litinput.ControlGroups, res litinput
 	return out
 }
 
-func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult, settingsScenario string) (canvasDump, error) {
+func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resizeFrom resolutionFlag, sceneName, cardScenario, resbarScenario, campaignScenario, localeTag, keymapPath string, localeTable *litlocale.Table, labels lithud.HUDStrings, menuFocus int, terminalResult, settingsScenario, stallScenario string) (canvasDump, error) {
 	canvas, err := lithud.NewCanvas(res.W, res.H, uiScale)
 	if err != nil {
 		return canvasDump{}, err
@@ -4564,6 +4566,9 @@ func buildCanvasHUD(scene *core.Node, res resolutionFlag, uiScale float64, resiz
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "settings") {
 		return buildSettingsHUD(scene, canvas, localeTag, localeTable, settingsScenario, menuFocus)
+	}
+	if strings.EqualFold(strings.TrimSpace(sceneName), "stall") {
+		return buildStallHUD(scene, canvas, localeTag, localeTable, stallScenario)
 	}
 	if strings.EqualFold(strings.TrimSpace(sceneName), "campaign-menu") || strings.TrimSpace(campaignScenario) != "" {
 		return buildCampaignMenuHUD(scene, canvas, campaignScenario, localeTag, localeTable)
@@ -5062,6 +5067,104 @@ func drawSettingsScreen(scene *core.Node, layout lithud.SettingsScreenLayout, ok
 		fg := math32.Color4{R: 0.82, G: 0.84, B: 0.90, A: 1} // settings rows: cool grey
 		if entry.Focused {
 			fg = math32.Color4{R: 0.96, G: 0.86, B: 0.46, A: 1} // focused row: gold cursor
+		}
+		label.SetColor4(&fg)
+		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
+		scene.Add(label)
+	}
+}
+
+// stallRuntimeDump is the FSV record for the netplay stall overlay (#71).
+type stallRuntimeDump struct {
+	Locale   string                   `json:"locale"`
+	Scenario string                   `json:"scenario"`
+	Layout   lithud.StallScreenLayout `json:"layout"`
+	OK       bool                     `json:"ok"`
+	Errors   []string                 `json:"errors,omitempty"`
+}
+
+func buildStallHUD(scene *core.Node, canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, scenario string) (canvasDump, error) {
+	rt, err := buildStallRuntime(canvas, localeTag, localeTable, scenario)
+	if err != nil {
+		return canvasDump{}, err
+	}
+	after := canvasSnapshotFor(canvas, rt.Layout.Widgets)
+	const stallBackgroundDrawCalls = 1
+	drawCalls := rt.Layout.ExpectedDrawCalls + stallBackgroundDrawCalls
+	dump := canvasDump{
+		Mode:  "stall",
+		After: after,
+		HUD: hudRuntimeDump{
+			Locale:               localeTag,
+			WidgetPanels:         len(rt.Layout.Widgets),
+			Labels:               len(rt.Layout.Labels),
+			ExpectedGUIDrawCalls: drawCalls,
+			DrawCallBudget:       drawCalls,
+		},
+		Stall:  rt,
+		OK:     rt.OK,
+		Errors: append([]string{}, rt.Errors...),
+	}
+	drawStallScreen(scene, rt.Layout, rt.OK)
+	return dump, nil
+}
+
+// buildStallRuntime resolves the stall chrome from the locale table and builds the
+// overlay for one scenario. The laggard names + countdown are exactly what the
+// host's net.StallController would surface to the client shell.
+func buildStallRuntime(canvas lithud.Canvas, localeTag string, localeTable *litlocale.Table, scenario string) (*stallRuntimeDump, error) {
+	scenario = strings.ToLower(strings.TrimSpace(scenario))
+	if scenario == "" {
+		scenario = "two"
+	}
+	var laggards []string
+	var seconds int
+	switch scenario {
+	case "single":
+		laggards, seconds = []string{"Ser Caldus"}, 22
+	case "two":
+		laggards, seconds = []string{"Ser Caldus", "Mira Vale"}, 17
+	case "imminent":
+		laggards, seconds = []string{"Mira Vale"}, 0
+	default:
+		return nil, fmt.Errorf("unknown stall scenario %q (want single|two|imminent)", scenario)
+	}
+
+	strs := lithud.StallScreenStringsFromLocale(localeTable)
+	layout := lithud.NewStallScreenLayout(canvas, laggards, seconds, strs)
+	rt := &stallRuntimeDump{
+		Locale:   localeTag,
+		Scenario: scenario,
+		Layout:   layout,
+		OK:       len(layout.Issues) == 0,
+	}
+	for _, issue := range layout.Issues {
+		rt.Errors = append(rt.Errors, issue.Widget+": "+issue.Msg)
+	}
+	return rt, nil
+}
+
+func drawStallScreen(scene *core.Node, layout lithud.StallScreenLayout, ok bool) {
+	bg := gui.NewPanel(float32(layout.Canvas.Width), float32(layout.Canvas.Height))
+	bgColor := math32.Color4{R: 0.10, G: 0.05, B: 0.06, A: 1} // dim crimson: something is wrong
+	bg.SetColor4(&bgColor)
+	bg.SetPosition(0, 0)
+	scene.Add(bg)
+	for _, w := range layout.Widgets {
+		panel := gui.NewPanel(float32(w.Rect.W), float32(w.Rect.H))
+		c := math32.Color4{R: 0.18, G: 0.12, B: 0.14, A: 0.96}
+		if !ok {
+			c = math32.Color4{R: 0.42, G: 0.10, B: 0.10, A: 0.96}
+		}
+		panel.SetColor4(&c)
+		panel.SetPosition(float32(w.Rect.X), float32(w.Rect.Y))
+		scene.Add(panel)
+	}
+	for _, entry := range layout.Labels {
+		label := gui.NewLabel(entry.Text)
+		fg := math32.Color4{R: 0.90, G: 0.82, B: 0.80, A: 1} // warm grey rows
+		if entry.Focused {                                   // the title
+			fg = math32.Color4{R: 1, G: 0.74, B: 0.52, A: 1} // amber alert
 		}
 		label.SetColor4(&fg)
 		label.SetPosition(float32(entry.Rect.X), float32(entry.Rect.Y))
