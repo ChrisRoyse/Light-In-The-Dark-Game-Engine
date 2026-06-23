@@ -144,3 +144,39 @@ backswing = 0.4
 delivery = "projectile"
 projectile-speed = 800
 targets-allowed = ["ground", "air", "structure"]
+
+# Beacon Warden — the Vigil hero (#153; identity.md §4 "rock stars with battle
+# axes", §2 light-infused support magic). Army-scale: high regen, heavy armor, a
+# heavy melee axe, and the four hero spells (Battle/Command/Mysticism + ult). Its
+# level-up skill tree lives in data/heroes/heroes.toml; trained + revived at the
+# bastion (the Vigil hero seat for v0.1).
+[[unit]]
+id = "beacon_warden"
+life = 700
+regen = 1.5
+armor = 4
+armor-type = "heavy"
+move-speed = 290
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+sight-day = 1800
+sight-night = 1000
+model = "units/vigil/beacon_warden.glb"
+abilities = ["warden_smite", "warden_rally", "warden_lantern_ward", "beacon_blaze"]
+food-cost = 5
+costs = { gold = 425, lumber = 100 }
+train-seconds = 55.0
+
+[[unit.attack]]
+type = "normal"
+range = 90
+damage-base = 32
+dice = 2
+sides = 4
+cooldown = 1.6
+damage-point = 0.4
+backswing = 0.4
+delivery = "instant"
+targets-allowed = ["ground", "structure"]

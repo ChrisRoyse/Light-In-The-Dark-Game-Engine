@@ -76,6 +76,36 @@ func main() {
 		out["items"] = tables.Items
 	case "nodes":
 		out["nodes"] = tables.Nodes
+	case "heroes":
+		// Resolve hero unit + skill ability indices back to names for readability.
+		if tables.Hero == nil {
+			out["heroes"] = nil
+			break
+		}
+		hs := make([]map[string]any, 0, len(tables.Hero.Heroes))
+		for i := range tables.Hero.Heroes {
+			hd := &tables.Hero.Heroes[i]
+			skills := make([]map[string]any, 0, len(hd.Skills))
+			for si := range hd.Skills {
+				sk := &hd.Skills[si]
+				ab := "#?"
+				if int(sk.Ability) < len(tables.Abilities) {
+					ab = tables.Abilities[sk.Ability].ID
+				}
+				skills = append(skills, map[string]any{"ability": ab, "minHeroLevel": sk.MinHeroLevel})
+			}
+			hs = append(hs, map[string]any{
+				"unit": unitName(tables, hd.Unit), "str": int64(hd.Str), "agi": int64(hd.Agi),
+				"int": int64(hd.Int), "strG": int64(hd.StrG), "agiG": int64(hd.AgiG), "intG": int64(hd.IntG),
+				"skills": skills,
+			})
+		}
+		out["heroSystem"] = map[string]any{
+			"xpCurve": tables.Hero.Curve, "startSkillPts": tables.Hero.StartSkillPts,
+			"shareRadius": int64(tables.Hero.ShareRadius), "deathPenalty": tables.Hero.DeathPenalty,
+			"reviveBaseTicks": tables.Hero.Revive.BaseTicks, "reviveTicksPerLevel": tables.Hero.Revive.TicksPerLevel,
+			"heroes": hs,
+		}
 	case "tech", "requires":
 		// Resolve requirement rows back to names so the tech tree is readable:
 		// each row = which target is gated on which alive prerequisites.

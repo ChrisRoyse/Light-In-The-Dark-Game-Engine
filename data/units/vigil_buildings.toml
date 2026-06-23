@@ -26,7 +26,8 @@ build-seconds = 90.0
 food-provided = 10
 costs = { gold = 385, lumber = 185 }
 depot-for = ["gold", "lumber"]
-trains = ["lamplighter"]
+trains = ["lamplighter", "beacon_warden"]
+revives-heroes = true
 
 # Hearth_hall — supply (food). Cheap, low footprint; raises the population cap.
 [[unit]]
