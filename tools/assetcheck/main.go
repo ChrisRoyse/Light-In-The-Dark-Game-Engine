@@ -426,6 +426,10 @@ func checkData(dir string, files []string, prefix string) []finding {
 	if prefix == "" || prefix == "music" || strings.HasPrefix(prefix, "music/") {
 		checkMusicDataTables(dir, files, add)
 	}
+	if prefix == "" || prefix == "units" || prefix == "upgrades" || prefix == "abilities" ||
+		strings.HasPrefix(prefix, "units/") || strings.HasPrefix(prefix, "upgrades/") || strings.HasPrefix(prefix, "abilities/") {
+		checkRosterTables(dir, files, add)
+	}
 	if prefix == "" {
 		checkHardcodedRenderLabels(filepath.Dir(dir), add)
 	}
