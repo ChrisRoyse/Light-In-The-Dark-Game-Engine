@@ -144,3 +144,39 @@ damage-point = 0.6
 backswing = 0.6
 delivery = "instant"
 targets-allowed = ["ground", "structure"]
+
+# Ember Chief — the Unbound hero (#154; identity.md §4 heroes carry the magic,
+# §2 fire/mobility/storm). The mirror of the Vigil's Beacon Warden: Agility-
+# primary (a fast, hard-hitting striker), lighter and quicker, with the four
+# fire/storm hero spells. Skill tree in data/heroes/heroes.toml; trained +
+# revived at the fire_kraal (the Unbound hero seat for v0.1).
+[[unit]]
+id = "ember_chief"
+life = 620
+regen = 1.2
+armor = 2
+armor-type = "medium"
+move-speed = 330
+turn-rate = 0.9
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+sight-day = 1800
+sight-night = 1000
+model = "units/unbound/ember_chief.glb"
+abilities = ["ember_dash", "storm_call", "flame_aura", "firestorm"]
+food-cost = 5
+costs = { gold = 420, lumber = 80 }
+train-seconds = 52.0
+
+[[unit.attack]]
+type = "normal"
+range = 90
+damage-base = 30
+dice = 2
+sides = 5
+cooldown = 1.5
+damage-point = 0.35
+backswing = 0.35
+delivery = "instant"
+targets-allowed = ["ground", "structure"]

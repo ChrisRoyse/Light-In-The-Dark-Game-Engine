@@ -24,7 +24,8 @@ build-seconds = 80.0
 food-provided = 10
 costs = { gold = 350, lumber = 150 }
 depot-for = ["gold", "lumber"]
-trains = ["forager"]
+trains = ["forager", "ember_chief"]
+revives-heroes = true
 
 # Hide_tent — supply (food). Cheapest, fastest structure; pure population cap.
 [[unit]]

@@ -57,3 +57,29 @@ min-hero-level = [1, 3, 5]
 [[hero.skill]]
 ability = "beacon_blaze"        # Ultimate
 min-hero-level = [5]
+
+# --- The Unbound hero (#154) -------------------------------------------------
+# Ember Chief — Agility primary (the fast striker) mirroring the Vigil warden's
+# Strength. Same shared XP curve + attribute rules above (v0.1 parity); the
+# faction difference is base stats and the fire/mobility/storm spell set.
+[[hero]]
+unit = "ember_chief"
+str = 18.0
+agi = 24.0
+int = 18.0
+str-per-level = 1.8
+agi-per-level = 2.8
+int-per-level = 2.0
+
+[[hero.skill]]
+ability = "ember_dash"          # Battle
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "storm_call"          # Command
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "flame_aura"          # Mysticism
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "firestorm"           # Ultimate
+min-hero-level = [5]
