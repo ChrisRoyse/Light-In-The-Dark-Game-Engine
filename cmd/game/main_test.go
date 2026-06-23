@@ -9,9 +9,11 @@ package main
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/math32"
 )
@@ -76,6 +78,39 @@ func TestScreenToGroundRoundTripFSV(t *testing.T) {
 		if math.Abs(got.X-p.X) > tol || math.Abs(got.Y-p.Y) > tol {
 			t.Fatalf("pick round-trip %+v -> %+v exceeds tol %.2f", p, got, tol)
 		}
+	}
+}
+
+func TestHUDTextFSV(t *testing.T) {
+	// SoT = the HUD string vs the live game state it reads. dev-sandbox loads one
+	// unit "hfoo" at (320,256) hp 100. X+X=Y: a game at tick 42 with that unit
+	// selected must produce a HUD naming exactly that.
+	host, err := worldhost.Load("../../worlds/dev-sandbox", 1, 50_000_000)
+	if err != nil {
+		t.Fatalf("load dev-sandbox: %v", err)
+	}
+	defer host.Close()
+	gm := &game{g: host.Game, selected: 0, curTick: 42}
+	txt := gm.hudText()
+	t.Logf("FSV hudText (playing): %q", txt)
+	for _, want := range []string{"tick=42", "units=1", "(320,256)", "hp=100", "playing", "selected=#"} {
+		if !strings.Contains(txt, want) {
+			t.Fatalf("HUD missing %q in: %s", want, txt)
+		}
+	}
+	// Edges: paused state and no-selection both reflect in the string.
+	gm.paused = true
+	gm.selected = -1
+	txt2 := gm.hudText()
+	t.Logf("FSV hudText (paused/none): %q", txt2)
+	if !strings.Contains(txt2, "PAUSED") {
+		t.Fatalf("paused HUD missing PAUSED: %s", txt2)
+	}
+	if !strings.Contains(txt2, "selected=none") {
+		t.Fatalf("no-selection HUD missing selected=none: %s", txt2)
+	}
+	if strings.Contains(txt2, "playing") {
+		t.Fatalf("paused HUD still says playing: %s", txt2)
 	}
 }
 

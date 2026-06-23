@@ -39,6 +39,7 @@ import (
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
@@ -73,6 +74,7 @@ type game struct {
 
 	unitsRoot *core.Node
 	menuRoot  *core.Node
+	hud       *gui.Label
 
 	world, archive, savePath, outDir string
 	tod                              float64
@@ -149,6 +151,7 @@ func main() {
 	gm.unitsRoot = core.NewNode()
 	gm.scene.Add(gm.unitsRoot)
 	gm.buildMenu()
+	gm.buildHUD()
 	gm.bindInput()
 	gm.rebuildUnits()
 
@@ -336,6 +339,36 @@ func (gm *game) buildMenu() {
 	gm.scene.Add(gm.menuRoot)
 }
 
+// buildHUD adds the on-screen status/command bar: a gui label (built-in font, no
+// asset) pinned top-left, refreshed each frame from live game state. This is the
+// HUD's data-binding core; the resource bar / command-card widgets (#192) layer on
+// once a world ships an economy.
+func (gm *game) buildHUD() {
+	gm.hud = gui.NewLabel("")
+	gm.hud.SetPosition(12, 10)
+	gm.hud.SetColor(&math32.Color{R: 0.95, G: 0.95, B: 0.85})
+	gm.scene.Add(gm.hud)
+}
+
+// hudText is the live HUD string — a deterministic function of game state, so it
+// is FSV-able without reading glyphs off a PNG. Shows the clock/tick, run state,
+// the selected unit's id/hp/position, the unit count, and the control legend.
+func (gm *game) hudText() string {
+	us := gm.g.AllUnits(nil)
+	sel := "none"
+	if gm.selected >= 0 && gm.selected < len(us) {
+		u := us[gm.selected]
+		p := u.Position()
+		sel = fmt.Sprintf("#%d hp=%.0f (%.0f,%.0f)", u.ID(), u.Life(), p.X, p.Y)
+	}
+	state := "playing"
+	if gm.paused {
+		state = "PAUSED"
+	}
+	return fmt.Sprintf("LitD  tick=%d  %s  tod=%.2f  units=%d  selected=%s\n[LMB select · RMB move · Tab cycle · Space fwd · F5/F9 save/load · Esc menu]",
+		gm.curTick, state, gm.g.TimeOfDay(), len(us), sel)
+}
+
 func (gm *game) setPaused(p bool) {
 	gm.paused = p
 	gm.menuRoot.SetVisible(p)
@@ -478,6 +511,7 @@ func (gm *game) update(rend *renderer.Renderer, dt time.Duration) {
 	}
 
 	gm.rebuildUnits()
+	gm.hud.SetText(gm.hudText())
 	gm.day.Update(gm.tod)
 	gm.app.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 	if err := rend.Render(gm.scene, gm.cam); err != nil {
