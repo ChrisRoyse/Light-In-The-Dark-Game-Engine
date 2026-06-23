@@ -101,6 +101,44 @@ func main() {
 		out["items"] = rows
 	case "nodes":
 		out["nodes"] = tables.Nodes
+	case "grimoires":
+		nm := func(idxs []uint16, lookup func(uint16) string) []string {
+			out := make([]string, 0, len(idxs))
+			for _, i := range idxs {
+				out = append(out, lookup(i))
+			}
+			return out
+		}
+		uN := func(i uint16) string { return unitName(tables, i) }
+		aN := func(i uint16) string {
+			if int(i) < len(tables.Abilities) {
+				return tables.Abilities[i].ID
+			}
+			return "#?"
+		}
+		gN := func(i uint16) string {
+			if int(i) < len(tables.Upgrades) {
+				return tables.Upgrades[i].ID
+			}
+			return "#?"
+		}
+		gs := make([]map[string]any, 0, len(tables.Grimoires))
+		for i := range tables.Grimoires {
+			g := &tables.Grimoires[i]
+			tiers := make([]map[string]any, 0, len(g.Tiers))
+			for ti := range g.Tiers {
+				t := &g.Tiers[ti]
+				tiers = append(tiers, map[string]any{
+					"researchTicks": t.ResearchTicks, "costs": t.Costs,
+					"units": nm(t.Units, uN), "abilities": nm(t.Abilities, aN), "upgrades": nm(t.Upgrades, gN),
+				})
+			}
+			gs = append(gs, map[string]any{
+				"id": g.ID, "name": g.Name, "slot": g.Slot,
+				"researchedAt": unitName(tables, g.ResearchedAt), "tiers": tiers,
+			})
+		}
+		out["grimoires"] = gs
 	case "heroes":
 		// Resolve hero unit + skill ability indices back to names for readability.
 		if tables.Hero == nil {

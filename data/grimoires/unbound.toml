@@ -1,0 +1,38 @@
+# Grimoire of the Ember Road (#156; identity.md §4 — themed research track,
+# fire/mobility/aggression). The mirror of the Long Vigil: an ordered 4-tier
+# track researched at the ember_shrine, granting the Unbound's speed/tempo/fire
+# tech. Slot "unbound_doctrine" is the foreclosure group (runtime-enforced).
+# Tier 4 is a strong capstone, not a transformation (identity.md §8).
+
+[[grimoire]]
+id = "ember_road"
+name = "Grimoire of the Ember Road"
+slot = "unbound_doctrine"
+researched-at = "ember_shrine"
+
+# Tier 1 — the moving road: army-wide move speed.
+[[grimoire.tier]]
+research-seconds = 28.0
+costs = { gold = 90, lumber = 40 }
+grants-upgrades = ["emberwind_stride"]
+
+# Tier 2 — raid tempo: faster raiders + the sprint ability.
+[[grimoire.tier]]
+research-seconds = 42.0
+costs = { gold = 140, lumber = 90 }
+grants-upgrades = ["raiders_frenzy"]
+grants-abilities = ["sprint"]
+
+# Tier 3 — carried fire: the weapon line + the flame aura.
+[[grimoire.tier]]
+research-seconds = 55.0
+costs = { gold = 190, lumber = 140 }
+grants-upgrades = ["unbound_weapon"]
+grants-abilities = ["flame_aura"]
+
+# Tier 4 — capstone: hardened hides + the firestorm ult.
+[[grimoire.tier]]
+research-seconds = 75.0
+costs = { gold = 280, lumber = 230 }
+grants-upgrades = ["unbound_armor"]
+grants-abilities = ["firestorm"]

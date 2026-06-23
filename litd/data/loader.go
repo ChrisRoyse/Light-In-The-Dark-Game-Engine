@@ -91,6 +91,7 @@ type Tables struct {
 	Requires      []Require          // admission requirements, sorted (#303)
 	Hero          *HeroTables        // hero rule set; nil when heroes/ absent (#304)
 	Items         []Item             // item types, sorted by ID (#305)
+	Grimoires     []Grimoire         // themed research tracks, sorted by ID (#155/#156)
 	Placement     *PlacementTable    // declarative load-time entity placement; nil when placement/ absent (#403)
 	Fingerprint   uint64             // canonical content hash (state-hash preamble)
 }
@@ -574,6 +575,12 @@ func Load(fsys fs.FS) (*Tables, error) {
 		return nil, err
 	}
 	t.Effects = comp.arena
+
+	// grimoire research tracks after units/abilities/upgrades: every tier's
+	// grants resolve against those tables (#155/#156)
+	if err := t.loadGrimoires(fsys); err != nil {
+		return nil, err
+	}
 
 	// smart-order table (optional directory; absence is visible as nil,
 	// never silently defaulted)
@@ -1087,6 +1094,7 @@ func (t *Tables) fingerprint() uint64 {
 	t.hashTech(h)
 	t.hashHero(h)
 	t.hashItems(h)
+	t.hashGrimoires(h)
 	h.WriteBool(t.Smart != nil)
 	if t.Smart != nil {
 		t.Smart.hashInto(h)
