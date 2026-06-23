@@ -1,0 +1,24 @@
+--- a/gls/gls-desktop.go	2026-06-23 15:18:41.353653861 -0400
++++ b/gls/gls-desktop.go	2026-06-23 15:18:41.338987198 -0400
+@@ -340,6 +340,21 @@
+ 	gs.stats.Textures -= len(tex)
+ }
+ 
++// LITD-PATCH: Go-side wrapper over the already-loaded glDeleteFramebuffers so
++// offscreen render targets (litd/render.PortraitTarget, #193) can release their
++// framebuffer object instead of leaking it. Mirrors DeleteTextures.
++func (gs *GLS) DeleteFramebuffers(fbos ...uint32) {
++
++	C.glDeleteFramebuffers(C.GLsizei(len(fbos)), (*C.GLuint)(&fbos[0]))
++}
++
++// LITD-PATCH: Go-side wrapper over the already-loaded glDeleteRenderbuffers so
++// offscreen render targets can release their depth/stencil renderbuffer.
++func (gs *GLS) DeleteRenderbuffers(rbos ...uint32) {
++
++	C.glDeleteRenderbuffers(C.GLsizei(len(rbos)), (*C.GLuint)(&rbos[0]))
++}
++
+ // DeleteVertexArrays deletes n​vertex array objects named
+ // by the elements of the provided array.
+ func (gs *GLS) DeleteVertexArrays(vaos ...uint32) {
