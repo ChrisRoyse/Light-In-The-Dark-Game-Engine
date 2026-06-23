@@ -17,6 +17,7 @@ import (
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
@@ -58,9 +59,14 @@ type benchDump struct {
 	SubmissionMS       float64                            `json:"submissionMs"`
 	AnimationSamples   []animationSample                  `json:"animationSamples"`
 	DeathTrace         []animationSample                  `json:"deathTrace"`
-	VisualDescription  string                             `json:"visualDescription"`
-	OK                 bool                               `json:"ok"`
-	Errors             []string                           `json:"errors,omitempty"`
+	// #233 slice 2 — max-battle overlay layers (all active per fog-of-war §7).
+	OverlayFog        bool     `json:"overlayFog,omitempty"`
+	OverlayBars       int      `json:"overlayBars,omitempty"`
+	OverlayMinimap    bool     `json:"overlayMinimap,omitempty"`
+	MinimapBlips      int      `json:"minimapBlips,omitempty"`
+	VisualDescription string   `json:"visualDescription"`
+	OK                bool     `json:"ok"`
+	Errors            []string `json:"errors,omitempty"`
 }
 
 type animationSample struct {
@@ -201,10 +207,18 @@ func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump,
 		dump.ExpectedWorldDraws = policy.FloorWorldDraws + 1
 	}
 
-	groundMat := material.NewStandard(&math32.Color{R: 0.09, G: 0.12, B: 0.10})
-	ground := graphic.NewMesh(geometry.NewPlane(1700, 980), groundMat)
-	ground.SetRotationX(-math32.Pi / 2)
-	scene.Add(ground)
+	overlays := sc.Segment == "max-battle"
+	if overlays {
+		// Fog-of-war ground: the plane is a FogTerrainMesh dimmed by a synthetic
+		// three-zone fog texture, so the keyframe shows hidden/explored/visible
+		// bands under the army (the fog overlay the segment requires).
+		addFogGround(scene)
+	} else {
+		groundMat := material.NewStandard(&math32.Color{R: 0.09, G: 0.12, B: 0.10})
+		ground := graphic.NewMesh(geometry.NewPlane(1700, 980), groundMat)
+		ground.SetRotationX(-math32.Pi / 2)
+		scene.Add(ground)
+	}
 
 	if variant == variantBaseline {
 		addRigidBaseline(scene, sc)
@@ -215,7 +229,104 @@ func buildScene(scene *core.Node, sc benchScenario, variant string) (*benchDump,
 	}
 	dump.AnimationSamples, dump.DeathTrace = addSkinnedPerDraw(scene, sc)
 	addSpellStormLights(scene, sc.Lights)
+
+	if overlays {
+		dump.OverlayFog = true
+		dump.OverlayBars = addHealthBars(scene, sc)
+		dump.OverlayMinimap, dump.MinimapBlips = addMinimap(scene, sc)
+	}
 	return dump, nil
+}
+
+// benchField is the world rectangle the fog/minimap overlays cover — a square
+// around the rigid army (zBase -460) and the skinned front row (zBase 340).
+const (
+	benchFieldMinX, benchFieldMinZ = float32(-700), float32(-700)
+	benchFieldMaxX, benchFieldMaxZ = float32(700), float32(700)
+)
+
+// benchFogGrid is a synthetic three-zone fog source (hidden | explored | visible
+// by world X), mirroring the #161 fogscout fixture so the bench fog reads the
+// same hidden→explored→visible ramp without a live sim.
+type benchFogGrid struct{ size int32 }
+
+func (g benchFogGrid) FogStateAt(_ uint8, x, _ int32) uint8 {
+	if x < 0 || x >= g.size {
+		return 0
+	}
+	switch {
+	case x < g.size/3:
+		return 0 // hidden
+	case x < 2*g.size/3:
+		return 1 // explored
+	default:
+		return 2 // visible
+	}
+}
+
+func addFogGround(scene *core.Node) {
+	origin := math32.Vector2{X: benchFieldMinX, Y: benchFieldMinZ}
+	size := math32.Vector2{X: benchFieldMaxX - benchFieldMinX, Y: benchFieldMaxZ - benchFieldMinZ}
+	fog := litrender.NewFogTexture(1)
+	fog.Update(benchFogGrid{size: int32(fog.Size())}, 1)
+	// A world-baked ground quad (identity model matrix) spanning the field, in the
+	// XZ plane. Built directly in world space so the fog UV (world XZ) is correct.
+	geom := geometry.NewPlane(size.X, size.Y)
+	mat := material.NewStandard(&math32.Color{R: 0.30, G: 0.40, B: 0.26})
+	ground := litrender.NewFogTerrainMesh(geom, mat, fog, origin, size)
+	ground.SetRotationX(-math32.Pi / 2)
+	ground.SetPosition((benchFieldMinX+benchFieldMaxX)/2, 0, (benchFieldMinZ+benchFieldMaxZ)/2)
+	scene.Add(ground)
+}
+
+// addHealthBars draws camera-facing health-bar billboards over the front-row
+// skinned units, fill mapped to the green→red ramp. Returns the bar count.
+func addHealthBars(scene *core.Node, sc benchScenario) int {
+	pool := litrender.NewHealthBarPool(sc.SkinnedUnits)
+	n := 0
+	for i := 0; i < sc.SkinnedUnits; i++ {
+		x, z := gridPos(i, sc.Columns, sc.SkinnedUnits, 26, 340)
+		fill := float32(i%5+1) / 5 // 0.2..1.0 spread across the row
+		idx, ok := pool.Acquire(math32.Vector3{X: x, Y: 44, Z: z}, fill, 1)
+		if !ok {
+			break
+		}
+		b := pool.At(idx)
+		barMat := material.NewStandard(&math32.Color{R: b.Color.R, G: b.Color.G, B: b.Color.B})
+		barMat.SetEmissiveColor(&math32.Color{R: b.Color.R, G: b.Color.G, B: b.Color.B})
+		barMat.SetUseLights(material.UseLightNone)
+		// Transparent (opacity 1) so the bars render in the alpha pass and do not
+		// inflate the opaque world-draw count the #107 instancing invariant asserts.
+		barMat.SetTransparent(true)
+		bar := graphic.NewSprite(28*b.Fill+2, 5, barMat) // width scales with fill
+		bar.SetPosition(b.Anchor.X, b.Anchor.Y, b.Anchor.Z)
+		scene.Add(bar)
+		n++
+	}
+	return n
+}
+
+// addMinimap composites a unit-blip minimap and shows it as a HUD image in the
+// bottom-left corner. Returns whether it was added and the blip count.
+func addMinimap(scene *core.Node, sc benchScenario) (bool, int) {
+	mm := litrender.NewMinimap(benchFieldMinX, benchFieldMinZ, benchFieldMaxX, benchFieldMaxZ)
+	mm.Clear()
+	blips := 0
+	plot := func(total int, spacing, zBase float32, c litrender.RGBA) {
+		for i := 0; i < total; i++ {
+			x, z := gridPos(i, sc.Columns, total, spacing, zBase)
+			mm.PlotBlip(x, z, 2, c, true)
+			blips++
+		}
+	}
+	plot(sc.RigidInstances, 34, -460, litrender.RGBA{R: 0.8, G: 0.5, B: 0.2, A: 1})
+	plot(sc.SkinnedUnits, 26, 340, litrender.RGBA{R: 0.3, G: 0.7, B: 1, A: 1})
+	mm.Upload()
+	img := gui.NewImageFromTex(mm.EnsureTexture())
+	img.SetSize(180, 180)
+	img.SetPosition(12, 576-192) // bottom-left of the 1024x576 frame
+	scene.Add(img)
+	return true, blips
 }
 
 // addSpellStormLights adds the stress segment's spell-storm point lights, spread

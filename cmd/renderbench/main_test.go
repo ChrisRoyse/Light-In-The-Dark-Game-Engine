@@ -95,6 +95,21 @@ func TestRenderBenchSegmentsFSV(t *testing.T) {
 			if dump.Segment != tc.segment {
 				t.Fatalf("segment label = %q, want %q", dump.Segment, tc.segment)
 			}
+			// Overlays (fog + health bars + minimap) are on for max-battle only.
+			wantOverlay := tc.scene == "max-battle"
+			if dump.OverlayFog != wantOverlay || dump.OverlayMinimap != wantOverlay {
+				t.Fatalf("segment %s overlays fog=%v minimap=%v, want %v", tc.scene, dump.OverlayFog, dump.OverlayMinimap, wantOverlay)
+			}
+			if wantOverlay {
+				if dump.OverlayBars != dump.SkinnedUnits {
+					t.Fatalf("max-battle bars = %d, want %d (one per skinned unit)", dump.OverlayBars, dump.SkinnedUnits)
+				}
+				if dump.MinimapBlips != dump.RigidInstances+dump.SkinnedUnits {
+					t.Fatalf("max-battle minimap blips = %d, want %d", dump.MinimapBlips, dump.RigidInstances+dump.SkinnedUnits)
+				}
+			} else if dump.OverlayBars != 0 || dump.MinimapBlips != 0 {
+				t.Fatalf("segment %s has unexpected overlays bars=%d blips=%d", tc.scene, dump.OverlayBars, dump.MinimapBlips)
+			}
 		})
 	}
 }
