@@ -1,0 +1,133 @@
+# The Vigil — playable unit roster (R-AST-1; identity.md §2: "Versatile,
+# defensive, light-infused support magic"; §6 art-direction binds the models).
+# Authored in seconds / units-per-second / revolutions-per-second — the loader
+# converts to 50 ms ticks and 32.32 fixed-point. Original balance (PRD §2.2, no
+# WC3 data copying). Faction texture = DEFENSIVE BIAS: armor and regen are
+# emphasized over move-speed (every Vigil unit moves <= 280 u/s, below the
+# generic 300 ranged baseline), per identity.md §2.
+#
+# Cooldowns are whole multiples of 50 ms (tick grid): 1.50 s = 30 t, 1.00 s =
+# 20 t, 1.75 s = 35 t, 2.00 s = 40 t.
+
+# Lamplighter — worker. Tends beacons; modest self-sustaining regen so a
+# harasser cannot trade it down for free. Light melee tap only.
+[[unit]]
+id = "lamplighter"
+life = 240
+regen = 0.50
+armor = 0
+armor-type = "light"
+move-speed = 270
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 400
+sight-day = 1600
+sight-night = 800
+model = "units/vigil/lamplighter.glb"
+
+[[unit.attack]]
+type = "normal"
+range = 80
+damage-base = 5
+dice = 1
+sides = 2
+cooldown = 2.0
+damage-point = 0.5
+backswing = 0.5
+delivery = "instant"
+targets-allowed = ["ground", "structure"]
+
+# Oathsworn — defensive frontline knight. Heavy armor, high life, deliberately
+# slow; carries Defend (the existing damage-mitigation ability) — the anvil the
+# Vigil army forms around.
+[[unit]]
+id = "oathsworn"
+life = 480
+regen = 0.30
+armor = 4
+armor-type = "heavy"
+move-speed = 250
+turn-rate = 0.6
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+sight-day = 1800
+sight-night = 800
+model = "units/vigil/oathsworn.glb"
+abilities = ["defend"]
+
+[[unit.attack]]
+type = "normal"
+range = 90
+damage-base = 13
+dice = 1
+sides = 3
+cooldown = 1.5
+damage-point = 0.5
+backswing = 0.5
+delivery = "instant"
+targets-allowed = ["ground", "structure"]
+
+# Pyre_archer — ranged piercing. Lower speed than a generic archer (defensive
+# bias) but long reach; the Vigil's poke behind the Oathsworn line.
+[[unit]]
+id = "pyre_archer"
+life = 260
+regen = 0.15
+armor = 1
+armor-type = "light"
+move-speed = 280
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 700
+sight-day = 1800
+sight-night = 800
+model = "units/vigil/pyre_archer.glb"
+
+[[unit.attack]]
+type = "piercing"
+range = 520
+damage-base = 12
+dice = 1
+sides = 3
+cooldown = 1.75
+damage-point = 0.3
+backswing = 0.3
+delivery = "projectile"
+projectile-speed = 900
+targets-allowed = ["ground", "air", "structure"]
+
+# Flame_cleric — light-infused support caster. High regen (self + line
+# sustain fantasy), magic-typed bolt at medium range, modest damage; the
+# support magic identity.md §2 calls for. Carries Firebolt (existing light
+# magic ability).
+[[unit]]
+id = "flame_cleric"
+life = 300
+regen = 0.50
+armor = 2
+armor-type = "light"
+move-speed = 260
+turn-rate = 0.7
+collision-size = 16
+pathing = "ground"
+acquisition-range = 550
+sight-day = 1700
+sight-night = 900
+model = "units/vigil/flame_cleric.glb"
+abilities = ["firebolt"]
+
+[[unit.attack]]
+type = "magic"
+range = 400
+damage-base = 9
+dice = 1
+sides = 2
+cooldown = 2.0
+damage-point = 0.4
+backswing = 0.4
+delivery = "projectile"
+projectile-speed = 800
+targets-allowed = ["ground", "air", "structure"]
