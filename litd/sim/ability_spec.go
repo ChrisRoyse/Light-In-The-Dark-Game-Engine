@@ -109,6 +109,11 @@ type AbilityOp struct {
 	HitMask uint16
 	Pierce  int32
 
+	// Block is the AbilityBook deferred-block index for after/loop/times ops
+	// (0 = none). Assigned by AbilityBook.RegisterSpec (#595), not the
+	// compiler — it is runtime wiring, never serialized.
+	Block uint16
+
 	Children []AbilityOp
 }
 

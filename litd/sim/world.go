@@ -431,6 +431,11 @@ type World struct {
 	// units AND projectiles. Pool foundation #582; advance (#584/#585),
 	// collision (#587), missile migration + hash/save (#590) build on it.
 	Movers *MoverStore
+	// composable ability specs (PRD2 06, #549): compiled specs + deferred op
+	// blocks the op interpreter (#595) executes by instantiating primitives.
+	// Distinct from Abilities (per-unit instance store): this is the read-only
+	// spec registry, populated by the host at setup (RegisterSpec).
+	AbilityDefs *AbilityBook
 	// moverHitScratch is the reused broad-phase result buffer for mover
 	// collision (#587) — keeps the per-tick collision pass zero-alloc.
 	moverHitScratch []EntityID
@@ -540,6 +545,7 @@ func NewWorld(requested Caps) *World {
 		KV:                 NewKVStore(caps.KVPairs),
 		CustomEvents:       NewCustomEventRegistry(caps.CustomEventKinds),
 		Movers:             NewMoverStore(caps.Movers, caps.MoverWaypoints),
+		AbilityDefs:        NewAbilityBook(),
 		moverHitScratch:    make([]EntityID, 0, 128),
 		moverAuthHold:      make([]bool, idxSpace),
 		moverAuthList:      make([]EntityID, 0, 64),
@@ -589,6 +595,7 @@ func NewWorld(requested Caps) *World {
 	w.kvUserDataKey = w.KV.InternKey(kvUserDataKey) // reserve userdata key first → stable id (#571)
 	w.initPlayers()
 	w.registerTriggerDispatch()   // ECA action-runner continuation (#459)
+	w.registerAbilityDispatch()   // deferred ability op-block continuation (#595)
 	w.installBaseDamageFormula() // ordered damage-formula pipeline (#473)
 	w.armorK = defaultArmorK     // configurable armor reduction (#474); default LUT
 	w.armorLUT = armorMult
