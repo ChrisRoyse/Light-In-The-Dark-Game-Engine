@@ -3853,6 +3853,39 @@ func validateSave(d *decodedSave, w *World) error {
 		}
 	}
 
+	// movers (#590, #630): same live ⊎ free = [1,cap] partition check as the
+	// timer/group pools — applySave indexes mv.*[slot] raw, so an out-of-range
+	// slot would OOB-panic and slot 0 would corrupt the reserved sentinel. Every
+	// live and free slot must be a distinct index in [1,cap] and together they
+	// must exactly partition the slot space. Fail-closed.
+	{
+		moverCap := w.Movers.Cap()
+		seen := make([]bool, moverCap+1) // index 0 reserved, never used
+		for i := range d.moverRows {
+			slot := d.moverRows[i].slot
+			if slot < 1 || int(slot) > moverCap {
+				return fmt.Errorf("sim: save: mover slot %d out of range [1,%d]", slot, moverCap)
+			}
+			if seen[slot] {
+				return fmt.Errorf("sim: save: mover slot %d appears twice (live)", slot)
+			}
+			seen[slot] = true
+		}
+		for _, f := range d.moverFree {
+			if int(f) < 1 || int(f) > moverCap {
+				return fmt.Errorf("sim: save: mover free slot %d out of range [1,%d]", f, moverCap)
+			}
+			if seen[f] {
+				return fmt.Errorf("sim: save: mover slot %d is both live and free", f)
+			}
+			seen[f] = true
+		}
+		if len(d.moverRows)+len(d.moverFree) != moverCap {
+			return fmt.Errorf("sim: save: mover slots accounted %d (live %d + free %d) != cap %d",
+				len(d.moverRows)+len(d.moverFree), len(d.moverRows), len(d.moverFree), moverCap)
+		}
+	}
+
 	// kv (#572): the pairs must already be in strict ascending (Owner,Key)
 	// order (the store's invariant — applySave does no sort), each Type a
 	// valid tag, each Key id within the decoded key table, and every
