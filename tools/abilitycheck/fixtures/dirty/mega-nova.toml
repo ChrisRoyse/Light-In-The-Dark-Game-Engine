@@ -1,0 +1,10 @@
+[ability]
+id = "mega_nova"
+cast_range = 0
+[[ability.on_cast]]
+op = "times"
+count = 5000
+arg = 1
+children = [ { op = "attach_mover", mover = "linear", speed = 30, range = 500, fx = { hit = "enemy", effects = "boom" } } ]
+[ability.effects.boom]
+ops = [ { effect = "damage", amount = 10 } ]

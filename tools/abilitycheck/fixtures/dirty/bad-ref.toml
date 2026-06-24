@@ -1,0 +1,8 @@
+[ability]
+id = "bad_ref"
+cast_range = 500
+[[ability.on_cast]]
+op = "attach_mover"
+mover = "homing"
+speed = 20
+fx = { hit = "enemy", effects = "missing_list" }

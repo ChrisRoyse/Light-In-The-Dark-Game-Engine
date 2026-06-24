@@ -132,6 +132,7 @@ step "API-surface lint (R-API-1..6)" go run ./tools/apilint ./litd/api
 step "presentation-trigger lint (#449/#471)" go run ./tools/presentlint litd/render litd/audio
 step "save-unsafe-timer lint (#557, R-TMR-8)" go run ./tools/timerlint abilities
 step "custom-event setup lint (#618, R-EVT-1)" go run ./tools/eventlint abilities worlds
+step "ability-spec validate (#598, R-ABL-3)" go run ./tools/abilitycheck docs/prd2/06-ability-composition/templates/specs abilities
 step "license-scan"         ./scripts/license-scan.sh
 
 # --- jassgen audit (jassgen-audit.yml) --------------------------------------

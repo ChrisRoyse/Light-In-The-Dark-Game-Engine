@@ -1,0 +1,31 @@
+# Template: Nova Ring — radial AoE burst (unit group + per-target effects).
+# Fill a group around the caster and damage every enemy at once.
+[ability]
+id         = "nova_ring"
+name       = "Nova Ring"
+cast_type  = "active"
+indicator  = "circle"
+cast_range = 0
+mana_cost  = 70
+cooldown   = 8.0
+
+[ability.timing]
+precast    = 0.3
+backswing  = 0.35
+
+[[ability.on_cast]]
+op     = "fill_group"
+hit    = "enemy"
+radius = 300
+
+[[ability.on_cast]]
+op = "for_each_in_group"
+children = [
+  { op = "run_effects", effects = "nova_hit" },
+]
+
+[ability.effects.nova_hit]
+ops = [
+  { effect = "damage", amount = 120, type = "magic" },
+  { effect = "emit_event", name = "ability.impact", arg = "caster" },
+]
