@@ -3886,6 +3886,34 @@ func validateSave(d *decodedSave, w *World) error {
 		}
 	}
 
+	// regions (#241, #630-class): NewRegion pops a free id and indexes
+	// s.entries[id] raw, so a corrupt free value out-of-range panics on the next
+	// create and one pointing at a live slot revives/corrupts a live region.
+	// Validate: every free id in [0,len), distinct, pointing at a dead (!alive)
+	// slot; and every dead slot is in the free list — {alive} ⊎ {free} = all
+	// entries (the store's runtime invariant). Fail-closed.
+	{
+		n := len(d.regEntries)
+		seen := make([]bool, n)
+		for _, f := range d.regFree {
+			if int(f) >= n {
+				return fmt.Errorf("sim: save: region free slot %d out of range [0,%d)", f, n)
+			}
+			if seen[f] {
+				return fmt.Errorf("sim: save: region free slot %d appears twice", f)
+			}
+			if d.regEntries[f].alive {
+				return fmt.Errorf("sim: save: region free slot %d points at a live region", f)
+			}
+			seen[f] = true
+		}
+		for i := 0; i < n; i++ {
+			if !d.regEntries[i].alive && !seen[i] {
+				return fmt.Errorf("sim: save: dead region slot %d missing from free list", i)
+			}
+		}
+	}
+
 	// kv (#572): the pairs must already be in strict ascending (Owner,Key)
 	// order (the store's invariant — applySave does no sort), each Type a
 	// valid tag, each Key id within the decoded key table, and every
