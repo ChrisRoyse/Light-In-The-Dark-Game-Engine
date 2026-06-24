@@ -30,6 +30,8 @@ type Caps struct {
 	GroupMembers       int // shared group-membership arena slots (PRD2 02, #560)
 	KVPairs            int // generic key-value store capacity (PRD2 03, #568)
 	CustomEventKinds   int // script-registered custom event kinds (PRD2 04, #614)
+	Movers             int // unified motion controllers (PRD2 05, #582)
+	MoverWaypoints     int // shared spline waypoint arena (PRD2 05, #582)
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
@@ -51,6 +53,8 @@ var EngineCaps = Caps{
 	GroupMembers:       65536,
 	KVPairs:            32768,
 	CustomEventKinds:   256,
+	Movers:             4096,
+	MoverWaypoints:     8192,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -80,6 +84,8 @@ func (c Caps) resolve() Caps {
 		GroupMembers:       clampCap(c.GroupMembers, EngineCaps.GroupMembers),
 		KVPairs:            clampCap(c.KVPairs, EngineCaps.KVPairs),
 		CustomEventKinds:   clampCap(c.CustomEventKinds, EngineCaps.CustomEventKinds),
+		Movers:             clampCap(c.Movers, EngineCaps.Movers),
+		MoverWaypoints:     clampCap(c.MoverWaypoints, EngineCaps.MoverWaypoints),
 	}
 }
 
@@ -421,6 +427,10 @@ type World struct {
 	// script-defined custom event kinds (PRD2 04, #547): named kinds that
 	// share the built-in event ring/dispatch. Registry foundation #614.
 	CustomEvents *CustomEventRegistry
+	// unified motion controller (PRD2 05, #548): one fixed-point mover for
+	// units AND projectiles. Pool foundation #582; advance (#584/#585),
+	// collision (#587), missile migration + hash/save (#590) build on it.
+	Movers *MoverStore
 	// kvUserDataKey is the reserved interned key id backing the legacy
 	// per-unit custom value (GetUnitUserData) over KV (#571). Interned
 	// first at construction so its id is stable across save/load.
@@ -520,6 +530,7 @@ func NewWorld(requested Caps) *World {
 		Groups:             NewGroupStore(caps.UnitGroups, caps.GroupMembers),
 		KV:                 NewKVStore(caps.KVPairs),
 		CustomEvents:       NewCustomEventRegistry(caps.CustomEventKinds),
+		Movers:             NewMoverStore(caps.Movers, caps.MoverWaypoints),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),
