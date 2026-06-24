@@ -217,6 +217,67 @@ func (s *KVStore) set(owner uint64, key uint32, typ KVType, val, val2 int64) boo
 	return true
 }
 
+// ---------------------------------------------------------------------
+// Scoped public ops (#570). The owner is the packed composite key from
+// makeOwner(scope, entityOrSlot); key is an interned id (InternKey). All
+// are deterministic and zero-alloc. Stale/absent → safe zero/false.
+// ---------------------------------------------------------------------
+
+// KVSet upserts a typed value. Returns false (and bumps Dropped) only if
+// the store is full and the key is new.
+func (s *KVStore) KVSet(owner uint64, key uint32, typ KVType, val, val2 int64) bool {
+	return s.set(owner, key, typ, val, val2)
+}
+
+// KVGet returns the stored type + value bits, ok=false when absent.
+func (s *KVStore) KVGet(owner uint64, key uint32) (typ KVType, val, val2 int64, ok bool) {
+	return s.get(owner, key)
+}
+
+// KVHas reports presence.
+func (s *KVStore) KVHas(owner uint64, key uint32) bool { return s.has(owner, key) }
+
+// KVDelete removes a pair, returning whether it was present.
+func (s *KVStore) KVDelete(owner uint64, key uint32) bool { return s.del(owner, key) }
+
+// ownerRange returns the contiguous row range [lo,hi) holding owner's
+// pairs (empty when owner has none). Relies on the (Owner,Key) sort.
+func (s *KVStore) ownerRange(owner uint64) (lo, hi int32) {
+	lo, _ = s.locate(owner, 0) // insertion point at the owner's first key
+	hi = lo
+	for hi < s.count && s.Owner[hi] == owner {
+		hi++
+	}
+	return lo, hi
+}
+
+// KVClearOwner drops every pair of owner in one shift (O(run) + the tail
+// shift), keeping the arrays sorted. Returns the number removed.
+func (s *KVStore) KVClearOwner(owner uint64) int {
+	lo, hi := s.ownerRange(owner)
+	n := hi - lo
+	if n == 0 {
+		return 0
+	}
+	copy(s.Owner[lo:s.count-n], s.Owner[hi:s.count])
+	copy(s.Key[lo:s.count-n], s.Key[hi:s.count])
+	copy(s.Type[lo:s.count-n], s.Type[hi:s.count])
+	copy(s.Val[lo:s.count-n], s.Val[hi:s.count])
+	copy(s.Val2[lo:s.count-n], s.Val2[hi:s.count])
+	s.count -= n
+	return int(n)
+}
+
+// KVEachOwner visits owner's pairs in key order. The range is snapshotted
+// at entry, so fn must not insert/delete pairs of THIS owner mid-iteration
+// (it may read freely and mutate other owners). Stale owner → no visits.
+func (s *KVStore) KVEachOwner(owner uint64, fn func(key uint32, typ KVType, val, val2 int64)) {
+	lo, hi := s.ownerRange(owner)
+	for i := lo; i < hi; i++ {
+		fn(s.Key[i], KVType(s.Type[i]), s.Val[i], s.Val2[i])
+	}
+}
+
 // get returns the stored type + value bits for (owner,key), or ok=false
 // when absent.
 func (s *KVStore) get(owner uint64, key uint32) (typ KVType, val, val2 int64, ok bool) {
