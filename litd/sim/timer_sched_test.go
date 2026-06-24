@@ -3,6 +3,7 @@ package sim
 import (
 	"testing"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim/sched"
 )
 
@@ -269,5 +270,59 @@ func TestTimerFiresThroughWorldStep(t *testing.T) {
 	}
 	if w.Timers.Count() != 0 {
 		t.Fatalf("single timer not freed: count=%d", w.Timers.Count())
+	}
+}
+
+// #554 — owner auto-cancel on death. An owned timer must not outlive
+// its owner; an unowned timer (and a timer owned by a survivor) is
+// untouched.
+func TestTimerOwnerAutoCancelOnDeath(t *testing.T) {
+	w := NewWorld(Caps{Units: 16})
+	fired := map[string]int{}
+	w.Sched.Register(1, func(_ *sched.Scheduler, st sched.State) {
+		switch st[0] {
+		case 1:
+			fired["owned"]++
+		case 2:
+			fired["unowned"]++
+		case 3:
+			fired["survivor"]++
+		}
+	})
+	doomed, _ := w.CreateUnit(fixed.Vec2{}, 0)
+	survivor, _ := w.CreateUnit(fixed.Vec2{}, 0)
+
+	// Loop timers so they would fire repeatedly if not cancelled.
+	owned := w.Timers.Create(w.Tick(), TimerLoop, 2, 0, 1, [4]int64{1}, doomed)
+	w.Timers.Create(w.Tick(), TimerLoop, 2, 0, 1, [4]int64{2}, 0)              // unowned
+	w.Timers.Create(w.Tick(), TimerLoop, 2, 0, 1, [4]int64{3}, survivor)       // owned by survivor
+
+	if w.Timers.Count() != 3 {
+		t.Fatalf("setup: count=%d, want 3", w.Timers.Count())
+	}
+	// Let them fire once (tick 2).
+	w.Step() // 1
+	w.Step() // 2 — all three fire
+	if fired["owned"] != 1 || fired["unowned"] != 1 || fired["survivor"] != 1 {
+		t.Fatalf("first fire counts = %v, want all 1", fired)
+	}
+	// Kill the doomed owner; its timer must be auto-cancelled in phase 7.
+	w.KillUnit(doomed)
+	w.Step() // 3 — cleanup cancels owned timer (no fire this tick anyway)
+	if w.Timers.Alive(owned) {
+		t.Fatal("owned timer still alive after owner death")
+	}
+	if w.Timers.Count() != 2 {
+		t.Fatalf("count after owner death = %d, want 2", w.Timers.Count())
+	}
+	// Run more ticks: owned must never fire again; the other two keep going.
+	before := fired["owned"]
+	w.Step() // 4 — unowned+survivor fire
+	w.Step() // 5
+	if fired["owned"] != before {
+		t.Fatalf("owned timer fired after owner death: %d -> %d", before, fired["owned"])
+	}
+	if fired["unowned"] < 2 || fired["survivor"] < 2 {
+		t.Fatalf("survivors stopped firing: %v", fired)
 	}
 }

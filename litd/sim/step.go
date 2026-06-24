@@ -181,6 +181,10 @@ func (w *World) phaseCleanup() {
 	w.buffExpirySystem() // before removals: dying carriers still resolvable (#162)
 	w.advanceTimeOfDay()
 	w.publishSnapshot()
+	// Auto-cancel timers owned by entities dying this tick, while their
+	// handles are still resolvable (#554, R-TMR-6): a dead spawner stops
+	// spawning; an ability teardown timer never outlives its caster.
+	w.Timers.cancelOwnedBy(w.killed)
 	for i := range w.killed {
 		w.DestroyUnit(w.killed[i])
 	}

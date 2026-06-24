@@ -291,6 +291,39 @@ func (s *TimerStore) onFired(row int32) (wake uint32, live bool) {
 	}
 }
 
+// cancelOwnedBy cancels every live timer whose Owner is one of the
+// entities in `dead` (the tick's deferred-kill list). Called in phase 7
+// (cleanup) BEFORE the entities are removed, so a dead spawner stops
+// spawning and an ability's teardown timer does not outlive its caster
+// (spec §2.5, R-TMR-6). Leak prevention: an owned timer can never
+// outlive its owner.
+//
+// Determinism: scans slots in ascending index order and cancels in that
+// order — no map iteration. Cost is O(cap × len(dead)) and runs only on
+// ticks with deaths; at default caps and realistic per-tick death counts
+// this is well inside the budget (perf-budget §3). Owner 0 (unowned) is
+// skipped.
+func (s *TimerStore) cancelOwnedBy(dead []EntityID) {
+	if len(dead) == 0 {
+		return
+	}
+	for row := int32(1); row < int32(len(s.live)); row++ {
+		if !s.live[row] {
+			continue
+		}
+		owner := s.Owner[row]
+		if owner == 0 {
+			continue
+		}
+		for i := range dead {
+			if dead[i] == owner {
+				s.freeRow(row)
+				break
+			}
+		}
+	}
+}
+
 // Cancel tears down a timer by handle: generation-checked, frees the
 // slot, bumps the generation so the handle goes stale. Idempotent — a
 // stale or already-cancelled handle is a safe no-op returning false
