@@ -130,6 +130,7 @@ func (w *World) phaseMovement() {
 	w.movementSystem()
 	w.flySystem()     // fly-height climb integration (#367)
 	w.missileSystem() // flight at the movement-phase tail (#158)
+	w.moverSystem()   // unified motion controllers (PRD2 05, #584)
 	w.bucketReconcile()
 	w.visibilitySystem()
 }
