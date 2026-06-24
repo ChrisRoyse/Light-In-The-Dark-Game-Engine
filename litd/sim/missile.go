@@ -574,12 +574,9 @@ func (w *World) ExpireMissile(id EntityID) bool {
 		if !w.Ents.Alive(id) {
 			return false
 		}
-		last := w.Transforms.Pos[w.Transforms.Row(id)]
-		if w.OnMissileExpire != nil {
-			w.OnMissileExpire(w.tick, id, last)
-		}
-		w.Emit(Event{Kind: EvMissileExpired, Src: id})
-		w.Movers.DoneMode[mr] = uint8(MoverDoneExpire) // payload-less: consume + free, no delivery
+		// DoneExpire -> moverComplete -> projectileExpire fires OnMissileExpire +
+		// EvMissileExpired once (do not also fire here, #590 — that double-cued).
+		w.Movers.DoneMode[mr] = uint8(MoverDoneExpire)
 		w.moverComplete(mr)
 		return true
 	}

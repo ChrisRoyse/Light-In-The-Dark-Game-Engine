@@ -34,11 +34,33 @@ func (w *World) moverComplete(r int32) {
 		if ms.OnDone[r] != 0 {
 			w.AfterMS(0, sched.ContID(ms.OnDone[r]), sched.State(ms.CState[r]))
 		}
+	case MoverDoneExpire:
+		w.projectileExpire(r) // missile-expiry signal for a projectile body (#590)
 	}
 	if ms.Flags[r]&MoverConsume != 0 {
 		w.KillUnit(ms.Target[r]) // consume the projectile body
 	}
 	w.moverFree(r)
+}
+
+// projectileExpire fires the missile-expiry presentation cue + EvMissileExpired
+// when a projectile body completes payload-less (range spent or pierce spent —
+// both reach DoneExpire). Gated on ProjRender so a plain DoneExpire mover (the
+// zero value, used by many non-projectile movers) stays silent. Mirrors the
+// legacy expireMissileAt (#590 facade parity). Non-hashing presentation.
+func (w *World) projectileExpire(r int32) {
+	ms := w.Movers
+	if w.ProjRender.Row(ms.Target[r]) == -1 {
+		return
+	}
+	at := ms.Goal[r]
+	if tr := w.Transforms.Row(ms.Target[r]); tr != -1 {
+		at = w.Transforms.Pos[tr]
+	}
+	if w.OnMissileExpire != nil {
+		w.OnMissileExpire(w.tick, ms.Target[r], at)
+	}
+	w.Emit(Event{Kind: EvMissileExpired, Src: ms.Target[r]})
 }
 
 // moverFree releases the slot, bumping the generation so outstanding

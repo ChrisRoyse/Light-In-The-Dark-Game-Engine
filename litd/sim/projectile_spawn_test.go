@@ -206,6 +206,39 @@ func TestSpawnProjectilePerHitCue(t *testing.T) {
 	}
 }
 
+// Expire-signal parity: a linear skillshot that spends its range in an empty
+// lane fires OnMissileExpire (payload-less) via both paths — the missile
+// expiry cue must survive the mover migration. SoT = the expire-callback count.
+func TestSpawnProjectileExpireSignalParity(t *testing.T) {
+	spec := func(s EntityID) MissileSpec {
+		return MissileSpec{
+			Pos: xy(1000, 1000), Source: s, Speed: 100 * fixed.One,
+			Flags: MissileLinear, Dir: xy(1, 0), Range: 250 * fixed.One, Pierce: 1,
+			Packet: DamagePacket{Source: s, Amount: 30 * fixed.One},
+		}
+	}
+	count := func(spawn func(*World, EntityID) bool) (expires, impacts int) {
+		w := lmWorld(t)
+		s := atkUnit(t, w, 0, xy(1000, 1000), 0) // empty lane: no foes
+		w.OnMissileExpire = func(uint32, EntityID, fixed.Vec2) { expires++ }
+		w.OnMissileImpact = func(uint32, EntityID, fixed.Vec2, EntityID) { impacts++ }
+		if !spawn(w, s) {
+			t.Fatal("spawn")
+		}
+		runToQuiet(w, 12)
+		return
+	}
+	le, li := count(func(w *World, s EntityID) bool { _, ok := w.SpawnMissile(spec(s)); return ok })
+	me, mi := count(func(w *World, s EntityID) bool { _, ok := w.spawnMoverProjectile(spec(s)); return ok })
+	t.Logf("expire: legacy=%d mover=%d | impact: legacy=%d mover=%d", le, me, li, mi)
+	if le != 1 || li != 0 {
+		t.Fatalf("legacy expiry baseline wrong: expires=%d impacts=%d (want 1/0)", le, li)
+	}
+	if me != le || mi != li {
+		t.Fatalf("EXPIRE PARITY BREAK: mover expires=%d impacts=%d, legacy %d/%d", me, mi, le, li)
+	}
+}
+
 // Degenerate specs the legacy path rejects, the mover path must reject too —
 // deterministic (0,false), never a silent fallback.
 func TestSpawnProjectileRejectionParity(t *testing.T) {
