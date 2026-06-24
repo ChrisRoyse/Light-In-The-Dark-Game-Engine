@@ -123,8 +123,8 @@ func TestTimerScenarioGolden(t *testing.T) {
 	}
 	// Tracks HashSystems membership (each change is a constant full-state
 	// shift; scenario unchanged): unitgroups+ (#565) → kv+ (#572) →
-	// userdata− (#571) → customevents+ (#617) ⇒ 0x78ae79d44dac6103.
-	const golden = uint64(0x78ae79d44dac6103)
+	// userdata− (#571) → customevents+ (#617) ⇒ 0xdc6ee40391256cff.
+	const golden = uint64(0xdc6ee40391256cff)
 	got := timerTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("timer golden hash %016x != recorded %016x (intended change? update golden)", got, golden)

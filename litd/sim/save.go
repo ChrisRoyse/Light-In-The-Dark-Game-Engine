@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 45
+const SaveFormatVersion uint32 = 46
 
 // ---- little-endian writer / reader ----
 
@@ -1102,6 +1102,72 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(ce.Dropped)
 	saveInternTable(s, &ce.names)
 
+	// movers (#590, PRD2 05): header counts + the used spline waypoint
+	// arena, live movers slot-ascending (every column), then the free-list
+	// with per-slot generations. Mirrors hashMovers exactly. The custom-
+	// step function table is code (re-registered at setup) — not saved.
+	mv := w.Movers
+	s.u32(uint32(mv.count))
+	s.u32(mv.Dropped)
+	s.u32(uint32(mv.wpCount))
+	for i := int32(0); i < mv.wpCount; i++ {
+		s.i64(int64(mv.waypoints[i].X))
+		s.i64(int64(mv.waypoints[i].Y))
+	}
+	for r := int32(1); r < int32(len(mv.live)); r++ {
+		if !mv.live[r] {
+			continue
+		}
+		s.u32(uint32(mv.Gen[r])<<24 | uint32(r)) // packed handle: exact slot+gen
+		s.u8(mv.Kind[r])
+		s.ent(mv.Target[r])
+		s.ent(mv.Anchor[r])
+		s.i64(int64(mv.Goal[r].X))
+		s.i64(int64(mv.Goal[r].Y))
+		s.i64(int64(mv.Dir[r].X))
+		s.i64(int64(mv.Dir[r].Y))
+		s.i64(int64(mv.Speed[r]))
+		s.i64(int64(mv.Accel[r]))
+		s.i64(int64(mv.Radius[r]))
+		s.u16(uint16(mv.AngVel[r]))
+		s.u16(uint16(mv.Angle[r]))
+		s.i64(int64(mv.RangeLeft[r]))
+		s.i64(int64(mv.Range0[r]))
+		s.i64(int64(mv.Height[r]))
+		s.u16(uint16(mv.TurnRate[r]))
+		s.i32(mv.WpStart[r])
+		s.i32(mv.WpLen[r])
+		s.i64(int64(mv.WpParam[r]))
+		s.u16(mv.Cont[r])
+		for k := 0; k < 4; k++ {
+			s.i64(mv.CState[r][k])
+		}
+		s.u16(mv.HitMask[r])
+		s.i32(mv.Pierce[r])
+		s.u16(mv.Decay[r])
+		s.u16(mv.Payload[r].Off)
+		s.u16(mv.Payload[r].Len)
+		s.ent(mv.Packet[r].Source)
+		s.ent(mv.Packet[r].Target)
+		s.i64(int64(mv.Packet[r].Amount))
+		s.u8(mv.Packet[r].AttackType)
+		s.u8(mv.Packet[r].Flags)
+		s.u16(mv.OnDone[r])
+		s.u8(mv.DoneMode[r])
+		s.u8(mv.Flags[r])
+		s.ent(mv.Owner[r])
+		s.i32(mv.HitN[r])
+		s.u32(uint32(len(mv.Hit[r])))
+		for k := 0; k < len(mv.Hit[r]); k++ {
+			s.ent(mv.Hit[r][k])
+		}
+	}
+	s.u32(uint32(len(mv.free)))
+	for _, slot := range mv.free {
+		s.u32(uint32(slot))
+		s.u8(mv.Gen[slot])
+	}
+
 	return s.err
 }
 
@@ -1519,6 +1585,30 @@ type decodedSave struct {
 	// custom-event-kind registry (#617, v44): Dropped + names.
 	ceDropped uint32
 	ceNames   []string
+
+	// unified motion controller pool (#590, v46): header counts + the used
+	// spline waypoint arena, live movers (slot+gen + every column), free-
+	// list with per-slot gens. Custom-step funcs are code — not saved.
+	moverCount    uint32
+	moverDropped  uint32
+	moverWaypts   []fixed.Vec2
+	moverRows     []savedMover
+	moverFree     []uint32
+	moverFreeGen  []uint8
+}
+
+// savedMover is one decoded live mover row (staging for #590 load). m
+// carries the MoverSpec-shaped columns; the remaining fields are live
+// state the spec doesn't model (set after motion, restored verbatim).
+type savedMover struct {
+	slot    int32
+	gen     uint8
+	m       MoverSpec
+	angle   fixed.Angle
+	range0  fixed.F64
+	wpParam fixed.F64
+	hitN    int32
+	hit     [moverHitRing]EntityID
 }
 
 // savedGroup is one decoded live group row (staging for #565 load).
@@ -3071,6 +3161,93 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return err
 	}
 	d.ceNames = ceNames
+
+	// movers (#590): header counts + waypoint arena + live rows + free-list.
+	// Counts are bounded against this world's caps before any make().
+	r.what = "movers"
+	moverCap := w.Movers.Cap()
+	wpCap := w.Movers.WaypointCap()
+	d.moverCount = r.u32()
+	d.moverDropped = r.u32()
+	wpN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(d.moverCount) > moverCap {
+		return fmt.Errorf("sim: save: mover count %d exceeds this world's cap %d", d.moverCount, moverCap)
+	}
+	if int(wpN) > wpCap {
+		return fmt.Errorf("sim: save: mover waypoint count %d exceeds arena %d", wpN, wpCap)
+	}
+	d.moverWaypts = make([]fixed.Vec2, wpN)
+	for i := range d.moverWaypts {
+		d.moverWaypts[i] = r.vec2()
+	}
+	d.moverRows = make([]savedMover, d.moverCount)
+	for i := range d.moverRows {
+		packed := r.u32()
+		sm := savedMover{slot: int32(packed & 0x00FFFFFF), gen: uint8(packed >> 24)}
+		sm.m.Kind = MoverKind(r.u8())
+		sm.m.Target = r.ent()
+		sm.m.Anchor = r.ent()
+		sm.m.Goal = fixed.Vec2{X: r.f64(), Y: r.f64()}
+		sm.m.Dir = fixed.Vec2{X: r.f64(), Y: r.f64()}
+		sm.m.Speed = r.f64()
+		sm.m.Accel = r.f64()
+		sm.m.Radius = r.f64()
+		sm.m.AngVel = fixed.Angle(r.u16())
+		sm.angle = fixed.Angle(r.u16())
+		sm.m.RangeLeft = r.f64()
+		sm.range0 = r.f64()
+		sm.m.Height = r.f64()
+		sm.m.TurnRate = fixed.Angle(r.u16())
+		sm.m.WpStart = r.i32()
+		sm.m.WpLen = r.i32()
+		sm.wpParam = r.f64()
+		sm.m.Cont = r.u16()
+		for k := 0; k < 4; k++ {
+			sm.m.CState[k] = r.i64()
+		}
+		sm.m.HitMask = r.u16()
+		sm.m.Pierce = r.i32()
+		sm.m.Decay = r.u16()
+		sm.m.Payload.Off = r.u16()
+		sm.m.Payload.Len = r.u16()
+		sm.m.Packet.Source = r.ent()
+		sm.m.Packet.Target = r.ent()
+		sm.m.Packet.Amount = r.f64()
+		sm.m.Packet.AttackType = r.u8()
+		sm.m.Packet.Flags = r.u8()
+		sm.m.OnDone = r.u16()
+		sm.m.DoneMode = MoverDoneMode(r.u8())
+		sm.m.Flags = r.u8()
+		sm.m.Owner = r.ent()
+		sm.hitN = r.i32()
+		hitLen := r.u32()
+		if r.err != nil {
+			return r.err
+		}
+		if int(hitLen) != moverHitRing {
+			return fmt.Errorf("sim: save: mover hit-ring len %d != %d", hitLen, moverHitRing)
+		}
+		for k := 0; k < moverHitRing; k++ {
+			sm.hit[k] = r.ent()
+		}
+		d.moverRows[i] = sm
+	}
+	mFreeN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(mFreeN) > moverCap {
+		return fmt.Errorf("sim: save: mover free-list %d exceeds cap %d", mFreeN, moverCap)
+	}
+	d.moverFree = make([]uint32, mFreeN)
+	d.moverFreeGen = make([]uint8, mFreeN)
+	for i := uint32(0); i < mFreeN; i++ {
+		d.moverFree[i] = r.u32()
+		d.moverFreeGen[i] = r.u8()
+	}
 	return r.err
 }
 
@@ -4543,4 +4720,56 @@ func applySave(d *decodedSave, w *World) {
 	ce.Dropped = d.ceDropped
 	ce.names.list = append(ce.names.list[:0], d.ceNames...)
 	ce.names.rebuildIndex()
+
+	// unified motion controller pool (#590): reset, restore the waypoint
+	// arena, re-install each live mover into its exact slot (with its column
+	// values + live Angle/Range0/WpParam/hit-ring), then the free-list with
+	// per-slot generations (#612). Custom-step functions are re-registered
+	// by the host at setup — not part of the save.
+	mv := w.Movers
+	mv.loadReset()
+	mv.Dropped = d.moverDropped
+	mv.wpCount = int32(len(d.moverWaypts))
+	copy(mv.waypoints, d.moverWaypts)
+	for i := range d.moverRows {
+		row := &d.moverRows[i]
+		idx := row.slot
+		mv.Kind[idx] = uint8(row.m.Kind)
+		mv.Target[idx] = row.m.Target
+		mv.Anchor[idx] = row.m.Anchor
+		mv.Goal[idx] = row.m.Goal
+		mv.Dir[idx] = row.m.Dir
+		mv.Speed[idx] = row.m.Speed
+		mv.Accel[idx] = row.m.Accel
+		mv.Radius[idx] = row.m.Radius
+		mv.AngVel[idx] = row.m.AngVel
+		mv.Angle[idx] = row.angle
+		mv.RangeLeft[idx] = row.m.RangeLeft
+		mv.Range0[idx] = row.range0
+		mv.Height[idx] = row.m.Height
+		mv.TurnRate[idx] = row.m.TurnRate
+		mv.WpStart[idx] = row.m.WpStart
+		mv.WpLen[idx] = row.m.WpLen
+		mv.WpParam[idx] = row.wpParam
+		mv.Cont[idx] = row.m.Cont
+		mv.CState[idx] = row.m.CState
+		mv.HitMask[idx] = row.m.HitMask
+		mv.Pierce[idx] = row.m.Pierce
+		mv.Decay[idx] = row.m.Decay
+		mv.Payload[idx] = row.m.Payload
+		mv.Packet[idx] = row.m.Packet
+		mv.OnDone[idx] = row.m.OnDone
+		mv.DoneMode[idx] = uint8(row.m.DoneMode)
+		mv.Flags[idx] = row.m.Flags
+		mv.Owner[idx] = row.m.Owner
+		mv.HitN[idx] = row.hitN
+		mv.Hit[idx] = row.hit
+		mv.Gen[idx] = row.gen
+		mv.live[idx] = true
+		mv.count++
+	}
+	for i, f := range d.moverFree {
+		mv.free = append(mv.free, int32(f))
+		mv.Gen[f] = d.moverFreeGen[i]
+	}
 }

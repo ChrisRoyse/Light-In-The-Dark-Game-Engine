@@ -135,6 +135,11 @@ var HashSystems = []string{
 	// subscriptions ride the existing subscription tables (R-SIM-6); this
 	// only fixes the name→kind mapping so it round-trips (R-EVT-8).
 	"customevents",
+	// appended by #590 (PRD2 05): the unified motion controller pool —
+	// count/Dropped/wpCount + the used waypoint arena, then live movers
+	// slot-ascending (every column), then the free-list with generations
+	// (#612 lesson) so two worlds mint identical MoverIDs next.
+	"movers",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -815,7 +820,81 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hce := h.next() // customevents (#617): custom-event-kind registry
 	w.hashCustomEvents(hce)
 
+	hmv := h.next() // movers (#590): unified motion controller pool
+	w.hashMovers(hmv)
+
 	return reg.Sum(dst)
+}
+
+// hashMovers folds the mover pool into its sub-hash, mirroring the save
+// block (#590). Header counts + the used spline waypoint arena, then live
+// movers slot-ascending (allocation-history order — every serialized
+// column, in struct-declaration order: the mirror invariant), then the
+// free-list with per-slot generations so two worlds mint identical
+// MoverIDs on the next Create (#612). The custom-step function table is
+// code, not state — never hashed (re-registered at setup).
+func (w *World) hashMovers(hm *statehash.Hasher) {
+	ms := w.Movers
+	hm.WriteU32(uint32(ms.count))
+	hm.WriteU32(ms.Dropped)
+	hm.WriteU32(uint32(ms.wpCount))
+	for i := int32(0); i < ms.wpCount; i++ {
+		hm.WriteI64(int64(ms.waypoints[i].X))
+		hm.WriteI64(int64(ms.waypoints[i].Y))
+	}
+	for r := int32(1); r < int32(len(ms.live)); r++ {
+		if !ms.live[r] {
+			continue
+		}
+		hm.WriteU32(uint32(ms.Gen[r])<<24 | uint32(r))
+		hm.WriteU8(ms.Kind[r])
+		hm.WriteU32(uint32(ms.Target[r]))
+		hm.WriteU32(uint32(ms.Anchor[r]))
+		hm.WriteI64(int64(ms.Goal[r].X))
+		hm.WriteI64(int64(ms.Goal[r].Y))
+		hm.WriteI64(int64(ms.Dir[r].X))
+		hm.WriteI64(int64(ms.Dir[r].Y))
+		hm.WriteI64(int64(ms.Speed[r]))
+		hm.WriteI64(int64(ms.Accel[r]))
+		hm.WriteI64(int64(ms.Radius[r]))
+		hm.WriteU16(uint16(ms.AngVel[r]))
+		hm.WriteU16(uint16(ms.Angle[r]))
+		hm.WriteI64(int64(ms.RangeLeft[r]))
+		hm.WriteI64(int64(ms.Range0[r]))
+		hm.WriteI64(int64(ms.Height[r]))
+		hm.WriteU16(uint16(ms.TurnRate[r]))
+		hm.WriteU32(uint32(ms.WpStart[r]))
+		hm.WriteU32(uint32(ms.WpLen[r]))
+		hm.WriteI64(int64(ms.WpParam[r]))
+		hm.WriteU16(ms.Cont[r])
+		for k := 0; k < 4; k++ {
+			hm.WriteI64(ms.CState[r][k])
+		}
+		hm.WriteU16(ms.HitMask[r])
+		hm.WriteU32(uint32(ms.Pierce[r]))
+		hm.WriteU16(ms.Decay[r])
+		hm.WriteU16(ms.Payload[r].Off)
+		hm.WriteU16(ms.Payload[r].Len)
+		hm.WriteU32(uint32(ms.Packet[r].Source))
+		hm.WriteU32(uint32(ms.Packet[r].Target))
+		hm.WriteI64(int64(ms.Packet[r].Amount))
+		hm.WriteU8(ms.Packet[r].AttackType)
+		hm.WriteU8(ms.Packet[r].Flags)
+		hm.WriteU16(ms.OnDone[r])
+		hm.WriteU8(ms.DoneMode[r])
+		hm.WriteU8(ms.Flags[r])
+		hm.WriteU32(uint32(ms.Owner[r]))
+		hm.WriteU32(uint32(ms.HitN[r]))
+		hm.WriteU32(uint32(len(ms.Hit[r])))
+		for k := 0; k < len(ms.Hit[r]); k++ {
+			hm.WriteU32(uint32(ms.Hit[r][k]))
+		}
+	}
+	hm.WriteU32(uint32(len(ms.free)))
+	for _, slot := range ms.free {
+		hm.WriteU32(uint32(slot))
+		hm.WriteU8(ms.Gen[slot])
+	}
 }
 
 // hashCustomEvents folds the custom-event registry into its sub-hash,

@@ -268,6 +268,19 @@ func (s *MoverStore) Create(spec MoverSpec) MoverID {
 	return makeMoverID(uint32(r), s.Gen[r])
 }
 
+// loadReset clears the pool for a save restore: apply re-installs live
+// movers (with their exact slot+gen), the free-list, the waypoint arena,
+// and the counters. Mirrors GroupStore.loadReset (#590).
+func (s *MoverStore) loadReset() {
+	for i := range s.live {
+		s.live[i] = false
+	}
+	s.free = s.free[:0]
+	s.count = 0
+	s.wpCount = 0
+	s.Dropped = 0
+}
+
 // resolve maps a handle to its live slot, validating the generation.
 func (s *MoverStore) resolve(id MoverID) (row int32, ok bool) {
 	idx := id.Index()

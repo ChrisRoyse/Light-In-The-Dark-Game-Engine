@@ -52,7 +52,7 @@ func TestCustomEventScenarioGolden(t *testing.T) {
 	if phase != 1 {
 		t.Fatalf("FSM phase = %d after 7 pulses, want 1", phase)
 	}
-	const golden = uint64(0x5ca11c5f72654de6) // recorded 2026-06-24 (#581)
+	const golden = uint64(0xd0db146402061510) // recorded 2026-06-24 (#581); rebumped #590 movers sub
 	if got := ceTopHash(w); golden != 0 && got != golden {
 		t.Fatalf("ce golden hash %016x != recorded %016x", got, golden)
 	}

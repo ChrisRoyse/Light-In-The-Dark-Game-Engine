@@ -58,7 +58,7 @@ func kvTopHash(w *World, reg *statehash.Registry) uint64 {
 func TestKVScenarioGolden(t *testing.T) {
 	w := NewWorld(Caps{Units: 16, KVPairs: 512})
 	kvScenario(w)
-	const golden = uint64(0x76160b54e252e0e5) // recorded 2026-06-23 (#574)
+	const golden = uint64(0x91c1231ba6845c24) // recorded #574; rebumped #590 movers sub
 	got := kvTopHash(w, NewHashRegistry())
 	if golden != 0 && got != golden {
 		t.Fatalf("kv golden hash %016x != recorded %016x (intended? update golden)", got, golden)
