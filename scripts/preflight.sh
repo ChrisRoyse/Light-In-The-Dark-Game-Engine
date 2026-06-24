@@ -39,6 +39,19 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 
+# Self-heal the core.bare flip (#610). On this WSL2 checkout two git binaries
+# see the same .git/config — the Linux /usr/bin/git the agent/scripts use and
+# the Windows msys git on PATH (/mnt/c/Program Files/Git/cmd), plus the VS Code
+# git extension operating on the repo. The Windows side intermittently rewrites
+# core.* on auto-detect and can leave `bare = true`, after which every
+# worktree git op (status/commit/the determlint + world-archive gates below)
+# fails with "this operation must be run in a work tree". Nothing in-repo sets
+# it, so repair idempotently before running any gate. Cheap, fail-safe.
+if [ "$(git config --get core.bare 2>/dev/null)" != "false" ]; then
+  echo "preflight: core.bare was not 'false' (#610 WSL/Windows-git flip) — repairing" >&2
+  git config core.bare false
+fi
+
 FAST=0
 RACE=1
 for arg in "$@"; do

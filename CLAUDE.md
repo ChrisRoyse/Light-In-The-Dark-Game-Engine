@@ -90,6 +90,7 @@ Verification of any visual/behavioral change follows `prompts/fsv.md`: run the t
 - **`MESA: error: Failed to attach to x11 shm`:** same root cause as above.
 - **EGL fallback:** `G3N_EGL=1` env makes the vendored g3n request an EGL context instead of GLX (LITD-PATCH in `repoes/engine/window/glfw.go`) — workaround for broken GLX context creation under WSLg per https://github.com/glfw/glfw/issues/2284
 - `GALLIUM_DRIVER=d3d12` selects the hardware-accelerated WSLg mesa driver if mesa picks wrong.
+- **`.git/config` `core.bare` intermittently flips to `true`** (#610), after which every worktree git op fails with `fatal: this operation must be run in a work tree`. Root cause: two git binaries share this checkout — the Linux `/usr/bin/git` and the Windows msys git on `PATH` (`/mnt/c/Program Files/Git/cmd`), plus the VS Code git extension — and the Windows side rewrites `core.*` on auto-detect. Nothing in-repo sets it. Fix (idempotent): `git config core.bare false`. `scripts/preflight.sh` self-heals this at startup; run the one-liner manually before a git op if you hit it mid-session.
 
 ## Architecture rules (PRD §4.1)
 
