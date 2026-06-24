@@ -161,6 +161,16 @@ func (w *World) moverStepHoming(r int32) {
 				ms.Dir[r] = w.turnToward(ms.Dir[r], desired, ms.TurnRate[r])
 			}
 		}
+	} else if ms.Flags[r]&MoverConsume != 0 && ms.Anchor[r] != 0 {
+		// The guide died mid-flight (#590, missile guide-invalidation model): a
+		// projectile homing mover completes now via its DoneMode rather than
+		// flying on forever — DoneDetonate fires the AoE payload at the current
+		// (last-pursued) position, anything else expires. (The legacy missile
+		// AoE case coasts to the exact last-known point before detonating; a
+		// homing body is already adjacent to it, so detonating in place is
+		// within a sub-step — documented minor difference, not a leak.)
+		w.moverComplete(r)
+		return
 	}
 	w.moverWrite(tr, pos.Add(unitStep(ms.Dir[r], ms.Speed[r])))
 }

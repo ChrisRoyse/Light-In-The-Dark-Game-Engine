@@ -219,6 +219,36 @@ func TestMoverHomingNonConsumeDoesNotArrive(t *testing.T) {
 	t.Logf("non-consume homing still alive after passing anchor (correct): %v", w.Movers.Alive(mid))
 }
 
+// Edge 4e (guide death → expire): a projectile homing mover whose anchor
+// dies mid-flight completes (expires) instead of flying forever — the
+// missile guide-invalidation model. SoT = the mover is freed within a few
+// ticks, not still flying.
+func TestMoverHomingGuideDeathExpires(t *testing.T) {
+	w := lmWorld(t)
+	caster := atkUnit(t, w, 0, xy(1000, 1000), 0)
+	anchor := atkUnit(t, w, 1, xy(5000, 1000), 0) // far away
+	body, _ := w.CreateUnit(xy(1000, 1000), 0)
+	mid := w.Movers.Create(MoverSpec{
+		Kind: MoverHoming, Target: body, Owner: caster, Anchor: anchor,
+		Dir: xy(1, 0), Speed: 50 * fixed.One, TurnRate: 0,
+		DoneMode: MoverDoneExpire, Flags: MoverConsume,
+		Packet:   DamagePacket{Source: caster, Amount: 40 * fixed.One},
+	})
+	w.KillUnit(anchor)
+	freedAt := -1
+	for i := 0; i < 6; i++ {
+		w.Step()
+		if !w.Movers.Alive(mid) {
+			freedAt = i + 1
+			break
+		}
+	}
+	t.Logf("homing mover freed at tick %d after guide death (was at x=5000 away)", freedAt)
+	if w.Movers.Alive(mid) {
+		t.Fatal("homing mover still flying after its guide died — leak (must expire)")
+	}
+}
+
 // Edge 5 (determinism/save): a mover mid-flight with DoneMode=Impact saves
 // and reloads hash-identical, and the DoneMode column is real hashed state
 // (mutating it moves the hash).
