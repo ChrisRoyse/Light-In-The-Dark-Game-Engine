@@ -30,6 +30,7 @@ source = "https://opengameart.org/content/loopable-dungeon-ambience"
 license = "CC0-1.0"
 retrieved = "2026-06-22"
 sha256 = "1d55b0deabd59f27b042f51ad3239ac7c1936984f40c04d081ff1daf580031f9"
+bytes = "1577746"
 
 [[asset]]
 path = "audio/music/menu_theme.ogg"
@@ -38,6 +39,7 @@ source = "https://opengameart.org/content/town-theme-rpg"
 license = "CC0-1.0"
 retrieved = "2026-06-22"
 sha256 = "b2821586c0fcbfd1b85b6a8a6dffd50d372324df472e9760ae8e9df089ae692e"
+bytes = "1602489"
 
 [[asset]]
 path = "audio/music/unbound_match.ogg"
@@ -46,6 +48,7 @@ source = "https://opengameart.org/content/determined-pursuit-epic-orchestra-loop
 license = "CC0-1.0"
 retrieved = "2026-06-22"
 sha256 = "9163b4545334f31dee880acfdb5f7d3c8a30d79cb1c30cd3e2e6a842152cfe29"
+bytes = "2252575"
 
 [[asset]]
 path = "audio/music/vigil_match.ogg"
@@ -54,6 +57,7 @@ source = "https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stri
 license = "CC0-1.0"
 retrieved = "2026-06-22"
 sha256 = "fbe7e37515e0e17a0c3b46df7c5c2977cd1b607e70d6f9494b09f1795a3ae4d3"
+bytes = "2850291"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Village_Market.glb"
@@ -62,6 +66,7 @@ source = "https://poly.pizza/m/0TsHLxX6CB"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a9ded34097efad3bb34f097f885805e96dd4c0d7f0f7a516cfe539d0b0139b3f"
+bytes = "385312"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Fortress.glb"
@@ -70,6 +75,7 @@ source = "https://poly.pizza/m/17scbUKx6U"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "eb94eb5cdb09d4f1e5a8fc1c8ce3071689ab7ec68d04b4cb597d690ba7dab703"
+bytes = "42912"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Castle_Fortress.glb"
@@ -78,6 +84,7 @@ source = "https://poly.pizza/m/3r6gq3ow6O"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "17b65a5d5eacc883b611b54a909bf954fd1797546e3ba63aa8446a09522a1595"
+bytes = "593072"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Gold_Rocks.glb"
@@ -86,6 +93,7 @@ source = "https://poly.pizza/m/49NgnJzOHc"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "964efe177a2708075212da778b87054cca2d4ea95db7943885c83fdb5d638163"
+bytes = "44780"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Hut.glb"
@@ -94,6 +102,7 @@ source = "https://poly.pizza/m/4MJWbyd6vw"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "78276f984382c03465d1a4050a31f145484876f00b73d59e9ec2de64f0ae6f71"
+bytes = "36276"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Rock.glb"
@@ -102,6 +111,7 @@ source = "https://poly.pizza/m/4MUaQTcDdc"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "306a8e11898caad21aa4da9eb60538ba05e041d9dd3c1a3d5da85b2a6165d8d8"
+bytes = "9116"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Market_Stalls.glb"
@@ -110,6 +120,7 @@ source = "https://poly.pizza/m/4ZAhRv2tLG"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a7f2e6d8a45eef2e7f9d0368419ec02c639eec2c568690942d25e04f2078a55c"
+bytes = "344572"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Port.glb"
@@ -118,6 +129,7 @@ source = "https://poly.pizza/m/4sE6lmhGPF"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "24ec4eaa0335069b325e3a9ee25aed686cc534862cce85319f5c469fbaac3dc9"
+bytes = "410920"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Archery_Second_Age_Le.glb"
@@ -126,6 +138,7 @@ source = "https://poly.pizza/m/52fgB0PCFu"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ae38c9f279870d5cba3ec5102e9258ea9486be9beac63d04ed1d1eb972e3d7d2"
+bytes = "381300"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wall_Towers_Door_Seco.glb"
@@ -134,6 +147,7 @@ source = "https://poly.pizza/m/5d80r2XX3O"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "dd6701fcefa2370c06ecad719d107c4668b36192344ae3ad0749d172f132427c"
+bytes = "133888"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Archery_Training_Grounds.glb"
@@ -142,6 +156,7 @@ source = "https://poly.pizza/m/5dWpau7C3k"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c8d6eeda4ba642b576680896bf3e9b286a1fc73002c86431da80a857f93a5aec"
+bytes = "320668"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Town_Center.glb"
@@ -150,6 +165,7 @@ source = "https://poly.pizza/m/76GTkSh4KM"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7d39bae9718ee1a86ff39a7c0a55c366213630daeb4ff920dc30a5ecf56bee52"
+bytes = "240408"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Mountain.glb"
@@ -158,6 +174,7 @@ source = "https://poly.pizza/m/7HYR2s9JVi"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "199bdd617f11c4aa1ec2716e474ed76d69ff4fedf81fe834153d69a7c72280ba"
+bytes = "17360"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Farm_Dirt.glb"
@@ -166,6 +183,7 @@ source = "https://poly.pizza/m/8BQFbUMOeC"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "59d83e1693a7899d83aed1d8e824fa743e9f3e5d5cfd2a3e1f422e897f42f495"
+bytes = "17916"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Wall.glb"
@@ -174,6 +192,7 @@ source = "https://poly.pizza/m/8C9NBoi9cA"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "02412e8f784f197ff8b0693f28d322d8fd9b3543fea25390d0002dfe123b578f"
+bytes = "18624"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Farm.glb"
@@ -182,6 +201,7 @@ source = "https://poly.pizza/m/91wMLb9kKo"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "403cd4f1218f2d45392becbf63e1bec64df527152235f99895342c5dd2b8b2c2"
+bytes = "230864"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Storage_Hut.glb"
@@ -190,6 +210,7 @@ source = "https://poly.pizza/m/BsTn4bKSGb"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7d9530a17dbafb82a3a5e485f75ed056eb26e71da7bee0de8d52dab3f99aee8d"
+bytes = "200212"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Trees_cut.glb"
@@ -198,6 +219,7 @@ source = "https://poly.pizza/m/CDzsCXJEBQ"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0821d2dc0eea14eb8c8a0248205baa4b0101f519fca2e116db00038dd3325551"
+bytes = "31152"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Temple.glb"
@@ -206,6 +228,7 @@ source = "https://poly.pizza/m/CE2Mn7lh6A"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bb5b65e2bcdf88dc7768ec8208d010982dda38c4cf29162b20e0fb4f0b2917cf"
+bytes = "292004"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Town_Center_CoERW5nFdE.glb"
@@ -214,6 +237,7 @@ source = "https://poly.pizza/m/CoERW5nFdE"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fa7d33ff72092a96073b659eba5562ed1eadf5b60a8092d1321769b34e9177a5"
+bytes = "159508"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Small_Watch_Tower.glb"
@@ -222,6 +246,7 @@ source = "https://poly.pizza/m/CygapExMf5"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "697dbc949daa279858e3e4ebed1b3039137bfb9e5be97d783be323a7786dd27f"
+bytes = "38744"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Town_Center_EEojbRn1eX.glb"
@@ -230,6 +255,7 @@ source = "https://poly.pizza/m/EEojbRn1eX"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1a04ed5b6545c8ed5b2b539eb2bd5be8286d92a5fa27eaf1b57a9e6cec68d827"
+bytes = "49516"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_house_tower.glb"
@@ -238,6 +264,7 @@ source = "https://poly.pizza/m/EV7pILnaZC"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "17f1d1737acf081761dadf6773788c4a6882f2f4f12dd6dd09dc70ea29e5dd6f"
+bytes = "119996"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Docks.glb"
@@ -246,6 +273,7 @@ source = "https://poly.pizza/m/F7twMHWPXY"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e6cadcf31d0000be2b1504bb072bbabbf4c8b67d1ec86ffd339ad443602acb41"
+bytes = "472544"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Archery_Training_Grounds_FD3GBkVOyX.glb"
@@ -254,6 +282,7 @@ source = "https://poly.pizza/m/FD3GBkVOyX"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "19c16547d4918a3a38e70ef2712db1c44878ea45334c9b1489eee539e84c6ff0"
+bytes = "251348"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Port_Gjt5yMM4Vw.glb"
@@ -262,6 +291,7 @@ source = "https://poly.pizza/m/Gjt5yMM4Vw"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e60aed8072719ac20a2b0d9578cb0da22ec0d4b362fc81c97eed21b8739ec296"
+bytes = "299940"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Rocks.glb"
@@ -270,6 +300,7 @@ source = "https://poly.pizza/m/Gl3pcrdnpW"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "93ff7c3cca2adcd6543a493aa1722a75e0f9cb98e43248781e08a0ff0f760d38"
+bytes = "21088"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Business_Building.glb"
@@ -278,6 +309,7 @@ source = "https://poly.pizza/m/GoF3zph6WI"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c40bf27eed71b70089b4131d20b496b9cecb0f554aafa88a755f2a26e0efae16"
+bytes = "529520"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wodden_Temple.glb"
@@ -286,6 +318,7 @@ source = "https://poly.pizza/m/HVg79yHQTm"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "447630726b168f148354e75f3c8713df6d10fb50744c8f7b5eb2ec4440e011d3"
+bytes = "340820"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Shack.glb"
@@ -294,6 +327,7 @@ source = "https://poly.pizza/m/HuzLJcbUd2"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f606be8496b29711c2c700aca9228667341a5441e6fdb34edcaeafaf4d1a2fb9"
+bytes = "58580"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Hut_I0IzdnH2iN.glb"
@@ -302,6 +336,7 @@ source = "https://poly.pizza/m/I0IzdnH2iN"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5391cbe7350623167d9bd3550ff0c920c6eb3f02909a8e920f20a0a0282391eb"
+bytes = "24012"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Archery_Towers.glb"
@@ -310,6 +345,7 @@ source = "https://poly.pizza/m/IA5qOjIAiT"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a3696e9b102fcbe93ab0f2f9d990ed061f8f5ea8fcdbb18f8989661607e0c261"
+bytes = "625020"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Farm_INctJkmEAl.glb"
@@ -318,6 +354,7 @@ source = "https://poly.pizza/m/INctJkmEAl"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a3a266dd075d797e0612e1075da9aa048d8a1e6882d98816e6eb316336de2b21"
+bytes = "143208"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Castle.glb"
@@ -326,6 +363,7 @@ source = "https://poly.pizza/m/JDUXodrPjL"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8566c55ac683084b69549cbf8cf4ba106822d2ca05576dd9e69b6d9796759185"
+bytes = "633096"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Rock_JmFMh7ztL9.glb"
@@ -334,6 +372,7 @@ source = "https://poly.pizza/m/JmFMh7ztL9"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2b645b367bcd95ad51d3a7288e2f7380b8d33588e4af19a6a477f054ced6017d"
+bytes = "28332"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Storage_Shed.glb"
@@ -342,6 +381,7 @@ source = "https://poly.pizza/m/JrFL3mLOKg"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2bdb9d58d39a262b85ee52f154d548ad80b1b8944dafcc2d8750b4f80c30fca4"
+bytes = "256252"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Temple_JsZnPztvRl.glb"
@@ -350,6 +390,7 @@ source = "https://poly.pizza/m/JsZnPztvRl"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8939e4c47c2b37f0d1bed2df7025b66a4cf71057ae01ecaafa04b234ebeaa560"
+bytes = "26700"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Wall_L0TxLurnES.glb"
@@ -358,6 +399,7 @@ source = "https://poly.pizza/m/L0TxLurnES"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "446ec4fa7005b9da077d1f522b4872258706f3c81ee60096bc88efcc73efe9f7"
+bytes = "61744"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House.glb"
@@ -366,6 +408,7 @@ source = "https://poly.pizza/m/L7h0SjZX2K"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "371193a0d0065a58daffe0f1d4aebca86ab3da85af23d8af734544039fb79246"
+bytes = "57660"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Farm_O4wpTLSfIn.glb"
@@ -374,6 +417,7 @@ source = "https://poly.pizza/m/O4wpTLSfIn"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "21838d1b950ed7428f776dca0256ebdcf259bdfb36d7d416f1dd1f60b3910abd"
+bytes = "124140"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Market_Stalls_OLd8vu6lPL.glb"
@@ -382,6 +426,7 @@ source = "https://poly.pizza/m/OLd8vu6lPL"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0c433410c8fbf388bd542418366de13e2fcdd75278073ae8be54f72660878545"
+bytes = "585880"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Market_Stalls_PUZZ5F91OE.glb"
@@ -390,6 +435,7 @@ source = "https://poly.pizza/m/PUZZ5F91OE"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c9b8d3836761846191a24f76fa58ace42e9b3d18e7c76fe5f9feb3c8d725889c"
+bytes = "249412"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Monument.glb"
@@ -398,6 +444,7 @@ source = "https://poly.pizza/m/QBTCfwOTsY"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "508843b80b53e7c99727b1556cb16e6c6f22c81bc09031dafdfc905844b52d68"
+bytes = "245640"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House_RSwoYSLblu.glb"
@@ -406,6 +453,7 @@ source = "https://poly.pizza/m/RSwoYSLblu"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2fa386ba7809ff1a40d9a66aebce9bb4902382726e630d76128d107b92773c60"
+bytes = "157096"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Crops.glb"
@@ -414,6 +462,7 @@ source = "https://poly.pizza/m/Ro6K0Yg7mx"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6e1cd75a7a9287c09f72a72f30cef4a75542932b7bff087454435b85228dc27b"
+bytes = "1976880"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Rock_RtLRqYjfMs.glb"
@@ -422,6 +471,7 @@ source = "https://poly.pizza/m/RtLRqYjfMs"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f515dce62fda16b1a265ce511d284e95b46443876a234f40896958d7e68d4ecd"
+bytes = "30648"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Stone_Tower.glb"
@@ -430,6 +480,7 @@ source = "https://poly.pizza/m/Rz4U5dZJz8"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8dc0fb7738d9c18cbcec1098cc3c2e2239fd7c91e8bd76049e55de1da6d887ba"
+bytes = "204912"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Fortress_Gate.glb"
@@ -438,6 +489,7 @@ source = "https://poly.pizza/m/SiSjNL8GtO"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0cb0498a802b1e86e3e6d8127da591b6746fd1292d0a3de9604258e6d495d7c6"
+bytes = "90984"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Storage_shed.glb"
@@ -446,6 +498,7 @@ source = "https://poly.pizza/m/TvXpjtD2nk"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "44b7937f8022bcc67afb30aeaa42c2fcf0ff06b8b573887ce25e4bb9448a1e85"
+bytes = "357992"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Barracks.glb"
@@ -454,6 +507,7 @@ source = "https://poly.pizza/m/UXCOwRBSxx"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bd8eae8b5d022ee9e891881685fde077c18e46f40430fcc3f2dcbf7cc3c25407"
+bytes = "583772"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Houses.glb"
@@ -462,6 +516,7 @@ source = "https://poly.pizza/m/UvVOeyHh92"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fd234dd066cf67f60917f44abfda4bf1193a89ffafaf8f980ad959ad41a511d9"
+bytes = "113188"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Watch_Tower.glb"
@@ -470,6 +525,7 @@ source = "https://poly.pizza/m/VJZZW37Vsk"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b43938378b0b38940fbf529ee78c3ae1ecae52486c06d9de1101bbb220ff71fc"
+bytes = "96872"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Windmill.glb"
@@ -478,6 +534,7 @@ source = "https://poly.pizza/m/WUbU1Nct2W"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "970fd5e562fc1e3c5bcf4ea78443b533d39a344afaac673d1bdfa29d3a343a47"
+bytes = "126108"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Dock.glb"
@@ -486,6 +543,7 @@ source = "https://poly.pizza/m/XViKoBh2UN"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "77449f8e456eb817f2ab3f15db1a5ceba5736b800fc1ea22da70d0221eb4296b"
+bytes = "18520"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Mountain_XY4ej3Zg3I.glb"
@@ -494,6 +552,7 @@ source = "https://poly.pizza/m/XY4ej3Zg3I"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "00c0cc2470f2ee3f2a0510198836672667a8cdd098e4fea0441404fb72bc4b64"
+bytes = "47128"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Archery_Building.glb"
@@ -502,6 +561,7 @@ source = "https://poly.pizza/m/XYe1bbeUv9"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "76b7929b762c01379e325fdfdb7bd8175669da5dbbc0cb82834c3d789260b5aa"
+bytes = "442584"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Dock_YAS4fY6UL1.glb"
@@ -510,6 +570,7 @@ source = "https://poly.pizza/m/YAS4fY6UL1"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5ce46d834ece831f2af70d1e55a95d9225a9378ad7f25dcb918357f611944448"
+bytes = "17416"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House_YlADpCJU8U.glb"
@@ -518,6 +579,7 @@ source = "https://poly.pizza/m/YlADpCJU8U"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "81bc46fc9589e24b77d5f97803325f35a6f1e8cbbdee644b54cb3a479b5cad4c"
+bytes = "49332"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Temple_First_Age_Leve.glb"
@@ -526,6 +588,7 @@ source = "https://poly.pizza/m/YrK9bureMV"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "56c90234684715537a916df5b31a56d81542a695e3cff492defc592933fd04bc"
+bytes = "634232"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Barracks_a1C1L8gJTX.glb"
@@ -534,6 +597,7 @@ source = "https://poly.pizza/m/a1C1L8gJTX"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f0a3ec92e5d1d46d752744c9245e26d32620bb266f07d3d0dfad879e4e19ef22"
+bytes = "137960"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Mountain_Group.glb"
@@ -542,6 +606,7 @@ source = "https://poly.pizza/m/a52gSEEq8X"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e0879bccdd3a5019c362d73e55e37e3d36b7397258584aff09a81e9ae518e773"
+bytes = "58428"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Watch_Tower_cMxuj2gt7D.glb"
@@ -550,6 +615,7 @@ source = "https://poly.pizza/m/cMxuj2gt7D"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d67209fc1dd681347796386114a1c2215ae2e83a5da9c0ccd7598541ea8398d1"
+bytes = "189788"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Town_Center_cuQuFJEIfH.glb"
@@ -558,6 +624,7 @@ source = "https://poly.pizza/m/cuQuFJEIfH"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3b2320b491dae5a25c65bf63dd269758a08bbd0a5e02c894af53d089ca654f5b"
+bytes = "175228"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Fortress.glb"
@@ -566,6 +633,7 @@ source = "https://poly.pizza/m/cwWP6GkoJc"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d4d021887b063db1b529380c741ad2a95f6255486875ef2f9ceaf3ff87566ddf"
+bytes = "476648"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Storage_House.glb"
@@ -574,6 +642,7 @@ source = "https://poly.pizza/m/d2ZQWcuhwR"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2f817a1bd2281eb0eeca731655c35fe4f524ac06c2221a701af9f7025165e3f2"
+bytes = "551388"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Stone_Tower_dJLAD6p90F.glb"
@@ -582,6 +651,7 @@ source = "https://poly.pizza/m/dJLAD6p90F"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5f4db1513020d24f57f991b951efcddf97beebf061d11c2e5a6da64fadc52cd3"
+bytes = "217660"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Shack_dlMcSexDWI.glb"
@@ -590,6 +660,7 @@ source = "https://poly.pizza/m/dlMcSexDWI"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7224cd7cebdf01749449034290a41d3a64fdfba51d3d6c0abfef0a32938ed72f"
+bytes = "44508"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Barracks_dvlksXgxWc.glb"
@@ -598,6 +669,7 @@ source = "https://poly.pizza/m/dvlksXgxWc"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b62a47e6cf8cdacc87be9afb6c5201a6becaf3e2616fd5d6797958b00e99ef74"
+bytes = "486740"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Watch_Tower_f2J0aSLVi4.glb"
@@ -606,6 +678,7 @@ source = "https://poly.pizza/m/f2J0aSLVi4"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d70f8855cb45003b4f78a093a23eab61717f9246fdcdeca281bf6b341edb442a"
+bytes = "53188"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Archery_Towers_fPB3sm5796.glb"
@@ -614,6 +687,7 @@ source = "https://poly.pizza/m/fPB3sm5796"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "32e578cae44a66e04adc4d1df732e77876b03690e0d58ead503efcf0e495b893"
+bytes = "399808"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Logs.glb"
@@ -622,6 +696,7 @@ source = "https://poly.pizza/m/fei4I7FfrJ"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3c812b330302d0be91ad557e85a6be3ba268cf46ffc1196c9e35644366364177"
+bytes = "27728"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Storage_shed_fkTsDdpQAA.glb"
@@ -630,6 +705,7 @@ source = "https://poly.pizza/m/fkTsDdpQAA"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d7a306d1b1d3dad2206be80e8da380f469cd946664bd64b19f45f2b2f89a3a5d"
+bytes = "514028"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Market_Stalls_Compact.glb"
@@ -638,6 +714,7 @@ source = "https://poly.pizza/m/fmHUuX9AS3"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ceb40decc76f7045cae5c5a882ed528c5d9c79f31e9be2e647d9a0971b5b9e04"
+bytes = "987996"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Houses_gEjAC1UvVU.glb"
@@ -646,6 +723,7 @@ source = "https://poly.pizza/m/gEjAC1UvVU"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5547d4a319939739390d014252a34ede84d614bf0246d0fbbfc99e36adcfb485"
+bytes = "262976"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Stone_Wall_Towers.glb"
@@ -654,6 +732,7 @@ source = "https://poly.pizza/m/geisKzlSFZ"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a8c05cfcff57f7d953e1db628c5ec07611ad0488e12658db148c6314974cfea0"
+bytes = "125480"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Huts.glb"
@@ -662,6 +741,7 @@ source = "https://poly.pizza/m/j9uMWazOBh"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5e6e09dd3e86e52b28254695469af31514b3f527bea7bf04328b64bab366ff2d"
+bytes = "92724"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Market_Stalls_jSqGy8V0MQ.glb"
@@ -670,6 +750,7 @@ source = "https://poly.pizza/m/jSqGy8V0MQ"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5b24f71fce37446094164538731bf6a8b9431dfc9a7f32d5a4dfde1024e6cabf"
+bytes = "142592"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Trees.glb"
@@ -678,6 +759,7 @@ source = "https://poly.pizza/m/jUzojhHoYR"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a61c2378b7a103276c8deb8ddbeda0d5b21d7cc638bca48500b97baabdf651d5"
+bytes = "92392"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Barracks_jjbNh1vCbj.glb"
@@ -686,6 +768,7 @@ source = "https://poly.pizza/m/jjbNh1vCbj"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "18910c3a1e98054f523e7206653288b7f463690e359486462a1c640400ac4ecc"
+bytes = "79112"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Resource_Gold.glb"
@@ -694,6 +777,7 @@ source = "https://poly.pizza/m/jkqD4dMoz1"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "014be202047295172158f524d11ecc0a172eef544b4d11fd0fe55b48e55be1f3"
+bytes = "51048"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Windmill_jpHoi9xDLG.glb"
@@ -702,6 +786,7 @@ source = "https://poly.pizza/m/jpHoi9xDLG"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a4de3c3c4823a48775c48c55c3f6967793a6495a7c123a635f5d7b6e423abbc4"
+bytes = "136688"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House_k6tP5nFUd2.glb"
@@ -710,6 +795,7 @@ source = "https://poly.pizza/m/k6tP5nFUd2"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e3423546ab2d5ed2248eec14d074f6c28cd1e441cb7b35eb1edc82a2447c4cbc"
+bytes = "180832"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Barracks_lnyADheSvA.glb"
@@ -718,6 +804,7 @@ source = "https://poly.pizza/m/lnyADheSvA"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "83dce8bd56c27cd3c692368c5a58e310edb6e44d94d3b8ca616f419f47683906"
+bytes = "226912"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Shipping_Port.glb"
@@ -726,6 +813,7 @@ source = "https://poly.pizza/m/mJXJPCIkbM"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "47ec6781831808cf6593048514064832711ed71e25d1af316e1ae5c010720b8e"
+bytes = "219296"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Small_Farm.glb"
@@ -734,6 +822,7 @@ source = "https://poly.pizza/m/nELNHkk0Uh"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "19fa8812875e26d6853d24a3ce0e2ea02bc9e11378d4808d54b59dd312b6e578"
+bytes = "127588"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Temple_nR264crTSr.glb"
@@ -742,6 +831,7 @@ source = "https://poly.pizza/m/nR264crTSr"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d92205a130279463f8f32a2b72ffcaff1fa00cd02ae313ba2e265dad20b4a720"
+bytes = "277956"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House_nihGGju7DW.glb"
@@ -750,6 +840,7 @@ source = "https://poly.pizza/m/nihGGju7DW"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0bc45c8db2827a3cdf29705cf13590614ff52726fa789fd5e89457b86b69efec"
+bytes = "76900"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wooden_Encampment.glb"
@@ -758,6 +849,7 @@ source = "https://poly.pizza/m/njoPJEjDQD"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6e63b39fb8468435eb11b83a2dfdf8add2c9677954d2fba898ccd5b17202badd"
+bytes = "235640"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House_oJJIRwv6Bo.glb"
@@ -766,6 +858,7 @@ source = "https://poly.pizza/m/oJJIRwv6Bo"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a0c6912d60898de574f3e03b7112cc989c466e372ff671f4aae61057ab5c4947"
+bytes = "108228"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Pine_Trees.glb"
@@ -774,6 +867,7 @@ source = "https://poly.pizza/m/oYtDty0fR6"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "aea959025a31b0d250d7c94c96cf9456f9fcdaf9fb269790029d85adae3703c4"
+bytes = "99604"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Castle.glb"
@@ -782,6 +876,7 @@ source = "https://poly.pizza/m/opTOmcN3o9"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fa15f21d4f13cddba97bcd94d05cf0055ff14de5d4b1a86a5c00dccc1b2f2ca6"
+bytes = "477160"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Barracks_puD1kbV4kf.glb"
@@ -790,6 +885,7 @@ source = "https://poly.pizza/m/puD1kbV4kf"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "459bd71f9c891e5bdff4912995e607373b5451fab8a3cf7ad5b36623980f0319"
+bytes = "273848"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Gold_rocks.glb"
@@ -798,6 +894,7 @@ source = "https://poly.pizza/m/r93I0pFAE7"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "31e149bb948016e67840631ea833cb31f0670679da122e0028f22c2204c265f6"
+bytes = "49376"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Shipping_Port_rDX8W8uqip.glb"
@@ -806,6 +903,7 @@ source = "https://poly.pizza/m/rDX8W8uqip"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a6bcc1b9f71295db1b87233008c333162e1ea437ffda60e496f7d04f7afcb11b"
+bytes = "218584"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Town_Center_Second_Age.glb"
@@ -814,6 +912,7 @@ source = "https://poly.pizza/m/sPY1OPVCAX"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9b37d1b3eac036e74c9efebe040dcfc2265a07cc0abf44d2a2459bd9ef0ed3c6"
+bytes = "398512"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Castle_Gate.glb"
@@ -822,6 +921,7 @@ source = "https://poly.pizza/m/tKTchdiQzV"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c73f5cb19153b70d5e6491678529e871934858b37cf87e94ec7d9ba17da52a8e"
+bytes = "147652"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Stone_Wall.glb"
@@ -830,6 +930,7 @@ source = "https://poly.pizza/m/tdeAOh3LQV"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4cd54104b7c0efe8ce92f15a54b5cb79a47de9cedf5db9a6a3a7d89447fb5e7c"
+bytes = "17992"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Temple_v36uJiErXS.glb"
@@ -838,6 +939,7 @@ source = "https://poly.pizza/m/v36uJiErXS"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "511a960964d6cd6066b28783ce9e360f7158d2d4266e54218728162a05533f84"
+bytes = "125628"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Houses_vCoDG5hFyI.glb"
@@ -846,6 +948,7 @@ source = "https://poly.pizza/m/vCoDG5hFyI"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c848a095e1d1e65d8d3ae45cdad653fc37f22e91f9143efb11c47c964115aa30"
+bytes = "163984"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/House_vZ1CLbWmSx.glb"
@@ -854,6 +957,7 @@ source = "https://poly.pizza/m/vZ1CLbWmSx"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "feb7f19fe95f5fe1ba7672d1a2a7b97008f3f63082f1f1d46eb1dbd08b47ce37"
+bytes = "152984"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Mountains.glb"
@@ -862,6 +966,7 @@ source = "https://poly.pizza/m/w9VBrh7Nz0"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "48d973fc0c74acad75c995d508be05408af10611afc6d6f8096abdf3e0642ce7"
+bytes = "154432"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Mine.glb"
@@ -870,6 +975,7 @@ source = "https://poly.pizza/m/wOJ61Fa0Lt"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cfbabb663904483aa9704b7ea63e053a58dbe882abbc2935e65f5a0425b21752"
+bytes = "141868"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Hut_wxi3kAu5ey.glb"
@@ -878,6 +984,7 @@ source = "https://poly.pizza/m/wxi3kAu5ey"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1efcda151a945c43cb81dfa2fbb0567ab837785a895b7a7e7fe61f4890224ce1"
+bytes = "95376"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Wall_Towers.glb"
@@ -886,6 +993,7 @@ source = "https://poly.pizza/m/xKVeMHa2tJ"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5042123e2dbd05a1b0afb6506adfbf80a77a2c7ca5d77fab9ad562a57f479215"
+bytes = "83412"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Tower_House.glb"
@@ -894,6 +1002,7 @@ source = "https://poly.pizza/m/xm5cViUjra"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d55afb525c47983af47aa7242e32ef1aec27e3f0aba785265393956dc389c5c4"
+bytes = "230536"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Castle_y15yE6kWLY.glb"
@@ -902,6 +1011,7 @@ source = "https://poly.pizza/m/y15yE6kWLY"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4fba9f5b8a0d66f2bca58d4c08740a527abbda8b3feaf331267b09017a9901d9"
+bytes = "544976"
 
 [[asset]]
 path = "quaternius-ultimate-fantasy-rts/Trees_cut_zhm3D5KKRh.glb"
@@ -910,6 +1020,7 @@ source = "https://poly.pizza/m/zhm3D5KKRh"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e64ec26fce1999d02ad792d29b9cb97079cef0fbd56574de95d0d58d6c305fa9"
+bytes = "25196"
 
 [[asset]]
 path = "kaykit-adventurers/Barbarian.glb"
@@ -918,6 +1029,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cefc311a0e10c7858b6141f5ada7e33268727564fb8ac1347aab97d000669cc6"
+bytes = "3613268"
 
 [[asset]]
 path = "kaykit-adventurers/Knight.glb"
@@ -926,6 +1038,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "60428e3abc09ba83e595d256e3af8c5c976b46cdae599f0802fc82b4a3445168"
+bytes = "3659532"
 
 [[asset]]
 path = "kaykit-adventurers/Mage.glb"
@@ -934,6 +1047,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cf898585da33fab50c724d31605fb931eb2912e6d2280092141e98ca81ad507d"
+bytes = "3589240"
 
 [[asset]]
 path = "kaykit-adventurers/Rogue.glb"
@@ -942,6 +1056,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e825437cd4d2ee9c1960b517a74a69101e33eb409ae7fa8cedc7134a998fbb7d"
+bytes = "3616284"
 
 [[asset]]
 path = "kaykit-adventurers/Rogue_Hooded.glb"
@@ -950,6 +1065,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "93e6e25213009952276d9cf34f5d96a243767334c66f280db0433ddfabb91545"
+bytes = "3597652"
 
 [[asset]]
 path = "kaykit-hexagon/barrel.glb"
@@ -958,6 +1074,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "88df85066b763b0ce5261de01edb969d153da16ee04ae1f78103bb7ecbbeb250"
+bytes = "32700"
 
 [[asset]]
 path = "kaykit-hexagon/bucket_arrows.glb"
@@ -966,6 +1083,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c65276f42ae11db80aecbee112c86143ef38fe80c7b230b90d5d33bae864bf30"
+bytes = "33380"
 
 [[asset]]
 path = "kaykit-hexagon/bucket_empty.glb"
@@ -974,6 +1092,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "83b9c665be1f4613609adaae0bf38b06b3a1e885c34d5dcdc58daae5186d337f"
+bytes = "24136"
 
 [[asset]]
 path = "kaykit-hexagon/bucket_water.glb"
@@ -982,6 +1101,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a3a9f450503b5f795b1335c7465b753ea4877708e0103909ba203e0674946133"
+bytes = "24136"
 
 [[asset]]
 path = "kaykit-hexagon/building_archeryrange_blue.glb"
@@ -990,6 +1110,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "98c80ff0af461d748bca8b93b203bb6d8c1a975c45e045d3df0bc550e175f002"
+bytes = "219548"
 
 [[asset]]
 path = "kaykit-hexagon/building_archeryrange_green.glb"
@@ -998,6 +1119,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "47c159d8b81f28cde842d085a9a3912c873b3391dcc8f32890e2303daf06bd7a"
+bytes = "219548"
 
 [[asset]]
 path = "kaykit-hexagon/building_archeryrange_red.glb"
@@ -1006,6 +1128,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0bebd07ebead276a9ed56c669305acc2b019b2ebc0225f5ab9d2c8959f729d5e"
+bytes = "219544"
 
 [[asset]]
 path = "kaykit-hexagon/building_archeryrange_yellow.glb"
@@ -1014,6 +1137,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "09a43de11c17fd18928e47e19576d4af621c30cc71d5a4c09a3554172994ef90"
+bytes = "219552"
 
 [[asset]]
 path = "kaykit-hexagon/building_barracks_blue.glb"
@@ -1022,6 +1146,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8efe029430ff5ef71fcbec0ae79744cd9146be3abc3986e0b211eb6d34fc95ea"
+bytes = "246844"
 
 [[asset]]
 path = "kaykit-hexagon/building_barracks_green.glb"
@@ -1030,6 +1155,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "53aff3b2a18bb95164403c0770e7dcba619ec03cc04fa5688cfc4ed0ab086fc8"
+bytes = "246844"
 
 [[asset]]
 path = "kaykit-hexagon/building_barracks_red.glb"
@@ -1038,6 +1164,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ce039d211f82fcce9ccccf5b81db04e413eb6cf8f50ad02c617679d526910136"
+bytes = "246840"
 
 [[asset]]
 path = "kaykit-hexagon/building_barracks_yellow.glb"
@@ -1046,6 +1173,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "79140209b11d557668c3c3805d3e734485e79d1112bd8f3a7e8a1d70f7be8588"
+bytes = "246848"
 
 [[asset]]
 path = "kaykit-hexagon/building_blacksmith_blue.glb"
@@ -1054,6 +1182,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8d532638fff1259180958c29c00f860493cec9abe8dbb12f3d45d39d681e3db4"
+bytes = "140228"
 
 [[asset]]
 path = "kaykit-hexagon/building_blacksmith_green.glb"
@@ -1062,6 +1191,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6bc2d85419bcf3ee864614778ac19b3ac958609973fd59d548ed5855428c8356"
+bytes = "140228"
 
 [[asset]]
 path = "kaykit-hexagon/building_blacksmith_red.glb"
@@ -1070,6 +1200,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "844cab451c8e64feba1d38d098dc06cfac3eab6a5145dc3216eca401181341c1"
+bytes = "140224"
 
 [[asset]]
 path = "kaykit-hexagon/building_blacksmith_yellow.glb"
@@ -1078,6 +1209,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4da62c25729f1602b966330086dc77833808b72b532c742e6b9f75eaeb2efdd9"
+bytes = "140232"
 
 [[asset]]
 path = "kaykit-hexagon/building_bridge_A.glb"
@@ -1086,6 +1218,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b02a8ce6664d574f6c8386ddeb3bb4e9918b89ceaf20001443c9dac8be8e4641"
+bytes = "42708"
 
 [[asset]]
 path = "kaykit-hexagon/building_bridge_B.glb"
@@ -1094,6 +1227,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5733083e5bd2ac349b0fbe0ff2d28d74a8f87f700c7e9f5b551fce3226cf44ca"
+bytes = "42708"
 
 [[asset]]
 path = "kaykit-hexagon/building_castle_blue.glb"
@@ -1102,6 +1236,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6600b629e7c31214b4ef2673d07636933223370a06b0fc627ace1be3ce3cd059"
+bytes = "334892"
 
 [[asset]]
 path = "kaykit-hexagon/building_castle_green.glb"
@@ -1110,6 +1245,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2b3f935a564b4b4ccccbc0e84700880ccbed95def42f7cbd51475ffe09ad3eee"
+bytes = "334896"
 
 [[asset]]
 path = "kaykit-hexagon/building_castle_red.glb"
@@ -1118,6 +1254,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "da397e59247e7afae074252a70b275b902c32190b2d9e70ff27dbb60297022b7"
+bytes = "334892"
 
 [[asset]]
 path = "kaykit-hexagon/building_castle_yellow.glb"
@@ -1126,6 +1263,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2d78ab30f7a9ce1a46fe30073b2493a0a17b62461b2871894723dafae33fb07d"
+bytes = "334896"
 
 [[asset]]
 path = "kaykit-hexagon/building_church_blue.glb"
@@ -1134,6 +1272,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d9913e25bcea62e774bd297c668dfe7b337577fcaeaaf6b4c9e6a3b22d294bcd"
+bytes = "106916"
 
 [[asset]]
 path = "kaykit-hexagon/building_church_green.glb"
@@ -1142,6 +1281,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6bd7f7b2beb3ab35728a8b83d5f6d29dff81eab733eb5e0df2e6abe02bf4c364"
+bytes = "106916"
 
 [[asset]]
 path = "kaykit-hexagon/building_church_red.glb"
@@ -1150,6 +1290,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "627a1fb1678ba6f88f588d9ac515a99343a476fce77b37f3758e8e0fc1337f54"
+bytes = "106912"
 
 [[asset]]
 path = "kaykit-hexagon/building_church_yellow.glb"
@@ -1158,6 +1299,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "788b25320031951ff9d759ee04616238d6b46ebf4f548480780085149272230d"
+bytes = "106920"
 
 [[asset]]
 path = "kaykit-hexagon/building_destroyed.glb"
@@ -1166,6 +1308,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2b91d9797b0e31d8d7716225de107bed8aec8e916e213a442f54ec2e7914a051"
+bytes = "73856"
 
 [[asset]]
 path = "kaykit-hexagon/building_dirt.glb"
@@ -1174,6 +1317,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "325abbbd63b3cc4155c26bf20c3a5c0c150093f95483e74e3146292fd7771e31"
+bytes = "24512"
 
 [[asset]]
 path = "kaykit-hexagon/building_grain.glb"
@@ -1182,6 +1326,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "02bf11816b1c0e14ced3a68f5c882a3dae21a4fd1cc6aee608985634be5a84b9"
+bytes = "30780"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_A_blue.glb"
@@ -1190,6 +1335,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "121ff88a0b19ce067d38ff7a9df9bb0f9153ff3d32cddf99e2e15cf0f57ecf7c"
+bytes = "72528"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_A_green.glb"
@@ -1198,6 +1344,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3436cbc3701c1a1d6f472a553c76a072b2dc40ef931991671ccc232f457020b4"
+bytes = "72528"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_A_red.glb"
@@ -1206,6 +1353,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6e10592983570c6af30d340f6a5bc45d080bf5595ff60429f2b65cda959b5911"
+bytes = "72524"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_A_yellow.glb"
@@ -1214,6 +1362,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "567627eb9e2e0365dd755fa1f0fa1e2fcd6da77c7e933e4da61600b696e15f1e"
+bytes = "72532"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_B_blue.glb"
@@ -1222,6 +1371,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3e910d298dc67e916e848d49f54ca7d86da40f859aca25c48030fb0ca3e0fa06"
+bytes = "99296"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_B_green.glb"
@@ -1230,6 +1380,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2f23e69b2d85747fefd145ec1de48b4f18eae9084f2dcf2ee3373878883cd91d"
+bytes = "99296"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_B_red.glb"
@@ -1238,6 +1389,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3fce95608f1c723947123d18f5720595342e9bdd3dca6d714e28eda296500f29"
+bytes = "99292"
 
 [[asset]]
 path = "kaykit-hexagon/building_home_B_yellow.glb"
@@ -1246,6 +1398,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1f61aaa682d450cc4349f1cd9d56b502354ef38ac4d8a3ccddd39d570a62389a"
+bytes = "99300"
 
 [[asset]]
 path = "kaykit-hexagon/building_lumbermill_blue.glb"
@@ -1254,6 +1407,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6dcfe73f85def12f15090d7fcabc940e57f8b3a3416222b0de2de163252d16be"
+bytes = "185100"
 
 [[asset]]
 path = "kaykit-hexagon/building_lumbermill_green.glb"
@@ -1262,6 +1416,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6e97d7640d0abfe5d19fdeaad0230d9594e2e639b3f8fe324c21dcfe29064e0d"
+bytes = "185108"
 
 [[asset]]
 path = "kaykit-hexagon/building_lumbermill_red.glb"
@@ -1270,6 +1425,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "092384bcb950fa93d06a31cdeaa8ad0e6d91201be58459f5c33301352feb4f4f"
+bytes = "185096"
 
 [[asset]]
 path = "kaykit-hexagon/building_lumbermill_yellow.glb"
@@ -1278,6 +1434,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "afb28437376cf46f1454c07faec6390b841c58cc38799cec5b6280b9ec84d781"
+bytes = "185112"
 
 [[asset]]
 path = "kaykit-hexagon/building_market_blue.glb"
@@ -1286,6 +1443,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "06da3118788dd0bda0d7362367613668808f6f08daf0899955b971fe2dc1b432"
+bytes = "169340"
 
 [[asset]]
 path = "kaykit-hexagon/building_market_green.glb"
@@ -1294,6 +1452,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b63b2307cb382c42f4564a613877f9062800409f2fc9aa4ec3d9eda6489c6e5b"
+bytes = "169340"
 
 [[asset]]
 path = "kaykit-hexagon/building_market_red.glb"
@@ -1302,6 +1461,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "883f911dc5d3f2f5573ac855a47fe8939e69146bc8b3766718f7ef9ffab08dc4"
+bytes = "169336"
 
 [[asset]]
 path = "kaykit-hexagon/building_market_yellow.glb"
@@ -1310,6 +1470,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4cbe6b1c675b9e51a22e9fcc068afa236dd0a6c6c98f835049cf1286f9aa0023"
+bytes = "169344"
 
 [[asset]]
 path = "kaykit-hexagon/building_mine_blue.glb"
@@ -1318,6 +1479,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2871e538e976a984c67f9de1f49ee98731ad82a33ac9df9fe304e5e5ad9ae553"
+bytes = "83196"
 
 [[asset]]
 path = "kaykit-hexagon/building_mine_green.glb"
@@ -1326,6 +1488,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f0272321fe4ae6335ff8d24c44f7290c689139dfd2ccb543a2f14811f102d992"
+bytes = "83200"
 
 [[asset]]
 path = "kaykit-hexagon/building_mine_red.glb"
@@ -1334,6 +1497,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "24d1eb979db1e28456895def3276d5cf29810ac80e409e308ea3d34d16e4d2c3"
+bytes = "83196"
 
 [[asset]]
 path = "kaykit-hexagon/building_mine_yellow.glb"
@@ -1342,6 +1506,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "42b7183254f50a4c94d85fbba2f03c509888d354feb72bd10f3da09be127ba93"
+bytes = "83200"
 
 [[asset]]
 path = "kaykit-hexagon/building_scaffolding.glb"
@@ -1350,6 +1515,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e402d76e70a25544aad8004b64170f1aaf2a728c5662e532d21faac5480c88be"
+bytes = "182716"
 
 [[asset]]
 path = "kaykit-hexagon/building_stage_A.glb"
@@ -1358,6 +1524,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "352c1e1f213a54f00d2e0968031e1cd68a8d20e031d84c6575713dc4776a89bc"
+bytes = "58960"
 
 [[asset]]
 path = "kaykit-hexagon/building_stage_B.glb"
@@ -1366,6 +1533,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fa31306f77613f8a475cba22a10c34c6564e2da8d2f7d4c8c952c71f7c997661"
+bytes = "66488"
 
 [[asset]]
 path = "kaykit-hexagon/building_stage_C.glb"
@@ -1374,6 +1542,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "23702edb43bbbb1740857ef0f23bf8d91d582e2272e20e8b0a3b84a35bf935d3"
+bytes = "86080"
 
 [[asset]]
 path = "kaykit-hexagon/building_tavern_blue.glb"
@@ -1382,6 +1551,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0af55da93b420f2a16c52e4f233044e9ed6388c88eb53a08d7bde9e1f1284b38"
+bytes = "188032"
 
 [[asset]]
 path = "kaykit-hexagon/building_tavern_green.glb"
@@ -1390,6 +1560,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "04752b85abfeeb43905e04827c418bf05e23aa7b9e934ba293889a010b4ef101"
+bytes = "188032"
 
 [[asset]]
 path = "kaykit-hexagon/building_tavern_red.glb"
@@ -1398,6 +1569,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b8b94eeeb17246b08866c0b237dd9db6b4548b75fb986652fba7a65ff68fb733"
+bytes = "188028"
 
 [[asset]]
 path = "kaykit-hexagon/building_tavern_yellow.glb"
@@ -1406,6 +1578,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c5cc7e2a1d9bf9beaa2da466d0dbc14d9dd1f90ba15bd1f687698492167cdcb2"
+bytes = "188036"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_A_blue.glb"
@@ -1414,6 +1587,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "caa74b7a8bbefe8006cfa8ca8afa3eb1caeece938abad1db16b6dcc0cf5afb67"
+bytes = "130752"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_A_green.glb"
@@ -1422,6 +1596,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6a1a6f0f090e573014ca3dc27aac8d37c0a987fed4178bd1d1ef6bfe409fe405"
+bytes = "130756"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_A_red.glb"
@@ -1430,6 +1605,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8d0f1e1ed5ec581d583e7a62c0a19d9ec99a8596e0190f00be1ae30db3396cb8"
+bytes = "130748"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_A_yellow.glb"
@@ -1438,6 +1614,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cb6e7d2ab5cb0e8bc4d6af0e93fa8392173708ad831c48e107732e3e164694a7"
+bytes = "130760"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_B_blue.glb"
@@ -1446,6 +1623,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7c3b77e382176f599cf257dec32deedb35843bedb26bd8ba16dbf3666c32b1d8"
+bytes = "148848"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_B_green.glb"
@@ -1454,6 +1632,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "90eff887cada10ab6d7023bcb8fbec03264d58d5e16766983d7b02f34751d7e9"
+bytes = "148852"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_B_red.glb"
@@ -1462,6 +1641,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b57a62067b92984fa242c9c41fa134c01198c635bb9399d09830d0757e195616"
+bytes = "148844"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_B_yellow.glb"
@@ -1470,6 +1650,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c13e0c7c57c1d30f2c00ec9c22e875f337891a727ad3dce41f2daba8d17600f4"
+bytes = "148856"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_base_blue.glb"
@@ -1478,6 +1659,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ea7225066d0b8b1f52504630100a7b4c0517775a35aaf74d3165ef78892456d0"
+bytes = "98860"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_base_green.glb"
@@ -1486,6 +1668,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1b827d144c8e00f728485aa47756939711ecd96b5b0c8c7dde92674cc6991594"
+bytes = "98860"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_base_red.glb"
@@ -1494,6 +1677,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "434a37bf71bfefe7d8083ee368d3024ead32497e59623b9af25c05b7fd61520c"
+bytes = "98856"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_base_yellow.glb"
@@ -1502,6 +1686,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "419801d15e1e6e7c9872934ba225c3513b7d647e465160a6aed5a23f3525fa58"
+bytes = "98864"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_catapult_blue.glb"
@@ -1510,6 +1695,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9dd201c29bdcc1bf22a47928da1d7401e4d3c6436eceb69ed4e334cce4da3dab"
+bytes = "163908"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_catapult_green.glb"
@@ -1518,6 +1704,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6927b02b9d324de8163015fc9f813e35c5ddb596db3bf3b415ee855cd43a6013"
+bytes = "163916"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_catapult_red.glb"
@@ -1526,6 +1713,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6523a425e0a8152db58eadd1773d45646b18814be69a9af5b7ab5e5d73cb17ea"
+bytes = "163904"
 
 [[asset]]
 path = "kaykit-hexagon/building_tower_catapult_yellow.glb"
@@ -1534,6 +1722,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5290ec409964ea4c9f49c9bfc7011ae09248cf4838577747fd510cb1649ffef8"
+bytes = "163920"
 
 [[asset]]
 path = "kaykit-hexagon/building_watermill_blue.glb"
@@ -1542,6 +1731,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2785ecba55b1ba24536c7b563759e3f79c65338881fccd4360ff5d3c89bbed1e"
+bytes = "129328"
 
 [[asset]]
 path = "kaykit-hexagon/building_watermill_green.glb"
@@ -1550,6 +1740,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ed33bb0c8e71e53adeed455a2dc7c650da1d92955cca7baf7316554688bff215"
+bytes = "129332"
 
 [[asset]]
 path = "kaykit-hexagon/building_watermill_red.glb"
@@ -1558,6 +1749,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "91aa11a330c7646a66a30802cca2cedc6cdf482a5650674852f51eb63f887f8d"
+bytes = "129324"
 
 [[asset]]
 path = "kaykit-hexagon/building_watermill_yellow.glb"
@@ -1566,6 +1758,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f914d8e40441a2ea9b770b9a0e9a51f2ef4d8ed04d76f3e28549e4aa0ade56d2"
+bytes = "129336"
 
 [[asset]]
 path = "kaykit-hexagon/building_well_blue.glb"
@@ -1574,6 +1767,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "09a1002bdb1da5e83d8812f8c078e0aa886e7654b2c889e29361d64515ecdc3b"
+bytes = "59520"
 
 [[asset]]
 path = "kaykit-hexagon/building_well_green.glb"
@@ -1582,6 +1776,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a7755ec6ab4b895f4b77c178190dcf577e485eab4ca64571c268e8fd088bf00f"
+bytes = "59520"
 
 [[asset]]
 path = "kaykit-hexagon/building_well_red.glb"
@@ -1590,6 +1785,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0453bf3e167bf9c1128ab031bf5b97f3ba5ba521cbadcd255d5b6f48bab119fa"
+bytes = "59516"
 
 [[asset]]
 path = "kaykit-hexagon/building_well_yellow.glb"
@@ -1598,6 +1794,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cbe6a4c603fda7e84529930873c31cee5401d7fb7601a850ab2bcddab69a9332"
+bytes = "59524"
 
 [[asset]]
 path = "kaykit-hexagon/building_windmill_blue.glb"
@@ -1606,6 +1803,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "48ffb49842c6217f38aa127243d25cc408eb663f15fc5d4f23f4ee5944679fad"
+bytes = "160444"
 
 [[asset]]
 path = "kaykit-hexagon/building_windmill_green.glb"
@@ -1614,6 +1812,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3201d828f99dee1e90f53290784ae9ce23daec055f171e6b5040c5eac6896d2e"
+bytes = "160452"
 
 [[asset]]
 path = "kaykit-hexagon/building_windmill_red.glb"
@@ -1622,6 +1821,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "414cb442ff6808afeec720863ba45c4e67b6297f88c537e23095ec11abfdbb14"
+bytes = "160440"
 
 [[asset]]
 path = "kaykit-hexagon/building_windmill_yellow.glb"
@@ -1630,6 +1830,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0c1ce3e7859c83b7fbb6239090fec90509a9601c3ecad11e151dd814b1b6a596"
+bytes = "160456"
 
 [[asset]]
 path = "kaykit-hexagon/cloud_big.glb"
@@ -1638,6 +1839,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "114b639be8560e98b25932b6b5c2d64b4f44f88b53250676cab4fe23a54a9cdc"
+bytes = "31992"
 
 [[asset]]
 path = "kaykit-hexagon/cloud_small.glb"
@@ -1646,6 +1848,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2802d080384fd42fa35f8056f8ab50765d0e339e2cf876d4ab8242151237f8d5"
+bytes = "25268"
 
 [[asset]]
 path = "kaykit-hexagon/crate_A_big.glb"
@@ -1654,6 +1857,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d6f81dcfb2b73eda64eb061f844991401fd65e16fcb109c9458e503ed38ec57a"
+bytes = "24156"
 
 [[asset]]
 path = "kaykit-hexagon/crate_A_small.glb"
@@ -1662,6 +1866,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3f79b72d538ad0243b29aa069fec1cf96b168742c9c384da20cb4ac2d63fa08e"
+bytes = "24156"
 
 [[asset]]
 path = "kaykit-hexagon/crate_B_big.glb"
@@ -1670,6 +1875,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "30ccaba8f2a62990f8837d2f031c0914f213b9a9a525aaa9afd81a324d107e63"
+bytes = "24156"
 
 [[asset]]
 path = "kaykit-hexagon/crate_B_small.glb"
@@ -1678,6 +1884,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "78ede5cc71618ba31ebc3a8d9ee46cfd268ef8969a185c6111fcc52ececa9d8c"
+bytes = "24156"
 
 [[asset]]
 path = "kaykit-hexagon/crate_long_A.glb"
@@ -1686,6 +1893,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f5daca0e3c5e2d66f2cd49db89a55ea70d4e9a71836f86b442ccc07d6cc16523"
+bytes = "31348"
 
 [[asset]]
 path = "kaykit-hexagon/crate_long_B.glb"
@@ -1694,6 +1902,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7c247630daf68526e0ef0cc970e4345f3a64d4e93e4371d633660ed642e72e8b"
+bytes = "31348"
 
 [[asset]]
 path = "kaykit-hexagon/crate_long_C.glb"
@@ -1702,6 +1911,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9a4c62eecc22f31f80be4ceb5e5ef6836b35835329ab3e44c821ad488159eabf"
+bytes = "27504"
 
 [[asset]]
 path = "kaykit-hexagon/crate_long_empty.glb"
@@ -1710,6 +1920,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6d333be858e004709267cc06dedd5291294d696613b0ed04dca5e963b0c83fa5"
+bytes = "19828"
 
 [[asset]]
 path = "kaykit-hexagon/crate_open.glb"
@@ -1718,6 +1929,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0371ec11df389fa759716905c4646af2e2a8c5439782d7f3090645b628e27472"
+bytes = "29212"
 
 [[asset]]
 path = "kaykit-hexagon/fence_stone_straight.glb"
@@ -1726,6 +1938,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5aae2e1d96a4c5f383d5d8ffaab04280c960321380ce75135decd66c5080ae37"
+bytes = "30972"
 
 [[asset]]
 path = "kaykit-hexagon/fence_stone_straight_gate.glb"
@@ -1734,6 +1947,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "286b10e1dc4d72ab257f4038a109dd220a55a7f97083e8cdc37c4ecb35bec562"
+bytes = "34096"
 
 [[asset]]
 path = "kaykit-hexagon/fence_wood_straight.glb"
@@ -1742,6 +1956,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ec6c5cf68357f8e3b6f4bac9db061530ca61019587711f21fae2a289d1385774"
+bytes = "32184"
 
 [[asset]]
 path = "kaykit-hexagon/fence_wood_straight_gate.glb"
@@ -1750,6 +1965,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "08a0cf6b8223f6292b3ef74d5f33e848caca0b22411a66ffcdb1b5a1656bed86"
+bytes = "37364"
 
 [[asset]]
 path = "kaykit-hexagon/flag_blue.glb"
@@ -1758,6 +1974,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1d9774c3ef53ba210a006bed960208940a3c2f7375d683d6fe23bdf630cd986d"
+bytes = "19592"
 
 [[asset]]
 path = "kaykit-hexagon/flag_green.glb"
@@ -1766,6 +1983,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "38bdfcb1ed4062075d02c77eacd3e55f47cd929568de6c7fb90c49427213ccba"
+bytes = "19596"
 
 [[asset]]
 path = "kaykit-hexagon/flag_red.glb"
@@ -1774,6 +1992,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1ea6f0ed6fae0abce3be87209efe773bf23e5b6f57d41a3c4c9448cb7f3cf701"
+bytes = "19592"
 
 [[asset]]
 path = "kaykit-hexagon/flag_yellow.glb"
@@ -1782,6 +2001,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8e76be427e262acc1f111ac74c4f7a48ab7060f7b1666c29ccf6fc9655e5143e"
+bytes = "19596"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_A.glb"
@@ -1790,6 +2010,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d8eb0b6121af382f34846bdb4f2f40738c0ec7266058acdf7308e7ea315bf643"
+bytes = "22832"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_A_waterless.glb"
@@ -1798,6 +2019,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "88cceb57ede81b78cc193df021ea9509be82171b1573571f98d7e1f3ad366019"
+bytes = "22580"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_B.glb"
@@ -1806,6 +2028,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8eb927e05e23298a141d139b3208ba10db98ad24a6170f64e1e258c283a1b0ef"
+bytes = "22504"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_B_waterless.glb"
@@ -1814,6 +2037,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5aef46c6740fb0eed659752aa64c0d698cb679716a2fba8f4215ece0d70a9de0"
+bytes = "22652"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_C.glb"
@@ -1822,6 +2046,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "84dc7d1f6e778d0ed1f94dc0087e582f1261391839a216d3eb8950f78b52c7d8"
+bytes = "22616"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_C_waterless.glb"
@@ -1830,6 +2055,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a99fc76846e619ffe9807450984d3f78e21fa5a1c366bc866adc595d4e40e6d6"
+bytes = "22460"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_D.glb"
@@ -1838,6 +2064,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2339ea168f6c61db96332ed749339d080caefaa9f12d0f00f77bc48bcf689849"
+bytes = "21912"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_D_waterless.glb"
@@ -1846,6 +2073,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3285096324e96f81cc8edf36ec49a7d16b8620d24ac19d3439c552c39f025e3a"
+bytes = "21704"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_E.glb"
@@ -1854,6 +2082,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7636898f5fcf6ecd6aafe415f96b630d1f25866621325d343a99328ebf511667"
+bytes = "21384"
 
 [[asset]]
 path = "kaykit-hexagon/hex_coast_E_waterless.glb"
@@ -1862,6 +2091,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "956fecd1ff68618d191c76552001210b106f697027d51f051166de8f455a3917"
+bytes = "21404"
 
 [[asset]]
 path = "kaykit-hexagon/hex_grass.glb"
@@ -1870,6 +2100,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6776a0eaf91eacf84c8e56c3ea54e005012e707d5efb679576c7c2943798facc"
+bytes = "19528"
 
 [[asset]]
 path = "kaykit-hexagon/hex_grass_bottom.glb"
@@ -1878,6 +2109,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5ddd1d3d3b21e807d2f74059fd4ad2243e7ff63f7294e78e3140be8aa5d30c80"
+bytes = "18376"
 
 [[asset]]
 path = "kaykit-hexagon/hex_grass_sloped_high.glb"
@@ -1886,6 +2118,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cebe582a01a93ca72ecf870088adbe1e712f76142aec08f9e718ed020ea1bd0d"
+bytes = "19192"
 
 [[asset]]
 path = "kaykit-hexagon/hex_grass_sloped_low.glb"
@@ -1894,6 +2127,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "94ee277be7bb5fd3d1f2c6a45114fc8f9662aaf7b365c2875257f47df6e4323e"
+bytes = "19128"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_A.glb"
@@ -1902,6 +2136,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "71c92346fbff6ec663940efb1c5761562a6c40d27bbc11bc7c7434c3ebadc510"
+bytes = "21848"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_A_curvy.glb"
@@ -1910,6 +2145,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e80b2b3b149ee099dcfd7d0998f27f69c8b27a97150a57980088e3e5714d750b"
+bytes = "26216"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_A_curvy_waterless.glb"
@@ -1918,6 +2154,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "73373628710f720102e8426532b75325f5e52cccbe265fe59f9610089ca43592"
+bytes = "24292"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_A_waterless.glb"
@@ -1926,6 +2163,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "da2dc3f18e18045c3986794304facea564e8e7f36558f023b0e542c60e47e371"
+bytes = "20628"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_B.glb"
@@ -1934,6 +2172,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cad030cd1b192fa501d8dcb36c66af0ba6ee63e7179d3be3b1ab567013c6ad6f"
+bytes = "25580"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_B_waterless.glb"
@@ -1942,6 +2181,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f31cfe9e44071c75379e5b512c1e31571fd20e0f244cecc057dc7aa9e212c37a"
+bytes = "23888"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_C.glb"
@@ -1950,6 +2190,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bb5449a66983b614697810786a943e884ee5dd10890fdfd6f25eeb65519fe73d"
+bytes = "25580"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_C_waterless.glb"
@@ -1958,6 +2199,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b360072534914c9a9040d5fcfdd018cb194f29826caadc43e4fd02d39a24b507"
+bytes = "23572"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_D.glb"
@@ -1966,6 +2208,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "47954163c30a8c757c4acffdd8751270f942f3dc7ad24a27eb0b6c86a5df31cc"
+bytes = "27228"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_D_waterless.glb"
@@ -1974,6 +2217,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "697822258556534a9eba705949383a5439fc75331effc359b3a52374ca9a4eff"
+bytes = "24740"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_E.glb"
@@ -1982,6 +2226,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "16c56f8facdb1359bf065b0fa70138347e37bb342594b2f4e85c1ad03ec7382a"
+bytes = "25972"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_E_waterless.glb"
@@ -1990,6 +2235,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "aae1684918cb10c513598a66f7abb1d2b842d630114b337f270bd5285f1b6e57"
+bytes = "23352"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_F.glb"
@@ -1998,6 +2244,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0ecce0514b64e2715cef48601c03cc329fd36515c0682e0c79fa1377575a82cc"
+bytes = "25972"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_F_waterless.glb"
@@ -2006,6 +2253,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "09f6dce8f49ccce97e559b05cc3e4d3ea05fcb41371dc34ff3b6e024ad6042ff"
+bytes = "23352"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_G.glb"
@@ -2014,6 +2262,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f7d224c9a11b2b3ef822cd240b87a70f70fbde41f3d79255426d589fdaecb756"
+bytes = "27932"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_G_waterless.glb"
@@ -2022,6 +2271,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7ba1039b00e95296a88f2f414deef77cc1ef7885f88e1020b42add43fdb701b0"
+bytes = "25180"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_H.glb"
@@ -2030,6 +2280,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7af3b696574e65d8b043b3b3baee4086ebf58354848467ca6eb1cc5372fcac67"
+bytes = "29472"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_H_waterless.glb"
@@ -2038,6 +2289,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a917d97650e67f504296aaeaf26573c53ddb5a6dbf612def06deb8973040d61e"
+bytes = "26064"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_I.glb"
@@ -2046,6 +2298,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "dbdce2dc63acf8bd000dfa5fd311e93fc92d06ffd5285f8fd30b911afc86802a"
+bytes = "29504"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_I_waterless.glb"
@@ -2054,6 +2307,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "22706ab7e83dcfb81d67a5b77596bb5d647999cd18a7d6156da6d3b61f3d620c"
+bytes = "26096"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_J.glb"
@@ -2062,6 +2316,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3ec4f0716ef076025248509e98a51b1e6ac1cccccd6f5dc3b363d1ef7038af30"
+bytes = "28172"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_J_waterless.glb"
@@ -2070,6 +2325,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "db9ff732735fb5caa50aa50f79534ecb0df3c8bba11fc306e9e9dafa9c4e4967"
+bytes = "24668"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_K.glb"
@@ -2078,6 +2334,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "14d60aa52995bf44542f1d68f1bfbf8ff6cafca7ec5a00139ee9fba3a93eb002"
+bytes = "31708"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_K_waterless.glb"
@@ -2086,6 +2343,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cce3e9fae7c299b7f91c322f39e553c9ea5f99529479bbee060e93e36ee27bf8"
+bytes = "27392"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_L.glb"
@@ -2094,6 +2352,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "67648d95e463cbe372f9d760d5bc8ae03866d922312d0f89ba52bdfac7eba96d"
+bytes = "34256"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_L_waterless.glb"
@@ -2102,6 +2361,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1213a7059da56f03bc0ca49ba55315a77099fc6d965245955a99882ca8f29655"
+bytes = "28712"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_crossing_A.glb"
@@ -2110,6 +2370,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5bdcd47c341cd4655278597d9194d9ab20687f8fd9e4fac63b7e405a804c0ef5"
+bytes = "25156"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_crossing_A_waterless.glb"
@@ -2118,6 +2379,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2b2a90e396a540323a1398cc5514000cf37a752daf98fb65a2573b2144201e28"
+bytes = "23784"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_crossing_B.glb"
@@ -2126,6 +2388,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "737e64203be3881e536b2279617f6975b84ac7d11504d9ae33dc56eb9fdf6938"
+bytes = "25156"
 
 [[asset]]
 path = "kaykit-hexagon/hex_river_crossing_B_waterless.glb"
@@ -2134,6 +2397,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "52d5334b84f0295817bc56cd1e9fe29206326da1510217c46d0fc4a92f79d49f"
+bytes = "23784"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_A.glb"
@@ -2142,6 +2406,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f1bdf7aad8a8af5a5ae21d3de975c81219541766e74a799351d61229bc3f22d0"
+bytes = "20808"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_A_sloped_high.glb"
@@ -2150,6 +2415,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ea1e64432a22ce999f0c7b2577e532e2e0b085507c95167f349a287e6ad8a000"
+bytes = "22652"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_A_sloped_low.glb"
@@ -2158,6 +2424,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ba542b072b772d2a2671a22f76586278774863835ed359873ee5347edb2d4be6"
+bytes = "22756"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_B.glb"
@@ -2166,6 +2433,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "365ee2367f9ef6fa969d60a716032702c150a179cea959558097f5eb54876393"
+bytes = "23408"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_C.glb"
@@ -2174,6 +2442,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "adc581e2eab02ae9e6f3530f3b09d1da52fc977bb88cc75524261db69476409f"
+bytes = "23696"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_D.glb"
@@ -2182,6 +2451,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6c28e647b9a7ca06e495f2aeb97bc34cf9010f6b098d35bc5889eee29338fd89"
+bytes = "25320"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_E.glb"
@@ -2190,6 +2460,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "916454ffdd546c0f084ee9390c0507c295968249e9f3e1cac7d490691cb228bc"
+bytes = "24408"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_F.glb"
@@ -2198,6 +2469,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "06c63f53360213a9f268e490e69f3b2bc8b2e19a2eb58c800b1f9bb83d11e8e6"
+bytes = "24408"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_G.glb"
@@ -2206,6 +2478,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "654d12ee19761cd3bb79fe1688f60c79caa166a32e4bf7cc773ade391aac1187"
+bytes = "24992"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_H.glb"
@@ -2214,6 +2487,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f48800c781ed9f8aac0118c6335219a3192de10c9a968168fb9eab2a7033c685"
+bytes = "27140"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_I.glb"
@@ -2222,6 +2496,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e9ee99c7bff72bafc952f61ebeeef0ac86cf5bf6ab8c890e2a4316e6cf65d672"
+bytes = "27040"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_J.glb"
@@ -2230,6 +2505,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "de240a82b395dd8e8e1aa1ecf502031762ffc49df1ad66bd692a873f320d901f"
+bytes = "25840"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_K.glb"
@@ -2238,6 +2514,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "174899d3dc559270b6b813762cad485cc62833ed569a674f37de2d823a8bbbc8"
+bytes = "28500"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_L.glb"
@@ -2246,6 +2523,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6167aef1e6403a39d0efd27c13726b24f8db36696a4cb368c2e7a68d07a399be"
+bytes = "30588"
 
 [[asset]]
 path = "kaykit-hexagon/hex_road_M.glb"
@@ -2254,6 +2532,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d08ac78c65d97deff76f239f0c85b49ec745184d467522a11bdd622b4b98f8a7"
+bytes = "21888"
 
 [[asset]]
 path = "kaykit-hexagon/hex_water.glb"
@@ -2262,6 +2541,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "429f40d6ad8b071154ce240fb7ee70f1c51072544fa4bc6e50338025ed0aefbb"
+bytes = "18576"
 
 [[asset]]
 path = "kaykit-hexagon/hill_single_A.glb"
@@ -2270,6 +2550,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6c6e65a35489c067b8b607df6d738f6089a31e039668ccf9a363b8608fbc5afb"
+bytes = "20340"
 
 [[asset]]
 path = "kaykit-hexagon/hill_single_B.glb"
@@ -2278,6 +2559,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d4754a04fc8d5dd27b2cf5ddfbe6e077ab30af29b2fb133b4af787e5883bd40b"
+bytes = "20404"
 
 [[asset]]
 path = "kaykit-hexagon/hill_single_C.glb"
@@ -2286,6 +2568,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2bd23f622617912f730b58d31348233d559e6688e30d072876d5a2ecb467c7ff"
+bytes = "20432"
 
 [[asset]]
 path = "kaykit-hexagon/hills_A.glb"
@@ -2294,6 +2577,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "128ddf64e45d9aeda83366ea4126a3fbc2a4ac21f13af5540c6c305909fd9990"
+bytes = "39204"
 
 [[asset]]
 path = "kaykit-hexagon/hills_A_trees.glb"
@@ -2302,6 +2586,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f70a36da650fa34f54556aed85b3621ac59423eafe477da74448d0936e1e184b"
+bytes = "48184"
 
 [[asset]]
 path = "kaykit-hexagon/hills_B.glb"
@@ -2310,6 +2595,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7a2055b4392c14c7e2a03552a94f749758bde7a68aaea14e178fa29cf4c5710b"
+bytes = "30408"
 
 [[asset]]
 path = "kaykit-hexagon/hills_B_trees.glb"
@@ -2318,6 +2604,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6eac72100380e6d88c880d77905b04e2d4bfd0c94cb42b866f8d508747584344"
+bytes = "42380"
 
 [[asset]]
 path = "kaykit-hexagon/hills_C.glb"
@@ -2326,6 +2613,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e1e1927f36c52113ff4927fed3bb5beef4b98a7e5cfb348ac35f576cdcc96446"
+bytes = "31536"
 
 [[asset]]
 path = "kaykit-hexagon/hills_C_trees.glb"
@@ -2334,6 +2622,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "81549be2dfcb277556268c80a1c184d847860e2190e1926b229852de0ed3e6b4"
+bytes = "56536"
 
 [[asset]]
 path = "kaykit-hexagon/ladder.glb"
@@ -2342,6 +2631,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "11e2e18935076ef9e97e3171a9c801c61759313eb4fa9282d83947ab75d0052b"
+bytes = "23024"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_A.glb"
@@ -2350,6 +2640,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "43d43d6dd3c10b7b95d4170b8c6eb1a33eb25a16c5ddd780f48e6477109842a0"
+bytes = "24776"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_A_grass.glb"
@@ -2358,6 +2649,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c7286e86e0ffee7472380393dcd32fe9758d5010abeba7ccfddff6f7f80eabfc"
+bytes = "32520"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_A_grass_trees.glb"
@@ -2366,6 +2658,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8eaadf669f9e271294cc4ff1c160f9a22117927973d730e6204c7ae6739032f0"
+bytes = "44492"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_B.glb"
@@ -2374,6 +2667,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "934cdb91f86b4777d26cac1a5364af8d3b8a20cd82f0722b41b6b5af9a385cc0"
+bytes = "24776"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_B_grass.glb"
@@ -2382,6 +2676,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "568b1aa87d9c295b1fd6171049b6ffb4cbf881ee5cd429a8dcfa6180e2bffe7b"
+bytes = "32392"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_B_grass_trees.glb"
@@ -2390,6 +2685,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "88d3e06716f616453c0c209d19d7853878689bf56c0939d89ea4c7c6650a2be0"
+bytes = "50348"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_C.glb"
@@ -2398,6 +2694,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4ccc09be09ee1c5181a04a62ed5c447772b2f4c2d318294d02f418a6143c5cc2"
+bytes = "29868"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_C_grass.glb"
@@ -2406,6 +2703,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e4917afaf8263c301983cfdf91619468ac6fbd2a9afb80577ba36366b129cd4b"
+bytes = "42568"
 
 [[asset]]
 path = "kaykit-hexagon/mountain_C_grass_trees.glb"
@@ -2414,6 +2712,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "de40ed44d4a700b127a95ca66e012f4f421551867727a74b7cef1ead2e99bd57"
+bytes = "60528"
 
 [[asset]]
 path = "kaykit-hexagon/pallet.glb"
@@ -2422,6 +2721,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "263a1dfa78827a0ab7e5bc47e26349e5b4b8ecfba2e0b66612b3827de4a3db9f"
+bytes = "22164"
 
 [[asset]]
 path = "kaykit-hexagon/projectile_catapult.glb"
@@ -2430,6 +2730,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8a135dcec3891ed12f555eb69e5bb768951d14fddfb27dc03f44e35c2346387a"
+bytes = "29436"
 
 [[asset]]
 path = "kaykit-hexagon/resource_lumber.glb"
@@ -2438,6 +2739,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "35d409b7e37b65290370b79b3b16a42d5c779b80f27665899495ac57305f9021"
+bytes = "29040"
 
 [[asset]]
 path = "kaykit-hexagon/resource_stone.glb"
@@ -2446,6 +2748,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "328a92da40815d6e6ac027caef093808d5e1414add1d68a6d9bd01ebd75a0f79"
+bytes = "28716"
 
 [[asset]]
 path = "kaykit-hexagon/rock_single_A.glb"
@@ -2454,6 +2757,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "52f11de10e23c822e1bffafb87d7d0190a0f10598be7505ad790f92c637b5adc"
+bytes = "18364"
 
 [[asset]]
 path = "kaykit-hexagon/rock_single_B.glb"
@@ -2462,6 +2766,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "22fcdc84a14d9174a2ad66d3e00f10946e5286547a108cb97fdc40310ee75191"
+bytes = "18788"
 
 [[asset]]
 path = "kaykit-hexagon/rock_single_C.glb"
@@ -2470,6 +2775,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "74dd1556f0abf9326269e324231fd6893b1a048fb48e97ad66ce1190b4c2b585"
+bytes = "19348"
 
 [[asset]]
 path = "kaykit-hexagon/rock_single_D.glb"
@@ -2478,6 +2784,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b4b0671d7d3a2947ef65c108a2332b5d30654129a52b7f8d8ef8f2b624cde5c0"
+bytes = "18508"
 
 [[asset]]
 path = "kaykit-hexagon/rock_single_E.glb"
@@ -2486,6 +2793,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4a766d558c692db53746f2b7990ae3a2b436f8bd5839a250baea91b1ab9ba7af"
+bytes = "21460"
 
 [[asset]]
 path = "kaykit-hexagon/sack.glb"
@@ -2494,6 +2802,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "478b37ab0f0efa917b1ea094bda9fa6d94b882a796dd54375e1019424734b204"
+bytes = "20380"
 
 [[asset]]
 path = "kaykit-hexagon/target.glb"
@@ -2502,6 +2811,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "727175932a11ab533a545ed93dc9e01cc98b5b0c4c28e375fe72f2e6bdf58adc"
+bytes = "24232"
 
 [[asset]]
 path = "kaykit-hexagon/tent.glb"
@@ -2510,6 +2820,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a598ed17263eb92457ac959e12da8c21535f41295c88f12586ed36216d150756"
+bytes = "23268"
 
 [[asset]]
 path = "kaykit-hexagon/tree_single_A.glb"
@@ -2518,6 +2829,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "32b0424396af804b5898b13f9170cfc466e224b7c9249b864ac64498e07a9336"
+bytes = "20496"
 
 [[asset]]
 path = "kaykit-hexagon/tree_single_A_cut.glb"
@@ -2526,6 +2838,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9744de4449b22320771b662d13549663505a68c4744ba70c64722c00166a0576"
+bytes = "18212"
 
 [[asset]]
 path = "kaykit-hexagon/tree_single_B.glb"
@@ -2534,6 +2847,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3d8404ca06582a8acf9f10abf8795185baf447c9e247901ffcfa16b189f43a15"
+bytes = "24520"
 
 [[asset]]
 path = "kaykit-hexagon/tree_single_B_cut.glb"
@@ -2542,6 +2856,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b4a4a5ad41d81077f0292910a1b3c5eb4cc8267a87b4d8522dfda5fede7453e6"
+bytes = "18960"
 
 [[asset]]
 path = "kaykit-hexagon/trees_A_cut.glb"
@@ -2550,6 +2865,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5ae33349f4c5dd06651f767d6540c4acf892afe8bead718f007d4be226f89c1c"
+bytes = "36160"
 
 [[asset]]
 path = "kaykit-hexagon/trees_A_large.glb"
@@ -2558,6 +2874,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3d7f487c2352516745f7957daf8836f63fe58dcd548cd970c99ccce94475a3e6"
+bytes = "74184"
 
 [[asset]]
 path = "kaykit-hexagon/trees_A_medium.glb"
@@ -2566,6 +2883,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9c99873dabdf5e641f0c436b97a5cc46c2729710fc6ebab76470b092193231f9"
+bytes = "48840"
 
 [[asset]]
 path = "kaykit-hexagon/trees_A_small.glb"
@@ -2574,6 +2892,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7798857134268de98c8259ad4911dde93b84c55916e19720071572ad9802161f"
+bytes = "45668"
 
 [[asset]]
 path = "kaykit-hexagon/trees_B_cut.glb"
@@ -2582,6 +2901,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "26eb0d1b5aeae99451c414b4f38d9ae5425f5a4fcdf490dc3be89e096fa411ee"
+bytes = "29888"
 
 [[asset]]
 path = "kaykit-hexagon/trees_B_large.glb"
@@ -2590,6 +2910,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "dce9b0ccad15de07701f57ac92b67919e8ce4a1311f48788a92b9c4da7216f95"
+bytes = "69120"
 
 [[asset]]
 path = "kaykit-hexagon/trees_B_medium.glb"
@@ -2598,6 +2919,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8cfb72a4a66f875c1594c5bc675def06b6bd29331aa52836effbafbd3d4e3bf4"
+bytes = "54256"
 
 [[asset]]
 path = "kaykit-hexagon/trees_B_small.glb"
@@ -2606,6 +2928,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "66fa6bdd30d877e44391184c49170b94dc88b1cbe3f2877615c851a12cfc3ef9"
+bytes = "39324"
 
 [[asset]]
 path = "kaykit-hexagon/wall_corner_A_gate.glb"
@@ -2614,6 +2937,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "66324d502226faa918f7f26276cefc99171f9284ac9f5ad5947a08ebf41cf63b"
+bytes = "64480"
 
 [[asset]]
 path = "kaykit-hexagon/wall_corner_A_inside.glb"
@@ -2622,6 +2946,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6d8447aad7438640beb61792c739caa0a539f3ce5b5598d72b517e9896b96112"
+bytes = "38504"
 
 [[asset]]
 path = "kaykit-hexagon/wall_corner_A_outside.glb"
@@ -2630,6 +2955,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b579627cd99b41cd4d7276a1237d55f0c0d9d32fdd836f08b68f7a12457e9ad1"
+bytes = "41944"
 
 [[asset]]
 path = "kaykit-hexagon/wall_corner_B_inside.glb"
@@ -2638,6 +2964,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ab48570370477cfd1956f3fb1078000659fa4a8578b04af0e208fd8860144f03"
+bytes = "33824"
 
 [[asset]]
 path = "kaykit-hexagon/wall_corner_B_outside.glb"
@@ -2646,6 +2973,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2a2355a4ddfffb8816d816e44e7bd0ac9973d8ff0e77030c9a2d669397ef73a8"
+bytes = "39908"
 
 [[asset]]
 path = "kaykit-hexagon/wall_straight.glb"
@@ -2654,6 +2982,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5226c562ca4ab382b9eea03046c6238e61f95bd7afb534b7b14b8019d80bb720"
+bytes = "48192"
 
 [[asset]]
 path = "kaykit-hexagon/wall_straight_gate.glb"
@@ -2662,6 +2991,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e5184cc1d6089f3e03cde7f7c77afd548fadaad3d6a6e79d19ae462f31266fc2"
+bytes = "65956"
 
 [[asset]]
 path = "kaykit-hexagon/waterlily_A.glb"
@@ -2670,6 +3000,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "00a94dc6ebe0fc51b2c4bbb9e40af13e1c7eea4f289d7c0c6197f0fdb6d7daee"
+bytes = "19748"
 
 [[asset]]
 path = "kaykit-hexagon/waterlily_B.glb"
@@ -2678,6 +3009,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a5d3c96c2633776a9b85487ba176ee359121107e76b55de899f0c6ff3c2e6c0b"
+bytes = "19972"
 
 [[asset]]
 path = "kaykit-hexagon/waterplant_A.glb"
@@ -2686,6 +3018,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "15bf98cb14447e3638dad92e8dc0591d5e2d214dbacbb4f23b554a0555482c02"
+bytes = "20144"
 
 [[asset]]
 path = "kaykit-hexagon/waterplant_B.glb"
@@ -2694,6 +3027,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1403b2a5801b987420c8589ba4b770d924731b8683d5e188322dffce0b78f359"
+bytes = "22964"
 
 [[asset]]
 path = "kaykit-hexagon/waterplant_C.glb"
@@ -2702,6 +3036,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "85a803ca46c532e5dce47fa6602eccbe504f95c33ab921bb10a686db09c3a06c"
+bytes = "29012"
 
 [[asset]]
 path = "kaykit-hexagon/weaponrack.glb"
@@ -2710,6 +3045,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "196e8aa2c0b949cae4c2d461abe59478619cf70c19845862d133ae75962d87ff"
+bytes = "20072"
 
 [[asset]]
 path = "kaykit-hexagon/wheelbarrow.glb"
@@ -2718,6 +3054,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d9937e0448abf4ffc728df95f388d136c0d3f42b273b1885460ad79b2eff5703"
+bytes = "36172"
 
 [[asset]]
 path = "kaykit-builder/base.glb"
@@ -2726,6 +3063,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7c28a8ccd0cf1f5b7fff62b8d13da40d6d00a57f6f5f51ff782a886ce39f14d0"
+bytes = "24596"
 
 [[asset]]
 path = "kaykit-builder/bench.glb"
@@ -2734,6 +3072,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b56310a9a59e96fdaa5b06bdbf338d488df01bdc842aee12a3c9edcc3bbf10e8"
+bytes = "24064"
 
 [[asset]]
 path = "kaykit-builder/box_A.glb"
@@ -2742,6 +3081,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "820f4b1edd908ae34a600899b9d61216c07eb0b5204eaa624125328f2fad8a0d"
+bytes = "23496"
 
 [[asset]]
 path = "kaykit-builder/box_B.glb"
@@ -2750,6 +3090,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4ecccd83d3331d8116d4cd8f78594a9d697cdd9992954e2a8bf051edc79bfef8"
+bytes = "22596"
 
 [[asset]]
 path = "kaykit-builder/building_A.glb"
@@ -2758,6 +3099,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1a9c11f6b3626cfd0c8456ee92c1294a4ee4555255f6d58ad3733575e319d48c"
+bytes = "70692"
 
 [[asset]]
 path = "kaykit-builder/building_A_withoutBase.glb"
@@ -2766,6 +3108,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b744bad34548653e4dd36b494cfd26f2725c5b8fdb2582ea003720311e559f34"
+bytes = "50100"
 
 [[asset]]
 path = "kaykit-builder/building_B.glb"
@@ -2774,6 +3117,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "93d2de78a601300dc6a51d7b8eb8eb27ff5989870a5df0585dac56b3637b5ea7"
+bytes = "86652"
 
 [[asset]]
 path = "kaykit-builder/building_B_withoutBase.glb"
@@ -2782,6 +3126,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "08fb3b15f147daea40a18cfb972086fb0a97017b4d9ad81d3d5d536f16587bb0"
+bytes = "60128"
 
 [[asset]]
 path = "kaykit-builder/building_C.glb"
@@ -2790,6 +3135,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b9109e528999776cb501c74a65a6724902de53dae4f59cdfad10f7815c64ab80"
+bytes = "82692"
 
 [[asset]]
 path = "kaykit-builder/building_C_withoutBase.glb"
@@ -2798,6 +3144,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ecef11619d4066b00dc18d4b3ab25c5ee8646c71e6f143d87089211db542ce8d"
+bytes = "64832"
 
 [[asset]]
 path = "kaykit-builder/building_D.glb"
@@ -2806,6 +3153,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "03200b5e6958aac65566b8a51429b35c72fa59e25ace955c6f827a6cab491e3e"
+bytes = "91012"
 
 [[asset]]
 path = "kaykit-builder/building_D_withoutBase.glb"
@@ -2814,6 +3162,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ae924955c49b21aa50c23af4c9fe99def025933196a2749a898ee06da5d040b8"
+bytes = "76960"
 
 [[asset]]
 path = "kaykit-builder/building_E.glb"
@@ -2822,6 +3171,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "92ec3bebb68154bab3b57a07eb9c9c028e7f9e818a97d2acecd62c04a72736d7"
+bytes = "106056"
 
 [[asset]]
 path = "kaykit-builder/building_E_withoutBase.glb"
@@ -2830,6 +3180,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1b9602a4a2ba52350b1edfb5f2473728e570248989b1a7f5b6a6fc7d4ba68647"
+bytes = "83368"
 
 [[asset]]
 path = "kaykit-builder/building_F.glb"
@@ -2838,6 +3189,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b74890ce064ca75c1c6647b0a7b00e4f085e16b2c4821b30543717bce069efe5"
+bytes = "105488"
 
 [[asset]]
 path = "kaykit-builder/building_F_withoutBase.glb"
@@ -2846,6 +3198,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "40cb9e7532ce34b1f7409c46cb7ee0e8b3eef34bde0bee6ce16ea8086fa7399f"
+bytes = "92472"
 
 [[asset]]
 path = "kaykit-builder/building_G.glb"
@@ -2854,6 +3207,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ae13034ded770443f3c9df8706e6ee81da449c712cb54b02cf8a93688438ec8d"
+bytes = "124932"
 
 [[asset]]
 path = "kaykit-builder/building_G_withoutBase.glb"
@@ -2862,6 +3216,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5474818b38818b5fbbfcdbd7e3abdfd3b0eda4c599bd6c784caa825723c8583a"
+bytes = "90160"
 
 [[asset]]
 path = "kaykit-builder/building_H.glb"
@@ -2870,6 +3225,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "743095df8c52411b4c0a011436bc13fe557e1490a47ab974ab0e587357679c70"
+bytes = "139284"
 
 [[asset]]
 path = "kaykit-builder/building_H_withoutBase.glb"
@@ -2878,6 +3234,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2ebff4be3eb2524b825dc5eddcab06f9639ba988173daaeee5ebc0ce6cd1c690"
+bytes = "108160"
 
 [[asset]]
 path = "kaykit-builder/bush.glb"
@@ -2886,6 +3243,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fa2ec58f9f2f7e7a0b8f773e7e4125ff12d01415bb7f26c858068358d477320e"
+bytes = "24292"
 
 [[asset]]
 path = "kaykit-builder/car_hatchback.glb"
@@ -2894,6 +3252,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e392463018faa77ec81826fb5692624f1a376d4c80803d7caf4411ce47b7ba4b"
+bytes = "77908"
 
 [[asset]]
 path = "kaykit-builder/car_police.glb"
@@ -2902,6 +3261,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "68957993120f39e4c9c08db59a115ea941c38d94034987867a8ce438d32476c5"
+bytes = "86496"
 
 [[asset]]
 path = "kaykit-builder/car_sedan.glb"
@@ -2910,6 +3270,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "def472c798f66465ff79010f2af33fef938df1c5d1e783d46ae68f09024e9e48"
+bytes = "79656"
 
 [[asset]]
 path = "kaykit-builder/car_stationwagon.glb"
@@ -2918,6 +3279,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2e57b08cc214982b7c659f4e8527d37f6d6ba1a09d511074fb61d490f175070c"
+bytes = "80532"
 
 [[asset]]
 path = "kaykit-builder/car_taxi.glb"
@@ -2926,6 +3288,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5aa2c506b8b17d6ca3d903973c716185412ad8d46ddd93ad4ea7d5de6442042c"
+bytes = "83020"
 
 [[asset]]
 path = "kaykit-builder/dumpster.glb"
@@ -2934,6 +3297,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f4eaee82f18074468c4d39674add33fd5836ea460c94174bbf9969480e8aabda"
+bytes = "29424"
 
 [[asset]]
 path = "kaykit-builder/firehydrant.glb"
@@ -2942,6 +3306,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3eaeca370a5fca5d7db6b8efde9a1ebc32e4aefcf2832b272bc20626978690e0"
+bytes = "29328"
 
 [[asset]]
 path = "kaykit-builder/road_corner.glb"
@@ -2950,6 +3315,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1e460f1e6072df02a10765ac3bbc06d4f35ab2edf44a409444629f5aab70e915"
+bytes = "28584"
 
 [[asset]]
 path = "kaykit-builder/road_corner_curved.glb"
@@ -2958,6 +3324,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0be11e99ea22aa293c9b7e617c3ba68b2c61d6590d4ebaca1eedec4589e890a9"
+bytes = "29160"
 
 [[asset]]
 path = "kaykit-builder/road_junction.glb"
@@ -2966,6 +3333,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c9649c184d1e404511a3ce881f992c47dfbc841cf7004ed562c474114e83b748"
+bytes = "30924"
 
 [[asset]]
 path = "kaykit-builder/road_straight.glb"
@@ -2974,6 +3342,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "01fcc84f3646aa594545b00ecea9aeb0da286af2ed1432bc66f645145e525dd3"
+bytes = "24856"
 
 [[asset]]
 path = "kaykit-builder/road_straight_crossing.glb"
@@ -2982,6 +3351,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "90fd99ee323b78764126c230cbaf34176ec3f4f912e009b4e06a99819e99eaf5"
+bytes = "25284"
 
 [[asset]]
 path = "kaykit-builder/road_tsplit.glb"
@@ -2990,6 +3360,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4242a7347379d5385edf5ef9adf07f5e6faa0620b9efef5dfa6da51dd2c7f1fb"
+bytes = "28728"
 
 [[asset]]
 path = "kaykit-builder/streetlight.glb"
@@ -2998,6 +3369,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "85d005e4809a6bd571c3c11c004ab252500e6b976af113e904723e14cba2b261"
+bytes = "28408"
 
 [[asset]]
 path = "kaykit-builder/trafficlight_A.glb"
@@ -3006,6 +3378,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "321e155594937694427b381ab7b07555071a2bdfda348a256e93491300235d25"
+bytes = "51944"
 
 [[asset]]
 path = "kaykit-builder/trafficlight_B.glb"
@@ -3014,6 +3387,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "145d23e1e40afdb3f19b537e21ef89503beadc0cacf8769c24046dc9cb406da7"
+bytes = "56872"
 
 [[asset]]
 path = "kaykit-builder/trafficlight_C.glb"
@@ -3022,6 +3396,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "705761628ef53ba8c506ccc2d817d981b6544be781763669052d10f15f965b7b"
+bytes = "45412"
 
 [[asset]]
 path = "kaykit-builder/trash_A.glb"
@@ -3030,6 +3405,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a44c35ce0f2f3c47ea73c293b24845b06d11771f8cef9c96d78772e5e84fc368"
+bytes = "21864"
 
 [[asset]]
 path = "kaykit-builder/trash_B.glb"
@@ -3038,6 +3414,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "047e7144ce8dbcd565a8b8162e777adbcf70822c4a79477d56891cf1daee56ad"
+bytes = "21868"
 
 [[asset]]
 path = "kaykit-builder/watertower.glb"
@@ -3046,6 +3423,7 @@ source = "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/tre
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bb78297f10ebfc8c9a2fc79ab8fb462c64f2eb4bfe4c2c3d486b4ab7eb44857f"
+bytes = "29540"
 
 [[asset]]
 path = "kenney-castle/bridge-draw.glb"
@@ -3054,6 +3432,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d7cded1ab137c118fa9df8c1e5321480fa4170c88cd93901fd324bd3d7f39d27"
+bytes = "12340"
 
 [[asset]]
 path = "kenney-castle/bridge-straight-pillar.glb"
@@ -3062,6 +3441,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "73243308f8154da9a8d7a16d111574197b5913d3add15902a576b81f34b2fcec"
+bytes = "21552"
 
 [[asset]]
 path = "kenney-castle/bridge-straight.glb"
@@ -3070,6 +3450,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "524fcf2ace571b6b668fdef028916095d8ba77f828b98a02ba048e6c09d42e0e"
+bytes = "24044"
 
 [[asset]]
 path = "kenney-castle/door.glb"
@@ -3078,6 +3459,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "71afb0b53ad8f8deaec5b723f051d77e2b2a320beb60d83a5c13c3d16f25a1f9"
+bytes = "24180"
 
 [[asset]]
 path = "kenney-castle/flag-banner-long.glb"
@@ -3086,6 +3468,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fe1159ab0f9019c112269d3b0c6129f718f55d5f05a7c34fade97529eabe2871"
+bytes = "13852"
 
 [[asset]]
 path = "kenney-castle/flag-banner-short.glb"
@@ -3094,6 +3477,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "27117d115f425f648aa9f0bd5a4202bc1aa2ac7ecebc5d01d5cb060dd52f7347"
+bytes = "13856"
 
 [[asset]]
 path = "kenney-castle/flag-pennant.glb"
@@ -3102,6 +3486,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7874dca1bc9d12db3cc1556ac637f519d5c305bb9742bb428416ce3209238508"
+bytes = "20764"
 
 [[asset]]
 path = "kenney-castle/flag-wide.glb"
@@ -3110,6 +3495,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3567b99f5c6ad45549c388d72c5ba7dc4483b971f354b04503219e15e293890e"
+bytes = "32572"
 
 [[asset]]
 path = "kenney-castle/flag.glb"
@@ -3118,6 +3504,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "737b179cc594b031558d07d72aa17ef54a24ddc9e05392fb884397aa95940e81"
+bytes = "22308"
 
 [[asset]]
 path = "kenney-castle/gate.glb"
@@ -3126,6 +3513,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cc4eb4dfcfce366f73bf34c5f0810d766c2cec86a11471b6cb1d4055c0a516d6"
+bytes = "21092"
 
 [[asset]]
 path = "kenney-castle/ground-hills.glb"
@@ -3134,6 +3522,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "53e7dda2b8d3304c5a0bda00fbce9614f17b3d83e22f227b9286da7f35f5809c"
+bytes = "19808"
 
 [[asset]]
 path = "kenney-castle/ground.glb"
@@ -3142,6 +3531,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "483b6c69961d5fdfb248da8433a3d84f998983b7bf3cae8a7e20e14a60400507"
+bytes = "9048"
 
 [[asset]]
 path = "kenney-castle/metal-gate.glb"
@@ -3150,6 +3540,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "45b449ca1f0a8fd91ba1b4520a546ae6c90ffd16600d8af4d11dbc0a6259d6a5"
+bytes = "30452"
 
 [[asset]]
 path = "kenney-castle/rocks-large.glb"
@@ -3158,6 +3549,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cdb9a81ead1ced7bb2757055303befa498b836427ad6617eca46f1e5fb589aa4"
+bytes = "23276"
 
 [[asset]]
 path = "kenney-castle/rocks-small.glb"
@@ -3166,6 +3558,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "985aa8fd440f2720c0149c4cac00334ce7068c21b209201e3c07e06a9a7958ba"
+bytes = "22264"
 
 [[asset]]
 path = "kenney-castle/siege-ballista-demolished.glb"
@@ -3174,6 +3567,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d237b17b8cbd2fa491ba8f6c43add7660ab6c8b46f480e7c0530950f7f1031f3"
+bytes = "61692"
 
 [[asset]]
 path = "kenney-castle/siege-ballista.glb"
@@ -3182,6 +3576,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "22e0c347291e2d0b8939d9a0d43a2ac2939c9e0cb953f20ca3059ee2bcf61484"
+bytes = "70500"
 
 [[asset]]
 path = "kenney-castle/siege-catapult-demolished.glb"
@@ -3190,6 +3585,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "034f11642f0193622e3ef202e767692e6f1ce657c3488e7278cde1b7265b695f"
+bytes = "78396"
 
 [[asset]]
 path = "kenney-castle/siege-catapult.glb"
@@ -3198,6 +3594,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1bf267a2d264b4062cf97bf15c023fc86f19adb923a4acb7df6e4994250f2e93"
+bytes = "91288"
 
 [[asset]]
 path = "kenney-castle/siege-ram-demolished.glb"
@@ -3206,6 +3603,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3b4a1a7b1090268fa35ba394f49db55128a45624575af3447721559f151f5ad3"
+bytes = "75184"
 
 [[asset]]
 path = "kenney-castle/siege-ram.glb"
@@ -3214,6 +3612,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4c6c7d23c84280038f5c62f107dd5f43e561647aa01e660c61e6a8da4325929e"
+bytes = "107900"
 
 [[asset]]
 path = "kenney-castle/siege-tower-demolished.glb"
@@ -3222,6 +3621,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9bd03d0d3a31b4ddd0547d75b559c9c3ecaad400262f6e37e50ff4c104e37643"
+bytes = "126872"
 
 [[asset]]
 path = "kenney-castle/siege-tower.glb"
@@ -3230,6 +3630,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "864e12792264dd602289af8f48089a1c0cdf5b4836cde818143e909bf5b74d84"
+bytes = "149564"
 
 [[asset]]
 path = "kenney-castle/siege-trebuchet-demolished.glb"
@@ -3238,6 +3639,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "37000fb0efed6cfb3874c72e71d63f883e0b66bc40ae6fc5aa5f6864041459af"
+bytes = "73160"
 
 [[asset]]
 path = "kenney-castle/siege-trebuchet.glb"
@@ -3246,6 +3648,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a8e7e730013544d8cad93e1169d8db9d0124de3c35b72060ea6b6367fe9b860b"
+bytes = "143332"
 
 [[asset]]
 path = "kenney-castle/stairs-stone-square.glb"
@@ -3254,6 +3657,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6763e8288cf0d1193bb67d6fae06e36d8610dfd322cf5f2d3c9aa85a1083f91b"
+bytes = "16768"
 
 [[asset]]
 path = "kenney-castle/stairs-stone.glb"
@@ -3262,6 +3666,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "48f0ca2c6b034fb016acfd3e4c3eab51517de0a502077ceb8cc0c7242e51b176"
+bytes = "17052"
 
 [[asset]]
 path = "kenney-castle/tower-base.glb"
@@ -3270,6 +3675,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5df77e55dc4b11ce518b27eddd1b50839ea8bb2eadf7e195d0e4b06ce738ed51"
+bytes = "48904"
 
 [[asset]]
 path = "kenney-castle/tower-hexagon-base.glb"
@@ -3278,6 +3684,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f5ded9947d3ce780ff778e1a53620b069a2bb63bc496df39d538493473bb15a2"
+bytes = "15516"
 
 [[asset]]
 path = "kenney-castle/tower-hexagon-mid.glb"
@@ -3286,6 +3693,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "62e7b7bd966980e75cbcaaf0e2699192c5f5e6aa3c90b57e32ed9d58aefed742"
+bytes = "40784"
 
 [[asset]]
 path = "kenney-castle/tower-hexagon-roof-secondary.glb"
@@ -3294,6 +3702,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6eab0f189354788e3d55c867e604919d562ee7692c984417a024c1ee84628b77"
+bytes = "19728"
 
 [[asset]]
 path = "kenney-castle/tower-hexagon-roof.glb"
@@ -3302,6 +3711,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f5811e66b6bcc87b9d6590d0a3c9d3035bcf7029b28a2d3824c617d5d6b1634f"
+bytes = "15516"
 
 [[asset]]
 path = "kenney-castle/tower-hexagon-top-wood.glb"
@@ -3310,6 +3720,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a33fadfaa2a730856522a968c98a1acef7ed3e9aec5510ca9b1855548cf5e47c"
+bytes = "21004"
 
 [[asset]]
 path = "kenney-castle/tower-hexagon-top.glb"
@@ -3318,6 +3729,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b02c990196d3121f01f5ff1a3107d87443b20bd75dbb0bd0e63e8aa8fb5bea3c"
+bytes = "21004"
 
 [[asset]]
 path = "kenney-castle/tower-slant-roof.glb"
@@ -3326,6 +3738,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2c17953817a7a07f43358401658cc543215705b3c6197f10775fa6495daf18db"
+bytes = "54512"
 
 [[asset]]
 path = "kenney-castle/tower-square-arch.glb"
@@ -3334,6 +3747,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "91387328d18a3ff2655781b1835189c21b0922988860bbb23980a018beafa34a"
+bytes = "36940"
 
 [[asset]]
 path = "kenney-castle/tower-square-base-border.glb"
@@ -3342,6 +3756,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e32f0ae152c2b1ddf4a2e826e97523b8d2ec483cb89798a09fed5a22c5a88ecd"
+bytes = "10904"
 
 [[asset]]
 path = "kenney-castle/tower-square-base-color.glb"
@@ -3350,6 +3765,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b0ea369379b55fe59c7b9584f2772a60c301f377c22e3e7aad02414158f8fbb5"
+bytes = "14124"
 
 [[asset]]
 path = "kenney-castle/tower-square-base.glb"
@@ -3358,6 +3774,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b7a27feb07342b7c13c6f4c2501b9ad654b0ca1f47c95b666e8a6494b9d4c163"
+bytes = "11676"
 
 [[asset]]
 path = "kenney-castle/tower-square-mid-color.glb"
@@ -3366,6 +3783,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "278480134d54bbccdb3e95fa9b9685ce29c796cc1e7db8c25186e6debec87385"
+bytes = "12596"
 
 [[asset]]
 path = "kenney-castle/tower-square-mid-door.glb"
@@ -3374,6 +3792,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bbdfd4887fa97c32b000bbde6357ebceccdc059a5ab5d51945c26a19d278ca4d"
+bytes = "36208"
 
 [[asset]]
 path = "kenney-castle/tower-square-mid-open-simple.glb"
@@ -3382,6 +3801,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "660028ff53ba1299b68325679867c6d6dd6018a8ed1add36ed7763b2d499c468"
+bytes = "26964"
 
 [[asset]]
 path = "kenney-castle/tower-square-mid-open.glb"
@@ -3390,6 +3810,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7474fb01b21c623094606e9774fc9bf0eb7e8910ce6da8af50e0c3124fe98676"
+bytes = "30784"
 
 [[asset]]
 path = "kenney-castle/tower-square-mid-windows.glb"
@@ -3398,6 +3819,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5fb43c018da41fc0b7fc17ef070bf475e6f8006322c9fa4370a13c6f58dffbe9"
+bytes = "38064"
 
 [[asset]]
 path = "kenney-castle/tower-square-mid.glb"
@@ -3406,6 +3828,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "019539cbf8a558677b7c4e2562900262f05f084ae6315d1522ac2e404d9fd61d"
+bytes = "14956"
 
 [[asset]]
 path = "kenney-castle/tower-square-roof.glb"
@@ -3414,6 +3837,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "99d0c3a191205f74eea16dc5c242f80bddefaa00b7e37530c00c4955789bb63f"
+bytes = "21252"
 
 [[asset]]
 path = "kenney-castle/tower-square-top-color.glb"
@@ -3422,6 +3846,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "41d2b05de56ded2a7731d983cb2c1c875dabf7788185988cdacc7a3a3287ff6e"
+bytes = "21300"
 
 [[asset]]
 path = "kenney-castle/tower-square-top-roof-high-windows.glb"
@@ -3430,6 +3855,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "00de1242319d9cc22bc775ebe845e657b550245bd07e31efefa78f30e2740112"
+bytes = "30000"
 
 [[asset]]
 path = "kenney-castle/tower-square-top-roof-high.glb"
@@ -3438,6 +3864,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "86dc3fd119c7c9fdc9a6582d16d337943ae2fff2e42b0f76c0bfb2cd3c9a24f7"
+bytes = "18500"
 
 [[asset]]
 path = "kenney-castle/tower-square-top-roof-rounded.glb"
@@ -3446,6 +3873,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1dafe6351ed4a0eb2bd10dd50bdff52672ee9bf2e3ceec4d8ec6ea18995c30a0"
+bytes = "18512"
 
 [[asset]]
 path = "kenney-castle/tower-square-top-roof.glb"
@@ -3454,6 +3882,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1997c721d47258c1636eab73c41075f78ababca6df9ed1ebd16e8df58ce0632e"
+bytes = "18468"
 
 [[asset]]
 path = "kenney-castle/tower-square-top.glb"
@@ -3462,6 +3891,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "64f1fc91b4441d063db031f3353ab71294c4a0756a5c6ee0ab8931a7cc926d8b"
+bytes = "20492"
 
 [[asset]]
 path = "kenney-castle/tower-square.glb"
@@ -3470,6 +3900,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3091468125473036f27fef70ebeb041f7964f92d37e12fc80aecc2ed959608ae"
+bytes = "23784"
 
 [[asset]]
 path = "kenney-castle/tower-top.glb"
@@ -3478,6 +3909,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "62a91103578a70ffce65fcc1100c1556b0a7caeac54e15798632897a1cc313f1"
+bytes = "34624"
 
 [[asset]]
 path = "kenney-castle/tree-large.glb"
@@ -3486,6 +3918,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3eee2ebfc2083b304caf1deae55f60b840bc71f7fc2c8358d30db9f0ed8fa3d1"
+bytes = "28432"
 
 [[asset]]
 path = "kenney-castle/tree-log.glb"
@@ -3494,6 +3927,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0146a7d7c7bb793b9333d0ee9642b6340e9dc0a46c6a904320b35dd9be74fdc4"
+bytes = "15084"
 
 [[asset]]
 path = "kenney-castle/tree-small.glb"
@@ -3502,6 +3936,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8a5fed35d8bf95d56621e41f526748eea5d146cb53fb2b9dd3c407ae50db44f4"
+bytes = "23000"
 
 [[asset]]
 path = "kenney-castle/tree-trunk.glb"
@@ -3510,6 +3945,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "34b6500a3d246c4e52ba8bf056191d14430d0a21c2e9c084d8c03897c3c35bc4"
+bytes = "12808"
 
 [[asset]]
 path = "kenney-castle/wall-corner-half-tower.glb"
@@ -3518,6 +3954,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6f9bc2bd61e0e729e9fc71b1f8bc10b3911906899d87f08112f26f3458b6de2f"
+bytes = "87196"
 
 [[asset]]
 path = "kenney-castle/wall-corner-half.glb"
@@ -3526,6 +3963,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "048eed66efe35f97cc09d3829f3c01bb0eb5df3716770474f64d3e613d32bda9"
+bytes = "20192"
 
 [[asset]]
 path = "kenney-castle/wall-corner-slant.glb"
@@ -3534,6 +3972,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fa2585aa5f3763c800e9e7ae585f8e324d24c7ab0cacaad9f05d523f64390d3e"
+bytes = "23244"
 
 [[asset]]
 path = "kenney-castle/wall-corner.glb"
@@ -3542,6 +3981,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "29e37795d40c0a950349c9fba0d3cc7d3dfa8c16c722c0cb76be27ae3d0c0a90"
+bytes = "22484"
 
 [[asset]]
 path = "kenney-castle/wall-doorway.glb"
@@ -3550,6 +3990,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c7befe6054402b9d4bf2f1792f573f370131f0ea73b21c66f6907b0ed966360f"
+bytes = "44776"
 
 [[asset]]
 path = "kenney-castle/wall-half-modular.glb"
@@ -3558,6 +3999,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "601fa4ef3f8e97c42601f62e0a80589e9633a337225593ef2f4af3a27b1aceae"
+bytes = "15236"
 
 [[asset]]
 path = "kenney-castle/wall-half.glb"
@@ -3566,6 +4008,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fea4afbaadec6880a49a5a803d3647684d479e9b655465afeeb5d51e5b98809e"
+bytes = "19348"
 
 [[asset]]
 path = "kenney-castle/wall-narrow-corner.glb"
@@ -3574,6 +4017,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4fa95c7f3e8c7d16c09476ec63ef60d5cdc0ad9e7d2fba4dc8419d62cf15ece9"
+bytes = "16600"
 
 [[asset]]
 path = "kenney-castle/wall-narrow-gate.glb"
@@ -3582,6 +4026,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "eae01c7aae504f890c16f2cf6b2f742290cdd29de40425439993e96d1d323e33"
+bytes = "24312"
 
 [[asset]]
 path = "kenney-castle/wall-narrow-stairs-rail.glb"
@@ -3590,6 +4035,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c6d2ab55084c0cf948ae47fa6b0bd2bc63b72a9539e57b7eb3d13d99625f2e52"
+bytes = "48108"
 
 [[asset]]
 path = "kenney-castle/wall-narrow-stairs.glb"
@@ -3598,6 +4044,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "310530cbe31b4097f18b8de4a63117b7c42223c90200a4a7f4ee7b4a33fb4643"
+bytes = "34184"
 
 [[asset]]
 path = "kenney-castle/wall-narrow-wood-fence.glb"
@@ -3606,6 +4053,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2e2e7874f496226801bf70898add587457cf624b2f104df8f97b0416d56ec78b"
+bytes = "40204"
 
 [[asset]]
 path = "kenney-castle/wall-narrow-wood.glb"
@@ -3614,6 +4062,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6213c2444cf49118bb5ceca4107a518524b70c756242132904d7a31227cd8cc4"
+bytes = "34028"
 
 [[asset]]
 path = "kenney-castle/wall-narrow.glb"
@@ -3622,6 +4071,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "eb942ab16bf4cd9992a56338781fe44c7bac7be97b73665b8eb46b7bd61ec6b0"
+bytes = "19372"
 
 [[asset]]
 path = "kenney-castle/wall-pillar.glb"
@@ -3630,6 +4080,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2785432f0c2a14429f1c68a5b2d505c17118677b6b36ff958a9b54c52eae8094"
+bytes = "25372"
 
 [[asset]]
 path = "kenney-castle/wall-stud.glb"
@@ -3638,6 +4089,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6eef17d22f32b070b7d3c7b0b11faea61d80e06b58557536f3154f44e55542aa"
+bytes = "10436"
 
 [[asset]]
 path = "kenney-castle/wall-to-narrow.glb"
@@ -3646,6 +4098,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "998465418235380f91d9635364296a865be12047254f303035ad8916de9600dc"
+bytes = "26988"
 
 [[asset]]
 path = "kenney-castle/wall.glb"
@@ -3654,6 +4107,7 @@ source = "https://kenney.nl/assets/castle-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e615e438bcb8edb3c406db26fa4c7fbf6ec4e81d8affedee7a3bf80f0687127f"
+bytes = "23768"
 
 [[asset]]
 path = "kenney-hexagon/bridge.glb"
@@ -3662,6 +4116,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "928cc7601af78e539171ec9620fa267138e77ba27cd1cba3b300af04b8cf6979"
+bytes = "46820"
 
 [[asset]]
 path = "kenney-hexagon/building-archery.glb"
@@ -3670,6 +4125,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a1c929a3f963c14ebe8ab59f569b9a4fecd95c26cc7fe399c22657cbc7c72ac3"
+bytes = "69104"
 
 [[asset]]
 path = "kenney-hexagon/building-cabin.glb"
@@ -3678,6 +4134,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "abac7fa53253056a585e0f88918bec0fc7b4684e6bde23397c9a462e1b236477"
+bytes = "54300"
 
 [[asset]]
 path = "kenney-hexagon/building-castle.glb"
@@ -3686,6 +4143,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "252118b1becaab175836bcbc9a01e000b14d145799df3787e9c0e6dafb3f71e5"
+bytes = "99068"
 
 [[asset]]
 path = "kenney-hexagon/building-dock.glb"
@@ -3694,6 +4152,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b657b19638ecb9f4cffbb524e341981d74c73677ec9f3f915e85426371895a26"
+bytes = "39464"
 
 [[asset]]
 path = "kenney-hexagon/building-farm.glb"
@@ -3702,6 +4161,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8d26f627f5a0c1e7d1c7e39f20d672b2a6e2109c16febb03439ddafa2b9d79b3"
+bytes = "29288"
 
 [[asset]]
 path = "kenney-hexagon/building-house.glb"
@@ -3710,6 +4170,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "95bd71684502f535434ee2a6dd06161261f96715fb86ba543f0f77c26b670c35"
+bytes = "45932"
 
 [[asset]]
 path = "kenney-hexagon/building-market.glb"
@@ -3718,6 +4179,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "df24f0ca75514e4794ec61844f22e752db68fb0d5f0c5d4660711b956b5ed97d"
+bytes = "62752"
 
 [[asset]]
 path = "kenney-hexagon/building-mill.glb"
@@ -3726,6 +4188,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ee11dc0166d22dfc6fa6519b41c778c3c2a0cc56d1b77ebd5b5e70f0b5d3c8c9"
+bytes = "58232"
 
 [[asset]]
 path = "kenney-hexagon/building-mine.glb"
@@ -3734,6 +4197,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e099360e9ffe58d033d66ee750a19ba1d53b49fb2d6957f1d42dd5b605f345e3"
+bytes = "43292"
 
 [[asset]]
 path = "kenney-hexagon/building-port.glb"
@@ -3742,6 +4206,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "036de30dbc6f02d63380d23ac90276fb54fbe59086482224e9476f18420cf0a1"
+bytes = "48612"
 
 [[asset]]
 path = "kenney-hexagon/building-sheep.glb"
@@ -3750,6 +4215,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "92d89ac15178e216cabb57e8b4068613eed863c33e5c16649ed204387455baa7"
+bytes = "81976"
 
 [[asset]]
 path = "kenney-hexagon/building-smelter.glb"
@@ -3758,6 +4224,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "73b4eb4142bfcfafacb0402b511e845c1d79bd98f03c5676cd91860a501dc49a"
+bytes = "53356"
 
 [[asset]]
 path = "kenney-hexagon/building-tower.glb"
@@ -3766,6 +4233,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "04cbff9748161a4d5505e56e5aa660e4fa5b5842b99c5b65eca32fd857111313"
+bytes = "61388"
 
 [[asset]]
 path = "kenney-hexagon/building-village.glb"
@@ -3774,6 +4242,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6a6cef8aeb8685c74e3d9ddbb11d03adea96a3a84073309c847341c32ec77aa5"
+bytes = "50780"
 
 [[asset]]
 path = "kenney-hexagon/building-wall.glb"
@@ -3782,6 +4251,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c7bc2a2f8a51f4a6e6b21c73030eb9aff452bc4587ad6e0388a8cf3ee95ef6de"
+bytes = "75064"
 
 [[asset]]
 path = "kenney-hexagon/building-walls.glb"
@@ -3790,6 +4260,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d10ead90b866464cce6ed4b51af1f099772ae8d20e24cd55a41fc5ef1360feb9"
+bytes = "119168"
 
 [[asset]]
 path = "kenney-hexagon/building-watermill.glb"
@@ -3798,6 +4269,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7aee39cdf7ae6d5083a431ba642e7b09731b879f17039a6234d798ad3f98f1fc"
+bytes = "65688"
 
 [[asset]]
 path = "kenney-hexagon/building-wizard-tower.glb"
@@ -3806,6 +4278,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "04db1fb4867c4f01c3567f1f20d17a44f57f0a2b5ef95e606632f2b42fa5c76e"
+bytes = "99380"
 
 [[asset]]
 path = "kenney-hexagon/dirt-lumber.glb"
@@ -3814,6 +4287,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b55e3a137d58b6fb973e016260a63763f33d44407cd626f04928d8106b70cb5e"
+bytes = "45396"
 
 [[asset]]
 path = "kenney-hexagon/dirt.glb"
@@ -3822,6 +4296,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a0c44d4e12dd49ccf22d4f6cab75c41a7a6262da4c503e0d80c5969f90aeb219"
+bytes = "13988"
 
 [[asset]]
 path = "kenney-hexagon/grass-forest.glb"
@@ -3830,6 +4305,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b5c0640984bb18e81f3d07aa494b46bfb9d092ec455962cf88dde0b34be39e5a"
+bytes = "56200"
 
 [[asset]]
 path = "kenney-hexagon/grass-hill.glb"
@@ -3838,6 +4314,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "21b502c2eb1b99225d43f3ae147ff0b13a6f84c1e32ae73c7076b1e7cce12100"
+bytes = "44648"
 
 [[asset]]
 path = "kenney-hexagon/grass.glb"
@@ -3846,6 +4323,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6f82794aa808babe96355d23cc132daff290c3e864ce7d3c659dfa422322da82"
+bytes = "15176"
 
 [[asset]]
 path = "kenney-hexagon/path-corner-sharp.glb"
@@ -3854,6 +4332,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1ef7702306e74648e86a336e0f444287ae45292ddb0b1387fd7986e45127bb20"
+bytes = "15988"
 
 [[asset]]
 path = "kenney-hexagon/path-corner.glb"
@@ -3862,6 +4341,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e9336906e32493e1c40d370fe84c83de25dc5de341986e3fc2da4ec2f54f0952"
+bytes = "15716"
 
 [[asset]]
 path = "kenney-hexagon/path-crossing.glb"
@@ -3870,6 +4350,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1638760598dcc73513a2233ca9f17f7d721b82089059137504be1b2bad1aaf31"
+bytes = "20200"
 
 [[asset]]
 path = "kenney-hexagon/path-end.glb"
@@ -3878,6 +4359,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8b4c3e037f6b24caa2fc6a13b7fcc8e69f64bf57471edeb31d66d5c8c7a246e6"
+bytes = "14220"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionA.glb"
@@ -3886,6 +4368,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7cbda5f6a607c8d90794ccd2235f34af7ee42414384f4d9a740174d901d7de7a"
+bytes = "16736"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionB.glb"
@@ -3894,6 +4377,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "42697bc0536e11130dcb8ec48b5af81eb1a29c0f72d3fcbd666bfe15ac914e7b"
+bytes = "16676"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionC.glb"
@@ -3902,6 +4386,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "77d9ddf425bfea64d3f13f5fcb53600a0a652ea9dfe14fdfaaef8e193973bf33"
+bytes = "16676"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionD.glb"
@@ -3910,6 +4395,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "df4b272af51e96da551606002f5b3e4bb8bc2d6dfb8e06341e002c307ac753dc"
+bytes = "17916"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionE.glb"
@@ -3918,6 +4404,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0ae1b7de139eb603023f271f46f25c69dec6def9b737dcd212a52693c793b994"
+bytes = "17916"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionF.glb"
@@ -3926,6 +4413,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "03e7ab361fbb8664cf344c1d9dbe495120e03f85f2d5841836c8fe334854b90e"
+bytes = "17292"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionG.glb"
@@ -3934,6 +4422,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "30276cfb33f8faa26258b7304eab3fad6ed3dbd36a50297ce2a5f067361cd711"
+bytes = "19212"
 
 [[asset]]
 path = "kenney-hexagon/path-intersectionH.glb"
@@ -3942,6 +4431,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b54f24c3c8f921c9b550125b3ad5c50ccb0be05e09e0e61875f860f1217845b9"
+bytes = "17716"
 
 [[asset]]
 path = "kenney-hexagon/path-square-end.glb"
@@ -3950,6 +4440,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "59275bd589907aef1594d6474af85fd354ad2fb235dee87a0f5bb8f006daeb6a"
+bytes = "15500"
 
 [[asset]]
 path = "kenney-hexagon/path-square.glb"
@@ -3958,6 +4449,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fcaea114e2180a8939499d86c5aa98ff5e579915de01a0619510eb0b2a320142"
+bytes = "16720"
 
 [[asset]]
 path = "kenney-hexagon/path-start.glb"
@@ -3966,6 +4458,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e78203ca88b02788e15df1cf013bcfd428b831ea354147e9b25e145481ccb2b0"
+bytes = "15124"
 
 [[asset]]
 path = "kenney-hexagon/path-straight.glb"
@@ -3974,6 +4467,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a2ba347c4742467f4de6bd70f3997b3b0eabc6a7d051c8a052e08e9ae3a9c8b6"
+bytes = "15212"
 
 [[asset]]
 path = "kenney-hexagon/river-corner-sharp.glb"
@@ -3982,6 +4476,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f2b8b8934bd1353fd0be7b0c1f2cd534dd56d74c264d2d4c94f0831516c49af8"
+bytes = "22660"
 
 [[asset]]
 path = "kenney-hexagon/river-corner.glb"
@@ -3990,6 +4485,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2b95650e5dcd7d96051bd464fcafe4982e1633e3715053f538d1a5eb42078967"
+bytes = "22672"
 
 [[asset]]
 path = "kenney-hexagon/river-crossing.glb"
@@ -3998,6 +4494,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0a50fe2108e6ef9b1c7cead1109cd19c70d3f26fdb52c5ebd196b69f43904a51"
+bytes = "31820"
 
 [[asset]]
 path = "kenney-hexagon/river-end.glb"
@@ -4006,6 +4503,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "508d6e10385c84e4233c147d3634f0fe6deb111cde5000a705b85da6db9528a4"
+bytes = "19412"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionA.glb"
@@ -4014,6 +4512,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "da8c2f5fac6ff9f755e402eecabe004e6f0d5c2c1b33cd77c237c33726930bd5"
+bytes = "24540"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionB.glb"
@@ -4022,6 +4521,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c9b2cff6050081a5e852d36c6cf7c75eeeae6a32e28c5e874fbdcc421a53fbdd"
+bytes = "29980"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionC.glb"
@@ -4030,6 +4530,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1d8ca2d75ed9ac2a7600f5189c12fc4b80620460a6c4f3e5cf29e0740a2f56cf"
+bytes = "24560"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionD.glb"
@@ -4038,6 +4539,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ecd4cb49e0fbc04032a1115aa8fb2f932fbe0d4b25ed0f6f5c2a8f13658a2084"
+bytes = "27828"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionE.glb"
@@ -4046,6 +4548,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "46fd843c79a140b75ee82e693ef89c33a0a3896892850344b269eea5d6462c64"
+bytes = "27708"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionF.glb"
@@ -4054,6 +4557,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5a44b04a6db26822d5ba22053c6597e05baa6492fa1323a79c598f9862ba31a8"
+bytes = "26508"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionG.glb"
@@ -4062,6 +4566,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "34807870c78b92467aa9f542326bce0b4ac4a90016b09ba828b05248c9b96d41"
+bytes = "30196"
 
 [[asset]]
 path = "kenney-hexagon/river-intersectionH.glb"
@@ -4070,6 +4575,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "31b62854309d4fb40768c6314724d462fe9c3ad1d1f25d296030ffd5a670c184"
+bytes = "27096"
 
 [[asset]]
 path = "kenney-hexagon/river-start.glb"
@@ -4078,6 +4584,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1a6703d4d1360104dbe4d2a3fb5a04a14b044fff92d48435d610403c517e2b80"
+bytes = "20720"
 
 [[asset]]
 path = "kenney-hexagon/river-straight.glb"
@@ -4086,6 +4593,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "992106342081a4686baf0c4400be508f7e59fd87a5f0cd7e1bd7ae8d0129348c"
+bytes = "21616"
 
 [[asset]]
 path = "kenney-hexagon/sand-desert.glb"
@@ -4094,6 +4602,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "415dc88f83d475d9669934c1a768947fcffb268bbc7bfbbe81c89b3dc5e405fa"
+bytes = "35980"
 
 [[asset]]
 path = "kenney-hexagon/sand-rocks.glb"
@@ -4102,6 +4611,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e77c8fabed2640cab7c8329c28dcbbc0cc78db4daa53cd23192a134b30761d35"
+bytes = "20148"
 
 [[asset]]
 path = "kenney-hexagon/sand.glb"
@@ -4110,6 +4620,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d06aae664655e39db59b74285bbb831c393637a2aa0d460330782425798f4c6c"
+bytes = "15172"
 
 [[asset]]
 path = "kenney-hexagon/stone-hill.glb"
@@ -4118,6 +4629,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bf61274060c5374bb17a04b5a4851e9e47175f675fff62da4d7a9c8aec5b61de"
+bytes = "23864"
 
 [[asset]]
 path = "kenney-hexagon/stone-mountain.glb"
@@ -4126,6 +4638,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c63a8b5374780d528d43e9efe83ab592f2c7ec0a84aae4a2ca461f5fc5d717f4"
+bytes = "31356"
 
 [[asset]]
 path = "kenney-hexagon/stone-rocks.glb"
@@ -4134,6 +4647,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ff5b0cff528934078e7bcc0cc1c911f772c8a2088815c4dca30f617cfa405919"
+bytes = "35148"
 
 [[asset]]
 path = "kenney-hexagon/stone.glb"
@@ -4142,6 +4656,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "36b8b8521bc03a6d6c2baefeec1f6044e48eebaaaf51372dd4b6cbb0765fe82b"
+bytes = "15176"
 
 [[asset]]
 path = "kenney-hexagon/unit-house.glb"
@@ -4150,6 +4665,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7f872464ac294dbb47fd061f5a9d63f02f6b7a224fb8650f454517cb8271cd79"
+bytes = "19312"
 
 [[asset]]
 path = "kenney-hexagon/unit-mansion.glb"
@@ -4158,6 +4674,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "da8d144dd6043b9291d46edb57a15a0d1e21db0310f117fccad0f03d73014ce0"
+bytes = "23620"
 
 [[asset]]
 path = "kenney-hexagon/unit-mill.glb"
@@ -4166,6 +4683,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "067d76749147670981ca8cbb69e3d548fb947c8cb03c14b1108b93c5fa3d40a8"
+bytes = "32956"
 
 [[asset]]
 path = "kenney-hexagon/unit-ship-large.glb"
@@ -4174,6 +4692,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "19d3be9b3fa4f4900184a1685c663823f370cef51093eb13421dc4d04e9bc3fb"
+bytes = "28052"
 
 [[asset]]
 path = "kenney-hexagon/unit-ship.glb"
@@ -4182,6 +4701,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cdb420445db67a5aac880394caefaed758320d6de7d795636d7de9940031f623"
+bytes = "23784"
 
 [[asset]]
 path = "kenney-hexagon/unit-tower.glb"
@@ -4190,6 +4710,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8370ed063ff1dc58c52f6193b26c17326a2daa983ff32fbeb57f896ea7e6ad9f"
+bytes = "31760"
 
 [[asset]]
 path = "kenney-hexagon/unit-tree.glb"
@@ -4198,6 +4719,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2875f3ef8fdaa4abbd1fa008d36b3dd0e4e1b36697f95e9c775c99a293cd8a35"
+bytes = "17212"
 
 [[asset]]
 path = "kenney-hexagon/unit-wall-tower.glb"
@@ -4206,6 +4728,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "595fb5f5f2e36248d32f260f2c3f5dc65694eed21250c95d4880c1a52edbe091"
+bytes = "26504"
 
 [[asset]]
 path = "kenney-hexagon/water-island.glb"
@@ -4214,6 +4737,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "434a256cdbb80da385d2edc7affca1a78b0e69d32e675c2f450960caab9ec9ef"
+bytes = "20260"
 
 [[asset]]
 path = "kenney-hexagon/water-rocks.glb"
@@ -4222,6 +4746,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "71396df0d09e27490148e8fda8a073a3f064d60166b48c7d0ccc7616cd67b74e"
+bytes = "27708"
 
 [[asset]]
 path = "kenney-hexagon/water.glb"
@@ -4230,6 +4755,7 @@ source = "https://kenney.nl/assets/hexagon-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "99e1f76d6167d3f7a6159c757ca4d91c06a5aec990441941aaa35a2f385a8e83"
+bytes = "13992"
 
 [[asset]]
 path = "kenney-retro-medieval/barrels.glb"
@@ -4238,6 +4764,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e3117a5d9434af0d395062798b280924a65565788c4712d3cc1f1781508275b8"
+bytes = "72308"
 
 [[asset]]
 path = "kenney-retro-medieval/battlement-corner-inner.glb"
@@ -4246,6 +4773,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cc33ee68d49414d0e64eba7a08b5066048763fea8fda4be72acfa961eadd80b9"
+bytes = "26468"
 
 [[asset]]
 path = "kenney-retro-medieval/battlement-corner-outer.glb"
@@ -4254,6 +4782,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9b2dccf36906713b4f2f5e414354329dae6a636a8792f263ad11a62774855952"
+bytes = "28136"
 
 [[asset]]
 path = "kenney-retro-medieval/battlement-half.glb"
@@ -4262,6 +4791,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9eb8d76c4cdd3e5e242fb24cdf53250a47707d0657d64d8896e4388fe61e10db"
+bytes = "18548"
 
 [[asset]]
 path = "kenney-retro-medieval/battlement.glb"
@@ -4270,6 +4800,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "51821ec896219a4209a7e2882230a5859ce6fc22045d5d8a27de38a38dd5aac5"
+bytes = "20936"
 
 [[asset]]
 path = "kenney-retro-medieval/bricks.glb"
@@ -4278,6 +4809,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9152f246a37e15c57e72f59754f541ab85ca203fcdbd7d63a2059eb26b4fc75d"
+bytes = "21184"
 
 [[asset]]
 path = "kenney-retro-medieval/column-damaged.glb"
@@ -4286,6 +4818,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1890e741fcc7350b9cfd1c130886a076acafb5198e78799c8fd9676ada32a1b2"
+bytes = "17332"
 
 [[asset]]
 path = "kenney-retro-medieval/column-paint-damaged.glb"
@@ -4294,6 +4827,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5d6bcf0c9e59339881a609fc999f3584c0231b571a1531f88bf636e653bb557c"
+bytes = "17356"
 
 [[asset]]
 path = "kenney-retro-medieval/column-paint.glb"
@@ -4302,6 +4836,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a4bce61f44ea4558a9938435d86f90154c3cfef8c815650c95583912d265b5ca"
+bytes = "14316"
 
 [[asset]]
 path = "kenney-retro-medieval/column-wood.glb"
@@ -4310,6 +4845,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fc1256c602573092f13df98d23b8223ba1f1286f68f760dfbb4147b737ab6cd9"
+bytes = "26204"
 
 [[asset]]
 path = "kenney-retro-medieval/column.glb"
@@ -4318,6 +4854,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d356e4433e121195cee92e21ba20d5ff0456e566131c86d399cc197b057c2d60"
+bytes = "14308"
 
 [[asset]]
 path = "kenney-retro-medieval/detail-barrel.glb"
@@ -4326,6 +4863,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a00ff16ae4f04947da9a66bbde509a78a1575059ed511475026c62f16293caea"
+bytes = "14084"
 
 [[asset]]
 path = "kenney-retro-medieval/detail-crate-ropes.glb"
@@ -4334,6 +4872,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "63b4cf09552e7f2598a7a2e6ebf895a10cd6c8f9b519f8d58d594a9db8a3f1b9"
+bytes = "18376"
 
 [[asset]]
 path = "kenney-retro-medieval/detail-crate-small.glb"
@@ -4342,6 +4881,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "413b4f9fc0e43208abca53b6cd5be9e51fc75504771afe41429be670e6f47fe9"
+bytes = "8428"
 
 [[asset]]
 path = "kenney-retro-medieval/detail-crate.glb"
@@ -4350,6 +4890,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7908cb732163ceec29556323a2a30d7fde39a672d9712ee1d8f5df49e59cde0f"
+bytes = "8408"
 
 [[asset]]
 path = "kenney-retro-medieval/dock-corner.glb"
@@ -4358,6 +4899,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d6c09691b8d93cf79a46c6d7d5ff7d7a32365a6971cc2e9c8768a435eceff772"
+bytes = "17100"
 
 [[asset]]
 path = "kenney-retro-medieval/dock-side.glb"
@@ -4366,6 +4908,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c1f3b169df7de3b7908aa5c934de7675a0b06230689e036cafba6fd1fe85e60b"
+bytes = "16076"
 
 [[asset]]
 path = "kenney-retro-medieval/fence-top.glb"
@@ -4374,6 +4917,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d28709a35955cd560a16deefb1c0689593201c55a2486e978521b519375c8148"
+bytes = "5112"
 
 [[asset]]
 path = "kenney-retro-medieval/fence-wood.glb"
@@ -4382,6 +4926,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2573f949dae251fcc559b0c5960ee1f27403801d5f2721dedf7b4fcdd4189f3e"
+bytes = "12472"
 
 [[asset]]
 path = "kenney-retro-medieval/fence.glb"
@@ -4390,6 +4935,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9da9660103b409ea29318bb1a5da076f51519417c3cb3dcaa1974d62920703cb"
+bytes = "5068"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-flat.glb"
@@ -4398,6 +4944,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "536e4d2a02eb3aca6e6b23c23fdb8fcb397e5ad069c659ac7bb0b0c38a74630b"
+bytes = "6824"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-stairs-corner-inner.glb"
@@ -4406,6 +4953,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3abe5094ee824717292ff80c1eadb0c72746ccf653e034169f8e767699da09ba"
+bytes = "20104"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-stairs-corner-outer.glb"
@@ -4414,6 +4962,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "08e7e1c37c0ecc0f678bea8e7eda261f99de84ad1228d7388d2a12d0c3a513b9"
+bytes = "20104"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-stairs.glb"
@@ -4422,6 +4971,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "a432baed2c71ab45024166c5ab33d76c1928f89495790072bfca886956bda8bf"
+bytes = "17496"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-steps-corner-inner.glb"
@@ -4430,6 +4980,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7b3ec60741d277e09e837193006a9e24d8ca9b1dfce0368d834bda634a737342"
+bytes = "21688"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-steps-corner-outer.glb"
@@ -4438,6 +4989,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d6f4c670e55d253fa7b2b80f484fcd372150d95f27aa7324d75b08132384f111"
+bytes = "20896"
 
 [[asset]]
 path = "kenney-retro-medieval/floor-steps.glb"
@@ -4446,6 +4998,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c0ceea388accae179d5796edb1ab61b57378502a4921c20de119853fd4ab1937"
+bytes = "17884"
 
 [[asset]]
 path = "kenney-retro-medieval/floor.glb"
@@ -4454,6 +5007,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c03ee83287e38ce2469194b1560754c3fe9d630949dabb60acce7675e9636ae2"
+bytes = "13868"
 
 [[asset]]
 path = "kenney-retro-medieval/ladder.glb"
@@ -4462,6 +5016,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2bca0b4cdd4aece22af9e1d213e9e2e1a51dcb70344dea4a9f961744acfcdb1a"
+bytes = "19128"
 
 [[asset]]
 path = "kenney-retro-medieval/overhang-fence.glb"
@@ -4470,6 +5025,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e836b35ff845c6cd0650cdba8dfc0891b371e4adbf6ffb523082989bc9a34e8e"
+bytes = "10512"
 
 [[asset]]
 path = "kenney-retro-medieval/overhang-round-railing.glb"
@@ -4478,6 +5034,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "584f3ed52578860bcf44b29371a3ff80855f8955f8a447790cba4238feaa85c0"
+bytes = "18972"
 
 [[asset]]
 path = "kenney-retro-medieval/overhang-round.glb"
@@ -4486,6 +5043,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e19d568ab9723f493cb806d4c0dcaaace2b3cd103e3448411d647ba68e6a8017"
+bytes = "11256"
 
 [[asset]]
 path = "kenney-retro-medieval/overhang.glb"
@@ -4494,6 +5052,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0784901e82b1482645d18c24dab743608166195f140d4e18d368b03966ea1190"
+bytes = "20284"
 
 [[asset]]
 path = "kenney-retro-medieval/pulley-crate.glb"
@@ -4502,6 +5061,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "226b4eb99340a112d7dcc531b26b5b7a894dad7b2ca9fe4069a08405d7292acc"
+bytes = "31364"
 
 [[asset]]
 path = "kenney-retro-medieval/pulley.glb"
@@ -4510,6 +5070,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "b55d7a3b1ad1d76b4d891ec7ee59507797c335e88b61c6b4f27dd5252f5c30f0"
+bytes = "17492"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-corner.glb"
@@ -4518,6 +5079,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "971fa2fe7a92926c1b1060d637bd210ee67ee98b35c60ed95bee1001cdf763bc"
+bytes = "31244"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-edge.glb"
@@ -4526,6 +5088,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "be5c313ff20380dc2a10a63b8580d28284f375aab77b85ed5dd1209e6a3c615e"
+bytes = "28452"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-high-side-corner-inner.glb"
@@ -4534,6 +5097,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "61e557ba75a07ea86acf7eb5c502fb2ef830c2a33af82e22276fb5464547dc3a"
+bytes = "19620"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-high-side-corner.glb"
@@ -4542,6 +5106,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0c128b25a49630b3faca82d98451503b5fdfa42fc3a48613b9284b5f40c58536"
+bytes = "18812"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-high-side.glb"
@@ -4550,6 +5115,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5ee1a7b41b5c5376d64254d7b6b9202a7fa322b344913760d93a6e170bb26bf4"
+bytes = "18988"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-side-corner-inner.glb"
@@ -4558,6 +5124,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "dfd18661624b6603e8cf15ab36eef27d462817ab21084676ba71de4bec06b45a"
+bytes = "19608"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-side-corner.glb"
@@ -4566,6 +5133,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e7dcea1b2c5b330eb9fad4b68d2b52e6944c06b8ef0632ba1d1491434166318a"
+bytes = "18796"
 
 [[asset]]
 path = "kenney-retro-medieval/roof-side.glb"
@@ -4574,6 +5142,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "67dd8e47f4ed2e01dd9aab9a994392752e7fc02e5cdc9c8e3cf53ee2043edd37"
+bytes = "18976"
 
 [[asset]]
 path = "kenney-retro-medieval/roof.glb"
@@ -4582,6 +5151,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "de40cbbd2fd4678955e037a6c9675c2a5bf34ea8c6ea4d680dc828d9c0ff60ab"
+bytes = "30236"
 
 [[asset]]
 path = "kenney-retro-medieval/stairs-corner.glb"
@@ -4590,6 +5160,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "15e5352d0e9d1b0f982dc59782fc3ef75cb9b7a53573c5f51adac10315144286"
+bytes = "28540"
 
 [[asset]]
 path = "kenney-retro-medieval/stairs-stone.glb"
@@ -4598,6 +5169,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "0d82ef44f1632fb77265e09483b2784ed74e8e3567ada320bdf41e32f5617b67"
+bytes = "34908"
 
 [[asset]]
 path = "kenney-retro-medieval/stairs-wood.glb"
@@ -4606,6 +5178,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ecbac9c88e02304e88dc584177639f329d5b85cf678340750258b0d7b6e91cfa"
+bytes = "26056"
 
 [[asset]]
 path = "kenney-retro-medieval/structure-cross.glb"
@@ -4614,6 +5187,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4ca1bb13ab7e115d1b0702a0437cf9d06f92321864d0166498dc9d117f541fc1"
+bytes = "29428"
 
 [[asset]]
 path = "kenney-retro-medieval/structure-pole.glb"
@@ -4622,6 +5196,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "97cf225e5a4e67c565ee71a22940b05028fd5e6c84a3283ac38d0ac48384aa23"
+bytes = "8908"
 
 [[asset]]
 path = "kenney-retro-medieval/structure-poles.glb"
@@ -4630,6 +5205,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "188ef78f925c700c7d27e891c63832869ea238d8ed7d8d1200f9615d0eb8d31e"
+bytes = "15984"
 
 [[asset]]
 path = "kenney-retro-medieval/structure-wall-cross.glb"
@@ -4638,6 +5214,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "35d270efda5bc73f20617e866e30981c4bc96580ab850a9d5d1a74c30414c41b"
+bytes = "16108"
 
 [[asset]]
 path = "kenney-retro-medieval/structure-wall.glb"
@@ -4646,6 +5223,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "bdf9a6086b2606cacbe3bb32100da91514cde990a9a04624e58493c69c1e4c59"
+bytes = "31840"
 
 [[asset]]
 path = "kenney-retro-medieval/structure.glb"
@@ -4654,6 +5232,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "68c9b3f8bd33ff084604139e1dc9b4eeabbd964a84e869bf621b3d106e9ba0b5"
+bytes = "27728"
 
 [[asset]]
 path = "kenney-retro-medieval/tower-base.glb"
@@ -4662,6 +5241,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9638da419cbfdd31eac89d6f35bba96f94c589cbea8468a5e3bb5564c8debc79"
+bytes = "21520"
 
 [[asset]]
 path = "kenney-retro-medieval/tower-edge.glb"
@@ -4670,6 +5250,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "aab077d44d1ccfb9c820d3dcb0d6697e47875af6455f2279aef12b9670e1addd"
+bytes = "14460"
 
 [[asset]]
 path = "kenney-retro-medieval/tower-paint-base.glb"
@@ -4678,6 +5259,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6c1e32b5d04218991dbfd6534330429582a86a9ec8d6d03902030605e71a5e67"
+bytes = "21528"
 
 [[asset]]
 path = "kenney-retro-medieval/tower-paint.glb"
@@ -4686,6 +5268,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "cfa8af7e8fedaf75b6259994b1ae23d855789a7b238a0010cbdf2ff568f9bfd9"
+bytes = "16652"
 
 [[asset]]
 path = "kenney-retro-medieval/tower-top.glb"
@@ -4694,6 +5277,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d7b8fecff7f4780d04f3ad8229265773d581fbe6b9f812b8c165762bb38fb61c"
+bytes = "45188"
 
 [[asset]]
 path = "kenney-retro-medieval/tower.glb"
@@ -4702,6 +5286,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "9b1f5db20ab89878fbb1163aea72f35d33c4a4c5ce86a6b5f5da17a4a74872a6"
+bytes = "16644"
 
 [[asset]]
 path = "kenney-retro-medieval/tree-large.glb"
@@ -4710,6 +5295,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "238ca32ed780fe244157169390e5749753741fa6a42489f168eb42940c7aa649"
+bytes = "6060"
 
 [[asset]]
 path = "kenney-retro-medieval/tree-shrub.glb"
@@ -4718,6 +5304,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7f457f09dbc145745a5286ab5a210b84f405f660e7b7cc2679b2da7139099090"
+bytes = "6060"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-detail.glb"
@@ -4726,6 +5313,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "21d69cd29bfbd42bddf429d819471d1fb0877287908da532057882bae8b288d4"
+bytes = "14276"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-door.glb"
@@ -4734,6 +5322,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f6ef93a4efdca7a0a98f83c4fcaeec68272bec07d5f4a2199cd4560482c05458"
+bytes = "20264"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-flat-gate.glb"
@@ -4742,6 +5331,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "200f7480082e9707f2eb65f9fb343ac94057ce0aa2e9ca11fc064ee881d7c7d0"
+bytes = "7748"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-door.glb"
@@ -4750,6 +5340,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "8009ff6688c1120d64231793ef0d619f20d3dfd51de11d7ca8b7f21d4453dd00"
+bytes = "32220"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-gate-half.glb"
@@ -4758,6 +5349,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "eeee0b4678d414b082df3396926075f78a74d3f367653299f25ae002b2840d0d"
+bytes = "29828"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-gate.glb"
@@ -4766,6 +5358,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f12de05985ed380078f5fd4da8a1664a4d018ebe372dea8dc060385d40e9d155"
+bytes = "31816"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-half.glb"
@@ -4774,6 +5367,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "08b6ab55a00538b6ec4d196431a0bb2ae0cfb66990050fe1b6904e521b608dad"
+bytes = "23012"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-paint-door.glb"
@@ -4782,6 +5376,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "7499f0aa196547de3e9eee350d86d44e2ebe68a168cbaf28cd37afdcfacaf3cc"
+bytes = "32228"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-paint-gate.glb"
@@ -4790,6 +5385,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ac77cc82ec0b719155df3e9e806731dd627a16248fc1f892d597c4c5d771f8a2"
+bytes = "46872"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-paint-half.glb"
@@ -4798,6 +5394,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c7872903abec1344ae2934c117b4f9ffe8b2d2b9cc7878d52214449b1bd6b4fc"
+bytes = "23020"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-paint-window.glb"
@@ -4806,6 +5403,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "ea0784027b52dcd9ad0214c6115c82376350d3a8db0a8339ac11ba5428f3137e"
+bytes = "32236"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-paint.glb"
@@ -4814,6 +5412,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5c4a0b621bd8f8b18a08ba0fcd1d1b1acc1b52f272e6441aa2eda63e30ec3e92"
+bytes = "26204"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified-window.glb"
@@ -4822,6 +5421,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6a7db28bf8929f3b46182771f37ce7c3692494c9c5a14e8497af6429443d30d3"
+bytes = "32228"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-fortified.glb"
@@ -4830,6 +5430,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "5ca0abf1bed9c0da3e4d12a16ec761e5683478eb623deb0b9cb549fe7cc63dca"
+bytes = "26196"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-gate-half.glb"
@@ -4838,6 +5439,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "01082e9bb9ffabc72699f4910ecf5023e92965f72d180d326a3131778b24eb6e"
+bytes = "17084"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-gate.glb"
@@ -4846,6 +5448,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c32a722c34c95f0f749d90c49442daa29d9e349ec31bf00d1e7d60d0774251e3"
+bytes = "19664"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-half.glb"
@@ -4854,6 +5457,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "fd3f638988d93871c8736a08c671146ac2ddde4d95e7f93df972415c2ea76461"
+bytes = "14252"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-low.glb"
@@ -4862,6 +5466,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "742d26df1bb883265f3005b25dbe6adca78350defaa6d3f1d3c9d6d0123a2f45"
+bytes = "14252"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint-detail.glb"
@@ -4870,6 +5475,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "6ced3d7d048169cae576dcb37121627970513fb36153075769e116d75d6403a5"
+bytes = "14284"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint-door.glb"
@@ -4878,6 +5484,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "4c614128825edc9241c159cb07526285f8e59d4c33b0bda719d9c72c690eab0d"
+bytes = "20272"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint-flat.glb"
@@ -4886,6 +5493,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "06cd4765c970d810ff751939ccee8148e046fcdd31dcd1f22d436abf3fd39dba"
+bytes = "23688"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint-gate.glb"
@@ -4894,6 +5502,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e11ff93059b0a4aeece2746405c72cc4b55096ea9bba0f42fcbedecd3d2eef6c"
+bytes = "36212"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint-half.glb"
@@ -4902,6 +5511,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "32ac54e7bbdeca90f316d261e0ad06a2f0c0c1b4a246441bf11a88f0c6258354"
+bytes = "14280"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint-window.glb"
@@ -4910,6 +5520,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "2c40a12a996953cc7a42bab060c4dcf37b71f3dceda503c8434eebcb610c50a9"
+bytes = "20688"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-paint.glb"
@@ -4918,6 +5529,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "220172c9aac51d42d92890d3694edded39d6afc8b5ce8d8daa73940cff145cd0"
+bytes = "14248"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-door.glb"
@@ -4926,6 +5538,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "abfe1736287e7c3f7cb29f8eae52d83d835b1fb75d34e38b0e5c5c7cf8a9bafe"
+bytes = "12464"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-paint-door.glb"
@@ -4934,6 +5547,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "82b3e62ea1e9de78e107f57f78b9c614fd398a9d38ae6c92c39f9c6b4ce2a6e4"
+bytes = "12472"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-paint-window.glb"
@@ -4942,6 +5556,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "d7c4417086019754d1f8f2dc3406432d2ff0d6d7a35b115634a160bf26aca0e5"
+bytes = "13068"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-paint.glb"
@@ -4950,6 +5565,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c3109bf59eb7b0b585501cbbb050e8095f15f48ec2c80906ee97b016d6e10282"
+bytes = "7020"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-painted-wood-door.glb"
@@ -4958,6 +5574,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "e2e9063e0e81018157947d0a428dced47ae9fd00be8db63be8fc08576eabfb46"
+bytes = "18752"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-painted-wood-window.glb"
@@ -4966,6 +5583,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "72d85d02a66700172046d8b3b3525d362536f44fcdf11065160ecfc4639465a1"
+bytes = "19164"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-painted-wood.glb"
@@ -4974,6 +5592,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "61f4d2ed99fb3784722ba271e87449797e269e8eb35ca1d2623cee8a3eb4b3d5"
+bytes = "13120"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-window.glb"
@@ -4982,6 +5601,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1eaeda1e0a09c351fc3d2092ab995233ced8fe090602eb3c8a2b431f0fdea63f"
+bytes = "19356"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-wood-door.glb"
@@ -4990,6 +5610,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "35d1ae37f87f0460e169d6d144a615ef26b41cc5084c00037dd8916de18878e8"
+bytes = "18736"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-wood-window.glb"
@@ -4998,6 +5619,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f5523dbc06b23fecbb05ed065253c079e87f0af9d8c62c166a6d14b92612005b"
+bytes = "19152"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane-wood.glb"
@@ -5006,6 +5628,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "efd3253205b25a53c707ec780287409c65b1218f62d1a8ccd3e42919a84b2f5a"
+bytes = "13104"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-pane.glb"
@@ -5014,6 +5637,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "f1aa2afef5445f0a51b78adf52fadc6e257115e379ec2e0b7e81d5cd391a0911"
+bytes = "6808"
 
 [[asset]]
 path = "kenney-retro-medieval/wall-window.glb"
@@ -5022,6 +5646,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "3672937020b99fc8de965acff020f5a23360d4ef8d79cbf970e07e438af85827"
+bytes = "20680"
 
 [[asset]]
 path = "kenney-retro-medieval/wall.glb"
@@ -5030,6 +5655,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "378918e7193cb2ca36d754c849de761690a4bf5d387e8f4bf3d19a3be47835fb"
+bytes = "14240"
 
 [[asset]]
 path = "kenney-retro-medieval/water.glb"
@@ -5038,6 +5664,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "12b856ee630415f63e4fc2ae6931e31fcba6b3a2c419848718a818be899d78c5"
+bytes = "7744"
 
 [[asset]]
 path = "kenney-retro-medieval/wood-floor-half.glb"
@@ -5046,6 +5673,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "c39de0167378a5c9c76336b2663ec662f08c18e6a3c0fb56b0b0036f6a526e94"
+bytes = "8848"
 
 [[asset]]
 path = "kenney-retro-medieval/wood-floor-quarter.glb"
@@ -5054,6 +5682,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "514489e4ca65792f57e5f61ecb61cf7e573ece14a7e050ed99a6b14687e20c7a"
+bytes = "9076"
 
 [[asset]]
 path = "kenney-retro-medieval/wood-floor-railing.glb"
@@ -5062,6 +5691,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "1d1237351c26fd3083ccb98d04b97717b98f6087d8152fb4c04595c03de83564"
+bytes = "13632"
 
 [[asset]]
 path = "kenney-retro-medieval/wood-floor.glb"
@@ -5070,6 +5700,7 @@ source = "https://opengameart.org/content/retro-medieval-kit"
 license = "CC0-1.0"
 retrieved = "2026-06-11"
 sha256 = "decb332416397e0b8c5ab3a55ab5ee91c8ce3c8f2767c2d2e282f868acbc9b8d"
+bytes = "8836"
 
 [[asset]]
 path = "ui/litd-default-ui.atlas.png"
@@ -5078,3 +5709,4 @@ source = "generated:go run ./tools/uiatlas"
 license = "CC0-1.0"
 retrieved = "2026-06-13"
 sha256 = "9000c18a8bfc9ea707ca82606407a5db6cb99ec7812ec3467efb327fe1f3aaf4"
+bytes = "732"
