@@ -121,6 +121,14 @@ func LoadWorldFS(L *lua.LState, reg *ChunkRegistry, fsys fs.FS, label string) (*
 	// (no filesystem, no arbitrary load — the stripped stdlib require stays gone).
 	installRequire(L, reg, relToID)
 
+	// Install the save-safe timer verbs (#558) as a registered chunk in
+	// reg, so coroutines they spawn carry registry-resolvable protos and
+	// survive a mid-match save — same proto-ownership requirement as the
+	// world entry below.
+	if err := RegisterTimerPrelude(L, reg); err != nil {
+		return nil, fmt.Errorf("luabind: world %q timer prelude: %w", label, err)
+	}
+
 	// Execute the entry through its REGISTERED prototype (not a fresh L.Load
 	// recompile), so every closure the entry creates — Game_Every actions, OnEvent
 	// handlers, trigger conditions/actions — has a prototype the registry owns by
