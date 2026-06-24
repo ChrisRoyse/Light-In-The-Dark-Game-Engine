@@ -115,6 +115,12 @@ var HashSystems = []string{
 	// node (op + operands) in node order. Empty default leaves the zero
 	// contribution.
 	"boolexpr",
+	// appended by #555 (PRD2 01, first of the five primitives): the
+	// serializable timer wheel — count/nextSeq/Dropped, then live timers
+	// in slot-ascending (canonical, wheel-independent) order, then the
+	// free-list LIFO order (steers future slot assignment, R-SIM-6).
+	// Empty default leaves the zero contribution.
+	"timers",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -788,7 +794,45 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hbe := h.next() // boolexpr (#457): condition arena nodes
 	w.hashExprArena(hbe)
 
+	htm := h.next() // timers (#555): serializable timer wheel
+	w.hashTimers(htm)
+
 	return reg.Sum(dst)
+}
+
+// hashTimers folds the timer-wheel state into its sub-hash, mirroring
+// the save block (serialization-and-hashing.md §3). Live timers are
+// walked in slot-ascending order — a pure function of allocation
+// history, independent of the (non-hashed) schedule index — so two
+// engines using different index structures hash identically. The
+// free-list LIFO order is included because it steers future slot
+// assignment; a divergent free-list would silently mint divergent
+// handles on the next create.
+func (w *World) hashTimers(ht *statehash.Hasher) {
+	ts := w.Timers
+	ht.WriteU32(uint32(ts.count))
+	ht.WriteU32(ts.nextSeq)
+	ht.WriteU32(ts.Dropped)
+	for idx := int32(1); idx < int32(len(ts.live)); idx++ {
+		if !ts.live[idx] {
+			continue
+		}
+		ht.WriteU32(uint32(ts.Gen[idx])<<24 | uint32(idx))
+		ht.WriteU8(ts.Mode[idx])
+		ht.WriteU32(ts.Interval[idx])
+		ht.WriteU32(ts.WakeTick[idx])
+		ht.WriteU32(ts.Remaining[idx])
+		ht.WriteU32(ts.Seq[idx])
+		ht.WriteU16(ts.Cont[idx])
+		for k := 0; k < 4; k++ {
+			ht.WriteI64(ts.State[idx][k])
+		}
+		ht.WriteU32(uint32(ts.Owner[idx]))
+	}
+	ht.WriteU32(uint32(len(ts.free)))
+	for _, slot := range ts.free {
+		ht.WriteU32(uint32(slot))
+	}
 }
 
 func hashAbilityDef(h *statehash.Hasher, def *data.Ability) {

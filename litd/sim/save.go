@@ -1024,6 +1024,34 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u64(uint64(w.trigNameIDs[i]))
 	}
 
+	// timers (#555, PRD2 01): live timers in slot-ascending order, then
+	// the free-list LIFO order. The schedule index (heap) is a derived,
+	// non-hashed structure — rebuilt on load, never serialized.
+	tm := w.Timers
+	s.u32(uint32(tm.count))
+	s.u32(tm.nextSeq)
+	s.u32(tm.Dropped)
+	for idx := int32(1); idx < int32(len(tm.live)); idx++ {
+		if !tm.live[idx] {
+			continue
+		}
+		s.u32(uint32(tm.Gen[idx])<<24 | uint32(idx)) // packed handle: restore exact slot+gen
+		s.u8(tm.Mode[idx])
+		s.u32(tm.Interval[idx])
+		s.u32(tm.WakeTick[idx])
+		s.u32(tm.Remaining[idx])
+		s.u32(tm.Seq[idx])
+		s.u16(tm.Cont[idx])
+		for k := 0; k < 4; k++ {
+			s.i64(tm.State[idx][k])
+		}
+		s.ent(tm.Owner[idx])
+	}
+	s.u32(uint32(len(tm.free)))
+	for _, slot := range tm.free {
+		s.u32(uint32(slot))
+	}
+
 	return s.err
 }
 
@@ -1403,6 +1431,29 @@ type decodedSave struct {
 	// name→trigger bindings (#478, v36): restored directly (TriggerIDs stable).
 	trigNameKeys []string
 	trigNameIDs  []TriggerID
+
+	// serializable timer wheel (#555, v38): live timers in slot order +
+	// free-list LIFO, validated then written into the store at apply; the
+	// heap index is rebuilt (derived, non-hashed). Cont rebinds against
+	// the world-setup continuation registry (stable IDs).
+	timerNextSeq uint32
+	timerDropped uint32
+	timerRows    []savedTimer
+	timerFree    []uint32
+}
+
+// savedTimer is one decoded live timer row (staging for #555 load).
+type savedTimer struct {
+	slot      int32
+	gen       uint8
+	mode      uint8
+	interval  uint32
+	wake      uint32
+	remaining uint32
+	seq       uint32
+	cont      uint16
+	state     [4]int64
+	owner     EntityID
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2797,6 +2848,51 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.trigNameKeys[i] = name
 		d.trigNameIDs[i] = TriggerID(r.u64())
 	}
+
+	// serializable timer wheel (#555, v38): count/nextSeq/dropped, then
+	// `count` live rows in slot order, then the free list. Slot/range
+	// validation happens in validateSave before any apply.
+	r.what = "timers"
+	timerCap := w.Timers.Cap()
+	tmN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(tmN) > timerCap {
+		return fmt.Errorf("sim: save: timer count %d exceeds this world's cap %d", tmN, timerCap)
+	}
+	d.timerNextSeq = r.u32()
+	d.timerDropped = r.u32()
+	d.timerRows = make([]savedTimer, tmN)
+	for i := uint32(0); i < tmN; i++ {
+		packed := r.u32()
+		row := savedTimer{
+			slot: int32(packed & 0x00FFFFFF),
+			gen:  uint8(packed >> 24),
+			mode: r.u8(),
+		}
+		row.interval = r.u32()
+		row.wake = r.u32()
+		row.remaining = r.u32()
+		row.seq = r.u32()
+		row.cont = r.u16()
+		for k := 0; k < 4; k++ {
+			row.state[k] = r.i64()
+		}
+		row.owner = r.ent()
+		d.timerRows[i] = row
+	}
+	tmFreeN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(tmFreeN) > timerCap {
+		return fmt.Errorf("sim: save: timer free-list length %d exceeds cap %d", tmFreeN, timerCap)
+	}
+	d.timerFree = make([]uint32, tmFreeN)
+	for i := uint32(0); i < tmFreeN; i++ {
+		d.timerFree[i] = r.u32()
+	}
 	return r.err
 }
 
@@ -3337,6 +3433,38 @@ func validateSave(d *decodedSave, w *World) error {
 			if d.mvRes[i] != -1 {
 				return fmt.Errorf("sim: save: movement row %d holds grid reservation %d but no grid is bound — SetGrid before LoadState", i, d.mvRes[i])
 			}
+		}
+	}
+
+	// timers (#555): every live slot and free slot must be a distinct,
+	// in-range index so applySave cannot collide or panic. Together they
+	// must exactly partition the slot space [1, cap] (live ⊎ free = all),
+	// the same total-accounting check the pool maintains at runtime.
+	{
+		timerCap := w.Timers.Cap()
+		seen := make([]bool, timerCap+1) // index 0 reserved, never used
+		for i := range d.timerRows {
+			slot := d.timerRows[i].slot
+			if slot < 1 || int(slot) > timerCap {
+				return fmt.Errorf("sim: save: timer slot %d out of range [1,%d]", slot, timerCap)
+			}
+			if seen[slot] {
+				return fmt.Errorf("sim: save: timer slot %d appears twice (live)", slot)
+			}
+			seen[slot] = true
+		}
+		for _, f := range d.timerFree {
+			if f < 1 || int(f) > timerCap {
+				return fmt.Errorf("sim: save: timer free slot %d out of range [1,%d]", f, timerCap)
+			}
+			if seen[f] {
+				return fmt.Errorf("sim: save: timer slot %d is both live and free", f)
+			}
+			seen[f] = true
+		}
+		if len(d.timerRows)+len(d.timerFree) != timerCap {
+			return fmt.Errorf("sim: save: timer slots accounted %d (live %d + free %d) != cap %d",
+				len(d.timerRows)+len(d.timerFree), len(d.timerRows), len(d.timerFree), timerCap)
 		}
 	}
 	return nil
@@ -4061,6 +4189,41 @@ func applySave(d *decodedSave, w *World) {
 	for i := int32(0); i < its.count; i++ {
 		if c := its.Carrier[i]; c != 0 {
 			w.restoreBuffCache(c)
+		}
+	}
+
+	// serializable timer wheel (#555): write the validated rows into
+	// their exact slots, restore the free list + cursors, then rebuild
+	// the derived heap index by re-inserting every live timer in
+	// ascending slot order (deterministic — the heap is non-hashed, so
+	// the rebuilt order cannot perturb the fingerprint). Cont rebinds
+	// implicitly: it is a stable integer looked up in the registry the
+	// world-setup code already re-registered (the #270 fix).
+	tm := w.Timers
+	tm.loadReset()
+	tm.nextSeq = d.timerNextSeq
+	tm.Dropped = d.timerDropped
+	for i := range d.timerRows {
+		row := &d.timerRows[i]
+		idx := row.slot
+		tm.Mode[idx] = row.mode
+		tm.Interval[idx] = row.interval
+		tm.WakeTick[idx] = row.wake
+		tm.Remaining[idx] = row.remaining
+		tm.Seq[idx] = row.seq
+		tm.Cont[idx] = row.cont
+		tm.State[idx] = row.state
+		tm.Owner[idx] = row.owner
+		tm.Gen[idx] = row.gen
+		tm.live[idx] = true
+		tm.count++
+	}
+	for _, f := range d.timerFree {
+		tm.free = append(tm.free, int32(f))
+	}
+	for idx := int32(1); idx < int32(len(tm.live)); idx++ {
+		if tm.live[idx] {
+			tm.heapPush(idx)
 		}
 	}
 }

@@ -331,6 +331,22 @@ func (s *TimerStore) cancelOwnedBy(dead []EntityID) {
 // on drain), so there is nothing to unlink here.
 func (s *TimerStore) Cancel(id TimerID) bool { return s.free_(id) }
 
+// loadReset empties the store — clears every slot, the heap index, the
+// free list, and the cursors — so a save can be applied into it from a
+// clean state (#555). The backing arrays are retained (no alloc); the
+// caller repopulates slots and the free list, then rebuilds the heap.
+func (s *TimerStore) loadReset() {
+	for i := range s.live {
+		s.live[i] = false
+		s.heapPos[i] = -1
+	}
+	s.hLen = 0
+	s.count = 0
+	s.free = s.free[:0]
+	s.nextSeq = 0
+	s.Dropped = 0
+}
+
 func (s *TimerStore) assert(msg string, id TimerID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)
