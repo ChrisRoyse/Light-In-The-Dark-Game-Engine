@@ -322,6 +322,12 @@ func (s *MoverStore) Cancel(id MoverID) bool {
 
 // CancelOwnedBy frees every mover owned by a dying entity (R-MOV-10),
 // called from the cleanup phase. Bounded by the dead list × live movers.
+//
+// Projectile bodies (MoverConsume) are EXEMPT: a launched projectile coasts
+// to its own completion regardless of whether the launcher survives — the
+// missile model, "the launcher dying changes nothing" (#590, missile.go).
+// Owner on a projectile mover names the damage source for attribution, not a
+// controller whose death should abort the flight.
 func (s *MoverStore) CancelOwnedBy(dead []EntityID) {
 	if len(dead) == 0 || s.count == 0 {
 		return
@@ -329,6 +335,9 @@ func (s *MoverStore) CancelOwnedBy(dead []EntityID) {
 	for r := int32(1); r < int32(len(s.live)); r++ {
 		if !s.live[r] {
 			continue
+		}
+		if s.Flags[r]&MoverConsume != 0 {
+			continue // projectile: coasts on past launcher death (#590)
 		}
 		for _, d := range dead {
 			if s.Owner[r] == d {

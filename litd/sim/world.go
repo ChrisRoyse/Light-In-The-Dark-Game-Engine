@@ -747,7 +747,8 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if isMissile {
 		w.Missiles.Remove(id)
 	}
-	if w.ProjRender.Row(id) != -1 {
+	isProjBody := w.ProjRender.Row(id) != -1
+	if isProjBody {
 		w.ProjRender.Remove(id) // render-only billboard record for a mover projectile (#590)
 	}
 	isEffect := w.Effects.Row(id) != -1
@@ -774,8 +775,8 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if !w.Ents.Destroy(id) {
 		return false
 	}
-	if !isMissile && !isEffect {
-		w.unitCount-- // missiles never counted against the unit cap
+	if !isMissile && !isEffect && !isProjBody {
+		w.unitCount-- // missiles and mover-projectile bodies never counted against the unit cap (#590)
 	}
 	return true
 }
