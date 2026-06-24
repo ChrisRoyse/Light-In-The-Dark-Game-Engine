@@ -80,3 +80,13 @@ func (r *CustomEventRegistry) NameOf(kind uint16) (string, bool) {
 func (r *CustomEventRegistry) IsCustomKind(kind uint16) bool {
 	return kind > KBuiltinMax && kind <= KBuiltinMax+uint16(r.names.count())
 }
+
+// ValidEventKind reports whether kind may be emitted/subscribed: a non-
+// zero built-in (1..KBuiltinMax) or a registered custom kind (#615). The
+// public emit/subscribe surface (#619) uses this to fail closed on a
+// custom kind nobody registered, rather than silently queueing an event
+// no handler can name. The sim's built-in emitters use compile-time kind
+// constants and bypass this check (the hot path stays a bare Emit).
+func (w *World) ValidEventKind(kind uint16) bool {
+	return kind != 0 && (kind <= KBuiltinMax || w.CustomEvents.IsCustomKind(kind))
+}
