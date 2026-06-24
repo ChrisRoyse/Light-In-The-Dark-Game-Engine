@@ -22,9 +22,18 @@ func (w *World) moverSystem() {
 		// Capture the pre-step position so a non-flying mover blocked by
 		// terrain can be clamped back (#588).
 		pre, _, hasPre := w.moverPos(r)
+		swept := w.moverSwept(r)
 		switch MoverKind(ms.Kind[r]) {
 		case MoverLinear:
-			w.moverStepLinear(r)
+			// A swept skillshot collides over the step segment from the
+			// pre-step position BEFORE advancing the body (#620), mirroring the
+			// missile's advanceLinear order.
+			if swept {
+				w.moverSweptCollide(r)
+			}
+			if ms.live[r] {
+				w.moverStepLinear(r)
+			}
 		case MoverPoint:
 			w.moverStepPoint(r)
 		case MoverHoming:
@@ -50,11 +59,28 @@ func (w *World) moverSystem() {
 			}
 		}
 		// Collision runs after the move, only if the step didn't already
-		// complete the mover (#587). A consumed mover stops here.
+		// complete the mover (#587). A consumed mover stops here. A swept
+		// linear mover already collided pre-step (#620): skip the endpoint
+		// test and instead complete (consume) when its pierce budget is spent.
 		if ms.live[r] {
-			w.moverCollide(r)
+			if swept {
+				if ms.Pierce[r] <= 0 {
+					w.moverComplete(r)
+				}
+			} else {
+				w.moverCollide(r)
+			}
 		}
 	}
+}
+
+// moverSwept reports whether a mover uses the swept-segment skillshot
+// collision model (#620): a linear mover with the MoverSwept flag and an
+// active hit mask. All other kinds (and non-swept linear) keep the endpoint
+// radius test.
+func (w *World) moverSwept(r int32) bool {
+	ms := w.Movers
+	return MoverKind(ms.Kind[r]) == MoverLinear && ms.Flags[r]&MoverSwept != 0 && ms.HitMask[r] != 0
 }
 
 // moverPos reads the mover's Target transform position; ok=false if the

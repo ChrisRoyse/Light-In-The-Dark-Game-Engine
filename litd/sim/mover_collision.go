@@ -93,6 +93,131 @@ func (w *World) moverDecay(r int32) {
 	ms.Packet[r].Amount = ms.Packet[r].Amount.Mul(keep).Div(fixed.FromInt(1000))
 }
 
+// moverSweptCollide runs the swept-segment collision pass for a linear
+// skillshot mover (#620), called BEFORE the body advance with the pre-step
+// position. It is a faithful port of the missile linear hit test
+// (advanceLinear/linearHits in missile.go): the step segment is projected
+// into an integer direction-scaled space (dirIntScale) so a foe whose
+// centre lies within along ∈ [0, stepL) and lateral perp² ≤ radius²·l2 is
+// crossed in exactly one advance over the whole flight — no already-hit
+// ring is consulted (the [0, stepL) window referenced from the current
+// position guarantees each foe is in range during exactly one tick).
+// Front-to-back cursor discipline (lastAlong/lastIdx) orders multi-hit
+// pierce deterministically. Radius is the mover's Radius column floored to
+// whole world units, falling back to missileHitRadius when unset, matching
+// the missile's integer-radius math. Fail-closed: an owner without a team
+// (vanished/unowned) classifies nothing and the skillshot flies through.
+// Zero alloc (bucket-grid walk, no scratch slice). Returns true if a hit
+// drove Pierce to 0 (caller completes the mover).
+func (w *World) moverSweptCollide(r int32) bool {
+	ms := w.Movers
+	tr := w.Transforms.Row(ms.Target[r])
+	if tr == -1 {
+		return false
+	}
+	pos := w.Transforms.Pos[tr]
+
+	// Step actually swept this tick: the body advances unitStep(Dir, Speed),
+	// but the final advance travels only the remaining range (mirrors the
+	// missile clamp) so the window never overruns the skillshot's range.
+	step := ms.Speed[r]
+	if ms.RangeLeft[r] < step {
+		step = ms.RangeLeft[r]
+	}
+	if step <= 0 {
+		return false
+	}
+	dir := ms.Dir[r]
+
+	// Integer, direction-scaled projection space (overflow-safe, det §2.1).
+	dx := dir.X.Mul(fixed.FromInt(dirIntScale)).Floor()
+	dy := dir.Y.Mul(fixed.FromInt(dirIntScale)).Floor()
+	l2 := dx*dx + dy*dy
+	if l2 <= 0 {
+		return false
+	}
+	l := int64(fixed.SqrtU64(uint64(l2)))
+	stepL := (int64(step) * l) >> 32 // window upper bound in along-space
+
+	radInt := int64(missileHitRadius)
+	if rf := ms.Radius[r].Floor(); rf > 0 {
+		radInt = rf
+	}
+	radiusSqL2 := radInt * radInt * l2
+
+	sor := w.Owners.Row(ms.Owner[r])
+	if sor == -1 {
+		return false // owner gone: no foe team to classify against (fail-closed)
+	}
+	team := w.Owners.Team[sor]
+	radius := fixed.FromInt(int32(radInt))
+	nextPos := pos.Add(dir.Scale(step))
+	x0 := bucketCoord(minF(pos.X, nextPos.X).Sub(radius))
+	x1 := bucketCoord(maxF(pos.X, nextPos.X).Add(radius))
+	y0 := bucketCoord(minF(pos.Y, nextPos.Y).Sub(radius))
+	y1 := bucketCoord(maxF(pos.Y, nextPos.Y).Add(radius))
+	px, py := pos.X.Floor(), pos.Y.Floor()
+
+	body := ms.Target[r]
+	lastAlong, lastIdx := int64(-1), int64(-1) // cursor: pick strictly after
+	for ms.Pierce[r] > 0 {
+		var (
+			bestAlong = int64(1) << 62
+			bestIdx   = int64(1) << 62
+			best      EntityID
+			bestAt    fixed.Vec2
+			found     bool
+		)
+		for by := y0; by <= y1; by++ {
+			for bx := x0; bx <= x1; bx++ {
+				for e := w.bucketHead[by*BucketGridSize+bx]; e != -1; e = w.bucketNext[e] {
+					cid := w.bucketID[e]
+					if cid == body || cid == ms.Owner[r] || !w.Ents.Alive(cid) {
+						continue
+					}
+					if w.Healths.Row(cid) == -1 {
+						continue // not damageable
+					}
+					if !w.missileHitAllowed(cid, team, ms.HitMask[r]) {
+						continue
+					}
+					ctr := w.Transforms.Row(cid)
+					if ctr == -1 {
+						continue
+					}
+					cp := w.Transforms.Pos[ctr]
+					relx, rely := cp.X.Floor()-px, cp.Y.Floor()-py
+					along := relx*dx + rely*dy
+					if along < 0 || along >= stepL {
+						continue // not within this advance's swept window
+					}
+					perp := (relx*relx+rely*rely)*l2 - along*along
+					if perp > radiusSqL2 {
+						continue // outside the lateral collision radius
+					}
+					cIdx := int64(cid.Index())
+					if along < lastAlong || (along == lastAlong && cIdx <= lastIdx) {
+						continue // already delivered to (cursor discipline)
+					}
+					if !found || along < bestAlong || (along == bestAlong && cIdx < bestIdx) {
+						found, bestAlong, bestIdx, best, bestAt = true, along, cIdx, cid, cp
+					}
+				}
+			}
+		}
+		if !found {
+			return false
+		}
+		w.moverDeliver(r, best, bestAt)
+		w.moverRecordHit(r, best) // keep the ring coherent for save/loop re-arm
+		w.Emit(Event{Kind: EvMissileImpact, Src: body, Dst: best})
+		w.moverDecay(r)
+		ms.Pierce[r]--
+		lastAlong, lastIdx = bestAlong, bestIdx
+	}
+	return ms.Pierce[r] <= 0
+}
+
 // moverAlreadyHit reports whether victim is in the mover's recent-hit ring.
 func (w *World) moverAlreadyHit(r int32, victim EntityID) bool {
 	ms := w.Movers

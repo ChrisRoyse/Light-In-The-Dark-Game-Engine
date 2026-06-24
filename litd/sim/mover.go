@@ -60,6 +60,7 @@ const (
 	MoverAuthority uint8 = 1 << iota // owns the Target unit's transform (suspends pathing)
 	MoverFlying                      // air pathing: ignores ground terrain collision
 	MoverConsume                     // kill the Target entity on completion (projectile body)
+	MoverSwept                       // linear skillshot: sweep the step segment for hits (#620)
 )
 
 // MoverStore is the SoA pool of motion controllers over a shared spline
