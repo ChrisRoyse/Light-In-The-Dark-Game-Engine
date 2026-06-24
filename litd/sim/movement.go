@@ -132,6 +132,9 @@ func (w *World) movementSystem() {
 		if w.Pauses.Has(id) {
 			continue // paused units freeze: no integration this tick (#217)
 		}
+		if w.moverAuthHeld(id) {
+			continue // a MoverAuthority mover owns this transform this tick (#588)
+		}
 		tr := w.Transforms.Row(id) // ecs §7 join probe
 		if tr == -1 {
 			m.State[r] = MoveIdle // transform vanished: fail closed

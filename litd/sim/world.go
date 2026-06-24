@@ -434,6 +434,12 @@ type World struct {
 	// moverHitScratch is the reused broad-phase result buffer for mover
 	// collision (#587) — keeps the per-tick collision pass zero-alloc.
 	moverHitScratch []EntityID
+	// moverAuthHold marks (by entity index) units whose transform is owned
+	// by a MoverAuthority mover this tick; moverAuthList is the set of marks
+	// to clear next tick. Derived from live movers each tick (#588) — not
+	// hashed/saved.
+	moverAuthHold []bool
+	moverAuthList []EntityID
 	// kvUserDataKey is the reserved interned key id backing the legacy
 	// per-unit custom value (GetUnitUserData) over KV (#571). Interned
 	// first at construction so its id is stable across save/load.
@@ -535,6 +541,8 @@ func NewWorld(requested Caps) *World {
 		CustomEvents:       NewCustomEventRegistry(caps.CustomEventKinds),
 		Movers:             NewMoverStore(caps.Movers, caps.MoverWaypoints),
 		moverHitScratch:    make([]EntityID, 0, 128),
+		moverAuthHold:      make([]bool, idxSpace),
+		moverAuthList:      make([]EntityID, 0, 64),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),

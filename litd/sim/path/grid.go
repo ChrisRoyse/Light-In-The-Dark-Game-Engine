@@ -76,6 +76,10 @@ func idx(x, y int32) int32 {
 // FlagsAt returns the flag byte of a cell.
 func (g *Grid) FlagsAt(x, y int32) Flags { return g.flags[idx(x, y)] }
 
+// Ready reports whether the terrain layer is allocated (a world with no
+// baked terrain has a zero Grid — callers must not index it). #588.
+func (g *Grid) Ready() bool { return g != nil && len(g.flags) > 0 }
+
 // SetFlags overwrites the flag byte of a cell (bake-time use).
 func (g *Grid) SetFlags(x, y int32, f Flags) { g.flags[idx(x, y)] = f }
 

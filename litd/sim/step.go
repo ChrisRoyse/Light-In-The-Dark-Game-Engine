@@ -126,6 +126,7 @@ func (w *World) phaseOrders() {
 // turn-rate-limited facing (movement.go), then the incremental
 // bucket-grid rebuild over everything that moved (buckets.go §3.1).
 func (w *World) phaseMovement() {
+	w.refreshMoverAuthority() // mark units a MoverAuthority mover owns (#588)
 	w.pathingSystem()
 	w.movementSystem()
 	w.flySystem()     // fly-height climb integration (#367)

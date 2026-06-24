@@ -19,6 +19,9 @@ func (w *World) moverSystem() {
 		if !ms.live[r] {
 			continue
 		}
+		// Capture the pre-step position so a non-flying mover blocked by
+		// terrain can be clamped back (#588).
+		pre, _, hasPre := w.moverPos(r)
 		switch MoverKind(ms.Kind[r]) {
 		case MoverLinear:
 			w.moverStepLinear(r)
@@ -36,6 +39,15 @@ func (w *World) moverSystem() {
 			w.moverStepSpline(r)
 		case MoverCustom:
 			w.moverStepCustom(r)
+		}
+		// Terrain block (#588): a non-flying mover may not push its Target
+		// into impassable terrain — clamp back to the pre-step position.
+		if ms.live[r] && hasPre {
+			if tr := w.Transforms.Row(ms.Target[r]); tr != -1 {
+				if to := w.Transforms.Pos[tr]; to != pre && w.moverTerrainBlocks(r, to) {
+					w.moverWrite(tr, pre)
+				}
+			}
 		}
 		// Collision runs after the move, only if the step didn't already
 		// complete the mover (#587). A consumed mover stops here.
