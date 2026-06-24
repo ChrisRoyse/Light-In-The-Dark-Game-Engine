@@ -26,6 +26,8 @@ type Caps struct {
 	RuntimeEffects     int // modder-registered effect primitives (#477)
 	Triggers           int // first-class ECA trigger slab (#456)
 	Timers             int // serializable timer wheel pool (PRD2 01, #551)
+	UnitGroups         int // persistent unit-group slots (PRD2 02, #560)
+	GroupMembers       int // shared group-membership arena slots (PRD2 02, #560)
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
@@ -43,6 +45,8 @@ var EngineCaps = Caps{
 	RuntimeEffects:     256,
 	Triggers:           4096,
 	Timers:             4096,
+	UnitGroups:         1024,
+	GroupMembers:       65536,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -68,6 +72,8 @@ func (c Caps) resolve() Caps {
 		RuntimeEffects:     clampCap(c.RuntimeEffects, EngineCaps.RuntimeEffects),
 		Triggers:           clampCap(c.Triggers, EngineCaps.Triggers),
 		Timers:             clampCap(c.Timers, EngineCaps.Timers),
+		UnitGroups:         clampCap(c.UnitGroups, EngineCaps.UnitGroups),
+		GroupMembers:       clampCap(c.GroupMembers, EngineCaps.GroupMembers),
 	}
 }
 
@@ -398,6 +404,10 @@ type World struct {
 	// (WakeTick,Seq) fire ordering. Pool foundation lands in #551; modes
 	// (#552), schedule index (#553), and hash/save (#555) build on it.
 	Timers *TimerStore
+	// persistent unit-group store (PRD2 02, #545): durable GroupID-handled
+	// sets over a shared Members arena. Pool foundation #560; membership
+	// ops (#561), algebra (#562), prune (#564), hash/save (#565) build on it.
+	Groups *GroupStore
 	// boolexpr condition arena (#457): flat And/Or/Not/Cond nodes indexed
 	// by ExprRef. Cold-path authoring; hashes + serializes.
 	exprArena []exprNode
@@ -491,6 +501,7 @@ func NewWorld(requested Caps) *World {
 		handlerReg:         newHandlerRegistry(),
 		Triggers:           NewTriggerStore(caps.Triggers),
 		Timers:             NewTimerStore(caps.Timers),
+		Groups:             NewGroupStore(caps.UnitGroups, caps.GroupMembers),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),

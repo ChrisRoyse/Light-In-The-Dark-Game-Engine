@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 40
+const SaveFormatVersion uint32 = 41
 
 // ---- little-endian writer / reader ----
 
@@ -256,6 +256,8 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(uint32(w.caps.RuntimeEffects))
 	s.u32(uint32(w.caps.Triggers))
 	s.u32(uint32(w.caps.Timers)) // PRD2 01 (#551): caps-table round-trip; pool contents land in #555
+	s.u32(uint32(w.caps.UnitGroups))   // PRD2 02 (#560): caps round-trip; contents land in #565
+	s.u32(uint32(w.caps.GroupMembers)) // PRD2 02 (#560)
 	s.u32(w.tick)
 	s.u32(uint32(w.unitCount))
 	cur := w.rng.Cursor()
@@ -1523,6 +1525,8 @@ func (w *World) LoadState(in io.Reader, fingerprint uint64) error {
 		RuntimeEffects:     int(r.u32()),
 		Triggers:           int(r.u32()),
 		Timers:             int(r.u32()),
+		UnitGroups:         int(r.u32()),
+		GroupMembers:       int(r.u32()),
 	}
 	if r.err == nil && got != w.caps {
 		return fmt.Errorf("sim: save: capability table %+v does not match this world's %+v — load into a world with identical caps", got, w.caps)
