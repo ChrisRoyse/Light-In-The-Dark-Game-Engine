@@ -172,8 +172,22 @@ func (w *World) RegisterItemAbilityGrant(itemType uint16, abilityID string) bool
 
 // applyItemGrants grants (or revokes) every ability bound to an item type for a
 // unit. Called from the pickup/drop/give paths so item-granted abilities follow
-// the item deterministically.
+// the item deterministically. Two sources compose: the data-authored
+// item.grants-abilities (#621) and the sim-side RegisterItemAbilityGrant
+// registry (#597, for runtime/scripted grants).
 func (w *World) applyItemGrants(unit EntityID, itemType uint16, grant bool) {
+	// Data-authored grants from the item definition.
+	if int(itemType) < len(w.itemDefs) {
+		for _, ai := range w.itemDefs[itemType].GrantsAbilities {
+			ref := ai + 1 // data index → ability ref (defIndex+1)
+			if grant {
+				w.grantAbilityRef(unit, ref)
+			} else {
+				w.revokeAbilityRef(unit, ref)
+			}
+		}
+	}
+	// Runtime/scripted grants registered on the world.
 	for i := range w.itemGrants {
 		g := &w.itemGrants[i]
 		if g.itemType != itemType {

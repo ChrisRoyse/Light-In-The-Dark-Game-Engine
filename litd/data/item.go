@@ -50,6 +50,7 @@ type Item struct {
 	Tier          uint8      // 1..4 for tiered gear; 0 = untiered (#157)
 	Acquisition   uint8      // 0 = unspecified, else ItemAcquisitions[Acquisition-1]
 	Recipe        []uint16   // sorted component item indices (crafted only)
+	GrantsAbilities []uint16 // ability indices granted to the carrier (#621)
 }
 
 type rawItemFile struct {
@@ -73,6 +74,7 @@ type rawItem struct {
 	Tier        int64            `toml:"tier" json:"tier"`               // 1..4 for tiered gear; 0 = untiered (#157)
 	Acquisition string           `toml:"acquisition" json:"acquisition"` // found|bought|crafted; "" = unspecified
 	Recipe      []string         `toml:"recipe" json:"recipe"`           // crafted-from component item IDs
+	GrantsAbilities []string     `toml:"grants-abilities" json:"grants-abilities"` // ability IDs granted to the carrier (#621)
 }
 
 // loadItems reads items/*.toml|json (optional directory). The caller
@@ -180,6 +182,27 @@ func (t *Tables) loadItems(fsys fs.FS, comp *effectCompiler) error {
 	}
 	if err := t.checkRecipeAcyclic(); err != nil {
 		return err
+	}
+	// Resolve item-granted abilities to ability indices (#621). Abilities load
+	// before items, so every id must resolve; an unknown id is a load error
+	// (fail-closed — an item cannot grant a non-existent ability).
+	for pi := range pending {
+		ga := pending[pi].raw.GrantsAbilities
+		if len(ga) == 0 {
+			continue
+		}
+		ii := t.itemIndex(pending[pi].raw.ID)
+		for _, ab := range ga {
+			ai := t.abilityIndex(ab)
+			if ai < 0 {
+				return fmt.Errorf("data: %s: item %q: grants-abilities %q is not a defined ability",
+					pending[pi].file, pending[pi].raw.ID, ab)
+			}
+			t.Items[ii].GrantsAbilities = append(t.Items[ii].GrantsAbilities, uint16(ai))
+		}
+		sort.Slice(t.Items[ii].GrantsAbilities, func(a, b int) bool {
+			return t.Items[ii].GrantsAbilities[a] < t.Items[ii].GrantsAbilities[b]
+		})
 	}
 	return nil
 }
