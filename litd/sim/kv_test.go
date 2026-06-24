@@ -153,3 +153,33 @@ func TestNewWorldWiresKV(t *testing.T) {
 		t.Fatalf("KV not wired: %v", w.KV)
 	}
 }
+
+// #571 — the retired UserData shim over KV. SoT = the KV column read via
+// the reserved key + entity-scope owner (deepest layer).
+func TestUserDataShimOverKV(t *testing.T) {
+	w := NewWorld(Caps{Units: 16})
+	id, ok := w.CreateUnit(CellCenter(1), 0)
+	if !ok {
+		t.Fatal("spawn failed")
+	}
+	owner := makeOwner(KVScopeEntity, uint64(id))
+	// BEFORE: no KV pair under the reserved userdata key.
+	if _, _, _, present := w.KV.KVGet(owner, w.kvUserDataKey); present {
+		t.Fatal("unset unit already has a userdata KV pair")
+	}
+	// Set via the shim, read the raw KV column.
+	if !w.SetUserData(id, 21+21) {
+		t.Fatal("SetUserData failed")
+	}
+	typ, val, _, present := w.KV.KVGet(owner, w.kvUserDataKey)
+	if !present || typ != KVInt || val != 42 {
+		t.Fatalf("KV pair after set: present=%v typ=%d val=%d, want KVInt/42", present, typ, val)
+	}
+	if w.UserData(id) != 42 {
+		t.Fatalf("UserData=%d, want 42", w.UserData(id))
+	}
+	// Reserved key has the stable first id.
+	if w.kvUserDataKey != 1 {
+		t.Fatalf("reserved userdata key id = %d, want 1 (interned first)", w.kvUserDataKey)
+	}
+}

@@ -295,7 +295,7 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // alloc's handle); constant shift, run1==run2.
 // Bumped c0c8…→6f86… (#565, unitgroups) → 279d… (#572, kv): each new
 // HashSystems entry (empty here) is a constant TopHash shift; run1==run2.
-const dGolden uint64 = 0x279d85a77fe8eb7b
+const dGolden uint64 = 0x504413c8f7219f71
 
 // TestAIDeterminism10k — the gate. The Golden subtest is the fast preflight SoT:
 // one full 10k-tick match must equal the committed golden hash. The default full

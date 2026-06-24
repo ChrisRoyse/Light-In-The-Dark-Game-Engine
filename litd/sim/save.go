@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 42
+const SaveFormatVersion uint32 = 43
 
 // ---- little-endian writer / reader ----
 
@@ -318,13 +318,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u16(ut.TypeID[i])
 	}
 
-	// userdata (#217): custom value per unit
-	ud := w.UserDatas
-	s.u32(uint32(ud.count))
-	for i := int32(0); i < ud.count; i++ {
-		s.ent(ud.Entity[i])
-		s.i32(ud.Value[i])
-	}
+	// userdata (#217) retired (#571): serialized inside the kv block now.
 
 	// hidden (#217): presence = hidden
 	hd := w.Hiddens
@@ -1161,9 +1155,6 @@ type decodedSave struct {
 	utE  []EntityID
 	utID []uint16
 
-	udN   int32
-	udE   []EntityID
-	udVal []int32
 
 	hdN int32
 	hdE []EntityID
@@ -1738,17 +1729,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.utID[i] = r.u16()
 	}
 
-	// userdata (#217)
-	if n, err = r.section("userdata", len(w.UserDatas.Value)); err != nil {
-		return err
-	}
-	d.udN = n
-	d.udE = make([]EntityID, n)
-	d.udVal = make([]int32, n)
-	for i := int32(0); i < n; i++ {
-		d.udE[i] = r.ent()
-		d.udVal[i] = r.i32()
-	}
+	// userdata (#217) retired (#571): no section — read from the kv block.
 
 	// hidden (#217)
 	if n, err = r.section("hidden", len(w.Hiddens.Entity)); err != nil {
@@ -3802,14 +3783,7 @@ func applySave(d *decodedSave, w *World) {
 		ut.rowOf[d.utE[i].Index()] = i
 	}
 
-	ud := w.UserDatas
-	ud.count = d.udN
-	resetRowOf(ud.rowOf)
-	for i := int32(0); i < d.udN; i++ {
-		ud.Entity[i] = d.udE[i]
-		ud.Value[i] = d.udVal[i]
-		ud.rowOf[d.udE[i].Index()] = i
-	}
+	// userdata (#217) retired (#571): restored as part of the kv block.
 
 	hd := w.Hiddens
 	hd.count = d.hdN

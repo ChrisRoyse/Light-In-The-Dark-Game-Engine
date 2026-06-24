@@ -121,10 +121,10 @@ func TestTimerScenarioGolden(t *testing.T) {
 	for i := 0; i < 300; i++ {
 		w.Step()
 	}
-	// Bumped 708d…→41d3… (#565, unitgroups sub) → c0025… (#572, kv sub):
-	// each new HashSystems entry contributes to this full-state fingerprint
-	// even when empty in the scenario. Constant shift; scenario unchanged.
-	const golden = uint64(0xc0025a13970de696)
+	// Tracks HashSystems membership (each change is a constant full-state
+	// shift; scenario unchanged): 708d→41d3 (#565 unitgroups+) → c002
+	// (#572 kv+) → 4554 (#571 userdata− folded into kv).
+	const golden = uint64(0x45542466299e55d6)
 	got := timerTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("timer golden hash %016x != recorded %016x (intended change? update golden)", got, golden)

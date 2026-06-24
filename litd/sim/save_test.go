@@ -120,8 +120,8 @@ func saveWorld(t *testing.T) (*World, *data.Tables, *[]uint32) {
 	if w.Sched.PendingSleepers() == 0 {
 		t.Fatal("degenerate fixture: no pending suspension at the save point")
 	}
-	if w.UserDatas.Count() == 0 {
-		t.Fatal("degenerate fixture: no userdata rows at the save point")
+	if w.KV.Count() == 0 {
+		t.Fatal("degenerate fixture: no kv/userdata pairs at the save point")
 	}
 	if w.Hiddens.Count() == 0 {
 		t.Fatal("degenerate fixture: no hidden units at the save point")

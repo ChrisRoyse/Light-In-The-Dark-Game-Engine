@@ -1393,46 +1393,47 @@ func TestUnitAcquireRangeFSV(t *testing.T) {
 	}
 }
 
-// TestUnitUserDataFSV: SetUserData/UserData round-trip through the sparse
-// UserDataStore. SoT = the store row (w.UserDatas.Row/Value), read directly —
-// never via the getter return alone. Proves the lazy-allocation invariant:
-// no row exists until a value is set; an unset unit reads 0.
+// TestUnitUserDataFSV: SetUserData/UserData round-trip, now backed by the
+// generic KV store via a reserved key (#571). SoT = the sim layer
+// (w.UserData reads the KV pair) + the KV pair count (w.KV.Count), read
+// directly — never the api getter return alone. Proves sparseness (no KV
+// pair until set), single-pair overwrite (no leak), and prune on death.
 func TestUnitUserDataFSV(t *testing.T) {
 	w := sim.NewWorld(sim.Caps{Units: 16})
 	g := newGame(w)
 	u, id := liveUnit(t, w, g, 0, 100)
 
-	// BEFORE: never set → sparse store has NO row, getter reads default 0.
-	if r := w.UserDatas.Row(id); r != -1 {
-		t.Fatalf("unset unit already has a userdata row %d (not sparse)", r)
+	// BEFORE: never set → no KV pair, sim + getter read default 0.
+	base := w.KV.Count()
+	if v := w.UserData(id); v != 0 {
+		t.Fatalf("unset sim UserData=%d, want 0", v)
 	}
 	if got := u.UserData(); got != 0 {
 		t.Fatalf("unset UserData()=%d, want 0", got)
 	}
-	t.Logf("BEFORE: row=%d getter=%d count=%d", w.UserDatas.Row(id), u.UserData(), w.UserDatas.Count())
+	t.Logf("BEFORE: simUserData=%d getter=%d kvCount=%d", w.UserData(id), u.UserData(), w.KV.Count())
 
-	// X+X=Y: set 21+21=42, then read the byte in the store, not the return.
+	// X+X=Y: set 21+21=42, then read the sim/KV state, not the return.
 	u.SetUserData(21 + 21)
-	r := w.UserDatas.Row(id)
-	if r == -1 {
-		t.Fatal("after SetUserData: still no store row (lazy-alloc failed)")
+	if w.KV.Count() != base+1 {
+		t.Fatalf("after SetUserData kvCount=%d, want %d (one pair added)", w.KV.Count(), base+1)
 	}
-	if w.UserDatas.Value[r] != 42 {
-		t.Errorf("store Value[%d]=%d, want 42", r, w.UserDatas.Value[r])
+	if w.UserData(id) != 42 {
+		t.Errorf("sim UserData=%d, want 42", w.UserData(id))
 	}
 	if u.UserData() != 42 {
 		t.Errorf("getter UserData()=%d, want 42", u.UserData())
 	}
-	t.Logf("AFTER set 42: row=%d store=%d getter=%d count=%d", r, w.UserDatas.Value[r], u.UserData(), w.UserDatas.Count())
+	t.Logf("AFTER set 42: simUserData=%d getter=%d kvCount=%d", w.UserData(id), u.UserData(), w.KV.Count())
 
-	// Overwrite reuses the SAME row (no leak): set again, count must not grow.
-	beforeCount := w.UserDatas.Count()
+	// Overwrite reuses the SAME pair (no leak): count must not grow.
+	beforeCount := w.KV.Count()
 	u.SetUserData(-7)
-	if w.UserDatas.Count() != beforeCount {
-		t.Errorf("overwrite grew count %d→%d (leaked a row)", beforeCount, w.UserDatas.Count())
+	if w.KV.Count() != beforeCount {
+		t.Errorf("overwrite grew kvCount %d→%d (leaked a pair)", beforeCount, w.KV.Count())
 	}
-	if w.UserDatas.Value[w.UserDatas.Row(id)] != -7 || u.UserData() != -7 {
-		t.Errorf("overwrite: store=%d getter=%d, want -7", w.UserDatas.Value[w.UserDatas.Row(id)], u.UserData())
+	if w.UserData(id) != -7 || u.UserData() != -7 {
+		t.Errorf("overwrite: sim=%d getter=%d, want -7", w.UserData(id), u.UserData())
 	}
 
 	// EDGE: int32 extremes survive the int↔int32 boundary unchanged.
@@ -1441,20 +1442,20 @@ func TestUnitUserDataFSV(t *testing.T) {
 		if got := u.UserData(); got != v {
 			t.Errorf("extreme %d: round-trip got %d", v, got)
 		}
-		if w.UserDatas.Value[w.UserDatas.Row(id)] != int32(v) {
-			t.Errorf("extreme %d: store=%d", v, w.UserDatas.Value[w.UserDatas.Row(id)])
+		if w.UserData(id) != int32(v) {
+			t.Errorf("extreme %d: sim=%d", v, w.UserData(id))
 		}
 	}
 
 	// EDGE: zero / removed handle → getter 0, setter no-op, no panic, and the
-	// store row is reclaimed on removal (DestroyUnit path).
+	// KV pair is reclaimed on removal (DestroyUnit path).
 	if (Unit{}).UserData() != 0 {
 		t.Error("zero Unit UserData() != 0")
 	}
 	u.SetUserData(99)
 	u.Remove()
-	if w.UserDatas.Row(id) != -1 {
-		t.Errorf("removed unit still has userdata row %d (DestroyUnit leak)", w.UserDatas.Row(id))
+	if w.UserData(id) != 0 {
+		t.Errorf("removed unit still has userdata (DestroyUnit leak): %d", w.UserData(id))
 	}
 	u.SetUserData(5) // no-op on dead handle
 	if u.UserData() != 0 {

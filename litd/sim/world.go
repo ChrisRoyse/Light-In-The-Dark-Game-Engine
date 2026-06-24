@@ -123,7 +123,6 @@ type World struct {
 	Healths       *HealthStore
 	Owners        *OwnerStore
 	UnitTypes     *UnitTypeStore
-	UserDatas     *UserDataStore
 	UnitNames     *UnitNameStore
 	Hiddens       *presenceSet
 	XPSuspends    *presenceSet
@@ -416,6 +415,10 @@ type World struct {
 	// Key)→typed-value map with intern tables. Foundation #568; interning
 	// (#569), scoped ops (#570), hash/save (#572) build on it.
 	KV *KVStore
+	// kvUserDataKey is the reserved interned key id backing the legacy
+	// per-unit custom value (GetUnitUserData) over KV (#571). Interned
+	// first at construction so its id is stable across save/load.
+	kvUserDataKey uint32
 	// boolexpr condition arena (#457): flat And/Or/Not/Cond nodes indexed
 	// by ExprRef. Cold-path authoring; hashes + serializes.
 	exprArena []exprNode
@@ -475,7 +478,6 @@ func NewWorld(requested Caps) *World {
 		Healths:            NewHealthStore(caps.Units, idxSpace),
 		Owners:             NewOwnerStore(caps.Units, idxSpace),
 		UnitTypes:          NewUnitTypeStore(caps.Units, idxSpace),
-		UserDatas:          NewUserDataStore(caps.Units, idxSpace),
 		UnitNames:          NewUnitNameStore(caps.Units, idxSpace),
 		Hiddens:            newPresenceSet(caps.Units, idxSpace),
 		XPSuspends:         newPresenceSet(caps.Units, idxSpace),
@@ -554,6 +556,7 @@ func NewWorld(requested Caps) *World {
 	for i := range w.bucketCell {
 		w.bucketCell[i] = -1
 	}
+	w.kvUserDataKey = w.KV.InternKey(kvUserDataKey) // reserve userdata key first → stable id (#571)
 	w.initPlayers()
 	w.registerTriggerDispatch()   // ECA action-runner continuation (#459)
 	w.installBaseDamageFormula() // ordered damage-formula pipeline (#473)
@@ -636,9 +639,8 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.UnitTypes.Row(id) != -1 {
 		w.UnitTypes.Remove(id)
 	}
-	if w.UserDatas.Row(id) != -1 {
-		w.UserDatas.Remove(id)
-	}
+	// userdata + any other entity-scope KV pairs go with the unit (#571).
+	w.KV.KVClearOwner(makeOwner(KVScopeEntity, uint64(id)))
 	if w.UnitNames.Row(id) != -1 {
 		w.UnitNames.Remove(id)
 	}
@@ -750,8 +752,7 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Owners.rowOf) * rowOfB
 	n += len(w.UnitTypes.TypeID) * (2 + 4)
 	n += len(w.UnitTypes.rowOf) * rowOfB
-	n += len(w.UserDatas.Value) * (4 + 4)
-	n += len(w.UserDatas.rowOf) * rowOfB
+	n += len(w.KV.Owner) * (8 + 4 + 1 + 8 + 8) // kv pairs (#571/#572)
 	n += len(w.UnitNames.Name) * (4 + 32) // 4-byte len + rough name bytes
 	n += len(w.UnitNames.rowOf) * rowOfB
 	n += len(w.Hiddens.Entity) * 4
