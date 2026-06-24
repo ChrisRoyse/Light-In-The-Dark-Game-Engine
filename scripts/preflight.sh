@@ -124,7 +124,7 @@ step "zero-alloc (R-GC-1/5)" go test ./litd/sim/ -run TestZeroAlloc -count=1
 # PRD2 sim-primitive acceptance goldens + save/resume parity (#559 timers,
 # #567 unit-groups). Fast and always run so a cross-platform hash divergence
 # in a primitive is caught even in --fast.
-step "PRD2 primitive acceptance (timers/groups/kv/events)" go test ./litd/sim/ -run 'TestTimerScenarioGolden|TestGroupScenarioGolden|TestGroupSaveResumeParity|TestGroupTwoRunDeterminism|TestKVScenarioGolden|TestKVSaveResumeParity|TestKVUserDataMigrationSaveLoad|TestCustomEventScenarioGolden|TestCustomEventSaveResumeParity|TestCustomEventTwoRunDeterminism' -count=1
+step "PRD2 primitive acceptance (timers/groups/kv/events/movers)" go test ./litd/sim/ -run 'TestTimerScenarioGolden|TestGroupScenarioGolden|TestGroupSaveResumeParity|TestGroupTwoRunDeterminism|TestKVScenarioGolden|TestKVSaveResumeParity|TestKVUserDataMigrationSaveLoad|TestCustomEventScenarioGolden|TestCustomEventSaveResumeParity|TestCustomEventTwoRunDeterminism|TestMoverScenarioGolden|TestMoverScenarioSaveResumeParity|TestMoverScenarioTwoRunDeterminism|TestMoverAdvanceZeroAlloc' -count=1
 step "import-graph (sim ⊥ render/G3N/GL)" go run ./tools/importcheck
 step "determinism lint"     go run ./tools/determlint ./litd/...
 step "API-surface lint (R-API-1..6)" go run ./tools/apilint ./litd/api
