@@ -140,7 +140,9 @@ func (w *World) moverSweptCollide(r int32) bool {
 	}
 	dir := ms.Dir[r]
 
-	// Integer, direction-scaled projection space (overflow-safe, det §2.1).
+	// Integer, direction-scaled projection space (det §2.1). Overflow-safe for
+	// every accepted spec: data.LowerAbilitySpec caps Speed/Range/Radius at
+	// maxProjectionExtent (1e5 wu) so (Δ²)·l2 stays ~180× under MaxInt64 (#631).
 	dx := dir.X.Mul(fixed.FromInt(dirIntScale)).Floor()
 	dy := dir.Y.Mul(fixed.FromInt(dirIntScale)).Floor()
 	l2 := dx*dx + dy*dy

@@ -180,7 +180,7 @@ func lowerOps(id string, srcs []OpSource, depth int) ([]OpLowered, error) {
 			Pierce: int32(s.Pierce), Done: s.Done,
 		}
 		var err error
-		if op.Speed, err = fixedExact(s.Speed, "speed"); err != nil {
+		if op.Speed, err = fixedExtent(s.Speed, "speed"); err != nil {
 			return nil, fmt.Errorf("ability %q op[%d]: %w", id, i, err)
 		}
 		if op.AngVel, err = degToBAM(s.AngVel); err != nil {
@@ -207,10 +207,10 @@ func lowerOps(id string, srcs []OpSource, depth int) ([]OpLowered, error) {
 			}
 			op.Waypoints = append(op.Waypoints, fixed.Vec2{X: x, Y: y})
 		}
-		if op.Range, err = fixedExact(s.Range, "range"); err != nil {
+		if op.Range, err = fixedExtent(s.Range, "range"); err != nil {
 			return nil, fmt.Errorf("ability %q op[%d]: %w", id, i, err)
 		}
-		if op.Radius, err = fixedExact(s.Radius, "radius"); err != nil {
+		if op.Radius, err = fixedExtent(s.Radius, "radius"); err != nil {
 			return nil, fmt.Errorf("ability %q op[%d]: %w", id, i, err)
 		}
 		if op.Amount, err = fixedExact(s.Amount, "amount"); err != nil {
@@ -265,6 +265,29 @@ func fixedExact(f float64, what string) (fixed.F64, error) {
 	back := float64(int64(q)) / float64(int64(1)<<32)
 	if math.Abs(back-f) > 1.0/float64(int64(1)<<31) {
 		return 0, fmt.Errorf("ability: %s = %v loses precision in fixed-point", what, f)
+	}
+	return q, nil
+}
+
+// maxProjectionExtent caps Speed/Range/Radius (world units) so the integer
+// swept-collision projection in litd/sim/mover_collision.go cannot overflow
+// int64. That projection forms (Δ²)·l2 with l2 ≤ 2·dirIntScale² = 2^21
+// (dirIntScale = 1024) and Δ bounded per tick by Speed+Radius; 1e5 keeps every
+// term under ~5e16 — ~180× below MaxInt64 — while sitting far above any real
+// ability (demo movers travel ≤ 1e3 u/tick). Authoring rejects anything larger,
+// so the sim's "overflow-safe" projection invariant holds for all inputs (#631).
+const maxProjectionExtent = 1e5
+
+// fixedExtent is fixedExact plus the semantic magnitude bound for the geometry
+// fields that feed the integer collision projection. Fail-closed at authoring —
+// an absurd Speed/Radius is rejected here, never silently overflowed downstream.
+func fixedExtent(f float64, what string) (fixed.F64, error) {
+	q, err := fixedExact(f, what)
+	if err != nil {
+		return 0, err
+	}
+	if f > maxProjectionExtent || f < -maxProjectionExtent {
+		return 0, fmt.Errorf("ability: %s = %v exceeds the %g world-unit projection limit", what, f, maxProjectionExtent)
 	}
 	return q, nil
 }
