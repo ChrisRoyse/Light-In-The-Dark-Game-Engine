@@ -26,6 +26,7 @@ const (
 	MoverDoneLoop     MoverDone = MoverDone(sim.MoverDoneLoop)     // re-arm and keep going
 	MoverDoneDetonate MoverDone = MoverDone(sim.MoverDoneDetonate) // AoE payload at the end, then free
 	MoverDoneCont     MoverDone = MoverDone(sim.MoverDoneCont)     // run an OnDone continuation, then free
+	MoverDoneImpact   MoverDone = MoverDone(sim.MoverDoneImpact)   // single-shot payload once at the end (missile point/homing impact), then free
 )
 
 // MoverHitMask filters mover collision candidates (same class/team bits as

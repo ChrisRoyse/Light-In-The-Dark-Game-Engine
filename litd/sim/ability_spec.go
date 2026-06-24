@@ -202,6 +202,7 @@ type WaypointSource struct{ X, Y float64 }
 var moverDoneModeNames = map[string]MoverDoneMode{
 	"expire": MoverDoneExpire, "loop": MoverDoneLoop,
 	"detonate": MoverDoneDetonate, "cont": MoverDoneCont,
+	"impact": MoverDoneImpact,
 }
 
 // degToBAM converts degrees to the sim binary angle (65536 = full circle),

@@ -28,6 +28,8 @@ func (w *World) moverComplete(r int32) {
 		return                         // stays live — no free
 	case MoverDoneDetonate:
 		w.moverDetonate(r)
+	case MoverDoneImpact:
+		w.moverImpact(r)
 	case MoverDoneCont:
 		if ms.OnDone[r] != 0 {
 			w.AfterMS(0, sched.ContID(ms.OnDone[r]), sched.State(ms.CState[r]))
@@ -47,6 +49,45 @@ func (w *World) moverFree(r int32) {
 	ms.Gen[r]++
 	ms.free = append(ms.free, r)
 	ms.count--
+}
+
+// moverImpact delivers the payload exactly ONCE at the mover's final
+// position — the missile point/homing-arrival impact model (#590). The
+// effect list runs a single time with Point = final pos and Target = the
+// homing guide (Anchor) if still alive, else 0 (a point impact); the
+// packet variant damages that target (or its preset Packet.Target). This
+// is the single-shot counterpart to moverDetonate's per-unit AoE: a
+// point-targeted projectile whose effect list does its own area must not
+// re-run the list once per nearby unit. Mirrors impactMissile exactly for
+// the hashing-relevant delivery + EvMissileImpact; the render cue is a
+// non-hashing presentation event (#309).
+func (w *World) moverImpact(r int32) {
+	ms := w.Movers
+	tr := w.Transforms.Row(ms.Target[r])
+	if tr == -1 {
+		return // body gone: nothing to anchor the impact to (fail-safe)
+	}
+	at := w.Transforms.Pos[tr]
+	tgt := ms.Anchor[r] // homing guide; 0 for a point mover
+	if tgt != 0 && !w.Ents.Alive(tgt) {
+		tgt = 0 // guide died: degrade to a point impact (never deliver to a corpse)
+	}
+	if lst := ms.Payload[r]; lst.Len > 0 {
+		w.ExecuteEffects(lst, EffectCtx{Source: ms.Owner[r], Target: tgt, Point: at})
+	} else {
+		p := ms.Packet[r]
+		if tgt != 0 {
+			p.Target = tgt // homing delivery follows the live guide
+		}
+		if p.Source == 0 {
+			p.Source = ms.Owner[r]
+		}
+		if p.Target != 0 {
+			w.QueueDamage(p)
+		}
+	}
+	w.EmitRenderEventAt(RenderMissileImpact, ms.Target[r], 0, at)
+	w.Emit(Event{Kind: EvMissileImpact, Src: ms.Target[r], Dst: tgt})
 }
 
 // moverDetonate delivers the payload to every masked unit within Radius of

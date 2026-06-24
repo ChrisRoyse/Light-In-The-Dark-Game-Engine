@@ -51,8 +51,9 @@ type MoverDoneMode uint8
 const (
 	MoverDoneExpire   MoverDoneMode = iota // free the mover (and consume projectile)
 	MoverDoneLoop                          // restart the motion
-	MoverDoneDetonate                      // fire the payload at the final position
+	MoverDoneDetonate                      // AoE: fire the payload once PER masked unit in Radius at the final position
 	MoverDoneCont                          // invoke OnDone continuation
+	MoverDoneImpact                        // single-shot: fire the payload ONCE at the final position (missile point/homing impact parity, #590)
 )
 
 // Mover flag bits.
