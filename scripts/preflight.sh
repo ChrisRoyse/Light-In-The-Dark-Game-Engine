@@ -164,6 +164,13 @@ step "jassgen tests"        go test ./tools/jassgen/
 # vs regenerated, never the committed blob) — which is exactly how audit-report.json
 # reached main stale at 585 exported verbs while the real surface was 588. Comparing
 # the post-regen working tree against HEAD is immune to that: a stale commit goes red.
+#
+# Order-independence (#629): this gate must report drift even when an upstream
+# jassgen step (-audit/-revclosure/-eventcov) failed for an unrelated reason. That
+# holds ONLY because step() is keep-going (records to FAILED[], never aborts) — do
+# NOT change step() to fail-fast, or a red upstream step would mask real artifact
+# drift behind it (the exact pre-#628 incident: revclosure was red, audit-report
+# drift went unseen). Verified: a failing upstream step still runs this diff.
 step "generated artifacts in sync" git diff --exit-code HEAD -- api-manifest.json audit-report.json audit-report.md docs/api/event-coverage.json
 
 # Public Lua API reference (#187): the committed docs/api/lua-reference.md must
