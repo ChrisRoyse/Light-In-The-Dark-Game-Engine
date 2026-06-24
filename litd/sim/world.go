@@ -431,6 +431,9 @@ type World struct {
 	// units AND projectiles. Pool foundation #582; advance (#584/#585),
 	// collision (#587), missile migration + hash/save (#590) build on it.
 	Movers *MoverStore
+	// moverHitScratch is the reused broad-phase result buffer for mover
+	// collision (#587) — keeps the per-tick collision pass zero-alloc.
+	moverHitScratch []EntityID
 	// kvUserDataKey is the reserved interned key id backing the legacy
 	// per-unit custom value (GetUnitUserData) over KV (#571). Interned
 	// first at construction so its id is stable across save/load.
@@ -531,6 +534,7 @@ func NewWorld(requested Caps) *World {
 		KV:                 NewKVStore(caps.KVPairs),
 		CustomEvents:       NewCustomEventRegistry(caps.CustomEventKinds),
 		Movers:             NewMoverStore(caps.Movers, caps.MoverWaypoints),
+		moverHitScratch:    make([]EntityID, 0, 128),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),

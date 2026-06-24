@@ -98,8 +98,15 @@ type MoverStore struct {
 	Flags    []uint8
 
 	Owner []EntityID
-	Gen   []uint8
-	live  []bool
+
+	// already-hit ring for pierce de-dup (#587): Hit holds up to
+	// moverHitRing recent victims, HitN is the monotone write cursor.
+	// Hashed + saved (#590).
+	Hit  [][moverHitRing]EntityID
+	HitN []int32
+
+	Gen  []uint8
+	live []bool
 	free  []int32
 	count int32
 
@@ -176,7 +183,9 @@ func NewMoverStore(moverCap, wpCap int) *MoverStore {
 		HitMask: make([]uint16, n), Pierce: make([]int32, n), Decay: make([]uint16, n),
 		Payload: make([]data.EffectList, n), Packet: make([]DamagePacket, n),
 		OnDone: make([]uint16, n), DoneMode: make([]uint8, n), Flags: make([]uint8, n),
-		Owner: make([]EntityID, n), Gen: make([]uint8, n), live: make([]bool, n),
+		Owner: make([]EntityID, n),
+		Hit:   make([][moverHitRing]EntityID, n), HitN: make([]int32, n),
+		Gen: make([]uint8, n), live: make([]bool, n),
 		free:      make([]int32, 0, moverCap),
 		waypoints: make([]fixed.Vec2, wpCap),
 	}
@@ -252,6 +261,7 @@ func (s *MoverStore) Create(spec MoverSpec) MoverID {
 	s.DoneMode[r] = uint8(spec.DoneMode)
 	s.Flags[r] = spec.Flags
 	s.Owner[r] = spec.Owner
+	s.HitN[r] = 0 // fresh hit ring (stale entries beyond HitN are ignored)
 	return makeMoverID(uint32(r), s.Gen[r])
 }
 

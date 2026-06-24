@@ -37,6 +37,11 @@ func (w *World) moverSystem() {
 		case MoverCustom:
 			w.moverStepCustom(r)
 		}
+		// Collision runs after the move, only if the step didn't already
+		// complete the mover (#587). A consumed mover stops here.
+		if ms.live[r] {
+			w.moverCollide(r)
+		}
 	}
 }
 
