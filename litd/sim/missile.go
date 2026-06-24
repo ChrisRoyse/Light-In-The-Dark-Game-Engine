@@ -533,6 +533,17 @@ func (w *World) missileTargetClass(target EntityID) uint16 {
 // non-missile or dead handle (R-API-5). Script-facing — Missile.Detonate
 // (#293).
 func (w *World) DetonateMissile(id EntityID) bool {
+	if mr, ok := w.projMover(id); ok {
+		// Mover-backed projectile (#590): deliver the payload once at the current
+		// position, then consume the body — force DoneImpact so a linear/expire
+		// projectile still delivers, matching impactMissile's immediate detonate.
+		if !w.Ents.Alive(id) {
+			return false
+		}
+		w.Movers.DoneMode[mr] = uint8(MoverDoneImpact)
+		w.moverComplete(mr)
+		return true
+	}
 	r := w.Missiles.Row(id)
 	if r == -1 || !w.Ents.Alive(id) {
 		return false
@@ -545,10 +556,33 @@ func (w *World) DetonateMissile(id EntityID) bool {
 	return true
 }
 
+// projMover resolves a projectile body entity to its driving mover row, or
+// ok=false if id is not a live mover-backed projectile (#590).
+func (w *World) projMover(id EntityID) (int32, bool) {
+	pr := w.ProjRender.Row(id)
+	if pr == -1 {
+		return 0, false
+	}
+	return w.Movers.resolve(w.ProjRender.Mover[pr])
+}
+
 // ExpireMissile removes a missile payload-less and emits EvMissileExpired
 // (plus the OnMissileExpire callback). Returns false on a non-missile or
 // dead handle. Script-facing — Missile.Expire (#293).
 func (w *World) ExpireMissile(id EntityID) bool {
+	if mr, ok := w.projMover(id); ok {
+		if !w.Ents.Alive(id) {
+			return false
+		}
+		last := w.Transforms.Pos[w.Transforms.Row(id)]
+		if w.OnMissileExpire != nil {
+			w.OnMissileExpire(w.tick, id, last)
+		}
+		w.Emit(Event{Kind: EvMissileExpired, Src: id})
+		w.Movers.DoneMode[mr] = uint8(MoverDoneExpire) // payload-less: consume + free, no delivery
+		w.moverComplete(mr)
+		return true
+	}
 	r := w.Missiles.Row(id)
 	if r == -1 || !w.Ents.Alive(id) {
 		return false
@@ -571,6 +605,31 @@ func (w *World) ExpireMissile(id EntityID) bool {
 // guided missile. Returns false on a non-missile/dead handle or a dead
 // target. Script-facing — Missile.SetTarget (#293).
 func (w *World) SetMissileTarget(id, target EntityID) bool {
+	if mr, ok := w.projMover(id); ok {
+		if !w.Ents.Alive(id) || (target != 0 && !w.Ents.Alive(target)) {
+			return false
+		}
+		ms := w.Movers
+		ms.Flags[mr] &^= MoverSwept // a retargeted projectile is guided, not a skillshot
+		ms.DoneMode[mr] = uint8(MoverDoneImpact)
+		if target != 0 {
+			ms.Kind[mr] = uint8(MoverHoming)
+			ms.Anchor[mr] = target
+			ms.TurnRate[mr] = 0
+		} else {
+			ms.Kind[mr] = uint8(MoverPoint)
+			ms.Anchor[mr] = 0
+			// A former skillshot has no goal point — aim at the current position
+			// so it arrives rather than flying to the origin (degenerate legacy
+			// linear->point case); a point mover keeps its existing Goal.
+			if ms.Goal[mr] == (fixed.Vec2{}) {
+				if tr := w.Transforms.Row(id); tr != -1 {
+					ms.Goal[mr] = w.Transforms.Pos[tr]
+				}
+			}
+		}
+		return true
+	}
 	r := w.Missiles.Row(id)
 	if r == -1 || !w.Ents.Alive(id) {
 		return false

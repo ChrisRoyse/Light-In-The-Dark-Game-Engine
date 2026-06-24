@@ -86,6 +86,13 @@ func (w *World) moverImpact(r int32) {
 			w.QueueDamage(p)
 		}
 	}
+	// Presentation parity with the legacy missile (#590): a projectile body
+	// fires the OnMissileImpact hook. Gated on ProjRender so a non-projectile
+	// DoneImpact mover (an ability's point-cast AoE) never spuriously fires a
+	// "missile" cue. Non-hashing presentation, like the render event below.
+	if w.OnMissileImpact != nil && w.ProjRender.Row(ms.Target[r]) != -1 {
+		w.OnMissileImpact(w.tick, ms.Target[r], at, tgt)
+	}
 	w.EmitRenderEventAt(RenderMissileImpact, ms.Target[r], 0, at)
 	w.Emit(Event{Kind: EvMissileImpact, Src: ms.Target[r], Dst: tgt})
 }
