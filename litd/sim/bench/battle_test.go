@@ -155,7 +155,7 @@ func stepBattle(w *sim.World, durs []time.Duration, st *battleStats) {
 		st.timer.stepEnd()
 		durs[i] = time.Since(start)
 		st.sampleCounters(w, durs[i])
-		if c := w.Missiles.Count(); c > st.missileHigh {
+		if c := w.ProjRender.Count(); c > st.missileHigh {
 			st.missileHigh = c
 		}
 	}
@@ -178,7 +178,7 @@ func (st *battleStats) sampleCounters(w *sim.World, tickDur time.Duration) {
 	c.Set(std.SimPathExpansionsTick, int64(w.PathExpansionsLastTick()))
 	c.Set(std.SimPathQueueDepth, int64(w.PathQueueDepth()))
 	c.Set(std.SimEntitiesUnitsActive, int64(w.UnitCount()))
-	c.Set(std.SimEntitiesMissiles, int64(w.Missiles.Count()))
+	c.Set(std.SimEntitiesMissiles, int64(w.ProjRender.Count()))
 	c.Set(std.SimEntitiesBuffs, int64(w.Buffs.Live()))
 	c.Sample(w.Tick(), 0)
 }
@@ -261,7 +261,7 @@ func benchBattle(b *testing.B, units int) {
 	for i := 0; i < warmupTicks; i++ {
 		w.Step()
 	}
-	if w.Missiles.Count() == 0 {
+	if w.ProjRender.Count() == 0 {
 		b.Fatal("degenerate scene: no missiles in flight after warmup")
 	}
 	counters, std := newBattleCounterSet()
@@ -432,10 +432,10 @@ func TestBattleAllocsZero(t *testing.T) {
 			w.Step()
 		}
 		avg := testing.AllocsPerRun(200, func() { w.Step() })
-		if w.Missiles.Count() == 0 {
+		if w.ProjRender.Count() == 0 {
 			t.Fatalf("n=%d: degenerate scene, no missiles in flight", n)
 		}
-		t.Logf("n=%d allocs/tick=%v missiles=%d", n, avg, w.Missiles.Count())
+		t.Logf("n=%d allocs/tick=%v missiles=%d", n, avg, w.ProjRender.Count())
 		if avg != 0 {
 			t.Errorf("n=%d: allocs/tick = %v, want 0", n, avg)
 		}

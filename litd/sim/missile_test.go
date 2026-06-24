@@ -212,7 +212,7 @@ func TestMissilePoolExhaustion(t *testing.T) {
 		Pos:    fixed.Vec2{X: 1000 * fixed.One, Y: 1000 * fixed.One},
 		Source: a, Target: v, Speed: fixed.One,
 	})
-	t.Logf("spawned %d/%d; spawn %d → ok=%v; live=%d", n, capN, capN+1, ok, w.Missiles.Count())
+	t.Logf("spawned %d/%d; spawn %d → ok=%v; live=%d", n, capN, capN+1, ok, w.ProjRender.Count())
 	if n != capN || ok {
 		t.Fatalf("want exactly %d spawns then deterministic refusal, got %d / ok=%v", capN, n, ok)
 	}
@@ -245,7 +245,11 @@ func TestMissileRetarget(t *testing.T) {
 		Packet: DamagePacket{Source: a, Target: v, Amount: 30 * fixed.One},
 	})
 	w.Step()
-	w.Missiles.GuideEnt[w.Missiles.Row(id)] = v2 // script-level retarget
+	mr, okm := w.projMover(id) // script-level retarget: redirect the mover's anchor
+	if !okm {
+		t.Fatal("projectile has no live mover")
+	}
+	w.Movers.Anchor[mr] = v2
 	for i := 0; i < 12 && w.Ents.Alive(id); i++ {
 		w.Step()
 		t.Logf("t%d missile@%s", w.Tick(), missilePos(w, id))
@@ -282,8 +286,8 @@ func TestMissileWeaponFire(t *testing.T) {
 	w.Subscribe(EvUnitDamaged, 1)
 	for i := 0; i < 20 && hitTick == 0; i++ {
 		w.Step()
-		if w.Missiles.Count() > 0 {
-			t.Logf("t%d missile in flight @%s", w.Tick(), missilePos(w, w.Missiles.Entity[0]))
+		if w.ProjRender.Count() > 0 {
+			t.Logf("t%d missile in flight @%s", w.Tick(), missilePos(w, w.ProjRender.Entity[0]))
 		}
 	}
 	t.Logf("FIRE at t%d, impact at t%d, victim life=%d", fireTick, hitTick, w.Healths.Life[hr])

@@ -165,7 +165,16 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // non-hashed legacy subs table. Behavior unchanged (event-behavior suites
 // green, dispatch order identical); only the carrier moved into the hash.
 // run1==run2 stays identical (deterministic).
-const goldenDetLua uint64 = 0xc9cd34dbd50ecb55
+//
+// Bumped 0xc9cd34dbd50ecb55 → 0x8410d60d0adb42e3 (2026-06-24, #590): missiles
+// are now mover-driven projectiles — SpawnMissile builds a body + mover +
+// render-only ProjRender record instead of a MissileStore row. Projectile state
+// moved from the hashed "missiles" sub-hash (now empty) into the hashed "movers"
+// sub-hash, a constant TopHash shift. NOT a sim-outcome change: the full
+// missile↔mover parity suite is green (identical damage, arrival tick, hit
+// positions, AoE last-point splash, non-AoE guide-death fizzle, pierce/decay,
+// acceleration), run1==run2 stays identical, alive count unchanged at 3.
+const goldenDetLua uint64 = 0x8410d60d0adb42e3
 
 // TestLoadWorldPlacementSpawnsEntities — #403: a world ships a placement table
 // (data/placement) and the loader spawns those entities after the type tables

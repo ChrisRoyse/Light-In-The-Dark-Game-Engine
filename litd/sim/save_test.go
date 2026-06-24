@@ -111,7 +111,7 @@ func saveWorld(t *testing.T) (*World, *data.Tables, *[]uint32) {
 	for i := 0; i < 10; i++ {
 		w.Step()
 	}
-	if w.Missiles.Count() == 0 {
+	if w.ProjRender.Count() == 0 {
 		t.Fatal("degenerate fixture: no missiles in flight at the save point")
 	}
 	if w.Buffs.Live() == 0 {
@@ -170,7 +170,7 @@ func TestSaveRoundTrip(t *testing.T) {
 	}
 	saved := append([]byte(nil), buf.Bytes()...)
 	t.Logf("save: %d bytes at tick %d (units=%d missiles=%d buffs=%d sleepers=%d)",
-		len(saved), src.Tick(), src.UnitCount(), src.Missiles.Count(), src.Buffs.Live(), src.Sched.PendingSleepers())
+		len(saved), src.Tick(), src.UnitCount(), src.ProjRender.Count(), src.Buffs.Live(), src.Sched.PendingSleepers())
 	t.Logf("header: % x", saved[:32])
 
 	firedDst := &[]uint32{}

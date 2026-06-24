@@ -3275,6 +3275,11 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	for i := uint32(0); i < mFreeN; i++ {
 		d.moverFree[i] = r.u32()
 		d.moverFreeGen[i] = r.u8()
+		// Each free slot must be a real mover row index — a corrupted value would
+		// panic at apply (mv.Gen[f]); fail closed instead (never silent).
+		if int(d.moverFree[i]) > moverCap {
+			return fmt.Errorf("sim: save: mover free slot %d exceeds cap %d", d.moverFree[i], moverCap)
+		}
 	}
 
 	// projectile render side table (#590, v47). Bounded against the mover cap

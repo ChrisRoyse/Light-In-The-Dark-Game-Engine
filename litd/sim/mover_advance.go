@@ -154,10 +154,16 @@ func (w *World) moverStepHoming(r int32) {
 		// using the same within-one-step predicate (distLE vs Speed) as the
 		// missile's snap-arrive. A non-consume homing mover (a guided unit)
 		// keeps pursuing past the anchor, unchanged.
-		if ms.Flags[r]&MoverConsume != 0 && distLE(apos.Sub(pos), ms.Speed[r]) {
-			w.moverWrite(tr, apos)
-			w.moverComplete(r)
-			return
+		if ms.Flags[r]&MoverConsume != 0 {
+			// Track the guide's last-known position so an AoE projectile can
+			// coast to it and detonate there if the guide dies (#590 missile
+			// GuidePt parity — see the dead-anchor branch below).
+			ms.Goal[r] = apos
+			if distLE(apos.Sub(pos), ms.Speed[r]) {
+				w.moverWrite(tr, apos)
+				w.moverComplete(r)
+				return
+			}
 		}
 		desired := apos.Sub(pos)
 		if desired.X != 0 || desired.Y != 0 {
@@ -186,7 +192,24 @@ func (w *World) moverStepHoming(r int32) {
 			w.moverFree(r)
 			return
 		}
-		w.moverComplete(r)
+		// An expire-mode projectile (DoneExpire) dies in place, payload-less —
+		// no last-point delivery, so do not coast.
+		if MoverDoneMode(ms.DoneMode[r]) == MoverDoneExpire {
+			w.moverComplete(r)
+			return
+		}
+		// AoE: coast toward the guide's last-known position (tracked in Goal)
+		// and detonate on arrival — the legacy MissileAoE coast-and-detonate at
+		// GuidePt, NOT an in-place detonation where the body happened to be when
+		// the guide died (which would splash the wrong area, #590).
+		to := ms.Goal[r].Sub(pos)
+		if distLE(to, ms.Speed[r]) {
+			w.moverWrite(tr, ms.Goal[r])
+			w.moverComplete(r)
+			return
+		}
+		w.moverWrite(tr, pos.Add(unitStep(to, ms.Speed[r])))
+		ms.Speed[r] += ms.Accel[r]
 		return
 	}
 	w.moverWrite(tr, pos.Add(unitStep(ms.Dir[r], ms.Speed[r])))

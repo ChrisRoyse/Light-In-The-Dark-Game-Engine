@@ -180,7 +180,7 @@ func TestLinearSpawnFailClosed(t *testing.T) {
 		{"neg range", func() MissileSpec { s := base; s.Dir = xy(1, 0); s.Range = -fixed.One; s.Pierce = 1; return s }()},
 		{"zero pierce", func() MissileSpec { s := base; s.Dir = xy(1, 0); s.Range = 500 * fixed.One; s.Pierce = 0; return s }()},
 	}
-	before := w.Missiles.Count()
+	before := w.Movers.Count()
 	for _, c := range cases {
 		id, ok := w.SpawnMissile(c.spec)
 		t.Logf("%-11s -> id=%d ok=%v", c.name, id.Index(), ok)
@@ -188,8 +188,8 @@ func TestLinearSpawnFailClosed(t *testing.T) {
 			t.Fatalf("%s: expected invalid handle, got id=%d ok=%v", c.name, id.Index(), ok)
 		}
 	}
-	if w.Missiles.Count() != before {
-		t.Fatalf("a failed linear spawn leaked a row: %d -> %d", before, w.Missiles.Count())
+	if w.Movers.Count() != before {
+		t.Fatalf("a failed linear spawn leaked a row: %d -> %d", before, w.Movers.Count())
 	}
 }
 
@@ -213,22 +213,25 @@ func TestLinearDeterminismAndSave(t *testing.T) {
 	var sa, sb statehash.Snapshot
 	a.HashState(NewHashRegistry(), &sa)
 	b.HashState(NewHashRegistry(), &sb)
-	t.Logf("twin A=%016x B=%016x missileRows=%d", sa.Top, sb.Top, a.Missiles.Count())
+	t.Logf("twin A=%016x B=%016x projRows=%d", sa.Top, sb.Top, a.ProjRender.Count())
 	if sa.Top != sb.Top {
 		t.Fatal("twin divergence")
 	}
-	if a.Missiles.Count() != 1 {
-		t.Fatalf("expected the mid-flight missile to persist, rows=%d", a.Missiles.Count())
+	if a.ProjRender.Count() != 1 {
+		t.Fatalf("expected the mid-flight missile to persist, rows=%d", a.ProjRender.Count())
 	}
 	// flip a linear field → hash must move (it is real state)
-	r := int32(0)
-	a.Missiles.PierceLeft[r]++
+	mr, okm := a.projMover(a.ProjRender.Entity[0])
+	if !okm {
+		t.Fatal("projectile has no live mover")
+	}
+	a.Movers.Pierce[mr]++
 	var sa2 statehash.Snapshot
 	a.HashState(NewHashRegistry(), &sa2)
 	if sa2.Top == sa.Top {
-		t.Fatal("PierceLeft mutation invisible to the hash")
+		t.Fatal("Pierce mutation invisible to the hash")
 	}
-	a.Missiles.PierceLeft[r]--
+	a.Movers.Pierce[mr]--
 
 	var buf bytes.Buffer
 	if err := a.SaveState(&buf, 5); err != nil {

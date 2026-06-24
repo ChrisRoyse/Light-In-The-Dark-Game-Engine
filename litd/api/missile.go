@@ -208,11 +208,11 @@ func (m Missile) Target() Unit {
 		m.g.reportInvalid("Missile.Target")
 		return Unit{}
 	}
-	r := m.g.w.Missiles.Row(m.id)
-	if r < 0 {
+	mr, ok := m.g.w.ProjMover(m.id)
+	if !ok {
 		return Unit{}
 	}
-	return Unit{id: m.g.w.Missiles.GuideEnt[r], g: m.g}
+	return Unit{id: m.g.w.Movers.Anchor[mr], g: m.g}
 }
 
 // SetTarget retargets the missile mid-flight to home on u (a zero Unit
@@ -234,11 +234,11 @@ func (m Missile) Source() Unit {
 		m.g.reportInvalid("Missile.Source")
 		return Unit{}
 	}
-	r := m.g.w.Missiles.Row(m.id)
-	if r < 0 {
+	mr, ok := m.g.w.ProjMover(m.id)
+	if !ok {
 		return Unit{}
 	}
-	return Unit{id: m.g.w.Missiles.Source[r], g: m.g}
+	return Unit{id: m.g.w.Movers.Owner[mr], g: m.g}
 }
 
 // Owner returns the player owning the launching unit, or the zero
@@ -248,11 +248,11 @@ func (m Missile) Owner() Player {
 		m.g.reportInvalid("Missile.Owner")
 		return Player{}
 	}
-	r := m.g.w.Missiles.Row(m.id)
-	if r < 0 {
+	mr, ok := m.g.w.ProjMover(m.id)
+	if !ok {
 		return Player{}
 	}
-	idx := m.g.ownerOf(m.g.w.Missiles.Source[r])
+	idx := m.g.ownerOf(m.g.w.Movers.Owner[mr])
 	if idx < 0 {
 		return Player{}
 	}

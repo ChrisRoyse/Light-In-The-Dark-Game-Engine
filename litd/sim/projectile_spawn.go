@@ -137,9 +137,18 @@ func (w *World) spawnMoverProjectile(m MissileSpec) (EntityID, bool) {
 		if tr := w.Transforms.Row(m.Target); tr != -1 {
 			goal = w.Transforms.Pos[tr]
 		}
+		// Seed Goal with the guide's launch position (legacy GuidePt init): if the
+		// guide dies before the first tracking tick, an AoE projectile still coasts
+		// to a valid last-known point instead of the origin (#590).
+		spec.Goal = goal
 		span = int32(flightUnits(m.Pos, goal))
 	}
 
+	// Projectile pool cap: enforce the same caps.Projectiles ceiling the legacy
+	// missile store did (deterministic refusal, not a mover-pool-sized overflow).
+	if int(w.ProjRender.Count()) >= w.caps.Projectiles {
+		return 0, false
+	}
 	// Body entity: a transform-only mote (no unit components), bucketed and
 	// snapshot-marked exactly like a missile body, NOT counted against the unit
 	// cap (destroyEntity skips the decrement for a ProjRender body, #590).

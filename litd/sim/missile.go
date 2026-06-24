@@ -72,103 +72,12 @@ const dirIntScale = 1024
 
 // SpawnMissile creates a missile entity. Fails deterministically
 // (0, false) on pool exhaustion or a bad spec — NEVER a silent
-// fire-as-instant fallback (ecs §2).
+// fire-as-instant fallback (ecs §2). As of #590 a missile is a mover-driven
+// projectile: SpawnMissile delegates to spawnMoverProjectile, which builds a
+// body entity + mover + render-only ProjRender record. The legacy MissileStore
+// machinery remains dormant (never populated) pending removal (#590 follow-up).
 func (w *World) SpawnMissile(m MissileSpec) (EntityID, bool) {
-	if m.Speed <= 0 || m.Accel < 0 {
-		return 0, false
-	}
-	guidanceID, ok := normalizeMissileGuidance(m)
-	if !ok {
-		return 0, false
-	}
-	impactID, ok := normalizeMissileImpact(m, guidanceID)
-	if !ok {
-		return 0, false
-	}
-	hitMask, ok := normalizeMissileHitMask(m.HitMask)
-	if !ok {
-		return 0, false
-	}
-	if impactID == MissileImpactDetonate {
-		m.Flags |= MissileAoE
-	}
-	var dir fixed.Vec2
-	switch guidanceID {
-	case MissileGuidanceLinear:
-		if m.Flags&MissileLinear == 0 {
-			return 0, false
-		}
-		// skillshot: validated independently of a guide target
-		dir = unitStep(m.Dir, fixed.FromInt(1)) // normalize to unit length
-		if dir == (fixed.Vec2{}) || m.Range <= 0 || m.Pierce < 1 {
-			return 0, false // degenerate skillshot: deterministic failure
-		}
-	case MissileGuidanceHoming:
-		if m.Flags&MissileLinear != 0 || m.Target == 0 || !w.Ents.Alive(m.Target) {
-			return 0, false // launch at a corpse resolves to nothing
-		}
-	case MissileGuidancePoint:
-		if m.Flags&MissileLinear != 0 || m.Target != 0 {
-			return 0, false
-		}
-	}
-	if int(w.Missiles.Count()) >= w.caps.Projectiles {
-		return 0, false // pool exhausted: creation fails, like WC3 handle limits
-	}
-	id, ok := w.Ents.Create()
-	if !ok {
-		return 0, false
-	}
-	if !w.Transforms.Add(w.Ents, id, m.Pos, 0) || !w.Missiles.Add(w.Ents, id) {
-		if w.Transforms.Row(id) != -1 {
-			w.Transforms.Remove(id)
-		}
-		w.Ents.Destroy(id)
-		return 0, false
-	}
-	w.bucketInsert(id, m.Pos)
-	w.MarkSnap(id)
-	s := w.Missiles
-	r := s.Row(id)
-	s.Speed[r] = m.Speed
-	s.Accel[r] = m.Accel
-	s.Arc[r] = m.Arc
-	s.Flags[r] = m.Flags
-	s.HitMask[r] = hitMask
-	s.GuidanceID[r] = guidanceID
-	s.ImpactID[r] = impactID
-	s.GuideEnt[r] = m.Target
-	s.GuidePt[r] = m.Point
-	if m.Target != 0 {
-		if tr := w.Transforms.Row(m.Target); tr != -1 {
-			s.GuidePt[r] = w.Transforms.Pos[tr]
-		}
-	}
-	s.Payload[r] = m.Payload
-	s.Packet[r] = m.Packet
-	s.Source[r] = m.Source
-	s.BirthTick[r] = w.tick
-	if m.Flags&MissileLinear != 0 {
-		s.Dir[r] = dir
-		s.RangeLeft[r] = m.Range
-		s.PierceLeft[r] = m.Pierce
-		if m.Decay == 0 {
-			s.Decay[r] = 1000
-		} else {
-			s.Decay[r] = m.Decay
-		}
-		s.GuideEnt[r] = 0
-	}
-	// Span: total flight distance in whole world units, captured once at spawn as
-	// the render-only arc-progress denominator (#528). A linear skillshot knows
-	// its range up front; a point/homing missile measures launch->goal. Never
-	// hashed (render-support; see MissileSnapEntry.LifeFrac).
-	if m.Flags&MissileLinear != 0 {
-		s.Span[r] = int32(m.Range.Floor())
-	} else {
-		s.Span[r] = int32(flightUnits(m.Pos, s.GuidePt[r]))
-	}
-	return id, true
+	return w.spawnMoverProjectile(m)
 }
 
 // flightUnits is the whole-world-unit distance between two points — the
@@ -565,6 +474,11 @@ func (w *World) projMover(id EntityID) (int32, bool) {
 	}
 	return w.Movers.resolve(w.ProjRender.Mover[pr])
 }
+
+// ProjMover resolves a projectile body entity to its live mover row, for
+// out-of-package readers (the api Missile wrapper). ok=false if the entity is
+// not a live projectile body. Exported shim over projMover (#590).
+func (w *World) ProjMover(id EntityID) (int32, bool) { return w.projMover(id) }
 
 // ExpireMissile removes a missile payload-less and emits EvMissileExpired
 // (plus the OnMissileExpire callback). Returns false on a non-missile or

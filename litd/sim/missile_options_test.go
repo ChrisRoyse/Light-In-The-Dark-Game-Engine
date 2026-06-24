@@ -33,17 +33,20 @@ func TestMissileAccelerationHashSaveFSV(t *testing.T) {
 	t.Logf("FSV missile acceleration AFTER t1: %s", after1)
 	t.Logf("FSV missile acceleration AFTER t2: %s", after2)
 
-	r := w.Missiles.Row(id)
+	mr, okm := w.projMover(id)
+	if !okm {
+		t.Fatal("projectile has no live mover")
+	}
 	tr := w.Transforms.Row(id)
-	if w.Transforms.Pos[tr].X != 25*fixed.One || w.Missiles.Speed[r] != 20*fixed.One || w.Missiles.Accel[r] != 5*fixed.One {
+	if w.Transforms.Pos[tr].X != 25*fixed.One || w.Movers.Speed[mr] != 20*fixed.One || w.Movers.Accel[mr] != 5*fixed.One {
 		t.Fatalf("acceleration integration wrong: %s", after2)
 	}
 
 	var base, changed statehash.Snapshot
 	w.HashState(NewHashRegistry(), &base)
-	w.Missiles.Accel[r] = 6 * fixed.One
+	w.Movers.Accel[mr] = 6 * fixed.One
 	w.HashState(NewHashRegistry(), &changed)
-	w.Missiles.Accel[r] = 5 * fixed.One
+	w.Movers.Accel[mr] = 5 * fixed.One
 	t.Logf("FSV missile acceleration hash: base=%016x changed=%016x", base.Top, changed.Top)
 	if base.Top == changed.Top {
 		t.Fatal("Accel mutation invisible to state hash")
@@ -65,16 +68,16 @@ func TestMissileAccelerationHashSaveFSV(t *testing.T) {
 		t.Fatal("save/load did not preserve acceleration missile state")
 	}
 
-	beforeCount := w.Missiles.Count()
+	beforeCount := w.Movers.Count()
 	bad, badOK := w.SpawnMissile(MissileSpec{
 		Pos: xy(0, 0), Point: xy(100, 0), Source: shooter,
 		Speed: 10 * fixed.One, Accel: -fixed.One,
 	})
-	afterCount := w.Missiles.Count()
+	afterCount := w.Movers.Count()
 	t.Logf("FSV missile negative acceleration BEFORE count=%d AFTER id=%d ok=%v count=%d",
 		beforeCount, bad.Index(), badOK, afterCount)
 	if badOK || bad != 0 || afterCount != beforeCount {
-		t.Fatal("negative acceleration must fail closed without mutating missile rows")
+		t.Fatal("negative acceleration must fail closed without mutating mover rows")
 	}
 }
 
@@ -141,17 +144,18 @@ func addCollisionClass(t *testing.T, w *World, id EntityID, flags uint8) {
 }
 
 func missileStateDump(w *World, id EntityID) string {
-	r := w.Missiles.Row(id)
+	pr := w.ProjRender.Row(id)
+	mr, okm := w.projMover(id)
 	tr := w.Transforms.Row(id)
-	if r == -1 || tr == -1 {
-		return fmt.Sprintf("alive=%v row=%d tr=%d count=%d", w.Ents.Alive(id), r, tr, w.Missiles.Count())
+	if pr == -1 || !okm || tr == -1 {
+		return fmt.Sprintf("alive=%v projrow=%d count=%d", w.Ents.Alive(id), pr, w.ProjRender.Count())
 	}
 	p := w.Transforms.Pos[tr]
-	return fmt.Sprintf("alive=%v row=%d pos=(%d,%d) speed=%d accel=%d hit=%04x guid=%d impact=%d range=%d pierce=%d count=%d",
-		w.Ents.Alive(id), r, p.X.Floor(), p.Y.Floor(),
-		int64(w.Missiles.Speed[r]), int64(w.Missiles.Accel[r]), w.Missiles.HitMask[r],
-		w.Missiles.GuidanceID[r], w.Missiles.ImpactID[r], int64(w.Missiles.RangeLeft[r]),
-		w.Missiles.PierceLeft[r], w.Missiles.Count())
+	return fmt.Sprintf("alive=%v pos=(%d,%d) speed=%d accel=%d hit=%04x guid=%d range=%d pierce=%d count=%d",
+		w.Ents.Alive(id), p.X.Floor(), p.Y.Floor(),
+		int64(w.Movers.Speed[mr]), int64(w.Movers.Accel[mr]), w.Movers.HitMask[mr],
+		w.ProjRender.Guidance[pr], int64(w.Movers.RangeLeft[mr]),
+		w.Movers.Pierce[mr], w.ProjRender.Count())
 }
 
 func missileMaskDump(w *World, id, ally, groundEnemy, airEnemy EntityID) string {

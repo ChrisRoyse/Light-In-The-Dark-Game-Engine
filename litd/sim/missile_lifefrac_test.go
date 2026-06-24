@@ -36,8 +36,8 @@ func TestMissileLifeFracProgressFSV(t *testing.T) {
 		t.Fatal("spawn linear missile failed")
 	}
 	// SoT: Span captured at spawn = the whole-unit range.
-	r := w.Missiles.Row(mid)
-	if got := w.Missiles.Span[r]; got != 1000 {
+	r := w.ProjRender.Row(mid)
+	if got := w.ProjRender.Span[r]; got != 1000 {
 		t.Fatalf("spawn Span = %d, want 1000", got)
 	}
 
@@ -83,8 +83,12 @@ func TestMissileSpanUnhashedButSavedFSV(t *testing.T) {
 	if !ok {
 		t.Fatal("spawn failed")
 	}
-	r := w.Missiles.Row(mid)
-	spawnSpan := w.Missiles.Span[r]
+	r := w.ProjRender.Row(mid)
+	spawnSpan := w.ProjRender.Span[r]
+	mr, okm := w.projMover(mid)
+	if !okm {
+		t.Fatal("projectile has no live mover")
+	}
 	t.Logf("FSV homing Span at spawn = %d units", spawnSpan)
 	if spawnSpan <= 0 {
 		t.Fatalf("homing Span = %d, want > 0 (distance launch->target)", spawnSpan)
@@ -95,18 +99,18 @@ func TestMissileSpanUnhashedButSavedFSV(t *testing.T) {
 	reg := NewHashRegistry()
 	var base, spanMut, accelMut statehash.Snapshot
 	w.HashState(reg, &base)
-	w.Missiles.Span[r] = spawnSpan + 9999
+	w.ProjRender.Span[r] = spawnSpan + 9999
 	w.HashState(reg, &spanMut)
-	w.Missiles.Span[r] = spawnSpan // restore
-	w.Missiles.Accel[r] += 7 * fixed.One
+	w.ProjRender.Span[r] = spawnSpan // restore
+	w.Movers.Accel[mr] += 7 * fixed.One
 	w.HashState(reg, &accelMut)
-	w.Missiles.Accel[r] -= 7 * fixed.One
+	w.Movers.Accel[mr] -= 7 * fixed.One
 	t.Logf("FSV hash: base=%016x spanMutated=%016x accelMutated=%016x", base.Top, spanMut.Top, accelMut.Top)
 	if spanMut.Top != base.Top {
 		t.Fatal("Span entered the state hash — must be render-only (#528)")
 	}
 	if accelMut.Top == base.Top {
-		t.Fatal("control failed: Accel mutation should change the hash")
+		t.Fatal("control failed: mover Accel mutation should change the hash")
 	}
 
 	// But Span IS persisted: save -> load preserves it (the store round-trips
@@ -119,13 +123,13 @@ func TestMissileSpanUnhashedButSavedFSV(t *testing.T) {
 	if err := loaded.LoadState(bytes.NewReader(buf.Bytes()), 9); err != nil {
 		t.Fatal(err)
 	}
-	lr := loaded.Missiles.Row(mid)
+	lr := loaded.ProjRender.Row(mid)
 	if lr < 0 {
-		t.Fatal("missile missing after load")
+		t.Fatal("projectile missing after load")
 	}
-	t.Logf("FSV save/load Span: original=%d reloaded=%d", spawnSpan, loaded.Missiles.Span[lr])
-	if loaded.Missiles.Span[lr] != spawnSpan {
-		t.Fatalf("save/load lost Span: %d != %d", loaded.Missiles.Span[lr], spawnSpan)
+	t.Logf("FSV save/load Span: original=%d reloaded=%d", spawnSpan, loaded.ProjRender.Span[lr])
+	if loaded.ProjRender.Span[lr] != spawnSpan {
+		t.Fatalf("save/load lost Span: %d != %d", loaded.ProjRender.Span[lr], spawnSpan)
 	}
 }
 
@@ -142,8 +146,8 @@ func TestMissileLifeFracDegenerateSpanFSV(t *testing.T) {
 	}
 	// Force the degenerate span (launch-on-goal): the published progress must
 	// clamp to "arrived" (65535), never divide by zero.
-	r := w.Missiles.Row(mid)
-	w.Missiles.Span[r] = 0
+	r := w.ProjRender.Row(mid)
+	w.ProjRender.Span[r] = 0
 	w.publishSnapshot()
 	snap := w.Snaps.Curr()
 	if len(snap.Missiles) != 1 {
