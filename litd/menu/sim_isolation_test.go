@@ -1,11 +1,17 @@
 package menu
 
-// #311 determinism-surface guard. The settings menu must touch render/audio/input
-// ONLY — never the sim. The import lint enforces it statically (config/menu import
-// no litd/sim); this is the dynamic proof: churn EVERY settings command through the
-// controller between sim ticks of a live match and the sim StateHash must be byte-
-// identical to a control match advanced the same way with no churn. SoT = the
-// authoritative sim StateHash (not a return value), read before and after.
+// #311 determinism-surface guard. Settings must add ZERO determinism surface.
+// Two complementary guarantees:
+//   - STATIC: litd/config (the settings data layer) imports no litd/sim, enforced
+//     by tools/importcheck's "litd/config ⊥ litd/sim" rule. litd/menu itself is
+//     NOT statically sim-free — the controller holds an *api.Game (to apply
+//     settings to a live match's render/audio), so it reaches sim transitively
+//     through the api facade. A static ban on menu is therefore impossible.
+//   - DYNAMIC (this test): churn EVERY settings command through the controller
+//     between sim ticks of a live match; the sim StateHash must be byte-identical
+//     to a control match advanced the same way with no churn. This is what proves
+//     menu's sim access is inert, which the static rule cannot.
+// SoT = the authoritative sim StateHash (not a return value), read before and after.
 
 import (
 	"testing"

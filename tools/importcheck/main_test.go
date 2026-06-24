@@ -122,6 +122,45 @@ func TestFindViolationsStdlibStopsFSV(t *testing.T) {
 	t.Log("FSV stdlib-stop: a Standard package is not expanded, so its (synthetic) banned import is not reached")
 }
 
+func TestConfigSimRuleWiredFSV(t *testing.T) {
+	// #311's "lint-enforced no import into litd/sim" for the settings data layer
+	// must actually be in the rules list — guards against silent removal. And a
+	// synthetic config→sim graph must be flagged by the same findViolations core.
+	var found *rule
+	for i := range rules {
+		if rules[i].rootPrefix == mod+"/litd/config" {
+			found = &rules[i]
+		}
+	}
+	if found == nil {
+		t.Fatal("config⊥sim rule missing from rules — #311 determinism guard not enforced")
+	}
+	if len(found.banned) != 1 || found.banned[0] != mod+"/litd/sim" {
+		t.Fatalf("config rule bans %v, want [litd/sim]", found.banned)
+	}
+	// listTargets must include the config tree, else the rule's roots are empty
+	// and the vacuity guard fires at runtime.
+	hasConfig := false
+	for _, tgt := range listTargets {
+		if tgt == mod+"/litd/config/..." {
+			hasConfig = true
+		}
+	}
+	if !hasConfig {
+		t.Fatalf("listTargets %v omits litd/config/... — config rule would be vacuous", listTargets)
+	}
+	// Teeth: a synthetic config pkg reaching sim is flagged.
+	g := graph(map[string][]string{
+		mod + "/litd/config": {mod + "/litd/sim"},
+		mod + "/litd/sim":    {"fmt"},
+	}, map[string]bool{"fmt": true})
+	v := findViolations(g, []string{mod + "/litd/config"}, found.banned)
+	if len(v) != 1 || v[0].Banned != mod+"/litd/sim" {
+		t.Fatalf("synthetic config→sim not flagged: %+v", v)
+	}
+	t.Logf("FSV #311: config⊥sim rule wired; synthetic config→sim flagged, chain %v", v[0].Chain)
+}
+
 func TestRootsByPrefixFSV(t *testing.T) {
 	g := graph(map[string][]string{
 		mod + "/litd/sim":       nil,

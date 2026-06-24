@@ -1,11 +1,14 @@
-// importcheck enforces the PRD §4.1 import-graph rule: litd/sim never
-// (transitively) imports litd/render, the G3N engine, or any GL/window
-// package. Run as `go run ./tools/importcheck`; CI runs it as a
-// required step.
+// importcheck enforces the project's static import-graph invariants (see
+// the `rules` list). Today:
+//   - PRD §4.1: litd/sim never (transitively) imports litd/render, the G3N
+//     engine, or any GL/window package.
+//   - #311: litd/config (the settings data layer) never imports litd/sim, so
+//     settings add zero determinism surface.
+// Run as `go run ./tools/importcheck`; preflight runs it as a required step.
 //
 // On violation it prints the full offending import chain, not just the
-// verdict. It also prints the audited-package count and fails if that
-// count is zero — the check is never vacuously green.
+// verdict. Each rule fails if zero packages are audited under its root — the
+// check is never vacuously green.
 package main
 
 import (
@@ -21,7 +24,7 @@ import (
 const module = "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine"
 
 // bannedPrefixes: any package whose import path starts with one of these
-// must be unreachable from litd/sim.
+// must be unreachable from litd/sim (PRD §4.1).
 var bannedPrefixes = []string{
 	module + "/litd/render",
 	"github.com/g3n/engine",
@@ -30,6 +33,32 @@ var bannedPrefixes = []string{
 	"github.com/go-gl/mathgl",
 }
 
+// rule is one import-graph invariant: no package under rootPrefix may
+// (transitively) reach any banned prefix.
+type rule struct {
+	name       string
+	rootPrefix string
+	banned     []string
+}
+
+// rules enumerated here are the static import-graph invariants. The go list
+// target below MUST include every rootPrefix's tree so its packages are present
+// in the graph (else the vacuity guard fires).
+var rules = []rule{
+	{"litd/sim ⊥ render/G3N/GL (PRD §4.1)", module + "/litd/sim", bannedPrefixes},
+	// #311: the settings DATA layer must never reach the sim — settings are a
+	// pure presentation/config surface and must add zero determinism surface.
+	// (litd/menu legitimately holds an *api.Game and so reaches sim transitively
+	// via the api facade; its determinism isolation is proven dynamically by
+	// litd/menu's sim-isolation test, not statically — only the config data
+	// package is statically sim-free, and this locks that in.)
+	{"litd/config ⊥ litd/sim (settings determinism, #311)", module + "/litd/config", []string{module + "/litd/sim"}},
+}
+
+// listTargets is the union of every rule's tree, so go list -deps loads each
+// rooted graph into one pkg map.
+var listTargets = []string{module + "/litd/sim/...", module + "/litd/config/..."}
+
 type pkg struct {
 	ImportPath string
 	Standard   bool
@@ -37,7 +66,8 @@ type pkg struct {
 }
 
 func main() {
-	out, err := exec.Command("go", "list", "-deps", "-json", module+"/litd/sim/...").Output()
+	args := append([]string{"list", "-deps", "-json"}, listTargets...)
+	out, err := exec.Command("go", args...).Output()
 	if err != nil {
 		var stderr string
 		if ee, ok := err.(*exec.ExitError); ok {
@@ -53,24 +83,24 @@ func main() {
 		os.Exit(2)
 	}
 
-	simPkgs := rootsByPrefix(pkgs, module+"/litd/sim")
-	if len(simPkgs) == 0 {
-		fmt.Fprintln(os.Stderr, "importcheck: FAIL: zero litd/sim packages audited — check would be vacuously green")
-		os.Exit(1)
+	total := 0
+	for _, ru := range rules {
+		roots := rootsByPrefix(pkgs, ru.rootPrefix)
+		if len(roots) == 0 {
+			fmt.Fprintf(os.Stderr, "importcheck: FAIL: zero packages under %s audited — rule %q would be vacuously green\n", ru.rootPrefix, ru.name)
+			os.Exit(1)
+		}
+		violations := findViolations(pkgs, roots, ru.banned)
+		for _, v := range violations {
+			fmt.Printf("FAIL [%s]: %s reaches banned package %s\n  chain: %s\n", ru.name, v.Root, v.Banned, strings.Join(v.Chain, "\n      -> "))
+		}
+		fmt.Printf("importcheck: rule %q — audited %d package(s) under %s, banned %v → %d violation(s)\n",
+			ru.name, len(roots), ru.rootPrefix, ru.banned, len(violations))
+		total += len(violations)
 	}
 
-	violations := findViolations(pkgs, simPkgs, bannedPrefixes)
-	for _, v := range violations {
-		fmt.Printf("FAIL: %s reaches banned package %s\n  chain: %s\n", v.Root, v.Banned, strings.Join(v.Chain, "\n      -> "))
-	}
-
-	fmt.Printf("importcheck: audited %d litd/sim package(s), %d dep(s) total\n", len(simPkgs), len(pkgs))
-	fmt.Println("banned prefixes checked:")
-	for _, b := range bannedPrefixes {
-		fmt.Println("  ", b)
-	}
-	if len(violations) > 0 {
-		fmt.Printf("importcheck: FAIL — %d violation(s)\n", len(violations))
+	if total > 0 {
+		fmt.Printf("importcheck: FAIL — %d violation(s) across %d rule(s)\n", total, len(rules))
 		os.Exit(1)
 	}
 	fmt.Println("importcheck: OK")
