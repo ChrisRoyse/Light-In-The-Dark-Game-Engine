@@ -194,3 +194,121 @@ func TestNewWorldWiresTimerStore(t *testing.T) {
 		t.Fatalf("over-ceiling cap -> %d, want clamp to %d", w3.Timers.Cap(), EngineCaps.Timers)
 	}
 }
+
+// #552 — modes + reschedule + cancel lifecycle. Asserts against the
+// store columns (SoT), driving onFired transitions directly.
+
+func TestTimerCreateColumns(t *testing.T) {
+	s := NewTimerStore(8)
+	st := [4]int64{11, 22, 33, 44}
+	id := s.Create(100, TimerCount, 5, 3, 7, st, EntityID(0x2000005))
+	row, ok := s.resolve(id)
+	if !ok {
+		t.Fatal("Create returned a handle that does not resolve")
+	}
+	if TimerMode(s.Mode[row]) != TimerCount {
+		t.Fatalf("Mode = %d", s.Mode[row])
+	}
+	if s.Interval[row] != 5 {
+		t.Fatalf("Interval = %d, want 5", s.Interval[row])
+	}
+	if s.WakeTick[row] != 105 {
+		t.Fatalf("WakeTick = %d, want 105 (now100+iv5)", s.WakeTick[row])
+	}
+	if s.Remaining[row] != 3 {
+		t.Fatalf("Remaining = %d, want 3", s.Remaining[row])
+	}
+	if s.Cont[row] != 7 {
+		t.Fatalf("Cont = %d, want 7", s.Cont[row])
+	}
+	if s.State[row] != st {
+		t.Fatalf("State = %v, want %v", s.State[row], st)
+	}
+	if s.Owner[row] != EntityID(0x2000005) {
+		t.Fatalf("Owner = %#x", s.Owner[row])
+	}
+}
+
+func TestTimerCreateQuantizesInterval(t *testing.T) {
+	s := NewTimerStore(4)
+	id := s.Create(0, TimerSingle, 0, 0, 1, [4]int64{}, 0)
+	row, _ := s.resolve(id)
+	if s.Interval[row] != 1 {
+		t.Fatalf("zero interval not quantized up: Interval=%d", s.Interval[row])
+	}
+	if s.WakeTick[row] != 1 {
+		t.Fatalf("WakeTick = %d, want 1 (now0 + floor1)", s.WakeTick[row])
+	}
+}
+
+func TestTimerOnFiredSingle(t *testing.T) {
+	s := NewTimerStore(4)
+	id := s.Create(0, TimerSingle, 3, 0, 1, [4]int64{}, 0)
+	row, _ := s.resolve(id)
+	wake, live := s.onFired(row)
+	if live || wake != 0 {
+		t.Fatalf("single onFired = (%d,%v), want (0,false)", wake, live)
+	}
+	if s.Alive(id) {
+		t.Fatal("single timer still alive after fire")
+	}
+}
+
+func TestTimerOnFiredLoop(t *testing.T) {
+	s := NewTimerStore(4)
+	id := s.Create(10, TimerLoop, 4, 0, 1, [4]int64{}, 0)
+	row, _ := s.resolve(id)
+	// fires at 14, 18, 22 ...
+	if s.WakeTick[row] != 14 {
+		t.Fatalf("first wake = %d, want 14", s.WakeTick[row])
+	}
+	wake, live := s.onFired(row)
+	if !live || wake != 18 {
+		t.Fatalf("loop onFired = (%d,%v), want (18,true)", wake, live)
+	}
+	wake, live = s.onFired(row)
+	if !live || wake != 22 {
+		t.Fatalf("loop onFired#2 = (%d,%v), want (22,true)", wake, live)
+	}
+	if !s.Alive(id) {
+		t.Fatal("loop timer freed unexpectedly")
+	}
+}
+
+func TestTimerOnFiredCount(t *testing.T) {
+	s := NewTimerStore(4)
+	id := s.Create(0, TimerCount, 2, 3, 1, [4]int64{}, 0)
+	row, _ := s.resolve(id)
+	// 3 fires expected: remaining 3->2->1->0(free)
+	if _, live := s.onFired(row); !live || s.Remaining[row] != 2 {
+		t.Fatalf("count fire 1: remaining=%d live check failed", s.Remaining[row])
+	}
+	if _, live := s.onFired(row); !live || s.Remaining[row] != 1 {
+		t.Fatalf("count fire 2: remaining=%d", s.Remaining[row])
+	}
+	wake, live := s.onFired(row)
+	if live || wake != 0 {
+		t.Fatalf("count fire 3 = (%d,%v), want (0,false) free", wake, live)
+	}
+	if s.Alive(id) {
+		t.Fatal("count timer alive after exhausting fires")
+	}
+}
+
+func TestTimerCancelIdempotent(t *testing.T) {
+	s := NewTimerStore(4)
+	id := s.Create(0, TimerLoop, 5, 0, 1, [4]int64{9}, EntityID(7))
+	if !s.Cancel(id) {
+		t.Fatal("Cancel of live timer returned false")
+	}
+	if s.Alive(id) {
+		t.Fatal("timer alive after Cancel")
+	}
+	row := int32(id.Index())
+	if s.Owner[row] != 0 || s.State[row] != ([4]int64{}) {
+		t.Fatalf("Cancel did not clear owner/state: owner=%#x state=%v", s.Owner[row], s.State[row])
+	}
+	if s.Cancel(id) {
+		t.Fatal("second Cancel returned true; want idempotent no-op")
+	}
+}

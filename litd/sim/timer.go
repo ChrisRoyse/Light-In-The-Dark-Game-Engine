@@ -155,6 +155,13 @@ func (s *TimerStore) free_(id TimerID) bool {
 		s.assert("free of stale/absent timer", id)
 		return false
 	}
+	s.freeRow(row)
+	return true
+}
+
+// freeRow releases a live slot by row index (no handle to validate —
+// the caller already holds a resolved row, e.g. the reschedule path).
+func (s *TimerStore) freeRow(row int32) {
 	s.live[row] = false
 	s.Gen[row]++ // wraps at 256; stale handles fail the generation check
 	// Clear references so a freed slot cannot pin an entity or leak a
@@ -163,7 +170,6 @@ func (s *TimerStore) free_(id TimerID) bool {
 	s.State[row] = [4]int64{}
 	s.free = append(s.free, row)
 	s.count--
-	return true
 }
 
 // resolve maps a handle to its live slot, validating the generation.
@@ -186,6 +192,86 @@ func (s *TimerStore) Alive(id TimerID) bool {
 	_, ok := s.resolve(id)
 	return ok
 }
+
+// ---------------------------------------------------------------------
+// Modes & lifecycle (#552). Create fills the behavior columns after a
+// successful alloc; onFired applies the per-mode reschedule/free
+// transition; Cancel is the idempotent generation-checked teardown.
+// The schedule index that actually drives firing (the (WakeTick,Seq)
+// wheel) and the advance() drain land in #553 — these methods are its
+// state-transition primitives.
+// ---------------------------------------------------------------------
+
+// Create allocates and arms a timer that next fires at
+// now + max(1, interval). For TimerCount, remaining is the total number
+// of fires (clamped to >=1); it is ignored for Single/Loop. cont is the
+// scheduler continuation to run on fire; st is its value payload; owner
+// (0 = unowned) enables auto-cancel on death (#554).
+//
+// Returns TimerID(0) on pool exhaustion (Dropped already incremented by
+// alloc) — the caller treats that as "timer not created". Zero alloc.
+func (s *TimerStore) Create(now uint32, mode TimerMode, interval, remaining uint32, cont uint16, st [4]int64, owner EntityID) TimerID {
+	iv := interval
+	if iv == 0 {
+		iv = 1 // sub-tick / zero quantizes UP to the 1-tick floor (R-EXEC-5)
+	}
+	id, row, ok := s.alloc()
+	if !ok {
+		return 0
+	}
+	s.Mode[row] = uint8(mode)
+	s.Interval[row] = iv
+	s.WakeTick[row] = now + iv
+	if mode == TimerCount {
+		if remaining == 0 {
+			remaining = 1
+		}
+		s.Remaining[row] = remaining
+	} else {
+		s.Remaining[row] = 0
+	}
+	s.Cont[row] = cont
+	s.State[row] = st
+	s.Owner[row] = owner
+	return id
+}
+
+// onFired applies the post-fire transition for a row that just ran its
+// continuation. It returns the next absolute wake tick and whether the
+// timer remains live:
+//   - Single: freed, ok=false.
+//   - Loop:   WakeTick += Interval, ok=true.
+//   - Count:  Remaining--; if it hits 0 the timer is freed (ok=false),
+//     else WakeTick += Interval (ok=true).
+//
+// Rescheduling always pushes to a strictly later tick (Interval>=1), so
+// a same-tick drain cannot loop forever (spec §2.3). The schedule index
+// re-insert is the caller's job (#553); onFired only mutates columns.
+func (s *TimerStore) onFired(row int32) (wake uint32, live bool) {
+	switch TimerMode(s.Mode[row]) {
+	case TimerLoop:
+		s.WakeTick[row] += s.Interval[row]
+		return s.WakeTick[row], true
+	case TimerCount:
+		s.Remaining[row]--
+		if s.Remaining[row] == 0 {
+			s.freeRow(row)
+			return 0, false
+		}
+		s.WakeTick[row] += s.Interval[row]
+		return s.WakeTick[row], true
+	default: // TimerSingle
+		s.freeRow(row)
+		return 0, false
+	}
+}
+
+// Cancel tears down a timer by handle: generation-checked, frees the
+// slot, bumps the generation so the handle goes stale. Idempotent — a
+// stale or already-cancelled handle is a safe no-op returning false
+// (R-API-5). The schedule-index removal is lazy (#553 skips dead slots
+// on drain), so there is nothing to unlink here.
+func (s *TimerStore) Cancel(id TimerID) bool { return s.free_(id) }
 
 func (s *TimerStore) assert(msg string, id TimerID) {
 	if s.DebugAssert != nil {
