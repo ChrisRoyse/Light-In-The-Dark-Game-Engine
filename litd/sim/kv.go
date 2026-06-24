@@ -49,9 +49,66 @@ func makeOwner(scope KVScope, entityOrSlot uint64) uint64 {
 func ownerScope(o uint64) KVScope { return KVScope(o >> 56) }
 func ownerEntity(o uint64) uint64 { return o & 0x0000FFFFFFFFFFFF }
 
+// internTable maps strings to stable 1-based uint32 ids (#569). Append-
+// only within a match: an id, once assigned, never changes or recycles,
+// so a serialized Key/string-value id resolves to the same string on
+// load. The `list` (id order) is the serialized truth; `byStr` is a
+// derived lookup index, rebuilt on load and used only for point lookups
+// (never iterated in hashed/gameplay code), so it carries no determinism
+// hazard. id 0 is the invalid/absent sentinel.
+type internTable struct {
+	list  []string          // list[id-1] = string
+	byStr map[string]uint32 // string → id (derived)
+}
+
+func newInternTable() internTable {
+	return internTable{byStr: make(map[string]uint32)}
+}
+
+// intern returns the id for s, assigning a fresh one on first sight.
+func (t *internTable) intern(s string) uint32 {
+	if id, ok := t.byStr[s]; ok {
+		return id
+	}
+	t.list = append(t.list, s)
+	id := uint32(len(t.list)) // 1-based
+	t.byStr[s] = id
+	return id
+}
+
+// lookup resolves an id to its string. ok=false for 0 or an out-of-range
+// id (a defensive guard; a valid match never produces one).
+func (t *internTable) lookup(id uint32) (string, bool) {
+	if id == 0 || int(id) > len(t.list) {
+		return "", false
+	}
+	return t.list[id-1], true
+}
+
+// id returns the id of s if already interned (0 if not). Read-only — does
+// not assign, so a get-by-key on an unseen key string is a clean miss.
+func (t *internTable) id(s string) uint32 { return t.byStr[s] }
+
+func (t *internTable) count() int { return len(t.list) }
+
+// reset clears the table to empty (load prelude).
+func (t *internTable) reset() {
+	t.list = t.list[:0]
+	clear(t.byStr)
+}
+
+// rebuildIndex repopulates byStr from list after the list is restored
+// (load). Ids are list-position + 1, matching intern's assignment.
+func (t *internTable) rebuildIndex() {
+	clear(t.byStr)
+	for i, s := range t.list {
+		t.byStr[s] = uint32(i + 1)
+	}
+}
+
 // KVStore is the sorted-parallel-array key-value store (spec §1). All
-// arrays are sized once at construction (R-GC-2); count tracks the live
-// prefix. Rows [0,count) are sorted ascending by (Owner, Key).
+// value arrays are sized once at construction (R-GC-2); count tracks the
+// live prefix. Rows [0,count) are sorted ascending by (Owner, Key).
 type KVStore struct {
 	Owner []uint64 // packed scope+entity, primary sort key
 	Key   []uint32 // interned key id, secondary sort key
@@ -64,6 +121,9 @@ type KVStore struct {
 	// Dropped counts upserts refused because the store was full — hashed
 	// state (#572) so a capacity divergence fails closed.
 	Dropped uint32
+
+	keys internTable // key strings → stable ids (#569), serialized
+	strs internTable // KVString VALUES → stable ids (#569), serialized
 }
 
 // NewKVStore returns a store sized for cap pairs.
@@ -77,8 +137,21 @@ func NewKVStore(cap int) *KVStore {
 		Type:  make([]uint8, cap),
 		Val:   make([]int64, cap),
 		Val2:  make([]int64, cap),
+		keys:  newInternTable(),
+		strs:  newInternTable(),
 	}
 }
+
+// InternKey returns the stable id for a key string, assigning one on
+// first use. KeyString resolves an id back to its string.
+func (s *KVStore) InternKey(key string) uint32        { return s.keys.intern(key) }
+func (s *KVStore) KeyID(key string) uint32            { return s.keys.id(key) }
+func (s *KVStore) KeyString(id uint32) (string, bool) { return s.keys.lookup(id) }
+
+// InternStr interns a KVString VALUE, returning its stable id; StrValue
+// resolves it back.
+func (s *KVStore) InternStr(v string) uint32         { return s.strs.intern(v) }
+func (s *KVStore) StrValue(id uint32) (string, bool) { return s.strs.lookup(id) }
 
 // Cap is the maximum number of pairs the store can hold.
 func (s *KVStore) Cap() int { return len(s.Owner) }
