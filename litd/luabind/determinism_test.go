@@ -62,7 +62,9 @@ import (
 // (the api/luabind event-behavior suites stay green; dispatch order and fire
 // counts unchanged); only the substrate carrying the subscription graph moved
 // into the state hash. run1==run2==p1==p8 unchanged (deterministic).
-const goldenLuaDeterminism10k = uint64(0x7ea316e742921b02)
+// Updated for #555: adding the "timers" sub-hash to HashSystems shifts
+// every state hash (still bit-deterministic; p1==p8 across GOMAXPROCS).
+const goldenLuaDeterminism10k = uint64(0x1af1dc7850ac8003)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

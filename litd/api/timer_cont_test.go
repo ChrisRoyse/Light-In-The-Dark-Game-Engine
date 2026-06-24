@@ -150,3 +150,49 @@ func TestContTimerSurvivesSaveLoad(t *testing.T) {
 		t.Fatal("loaded continuation timer never fired — rebind/rebuild broken")
 	}
 }
+
+// #557 — save-unsafe contract: a Go-closure After/Every timer is dropped
+// from the save (its scheduler record is transient), while a continuation
+// timer in the same world survives. SoT: PendingTransient before save, the
+// loaded world's timer/scheduler state, and that LoadState SUCCEEDS (the
+// closure record would otherwise reference an unregistered ContID).
+func TestClosureTimerDroppedOnSave(t *testing.T) {
+	w, g := timerHarness()
+	g.RegisterCont(contTick, func(*Game, Payload) {})
+	clo := g.Every(100*time.Millisecond, func(Timer) {})  // save-unsafe closure
+	g.LoopCont(100*time.Millisecond, contTick, Payload{}) // save-safe continuation
+
+	// SoT: the scheduler holds exactly one transient (save-unsafe) record.
+	if got := w.Sched.PendingTransient(); got != 1 {
+		t.Fatalf("PendingTransient = %d, want 1 (the closure timer)", got)
+	}
+	if !clo.Valid() {
+		t.Fatal("closure timer invalid before save")
+	}
+
+	var buf bytes.Buffer
+	if err := w.SaveState(&buf, 0); err != nil {
+		t.Fatalf("SaveState: %v", err)
+	}
+	// Save must not kill the source's live closure timer.
+	if !clo.Valid() {
+		t.Fatal("closure timer dropped from the SOURCE after save (should only be omitted from the blob)")
+	}
+
+	// Load into a fresh game that NEVER used closure timers (so contGoTimer
+	// is unregistered). Before #557 the saved closure record would make this
+	// fail "unregistered ContID"; now it was dropped, so load succeeds.
+	w2 := sim.NewWorld(sim.Caps{})
+	g2 := newGame(w2)
+	g2.RegisterCont(contTick, func(*Game, Payload) {})
+	if err := w2.LoadState(bytes.NewReader(buf.Bytes()), 0); err != nil {
+		t.Fatalf("LoadState rejected a save with a (dropped) closure timer: %v", err)
+	}
+	// The continuation timer survived; no closure record came back.
+	if w2.Timers.Count() != 1 {
+		t.Fatalf("loaded continuation timers = %d, want 1", w2.Timers.Count())
+	}
+	if w2.Sched.PendingSleepers() != 0 {
+		t.Fatalf("loaded scheduler has %d sleepers, want 0 (closure dropped)", w2.Sched.PendingSleepers())
+	}
+}

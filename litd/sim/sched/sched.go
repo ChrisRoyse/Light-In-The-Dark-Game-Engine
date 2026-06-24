@@ -66,6 +66,15 @@ type Scheduler struct {
 	// dispatches (R-GC-2): at steady state no dispatch allocates. Pure
 	// memory reuse — never serialized, never observable in resume order.
 	listPool [][]waiter
+
+	// transient marks ContIDs whose suspension records are SAVE-UNSAFE:
+	// they run live and share the single (wakeTick, seq) wake order like
+	// any record, but Save omits them from the blob (R-TMR-8, #557). The
+	// api's Go-closure timer continuation is marked transient because its
+	// closure cannot be serialized — so a closure timer is dropped on
+	// save rather than producing an unloadable blob. Lookup-only, never
+	// serialized, never affects live ordering.
+	transient map[ContID]struct{}
 }
 
 // New returns an empty scheduler at tick 0.
@@ -101,6 +110,38 @@ func (s *Scheduler) Register(id ContID, fn Func) {
 		panic("sched: duplicate ContID registration")
 	}
 	s.conts[id] = fn
+}
+
+// MarkTransient flags cont's suspension records as save-unsafe: they
+// run normally but Save omits them (#557). Idempotent; call once at
+// setup. A transient cont must still be Register'd (it runs live).
+func (s *Scheduler) MarkTransient(cont ContID) {
+	if s.transient == nil {
+		s.transient = make(map[ContID]struct{})
+	}
+	s.transient[cont] = struct{}{}
+}
+
+// isTransient reports whether cont's records are skipped by Save.
+func (s *Scheduler) isTransient(cont ContID) bool {
+	if s.transient == nil {
+		return false
+	}
+	_, ok := s.transient[cont]
+	return ok
+}
+
+// PendingTransient counts live sleep records that Save will drop because
+// their cont is transient — the number of save-unsafe timers that will
+// not survive the next save (for deterministic logging at save time).
+func (s *Scheduler) PendingTransient() int {
+	n := 0
+	for i := range s.sleep {
+		if s.isTransient(s.sleep[i].cont) {
+			n++
+		}
+	}
+	return n
 }
 
 // Now returns the current tick.

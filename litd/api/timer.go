@@ -21,12 +21,18 @@ package litd
 // scheduler keys records by (wakeTick, seq)) — the classic replay
 // divergence is structurally impossible, not merely tested.
 //
-// Save/load note: a timer's callback is a Go closure, which — like a
-// JASS anonymous function — cannot be serialized. The scheduler RECORD
-// (wakeTick, slot, generation, epoch) is value-typed and serializes with
-// the queue, but the closure table is rebuilt by Go code, so Go-closure
-// timers do not survive a sim save/load. Script (Lua) timers, when that
-// layer lands, persist through their own registered continuations.
+// Save/load note (R-TMR-8, #557): a timer's callback is a Go closure,
+// which — like a JASS anonymous function — cannot be serialized. The
+// scheduler record is value-typed, but the closure table is rebuilt by
+// Go code, so closure timers cannot survive a save. They are therefore
+// reclassified SAVE-UNSAFE: their continuation (contGoTimer) is marked
+// transient in the scheduler, so Save DROPS their records (deterministic,
+// countable via Sched.PendingTransient) rather than writing a blob that
+// would fail Load against the rebuilt registry. They still run live and
+// keep the single (wakeTick, seq) wake order shared with script waits
+// (#269). The SERIALIZABLE path gameplay/ability code MUST use is the
+// continuation form — AfterCont/LoopCont/CountCont (timer_cont.go) —
+// enforced in ability packages by tools/timerlint.
 
 import (
 	"time"
@@ -89,6 +95,14 @@ func (g *Game) newTimer(d time.Duration, periodic bool, fn func(Timer)) Timer {
 		g.w.Sched.Register(contGoTimer, func(_ *sched.Scheduler, st sched.State) {
 			g.fireTimer(st)
 		})
+		// Closure timers are SAVE-UNSAFE (R-TMR-8, #557): their Go closure
+		// cannot be serialized, so their scheduler records are marked
+		// transient and dropped on save rather than producing an
+		// unloadable blob. They still run live and share the single
+		// (wakeTick, seq) wake order with script waits (#269). Gameplay/
+		// ability code must use the continuation form (AfterCont/LoopCont/
+		// CountCont, timer_cont.go), which survives save/load.
+		g.w.Sched.MarkTransient(contGoTimer)
 		g.timerContReg = true
 	}
 	slot := g.allocTimerSlot()

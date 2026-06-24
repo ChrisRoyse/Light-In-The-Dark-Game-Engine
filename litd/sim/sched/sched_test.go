@@ -248,3 +248,40 @@ func TestDuplicateRegisterPanics(t *testing.T) {
 	s.Register(contNote, func(*Scheduler, State) {})
 	s.Register(contNote, func(*Scheduler, State) {})
 }
+
+// #557 — a transient cont's records run live but are omitted from Save,
+// so a blob never references a save-unsafe continuation. SoT = the byte
+// length (SaveSize matches Save) and that Load succeeds without the
+// transient cont registered.
+func TestTransientContSkippedBySave(t *testing.T) {
+	s := New()
+	const persistent ContID = 1
+	const transient ContID = 2
+	s.Register(persistent, func(*Scheduler, State) {})
+	s.Register(transient, func(*Scheduler, State) {})
+	s.MarkTransient(transient)
+
+	s.After(5, persistent, State{10})
+	s.After(5, transient, State{20})
+	s.After(7, transient, State{30})
+
+	if got := s.PendingTransient(); got != 2 {
+		t.Fatalf("PendingTransient = %d, want 2", got)
+	}
+
+	blob := s.Save(make([]byte, 0, s.SaveSize()))
+	if len(blob) != s.SaveSize() {
+		t.Fatalf("Save wrote %d bytes, SaveSize said %d (out of sync)", len(blob), s.SaveSize())
+	}
+
+	// Load into a scheduler that only knows the persistent cont — the
+	// transient records must be absent, or Load would reject them.
+	s2 := New()
+	s2.Register(persistent, func(*Scheduler, State) {})
+	if err := s2.Load(blob); err != nil {
+		t.Fatalf("Load rejected blob (transient not skipped?): %v", err)
+	}
+	if s2.PendingSleepers() != 1 {
+		t.Fatalf("loaded sleepers = %d, want 1 (only the persistent record)", s2.PendingSleepers())
+	}
+}

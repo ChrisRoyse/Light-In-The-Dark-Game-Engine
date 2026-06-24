@@ -288,7 +288,9 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // Bumped 0xb794e7700f4624c7 → 0x60d4d3e1e67b0acd (2026-06-20, #457): the
 // boolexpr condition arena adds a "boolexpr" system to HashSystems — another
 // constant TopHash shift (empty arena here). run1==run2 unchanged.
-const dGolden uint64 = 0x60d4d3e1e67b0acd
+// Bumped 0x60d4d3e1e67b0acd → 0xae10ce86e7d9e258 (#555): the "timers"
+// sub-hash joins HashSystems — same constant-shift discipline, run1==run2.
+const dGolden uint64 = 0xae10ce86e7d9e258
 
 // TestAIDeterminism10k — the gate. The Golden subtest is the fast preflight SoT:
 // one full 10k-tick match must equal the committed golden hash. The default full

@@ -38,9 +38,12 @@ const (
 	waiterSize = 4 + 4 + 32     // seq, cont, state
 )
 
-// SaveSize returns the exact byte length Save will produce.
+// SaveSize returns the exact byte length Save will produce. Transient
+// (save-unsafe) sleep records are excluded — Save drops them (#557) — so
+// this must count only persistable records to stay exactly in sync.
 func (s *Scheduler) SaveSize() int {
-	n := 8 + 2 + 4 + 4 + 4 + len(s.sleep)*recordSize + 4
+	persist := len(s.sleep) - s.PendingTransient()
+	n := 8 + 2 + 4 + 4 + 4 + persist*recordSize + 4
 	for i := range s.waiters {
 		if len(s.waiters[i].list) > 0 {
 			n += 4 + 4 + len(s.waiters[i].list)*waiterSize
@@ -58,8 +61,15 @@ func (s *Scheduler) Save(dst []byte) []byte {
 	dst = binary.LittleEndian.AppendUint32(dst, s.now)
 	dst = binary.LittleEndian.AppendUint32(dst, s.nextSeq)
 
-	sorted := make([]record, len(s.sleep))
-	copy(sorted, s.sleep)
+	// Persist only non-transient records: a transient (save-unsafe) cont
+	// — e.g. the Go-closure timer trampoline — is dropped on save (#557),
+	// so its records never reach the blob and cannot fail Load.
+	sorted := make([]record, 0, len(s.sleep))
+	for i := range s.sleep {
+		if !s.isTransient(s.sleep[i].cont) {
+			sorted = append(sorted, s.sleep[i])
+		}
+	}
 	sort.Slice(sorted, func(i, j int) bool { return recordLess(sorted[i], sorted[j]) })
 	dst = binary.LittleEndian.AppendUint32(dst, uint32(len(sorted)))
 	for i := range sorted {
