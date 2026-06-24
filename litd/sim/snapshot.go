@@ -234,8 +234,9 @@ func (w *World) publishSnapshot() {
 		id := w.Transforms.Entity[r]
 		// Missiles share the Transforms store but render as arced
 		// billboards, not unit models — publish them to back.Missiles
-		// below, never as a unit entry (#309).
-		if w.Missiles.Row(id) != -1 {
+		// below, never as a unit entry (#309). Mover-driven projectile
+		// bodies (#590) render the same way and are likewise skipped here.
+		if w.Missiles.Row(id) != -1 || w.ProjRender.Row(id) != -1 {
 			continue
 		}
 		idx := id.Index()
@@ -304,6 +305,55 @@ func (w *World) publishSnapshot() {
 			Facing:     w.Transforms.Facing[tr],
 			Arc:        w.Missiles.Arc[r],
 			GuidanceID: w.Missiles.GuidanceID[r],
+			LifeFrac:   lifeFrac,
+		})
+	}
+
+	// mover-driven projectiles (#590): the same arced-billboard surface, but the
+	// body's motion comes from a mover and its render statics from ProjRender.
+	// Render-only — never hashed. Flight progress mirrors the missile metric:
+	// (Span - remaining)/Span, where remaining is the linear mover's RangeLeft
+	// or a point/homing mover's distance to its live goal.
+	pr := w.ProjRender
+	for r := int32(0); r < pr.Count(); r++ {
+		id := pr.Entity[r]
+		tr := w.Transforms.Row(id)
+		if tr == -1 {
+			continue
+		}
+		pos := w.Transforms.Pos[tr]
+		lifeFrac := uint16(65535)
+		if span := int64(pr.Span[r]); span > 0 {
+			remaining := span
+			if mr, ok := w.Movers.resolve(pr.Mover[r]); ok {
+				if MoverKind(w.Movers.Kind[mr]) == MoverLinear {
+					remaining = w.Movers.RangeLeft[mr].Floor()
+				} else {
+					goal := w.Movers.Goal[mr]
+					if MoverKind(w.Movers.Kind[mr]) == MoverHoming {
+						if ar := w.Transforms.Row(w.Movers.Anchor[mr]); ar != -1 {
+							goal = w.Transforms.Pos[ar]
+						}
+					}
+					remaining = flightUnits(pos, goal)
+				}
+			}
+			traveled := span - remaining
+			switch {
+			case traveled <= 0:
+				lifeFrac = 0
+			case traveled >= span:
+				lifeFrac = 65535
+			default:
+				lifeFrac = uint16(traveled * 65535 / span)
+			}
+		}
+		back.Missiles = append(back.Missiles, MissileSnapEntry{
+			ID:         id,
+			Pos:        pos,
+			Facing:     w.Transforms.Facing[tr],
+			Arc:        pr.Arc[r],
+			GuidanceID: pr.Guidance[r],
 			LifeFrac:   lifeFrac,
 		})
 	}

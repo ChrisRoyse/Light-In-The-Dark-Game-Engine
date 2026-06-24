@@ -146,7 +146,8 @@ type World struct {
 	Invents         *InventoryStore
 	Orders        *OrderStore
 	Buffs         *BuffPool
-	Missiles      *MissileStore // first-class missile entities (#158, ADR #295)
+	Missiles      *MissileStore     // first-class missile entities (#158, ADR #295)
+	ProjRender    *ProjectileRender // render-only billboard data for mover-driven projectiles (#590)
 	Effects       *EffectStore  // persistent script effects, first-class entities (#348)
 	Heroes        *HeroStore
 	Items         *ItemStore   // item entities (#305): type + charges + carrier
@@ -537,6 +538,7 @@ func NewWorld(requested Caps) *World {
 		Orders:             NewOrderStore(caps.Units, idxSpace),
 		Buffs:              NewBuffPool(caps.BuffInstances),
 		Missiles:           NewMissileStore(caps.Projectiles, idxSpace),
+		ProjRender:         NewProjectileRender(caps.Projectiles, idxSpace),
 		Effects:            NewEffectStore(caps.Effects, idxSpace),
 		Nodes:              NewResourceNodeStore(caps.Units, idxSpace),
 		Econs:              NewEconStore(caps.Units, idxSpace),
@@ -744,6 +746,9 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	isMissile := w.Missiles.Row(id) != -1
 	if isMissile {
 		w.Missiles.Remove(id)
+	}
+	if w.ProjRender.Row(id) != -1 {
+		w.ProjRender.Remove(id) // render-only billboard record for a mover projectile (#590)
 	}
 	isEffect := w.Effects.Row(id) != -1
 	if isEffect {
