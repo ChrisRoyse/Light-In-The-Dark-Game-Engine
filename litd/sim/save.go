@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 39
+const SaveFormatVersion uint32 = 40
 
 // ---- little-endian writer / reader ----
 
@@ -1052,6 +1052,7 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	s.u32(uint32(len(tm.free)))
 	for _, slot := range tm.free {
 		s.u32(uint32(slot))
+		s.u8(tm.Gen[slot]) // free-slot generation: the value the next alloc stamps (bugfix found by #559)
 	}
 
 	return s.err
@@ -1442,6 +1443,7 @@ type decodedSave struct {
 	timerDropped uint32
 	timerRows    []savedTimer
 	timerFree    []uint32
+	timerFreeGen []uint8 // generation of each free slot, parallel to timerFree (bugfix #559)
 }
 
 // savedTimer is one decoded live timer row (staging for #555 load).
@@ -2896,8 +2898,10 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		return fmt.Errorf("sim: save: timer free-list length %d exceeds cap %d", tmFreeN, timerCap)
 	}
 	d.timerFree = make([]uint32, tmFreeN)
+	d.timerFreeGen = make([]uint8, tmFreeN)
 	for i := uint32(0); i < tmFreeN; i++ {
 		d.timerFree[i] = r.u32()
+		d.timerFreeGen[i] = r.u8()
 	}
 	return r.err
 }
@@ -4226,8 +4230,9 @@ func applySave(d *decodedSave, w *World) {
 		tm.live[idx] = true
 		tm.count++
 	}
-	for _, f := range d.timerFree {
+	for i, f := range d.timerFree {
 		tm.free = append(tm.free, int32(f))
+		tm.Gen[f] = d.timerFreeGen[i] // restore the free slot's generation (bugfix #559)
 	}
 	// Rebuild the heap in ascending slot order — but only for RUNNING
 	// timers; a paused timer is intentionally absent from the schedule

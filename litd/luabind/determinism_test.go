@@ -64,7 +64,9 @@ import (
 // into the state hash. run1==run2==p1==p8 unchanged (deterministic).
 // Updated for #555: adding the "timers" sub-hash to HashSystems shifts
 // every state hash (still bit-deterministic; p1==p8 across GOMAXPROCS).
-const goldenLuaDeterminism10k = uint64(0x1af1dc7850ac8003)
+// Updated again for #559 bugfix: the timer sub-hash now folds each free
+// slot's generation (steers the next alloc); still bit-deterministic.
+const goldenLuaDeterminism10k = uint64(0x6b0f9e4d33ce9b1c)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

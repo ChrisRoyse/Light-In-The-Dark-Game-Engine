@@ -834,6 +834,13 @@ func (w *World) hashTimers(ht *statehash.Hasher) {
 	ht.WriteU32(uint32(len(ts.free)))
 	for _, slot := range ts.free {
 		ht.WriteU32(uint32(slot))
+		// Hash the free slot's generation too (#bugfix found by #559): a
+		// free slot's Gen is the value the NEXT alloc stamps, so it is
+		// live state — two worlds with divergent free-slot gens mint
+		// divergent handles on the next create. The entity allocator
+		// hashes every slot's gen for exactly this reason; the timer pool
+		// must match or the divergence only surfaces on reuse.
+		ht.WriteU8(ts.Gen[slot])
 	}
 }
 

@@ -290,7 +290,10 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // constant TopHash shift (empty arena here). run1==run2 unchanged.
 // Bumped 0x60d4d3e1e67b0acd → 0xae10ce86e7d9e258 (#555): the "timers"
 // sub-hash joins HashSystems — same constant-shift discipline, run1==run2.
-const dGolden uint64 = 0xae10ce86e7d9e258
+// Bumped 0xae10ce86e7d9e258 → 0xc0c873859d615850 (#559 bugfix): the timer
+// sub-hash now folds each FREE slot's generation (it steers the next
+// alloc's handle); constant shift, run1==run2.
+const dGolden uint64 = 0xc0c873859d615850
 
 // TestAIDeterminism10k — the gate. The Golden subtest is the fast preflight SoT:
 // one full 10k-tick match must equal the committed golden hash. The default full
