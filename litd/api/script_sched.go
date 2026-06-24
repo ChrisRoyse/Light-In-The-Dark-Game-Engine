@@ -93,6 +93,14 @@ func (g *Game) SubscribeScriptEvent(pubKind EventKind) (simKind uint16, ok bool)
 	}
 	sk, found := simKindOf[pubKind]
 	if !found {
+		// Custom event kind (#616): a registered custom kind id IS its own
+		// sim kind (it lives above KBuiltinMax, outside the built-in enum
+		// map). An unregistered kind stays unknown → fail closed.
+		if g.w.CustomEvents.IsCustomKind(uint16(pubKind)) {
+			sk, found = uint16(pubKind), true
+		}
+	}
+	if !found {
 		return 0, false
 	}
 	if !g.w.IsSubscribed(sk, scriptEventHandlerID) {
