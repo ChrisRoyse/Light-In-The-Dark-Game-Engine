@@ -61,7 +61,7 @@ func TestGroupScenarioGolden(t *testing.T) {
 	// Recorded 2026-06-23 (#567); bumped da66…→ba33… (#572) when the empty
 	// "kv" sub joined HashSystems (constant full-state shift; scenario
 	// only touches the unitgroups sub).
-	const golden = uint64(0xce8dca837e40e34a)
+	const golden = uint64(0x502de8a5373b3407)
 	got := groupTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("group golden hash %016x != recorded %016x (intended? update golden)", got, golden)

@@ -1094,6 +1094,12 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 	saveInternTable(s, &kv.keys)
 	saveInternTable(s, &kv.strs)
 
+	// customevents (#617, PRD2 04): Dropped + the name intern table in id
+	// order. Mirrors hashCustomEvents. Subscriptions ride the subs tables.
+	ce := w.CustomEvents
+	s.u32(ce.Dropped)
+	saveInternTable(s, &ce.names)
+
 	return s.err
 }
 
@@ -1507,6 +1513,10 @@ type decodedSave struct {
 	kvVal2    []int64
 	kvKeys    []string
 	kvStrs    []string
+
+	// custom-event-kind registry (#617, v44): Dropped + names.
+	ceDropped uint32
+	ceNames   []string
 }
 
 // savedGroup is one decoded live group row (staging for #565 load).
@@ -3048,6 +3058,15 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 	}
 	d.kvKeys = keys
 	d.kvStrs = strs
+
+	// custom-event-kind registry (#617): Dropped + name intern table.
+	r.what = "customevents"
+	d.ceDropped = r.u32()
+	ceNames, err := loadInternTable(r)
+	if err != nil {
+		return err
+	}
+	d.ceNames = ceNames
 	return r.err
 }
 
@@ -3708,6 +3727,11 @@ func validateSave(d *decodedSave, w *World) error {
 					i, d.kvOwner[i-1], d.kvKey[i-1], d.kvOwner[i], d.kvKey[i])
 			}
 		}
+	}
+
+	// customevents (#617): registered count must fit this world's cap.
+	if len(d.ceNames) > int(w.CustomEvents.Cap()) {
+		return fmt.Errorf("sim: save: custom-event count %d exceeds this world's cap %d", len(d.ceNames), w.CustomEvents.Cap())
 	}
 	return nil
 }
@@ -4506,4 +4530,13 @@ func applySave(d *decodedSave, w *World) {
 	kv.keys.rebuildIndex()
 	kv.strs.list = append(kv.strs.list[:0], d.kvStrs...)
 	kv.strs.rebuildIndex()
+
+	// custom-event-kind registry (#617): restore names (id order) +
+	// rebuild the lookup index; kind = KBuiltinMax + nameId, so the names
+	// alone reconstruct the whole mapping. Subscriptions were restored
+	// with the subs tables above.
+	ce := w.CustomEvents
+	ce.Dropped = d.ceDropped
+	ce.names.list = append(ce.names.list[:0], d.ceNames...)
+	ce.names.rebuildIndex()
 }

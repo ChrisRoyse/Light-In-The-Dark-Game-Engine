@@ -130,6 +130,11 @@ var HashSystems = []string{
 	// ascending (Owner,Key)), then the key + string-value intern tables
 	// in id order. The optional row index is derived, not hashed (R-KV-7).
 	"kv",
+	// appended by #617 (PRD2 04): the custom-event-kind registry —
+	// Dropped + the name intern table in id order. Custom-kind
+	// subscriptions ride the existing subscription tables (R-SIM-6); this
+	// only fixes the name→kind mapping so it round-trips (R-EVT-8).
+	"customevents",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -807,7 +812,20 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hkv := h.next() // kv (#572): generic typed key-value store
 	w.hashKV(hkv)
 
+	hce := h.next() // customevents (#617): custom-event-kind registry
+	w.hashCustomEvents(hce)
+
 	return reg.Sum(dst)
+}
+
+// hashCustomEvents folds the custom-event registry into its sub-hash,
+// mirroring the save block (#617). Dropped + the name intern table in id
+// order; a kind id is KBuiltinMax + nameId, so the names alone fix the
+// whole mapping.
+func (w *World) hashCustomEvents(hc *statehash.Hasher) {
+	ce := w.CustomEvents
+	hc.WriteU32(ce.Dropped)
+	hashInternTable(hc, &ce.names)
 }
 
 // hashKV folds the key-value store into its sub-hash, mirroring the save
