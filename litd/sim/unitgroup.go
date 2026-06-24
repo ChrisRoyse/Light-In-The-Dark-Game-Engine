@@ -396,6 +396,49 @@ func (s *GroupStore) appendAll(dst, src GroupID) {
 	}
 }
 
+// PruneEntities removes every entity in dead from every live group,
+// preserving insertion order (stable compaction, spec §3) so survivors'
+// relative order is unperturbed. One pass per live group; each span is
+// scanned in index order and compacted in place. Returns the total
+// (group, member) removals. Zero-alloc. Called from the cleanup phase
+// with the tick's killed set (#564, R-UGR-6) so a dead unit never lingers
+// in a group's count, iteration, or serialized members.
+func (s *GroupStore) PruneEntities(dead []EntityID) int {
+	if len(dead) == 0 || s.count == 0 {
+		return 0
+	}
+	removed := 0
+	seen := int32(0)
+	for row := int32(1); row < int32(len(s.live)) && seen < s.count; row++ {
+		if !s.live[row] {
+			continue
+		}
+		seen++
+		start, n := s.Start[row], s.Len[row]
+		wcur := int32(0) // write cursor for in-place compaction
+		for r := int32(0); r < n; r++ {
+			e := s.Members[start+r]
+			drop := false
+			for _, d := range dead {
+				if d == e {
+					drop = true
+					break
+				}
+			}
+			if drop {
+				removed++
+				continue
+			}
+			if wcur != r {
+				s.Members[start+wcur] = e
+			}
+			wcur++
+		}
+		s.Len[row] = wcur
+	}
+	return removed
+}
+
 func (s *GroupStore) assert(msg string, id GroupID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)

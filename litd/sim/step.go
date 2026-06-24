@@ -185,6 +185,10 @@ func (w *World) phaseCleanup() {
 	// handles are still resolvable (#554, R-TMR-6): a dead spawner stops
 	// spawning; an ability teardown timer never outlives its caster.
 	w.Timers.cancelOwnedBy(w.killed)
+	// Prune entities dying this tick from every group, stable order, while
+	// the killed set is intact (#564, R-UGR-6): a dead unit must not linger
+	// in a group's count, iteration, or serialized members.
+	w.Groups.PruneEntities(w.killed)
 	for i := range w.killed {
 		w.DestroyUnit(w.killed[i])
 	}
