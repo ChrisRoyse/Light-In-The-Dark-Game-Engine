@@ -8,15 +8,16 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 )
 
 // fpBook compiles a spec list into a fresh book and returns its fingerprint.
-func fpBook(t *testing.T, srcs ...AbilitySpecSource) uint64 {
+func fpBook(t *testing.T, srcs ...data.AbilitySpecSource) uint64 {
 	t.Helper()
 	bk := NewAbilityBook()
 	for _, s := range srcs {
-		spec, err := CompileAbilitySpec(s, interpResolver{})
+		spec, err := compileSrc(s, interpResolver{})
 		if err != nil {
 			t.Fatalf("compile %q: %v", s.ID, err)
 		}
@@ -25,20 +26,20 @@ func fpBook(t *testing.T, srcs ...AbilitySpecSource) uint64 {
 	return bk.Fingerprint()
 }
 
-func srcFireball(cd float64) AbilitySpecSource {
-	return AbilitySpecSource{
+func srcFireball(cd float64) data.AbilitySpecSource {
+	return data.AbilitySpecSource{
 		ID: "fireball", Name: "Fireball", CastType: "active", CastRange: 900, Cooldown: cd,
-		OnCast: []OpSource{
+		OnCast: []data.OpSource{
 			{Op: "spawn_projectile"},
 			{Op: "attach_mover", Mover: "linear", Effects: "impact", Speed: 30, Range: 900, Radius: 64},
 		},
 	}
 }
 
-func srcBlink() AbilitySpecSource {
-	return AbilitySpecSource{
+func srcBlink() data.AbilitySpecSource {
+	return data.AbilitySpecSource{
 		ID: "blink", Name: "Blink", CastType: "active", CastRange: 600,
-		OnCast: []OpSource{{Op: "emit_event", Event: "ability.impact", Arg: 1}},
+		OnCast: []data.OpSource{{Op: "emit_event", Event: "ability.impact", Arg: 1}},
 	}
 }
 
@@ -78,11 +79,11 @@ func TestFPAddedAbility(t *testing.T) {
 // TestFPReorderedOpsDiffers: reordering on_cast ops changes the fingerprint
 // (order is behavior — spawn-then-move ≠ move-then-spawn).
 func TestFPReorderedOpsDiffers(t *testing.T) {
-	forward := AbilitySpecSource{ID: "x", OnCast: []OpSource{
+	forward := data.AbilitySpecSource{ID: "x", OnCast: []data.OpSource{
 		{Op: "spawn_projectile"},
 		{Op: "attach_mover", Mover: "linear", Speed: 30, Range: 100},
 	}}
-	reversed := AbilitySpecSource{ID: "x", OnCast: []OpSource{
+	reversed := data.AbilitySpecSource{ID: "x", OnCast: []data.OpSource{
 		{Op: "attach_mover", Mover: "linear", Speed: 30, Range: 100},
 		{Op: "spawn_projectile"},
 	}}
@@ -111,7 +112,7 @@ func TestFPJoinGateRejectsMismatch(t *testing.T) {
 	build := func(cd float64) *World {
 		w := NewWorld(Caps{Units: 16})
 		w.SetDataFingerprint(0xDA7A) // same data tables on both peers
-		spec, err := CompileAbilitySpec(srcFireball(cd), interpResolver{})
+		spec, err := compileSrc(srcFireball(cd), interpResolver{})
 		if err != nil {
 			t.Fatal(err)
 		}

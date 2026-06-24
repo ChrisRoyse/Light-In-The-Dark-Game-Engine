@@ -65,9 +65,9 @@ func interpVictim(w *World, x, y int64) EntityID {
 	return id
 }
 
-func compile(t *testing.T, ops []OpSource) AbilitySpec {
+func compile(t *testing.T, ops []data.OpSource) AbilitySpec {
 	t.Helper()
-	spec, err := CompileAbilitySpec(AbilitySpecSource{ID: "test", OnCast: ops}, interpResolver{})
+	spec, err := compileSrc(data.AbilitySpecSource{ID: "test", OnCast: ops}, interpResolver{})
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestInterpFireball(t *testing.T) {
 	w, caster := interpWorld(t)
 	victim := interpVictim(w, 20, 0)
 
-	idx := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
+	idx := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
 		{Op: "spawn_projectile"},
 		{Op: "attach_mover", Mover: "linear", Effects: "impact",
 			Speed: 5, Range: 100, Radius: 8, HitMask: MissileHitEnemy, Pierce: 1},
@@ -137,8 +137,8 @@ func TestInterpFireball(t *testing.T) {
 func TestInterpAfterDetonation(t *testing.T) {
 	w, caster := interpWorld(t)
 	victim := interpVictim(w, 0, 0)
-	idx := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
-		{Op: "after", Count: 5, Children: []OpSource{{Op: "run_effects", Effects: "impact"}}},
+	idx := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
+		{Op: "after", Count: 5, Children: []data.OpSource{{Op: "run_effects", Effects: "impact"}}},
 	}))
 	w.CastAbility(idx, caster, victim, fixed.Vec2{})
 
@@ -170,9 +170,9 @@ func TestInterpForEachNova(t *testing.T) {
 	w.Owners.Add(w.Ents, ally, 1, 1, 1) // caster's team
 	w.Healths.Add(w.Ents, ally, 1000*fixed.One, 0, 0, 0)
 
-	idx := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
+	idx := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
 		{Op: "fill_group", Radius: 50, HitMask: MissileHitEnemy},
-		{Op: "for_each_in_group", Children: []OpSource{{Op: "run_effects", Effects: "impact"}}},
+		{Op: "for_each_in_group", Children: []data.OpSource{{Op: "run_effects", Effects: "impact"}}},
 	}))
 	t.Logf("BEFORE: e1=%d e2=%d e3=%d ally=%d",
 		int64(lifeOf(w, e1)), int64(lifeOf(w, e2)), int64(lifeOf(w, e3)), int64(lifeOf(w, ally)))
@@ -197,9 +197,9 @@ func TestInterpIfBranchKV(t *testing.T) {
 	victim := interpVictim(w, 0, 0)
 
 	// Branch taken: KV value matches the predicate arg.
-	idxHit := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
+	idxHit := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
 		{Op: "set_kv", Key: "hp", Arg: 7},
-		{Op: "if", Key: "hp", Arg: 7, Children: []OpSource{{Op: "run_effects", Effects: "impact"}}},
+		{Op: "if", Key: "hp", Arg: 7, Children: []data.OpSource{{Op: "run_effects", Effects: "impact"}}},
 	}))
 	w.CastAbility(idxHit, caster, victim, fixed.Vec2{})
 	_, kv, _, ok := w.KV.KVGet(EntityKVOwner(caster), 11)
@@ -215,9 +215,9 @@ func TestInterpIfBranchKV(t *testing.T) {
 
 	// Branch NOT taken: predicate arg differs from stored value.
 	victim2 := interpVictim(w, 100, 0)
-	idxMiss := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
+	idxMiss := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
 		{Op: "set_kv", Key: "hp", Arg: 7},
-		{Op: "if", Key: "hp", Arg: 8, Children: []OpSource{{Op: "run_effects", Effects: "impact"}}},
+		{Op: "if", Key: "hp", Arg: 8, Children: []data.OpSource{{Op: "run_effects", Effects: "impact"}}},
 	}))
 	w.CastAbility(idxMiss, caster, victim2, fixed.Vec2{})
 	w.Step()
@@ -232,8 +232,8 @@ func TestInterpIfBranchKV(t *testing.T) {
 func TestInterpTimesDoT(t *testing.T) {
 	w, caster := interpWorld(t)
 	victim := interpVictim(w, 0, 0)
-	idx := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
-		{Op: "times", Count: 3, Arg: 2, Children: []OpSource{{Op: "run_effects", Effects: "impact"}}},
+	idx := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
+		{Op: "times", Count: 3, Arg: 2, Children: []data.OpSource{{Op: "run_effects", Effects: "impact"}}},
 	}))
 	w.CastAbility(idx, caster, victim, fixed.Vec2{})
 	want := map[int]int64{2: 50, 4: 100, 6: 150}
@@ -256,9 +256,9 @@ func TestInterpCastZeroAlloc(t *testing.T) {
 	w, caster := interpWorld(t)
 	e1 := interpVictim(w, 10, 0)
 	_ = e1
-	idx := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
+	idx := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
 		{Op: "fill_group", Radius: 50, HitMask: MissileHitEnemy},
-		{Op: "for_each_in_group", Children: []OpSource{
+		{Op: "for_each_in_group", Children: []data.OpSource{
 			{Op: "set_kv", Key: "hp", Arg: 1},
 			{Op: "run_effects", Effects: "impact"},
 		}},
@@ -288,7 +288,7 @@ func TestInterpEmitEvent(t *testing.T) {
 		gotKind, gotArg = e.Kind, e.Arg
 	})
 	w.Subscribe(90, HandlerID(1))
-	idx := w.AbilityDefs.RegisterSpec(compile(t, []OpSource{
+	idx := w.AbilityDefs.RegisterSpec(compile(t, []data.OpSource{
 		{Op: "emit_event", Event: "ability.impact", Arg: 42},
 	}))
 	w.CastAbility(idx, caster, victim, fixed.Vec2{})

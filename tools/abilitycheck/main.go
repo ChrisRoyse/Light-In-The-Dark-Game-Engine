@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/ability"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
@@ -166,7 +167,7 @@ func checkFile(path string, groupMax int) []finding {
 // cast could instantiate, multiplying through the fan-out ops. for_each_in_group
 // is assumed to iterate up to groupMax members; times/loop multiply by their
 // count. An unbounded count (<=0) is treated as 1 (the compiler bounds them).
-func budget(ops []sim.OpSource, fanout, groupMax int) (movers, ents int) {
+func budget(ops []data.OpSource, fanout, groupMax int) (movers, ents int) {
 	for i := range ops {
 		op := &ops[i]
 		switch op.Op {

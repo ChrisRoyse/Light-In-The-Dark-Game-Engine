@@ -92,6 +92,6 @@ func EffectListSpan(off, length uint16) data.EffectList {
 // RegisterAbilitySpecAuto compiles + registers a composable ability using the
 // world itself as the resolver — the one-call authoring entry shared by the Go
 // and Lua surfaces (#599). Returns the ability ref (defIndex+1) or an error.
-func (w *World) RegisterAbilitySpecAuto(src AbilitySpecSource) (uint16, error) {
+func (w *World) RegisterAbilitySpecAuto(src data.AbilitySpecLowered) (uint16, error) {
 	return w.RegisterAbilitySpec(src, w)
 }

@@ -7,6 +7,7 @@ package litd
 // language (R-ABL-5): same names, same params, same compiled spec, same cast.
 
 import (
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
@@ -76,13 +77,20 @@ func (g *Game) RegisterAbilitySpec(def AbilitySpecDef) (AbilityRef, error) {
 	if g == nil || g.w == nil {
 		return 0, errNoGame{}
 	}
-	src := sim.AbilitySpecSource{
+	src := data.AbilitySpecSource{
 		ID: def.ID, Name: def.Name, CastType: def.CastType, Indicator: def.Indicator,
 		CastRange: def.CastRange, ManaCost: def.ManaCost, Cooldown: def.Cooldown,
 		Precast: def.Precast, CastPoint: def.CastPoint, Backswing: def.Backswing,
 		OnCast: opDefsToSource(def.OnCast),
 	}
-	ref, err := g.w.RegisterAbilitySpecAuto(src)
+	// Lower the float authoring numbers to fixed-point (litd/data, #628) before
+	// handing the spec to the deterministic sim core, which never sees a float.
+	lowered, err := data.LowerAbilitySpec(src)
+	if err != nil {
+		g.reportInvalid("Game.RegisterAbilitySpec (" + err.Error() + ")")
+		return 0, err
+	}
+	ref, err := g.w.RegisterAbilitySpecAuto(lowered)
 	if err != nil {
 		g.reportInvalid("Game.RegisterAbilitySpec (" + err.Error() + ")")
 		return 0, err
@@ -100,14 +108,14 @@ func (g *Game) RegisterEffectListName(name string, offset, length uint16) bool {
 	return g.w.RegisterEffectListName(name, sim.EffectListSpan(offset, length))
 }
 
-func opDefsToSource(ops []AbilityOpDef) []sim.OpSource {
+func opDefsToSource(ops []AbilityOpDef) []data.OpSource {
 	if len(ops) == 0 {
 		return nil
 	}
-	out := make([]sim.OpSource, len(ops))
+	out := make([]data.OpSource, len(ops))
 	for i := range ops {
 		o := &ops[i]
-		out[i] = sim.OpSource{
+		out[i] = data.OpSource{
 			Op: o.Op, Mover: o.Mover, Effects: o.Effects, Event: o.Event, Key: o.Key,
 			Cont: o.Cont, Speed: o.Speed, Range: o.Range, Radius: o.Radius, Amount: o.Amount,
 			Arg: o.Arg, Count: o.Count, HitMask: o.HitMask, Pierce: o.Pierce,
@@ -115,7 +123,7 @@ func opDefsToSource(ops []AbilityOpDef) []sim.OpSource {
 			Children: opDefsToSource(o.Children),
 		}
 		for _, wp := range o.Waypoints {
-			out[i].Waypoints = append(out[i].Waypoints, sim.WaypointSource{X: wp[0], Y: wp[1]})
+			out[i].Waypoints = append(out[i].Waypoints, data.WaypointSource{X: wp[0], Y: wp[1]})
 		}
 	}
 	return out

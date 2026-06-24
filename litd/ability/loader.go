@@ -15,12 +15,13 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
 // Template is a loaded ability spec plus the names it declares/references.
 type Template struct {
-	Source      sim.AbilitySpecSource
+	Source      data.AbilitySpecSource
 	EffectLists []string // names declared under [ability.effects.*]
 	RefEffects  []string // effect-list names referenced by ops (run_effects / fx.effects)
 	RefMovers   []string // mover-kind names referenced by attach_mover
@@ -103,7 +104,7 @@ func LoadTOML(blob []byte) (Template, error) {
 		return Template{}, fmt.Errorf("ability: missing [ability].id")
 	}
 	t := Template{
-		Source: sim.AbilitySpecSource{
+		Source: data.AbilitySpecSource{
 			ID: a.ID, Name: a.Name, CastType: a.CastType, Indicator: a.Indicator,
 			CastRange: a.CastRange, ManaCost: a.ManaCost, Cooldown: a.Cooldown,
 			Precast: a.Timing.Precast, CastPoint: a.Timing.CastPoint, Backswing: a.Timing.Backswing,
@@ -126,24 +127,24 @@ func LoadTOML(blob []byte) (Template, error) {
 	return t, nil
 }
 
-func convertOps(raw []rawOp, t *Template) ([]sim.OpSource, error) {
+func convertOps(raw []rawOp, t *Template) ([]data.OpSource, error) {
 	if len(raw) == 0 {
 		return nil, nil
 	}
-	out := make([]sim.OpSource, 0, len(raw))
+	out := make([]data.OpSource, 0, len(raw))
 	for i := range raw {
 		r := &raw[i]
 		if r.Op == "" {
 			return nil, fmt.Errorf("ability %q: op[%d] missing 'op'", t.Source.ID, i)
 		}
-		o := sim.OpSource{
+		o := data.OpSource{
 			Op: r.Op, Mover: r.Mover, Effects: r.Effects, Event: r.Event, Key: r.Key,
 			Cont: r.Cont, Speed: r.Speed, Range: r.Range, Radius: r.Radius, Amount: r.Amount,
 			Arg: r.Arg, Count: r.Count, Pierce: r.Pierce, HitMask: parseHitMask(r.Hit),
 			AngVel: r.AngVel, TurnRate: r.TurnRate, Height: r.Height, Decay: r.Decay, Done: r.Done,
 		}
 		for _, wp := range r.Waypoints {
-			o.Waypoints = append(o.Waypoints, sim.WaypointSource{X: wp[0], Y: wp[1]})
+			o.Waypoints = append(o.Waypoints, data.WaypointSource{X: wp[0], Y: wp[1]})
 		}
 		// attach_mover folds the inline fx table into the op fields.
 		if r.Fx != nil {

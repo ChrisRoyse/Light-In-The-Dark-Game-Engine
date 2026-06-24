@@ -37,12 +37,12 @@ func (fakeResolver) MoverKindByName(n string) (MoverKind, bool) {
 }
 func (fakeResolver) KeyID(n string) uint32 { return 7 }
 
-func validFireball() AbilitySpecSource {
-	return AbilitySpecSource{
+func validFireball() data.AbilitySpecSource {
+	return data.AbilitySpecSource{
 		ID: "fireball", Name: "Fireball", CastType: "active", Indicator: "line",
 		CastRange: 900, ManaCost: 75, Cooldown: 6.0,
 		Precast: 0.3, CastPoint: 0.0, Backswing: 0.4,
-		OnCast: []OpSource{
+		OnCast: []data.OpSource{
 			{Op: "attach_mover", Mover: "linear", Speed: 30, Range: 900, Radius: 64, Pierce: 1},
 			{Op: "run_effects", Effects: "fireball_impact"},
 			{Op: "emit_event", Event: "ability.impact", Arg: 1},
@@ -51,7 +51,7 @@ func validFireball() AbilitySpecSource {
 }
 
 func TestAbilityCompileValid(t *testing.T) {
-	spec, err := CompileAbilitySpec(validFireball(), fakeResolver{})
+	spec, err := compileSrc(validFireball(), fakeResolver{})
 	if err != nil {
 		t.Fatalf("valid spec rejected: %v", err)
 	}
@@ -75,8 +75,8 @@ func TestAbilityCompileValid(t *testing.T) {
 
 func TestAbilityRejectUnknownOp(t *testing.T) {
 	src := validFireball()
-	src.OnCast = append(src.OnCast, OpSource{Op: "teleport_to_moon"})
-	_, err := CompileAbilitySpec(src, fakeResolver{})
+	src.OnCast = append(src.OnCast, data.OpSource{Op: "teleport_to_moon"})
+	_, err := compileSrc(src, fakeResolver{})
 	if err == nil || !strings.Contains(err.Error(), "unknown op") {
 		t.Fatalf("expected unknown-op reject, got %v", err)
 	}
@@ -85,7 +85,7 @@ func TestAbilityRejectUnknownOp(t *testing.T) {
 func TestAbilityRejectMissingEffectRef(t *testing.T) {
 	src := validFireball()
 	src.OnCast[1].Effects = "nonexistent_list"
-	_, err := CompileAbilitySpec(src, fakeResolver{})
+	_, err := compileSrc(src, fakeResolver{})
 	if err == nil || !strings.Contains(err.Error(), "unknown effect list") {
 		t.Fatalf("expected missing-effect reject, got %v", err)
 	}
@@ -94,13 +94,13 @@ func TestAbilityRejectMissingEffectRef(t *testing.T) {
 func TestAbilityRejectOutOfRangeCooldown(t *testing.T) {
 	src := validFireball()
 	src.Cooldown = 1e9 // seconds → way past uint16 ticks
-	_, err := CompileAbilitySpec(src, fakeResolver{})
+	_, err := compileSrc(src, fakeResolver{})
 	if err == nil || !strings.Contains(err.Error(), "tick limit") {
 		t.Fatalf("expected cooldown out-of-range reject, got %v", err)
 	}
 	src2 := validFireball()
 	src2.Cooldown = -1
-	if _, err := CompileAbilitySpec(src2, fakeResolver{}); err == nil {
+	if _, err := compileSrc(src2, fakeResolver{}); err == nil {
 		t.Fatal("expected negative-cooldown reject")
 	}
 }
@@ -110,7 +110,7 @@ func TestAbilityRejectPrecisionLoss(t *testing.T) {
 	// NaN/Inf (definitely unrepresentable) and a huge magnitude.
 	src := validFireball()
 	src.CastRange = 1e30 // out of fixed range
-	if _, err := CompileAbilitySpec(src, fakeResolver{}); err == nil {
+	if _, err := compileSrc(src, fakeResolver{}); err == nil {
 		t.Fatal("expected out-of-fixed-range reject for cast_range 1e30")
 	}
 }
@@ -118,7 +118,7 @@ func TestAbilityRejectPrecisionLoss(t *testing.T) {
 func TestAbilityRejectMissingEventName(t *testing.T) {
 	src := validFireball()
 	src.OnCast[2].Event = "" // emit_event with no event
-	_, err := CompileAbilitySpec(src, fakeResolver{})
+	_, err := compileSrc(src, fakeResolver{})
 	if err == nil || !strings.Contains(err.Error(), "emit_event needs") {
 		t.Fatalf("expected emit_event reject, got %v", err)
 	}

@@ -61,7 +61,7 @@ func templateWorld(t *testing.T, file string) (*sim.World, uint16) {
 	for _, ev := range tpl.RefEvents {
 		w.CustomEvents.RegisterEventKind(ev)
 	}
-	if _, err := w.RegisterAbilitySpecAuto(tpl.Source); err != nil {
+	if _, err := registerLowered(w, tpl.Source); err != nil {
 		t.Fatalf("register %s: %v", file, err)
 	}
 	idx, ok := w.AbilityDefs.Lookup(tpl.Source.ID)
@@ -157,7 +157,7 @@ func TestTemplatesSaveLoadRoundTrip(t *testing.T) {
 			for _, ev := range tpl.RefEvents {
 				w.CustomEvents.RegisterEventKind(ev)
 			}
-			if _, err := w.RegisterAbilitySpecAuto(tpl.Source); err != nil {
+			if _, err := registerLowered(w, tpl.Source); err != nil {
 				t.Fatalf("register %s: %v", f, err)
 			}
 		}
@@ -204,7 +204,7 @@ func TestTemplateFingerprintReject(t *testing.T) {
 		for _, n := range tpl.EffectLists {
 			w.RegisterEffectListName(n, sim.EffectListSpan(0, 1))
 		}
-		if _, err := w.RegisterAbilitySpecAuto(tpl.Source); err != nil {
+		if _, err := registerLowered(w, tpl.Source); err != nil {
 			t.Fatal(err)
 		}
 		return w
@@ -226,4 +226,14 @@ func TestTemplateFingerprintReject(t *testing.T) {
 	} else {
 		t.Logf("retuned peer rejected the save: %v", err)
 	}
+}
+
+// registerLowered lowers a float source (litd/data, #628) then registers it —
+// the sim API now takes the fixed-point lowered form.
+func registerLowered(w *sim.World, src data.AbilitySpecSource) (uint16, error) {
+	lo, err := data.LowerAbilitySpec(src)
+	if err != nil {
+		return 0, err
+	}
+	return w.RegisterAbilitySpecAuto(lo)
 }

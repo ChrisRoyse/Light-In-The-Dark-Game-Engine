@@ -21,7 +21,7 @@ type itemAbilityGrant struct {
 // the ability ref (defIndex+1). Setup-only (RegisterAbilityDef refuses calls
 // during a tick). Fail-closed: a compile or registration failure registers
 // nothing.
-func (w *World) RegisterAbilitySpec(src AbilitySpecSource, res AbilityResolver) (uint16, error) {
+func (w *World) RegisterAbilitySpec(src data.AbilitySpecLowered, res AbilityResolver) (uint16, error) {
 	spec, err := CompileAbilitySpec(src, res)
 	if err != nil {
 		return 0, err

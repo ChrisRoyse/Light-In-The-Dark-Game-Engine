@@ -112,12 +112,12 @@ func (w *World) moverStepLinear(r int32) {
 	}
 	step := unitStep(ms.Dir[r], ms.Speed[r])
 	w.moverWrite(tr, pos.Add(step))
-	ms.RangeLeft[r] -= ms.Speed[r]
+	ms.RangeLeft[r] = ms.RangeLeft[r].Sub(ms.Speed[r])
 	if ms.RangeLeft[r] <= 0 {
 		w.moverComplete(r)
 		return
 	}
-	ms.Speed[r] += ms.Accel[r] // accelerate after the move (missile parity, #590)
+	ms.Speed[r] = ms.Speed[r].Add(ms.Accel[r]) // accelerate after the move (missile parity, #590)
 }
 
 func (w *World) moverStepPoint(r int32) {
@@ -135,7 +135,7 @@ func (w *World) moverStepPoint(r int32) {
 		return
 	}
 	w.moverWrite(tr, pos.Add(unitStep(to, ms.Speed[r])))
-	ms.Speed[r] += ms.Accel[r] // accelerate after the move (missile parity, #590)
+	ms.Speed[r] = ms.Speed[r].Add(ms.Accel[r]) // accelerate after the move (missile parity, #590)
 }
 
 func (w *World) moverStepHoming(r int32) {
@@ -209,11 +209,11 @@ func (w *World) moverStepHoming(r int32) {
 			return
 		}
 		w.moverWrite(tr, pos.Add(unitStep(to, ms.Speed[r])))
-		ms.Speed[r] += ms.Accel[r]
+		ms.Speed[r] = ms.Speed[r].Add(ms.Accel[r])
 		return
 	}
 	w.moverWrite(tr, pos.Add(unitStep(ms.Dir[r], ms.Speed[r])))
-	ms.Speed[r] += ms.Accel[r] // accelerate after the move (missile parity, #590)
+	ms.Speed[r] = ms.Speed[r].Add(ms.Accel[r]) // accelerate after the move (missile parity, #590)
 }
 
 // turnToward rotates cur toward the direction of want by at most maxTurn

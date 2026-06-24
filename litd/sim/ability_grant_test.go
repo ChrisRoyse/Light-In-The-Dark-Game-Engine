@@ -31,10 +31,10 @@ func grantWorld(t *testing.T) (w *World, ref uint16, caster, victim EntityID) {
 		t.Fatalf("bind matrix: %v", err)
 	}
 	var err error
-	ref, err = w.RegisterAbilitySpec(AbilitySpecSource{
+	ref, err = w.registerSrc(data.AbilitySpecSource{
 		ID: "fireball", Name: "Fireball", CastType: "active",
 		CastRange: 900, ManaCost: 20, Cooldown: 1.0, CastPoint: 0.1, // 20t cd, 2t castpoint
-		OnCast: []OpSource{{Op: "run_effects", Effects: "impact"}},
+		OnCast: []data.OpSource{{Op: "run_effects", Effects: "impact"}},
 	}, interpResolver{})
 	if err != nil {
 		t.Fatalf("RegisterAbilitySpec: %v", err)

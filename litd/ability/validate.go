@@ -56,9 +56,15 @@ func (r *templateResolver) KeyID(string) uint32 {
 	return r.nextKey
 }
 
-// Compile validates and compiles a template, returning the compiled spec.
+// Compile validates and compiles a template, returning the compiled spec. The
+// float authoring numbers are lowered to fixed-point (litd/data, #628) before
+// the sim resolver runs.
 func Compile(t Template) (sim.AbilitySpec, error) {
-	return sim.CompileAbilitySpec(t.Source, newTemplateResolver(&t))
+	lowered, err := data.LowerAbilitySpec(t.Source)
+	if err != nil {
+		return sim.AbilitySpec{}, err
+	}
+	return sim.CompileAbilitySpec(lowered, newTemplateResolver(&t))
 }
 
 // Validate is Compile's error-only form.

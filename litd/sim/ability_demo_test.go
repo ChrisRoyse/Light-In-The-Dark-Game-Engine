@@ -23,18 +23,18 @@ const flameAftershockName = "flame.aftershock"
 //
 //	set_kv (03) → spawn_projectile + attach_mover (05, effect arena on hit) →
 //	after (01) { fill_group (02) → for_each_in_group → run_effects ; emit_event (04) }
-func flameBurst() AbilitySpecSource {
-	return AbilitySpecSource{
+func flameBurst() data.AbilitySpecSource {
+	return data.AbilitySpecSource{
 		ID: "flame_burst", Name: "Flame Burst", CastType: "active",
 		CastRange: 900, ManaCost: 10, Cooldown: 2.0, CastPoint: 0.05,
-		OnCast: []OpSource{
+		OnCast: []data.OpSource{
 			{Op: "set_kv", Key: "casts", Arg: 1},
 			{Op: "spawn_projectile"},
 			{Op: "attach_mover", Mover: "linear", Effects: "burst_hit",
 				Speed: 10, Range: 300, Radius: 24, HitMask: MissileHitEnemy, Pierce: 1},
-			{Op: "after", Count: 10, Children: []OpSource{
+			{Op: "after", Count: 10, Children: []data.OpSource{
 				{Op: "fill_group", HitMask: MissileHitEnemy, Radius: 200},
-				{Op: "for_each_in_group", Children: []OpSource{{Op: "run_effects", Effects: "aoe_hit"}}},
+				{Op: "for_each_in_group", Children: []data.OpSource{{Op: "run_effects", Effects: "aoe_hit"}}},
 				{Op: "emit_event", Event: flameAftershockName, Arg: 7},
 			}},
 		},
@@ -56,7 +56,7 @@ func buildFlameWorld(t *testing.T) (*World, uint16, uint16, EntityID) {
 	w.RegisterEffectListName("burst_hit", EffectListSpan(0, 1))
 	w.RegisterEffectListName("aoe_hit", EffectListSpan(0, 1))
 	kind := w.CustomEvents.RegisterEventKind(flameAftershockName)
-	ref, err := w.RegisterAbilitySpecAuto(flameBurst())
+	ref, err := w.registerSrcAuto(flameBurst())
 	if err != nil {
 		t.Fatalf("register flame_burst: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestFlameBurstSaveMidAbilityResumes(t *testing.T) {
 	w2.RegisterEffectListName("burst_hit", EffectListSpan(0, 1))
 	w2.RegisterEffectListName("aoe_hit", EffectListSpan(0, 1))
 	w2.CustomEvents.RegisterEventKind(flameAftershockName)
-	if _, err := w2.RegisterAbilitySpecAuto(flameBurst()); err != nil {
+	if _, err := w2.registerSrcAuto(flameBurst()); err != nil {
 		t.Fatalf("re-register ability: %v", err)
 	}
 	if err := w2.LoadState(bytes.NewReader(buf.Bytes()), fp); err != nil {

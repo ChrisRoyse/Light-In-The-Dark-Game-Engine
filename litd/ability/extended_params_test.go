@@ -35,7 +35,7 @@ func castTemplate(t *testing.T, file string) *sim.World {
 	for _, n := range tpl.EffectLists {
 		w.RegisterEffectListName(n, sim.EffectListSpan(0, 1))
 	}
-	if _, err := w.RegisterAbilitySpecAuto(tpl.Source); err != nil {
+	if _, err := registerLowered(w, tpl.Source); err != nil {
 		t.Fatal(err)
 	}
 	idx, _ := w.AbilityDefs.Lookup(tpl.Source.ID)

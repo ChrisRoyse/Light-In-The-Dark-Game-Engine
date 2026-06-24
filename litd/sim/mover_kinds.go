@@ -62,7 +62,7 @@ func (w *World) moverStepArc(r int32) {
 	if total > 0 {
 		rem := ms.Goal[r].Sub(next)
 		remLen := vecLen(rem)
-		t := fixed.One - remLen.Mul(fixedInv(total))
+		t := fixed.One.Sub(remLen.Mul(fixedInv(total)))
 		ms.Height[r] = arcZ(apex, t)
 	}
 }
@@ -75,7 +75,7 @@ func arcZ(apex, t fixed.F64) fixed.F64 {
 		t = fixed.One
 	}
 	four := fixed.FromInt(4)
-	return four.Mul(apex).Mul(t).Mul(fixed.One - t)
+	return four.Mul(apex).Mul(t).Mul(fixed.One.Sub(t))
 }
 
 // moverStepSpline advances WpParam by Speed (param units/tick) and writes
@@ -94,7 +94,7 @@ func (w *World) moverStepSpline(r int32) {
 		return
 	}
 	last := fixed.FromInt(n - 1)
-	ms.WpParam[r] += ms.Speed[r]
+	ms.WpParam[r] = ms.WpParam[r].Add(ms.Speed[r])
 	if ms.WpParam[r] >= last {
 		w.moverWrite(tr, ms.waypoints[ms.WpStart[r]+n-1])
 		w.moverComplete(r)
@@ -112,7 +112,7 @@ func (w *World) catmullRom(r int32, p fixed.F64) fixed.Vec2 {
 	if seg > n-2 {
 		seg = n - 2
 	}
-	t := p - fixed.FromInt(seg) // local 0..1
+	t := p.Sub(fixed.FromInt(seg)) // local 0..1
 	at := func(i int32) fixed.Vec2 {
 		if i < 0 {
 			i = 0
