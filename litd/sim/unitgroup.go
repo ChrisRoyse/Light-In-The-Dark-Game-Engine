@@ -289,6 +289,113 @@ func (s *GroupStore) GroupEach(id GroupID, fn func(EntityID)) {
 	}
 }
 
+// ---------------------------------------------------------------------
+// Set algebra (#562). Each writes the result into a preallocated dst
+// group (cleared first), reading a and b in their member order, so the
+// result order is a deterministic function of the inputs. Zero-alloc:
+// membership tests reuse the linear span scan, no temporaries. dst MUST
+// be distinct from a and b — clearing dst first would otherwise destroy
+// a source mid-read; an aliasing call asserts and is a no-op (false).
+// Members beyond dst's span cap are dropped (DroppedMembers++), same as
+// GroupAdd.
+// ---------------------------------------------------------------------
+
+// distinctDst reports whether dst is a live group distinct from a and b
+// (the precondition for the algebra ops).
+func (s *GroupStore) distinctDst(dst, a, b GroupID) (row int32, ok bool) {
+	r, live := s.resolve(dst)
+	if !live {
+		return 0, false
+	}
+	if dst == a || dst == b {
+		s.assert("group algebra dst aliases a source", dst)
+		return 0, false
+	}
+	return r, true
+}
+
+// GroupUnion sets dst = a ∪ b (a's members in order, then b's not already
+// present). Returns false on a stale/aliasing dst.
+func (s *GroupStore) GroupUnion(dst, a, b GroupID) bool {
+	dstRow, ok := s.distinctDst(dst, a, b)
+	if !ok {
+		return false
+	}
+	s.Len[dstRow] = 0
+	s.appendAll(dst, a)
+	s.appendAll(dst, b)
+	return true
+}
+
+// GroupIntersect sets dst = a ∩ b (a's members, in a's order, that are
+// also in b). Returns false on a stale/aliasing dst.
+func (s *GroupStore) GroupIntersect(dst, a, b GroupID) bool {
+	dstRow, ok := s.distinctDst(dst, a, b)
+	if !ok {
+		return false
+	}
+	s.Len[dstRow] = 0
+	aRow, aok := s.resolve(a)
+	if !aok {
+		return true // a empty/stale → empty intersection
+	}
+	start, n := s.Start[aRow], s.Len[aRow]
+	for i := int32(0); i < n; i++ {
+		e := s.Members[start+i]
+		if s.GroupContains(b, e) {
+			s.GroupAdd(dst, e)
+		}
+	}
+	return true
+}
+
+// GroupDifference sets dst = a ∖ b (a's members, in a's order, not in b).
+// Returns false on a stale/aliasing dst.
+func (s *GroupStore) GroupDifference(dst, a, b GroupID) bool {
+	dstRow, ok := s.distinctDst(dst, a, b)
+	if !ok {
+		return false
+	}
+	s.Len[dstRow] = 0
+	aRow, aok := s.resolve(a)
+	if !aok {
+		return true
+	}
+	start, n := s.Start[aRow], s.Len[aRow]
+	for i := int32(0); i < n; i++ {
+		e := s.Members[start+i]
+		if !s.GroupContains(b, e) {
+			s.GroupAdd(dst, e)
+		}
+	}
+	return true
+}
+
+// GroupCopy sets dst = src (src's members in order). dst must differ from
+// src. Returns false on a stale/aliasing dst.
+func (s *GroupStore) GroupCopy(dst, src GroupID) bool {
+	dstRow, ok := s.distinctDst(dst, src, src)
+	if !ok {
+		return false
+	}
+	s.Len[dstRow] = 0
+	s.appendAll(dst, src)
+	return true
+}
+
+// appendAll adds every member of src to dst (unique, ordered). src may be
+// stale (no-op). Internal helper for the algebra ops.
+func (s *GroupStore) appendAll(dst, src GroupID) {
+	row, ok := s.resolve(src)
+	if !ok {
+		return
+	}
+	start, n := s.Start[row], s.Len[row]
+	for i := int32(0); i < n; i++ {
+		s.GroupAdd(dst, s.Members[start+i])
+	}
+}
+
 func (s *GroupStore) assert(msg string, id GroupID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)
