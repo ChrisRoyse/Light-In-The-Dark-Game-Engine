@@ -206,6 +206,39 @@ func TestSpawnProjectilePerHitCue(t *testing.T) {
 	}
 }
 
+// Acceleration parity: a point projectile with Accel must integrate speed the
+// same as the legacy missile (Speed += Accel after each move). SoT = the body's
+// X after two ticks. Speed 10 + Accel 5: tick1 moves 10 (x=10, speed->15),
+// tick2 moves 15 (x=25, speed->20) — identical via both paths.
+func TestSpawnProjectileAccelParity(t *testing.T) {
+	spec := func(s EntityID) MissileSpec {
+		return MissileSpec{
+			Pos: xy(0, 0), Point: xy(1000, 0), Source: s,
+			Speed: 10 * fixed.One, Accel: 5 * fixed.One, GuidanceID: MissileGuidancePoint,
+		}
+	}
+	posX := func(spawn func(*World, EntityID) (EntityID, bool)) int64 {
+		w := lmWorld(t)
+		s := atkUnit(t, w, 0, xy(0, 200), 0)
+		id, ok := spawn(w, s)
+		if !ok {
+			t.Fatal("spawn")
+		}
+		w.Step()
+		w.Step()
+		return w.Transforms.Pos[w.Transforms.Row(id)].X.Floor()
+	}
+	legacy := posX(func(w *World, s EntityID) (EntityID, bool) { return w.SpawnMissile(spec(s)) })
+	mover := posX(func(w *World, s EntityID) (EntityID, bool) { return w.spawnMoverProjectile(spec(s)) })
+	t.Logf("accel pos.X after 2 ticks: legacy=%d mover=%d (want 25)", legacy, mover)
+	if legacy != 25 {
+		t.Fatalf("legacy accel baseline = %d, want 25", legacy)
+	}
+	if mover != legacy {
+		t.Fatalf("ACCEL PARITY BREAK: mover x=%d != legacy %d (mover not accelerating)", mover, legacy)
+	}
+}
+
 // Expire-signal parity: a linear skillshot that spends its range in an empty
 // lane fires OnMissileExpire (payload-less) via both paths — the missile
 // expiry cue must survive the mover migration. SoT = the expire-callback count.
