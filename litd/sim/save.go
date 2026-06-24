@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 46
+const SaveFormatVersion uint32 = 47 // v47: ProjRender section (render-only projectile billboards, #590)
 
 // ---- little-endian writer / reader ----
 
@@ -1168,6 +1168,20 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(mv.Gen[slot])
 	}
 
+	// projectile render (#590, v47): render-only billboard statics for mover
+	// projectiles — Arc/guidance/Span + the driving MoverID, keyed by body
+	// entity. NOT hashed (presentation only); saved so a reloaded mid-flight
+	// projectile still draws as an arced billboard. Dense, saved in row order.
+	prw := w.ProjRender
+	s.u32(uint32(prw.count))
+	for r := int32(0); r < prw.count; r++ {
+		s.ent(prw.Entity[r])
+		s.i64(int64(prw.Arc[r]))
+		s.u16(prw.Guidance[r])
+		s.i32(prw.Span[r])
+		s.u32(uint32(prw.Mover[r]))
+	}
+
 	return s.err
 }
 
@@ -1595,6 +1609,20 @@ type decodedSave struct {
 	moverRows     []savedMover
 	moverFree     []uint32
 	moverFreeGen  []uint8
+
+	// projectile render side table (#590, v47): render-only billboard statics
+	// for mover projectiles, keyed by body entity. NOT hashed; applied after
+	// entities are restored.
+	projRenderRows []savedProjRender
+}
+
+// savedProjRender is one decoded ProjectileRender record (#590 load staging).
+type savedProjRender struct {
+	entity   EntityID
+	arc      fixed.F64
+	guidance uint16
+	span     int32
+	mover    MoverID
 }
 
 // savedMover is one decoded live mover row (staging for #590 load). m
@@ -3248,6 +3276,27 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.moverFree[i] = r.u32()
 		d.moverFreeGen[i] = r.u8()
 	}
+
+	// projectile render side table (#590, v47). Bounded against the mover cap
+	// (one record per projectile body, never more than the mover pool).
+	r.what = "projrender"
+	prN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(prN) > moverCap {
+		return fmt.Errorf("sim: save: projrender count %d exceeds mover cap %d", prN, moverCap)
+	}
+	d.projRenderRows = make([]savedProjRender, prN)
+	for i := range d.projRenderRows {
+		d.projRenderRows[i] = savedProjRender{
+			entity:   r.ent(),
+			arc:      r.f64(),
+			guidance: r.u16(),
+			span:     r.i32(),
+			mover:    MoverID(r.u32()),
+		}
+	}
 	return r.err
 }
 
@@ -4789,5 +4838,14 @@ func applySave(d *decodedSave, w *World) {
 	for i, f := range d.moverFree {
 		mv.free = append(mv.free, int32(f))
 		mv.Gen[f] = d.moverFreeGen[i]
+	}
+
+	// projectile render side table (#590, v47): reset, then re-add each saved
+	// record in order (reproduces the dense layout). Applied after movers so
+	// the referenced MoverID resolves; render-only, never hashed.
+	w.ProjRender.loadReset()
+	for i := range d.projRenderRows {
+		row := &d.projRenderRows[i]
+		w.ProjRender.Add(row.entity, row.mover, row.arc, row.guidance, row.span)
 	}
 }

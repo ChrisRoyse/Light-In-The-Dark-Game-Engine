@@ -79,6 +79,17 @@ func (s *ProjectileRender) Add(id EntityID, mover MoverID, arc fixed.F64, guidan
 	return true
 }
 
+// loadReset clears the store for a save restore: apply re-adds each saved
+// record (in saved order, which reproduces the dense layout) via Add. Render
+// statics are saved (not hashed) so a reloaded mid-flight projectile still
+// renders as an arced billboard (#590).
+func (s *ProjectileRender) loadReset() {
+	for i := range s.rowOf {
+		s.rowOf[i] = -1
+	}
+	s.count = 0
+}
+
 // Remove drops a body's render record (dense swap-with-last), called from the
 // entity-death cleanup. Returns false if the entity had no record.
 func (s *ProjectileRender) Remove(id EntityID) bool {
