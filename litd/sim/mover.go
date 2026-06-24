@@ -106,6 +106,11 @@ type MoverStore struct {
 	waypoints []fixed.Vec2 // shared spline arena
 	wpCount   int32        // bump cursor into waypoints
 
+	// steps binds custom-step ContIDs to functions (#586). Code, not
+	// state: re-registered at setup, never serialized; lookup-by-id only
+	// (no iteration in gameplay).
+	steps map[uint16]MoverStepFunc
+
 	// Dropped counts Create/AddWaypoints refused at capacity — hashed
 	// state (#590) so a capacity divergence fails closed.
 	Dropped uint32

@@ -34,6 +34,8 @@ func (w *World) moverSystem() {
 			w.moverStepArc(r)
 		case MoverSpline:
 			w.moverStepSpline(r)
+		case MoverCustom:
+			w.moverStepCustom(r)
 		}
 	}
 }
