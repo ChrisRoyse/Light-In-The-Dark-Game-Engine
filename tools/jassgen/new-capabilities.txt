@@ -465,3 +465,147 @@ exact   Effect.ID
 exact   Game.RecordReplay
 exact   Game.ReplayCommands
 exact   Game.BuildReplay
+
+# --- unified parametric movers (#548 epic / #584-590): the deterministic
+# mover system that drives both unit motion and projectiles. The Move* verbs
+# launch a mover by kind (linear/homing/point/orbit-unit/orbit-point/arc/spline/
+# custom), SpawnProjectile launches a mover-driven projectile body (the engine
+# under SpawnMissile post-#590 flip), RegisterMoverStep installs a named custom
+# step fn, and Mover.Cancel stops a live mover. LitD-original — WC3/JASS has no
+# parametric mover; its "missiles" are art-only and its unit motion is the
+# pathing engine, neither script-parameterizable.
+exact   Game.MoveLinear
+exact   Game.MoveHoming
+exact   Game.MovePoint
+exact   Game.MoveOrbitUnit
+exact   Game.MoveOrbitPoint
+exact   Game.MoveArc
+exact   Game.MoveSpline
+exact   Game.MoveCustom
+exact   Game.SpawnProjectile
+exact   Game.RegisterMoverStep
+exact   Mover.Cancel
+
+# --- first-class persistent unit groups (#613): the GroupStore reusable mutable
+# unit-set handle (best-fit member-span allocator). DISTINCT from the JASS group
+# natives — those (CreateGroup/GroupAddUnit/ForGroup/GroupEnum*) already collapse
+# to the query-result UnitSet + spatial-query landing in overrides.toml (ForGroup
+# -> UnitSet.Units, R-EXEC-4); this Group noun is a LitD-original persistent
+# container the mover/ability systems hold across ticks (saved + hashed). NewGroup
+# constructs; Add/Remove/RemoveOrdered/Clear/Contains/Count/First/Each iterate +
+# mutate; Union/Intersect/Difference/CopyFrom are set algebra; Fill{Owner,Radius,
+# Rect,Type} bulk-populate from a query.
+exact   Game.NewGroup
+exact   Group.Add
+exact   Group.Remove
+exact   Group.RemoveOrdered
+exact   Group.Clear
+exact   Group.Contains
+exact   Group.Count
+exact   Group.First
+exact   Group.Each
+exact   Group.Union
+exact   Group.Intersect
+exact   Group.Difference
+exact   Group.CopyFrom
+exact   Group.Destroy
+exact   Group.FillOwner
+exact   Group.FillRadius
+exact   Group.FillRect
+exact   Group.FillType
+
+# --- typed per-handle / per-player / global key-value store: a deterministic,
+# saved+hashed typed KV on the Unit, Player, and Game(global) scopes. DISTINCT
+# from the JASS gamecache family — that collapses to the Storage noun in
+# overrides.toml (StoreInteger -> Storage.SetInt, #242); WC3 has no per-handle or
+# per-player scripted KV (the gamecache is a single global string-keyed blob).
+# Comma-ok getters, typed setters (Int/Real/Bool/String/Unit/Point/GroupRef),
+# Has/DeleteKey/EachKey lifecycle, and GetDynamic for the dynamic Lua binding.
+exact   Unit.SetInt
+exact   Unit.GetInt
+exact   Unit.SetReal
+exact   Unit.GetReal
+exact   Unit.SetBool
+exact   Unit.GetBool
+exact   Unit.SetString
+exact   Unit.GetString
+exact   Unit.SetUnit
+exact   Unit.GetUnit
+exact   Unit.SetPoint
+exact   Unit.GetPoint
+exact   Unit.SetGroupRef
+exact   Unit.GetGroupRef
+exact   Unit.Has
+exact   Unit.DeleteKey
+exact   Unit.EachKey
+exact   Unit.GetDynamic
+exact   Player.SetInt
+exact   Player.GetInt
+exact   Player.SetReal
+exact   Player.GetReal
+exact   Player.SetBool
+exact   Player.GetBool
+exact   Player.SetString
+exact   Player.GetString
+exact   Player.HasKey
+exact   Player.DeleteKey
+exact   Player.EachKey
+exact   Player.GetDynamic
+exact   Game.SetGlobalInt
+exact   Game.GetGlobalInt
+exact   Game.SetGlobalReal
+exact   Game.GetGlobalReal
+exact   Game.SetGlobalBool
+exact   Game.GetGlobalBool
+exact   Game.SetGlobalString
+exact   Game.GetGlobalString
+exact   Game.SetGlobalUnit
+exact   Game.GetGlobalUnit
+exact   Game.HasGlobal
+exact   Game.DeleteGlobal
+exact   Game.EachGlobalKey
+exact   Game.GetGlobalDynamic
+
+# --- continuation scheduler (cont): serializable deterministic continuations on
+# the stackless scheduler — register a named cont fn, then schedule it one-shot
+# (AfterCont) or periodic (LoopCont), with owner-scoped variants that auto-cancel
+# on the owner's death (AfterContOwned/LoopContOwned), plus CountCont introspection.
+# The serializable sibling of the Go-closure Game.After/Every (which can't survive
+# save/load). LitD-original green-thread plumbing, no JASS equivalent.
+exact   Game.RegisterCont
+exact   Game.AfterCont
+exact   Game.LoopCont
+exact   Game.AfterContOwned
+exact   Game.LoopContOwned
+exact   Game.CountCont
+
+# --- custom script events + named effect lists: a world registers its own event
+# kind (RegisterEvent), resolves a kind by name (EventKindByName), and emits it to
+# all subscribers (Emit) or to a unit group (EmitGroup); Event.Arg/GroupArg read
+# the emitted payload. RegisterEffectListName binds a name to a compiled effect
+# list for data reference. LitD-original extensibility — JASS events are a fixed
+# native set, not script-registrable.
+exact   Game.RegisterEvent
+exact   Game.EventKindByName
+exact   Game.Emit
+exact   Game.EmitGroup
+exact   Event.Arg
+exact   Event.GroupArg
+exact   Game.RegisterEffectListName
+
+# --- ability authoring seams: RegisterAbilitySpec installs a parametric ability
+# template (the data-driven five-primitive spec, #602/#622); AbilityFingerprint
+# returns its deterministic identity digest for serializable cast records. LitD-
+# original — JASS abilities are 'xxxx' rawcodes in map data, not script-built specs.
+exact   Game.RegisterAbilitySpec
+exact   Game.AbilityFingerprint
+
+# --- Timer noun accessor additions: typed pause state (Paused/SetPaused), the
+# periodic remaining-fire count (FiresRemaining), and Cancel. The JASS timer
+# natives already map to Timer.Pause/Resume/Stop/Remaining/Elapsed/Timeout in the
+# manifest; these are LitD typed accessors layered on the same noun (FiresRemaining
+# has no JASS analog — WC3 periodic timers fire until destroyed).
+exact   Timer.Paused
+exact   Timer.SetPaused
+exact   Timer.FiresRemaining
+exact   Timer.Cancel

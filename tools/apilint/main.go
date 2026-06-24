@@ -73,6 +73,10 @@ var setupAllowlist = map[string]bool{
 //     DefineResourceNodes (#401) and DefineCombat (#406) are the same install-seam
 //     shape (each documents itself "A setup verb (R-API-5)"): they fail closed on
 //     an empty / oversized / ragged table at bind time, never during a tick.
+//     RegisterAbilitySpec (#602/#622) compiles + registers a parametric ability
+//     template at setup and fails closed when a referenced effect-list/event/mover
+//     name does not resolve or a number is out of range — the same load-time
+//     validation abilitycheck + the Lua surface use, never a mid-match verb.
 //
 // Keyed "Type.Method".
 var methodErrAllowlist = map[string]bool{
@@ -97,6 +101,7 @@ var methodErrAllowlist = map[string]bool{
 	"Game.SetDamageFormula":    true,
 	"Game.SetArmorReduction":   true,
 	"Game.RegisterEffect":      true,
+	"Game.RegisterAbilitySpec": true,
 }
 
 // forbiddenIdents are exported identifiers the API must never expose — the
@@ -108,9 +113,17 @@ var methodErrAllowlist = map[string]bool{
 // sugar over it. The rest of the zoo — boolexpr/triggercondition/
 // triggeraction/conditionfunc — stays collapsed (conditions are a boolexpr
 // arena and actions are handler refs in the sim core, not public types).
+//
+// Group was un-forbidden by #613: the original ban targeted the WC3 heap
+// group object (a leaky mutable handle from the trigger-zoo era). The new
+// Group is a value-type handle (struct{id sim.GroupID; g *Game}, identical in
+// shape to Unit/Missile/Trigger) over the deterministic GroupStore — a durable,
+// saved+hashed, generation-checked persistent unit set with safe-no-op stale
+// handles (R-API-2/4/5 satisfied). Same precedent as the Trigger un-ban: a zoo
+// type returning as a sanctioned first-class value noun. The JASS group-enum
+// natives stay collapsed to UnitSet/spatial queries (overrides.toml).
 var forbiddenIdents = map[string]bool{
 	"BoolExpr": true,
-	"Group":    true,
 	"Location": true,
 }
 

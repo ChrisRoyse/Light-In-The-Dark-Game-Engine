@@ -33,6 +33,9 @@ const (
 // the missile mask). The zero mask collides with nothing.
 type MoverHitMask uint16
 
+// Mover collision-class bits — OR them to build a MoverHitMask. Mirror the
+// missile hit-class flags: ground / air / structure targets and enemy / ally
+// team relations.
 const (
 	MoverHitGround    MoverHitMask = MoverHitMask(sim.MissileHitGround)
 	MoverHitAir       MoverHitMask = MoverHitMask(sim.MissileHitAir)
@@ -321,6 +324,8 @@ func (g *Game) SpawnProjectile(origin Vec2, kind ProjectileKind, o MoverOptions)
 // ProjectileKind selects SpawnProjectile's motion.
 type ProjectileKind uint8
 
+// Projectile motion kinds for SpawnProjectile: straight-line, fly-to-point,
+// ballistic arc, or target-tracking homing.
 const (
 	ProjectileLinear ProjectileKind = iota
 	ProjectilePoint

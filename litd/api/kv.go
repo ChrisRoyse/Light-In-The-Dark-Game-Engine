@@ -178,60 +178,143 @@ func (a kvAccess) getDynamic(key string) any {
 
 func (u Unit) kv() kvAccess { return kvAccess{g: u.g, owner: sim.EntityKVOwner(u.id)} }
 
-func (u Unit) SetInt(key string, v int64)          { u.kv().SetInt(key, v) }
-func (u Unit) GetInt(key string) (int64, bool)     { return u.kv().GetInt(key) }
-func (u Unit) SetReal(key string, v float64)       { u.kv().SetReal(key, v) }
-func (u Unit) GetReal(key string) (float64, bool)  { return u.kv().GetReal(key) }
-func (u Unit) SetBool(key string, v bool)          { u.kv().SetBool(key, v) }
-func (u Unit) GetBool(key string) (bool, bool)     { return u.kv().GetBool(key) }
-func (u Unit) SetString(key, v string)             { u.kv().SetString(key, v) }
+// SetInt stores an integer under key in the unit's key-value store.
+func (u Unit) SetInt(key string, v int64) { u.kv().SetInt(key, v) }
+
+// GetInt reads the integer at key; ok is false if absent or another type.
+func (u Unit) GetInt(key string) (int64, bool) { return u.kv().GetInt(key) }
+
+// SetReal stores a real number under key in the unit's key-value store.
+func (u Unit) SetReal(key string, v float64) { u.kv().SetReal(key, v) }
+
+// GetReal reads the real at key; ok is false if absent or another type.
+func (u Unit) GetReal(key string) (float64, bool) { return u.kv().GetReal(key) }
+
+// SetBool stores a boolean under key in the unit's key-value store.
+func (u Unit) SetBool(key string, v bool) { u.kv().SetBool(key, v) }
+
+// GetBool reads the boolean at key; ok is false if absent or another type.
+func (u Unit) GetBool(key string) (bool, bool) { return u.kv().GetBool(key) }
+
+// SetString stores a string under key in the unit's key-value store.
+func (u Unit) SetString(key, v string) { u.kv().SetString(key, v) }
+
+// GetString reads the string at key; ok is false if absent or another type.
 func (u Unit) GetString(key string) (string, bool) { return u.kv().GetString(key) }
-func (u Unit) SetUnit(key string, v Unit)          { u.kv().SetUnit(key, v) }
-func (u Unit) GetUnit(key string) (Unit, bool)     { return u.kv().GetUnit(key) }
-func (u Unit) SetPoint(key string, v Vec2)         { u.kv().SetPoint(key, v) }
-func (u Unit) GetPoint(key string) (Vec2, bool)    { return u.kv().GetPoint(key) }
-func (u Unit) SetGroupRef(key string, v Group)     { u.kv().SetGroupRef(key, v) }
+
+// SetUnit stores a unit handle under key in the unit's key-value store.
+func (u Unit) SetUnit(key string, v Unit) { u.kv().SetUnit(key, v) }
+
+// GetUnit reads the unit handle at key; ok is false if absent or another type.
+func (u Unit) GetUnit(key string) (Unit, bool) { return u.kv().GetUnit(key) }
+
+// SetPoint stores a point under key in the unit's key-value store.
+func (u Unit) SetPoint(key string, v Vec2) { u.kv().SetPoint(key, v) }
+
+// GetPoint reads the point at key; ok is false if absent or another type.
+func (u Unit) GetPoint(key string) (Vec2, bool) { return u.kv().GetPoint(key) }
+
+// SetGroupRef stores a group handle under key in the unit's key-value store.
+func (u Unit) SetGroupRef(key string, v Group) { u.kv().SetGroupRef(key, v) }
+
+// GetGroupRef reads the group handle at key; ok is false if absent or another type.
 func (u Unit) GetGroupRef(key string) (Group, bool) { return u.kv().GetGroupRef(key) }
-func (u Unit) Has(key string) bool                 { return u.kv().Has(key) }
-func (u Unit) DeleteKey(key string)                { u.kv().DeleteKey(key) }
-func (u Unit) EachKey(fn func(key string))         { u.kv().EachKey(fn) }
+
+// Has reports whether the unit has any value stored under key.
+func (u Unit) Has(key string) bool { return u.kv().Has(key) }
+
+// DeleteKey removes key from the unit's key-value store (no-op if absent).
+func (u Unit) DeleteKey(key string) { u.kv().DeleteKey(key) }
+
+// EachKey calls fn once per key in the unit's key-value store, in deterministic order.
+func (u Unit) EachKey(fn func(key string)) { u.kv().EachKey(fn) }
 
 // -- global scope (Game) ----------------------------------------------
 
 func (g *Game) globalKV() kvAccess { return kvAccess{g: g, owner: sim.GlobalKVOwner()} }
 
-func (g *Game) SetGlobalInt(key string, v int64)          { g.globalKV().SetInt(key, v) }
-func (g *Game) GetGlobalInt(key string) (int64, bool)     { return g.globalKV().GetInt(key) }
-func (g *Game) SetGlobalReal(key string, v float64)       { g.globalKV().SetReal(key, v) }
-func (g *Game) GetGlobalReal(key string) (float64, bool)  { return g.globalKV().GetReal(key) }
-func (g *Game) SetGlobalBool(key string, v bool)          { g.globalKV().SetBool(key, v) }
-func (g *Game) GetGlobalBool(key string) (bool, bool)     { return g.globalKV().GetBool(key) }
-func (g *Game) SetGlobalString(key, v string)             { g.globalKV().SetString(key, v) }
+// SetGlobalInt stores an integer under key in the global key-value store.
+func (g *Game) SetGlobalInt(key string, v int64) { g.globalKV().SetInt(key, v) }
+
+// GetGlobalInt reads the global integer at key; ok is false if absent or another type.
+func (g *Game) GetGlobalInt(key string) (int64, bool) { return g.globalKV().GetInt(key) }
+
+// SetGlobalReal stores a real number under key in the global key-value store.
+func (g *Game) SetGlobalReal(key string, v float64) { g.globalKV().SetReal(key, v) }
+
+// GetGlobalReal reads the global real at key; ok is false if absent or another type.
+func (g *Game) GetGlobalReal(key string) (float64, bool) { return g.globalKV().GetReal(key) }
+
+// SetGlobalBool stores a boolean under key in the global key-value store.
+func (g *Game) SetGlobalBool(key string, v bool) { g.globalKV().SetBool(key, v) }
+
+// GetGlobalBool reads the global boolean at key; ok is false if absent or another type.
+func (g *Game) GetGlobalBool(key string) (bool, bool) { return g.globalKV().GetBool(key) }
+
+// SetGlobalString stores a string under key in the global key-value store.
+func (g *Game) SetGlobalString(key, v string) { g.globalKV().SetString(key, v) }
+
+// GetGlobalString reads the global string at key; ok is false if absent or another type.
 func (g *Game) GetGlobalString(key string) (string, bool) { return g.globalKV().GetString(key) }
-func (g *Game) SetGlobalUnit(key string, v Unit)          { g.globalKV().SetUnit(key, v) }
-func (g *Game) GetGlobalUnit(key string) (Unit, bool)     { return g.globalKV().GetUnit(key) }
-func (g *Game) HasGlobal(key string) bool                 { return g.globalKV().Has(key) }
-func (g *Game) DeleteGlobal(key string)                   { g.globalKV().DeleteKey(key) }
-func (g *Game) EachGlobalKey(fn func(key string))         { g.globalKV().EachKey(fn) }
+
+// SetGlobalUnit stores a unit handle under key in the global key-value store.
+func (g *Game) SetGlobalUnit(key string, v Unit) { g.globalKV().SetUnit(key, v) }
+
+// GetGlobalUnit reads the global unit handle at key; ok is false if absent or another type.
+func (g *Game) GetGlobalUnit(key string) (Unit, bool) { return g.globalKV().GetUnit(key) }
+
+// HasGlobal reports whether a value is stored under key in the global store.
+func (g *Game) HasGlobal(key string) bool { return g.globalKV().Has(key) }
+
+// DeleteGlobal removes key from the global key-value store (no-op if absent).
+func (g *Game) DeleteGlobal(key string) { g.globalKV().DeleteKey(key) }
+
+// EachGlobalKey calls fn once per key in the global store, in deterministic order.
+func (g *Game) EachGlobalKey(fn func(key string)) { g.globalKV().EachKey(fn) }
 
 // -- player scope (Player) --------------------------------------------
 
 func (p Player) kv() kvAccess { return kvAccess{g: p.g, owner: sim.PlayerKVOwner(uint8(p.idx))} }
 
-func (p Player) SetInt(key string, v int64)          { p.kv().SetInt(key, v) }
-func (p Player) GetInt(key string) (int64, bool)     { return p.kv().GetInt(key) }
-func (p Player) SetReal(key string, v float64)       { p.kv().SetReal(key, v) }
-func (p Player) GetReal(key string) (float64, bool)  { return p.kv().GetReal(key) }
-func (p Player) SetBool(key string, v bool)          { p.kv().SetBool(key, v) }
-func (p Player) GetBool(key string) (bool, bool)     { return p.kv().GetBool(key) }
-func (p Player) SetString(key, v string)             { p.kv().SetString(key, v) }
+// SetInt stores an integer under key in the player's key-value store.
+func (p Player) SetInt(key string, v int64) { p.kv().SetInt(key, v) }
+
+// GetInt reads the player integer at key; ok is false if absent or another type.
+func (p Player) GetInt(key string) (int64, bool) { return p.kv().GetInt(key) }
+
+// SetReal stores a real number under key in the player's key-value store.
+func (p Player) SetReal(key string, v float64) { p.kv().SetReal(key, v) }
+
+// GetReal reads the player real at key; ok is false if absent or another type.
+func (p Player) GetReal(key string) (float64, bool) { return p.kv().GetReal(key) }
+
+// SetBool stores a boolean under key in the player's key-value store.
+func (p Player) SetBool(key string, v bool) { p.kv().SetBool(key, v) }
+
+// GetBool reads the player boolean at key; ok is false if absent or another type.
+func (p Player) GetBool(key string) (bool, bool) { return p.kv().GetBool(key) }
+
+// SetString stores a string under key in the player's key-value store.
+func (p Player) SetString(key, v string) { p.kv().SetString(key, v) }
+
+// GetString reads the player string at key; ok is false if absent or another type.
 func (p Player) GetString(key string) (string, bool) { return p.kv().GetString(key) }
-func (p Player) HasKey(key string) bool              { return p.kv().Has(key) }
-func (p Player) DeleteKey(key string)                { p.kv().DeleteKey(key) }
-func (p Player) EachKey(fn func(key string))         { p.kv().EachKey(fn) }
+
+// HasKey reports whether the player has any value stored under key.
+func (p Player) HasKey(key string) bool { return p.kv().Has(key) }
+
+// DeleteKey removes key from the player's key-value store (no-op if absent).
+func (p Player) DeleteKey(key string) { p.kv().DeleteKey(key) }
+
+// EachKey calls fn once per key in the player's key-value store, in deterministic order.
+func (p Player) EachKey(fn func(key string)) { p.kv().EachKey(fn) }
 
 // GetDynamic resolves a key to its Go value (nil if absent) for the
 // dynamic Lua binding. Entity / global / player scopes.
-func (u Unit) GetDynamic(key string) any        { return u.kv().getDynamic(key) }
+func (u Unit) GetDynamic(key string) any { return u.kv().getDynamic(key) }
+
+// GetGlobalDynamic resolves a global key to its Go value (nil if absent), for the dynamic Lua binding.
 func (g *Game) GetGlobalDynamic(key string) any { return g.globalKV().getDynamic(key) }
-func (p Player) GetDynamic(key string) any      { return p.kv().getDynamic(key) }
+
+// GetDynamic resolves a player key to its Go value (nil if absent), for the dynamic Lua binding.
+func (p Player) GetDynamic(key string) any { return p.kv().getDynamic(key) }
