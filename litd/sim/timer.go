@@ -250,6 +250,51 @@ func (s *TimerStore) IsPaused(id TimerID) bool {
 	return ok && s.Paused[row]
 }
 
+// RemainingTicks returns the ticks until the timer next fires (its
+// frozen remainder when paused). ok is false for a stale handle. These
+// read-only accessors back the public api Timer query methods (#556).
+func (s *TimerStore) RemainingTicks(id TimerID, now uint32) (uint32, bool) {
+	row, ok := s.resolve(id)
+	if !ok {
+		return 0, false
+	}
+	if s.Paused[row] {
+		return s.PausedRem[row], true
+	}
+	if s.WakeTick[row] <= now {
+		return 0, true
+	}
+	return s.WakeTick[row] - now, true
+}
+
+// IntervalOf returns the configured fire interval in ticks. ok=false on
+// a stale handle.
+func (s *TimerStore) IntervalOf(id TimerID) (uint32, bool) {
+	row, ok := s.resolve(id)
+	if !ok {
+		return 0, false
+	}
+	return s.Interval[row], true
+}
+
+// FiresLeft returns how many fires remain: the exact count for a
+// TimerCount, -1 for an unbounded TimerLoop, and 1 for a pending
+// TimerSingle. ok=false on a stale handle (a done/cancelled timer).
+func (s *TimerStore) FiresLeft(id TimerID) (int, bool) {
+	row, ok := s.resolve(id)
+	if !ok {
+		return 0, false
+	}
+	switch TimerMode(s.Mode[row]) {
+	case TimerLoop:
+		return -1, true
+	case TimerCount:
+		return int(s.Remaining[row]), true
+	default: // TimerSingle
+		return 1, true
+	}
+}
+
 // resolve maps a handle to its live slot, validating the generation.
 // ok is false for the invalid sentinel, an out-of-range index, a dead
 // slot, or a generation mismatch (stale handle ⇒ no-op).

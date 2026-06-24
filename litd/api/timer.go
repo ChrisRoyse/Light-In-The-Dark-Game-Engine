@@ -207,6 +207,10 @@ func (t Timer) entry() *timerEntry {
 // remainder. No-op on an already-paused or invalid timer.
 // JASS: PauseTimer
 func (t Timer) Pause() {
+	if t.sid != 0 {
+		t.g.w.Timers.Pause(t.sid, t.g.w.Tick())
+		return
+	}
 	e := t.entry()
 	if e == nil {
 		t.g.reportInvalid("Timer.Pause")
@@ -230,6 +234,10 @@ func (t Timer) Pause() {
 // running or invalid timer.
 // JASS: ResumeTimer
 func (t Timer) Resume() {
+	if t.sid != 0 {
+		t.g.w.Timers.Resume(t.sid, t.g.w.Tick())
+		return
+	}
 	e := t.entry()
 	if e == nil {
 		t.g.reportInvalid("Timer.Resume")
@@ -254,6 +262,10 @@ func (t Timer) Resume() {
 // callback may Stop its own periodic timer safely.
 // JASS: DestroyTimer, DestroyTimerBJ
 func (t Timer) Stop() {
+	if t.sid != 0 {
+		t.g.w.Timers.Cancel(t.sid)
+		return
+	}
 	if t.entry() == nil {
 		return
 	}
@@ -264,6 +276,12 @@ func (t Timer) Stop() {
 // on an invalid timer.
 // JASS: TimerGetTimeout
 func (t Timer) Timeout() time.Duration {
+	if t.sid != 0 {
+		if iv, ok := t.g.w.Timers.IntervalOf(t.sid); ok {
+			return ticksToDuration(iv)
+		}
+		return 0
+	}
 	e := t.entry()
 	if e == nil {
 		return 0
@@ -276,6 +294,12 @@ func (t Timer) Timeout() time.Duration {
 // frozen remainder.
 // JASS: TimerGetRemaining
 func (t Timer) Remaining() time.Duration {
+	if t.sid != 0 {
+		if rem, ok := t.g.w.Timers.RemainingTicks(t.sid, t.g.w.Tick()); ok {
+			return ticksToDuration(rem)
+		}
+		return 0
+	}
 	e := t.entry()
 	if e == nil {
 		return 0
@@ -294,6 +318,17 @@ func (t Timer) Remaining() time.Duration {
 // (TimerGetElapsed) = Timeout - Remaining, 0 on an invalid timer.
 // JASS: TimerGetElapsed
 func (t Timer) Elapsed() time.Duration {
+	if t.sid != 0 {
+		iv, ok := t.g.w.Timers.IntervalOf(t.sid)
+		if !ok {
+			return 0
+		}
+		rem, _ := t.g.w.Timers.RemainingTicks(t.sid, t.g.w.Tick())
+		if rem > iv {
+			rem = iv
+		}
+		return ticksToDuration(iv - rem)
+	}
 	e := t.entry()
 	if e == nil {
 		return 0

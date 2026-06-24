@@ -177,12 +177,24 @@ type Timer struct {
 	slot uint32
 	gen  uint32
 	g    *Game
+	// sid is non-zero for a SERIALIZABLE sim-backed timer (PRD2 01,
+	// #556): created via AfterCont/LoopCont/CountCont and stored in the
+	// sim TimerStore. When sid==0 the handle is a transient Go-closure
+	// timer (After/Every) backed by g.timers. Every method dispatches on
+	// this discriminator; the sim sentinel TimerID(0) guarantees a live
+	// sim timer always has sid!=0, so the two spaces never overlap.
+	sid sim.TimerID
 }
 
 // Valid reports whether the timer still exists (created, not yet
-// Stopped, not auto-retired after a one-shot fire). A zero-value
-// Timer{} and a handle to a retired slot both report false.
-func (t Timer) Valid() bool { return t.entry() != nil }
+// Stopped/Cancelled, not auto-retired after a one-shot fire). A
+// zero-value Timer{} and a handle to a retired slot both report false.
+func (t Timer) Valid() bool {
+	if t.sid != 0 {
+		return t.g != nil && t.g.w.Timers.Alive(t.sid)
+	}
+	return t.entry() != nil
+}
 
 // IsZero reports whether this is the zero-value handle (no bound game).
 func (t Timer) IsZero() bool { return t == Timer{} }
