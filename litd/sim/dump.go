@@ -133,8 +133,8 @@ func (w *World) DumpState(wr io.Writer) error {
 			PosY:   df(w.Transforms.Pos[i].Y),
 			Facing: uint16(w.Transforms.Facing[i]),
 		}
-		if w.Missiles.Row(id) != -1 {
-			e.Kind = "missile"
+		if w.ProjRender.Row(id) != -1 {
+			e.Kind = "missile" // mover-backed projectile body (#590)
 		}
 		if hr := w.Healths.Row(id); hr != -1 {
 			l, ml := df(w.Healths.Life[hr]), df(w.Healths.MaxLife[hr])

@@ -308,9 +308,9 @@ func TestMissileAdvanceAllocs(t *testing.T) {
 			Source: a, Target: v, Speed: fixed.One / 1024, // slow: never arrives during the measurement
 		})
 	}
-	allocs := testing.AllocsPerRun(100, func() { w.missileSystem() })
+	allocs := testing.AllocsPerRun(100, func() { w.moverSystem() })
 	if allocs != 0 {
-		t.Fatalf("missileSystem allocates %v/run, want 0 (R-GC-1)", allocs)
+		t.Fatalf("projectile moverSystem allocates %v/run, want 0 (R-GC-1)", allocs)
 	}
 }
 
@@ -335,6 +335,6 @@ func BenchmarkMissileAdvance(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer() // setup (NewWorld + spawns) must not count
 	for i := 0; i < b.N; i++ {
-		w.missileSystem()
+		w.moverSystem()
 	}
 }

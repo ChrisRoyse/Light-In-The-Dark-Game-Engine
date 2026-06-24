@@ -232,11 +232,10 @@ func (w *World) publishSnapshot() {
 	back.Entries = back.Entries[:0]
 	for r := int32(0); r < w.Transforms.Count(); r++ {
 		id := w.Transforms.Entity[r]
-		// Missiles share the Transforms store but render as arced
-		// billboards, not unit models — publish them to back.Missiles
-		// below, never as a unit entry (#309). Mover-driven projectile
-		// bodies (#590) render the same way and are likewise skipped here.
-		if w.Missiles.Row(id) != -1 || w.ProjRender.Row(id) != -1 {
+		// Mover-driven projectile bodies (#590) share the Transforms store
+		// but render as arced billboards, not unit models — published to
+		// back.Missiles below, never as a unit entry (#309).
+		if w.ProjRender.Row(id) != -1 {
 			continue
 		}
 		idx := id.Index()
@@ -267,53 +266,12 @@ func (w *World) publishSnapshot() {
 		})
 	}
 
-	// missiles: arced billboards, Pos/Facing from the shared Transforms
-	// row, Arc/guidance from the missile store (#309). Render-only — this
-	// surface is never hashed (HashState is wholly separate), so the add
-	// is determinism-inert.
+	// mover-driven projectiles (#590): arced-billboard surface, body motion from
+	// a mover and render statics from ProjRender. Render-only — never hashed
+	// (HashState is wholly separate), so the add is determinism-inert. Flight
+	// progress: (Span - remaining)/Span, where remaining is the linear mover's
+	// RangeLeft or a point/homing mover's distance to its live goal.
 	back.Missiles = back.Missiles[:0]
-	for r := int32(0); r < w.Missiles.Count(); r++ {
-		id := w.Missiles.Entity[r]
-		tr := w.Transforms.Row(id)
-		if tr == -1 {
-			continue
-		}
-		// flight progress (#528): (Span - remaining)/Span, render-only. remaining is
-		// the linear missile's RangeLeft or a point/homing missile's distance to its
-		// guide point. Span ≤ 0 (degenerate launch-on-goal) renders as arrived.
-		lifeFrac := uint16(65535)
-		if span := int64(w.Missiles.Span[r]); span > 0 {
-			var remaining int64
-			if w.Missiles.Flags[r]&MissileLinear != 0 {
-				remaining = w.Missiles.RangeLeft[r].Floor()
-			} else {
-				remaining = flightUnits(w.Transforms.Pos[tr], w.Missiles.GuidePt[r])
-			}
-			traveled := span - remaining
-			switch {
-			case traveled <= 0:
-				lifeFrac = 0
-			case traveled >= span:
-				lifeFrac = 65535
-			default:
-				lifeFrac = uint16(traveled * 65535 / span)
-			}
-		}
-		back.Missiles = append(back.Missiles, MissileSnapEntry{
-			ID:         id,
-			Pos:        w.Transforms.Pos[tr],
-			Facing:     w.Transforms.Facing[tr],
-			Arc:        w.Missiles.Arc[r],
-			GuidanceID: w.Missiles.GuidanceID[r],
-			LifeFrac:   lifeFrac,
-		})
-	}
-
-	// mover-driven projectiles (#590): the same arced-billboard surface, but the
-	// body's motion comes from a mover and its render statics from ProjRender.
-	// Render-only — never hashed. Flight progress mirrors the missile metric:
-	// (Span - remaining)/Span, where remaining is the linear mover's RangeLeft
-	// or a point/homing mover's distance to its live goal.
 	pr := w.ProjRender
 	for r := int32(0); r < pr.Count(); r++ {
 		id := pr.Entity[r]

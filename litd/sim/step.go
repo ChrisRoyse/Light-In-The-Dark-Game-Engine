@@ -129,9 +129,8 @@ func (w *World) phaseMovement() {
 	w.refreshMoverAuthority() // mark units a MoverAuthority mover owns (#588)
 	w.pathingSystem()
 	w.movementSystem()
-	w.flySystem()     // fly-height climb integration (#367)
-	w.missileSystem() // flight at the movement-phase tail (#158)
-	w.moverSystem()   // unified motion controllers (PRD2 05, #584)
+	w.flySystem()   // fly-height climb integration (#367)
+	w.moverSystem() // unified motion controllers (PRD2 05, #584) — projectiles included since #590
 	w.bucketReconcile()
 	w.visibilitySystem()
 }
