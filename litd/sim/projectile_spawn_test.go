@@ -138,6 +138,74 @@ func TestSpawnProjectileLinearParity(t *testing.T) {
 	}
 }
 
+// Multi-hit pierce+decay parity: a skillshot through three foes must decay the
+// payload identically via both paths. Guards the Decay-convention bridge in
+// spawnMoverProjectile (MissileSpec keep-per-mille -> MoverSpec reduction). The
+// asymmetric Decay=700 (input keep 70%) would mismap under the naive
+// pass-through and is the regression that exposed the bug.
+func TestSpawnProjectileDecayParity(t *testing.T) {
+	build := func() (*World, EntityID, []EntityID) {
+		w := lmWorld(t)
+		s := atkUnit(t, w, 0, xy(1000, 1000), 0)
+		f1 := atkUnit(t, w, 1, xy(1200, 1000), 0)
+		f2 := atkUnit(t, w, 1, xy(1400, 1000), 0)
+		f3 := atkUnit(t, w, 1, xy(1600, 1000), 0)
+		return w, s, []EntityID{f1, f2, f3}
+	}
+	spec := func(s EntityID) MissileSpec {
+		return MissileSpec{
+			Pos: xy(1000, 1000), Source: s, Speed: 800 * fixed.One,
+			Flags: MissileLinear, Dir: xy(1, 0), Range: 2000 * fixed.One, Pierce: 3, Decay: 700,
+			Packet: DamagePacket{Source: s, Amount: 50 * fixed.One},
+		}
+	}
+	wa, sa, fa := build()
+	if _, ok := wa.SpawnMissile(spec(sa)); !ok {
+		t.Fatal("legacy decay spawn")
+	}
+	runToQuiet(wa, 20)
+
+	wb, sb, fb := build()
+	if _, ok := wb.spawnMoverProjectile(spec(sb)); !ok {
+		t.Fatal("mover decay spawn")
+	}
+	runToQuiet(wb, 20)
+
+	for i := range fa {
+		la, lb := life(wa, fa[i]), life(wb, fb[i])
+		t.Logf("decay foe%d: legacy=%d mover=%d", i+1, la, lb)
+		if la == 100 {
+			t.Fatalf("legacy foe%d untouched — test setup wrong", i+1)
+		}
+		if lb != la {
+			t.Fatalf("DECAY PARITY BREAK foe%d: mover=%d != legacy %d", i+1, lb, la)
+		}
+	}
+}
+
+// Per-hit presentation cue: a piercing projectile fires OnMissileImpact once
+// per pierced foe (matching the legacy linear missile), gated on ProjRender.
+func TestSpawnProjectilePerHitCue(t *testing.T) {
+	w := lmWorld(t)
+	s := atkUnit(t, w, 0, xy(1000, 1000), 0)
+	atkUnit(t, w, 1, xy(1200, 1000), 0)
+	atkUnit(t, w, 1, xy(1400, 1000), 0)
+	cues := 0
+	w.OnMissileImpact = func(uint32, EntityID, fixed.Vec2, EntityID) { cues++ }
+	if _, ok := w.spawnMoverProjectile(MissileSpec{
+		Pos: xy(1000, 1000), Source: s, Speed: 800 * fixed.One,
+		Flags: MissileLinear, Dir: xy(1, 0), Range: 2000 * fixed.One, Pierce: 2,
+		Packet: DamagePacket{Source: s, Amount: 10 * fixed.One},
+	}); !ok {
+		t.Fatal("spawn")
+	}
+	runToQuiet(w, 20)
+	t.Logf("per-hit cues fired = %d (want 2)", cues)
+	if cues != 2 {
+		t.Fatalf("OnMissileImpact fired %d times, want 2 (one per pierced foe)", cues)
+	}
+}
+
 // Degenerate specs the legacy path rejects, the mover path must reject too —
 // deterministic (0,false), never a silent fallback.
 func TestSpawnProjectileRejectionParity(t *testing.T) {

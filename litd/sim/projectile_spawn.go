@@ -86,10 +86,15 @@ func (w *World) spawnMoverProjectile(m MissileSpec) (EntityID, bool) {
 		Packet:  m.Packet,
 		Flags:   MoverConsume,
 	}
-	decay := m.Decay
-	if decay == 0 {
-		decay = 1000 // per-mille: no decay between pierce hits
+	// Decay convention bridge (#590): MissileSpec.Decay is KEEP-per-mille with 0
+	// as the "no decay" sentinel (stored 1000 = keep all). MoverSpec.Decay is
+	// REDUCTION-per-mille (0 = no decay), what moverDecay applies. Convert
+	// keep->reduction so a piercing skillshot decays identically via either path.
+	keep := m.Decay
+	if keep == 0 {
+		keep = 1000 // missile sentinel: 0 means keep everything
 	}
+	decay := uint16(1000 - keep)
 	var span int32
 	switch guidanceID {
 	case MissileGuidanceLinear:

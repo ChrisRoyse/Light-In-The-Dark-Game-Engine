@@ -67,6 +67,17 @@ func (w *World) moverSourceTeam(r int32) uint8 {
 // otherwise the damage packet (homing/AoE delivery follows the live hit).
 func (w *World) moverDeliver(r int32, victim EntityID, at fixed.Vec2) {
 	ms := w.Movers
+	// Per-hit presentation cue for a projectile body (#590 facade parity with
+	// the legacy linear missile, which fired OnMissileImpact + a render event
+	// per pierce hit). Gated on ProjRender so a non-projectile collision mover
+	// stays silent. Non-hashing — the callback + render event never touch sim
+	// state (moverImpact inlines its own delivery, so no double-fire).
+	if w.ProjRender.Row(ms.Target[r]) != -1 {
+		if w.OnMissileImpact != nil {
+			w.OnMissileImpact(w.tick, ms.Target[r], at, victim)
+		}
+		w.EmitRenderEventAt(RenderMissileImpact, ms.Target[r], 0, at)
+	}
 	if lst := ms.Payload[r]; lst.Len > 0 {
 		w.ExecuteEffects(lst, EffectCtx{Source: ms.Owner[r], Target: victim, Point: at})
 		return
