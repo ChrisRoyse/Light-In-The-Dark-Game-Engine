@@ -243,6 +243,7 @@ type World struct {
 	appliedMaxMana []fixed.F64
 	buffScratch    []int32    // recompute gather scratch, cap = BuffInstances
 	auraScratch []EntityID // aura candidate scratch (#164), cap = Units
+	grpScratch  []EntityID // GroupFill spatial-query scratch (#563), cap = Units
 	// spatial bucket grid (buckets.go) — derived from Transform
 	// positions, excluded from the state hash
 	bucketHead []int32
@@ -522,6 +523,7 @@ func NewWorld(requested Caps) *World {
 		areaDistLo:         make([]uint64, 0, 64),
 		buffScratch:        make([]int32, 0, caps.BuffInstances),
 		auraScratch:        make([]EntityID, 0, caps.Units),
+		grpScratch:         make([]EntityID, 0, caps.Units), // GroupFill query buffer (#563)
 	}
 	for s := 0; s < int(data.BuffStatCount); s++ {
 		w.buffAdd[s] = make([]int64, idxSpace)
