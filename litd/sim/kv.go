@@ -49,6 +49,12 @@ func makeOwner(scope KVScope, entityOrSlot uint64) uint64 {
 func ownerScope(o uint64) KVScope { return KVScope(o >> 56) }
 func ownerEntity(o uint64) uint64 { return o & 0x0000FFFFFFFFFFFF }
 
+// Exported owner-key builders for the public API (#573), which composes
+// scoped KV access without reaching into the packing.
+func EntityKVOwner(id EntityID) uint64  { return makeOwner(KVScopeEntity, uint64(id)) }
+func GlobalKVOwner() uint64             { return makeOwner(KVScopeGlobal, 0) }
+func PlayerKVOwner(slot uint8) uint64   { return makeOwner(KVScopePlayer, uint64(slot)) }
+
 // internTable maps strings to stable 1-based uint32 ids (#569). Append-
 // only within a match: an id, once assigned, never changes or recycles,
 // so a serialized Key/string-value id resolves to the same string on

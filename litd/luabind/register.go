@@ -43,6 +43,7 @@ func Register(L *lua.LState, g *api.Game) error {
 		registerGameBound(L, gameBinder{g: g}) // Game-receiver verbs, bound to g
 		registerCatalog(L, gameBinder{g: g})   // hand-written type-catalog resolvers (#393)
 		registerGroups(L, gameBinder{g: g})    // persistent unit-group verbs (PRD2 02, #566)
+		registerKV(L, gameBinder{g: g})        // key-value store verbs (PRD2 03, #573)
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
 		registerScriptTriggers(L, g)           // CreateTrigger/TriggerRegisterX/... ECA bindings (#463)
