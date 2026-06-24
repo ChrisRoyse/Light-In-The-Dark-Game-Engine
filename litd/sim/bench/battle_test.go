@@ -404,7 +404,7 @@ func TestBattle1000Capacities(t *testing.T) {
 	for i := 0; i < warmupTicks; i++ {
 		w.Step()
 	}
-	missileCol := &w.Missiles.Entity[0]
+	missileCol := &w.ProjRender.Entity[0]
 	posCol := &w.Transforms.Pos[0]
 	healthCol := &w.Healths.Entity[0]
 	st := runBattle(w, 2000)
@@ -416,7 +416,7 @@ func TestBattle1000Capacities(t *testing.T) {
 	if int(st.missileHigh) > sim.EngineCaps.Projectiles {
 		t.Errorf("missile high-water %d exceeds pool cap %d", st.missileHigh, sim.EngineCaps.Projectiles)
 	}
-	if missileCol != &w.Missiles.Entity[0] || posCol != &w.Transforms.Pos[0] || healthCol != &w.Healths.Entity[0] {
+	if missileCol != &w.ProjRender.Entity[0] || posCol != &w.Transforms.Pos[0] || healthCol != &w.Healths.Entity[0] {
 		t.Error("backing array reallocated mid-scene (R-GC-1 violation)")
 	}
 	t.Logf("backing pointers identical pre/post: missiles=%p transforms=%p healths=%p",

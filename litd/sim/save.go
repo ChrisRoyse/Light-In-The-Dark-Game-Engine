@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 47 // v47: ProjRender section (render-only projectile billboards, #590)
+const SaveFormatVersion uint32 = 48 // v48: "missiles" section retired — projectiles are mover-driven (#590)
 
 // ---- little-endian writer / reader ----
 
@@ -517,34 +517,8 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.i32(f)
 	}
 
-	// missiles
-	ms := w.Missiles
-	s.u32(uint32(ms.Count()))
-	for i := int32(0); i < ms.Count(); i++ {
-		s.ent(ms.Entity[i])
-		s.f64(ms.Speed[i])
-		s.f64(ms.Accel[i])
-		s.f64(ms.Arc[i])
-		s.i32(ms.Span[i])
-		s.u8(ms.Flags[i])
-		s.u16(ms.HitMask[i])
-		s.u16(ms.GuidanceID[i])
-		s.u16(ms.ImpactID[i])
-		s.ent(ms.GuideEnt[i])
-		s.vec2(ms.GuidePt[i])
-		s.u16(ms.Payload[i].Off)
-		s.u16(ms.Payload[i].Len)
-		s.ent(ms.Packet[i].Source)
-		s.ent(ms.Packet[i].Target)
-		s.f64(ms.Packet[i].Amount)
-		s.u8(ms.Packet[i].AttackType)
-		s.ent(ms.Source[i])
-		s.u32(ms.BirthTick[i])
-		s.vec2(ms.Dir[i])
-		s.f64(ms.RangeLeft[i])
-		s.i32(ms.PierceLeft[i])
-		s.u16(ms.Decay[i])
-	}
+	// #590: "missiles" section retired — projectiles are mover-driven and
+	// serialize under the "movers"/"ProjRender" sections.
 
 	// doodads (byPlacement is derived, rebuilt at load)
 	d := w.Doodads
@@ -1325,27 +1299,6 @@ type decodedSave struct {
 	buffLive []bool
 	buffRows []BuffInstance
 	buffFree []int32
-
-	msN      int32
-	msE      []EntityID
-	msSpeed  []fixed.F64
-	msAccel  []fixed.F64
-	msArc    []fixed.F64
-	msSpan   []int32
-	msFlags  []uint8
-	msHit    []uint16
-	msGuid   []uint16
-	msImpact []uint16
-	msGE     []EntityID
-	msGP     []fixed.Vec2
-	msPay    []data.EffectList
-	msPkt    []DamagePacket
-	msSrc    []EntityID
-	msBirth  []uint32
-	msDir    []fixed.Vec2
-	msRange  []fixed.F64
-	msPierce []int32
-	msDecay  []uint16
 
 	doN     int32
 	doPlace []int32
@@ -2151,51 +2104,7 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.buffFree[i] = r.i32()
 	}
 
-	// missiles
-	if n, err = r.section("missiles", len(w.Missiles.Speed)); err != nil {
-		return err
-	}
-	d.msN = n
-	d.msE = make([]EntityID, n)
-	d.msSpeed = make([]fixed.F64, n)
-	d.msAccel = make([]fixed.F64, n)
-	d.msArc = make([]fixed.F64, n)
-	d.msSpan = make([]int32, n)
-	d.msFlags = make([]uint8, n)
-	d.msHit = make([]uint16, n)
-	d.msGuid = make([]uint16, n)
-	d.msImpact = make([]uint16, n)
-	d.msGE = make([]EntityID, n)
-	d.msGP = make([]fixed.Vec2, n)
-	d.msPay = make([]data.EffectList, n)
-	d.msPkt = make([]DamagePacket, n)
-	d.msSrc = make([]EntityID, n)
-	d.msBirth = make([]uint32, n)
-	d.msDir = make([]fixed.Vec2, n)
-	d.msRange = make([]fixed.F64, n)
-	d.msPierce = make([]int32, n)
-	d.msDecay = make([]uint16, n)
-	for i := int32(0); i < n; i++ {
-		d.msE[i] = r.ent()
-		d.msSpeed[i] = r.f64()
-		d.msAccel[i] = r.f64()
-		d.msArc[i] = r.f64()
-		d.msSpan[i] = r.i32()
-		d.msFlags[i] = r.u8()
-		d.msHit[i] = r.u16()
-		d.msGuid[i] = r.u16()
-		d.msImpact[i] = r.u16()
-		d.msGE[i] = r.ent()
-		d.msGP[i] = r.vec2()
-		d.msPay[i] = data.EffectList{Off: r.u16(), Len: r.u16()}
-		d.msPkt[i] = DamagePacket{Source: r.ent(), Target: r.ent(), Amount: r.f64(), AttackType: r.u8()}
-		d.msSrc[i] = r.ent()
-		d.msBirth[i] = r.u32()
-		d.msDir[i] = r.vec2()
-		d.msRange[i] = r.f64()
-		d.msPierce[i] = r.i32()
-		d.msDecay[i] = r.u16()
-	}
+	// #590: "missiles" section retired — nothing to read between buffs and doodads.
 
 	// doodads
 	if n, err = r.section("doodads", len(w.Doodads.Placement)); err != nil {
@@ -3392,7 +3301,7 @@ func validateSave(d *decodedSave, w *World) error {
 		{"transforms", d.trE}, {"movement", d.mvE}, {"collisions", d.coE},
 		{"unit types", d.utE}, {"health", d.hlE}, {"owners", d.owE},
 		{"combat", d.cbE}, {"abilities", d.abE}, {"inventories", d.inE},
-		{"orders", d.orE}, {"missiles", d.msE}, {"doodads", d.doE},
+		{"orders", d.orE}, {"doodads", d.doE},
 		{"resource nodes", d.ndE}, {"econ rows", d.ecE}, {"harvest rows", d.hvE},
 		{"produce rows", d.pqE}, {"hero rows", d.hrE}, {"item rows", d.itE},
 		{"patrol rows", d.paE}, {"build rows", d.bdE}, {"effects", d.efE},
@@ -4260,31 +4169,7 @@ func applySave(d *decodedSave, w *World) {
 	p.free = p.free[:len(d.buffFree)]
 	copy(p.free, d.buffFree)
 
-	ms := w.Missiles
-	ms.count = d.msN
-	resetRowOf(ms.rowOf)
-	for i := int32(0); i < d.msN; i++ {
-		ms.Entity[i] = d.msE[i]
-		ms.Speed[i] = d.msSpeed[i]
-		ms.Accel[i] = d.msAccel[i]
-		ms.Arc[i] = d.msArc[i]
-		ms.Span[i] = d.msSpan[i]
-		ms.Flags[i] = d.msFlags[i]
-		ms.HitMask[i] = d.msHit[i]
-		ms.GuidanceID[i] = d.msGuid[i]
-		ms.ImpactID[i] = d.msImpact[i]
-		ms.GuideEnt[i] = d.msGE[i]
-		ms.GuidePt[i] = d.msGP[i]
-		ms.Payload[i] = d.msPay[i]
-		ms.Packet[i] = d.msPkt[i]
-		ms.Source[i] = d.msSrc[i]
-		ms.BirthTick[i] = d.msBirth[i]
-		ms.Dir[i] = d.msDir[i]
-		ms.RangeLeft[i] = d.msRange[i]
-		ms.PierceLeft[i] = d.msPierce[i]
-		ms.Decay[i] = d.msDecay[i]
-		ms.rowOf[d.msE[i].Index()] = i
-	}
+	// #590: "missiles" store retired — nothing to restore here.
 
 	do := w.Doodads
 	do.count = d.doN

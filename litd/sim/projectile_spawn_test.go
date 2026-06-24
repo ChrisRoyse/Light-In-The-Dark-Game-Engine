@@ -12,11 +12,11 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/fixed"
 )
 
-// runToQuiet steps until no movers and no missiles remain live, or a cap.
+// runToQuiet steps until no movers (incl. mover-backed projectiles) remain live, or a cap.
 func runToQuiet(w *World, cap int) {
 	for i := 0; i < cap; i++ {
 		w.Step()
-		if w.Movers.Count() == 0 && w.Missiles.Count() == 0 {
+		if w.Movers.Count() == 0 {
 			return
 		}
 	}

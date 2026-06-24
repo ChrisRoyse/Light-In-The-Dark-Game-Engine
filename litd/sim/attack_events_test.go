@@ -147,7 +147,7 @@ func TestAttackLifecycleDeadTargetNoLanded(t *testing.T) {
 	// step until the missile is in flight (Launch fired), then kill the target.
 	for i := 0; i < 12; i++ {
 		w.Step()
-		if w.Missiles.Count() > 0 {
+		if w.ProjRender.Count() > 0 {
 			break
 		}
 	}

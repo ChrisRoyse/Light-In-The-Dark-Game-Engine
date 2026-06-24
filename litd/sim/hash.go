@@ -20,7 +20,11 @@ func (w *World) RNGCursor() prng.Cursor { return w.rng.Cursor() }
 // fixed system vocabulary of the state hash.
 var HashSystems = []string{
 	"tick", "entities", "transforms", "movement", "health", "owners",
-	"combat", "abilities", "orders", "buffs", "missiles", "doodads",
+	"combat", "abilities", "orders", "buffs", "doodads",
+	// #590 "missiles" retired — projectiles are mover-driven, hashed under
+	// "movers". Removing the (always-empty post-flip) sub-hash drops its
+	// zero contribution from the combined sum: a one-time golden rebump,
+	// the same procedure as #571 retiring "userdata".
 	"sched", "prng",
 	// appended by #334 (gap found in #206): these were live state the
 	// hash was blind to. Appending keeps prior sub indices stable;
@@ -327,35 +331,7 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 		hb.WriteU32(uint32(f))
 	}
 
-	hmi := h.next() // missiles
-	ms := w.Missiles
-	hmi.WriteU32(uint32(ms.Count()))
-	for i := int32(0); i < ms.Count(); i++ {
-		hmi.WriteU32(uint32(ms.Entity[i]))
-		hmi.WriteI64(int64(ms.Speed[i]))
-		hmi.WriteI64(int64(ms.Accel[i]))
-		hmi.WriteI64(int64(ms.Arc[i]))
-		hmi.WriteU8(ms.Flags[i])
-		hmi.WriteU16(ms.HitMask[i])
-		hmi.WriteU16(ms.GuidanceID[i])
-		hmi.WriteU16(ms.ImpactID[i])
-		hmi.WriteU32(uint32(ms.GuideEnt[i]))
-		hmi.WriteI64(int64(ms.GuidePt[i].X))
-		hmi.WriteI64(int64(ms.GuidePt[i].Y))
-		hmi.WriteU16(ms.Payload[i].Off)
-		hmi.WriteU16(ms.Payload[i].Len)
-		hmi.WriteU32(uint32(ms.Packet[i].Source))
-		hmi.WriteU32(uint32(ms.Packet[i].Target))
-		hmi.WriteI64(int64(ms.Packet[i].Amount))
-		hmi.WriteU8(ms.Packet[i].AttackType)
-		hmi.WriteU32(uint32(ms.Source[i]))
-		hmi.WriteU32(ms.BirthTick[i])
-		hmi.WriteI64(int64(ms.Dir[i].X))
-		hmi.WriteI64(int64(ms.Dir[i].Y))
-		hmi.WriteI64(int64(ms.RangeLeft[i]))
-		hmi.WriteU32(uint32(ms.PierceLeft[i]))
-		hmi.WriteU16(ms.Decay[i])
-	}
+	// #590: "missiles" sub-hash retired — projectiles hash under "movers".
 
 	hd := h.next() // doodads
 	w.Doodads.HashInto(hd)

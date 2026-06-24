@@ -174,7 +174,12 @@ func TestLoadWorldInstallsResourceNodes(t *testing.T) {
 // missile↔mover parity suite is green (identical damage, arrival tick, hit
 // positions, AoE last-point splash, non-AoE guide-death fizzle, pierce/decay,
 // acceleration), run1==run2 stays identical, alive count unchanged at 3.
-const goldenDetLua uint64 = 0x8410d60d0adb42e3
+//
+// Bumped 0x8410d60d0adb42e3 → 0x8a0b792ba55ed552 (2026-06-24, #590): the now-
+// empty "missiles" sub-hash is REMOVED from HashSystems entirely — its zero
+// contribution drops from the combined sum (constant TopHash shift, the #571
+// "userdata"-retirement procedure). run1==run2, alive unchanged at 3.
+const goldenDetLua uint64 = 0x8a0b792ba55ed552
 
 // TestLoadWorldPlacementSpawnsEntities — #403: a world ships a placement table
 // (data/placement) and the loader spawns those entities after the type tables

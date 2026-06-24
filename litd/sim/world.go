@@ -146,7 +146,6 @@ type World struct {
 	Invents         *InventoryStore
 	Orders        *OrderStore
 	Buffs         *BuffPool
-	Missiles      *MissileStore     // first-class missile entities (#158, ADR #295)
 	ProjRender    *ProjectileRender // render-only billboard data for mover-driven projectiles (#590)
 	Effects       *EffectStore  // persistent script effects, first-class entities (#348)
 	Heroes        *HeroStore
@@ -537,7 +536,6 @@ func NewWorld(requested Caps) *World {
 		Invents:            NewInventoryStore(caps.Units, idxSpace),
 		Orders:             NewOrderStore(caps.Units, idxSpace),
 		Buffs:              NewBuffPool(caps.BuffInstances),
-		Missiles:           NewMissileStore(caps.Projectiles, idxSpace),
 		ProjRender:         NewProjectileRender(caps.Projectiles, idxSpace),
 		Effects:            NewEffectStore(caps.Effects, idxSpace),
 		Nodes:              NewResourceNodeStore(caps.Units, idxSpace),
@@ -743,10 +741,6 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if w.Harvests.Row(id) != -1 {
 		w.Harvests.Remove(id)
 	}
-	isMissile := w.Missiles.Row(id) != -1
-	if isMissile {
-		w.Missiles.Remove(id)
-	}
 	isProjBody := w.ProjRender.Row(id) != -1
 	if isProjBody {
 		w.ProjRender.Remove(id) // render-only billboard record for a mover projectile (#590)
@@ -775,8 +769,8 @@ func (w *World) DestroyUnit(id EntityID) bool {
 	if !w.Ents.Destroy(id) {
 		return false
 	}
-	if !isMissile && !isEffect && !isProjBody {
-		w.unitCount-- // missiles and mover-projectile bodies never counted against the unit cap (#590)
+	if !isEffect && !isProjBody {
+		w.unitCount-- // mover-projectile bodies never counted against the unit cap (#590)
 	}
 	return true
 }
@@ -829,7 +823,6 @@ func (w *World) PreallocatedBytes() int {
 	n += len(w.Invents.rowOf) * rowOfB
 	n += len(w.Orders.Kind) * (1 + 1 + 4 + 16 + 4 + 4)
 	n += len(w.Orders.rowOf) * rowOfB
-	n += cap(w.Missiles.Entity) * 138 // MissileStore columns
 	n += len(w.Effects.ModelID) * (2 + 8 + 4 + 4 + 4)
 	n += len(w.Effects.rowOf) * rowOfB
 	n += w.Visibility.PreallocatedBytes()

@@ -67,7 +67,7 @@ func TestGroupScenarioGolden(t *testing.T) {
 	// the hashed member bytes + dropped counter legitimately change — groups
 	// now hold their full membership (R-UGR-7). The empty-store sub-hash (every
 	// non-group scenario) is unchanged, so no other determinism golden moves.
-	const golden = uint64(0xab128a20d7c1c29a)
+	const golden = uint64(0x30f26e8823632c6e) // rebumped #590 "missiles" sub-hash retired
 	got := groupTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("group golden hash %016x != recorded %016x (intended? update golden)", got, golden)

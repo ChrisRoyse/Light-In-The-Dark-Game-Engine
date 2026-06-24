@@ -45,7 +45,7 @@ func moverScenario(t *testing.T) *World {
 
 func TestMoverScenarioGolden(t *testing.T) {
 	w := moverScenario(t)
-	const golden = uint64(0x5a98dc110aa1b479) // recorded 2026-06-24 (#592)
+	const golden = uint64(0x6568de319749f137) // recorded 2026-06-24 (#592); rebumped #590 "missiles" sub-hash retired
 	got := moverTopHash(w)
 	if golden != 0 && got != golden {
 		t.Fatalf("mover scenario hash %016x != recorded %016x", got, golden)

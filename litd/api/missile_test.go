@@ -281,16 +281,17 @@ func TestMissileUnknownNamedIDsFailClosedFSV(t *testing.T) {
 	}
 }
 
-func apiMissileRows(w *sim.World) int32 { return w.Missiles.Count() }
+func apiMissileRows(w *sim.World) int32 { return w.ProjRender.Count() }
 
 func apiMissileDump(w *sim.World, m Missile) string {
-	r := w.Missiles.Row(m.id)
-	if r == -1 {
+	mr, ok := w.ProjMover(m.id)
+	if !ok {
 		return "row=<none>"
 	}
-	return fmt.Sprintf("valid=%v row=%d speed=%d accel=%d guid=%d impact=%d hit=%04x rows=%d",
-		m.Valid(), r, int64(w.Missiles.Speed[r]), int64(w.Missiles.Accel[r]),
-		w.Missiles.GuidanceID[r], w.Missiles.ImpactID[r], w.Missiles.HitMask[r], w.Missiles.Count())
+	ms := w.Movers
+	return fmt.Sprintf("valid=%v mover=%d speed=%d accel=%d kind=%d hit=%04x rows=%d",
+		m.Valid(), mr, int64(ms.Speed[mr]), int64(ms.Accel[mr]),
+		ms.Kind[mr], ms.HitMask[mr], w.ProjRender.Count())
 }
 
 func containsStr(s, sub string) bool {

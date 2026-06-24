@@ -295,7 +295,11 @@ func dLoadFactions(t *testing.T) (*melee.Strategy, *melee.Strategy) {
 // alloc's handle); constant shift, run1==run2.
 // Bumped c0c8…→6f86… (#565, unitgroups) → 279d… (#572, kv): each new
 // HashSystems entry (empty here) is a constant TopHash shift; run1==run2.
-const dGolden uint64 = 0x942436f6d5fd0b8b // rebumped #590 (movers hash sub)
+// Bumped 0x942436f6d5fd0b8b → 0xebade9dedc83ebef (#590): the empty "missiles"
+// sub-hash is REMOVED from HashSystems (projectiles hash under "movers"),
+// dropping its zero contribution from the combined sum — a constant TopHash
+// shift, the same procedure as #571 retiring "userdata". run1==run2 unchanged.
+const dGolden uint64 = 0xebade9dedc83ebef
 
 // TestAIDeterminism10k — the gate. The Golden subtest is the fast preflight SoT:
 // one full 10k-tick match must equal the committed golden hash. The default full
