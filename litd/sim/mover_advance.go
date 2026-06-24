@@ -26,6 +26,14 @@ func (w *World) moverSystem() {
 			w.moverStepPoint(r)
 		case MoverHoming:
 			w.moverStepHoming(r)
+		case MoverOrbitUnit:
+			w.moverStepOrbit(r, true)
+		case MoverOrbitPoint:
+			w.moverStepOrbit(r, false)
+		case MoverArc:
+			w.moverStepArc(r)
+		case MoverSpline:
+			w.moverStepSpline(r)
 		}
 	}
 }
