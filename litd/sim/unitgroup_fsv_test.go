@@ -58,9 +58,10 @@ func TestGroupScenarioGolden(t *testing.T) {
 	w := NewWorld(Caps{Units: 32, UnitGroups: 64, GroupMembers: 64 * 16})
 	groupScenario(w)
 	reg := NewHashRegistry()
-	// Recorded 2026-06-23 (#567). Empty other subsystems; only the
-	// unitgroups sub carries scenario state.
-	const golden = uint64(0xda66da08418df91f)
+	// Recorded 2026-06-23 (#567); bumped da66…→ba33… (#572) when the empty
+	// "kv" sub joined HashSystems (constant full-state shift; scenario
+	// only touches the unitgroups sub).
+	const golden = uint64(0xba3339f2f9cbec74)
 	got := groupTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("group golden hash %016x != recorded %016x (intended? update golden)", got, golden)

@@ -189,6 +189,12 @@ func (w *World) phaseCleanup() {
 	// the killed set is intact (#564, R-UGR-6): a dead unit must not linger
 	// in a group's count, iteration, or serialized members.
 	w.Groups.PruneEntities(w.killed)
+	// Drop each dying entity's KV run (entity scope only; global/player
+	// scope is never auto-pruned, spec §8, R-KV-8). Bounded by the killed
+	// list; deterministic.
+	for i := range w.killed {
+		w.KV.KVClearOwner(makeOwner(KVScopeEntity, uint64(w.killed[i])))
+	}
 	for i := range w.killed {
 		w.DestroyUnit(w.killed[i])
 	}

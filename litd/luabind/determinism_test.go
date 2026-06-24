@@ -68,7 +68,7 @@ import (
 // slot's generation (steers the next alloc); still bit-deterministic.
 // Updated for #565: the "unitgroups" sub-hash joins HashSystems (empty in
 // this scenario) — constant shift, still bit-deterministic (p1==p8).
-const goldenLuaDeterminism10k = uint64(0x54e50e3568677a11)
+const goldenLuaDeterminism10k = uint64(0x638d54cb4719f40a)
 
 // runDeterminismScenario builds the fixed scenario, advances 10,000 ticks, and
 // returns the resulting state hash. moveStep lets the divergence control change

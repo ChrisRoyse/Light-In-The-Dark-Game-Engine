@@ -1083,7 +1083,30 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(gs.Gen[slot]) // free-slot generation, same #559 lesson
 	}
 
+	// kv (#572, PRD2 03): count/Dropped, then pairs in array order, then
+	// the two intern tables in id order. Mirrors hashKV exactly. The row
+	// index (#570 perf hint) is derived — not serialized.
+	kv := w.KV
+	s.u32(uint32(kv.count))
+	s.u32(kv.Dropped)
+	for i := int32(0); i < kv.count; i++ {
+		s.u64(kv.Owner[i])
+		s.u32(kv.Key[i])
+		s.u8(kv.Type[i])
+		s.i64(kv.Val[i])
+		s.i64(kv.Val2[i])
+	}
+	saveInternTable(s, &kv.keys)
+	saveInternTable(s, &kv.strs)
+
 	return s.err
+}
+
+func saveInternTable(s *saveWriter, t *internTable) {
+	s.u32(uint32(len(t.list)))
+	for _, str := range t.list {
+		s.str(str)
+	}
 }
 
 func abilityDefSave(s *saveWriter, def *data.Ability) {
@@ -1481,6 +1504,17 @@ type decodedSave struct {
 	groupRows     []savedGroup
 	groupFree     []uint32
 	groupFreeGen  []uint8
+
+	// generic key-value store (#572, v42): pairs in array order + the two
+	// intern tables. Sorted-invariant is re-validated before apply.
+	kvDropped uint32
+	kvOwner   []uint64
+	kvKey     []uint32
+	kvType    []uint8
+	kvVal     []int64
+	kvVal2    []int64
+	kvKeys    []string
+	kvStrs    []string
 }
 
 // savedGroup is one decoded live group row (staging for #565 load).
@@ -2996,8 +3030,68 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.groupFree[i] = r.u32()
 		d.groupFreeGen[i] = r.u8()
 	}
+
+	// generic key-value store (#572, v42): count/Dropped, pairs in array
+	// order, then the two intern tables. Sorted-invariant validated later.
+	r.what = "kv"
+	kvCap := w.KV.Cap()
+	kvN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(kvN) > kvCap {
+		return fmt.Errorf("sim: save: kv pair count %d exceeds this world's cap %d", kvN, kvCap)
+	}
+	d.kvDropped = r.u32()
+	d.kvOwner = make([]uint64, kvN)
+	d.kvKey = make([]uint32, kvN)
+	d.kvType = make([]uint8, kvN)
+	d.kvVal = make([]int64, kvN)
+	d.kvVal2 = make([]int64, kvN)
+	for i := uint32(0); i < kvN; i++ {
+		d.kvOwner[i] = r.u64()
+		d.kvKey[i] = r.u32()
+		d.kvType[i] = r.u8()
+		d.kvVal[i] = r.i64()
+		d.kvVal2[i] = r.i64()
+	}
+	keys, err := loadInternTable(r)
+	if err != nil {
+		return err
+	}
+	strs, err := loadInternTable(r)
+	if err != nil {
+		return err
+	}
+	d.kvKeys = keys
+	d.kvStrs = strs
 	return r.err
 }
+
+func loadInternTable(r *saveReader) ([]string, error) {
+	n := r.u32()
+	if r.err != nil {
+		return nil, r.err
+	}
+	if n > maxInternEntries {
+		return nil, fmt.Errorf("sim: save: intern table length %d exceeds sanity cap %d", n, maxInternEntries)
+	}
+	out := make([]string, n)
+	for i := uint32(0); i < n; i++ {
+		s, err := r.str(maxInternStringLen)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = s
+	}
+	return out, nil
+}
+
+// intern sanity caps — defensive bounds on a hand-edited/corrupt save.
+const (
+	maxInternEntries  = 1 << 20
+	maxInternStringLen = 4096
+)
 
 func abilityDefLoad(r *saveReader) (data.Ability, error) {
 	id, err := r.str(maxRuntimeAbilityStringLen)
@@ -3602,6 +3696,34 @@ func validateSave(d *decodedSave, w *World) error {
 		if len(d.groupRows)+len(d.groupFree) != groupCap {
 			return fmt.Errorf("sim: save: group slots accounted %d (live %d + free %d) != cap %d",
 				len(d.groupRows)+len(d.groupFree), len(d.groupRows), len(d.groupFree), groupCap)
+		}
+	}
+
+	// kv (#572): the pairs must already be in strict ascending (Owner,Key)
+	// order (the store's invariant — applySave does no sort), each Type a
+	// valid tag, each Key id within the decoded key table, and every
+	// KVString value id within the decoded string table. Fail-closed so a
+	// corrupt save can never produce an unsorted store (silent get misses)
+	// or an out-of-range intern reference.
+	{
+		nKeys := uint32(len(d.kvKeys))
+		nStrs := uint32(len(d.kvStrs))
+		for i := range d.kvOwner {
+			if d.kvType[i] >= uint8(kvTypeCount) {
+				return fmt.Errorf("sim: save: kv pair %d has unknown type %d", i, d.kvType[i])
+			}
+			if d.kvKey[i] == 0 || d.kvKey[i] > nKeys {
+				return fmt.Errorf("sim: save: kv pair %d key id %d out of intern range [1,%d]", i, d.kvKey[i], nKeys)
+			}
+			if KVType(d.kvType[i]) == KVString {
+				if sid := uint32(d.kvVal[i]); sid == 0 || sid > nStrs {
+					return fmt.Errorf("sim: save: kv pair %d string value id %d out of intern range [1,%d]", i, sid, nStrs)
+				}
+			}
+			if i > 0 && !kvLess(d.kvOwner[i-1], d.kvKey[i-1], d.kvOwner[i], d.kvKey[i]) {
+				return fmt.Errorf("sim: save: kv pairs not strictly ascending at %d: (%d,%d) !< (%d,%d)",
+					i, d.kvOwner[i-1], d.kvKey[i-1], d.kvOwner[i], d.kvKey[i])
+			}
 		}
 	}
 	return nil
@@ -4391,4 +4513,21 @@ func applySave(d *decodedSave, w *World) {
 		gs.free = append(gs.free, int32(f))
 		gs.Gen[f] = d.groupFreeGen[i]
 	}
+
+	// generic key-value store (#572): copy the validated, already-sorted
+	// pairs into the columns, restore Dropped + the intern tables, and
+	// rebuild the derived intern index. No sort — order is the invariant
+	// the save preserved and validateSave re-checked.
+	kv := w.KV
+	kv.count = int32(len(d.kvOwner))
+	kv.Dropped = d.kvDropped
+	copy(kv.Owner, d.kvOwner)
+	copy(kv.Key, d.kvKey)
+	copy(kv.Type, d.kvType)
+	copy(kv.Val, d.kvVal)
+	copy(kv.Val2, d.kvVal2)
+	kv.keys.list = append(kv.keys.list[:0], d.kvKeys...)
+	kv.keys.rebuildIndex()
+	kv.strs.list = append(kv.strs.list[:0], d.kvStrs...)
+	kv.strs.rebuildIndex()
 }

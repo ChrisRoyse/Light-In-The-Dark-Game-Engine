@@ -128,6 +128,11 @@ var HashSystems = []string{
 	// generations (steers future slot assignment — same #612 lesson as
 	// the timer pool). Start/Cap are derived (slot×perCap) and not hashed.
 	"unitgroups",
+	// appended by #572 (PRD2 03): the generic key-value store —
+	// count/kvDropped, then pairs in array order (already canonical
+	// ascending (Owner,Key)), then the key + string-value intern tables
+	// in id order. The optional row index is derived, not hashed (R-KV-7).
+	"kv",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -807,7 +812,37 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	hug := h.next() // unitgroups (#565): persistent unit-group store
 	w.hashGroups(hug)
 
+	hkv := h.next() // kv (#572): generic typed key-value store
+	w.hashKV(hkv)
+
 	return reg.Sum(dst)
+}
+
+// hashKV folds the key-value store into its sub-hash, mirroring the save
+// block (#572, spec §7). Pairs are walked in array order — already the
+// canonical ascending (Owner,Key) order, an invariant not a per-hash
+// sort. Then the two intern tables in id order so a Key/string-value id
+// resolves identically across engines.
+func (w *World) hashKV(hk *statehash.Hasher) {
+	kv := w.KV
+	hk.WriteU32(uint32(kv.count))
+	hk.WriteU32(kv.Dropped)
+	for i := int32(0); i < kv.count; i++ {
+		hk.WriteU64(kv.Owner[i])
+		hk.WriteU32(kv.Key[i])
+		hk.WriteU8(kv.Type[i])
+		hk.WriteI64(kv.Val[i])
+		hk.WriteI64(kv.Val2[i])
+	}
+	hashInternTable(hk, &kv.keys)
+	hashInternTable(hk, &kv.strs)
+}
+
+func hashInternTable(hk *statehash.Hasher, t *internTable) {
+	hk.WriteU32(uint32(len(t.list)))
+	for _, s := range t.list {
+		hashString(hk, s)
+	}
 }
 
 // hashGroups folds the unit-group store into its sub-hash, mirroring the
