@@ -278,27 +278,27 @@ func (e *vEncoder) encodeTable(t *lua.LTable) (sval, error) {
 	e.ids[t] = id
 	e.tables = append(e.tables, stable{}) // reserve the slot before recursing (cycles)
 
+	// Deterministic key order (#634): t.ForEach ranges the fork's backing Go maps
+	// (strdict/dict) for tables that spilled past small-mode (>8 keys), whose
+	// iteration order is randomized — which made this function's documented
+	// "deterministic blob" non-reproducible (different bytes every run, and
+	// because encode() interns nested tables in visitation order, even the intern
+	// ids diverged). t.Next walks the fork's insertion-ordered key list (array →
+	// skv/keys), the same order Lua-level pairs/next uses, so both the key order
+	// AND the intern-id assignment order are deterministic. Insertion order is
+	// stable across a save/load round-trip (decode re-inserts in blob order).
 	var keys, vals []sval
-	var encErr error
-	t.ForEach(func(k, v lua.LValue) {
-		if encErr != nil {
-			return
-		}
+	for k, v := t.Next(lua.LNil); k != lua.LNil; k, v = t.Next(k) {
 		ek, err := e.encode(k)
 		if err != nil {
-			encErr = err
-			return
+			return sval{}, err
 		}
 		ev, err := e.encode(v)
 		if err != nil {
-			encErr = err
-			return
+			return sval{}, err
 		}
 		keys = append(keys, ek)
 		vals = append(vals, ev)
-	})
-	if encErr != nil {
-		return sval{}, encErr
 	}
 
 	rec := stable{Keys: keys, Vals: vals}

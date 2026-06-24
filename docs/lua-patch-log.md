@@ -254,3 +254,36 @@ determinism scenario uses no `math.*`).
 
 Lettered "V": a determinism patch in the LITD-PATCH-2 family, filed separately
 per #391 because the precision/semantics were an owner contract decision.
+
+## Patch W (#633): address-free `LValue.String()`
+
+Stock gopher-lua renders `tostring` of a non-scalar via `fmt.Sprintf("table: %p", v)`
+(and the same for functions / userdata), embedding the live heap address. In LITD
+that string is reachable into **hashed sim state**: a world script can do
+`SetGlobalKV("k", tostring({}))`, and the global KV store is serialized + hashed
+(R-SIM-6). A per-run address makes the state hash differ every run → lockstep
+desync. Empirically `tostring({})` returned `"table: 0xe79e..."`, a different
+address each process.
+
+Fork change:
+
+- `repoes/gopher-lua/value.go` — `LTable.String()`, `LFunction.String()`,
+  `LUserData.String()` return the bare type token (`"table"` / `"function"` /
+  `"userdata"`) instead of the `%p` form. Each hunk carries `// LITD-PATCH (#633)`.
+
+Tables are interned for serialization by pointer (`vEncoder.ids`), not by this
+string, so dropping the address costs the persister nothing. Scripts must not use
+`tostring` for object identity — that is inherently nondeterministic and exactly
+the footgun this closes. A truly-unique *deterministic* token would need a
+per-`LState` counter plumbed into `String()` (which has no `LState` receiver), out
+of proportion to the need.
+
+Verified: `go build ./...` green; `litd/luabind` + the 10k determinism golden, the
+ai/sim/cmd determinism goldens, and the save/load suites are all byte-identical (no
+world script fed an address into a hashed sink, so no golden moved). Regression:
+`TestTostringNoAddressFSV` (`litd/luabind/determinism_address_test.go`) — fails
+before this patch (address + nondeterministic), passes after.
+
+Lettered "W": a determinism patch, sibling to the #634 main-module fix
+(`litd/luabind/persist_value.go`, deterministic `encodeTable` key order) committed
+in the same change.
