@@ -1057,6 +1057,31 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.u8(tm.Gen[slot]) // free-slot generation: the value the next alloc stamps (bugfix found by #559)
 	}
 
+	// unitgroups (#565, PRD2 02): live groups slot-ascending, each with
+	// Len + members (insertion order), then the free-list LIFO order with
+	// per-slot generations. Start/Cap are derived (slot×perCap) — rebuilt
+	// on load, never serialized. Mirrors hashGroups exactly.
+	gs := w.Groups
+	s.u32(uint32(gs.count))
+	s.u32(gs.DroppedGroups)
+	s.u32(gs.DroppedMembers)
+	for idx := int32(1); idx < int32(len(gs.live)); idx++ {
+		if !gs.live[idx] {
+			continue
+		}
+		s.u32(uint32(gs.Gen[idx])<<24 | uint32(idx)) // packed handle: restore exact slot+gen
+		s.u32(uint32(gs.Len[idx]))
+		start := gs.Start[idx]
+		for k := int32(0); k < gs.Len[idx]; k++ {
+			s.ent(gs.Members[start+k])
+		}
+	}
+	s.u32(uint32(len(gs.free)))
+	for _, slot := range gs.free {
+		s.u32(uint32(slot))
+		s.u8(gs.Gen[slot]) // free-slot generation, same #559 lesson
+	}
+
 	return s.err
 }
 
@@ -1446,6 +1471,22 @@ type decodedSave struct {
 	timerRows    []savedTimer
 	timerFree    []uint32
 	timerFreeGen []uint8 // generation of each free slot, parallel to timerFree (bugfix #559)
+
+	// persistent unit-group store (#565, v41): live groups (slot+gen+
+	// members) + free-list LIFO with per-slot gens; Start/Cap recomputed
+	// at apply from the slot's fixed span.
+	groupDroppedG uint32
+	groupDroppedM uint32
+	groupRows     []savedGroup
+	groupFree     []uint32
+	groupFreeGen  []uint8
+}
+
+// savedGroup is one decoded live group row (staging for #565 load).
+type savedGroup struct {
+	slot    int32
+	gen     uint8
+	members []EntityID
 }
 
 // savedTimer is one decoded live timer row (staging for #555 load).
@@ -2907,6 +2948,52 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 		d.timerFree[i] = r.u32()
 		d.timerFreeGen[i] = r.u8()
 	}
+
+	// persistent unit-group store (#565, v41): count/dropped, then `count`
+	// live group rows (slot+gen+Len+members) in slot order, then the free
+	// list with per-slot gens. Partition/range validation in validateSave.
+	r.what = "unitgroups"
+	groupCap := w.Groups.GroupCap()
+	memberCap := len(w.Groups.Members)
+	gN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(gN) > groupCap {
+		return fmt.Errorf("sim: save: group count %d exceeds this world's cap %d", gN, groupCap)
+	}
+	d.groupDroppedG = r.u32()
+	d.groupDroppedM = r.u32()
+	d.groupRows = make([]savedGroup, gN)
+	for i := uint32(0); i < gN; i++ {
+		packed := r.u32()
+		row := savedGroup{slot: int32(packed & 0x00FFFFFF), gen: uint8(packed >> 24)}
+		mn := r.u32()
+		if r.err != nil {
+			return r.err
+		}
+		if int(mn) > memberCap {
+			return fmt.Errorf("sim: save: group member count %d exceeds arena %d", mn, memberCap)
+		}
+		row.members = make([]EntityID, mn)
+		for k := uint32(0); k < mn; k++ {
+			row.members[k] = r.ent()
+		}
+		d.groupRows[i] = row
+	}
+	gFreeN := r.u32()
+	if r.err != nil {
+		return r.err
+	}
+	if int(gFreeN) > groupCap {
+		return fmt.Errorf("sim: save: group free-list length %d exceeds cap %d", gFreeN, groupCap)
+	}
+	d.groupFree = make([]uint32, gFreeN)
+	d.groupFreeGen = make([]uint8, gFreeN)
+	for i := uint32(0); i < gFreeN; i++ {
+		d.groupFree[i] = r.u32()
+		d.groupFreeGen[i] = r.u8()
+	}
 	return r.err
 }
 
@@ -3479,6 +3566,40 @@ func validateSave(d *decodedSave, w *World) error {
 		if len(d.timerRows)+len(d.timerFree) != timerCap {
 			return fmt.Errorf("sim: save: timer slots accounted %d (live %d + free %d) != cap %d",
 				len(d.timerRows)+len(d.timerFree), len(d.timerRows), len(d.timerFree), timerCap)
+		}
+	}
+
+	// unitgroups (#565): same live ⊎ free = [1,cap] partition check, plus
+	// each live group's member count must fit its slot's fixed span.
+	{
+		groupCap := w.Groups.GroupCap()
+		perCap := w.Groups.MembersPerGroup()
+		seen := make([]bool, groupCap+1)
+		for i := range d.groupRows {
+			slot := d.groupRows[i].slot
+			if slot < 1 || int(slot) > groupCap {
+				return fmt.Errorf("sim: save: group slot %d out of range [1,%d]", slot, groupCap)
+			}
+			if seen[slot] {
+				return fmt.Errorf("sim: save: group slot %d appears twice (live)", slot)
+			}
+			seen[slot] = true
+			if int32(len(d.groupRows[i].members)) > perCap {
+				return fmt.Errorf("sim: save: group slot %d has %d members, exceeds span cap %d", slot, len(d.groupRows[i].members), perCap)
+			}
+		}
+		for _, f := range d.groupFree {
+			if f < 1 || int(f) > groupCap {
+				return fmt.Errorf("sim: save: group free slot %d out of range [1,%d]", f, groupCap)
+			}
+			if seen[f] {
+				return fmt.Errorf("sim: save: group slot %d is both live and free", f)
+			}
+			seen[f] = true
+		}
+		if len(d.groupRows)+len(d.groupFree) != groupCap {
+			return fmt.Errorf("sim: save: group slots accounted %d (live %d + free %d) != cap %d",
+				len(d.groupRows)+len(d.groupFree), len(d.groupRows), len(d.groupFree), groupCap)
 		}
 	}
 	return nil
@@ -4245,5 +4366,27 @@ func applySave(d *decodedSave, w *World) {
 		if tm.live[idx] && !tm.Paused[idx] {
 			tm.heapPush(idx)
 		}
+	}
+
+	// persistent unit-group store (#565): write each validated group's
+	// members into its slot's fixed span, restore the free list with its
+	// per-slot generations (#612 lesson), and counters. Start/Cap are the
+	// construction-fixed partition — never serialized, identical here.
+	gs := w.Groups
+	gs.loadReset()
+	gs.DroppedGroups = d.groupDroppedG
+	gs.DroppedMembers = d.groupDroppedM
+	for i := range d.groupRows {
+		row := &d.groupRows[i]
+		idx := row.slot
+		copy(gs.Members[gs.Start[idx]:gs.Start[idx]+int32(len(row.members))], row.members)
+		gs.Len[idx] = int32(len(row.members))
+		gs.Gen[idx] = row.gen
+		gs.live[idx] = true
+		gs.count++
+	}
+	for i, f := range d.groupFree {
+		gs.free = append(gs.free, int32(f))
+		gs.Gen[f] = d.groupFreeGen[i]
 	}
 }

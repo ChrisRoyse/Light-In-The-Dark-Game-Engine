@@ -121,7 +121,10 @@ func TestTimerScenarioGolden(t *testing.T) {
 	for i := 0; i < 300; i++ {
 		w.Step()
 	}
-	const golden = uint64(0x708d04e1f7c54089)
+	// Bumped 0x708d04e1f7c54089 → 0x41d30a7ca0fa1ba7 (#565): the empty
+	// unitgroups sub-hash now contributes (count/dropped + the full
+	// free-list with per-slot gens) to the full-state fingerprint.
+	const golden = uint64(0x41d30a7ca0fa1ba7)
 	got := timerTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("timer golden hash %016x != recorded %016x (intended change? update golden)", got, golden)

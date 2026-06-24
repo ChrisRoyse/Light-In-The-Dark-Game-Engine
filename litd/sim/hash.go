@@ -121,6 +121,13 @@ var HashSystems = []string{
 	// free-list LIFO order (steers future slot assignment, R-SIM-6).
 	// Empty default leaves the zero contribution.
 	"timers",
+	// appended by #565 (PRD2 02): the persistent unit-group store —
+	// count/DroppedGroups/DroppedMembers, then live groups in slot-
+	// ascending order each with Len + members (insertion order, the
+	// hashed truth, R-UGR-2), then the free-list LIFO order with per-slot
+	// generations (steers future slot assignment — same #612 lesson as
+	// the timer pool). Start/Cap are derived (slot×perCap) and not hashed.
+	"unitgroups",
 }
 
 // NewHashRegistry builds a registry with the canonical system set.
@@ -797,7 +804,39 @@ func (w *World) HashState(reg *statehash.Registry, dst *statehash.Snapshot) *sta
 	htm := h.next() // timers (#555): serializable timer wheel
 	w.hashTimers(htm)
 
+	hug := h.next() // unitgroups (#565): persistent unit-group store
+	w.hashGroups(hug)
+
 	return reg.Sum(dst)
+}
+
+// hashGroups folds the unit-group store into its sub-hash, mirroring the
+// save block (#565). Live groups are walked slot-ascending (allocation-
+// history order, independent of any future allocator), each contributing
+// its Len then its members in insertion order — the hashed truth. The
+// free-list contributes its LIFO order with each slot's generation so two
+// worlds mint identical handles on the next CreateGroup (the #612 lesson).
+func (w *World) hashGroups(hg *statehash.Hasher) {
+	gs := w.Groups
+	hg.WriteU32(uint32(gs.count))
+	hg.WriteU32(gs.DroppedGroups)
+	hg.WriteU32(gs.DroppedMembers)
+	for idx := int32(1); idx < int32(len(gs.live)); idx++ {
+		if !gs.live[idx] {
+			continue
+		}
+		hg.WriteU32(uint32(gs.Gen[idx])<<24 | uint32(idx))
+		hg.WriteU32(uint32(gs.Len[idx]))
+		start := gs.Start[idx]
+		for k := int32(0); k < gs.Len[idx]; k++ {
+			hg.WriteU32(uint32(gs.Members[start+k]))
+		}
+	}
+	hg.WriteU32(uint32(len(gs.free)))
+	for _, slot := range gs.free {
+		hg.WriteU32(uint32(slot))
+		hg.WriteU8(gs.Gen[slot])
+	}
 }
 
 // hashTimers folds the timer-wheel state into its sub-hash, mirroring

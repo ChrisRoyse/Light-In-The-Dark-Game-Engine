@@ -439,6 +439,21 @@ func (s *GroupStore) PruneEntities(dead []EntityID) int {
 	return removed
 }
 
+// loadReset clears the store to the empty-but-allocated state before
+// applySave writes the decoded rows. Start/Cap are construction-fixed and
+// retained (the v1 partition is recomputed identically); only occupancy,
+// the free list, counters, and Len are reset.
+func (s *GroupStore) loadReset() {
+	for i := range s.live {
+		s.live[i] = false
+		s.Len[i] = 0
+	}
+	s.free = s.free[:0]
+	s.count = 0
+	s.DroppedGroups = 0
+	s.DroppedMembers = 0
+}
+
 func (s *GroupStore) assert(msg string, id GroupID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)
