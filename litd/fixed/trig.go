@@ -34,6 +34,20 @@ func (a Angle) Sin() F64 {
 // Cos returns cos(a) as 32.32 fixed point: cos(a) = sin(a + quarter turn).
 func (a Angle) Cos() F64 { return (a + quarterTurn).Sin() }
 
+// UnitVec returns the unit direction (Cos a, Sin a) in 32.32 fixed point
+// — the mover-facing helper for orbit/arc placement (#583): a circle of
+// radius r about c is c.Add(a.UnitVec().Scale(r)). Angle 0 = +X, quarter
+// turn = +Y. Deterministic (LUT-based, no runtime math.*).
+func (a Angle) UnitVec() Vec2 { return Vec2{X: a.Cos(), Y: a.Sin()} }
+
+// Rotate returns v rotated by a about the origin, via the committed sine
+// table (#583): (x·cos − y·sin, x·sin + y·cos). Used for spline tangents
+// and arc framing. Integer-exact, identical on every machine.
+func (v Vec2) Rotate(a Angle) Vec2 {
+	c, s := a.Cos(), a.Sin()
+	return Vec2{X: v.X.Mul(c).Sub(v.Y.Mul(s)), Y: v.X.Mul(s).Add(v.Y.Mul(c))}
+}
+
 // tanLessEq reports tan(a) <= y/x for a in [0, quarterTurn], x > 0,
 // y >= 0 — compared as sin(a)·x <= cos(a)·y in exact 128 bits (no
 // division, no truncation; determinism.md §2.4).
