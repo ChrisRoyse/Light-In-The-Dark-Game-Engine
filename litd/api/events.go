@@ -89,6 +89,13 @@ func (g *Game) OnEvent(kind EventKind, handler func(Event), opts ...EventOption)
 	}
 	simKind, ok := simKindOf[kind]
 	if !ok {
+		// Custom event kind (#619): a registered custom kind id IS its own
+		// sim kind. Unregistered → fail closed, same as an unknown built-in.
+		if g.w.CustomEvents.IsCustomKind(uint16(kind)) {
+			simKind, ok = uint16(kind), true
+		}
+	}
+	if !ok {
 		g.reportInvalid("OnEvent (unknown event kind)")
 		return Subscription{}
 	}
