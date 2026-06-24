@@ -151,6 +151,27 @@ func runBench(s suite) (result, error) {
 	return result{}, fmt.Errorf("%s: no benchmark line for %s in output:\n%s", s.pkg, s.bench, out)
 }
 
+// evaluate applies the R-GC-5 budget gate to one benchmark result. It returns the
+// verdict ("OK"/"FAIL"), a human-readable gate string, and the budget key the
+// verdict is attributed to. Only perTick metrics are gated; others are trend-only
+// and never fail. Equality is WITHIN budget (allocs==budget and ns==tickBudget
+// both pass) — the boundary the > comparisons encode; a slip to >= would wrongly
+// fail a result that exactly meets budget, which these semantics forbid.
+func evaluate(r result, bud budgets, perTick bool) (verdict, gate, budgetKey string) {
+	if !perTick {
+		return "OK", "trend-only", ""
+	}
+	tickBudgetNs := float64(bud.tickMsMax) * 1e6
+	switch {
+	case r.AllocsOp > bud.allocsPerTick:
+		return "FAIL", fmt.Sprintf("FAIL allocs %d > allocs_per_tick=%d", r.AllocsOp, bud.allocsPerTick), "allocs_per_tick"
+	case r.NsPerOp > tickBudgetNs:
+		return "FAIL", fmt.Sprintf("FAIL %.0fns > tick_ms_max=%dms", r.NsPerOp, bud.tickMsMax), "tick_ms_max"
+	default:
+		return "OK", fmt.Sprintf("OK (≤ tick_ms_max=%dms, allocs=%d)", bud.tickMsMax, r.AllocsOp), "tick_ms_max"
+	}
+}
+
 func loadHistory(path string) map[string][]result {
 	h := map[string][]result{}
 	f, err := os.Open(path)
@@ -179,7 +200,6 @@ func main() {
 		os.Exit(2)
 	}
 	history := loadHistory(*historyPath)
-	tickBudgetNs := float64(bud.tickMsMax) * 1e6
 
 	fmt.Printf("benchharness: budgets from %s: tick_ms_max=%d allocs_per_tick=%d\n\n",
 		*budgetsPath, bud.tickMsMax, bud.allocsPerTick)
@@ -196,24 +216,11 @@ func main() {
 		}
 		r.Time = now
 
-		gate := "trend-only"
-		r.Verdict = "OK"
-		if s.perTick {
-			switch {
-			case r.AllocsOp > bud.allocsPerTick:
-				r.Verdict = "FAIL"
-				r.Budget = "allocs_per_tick"
-				gate = fmt.Sprintf("FAIL allocs %d > allocs_per_tick=%d", r.AllocsOp, bud.allocsPerTick)
-				failed = true
-			case r.NsPerOp > tickBudgetNs:
-				r.Verdict = "FAIL"
-				r.Budget = "tick_ms_max"
-				gate = fmt.Sprintf("FAIL %.0fns > tick_ms_max=%dms", r.NsPerOp, bud.tickMsMax)
-				failed = true
-			default:
-				r.Budget = "tick_ms_max"
-				gate = fmt.Sprintf("OK (≤ tick_ms_max=%dms, allocs=%d)", bud.tickMsMax, r.AllocsOp)
-			}
+		verdict, gate, budgetKey := evaluate(r, bud, s.perTick)
+		r.Verdict = verdict
+		r.Budget = budgetKey
+		if verdict == "FAIL" {
+			failed = true
 		}
 
 		// rolling-window trend: last ≤5 prior entries; ≥10% worse than
