@@ -172,13 +172,20 @@ func (w *World) moverStepHoming(r int32) {
 			}
 		}
 	} else if ms.Flags[r]&MoverConsume != 0 && ms.Anchor[r] != 0 {
-		// The guide died mid-flight (#590, missile guide-invalidation model): a
-		// projectile homing mover completes now via its DoneMode rather than
-		// flying on forever — DoneDetonate fires the AoE payload at the current
-		// (last-pursued) position, anything else expires. (The legacy missile
-		// AoE case coasts to the exact last-known point before detonating; a
-		// homing body is already adjacent to it, so detonating in place is
-		// within a sub-step — documented minor difference, not a leak.)
+		// The guide died mid-flight (#590/#626, missile guide-invalidation model).
+		// A non-AoE homing projectile (MoverExpireOnGuideLoss) fizzles payload-less
+		// — the legacy ImpactDeliver missile behavior. An AoE homing projectile
+		// (no flag) completes via DoneImpact, delivering its payload at the current
+		// (last-pursued) position — the legacy MissileAoE coast-and-detonate (the
+		// body is already adjacent to the last-known point, within a sub-step).
+		if ms.Flags[r]&MoverExpireOnGuideLoss != 0 {
+			w.projectileExpire(r)
+			if ms.Flags[r]&MoverConsume != 0 {
+				w.KillUnit(ms.Target[r])
+			}
+			w.moverFree(r)
+			return
+		}
 		w.moverComplete(r)
 		return
 	}

@@ -22,11 +22,12 @@ package sim
 //	                    TurnRate 0 (instant tracking, byte-identical to the
 //	                    missile's beeline). ImpactExpire -> DoneExpire.
 //
-// Guide-death semantics follow #626 decision (1): a homing projectile whose
-// guide dies delivers its payload at the last-pursued point (DoneImpact,
-// tgt=0), unifying the legacy AoE/non-AoE split — non-AoE homing no longer
-// fizzles payload-less. Intentional, documented divergence from the legacy
-// missile (missile.go:259-266); covered by the parity test.
+// Guide-death semantics follow #626 decision (2) — PRESERVE the legacy split,
+// since #590 is a behavior-preserving migration: a non-AoE homing projectile
+// (ImpactDeliver) fizzles payload-less if its guide dies mid-flight
+// (MoverExpireOnGuideLoss), while an AoE homing projectile (ImpactDetonate)
+// delivers its payload at the last-pursued point. Both still deliver on
+// reaching a live target. Matches missile.go's MissileAoE guide-invalidation.
 //
 // Damage source: the mover's Owner carries the launcher (m.Source) for
 // attribution (moverImpact/moverDetonate read Owner). Projectile movers are
@@ -124,6 +125,13 @@ func (w *World) spawnMoverProjectile(m MissileSpec) (EntityID, bool) {
 			spec.DoneMode = MoverDoneExpire
 		} else {
 			spec.DoneMode = MoverDoneImpact
+			// Non-AoE homing (ImpactDeliver) fizzles payload-less if its guide
+			// dies mid-flight; AoE homing (ImpactDetonate) delivers at the last
+			// point. Legacy missile guide-invalidation parity (#626 decision 2:
+			// preserve, since #590 is a behavior-preserving migration).
+			if impactID == MissileImpactDeliver {
+				spec.Flags |= MoverExpireOnGuideLoss
+			}
 		}
 		goal := m.Point
 		if tr := w.Transforms.Row(m.Target); tr != -1 {

@@ -239,6 +239,44 @@ func TestSpawnProjectileAccelParity(t *testing.T) {
 	}
 }
 
+// Guide-death parity (#626 decision 2): a non-AoE homing projectile whose guide
+// dies mid-flight fizzles payload-less (OnMissileExpire, no damage) — the legacy
+// ImpactDeliver behavior. SoT = expire-callback count + the (now-dead) target's
+// neighbourhood taking no damage, via both paths.
+func TestSpawnProjectileHomingGuideDeathFizzleParity(t *testing.T) {
+	// A bystander sits where the guide dies; a fizzle must NOT damage it.
+	run := func(spawn func(*World, EntityID, EntityID) bool) (expires int, bystanderHP int64) {
+		w := lmWorld(t)
+		s := atkUnit(t, w, 0, xy(1000, 1000), 0)
+		guide := atkUnit(t, w, 1, xy(1500, 1000), 0)
+		bystander := atkUnit(t, w, 1, xy(1100, 1000), 0) // near the launch path
+		w.OnMissileExpire = func(uint32, EntityID, fixed.Vec2) { expires++ }
+		if !spawn(w, s, guide) {
+			t.Fatal("spawn homing")
+		}
+		w.Step()         // in flight
+		w.KillUnit(guide) // guide dies mid-flight
+		runToQuiet(w, 30)
+		return expires, life(w, bystander)
+	}
+	spec := func(s, guide EntityID) MissileSpec {
+		return MissileSpec{
+			Pos: xy(1000, 1000), Source: s, Target: guide, Speed: 60 * fixed.One,
+			ImpactID: MissileImpactDeliver, // non-AoE: fizzle on guide loss
+			Packet:   DamagePacket{Source: s, Target: guide, Amount: 40 * fixed.One},
+		}
+	}
+	le, lb := run(func(w *World, s, g EntityID) bool { _, ok := w.SpawnMissile(spec(s, g)); return ok })
+	me, mb := run(func(w *World, s, g EntityID) bool { _, ok := w.spawnMoverProjectile(spec(s, g)); return ok })
+	t.Logf("guide-death fizzle: legacy expires=%d bystander=%d | mover expires=%d bystander=%d", le, lb, me, mb)
+	if le != 1 || lb != 100 {
+		t.Fatalf("legacy fizzle baseline wrong: expires=%d bystander=%d (want 1/100)", le, lb)
+	}
+	if me != le || mb != lb {
+		t.Fatalf("GUIDE-DEATH PARITY BREAK: mover expires=%d bystander=%d, legacy %d/%d", me, mb, le, lb)
+	}
+}
+
 // Expire-signal parity: a linear skillshot that spends its range in an empty
 // lane fires OnMissileExpire (payload-less) via both paths — the missile
 // expiry cue must survive the mover migration. SoT = the expire-callback count.

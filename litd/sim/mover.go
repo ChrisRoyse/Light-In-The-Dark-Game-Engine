@@ -62,6 +62,7 @@ const (
 	MoverFlying                      // air pathing: ignores ground terrain collision
 	MoverConsume                     // kill the Target entity on completion (projectile body)
 	MoverSwept                       // linear skillshot: sweep the step segment for hits (#620)
+	MoverExpireOnGuideLoss           // homing: if the guide dies mid-flight, expire payload-less instead of delivering at the last point (non-AoE missile parity, #590/#626)
 )
 
 // MoverStore is the SoA pool of motion controllers over a shared spline
