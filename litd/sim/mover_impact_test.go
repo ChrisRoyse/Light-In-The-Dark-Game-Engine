@@ -136,6 +136,89 @@ func TestMoverDoneImpactGuideDiedDegrades(t *testing.T) {
 	}
 }
 
+// Edge 4b (homing arrival): a projectile homing mover (MoverConsume) snap-
+// arrives at its live anchor and completes, delivering once via DoneImpact —
+// the missile homing-impact model. SoT = anchor-foe Healths.Life + the mover
+// being freed.
+func TestMoverHomingArrivalDelivers(t *testing.T) {
+	w := lmWorld(t)
+	caster := atkUnit(t, w, 0, xy(1000, 1000), 0)
+	foe := atkUnit(t, w, 1, xy(1100, 1000), 0)
+	body, _ := w.CreateUnit(xy(1000, 1000), 0)
+	mid := w.Movers.Create(MoverSpec{
+		Kind: MoverHoming, Target: body, Owner: caster, Anchor: foe,
+		Dir: xy(1, 0), Speed: 25 * fixed.One, TurnRate: 0,
+		DoneMode: MoverDoneImpact, Flags: MoverConsume,
+		Packet:   DamagePacket{Source: caster, Amount: 40 * fixed.One},
+	})
+	for i := 0; i < 8 && w.Movers.Alive(mid); i++ {
+		w.Step()
+		t.Logf("t%d foe=%d alive=%v", i+1, life(w, foe), w.Movers.Alive(mid))
+	}
+	if life(w, foe) != 60 {
+		t.Fatalf("foe life=%d, want 60 (homing arrival delivered 40 once)", life(w, foe))
+	}
+	if w.Movers.Alive(mid) {
+		t.Fatal("homing projectile not freed on arrival")
+	}
+}
+
+// Edge 4c (homing parity): a homing missile and a MoverHoming+Consume+Impact,
+// both to the same stationary target, deliver identical damage at the same tick.
+func TestMoverHomingArrivalMissileParity(t *testing.T) {
+	const speed = 25 * fixed.One
+	wm := lmWorld(t)
+	sm := atkUnit(t, wm, 0, xy(1000, 1000), 0)
+	fm := atkUnit(t, wm, 1, xy(1090, 1040), 0) // off-axis so homing actually turns
+	wm.SpawnMissile(MissileSpec{
+		Pos: xy(1000, 1000), Source: sm, Speed: speed, Target: fm,
+		GuidanceID: MissileGuidanceHoming,
+		Packet:     DamagePacket{Source: sm, Amount: 40 * fixed.One},
+	})
+	wv := lmWorld(t)
+	sv := atkUnit(t, wv, 0, xy(1000, 1000), 0)
+	fv := atkUnit(t, wv, 1, xy(1090, 1040), 0)
+	body, _ := wv.CreateUnit(xy(1000, 1000), 0)
+	wv.Movers.Create(MoverSpec{
+		Kind: MoverHoming, Target: body, Owner: sv, Anchor: fv,
+		Dir: xy(1, 0), Speed: speed, TurnRate: 0,
+		DoneMode: MoverDoneImpact, Flags: MoverConsume,
+		Packet:   DamagePacket{Source: sv, Amount: 40 * fixed.One},
+	})
+	for i := 0; i < 10; i++ {
+		wm.Step()
+		wv.Step()
+		if life(wm, fm) != life(wv, fv) {
+			t.Fatalf("tick %d: mover foe %d != missile foe %d (homing impact parity broken)", i+1, life(wv, fv), life(wm, fm))
+		}
+	}
+	if life(wv, fv) != 60 {
+		t.Fatalf("final foe HP=%d, want 60", life(wv, fv))
+	}
+}
+
+// Edge 4d (gate): a NON-consume homing mover (a guided unit) does NOT
+// complete on reaching its anchor — it keeps pursuing. Proves arrival-
+// complete is scoped to projectile bodies.
+func TestMoverHomingNonConsumeDoesNotArrive(t *testing.T) {
+	w := lmWorld(t)
+	caster := atkUnit(t, w, 0, xy(1000, 1000), 0)
+	foe := atkUnit(t, w, 1, xy(1050, 1000), 0)
+	body, _ := w.CreateUnit(xy(1000, 1000), 0)
+	mid := w.Movers.Create(MoverSpec{
+		Kind: MoverHoming, Target: body, Owner: caster, Anchor: foe,
+		Dir: xy(1, 0), Speed: 25 * fixed.One, TurnRate: 0,
+		// no MoverConsume, no DoneImpact
+	})
+	for i := 0; i < 8; i++ {
+		w.Step()
+	}
+	if !w.Movers.Alive(mid) {
+		t.Fatal("non-consume homing mover completed on arrival — arrival-complete must be projectile-only")
+	}
+	t.Logf("non-consume homing still alive after passing anchor (correct): %v", w.Movers.Alive(mid))
+}
+
 // Edge 5 (determinism/save): a mover mid-flight with DoneMode=Impact saves
 // and reloads hash-identical, and the DoneMode column is real hashed state
 // (mutating it moves the hash).

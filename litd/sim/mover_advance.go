@@ -138,7 +138,18 @@ func (w *World) moverStepHoming(r int32) {
 	// Desired direction = toward the anchor's current position. A vanished
 	// anchor leaves the current Dir unchanged (fly straight on).
 	if ar := w.Transforms.Row(ms.Anchor[r]); ar != -1 {
-		desired := w.Transforms.Pos[ar].Sub(pos)
+		apos := w.Transforms.Pos[ar]
+		// Projectile homing (MoverConsume) snap-arrives and completes when it
+		// reaches the live anchor (#590) — the missile homing-impact model,
+		// using the same within-one-step predicate (distLE vs Speed) as the
+		// missile's snap-arrive. A non-consume homing mover (a guided unit)
+		// keeps pursuing past the anchor, unchanged.
+		if ms.Flags[r]&MoverConsume != 0 && distLE(apos.Sub(pos), ms.Speed[r]) {
+			w.moverWrite(tr, apos)
+			w.moverComplete(r)
+			return
+		}
+		desired := apos.Sub(pos)
 		if desired.X != 0 || desired.Y != 0 {
 			if ms.TurnRate[r] == 0 {
 				// Instant turn: beeline along the raw desired vector. unitStep
