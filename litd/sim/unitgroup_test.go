@@ -11,8 +11,8 @@ func TestGroupStoreCreateResolveDestroy(t *testing.T) {
 	if s.GroupCap() != 8 {
 		t.Fatalf("GroupCap = %d, want 8", s.GroupCap())
 	}
-	if s.MembersPerGroup() != 64 {
-		t.Fatalf("MembersPerGroup = %d, want 64 (512/8)", s.MembersPerGroup())
+	if s.MembersPerGroup() != 512 {
+		t.Fatalf("MembersPerGroup = %d, want 512 (whole arena, #613 span allocator)", s.MembersPerGroup())
 	}
 	if s.Count() != 0 {
 		t.Fatalf("fresh Count = %d", s.Count())
@@ -29,10 +29,10 @@ func TestGroupStoreCreateResolveDestroy(t *testing.T) {
 	if !s.live[row] || s.Len[row] != 0 {
 		t.Fatalf("new group not live/empty: live=%v len=%d", s.live[row], s.Len[row])
 	}
-	// Fixed span: slot r owns Members[(r-1)*perCap : ...], Cap = perCap.
-	if s.Start[row] != (row-1)*s.perCap || s.Cap[row] != s.perCap {
-		t.Fatalf("span layout wrong: Start=%d want %d, Cap=%d want %d",
-			s.Start[row], (row-1)*s.perCap, s.Cap[row], s.perCap)
+	// Span allocator (#613): a fresh group reserves no arena span until its
+	// first add (lazy) — Cap starts 0.
+	if s.Cap[row] != 0 || s.Len[row] != 0 {
+		t.Fatalf("fresh group should hold no span: Start=%d Cap=%d Len=%d", s.Start[row], s.Cap[row], s.Len[row])
 	}
 	if s.Count() != 1 {
 		t.Fatalf("Count after create = %d", s.Count())

@@ -3849,11 +3849,14 @@ func validateSave(d *decodedSave, w *World) error {
 	}
 
 	// unitgroups (#565): same live ⊎ free = [1,cap] partition check, plus
-	// each live group's member count must fit its slot's fixed span.
+	// span allocator (#613): every group fits the shared arena and the live
+	// groups' members together do not exceed it (so applySave's re-reservation
+	// cannot fail).
 	{
 		groupCap := w.Groups.GroupCap()
-		perCap := w.Groups.MembersPerGroup()
+		arena := w.Groups.MembersPerGroup() // now the whole-arena capacity
 		seen := make([]bool, groupCap+1)
+		var total int32
 		for i := range d.groupRows {
 			slot := d.groupRows[i].slot
 			if slot < 1 || int(slot) > groupCap {
@@ -3863,9 +3866,14 @@ func validateSave(d *decodedSave, w *World) error {
 				return fmt.Errorf("sim: save: group slot %d appears twice (live)", slot)
 			}
 			seen[slot] = true
-			if int32(len(d.groupRows[i].members)) > perCap {
-				return fmt.Errorf("sim: save: group slot %d has %d members, exceeds span cap %d", slot, len(d.groupRows[i].members), perCap)
+			n := int32(len(d.groupRows[i].members))
+			if n > arena {
+				return fmt.Errorf("sim: save: group slot %d has %d members, exceeds arena %d", slot, n, arena)
 			}
+			total += n
+		}
+		if total > arena {
+			return fmt.Errorf("sim: save: group members total %d exceeds arena %d", total, arena)
 		}
 		for _, f := range d.groupFree {
 			if f < 1 || int(f) > groupCap {
@@ -4673,10 +4681,11 @@ func applySave(d *decodedSave, w *World) {
 		}
 	}
 
-	// persistent unit-group store (#565): write each validated group's
-	// members into its slot's fixed span, restore the free list with its
-	// per-slot generations (#612 lesson), and counters. Start/Cap are the
-	// construction-fixed partition — never serialized, identical here.
+	// persistent unit-group store (#565): re-reserve each validated group's
+	// member span from the rebuilt arena allocator (#613), copy its members,
+	// restore the free list with its per-slot generations (#612 lesson), and
+	// counters. Start/Cap are derived layout — never serialized; the span
+	// allocator reproduces a valid layout in slot order.
 	gs := w.Groups
 	gs.loadReset()
 	gs.DroppedGroups = d.groupDroppedG
@@ -4684,8 +4693,17 @@ func applySave(d *decodedSave, w *World) {
 	for i := range d.groupRows {
 		row := &d.groupRows[i]
 		idx := row.slot
-		copy(gs.Members[gs.Start[idx]:gs.Start[idx]+int32(len(row.members))], row.members)
-		gs.Len[idx] = int32(len(row.members))
+		n := int32(len(row.members))
+		if n > 0 {
+			start, ok := gs.spanAlloc(n)
+			if !ok {
+				return // validateSave bounded total members ≤ arena; unreachable
+			}
+			gs.Start[idx] = start
+			gs.Cap[idx] = n
+			copy(gs.Members[start:start+n], row.members)
+		}
+		gs.Len[idx] = n
 		gs.Gen[idx] = row.gen
 		gs.live[idx] = true
 		gs.count++

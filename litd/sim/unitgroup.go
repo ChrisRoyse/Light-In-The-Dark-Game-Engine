@@ -49,7 +49,16 @@ type GroupStore struct {
 
 	free    []int32 // free group slots (LIFO); serialized for slot-stable reload
 	count   int32   // live group count
-	perCap  int32   // v1 fixed members-per-group span size
+
+	// Member-arena span allocator (#613). A group's Start/Cap are no longer a
+	// fixed partition: CreateGroup reserves nothing, the first add reserves an
+	// initialGroupSpan span, and growth past Cap relocates the group to a
+	// best-fit free span (double-or-need). freeSpans is the sorted, coalesced
+	// list of free arena regions — a DERIVED index, never hashed or serialized;
+	// it is rebuilt from the live groups' spans on load. Preallocated so the
+	// allocator is zero-alloc.
+	freeSpans []span
+	memberCap int32
 
 	// Dropped counts add attempts that failed because a group's span was
 	// full (#561) or CreateGroup attempts that failed on pool exhaustion.
@@ -60,12 +69,18 @@ type GroupStore struct {
 	DebugAssert func(msg string, id GroupID)
 }
 
-// NewGroupStore returns a pool of `groupCap` group slots over a Members
-// arena of `memberCap` slots. The v1 per-group span size is
-// memberCap/groupCap (so the arena is fully partitioned, one fixed span
-// per group). Both caps must be positive and fit the 24-bit index space;
-// memberCap must be a multiple of groupCap is NOT required — any
-// remainder is simply unused arena tail.
+// span is a contiguous region of the member arena: Members[start:start+length].
+type span struct{ start, length int32 }
+
+// initialGroupSpan is the member-arena span a group reserves on its first add.
+// Growth doubles from here (8→16→…), best-fit, with relocation.
+const initialGroupSpan int32 = 8
+
+// NewGroupStore returns a pool of `groupCap` group slots over a shared Members
+// arena of `memberCap` slots, managed by a best-fit span allocator (#613): a
+// group reserves arena space on demand and grows by relocation, so one large
+// group and many small ones share the same arena (R-UGR-7). Both caps must be
+// positive and fit the 24-bit index space.
 func NewGroupStore(groupCap, memberCap int) *GroupStore {
 	if groupCap <= 0 || groupCap >= 1<<24 {
 		panic("sim: group capacity must be in (0, 2^24)")
@@ -73,27 +88,20 @@ func NewGroupStore(groupCap, memberCap int) *GroupStore {
 	if memberCap <= 0 || memberCap >= 1<<24 {
 		panic("sim: group member capacity must be in (0, 2^24)")
 	}
-	perCap := int32(memberCap / groupCap)
-	if perCap < 1 {
-		perCap = 1
-	}
 	n := groupCap + 1 // slot 0 reserved
 	s := &GroupStore{
-		Start:   make([]int32, n),
-		Len:     make([]int32, n),
-		Cap:     make([]int32, n),
-		Gen:     make([]uint8, n),
-		live:    make([]bool, n),
-		Members: make([]EntityID, memberCap),
-		free:    make([]int32, 0, groupCap),
-		perCap:  perCap,
+		Start:     make([]int32, n),
+		Len:       make([]int32, n),
+		Cap:       make([]int32, n),
+		Gen:       make([]uint8, n),
+		live:      make([]bool, n),
+		Members:   make([]EntityID, memberCap),
+		free:      make([]int32, 0, groupCap),
+		freeSpans: make([]span, 0, groupCap+1),
+		memberCap: int32(memberCap),
 	}
-	// Pre-assign each slot's fixed span and seed the free list (low slot
-	// first via LIFO, like TimerStore) so slot assignment is stable.
-	for i := 1; i <= groupCap; i++ {
-		s.Start[i] = int32(i-1) * perCap
-		s.Cap[i] = perCap
-	}
+	// Whole arena starts free; group slots seed low-first via LIFO (stable).
+	s.freeSpans = append(s.freeSpans, span{start: 0, length: int32(memberCap)})
 	for i := groupCap; i >= 1; i-- {
 		s.free = append(s.free, int32(i))
 	}
@@ -103,8 +111,147 @@ func NewGroupStore(groupCap, memberCap int) *GroupStore {
 // GroupCap is the number of usable group slots (excludes reserved slot 0).
 func (s *GroupStore) GroupCap() int { return len(s.live) - 1 }
 
-// MembersPerGroup is the v1 fixed per-group span capacity.
-func (s *GroupStore) MembersPerGroup() int32 { return s.perCap }
+// MembersPerGroup is the largest a single group can grow to — the whole arena
+// (the span allocator lifted the v1 fixed per-group cap, #613).
+func (s *GroupStore) MembersPerGroup() int32 { return s.memberCap }
+
+// spanAlloc reserves `need` contiguous arena slots via best fit (smallest free
+// span that fits), splitting the chosen span. Returns the start and ok=false on
+// arena exhaustion. Zero-alloc (the free-span slice only shrinks/rewrites).
+func (s *GroupStore) spanAlloc(need int32) (int32, bool) {
+	if need <= 0 {
+		return 0, true
+	}
+	best := -1
+	var bestLen int32
+	for i := range s.freeSpans {
+		l := s.freeSpans[i].length
+		if l >= need && (best == -1 || l < bestLen) {
+			best, bestLen = i, l
+		}
+	}
+	if best == -1 {
+		return 0, false
+	}
+	start := s.freeSpans[best].start
+	if bestLen == need {
+		s.freeSpans = append(s.freeSpans[:best], s.freeSpans[best+1:]...) // consume whole span
+	} else {
+		s.freeSpans[best].start += need // shrink from the front
+		s.freeSpans[best].length -= need
+	}
+	return start, true
+}
+
+// spanFree returns [start,start+length) to the free list, inserting in sorted
+// order and coalescing with adjacent free spans. Zero-alloc in steady state.
+func (s *GroupStore) spanFree(start, length int32) {
+	if length <= 0 {
+		return
+	}
+	// Insertion point (sorted by start).
+	i := 0
+	for i < len(s.freeSpans) && s.freeSpans[i].start < start {
+		i++
+	}
+	s.freeSpans = append(s.freeSpans, span{})
+	copy(s.freeSpans[i+1:], s.freeSpans[i:])
+	s.freeSpans[i] = span{start: start, length: length}
+	// Coalesce with the right neighbour, then the left.
+	if i+1 < len(s.freeSpans) && s.freeSpans[i].start+s.freeSpans[i].length == s.freeSpans[i+1].start {
+		s.freeSpans[i].length += s.freeSpans[i+1].length
+		s.freeSpans = append(s.freeSpans[:i+1], s.freeSpans[i+2:]...)
+	}
+	if i > 0 && s.freeSpans[i-1].start+s.freeSpans[i-1].length == s.freeSpans[i].start {
+		s.freeSpans[i-1].length += s.freeSpans[i].length
+		s.freeSpans = append(s.freeSpans[:i], s.freeSpans[i+1:]...)
+	}
+}
+
+// growGroup relocates group row to a span holding at least `need` members,
+// preserving member order. Doubles the current cap (or initialGroupSpan for the
+// first span), falling back to an exact `need` fit. Returns false on genuine
+// arena exhaustion, leaving the group's existing span intact. Zero-alloc.
+func (s *GroupStore) growGroup(row, need int32) bool {
+	target := initialGroupSpan
+	if s.Cap[row] > 0 {
+		target = s.Cap[row] * 2
+	}
+	if target < need {
+		target = need
+	}
+	// Case 1/2: a disjoint free span fits (preferred target, else exact need).
+	// Alloc first, copy, then free the old span — no overlap.
+	if start, ok := s.spanAlloc(target); ok {
+		s.relocateInto(row, start, target)
+		return true
+	}
+	if start, ok := s.spanAlloc(need); ok {
+		s.relocateInto(row, start, need)
+		return true
+	}
+	// Case 3: the only room is this group's own span plus adjacent free. Free
+	// it first (coalescing), then alloc — the copy may overlap (copy is
+	// memmove-safe). On failure, restore the original span exactly so the
+	// group's members are never lost.
+	if s.Cap[row] == 0 {
+		return false // a fresh group with no span and no free arena
+	}
+	oldStart, oldCap, oldLen := s.Start[row], s.Cap[row], s.Len[row]
+	s.spanFree(oldStart, oldCap)
+	want := target
+	start, ok := s.spanAlloc(want)
+	if !ok {
+		want = need
+		start, ok = s.spanAlloc(want)
+	}
+	if !ok {
+		s.reclaimExact(oldStart, oldCap) // genuine exhaustion: undo the free
+		return false
+	}
+	copy(s.Members[start:start+oldLen], s.Members[oldStart:oldStart+oldLen])
+	s.Start[row], s.Cap[row] = start, want
+	return true
+}
+
+// relocateInto moves group row's members into an already-allocated [start,cap)
+// span (disjoint from the old one) and frees the old span.
+func (s *GroupStore) relocateInto(row, start, cap int32) {
+	if s.Cap[row] > 0 {
+		copy(s.Members[start:start+s.Len[row]], s.Members[s.Start[row]:s.Start[row]+s.Len[row]])
+		s.spanFree(s.Start[row], s.Cap[row])
+	}
+	s.Start[row], s.Cap[row] = start, cap
+}
+
+// reclaimExact removes [start,start+length) from the free list — the exact undo
+// of a spanFree, used to roll back a failed relocation. The range lies wholly
+// within one free span (it was just freed); carve it out, splitting as needed.
+func (s *GroupStore) reclaimExact(start, length int32) {
+	end := start + length
+	for i := range s.freeSpans {
+		fs := s.freeSpans[i]
+		if start < fs.start || end > fs.start+fs.length {
+			continue
+		}
+		left := span{start: fs.start, length: start - fs.start}
+		right := span{start: end, length: fs.start + fs.length - end}
+		switch {
+		case left.length > 0 && right.length > 0:
+			s.freeSpans[i] = left
+			s.freeSpans = append(s.freeSpans, span{})
+			copy(s.freeSpans[i+2:], s.freeSpans[i+1:])
+			s.freeSpans[i+1] = right
+		case left.length > 0:
+			s.freeSpans[i] = left
+		case right.length > 0:
+			s.freeSpans[i] = right
+		default:
+			s.freeSpans = append(s.freeSpans[:i], s.freeSpans[i+1:]...)
+		}
+		return
+	}
+}
 
 // Count is the number of live groups.
 func (s *GroupStore) Count() int32 { return s.count }
@@ -122,23 +269,30 @@ func (s *GroupStore) CreateGroup() GroupID {
 	s.free = s.free[:n-1]
 	s.live[row] = true
 	s.Len[row] = 0
+	s.Start[row] = 0 // no span reserved until the first add (lazy)
+	s.Cap[row] = 0
 	s.count++
 	return makeGroupID(uint32(row), s.Gen[row])
 }
 
 // DestroyGroup frees a group's slot, bumping its generation so every
 // outstanding handle goes stale. Idempotent: destroying a stale/free
-// group is a no-op (returns false). The span returns to the slot's fixed
-// region (v1) — nothing to coalesce.
+// group is a no-op (returns false). The group's member span returns to the
+// arena allocator (coalesced) so other groups can reuse it (#613).
 func (s *GroupStore) DestroyGroup(id GroupID) bool {
 	row, ok := s.resolve(id)
 	if !ok {
 		s.assert("DestroyGroup of stale/absent group", id)
 		return false
 	}
+	if s.Cap[row] > 0 {
+		s.spanFree(s.Start[row], s.Cap[row])
+	}
 	s.live[row] = false
 	s.Gen[row]++
 	s.Len[row] = 0
+	s.Start[row] = 0
+	s.Cap[row] = 0
 	s.free = append(s.free, row)
 	s.count--
 	return true
@@ -223,8 +377,12 @@ func (s *GroupStore) GroupAdd(id GroupID, e EntityID) bool {
 		return true // already a member — unique, no-op
 	}
 	if s.Len[row] >= s.Cap[row] {
-		s.DroppedMembers++
-		return false // span full (v1 fixed cap; span allocator lifts this)
+		// Grow into a larger best-fit span (relocating, order-preserving). Only
+		// arena exhaustion drops the member now (#613, R-UGR-7).
+		if !s.growGroup(row, s.Len[row]+1) {
+			s.DroppedMembers++
+			return false
+		}
 	}
 	s.Members[s.Start[row]+s.Len[row]] = e
 	s.Len[row]++
@@ -440,15 +598,20 @@ func (s *GroupStore) PruneEntities(dead []EntityID) int {
 }
 
 // loadReset clears the store to the empty-but-allocated state before
-// applySave writes the decoded rows. Start/Cap are construction-fixed and
-// retained (the v1 partition is recomputed identically); only occupancy,
-// the free list, counters, and Len are reset.
+// applySave writes the decoded rows. The span allocator is reset to a single
+// whole-arena free span; applySave re-reserves each live group's span (#613).
+// Only the member bytes + Start/Len/Cap are the serialized state — the
+// freeSpans index is derived and rebuilt here.
 func (s *GroupStore) loadReset() {
 	for i := range s.live {
 		s.live[i] = false
 		s.Len[i] = 0
+		s.Start[i] = 0
+		s.Cap[i] = 0
 	}
 	s.free = s.free[:0]
+	s.freeSpans = s.freeSpans[:0]
+	s.freeSpans = append(s.freeSpans, span{start: 0, length: s.memberCap})
 	s.count = 0
 	s.DroppedGroups = 0
 	s.DroppedMembers = 0

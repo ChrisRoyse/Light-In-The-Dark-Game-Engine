@@ -107,22 +107,24 @@ func TestGroupClearAndEach(t *testing.T) {
 }
 
 func TestGroupSpanFullDropsMember(t *testing.T) {
-	s := NewGroupStore(2, 8) // perCap = 4
+	// Arena of 8; one group can now grow to fill it (#613), and only arena
+	// exhaustion drops a member.
+	s := NewGroupStore(2, 8)
 	g := s.CreateGroup()
-	for i := uint32(0); i < 4; i++ {
+	for i := uint32(0); i < 8; i++ {
 		if !s.GroupAdd(g, ent(100+i)) {
-			t.Fatalf("add %d failed below cap", i)
+			t.Fatalf("add %d failed below arena capacity", i)
 		}
 	}
-	// 5th add overflows the fixed span.
+	// 9th add cannot fit the 8-slot arena.
 	if s.GroupAdd(g, ent(999)) {
-		t.Fatal("add past span cap returned true")
+		t.Fatal("add past arena capacity returned true")
 	}
 	if s.DroppedMembers != 1 {
 		t.Fatalf("DroppedMembers = %d, want 1", s.DroppedMembers)
 	}
-	if s.GroupCount(g) != 4 {
-		t.Fatalf("count = %d, want 4 (overflow dropped)", s.GroupCount(g))
+	if s.GroupCount(g) != 8 {
+		t.Fatalf("count = %d, want 8 (arena-full overflow dropped)", s.GroupCount(g))
 	}
 }
 

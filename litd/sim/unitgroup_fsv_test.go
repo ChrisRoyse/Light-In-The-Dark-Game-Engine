@@ -61,7 +61,13 @@ func TestGroupScenarioGolden(t *testing.T) {
 	// Recorded 2026-06-23 (#567); bumped da66…→ba33… (#572) when the empty
 	// "kv" sub joined HashSystems (constant full-state shift; scenario
 	// only touches the unitgroups sub).
-	const golden = uint64(0x4846022f8bda62e5)
+	// Bumped 4846022f8bda62e5 → ab128a20d7c1c29a (#613): the best-fit span
+	// allocator lifts the v1 fixed per-group cap (perCap=16 here). The union
+	// c=a∪b is 17 members; v1 truncated it to 16 (DroppedMembers nonzero), so
+	// the hashed member bytes + dropped counter legitimately change — groups
+	// now hold their full membership (R-UGR-7). The empty-store sub-hash (every
+	// non-group scenario) is unchanged, so no other determinism golden moves.
+	const golden = uint64(0xab128a20d7c1c29a)
 	got := groupTopHash(w, reg)
 	if golden != 0 && got != golden {
 		t.Fatalf("group golden hash %016x != recorded %016x (intended? update golden)", got, golden)
