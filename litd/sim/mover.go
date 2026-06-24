@@ -59,6 +59,7 @@ const (
 const (
 	MoverAuthority uint8 = 1 << iota // owns the Target unit's transform (suspends pathing)
 	MoverFlying                      // air pathing: ignores ground terrain collision
+	MoverConsume                     // kill the Target entity on completion (projectile body)
 )
 
 // MoverStore is the SoA pool of motion controllers over a shared spline
@@ -78,6 +79,7 @@ type MoverStore struct {
 	AngVel    []fixed.Angle
 	Angle     []fixed.Angle
 	RangeLeft []fixed.F64
+	Range0    []fixed.F64 // initial RangeLeft, for MoverDoneLoop re-arm (#589)
 	Height    []fixed.F64
 	TurnRate  []fixed.Angle
 
@@ -177,7 +179,7 @@ func NewMoverStore(moverCap, wpCap int) *MoverStore {
 		Anchor: make([]EntityID, n), Goal: make([]fixed.Vec2, n), Dir: make([]fixed.Vec2, n),
 		Speed: make([]fixed.F64, n), Accel: make([]fixed.F64, n), Radius: make([]fixed.F64, n),
 		AngVel: make([]fixed.Angle, n), Angle: make([]fixed.Angle, n),
-		RangeLeft: make([]fixed.F64, n), Height: make([]fixed.F64, n), TurnRate: make([]fixed.Angle, n),
+		RangeLeft: make([]fixed.F64, n), Range0: make([]fixed.F64, n), Height: make([]fixed.F64, n), TurnRate: make([]fixed.Angle, n),
 		WpStart: make([]int32, n), WpLen: make([]int32, n), WpParam: make([]fixed.F64, n),
 		Cont: make([]uint16, n), CState: make([][4]int64, n),
 		HitMask: make([]uint16, n), Pierce: make([]int32, n), Decay: make([]uint16, n),
@@ -245,6 +247,7 @@ func (s *MoverStore) Create(spec MoverSpec) MoverID {
 	s.AngVel[r] = spec.AngVel
 	s.Angle[r] = spec.Angle
 	s.RangeLeft[r] = spec.RangeLeft
+	s.Range0[r] = spec.RangeLeft // remembered for loop re-arm
 	s.Height[r] = spec.Height
 	s.TurnRate[r] = spec.TurnRate
 	s.WpStart[r] = spec.WpStart

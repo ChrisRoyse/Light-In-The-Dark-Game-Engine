@@ -155,15 +155,3 @@ func distLE(v fixed.Vec2, r fixed.F64) bool {
 	}
 	return dLo <= rLo
 }
-
-// moverComplete handles a mover that finished its motion this tick. #584
-// seam: expire (free the mover). The full completion policy — loop /
-// detonate / cont, plus consume-on-impact — is layered in by #589, which
-// replaces this body with a DoneMode dispatch.
-func (w *World) moverComplete(r int32) {
-	ms := w.Movers
-	ms.live[r] = false
-	ms.Gen[r]++
-	ms.free = append(ms.free, r)
-	ms.count--
-}

@@ -191,6 +191,9 @@ func (w *World) phaseCleanup() {
 	// the killed set is intact (#564, R-UGR-6): a dead unit must not linger
 	// in a group's count, iteration, or serialized members.
 	w.Groups.PruneEntities(w.killed)
+	// Auto-cancel movers owned by entities dying this tick (#589, R-MOV-10):
+	// a caster's projectiles/forced-moves die with it.
+	w.Movers.CancelOwnedBy(w.killed)
 	// Drop each dying entity's KV run (entity scope only; global/player
 	// scope is never auto-pruned, spec §8, R-KV-8). Bounded by the killed
 	// list; deterministic.
