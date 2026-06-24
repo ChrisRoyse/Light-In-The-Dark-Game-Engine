@@ -22,6 +22,8 @@ projectile = "glaive"
 op    = "attach_mover"
 mover = "spline"
 speed = 24
+# Out-and-back control points (Catmull-Rom): origin → far → back to origin.
+waypoints = [ [0.0, 0.0], [0.0, 0.0], [400.0, 0.0], [0.0, 0.0], [0.0, 0.0] ]
 fx = { hit = "enemy", radius = 60, pierce = 99, effects = "glaive_hit" }
 
 [ability.effects.glaive_hit]

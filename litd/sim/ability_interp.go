@@ -227,6 +227,8 @@ func (w *World) abilityAttachMover(op *AbilityOp, ctx *abilityCtx) {
 		Kind: op.MoverKind, Target: target, Owner: ctx.caster,
 		Dir: ctx.dir, Speed: op.Speed, RangeLeft: op.Range, Radius: op.Radius,
 		HitMask: op.HitMask, Pierce: op.Pierce, Payload: op.EffectList,
+		AngVel: op.AngVel, TurnRate: op.TurnRate, Height: op.Height,
+		Decay: op.Decay, DoneMode: op.DoneMode, OnDone: op.OnDone,
 	}
 	// A mover carrying a spawned projectile owns that body's lifetime: consume
 	// it on completion so projectiles don't leak unit slots (R-ABL-6). A mover
@@ -239,6 +241,14 @@ func (w *World) abilityAttachMover(op *AbilityOp, ctx *abilityCtx) {
 		spec.Anchor = ctx.target
 	case MoverPoint:
 		spec.Goal = ctx.point
+	}
+	// Spline movers carry their control points; file them into the shared
+	// waypoint arena at cast time (#622).
+	if len(op.Waypoints) > 0 {
+		if start, length, ok := w.Movers.AddWaypoints(op.Waypoints); ok {
+			spec.WpStart = start
+			spec.WpLen = length
+		}
 	}
 	w.Movers.Create(spec)
 }

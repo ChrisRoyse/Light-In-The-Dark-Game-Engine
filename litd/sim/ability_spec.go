@@ -109,6 +109,15 @@ type AbilityOp struct {
 	HitMask uint16
 	Pierce  int32
 
+	// Extended mover params (#622) — set on the MoverSpec by attach_mover.
+	AngVel    fixed.Angle    // orbit angular velocity, BAM/tick
+	TurnRate  fixed.Angle    // homing turn rate, BAM/tick (0 = instant track)
+	Height    fixed.F64      // arc apex height
+	Decay     uint16         // per-hit damage decay, per-mille
+	DoneMode  MoverDoneMode  // on completion: expire/loop/detonate/cont
+	OnDone    uint16         // cont id for DoneMode=cont
+	Waypoints []fixed.Vec2   // spline control points
+
 	// Block is the AbilityBook deferred-block index for after/loop/times ops
 	// (0 = none). Assigned by AbilityBook.RegisterSpec (#595), not the
 	// compiler — it is runtime wiring, never serialized.
@@ -175,7 +184,33 @@ type OpSource struct {
 	HitMask uint16
 	Pierce  int
 
+	// Extended mover params (#622). Angles in degrees-per-tick; Decay per-mille.
+	AngVel    float64
+	TurnRate  float64
+	Height    float64
+	Decay     int
+	Done      string // expire | loop | detonate | cont
+	Waypoints []WaypointSource
+
 	Children []OpSource
+}
+
+// WaypointSource is one author-facing spline control point (world units).
+type WaypointSource struct{ X, Y float64 }
+
+// moverDoneModeNames maps the author done string to its compiled mode.
+var moverDoneModeNames = map[string]MoverDoneMode{
+	"expire": MoverDoneExpire, "loop": MoverDoneLoop,
+	"detonate": MoverDoneDetonate, "cont": MoverDoneCont,
+}
+
+// degToBAM converts degrees to the sim binary angle (65536 = full circle),
+// rejecting NaN/Inf. Used for angvel/turnrate (per-tick).
+func degToBAM(deg float64) (fixed.Angle, error) {
+	if math.IsNaN(deg) || math.IsInf(deg, 0) {
+		return 0, fmt.Errorf("angle %v is not finite", deg)
+	}
+	return fixed.Angle(int64(math.Round(deg*65536.0/360.0)) & 0xffff), nil
 }
 
 // AbilityResolver resolves author names to compiled ids. Supplied by the
@@ -281,10 +316,41 @@ func compileOps(id string, srcs []OpSource, res AbilityResolver, depth int) ([]A
 		if !ok {
 			return nil, fmt.Errorf("ability %q op[%d]: unknown op %q", id, i, s.Op)
 		}
-		op := AbilityOp{Kind: kind, Cont: s.Cont, Arg: s.Arg, Count: int32(s.Count), HitMask: s.HitMask, Pierce: int32(s.Pierce)}
+		op := AbilityOp{Kind: kind, Cont: s.Cont, Arg: s.Arg, Count: int32(s.Count), HitMask: s.HitMask, Pierce: int32(s.Pierce), OnDone: s.Cont}
 		var err error
 		if op.Speed, err = fixedExact(s.Speed, "speed"); err != nil {
 			return nil, fmt.Errorf("ability %q op[%d]: %w", id, i, err)
+		}
+		if op.AngVel, err = degToBAM(s.AngVel); err != nil {
+			return nil, fmt.Errorf("ability %q op[%d]: angvel: %w", id, i, err)
+		}
+		if op.TurnRate, err = degToBAM(s.TurnRate); err != nil {
+			return nil, fmt.Errorf("ability %q op[%d]: turnrate: %w", id, i, err)
+		}
+		if op.Height, err = fixedExact(s.Height, "height"); err != nil {
+			return nil, fmt.Errorf("ability %q op[%d]: %w", id, i, err)
+		}
+		if s.Decay < 0 || s.Decay > 1000 {
+			return nil, fmt.Errorf("ability %q op[%d]: decay %d out of [0,1000] per-mille", id, i, s.Decay)
+		}
+		op.Decay = uint16(s.Decay)
+		if s.Done != "" {
+			dm, ok := moverDoneModeNames[s.Done]
+			if !ok {
+				return nil, fmt.Errorf("ability %q op[%d]: unknown done mode %q", id, i, s.Done)
+			}
+			op.DoneMode = dm
+		}
+		for wi, wp := range s.Waypoints {
+			x, err := fixedExact(wp.X, "waypoint.x")
+			if err != nil {
+				return nil, fmt.Errorf("ability %q op[%d] waypoint[%d]: %w", id, i, wi, err)
+			}
+			y, err := fixedExact(wp.Y, "waypoint.y")
+			if err != nil {
+				return nil, fmt.Errorf("ability %q op[%d] waypoint[%d]: %w", id, i, wi, err)
+			}
+			op.Waypoints = append(op.Waypoints, fixed.Vec2{X: x, Y: y})
 		}
 		if op.Range, err = fixedExact(s.Range, "range"); err != nil {
 			return nil, fmt.Errorf("ability %q op[%d]: %w", id, i, err)

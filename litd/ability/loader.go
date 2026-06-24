@@ -61,16 +61,22 @@ type rawOp struct {
 	Event      string  `toml:"event"`
 	Key        string  `toml:"key"`
 	Cont       uint16  `toml:"cont"`
-	Speed      float64 `toml:"speed"`
-	Range      float64 `toml:"range"`
-	Radius     float64 `toml:"radius"`
-	Amount     float64 `toml:"amount"`
-	Arg        int64   `toml:"arg"`
-	Count      int     `toml:"count"`
-	Hit        string  `toml:"hit"`
-	Pierce     int     `toml:"pierce"`
-	Fx         *rawFx  `toml:"fx"`
-	Children   []rawOp `toml:"children"`
+	Speed      float64       `toml:"speed"`
+	Range      float64       `toml:"range"`
+	Radius     float64       `toml:"radius"`
+	Amount     float64       `toml:"amount"`
+	Arg        int64         `toml:"arg"`
+	Count      int           `toml:"count"`
+	Hit        string        `toml:"hit"`
+	Pierce     int           `toml:"pierce"`
+	AngVel     float64       `toml:"angvel"`
+	TurnRate   float64       `toml:"turn_rate"`
+	Height     float64       `toml:"height"`
+	Decay      int           `toml:"decay"`
+	Done       string        `toml:"done"`
+	Waypoints  [][2]float64  `toml:"waypoints"`
+	Fx         *rawFx        `toml:"fx"`
+	Children   []rawOp       `toml:"children"`
 }
 
 type rawFx struct {
@@ -134,6 +140,10 @@ func convertOps(raw []rawOp, t *Template) ([]sim.OpSource, error) {
 			Op: r.Op, Mover: r.Mover, Effects: r.Effects, Event: r.Event, Key: r.Key,
 			Cont: r.Cont, Speed: r.Speed, Range: r.Range, Radius: r.Radius, Amount: r.Amount,
 			Arg: r.Arg, Count: r.Count, Pierce: r.Pierce, HitMask: parseHitMask(r.Hit),
+			AngVel: r.AngVel, TurnRate: r.TurnRate, Height: r.Height, Decay: r.Decay, Done: r.Done,
+		}
+		for _, wp := range r.Waypoints {
+			o.Waypoints = append(o.Waypoints, sim.WaypointSource{X: wp[0], Y: wp[1]})
 		}
 		// attach_mover folds the inline fx table into the op fields.
 		if r.Fx != nil {
@@ -145,6 +155,9 @@ func convertOps(raw []rawOp, t *Template) ([]sim.OpSource, error) {
 			}
 			if r.Fx.Pierce != 0 {
 				o.Pierce = r.Fx.Pierce
+			}
+			if r.Fx.Done != "" {
+				o.Done = r.Fx.Done
 			}
 			if m := parseHitMask(r.Fx.Hit); m != 0 {
 				o.HitMask = m

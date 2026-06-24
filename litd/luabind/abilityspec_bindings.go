@@ -83,6 +83,18 @@ func abilityOpFromTable(t *lua.LTable) api.AbilityOpDef {
 		Cont: uint16(num("cont")), Speed: num("speed"), Range: num("range"), Radius: num("radius"),
 		Amount: num("amount"), Arg: int64(num("arg")), Count: int(num("count")),
 		HitMask: uint16(num("hitmask")), Pierce: int(num("pierce")),
+		AngVel: num("angvel"), TurnRate: num("turn_rate"), Height: num("height"),
+		Decay: int(num("decay")), Done: str("done"),
+	}
+	if wps, ok := t.RawGetString("waypoints").(*lua.LTable); ok {
+		n := wps.Len()
+		for i := 1; i <= n; i++ {
+			if pt, ok := wps.RawGetInt(i).(*lua.LTable); ok {
+				x, _ := pt.RawGetString("x").(lua.LNumber)
+				y, _ := pt.RawGetString("y").(lua.LNumber)
+				op.Waypoints = append(op.Waypoints, [2]float64{float64(x), float64(y)})
+			}
+		}
 	}
 	if kids, ok := t.RawGetString("children").(*lua.LTable); ok {
 		op.Children = abilityOpsFromTable(kids)

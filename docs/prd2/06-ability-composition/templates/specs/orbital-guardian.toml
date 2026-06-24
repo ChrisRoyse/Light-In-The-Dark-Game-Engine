@@ -22,7 +22,8 @@ op     = "attach_mover"
 mover  = "orbit_unit"
 speed  = 18
 radius = 160
-fx = { hit = "enemy", radius = 40, pierce = 99, effects = "guardian_hit" }
+angvel = 9.0          # ~9 deg/tick → a full orbit in ~40 ticks (2s)
+fx = { hit = "enemy", radius = 40, pierce = 99, done = "loop", effects = "guardian_hit" }
 
 [ability.effects.guardian_hit]
 ops = [

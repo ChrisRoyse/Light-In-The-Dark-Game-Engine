@@ -35,6 +35,16 @@ type AbilityOpDef struct {
 	HitMask uint16
 	Pierce  int
 
+	// Extended mover params (#622): AngVel/TurnRate in degrees-per-tick,
+	// Decay per-mille, Done one of expire/loop/detonate/cont, Waypoints world
+	// units (spline control points).
+	AngVel    float64
+	TurnRate  float64
+	Height    float64
+	Decay     int
+	Done      string
+	Waypoints [][2]float64
+
 	Children []AbilityOpDef
 }
 
@@ -101,7 +111,11 @@ func opDefsToSource(ops []AbilityOpDef) []sim.OpSource {
 			Op: o.Op, Mover: o.Mover, Effects: o.Effects, Event: o.Event, Key: o.Key,
 			Cont: o.Cont, Speed: o.Speed, Range: o.Range, Radius: o.Radius, Amount: o.Amount,
 			Arg: o.Arg, Count: o.Count, HitMask: o.HitMask, Pierce: o.Pierce,
+			AngVel: o.AngVel, TurnRate: o.TurnRate, Height: o.Height, Decay: o.Decay, Done: o.Done,
 			Children: opDefsToSource(o.Children),
+		}
+		for _, wp := range o.Waypoints {
+			out[i].Waypoints = append(out[i].Waypoints, sim.WaypointSource{X: wp[0], Y: wp[1]})
 		}
 	}
 	return out

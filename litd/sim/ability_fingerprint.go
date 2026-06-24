@@ -61,6 +61,17 @@ func hashAbilityOps(h *statehash.Hasher, ops []AbilityOp) {
 		h.WriteI64(int64(op.Count))
 		h.WriteU16(op.HitMask)
 		h.WriteI64(int64(op.Pierce))
+		h.WriteU16(uint16(op.AngVel))
+		h.WriteU16(uint16(op.TurnRate))
+		h.WriteI64(int64(op.Height))
+		h.WriteU16(op.Decay)
+		h.WriteU8(uint8(op.DoneMode))
+		h.WriteU16(op.OnDone)
+		h.WriteU32(uint32(len(op.Waypoints)))
+		for _, wp := range op.Waypoints {
+			h.WriteI64(int64(wp.X))
+			h.WriteI64(int64(wp.Y))
+		}
 		hashAbilityOps(h, op.Children)
 	}
 }
