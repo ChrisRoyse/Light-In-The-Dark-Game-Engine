@@ -163,6 +163,132 @@ func (s *GroupStore) Alive(id GroupID) bool {
 	return ok
 }
 
+// ---------------------------------------------------------------------
+// Membership ops (#561). All operate on a group's span
+// Members[Start:Start+Len]. Uniqueness and Contains use a linear span
+// scan (O(Cap)=O(64) in the v1 fixed-cap cut, spec §2-sanctioned); the
+// O(1) presence bitset is the span-allocator follow-up's concern. All
+// zero-alloc; stale handles are safe no-ops.
+// ---------------------------------------------------------------------
+
+// memberIndex returns the position of e within group row's span, or -1.
+func (s *GroupStore) memberIndex(row int32, target EntityID) int32 {
+	start, n := s.Start[row], s.Len[row]
+	for i := int32(0); i < n; i++ {
+		if s.Members[start+i] == target {
+			return i
+		}
+	}
+	return -1
+}
+
+// GroupContains reports whether e is a member of g. Stale g ⇒ false.
+func (s *GroupStore) GroupContains(id GroupID, e EntityID) bool {
+	row, ok := s.resolve(id)
+	if !ok {
+		return false
+	}
+	return s.memberIndex(row, e) >= 0
+}
+
+// GroupCount returns g's member count, 0 for a stale handle.
+func (s *GroupStore) GroupCount(id GroupID) int32 {
+	row, ok := s.resolve(id)
+	if !ok {
+		return 0
+	}
+	return s.Len[row]
+}
+
+// GroupFirst returns g's first (oldest) member in insertion order, or
+// EntityID(0) when g is empty or stale — a deterministic pick.
+func (s *GroupStore) GroupFirst(id GroupID) EntityID {
+	row, ok := s.resolve(id)
+	if !ok || s.Len[row] == 0 {
+		return 0
+	}
+	return s.Members[s.Start[row]]
+}
+
+// GroupAdd appends e to g if not already present (unique, insertion-
+// ordered). Returns true if e is in g after the call (added or already
+// present), false on a stale handle or a full span (DroppedMembers++).
+func (s *GroupStore) GroupAdd(id GroupID, e EntityID) bool {
+	row, ok := s.resolve(id)
+	if !ok {
+		s.assert("GroupAdd on stale/absent group", id)
+		return false
+	}
+	if s.memberIndex(row, e) >= 0 {
+		return true // already a member — unique, no-op
+	}
+	if s.Len[row] >= s.Cap[row] {
+		s.DroppedMembers++
+		return false // span full (v1 fixed cap; span allocator lifts this)
+	}
+	s.Members[s.Start[row]+s.Len[row]] = e
+	s.Len[row]++
+	return true
+}
+
+// GroupRemove removes e from g by swap (O(1), reorders the survivors).
+// Returns true if e was present. Stale handle ⇒ false.
+func (s *GroupStore) GroupRemove(id GroupID, e EntityID) bool {
+	row, ok := s.resolve(id)
+	if !ok {
+		return false
+	}
+	i := s.memberIndex(row, e)
+	if i < 0 {
+		return false
+	}
+	start, last := s.Start[row], s.Len[row]-1
+	s.Members[start+i] = s.Members[start+last]
+	s.Len[row]--
+	return true
+}
+
+// GroupRemoveOrdered removes e from g preserving insertion order (O(n)
+// shift). Returns true if e was present. Stale handle ⇒ false.
+func (s *GroupStore) GroupRemoveOrdered(id GroupID, e EntityID) bool {
+	row, ok := s.resolve(id)
+	if !ok {
+		return false
+	}
+	i := s.memberIndex(row, e)
+	if i < 0 {
+		return false
+	}
+	start, n := s.Start[row], s.Len[row]
+	copy(s.Members[start+i:start+n-1], s.Members[start+i+1:start+n])
+	s.Len[row]--
+	return true
+}
+
+// GroupClear empties g (Len=0) without freeing the slot. Stale ⇒ no-op.
+func (s *GroupStore) GroupClear(id GroupID) {
+	if row, ok := s.resolve(id); ok {
+		s.Len[row] = 0
+	}
+}
+
+// GroupEach visits g's members in insertion order. The count is snapshotted
+// at entry and the index is re-clamped to the live Len each step, so a
+// callback that removes members cannot read past the span (safe in-loop
+// removal); note a swap-Remove inside the loop may skip the swapped-in
+// member — use GroupRemoveOrdered or collect-then-remove if completeness
+// matters. Stale handle ⇒ no visits.
+func (s *GroupStore) GroupEach(id GroupID, fn func(EntityID)) {
+	row, ok := s.resolve(id)
+	if !ok {
+		return
+	}
+	n := s.Len[row]
+	for i := int32(0); i < n && i < s.Len[row]; i++ {
+		fn(s.Members[s.Start[row]+i])
+	}
+}
+
 func (s *GroupStore) assert(msg string, id GroupID) {
 	if s.DebugAssert != nil {
 		s.DebugAssert(msg, id)
