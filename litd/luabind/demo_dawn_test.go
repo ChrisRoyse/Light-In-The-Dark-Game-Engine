@@ -82,6 +82,36 @@ func TestDemoTwoMissionCarryChainFSV(t *testing.T) {
 	}
 }
 
+func TestDemoDawnInstantiatesCarriedLevelDataDrivenFSV(t *testing.T) {
+	// #312 FSV edge 3: "a different playthrough → mission 2 reflects the different
+	// record." TestDemoTwoMissionCarryChainFSV always carries level 3, so a dawn
+	// that hardcoded "3" (or clamped to it) would pass it. This hands dawn DIFFERENT
+	// carried levels and asserts the instantiated hero matches each — proving the
+	// carried level is data-driven, not baked. SoT = dawn's own store after stepping.
+	cat := campaign.StorageCategory("demo")
+	for _, level := range []int{2, 5} {
+		d, err := worldhost.Load(demoDir+"/dawn", 1, 50_000_000)
+		if err != nil {
+			t.Fatalf("level %d: load dawn: %v", level, err)
+		}
+		// Hand dawn a synthetic carry at this level (the runner's hand-off seam).
+		d.Game.Storage().SetInt(cat, "carry:dawn:hero-count", 1)
+		d.Game.Storage().SetInt(cat, "carry:dawn:hero:0:level", level)
+		d.Game.Storage().SetInt(cat, "carry:dawn:hero:0:item-count", 1)
+		d.Game.Advance(20)
+		got, ok := d.Game.Storage().GetInt(cat, "dawn:caldus:level")
+		carried, _ := d.Game.Storage().GetInt(cat, "dawn:carried-heroes")
+		t.Logf("FSV edge3: carried level %d → dawn instantiated level=(%d,%v) carried-heroes=%d", level, got, ok, carried)
+		if !ok || got != level {
+			t.Fatalf("dawn instantiated Caldus at level %d, want carried %d — carry is not data-driven", got, level)
+		}
+		if carried != 1 {
+			t.Fatalf("level %d: dawn saw %d carried heroes, want 1", level, carried)
+		}
+		d.Close()
+	}
+}
+
 func TestDemoDawnStandaloneLevelOneFSV(t *testing.T) {
 	// Fail-safe: loaded with no carry committed, dawn still works — Caldus arrives
 	// at level 1 (never a level-0 / no hero). SoT = dawn's own store.
