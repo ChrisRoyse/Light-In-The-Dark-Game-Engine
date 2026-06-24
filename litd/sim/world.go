@@ -191,6 +191,16 @@ type World struct {
 	// runtime ability rows (#355), appended after loaded abilityDefs.
 	// Backing storage is capped by Caps.RuntimeAbilityDefs.
 	runtimeAbilityDefs []data.Ability
+	// composable-spec bridge (#597): ability ref → AbilitySpec index+1 (0 =
+	// a plain effect/trigger ability). A granted composable ability casts
+	// through the SAME #160 slot machine; its EFFECT edge runs the op
+	// interpreter (#595) instead of an effect list. Rebuilt at setup from the
+	// registered specs — not serialized (mirrors AbilityDefs/AbilityBook).
+	specRefs []uint16
+	// item→ability grants (#597): item type id → ability refs the item grants
+	// its carrier on pickup and revokes on drop. Setup-registered, scanned
+	// (never ranged in a hot loop); not serialized.
+	itemGrants []itemAbilityGrant
 	// modder-registered effect primitives (#477): names hash + serialize
 	// (the per-match contract); execs are re-bound in setup on load. Capped
 	// by Caps.RuntimeEffects, frozen at first Step.

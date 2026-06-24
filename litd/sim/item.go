@@ -337,6 +337,7 @@ func (w *World) takeItem(unit, item EntityID, requireReach bool) uint8 {
 	w.Items.Carrier[r] = unit
 	w.Invents.SetSlot(unit, slot, item)
 	w.recomputeBuffStats(unit) // fold the carried modifiers in
+	w.applyItemGrants(unit, w.Items.TypeID[r], true) // #597: item-granted abilities
 	w.Emit(Event{Kind: EvItemPickedUp, Src: unit, Dst: item, Arg: int64(slot)})
 	return ItemOK
 }
@@ -356,8 +357,10 @@ func (w *World) DropItem(unit EntityID, slot int) uint8 {
 	if !ok {
 		return ItemNoSpace
 	}
+	itemType := w.Items.TypeID[w.Items.Row(item)]
 	w.Invents.ClearSlot(unit, slot)
 	w.groundItem(item, pos)
+	w.applyItemGrants(unit, itemType, false) // #597: revoke item-granted abilities
 	w.recomputeBuffStats(unit)
 	w.Emit(Event{Kind: EvItemDropped, Src: unit, Dst: item, Arg: 0})
 	return ItemOK
@@ -394,9 +397,12 @@ func (w *World) GiveItem(from EntityID, slot int, to EntityID) uint8 {
 		return ItemFull
 	}
 	item := w.Invents.Slots[fr][slot]
+	itemType := w.Items.TypeID[w.Items.Row(item)]
 	w.Invents.ClearSlot(from, slot)
 	w.Invents.SetSlot(to, free, item)
 	w.Items.Carrier[w.Items.Row(item)] = to
+	w.applyItemGrants(from, itemType, false) // #597: item-granted abilities follow the item
+	w.applyItemGrants(to, itemType, true)
 	w.recomputeBuffStats(from)
 	w.recomputeBuffStats(to)
 	w.Emit(Event{Kind: EvItemDropped, Src: from, Dst: item, Arg: 0})

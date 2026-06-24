@@ -286,7 +286,12 @@ func (w *World) advanceCast(ar int32, id EntityID, slot int, or int32) {
 			return
 		}
 		effectEv := Event{Kind: EvAbilityEffect, Src: id, Dst: w.Orders.Target[or], Arg: int64(a.AbilityID[ar][slot])}
-		if def.TriggerName != "" {
+		if specIdx, ok := w.specForRef(a.AbilityID[ar][slot]); ok {
+			// #597: a composable AbilitySpec — run the op interpreter (#595)
+			// with the cast's caster/target/point. The slot machine still owns
+			// mana, cooldown, and the cast-state lifecycle around this edge.
+			w.CastAbility(specIdx, id, w.Orders.Target[or], w.Orders.Point[or])
+		} else if def.TriggerName != "" {
 			// #478: behavior is a bound trigger (event = this cast). An unbound
 			// name, a disabled trigger, or a false condition is a documented
 			// no-op (the spell simply does nothing this cast).
