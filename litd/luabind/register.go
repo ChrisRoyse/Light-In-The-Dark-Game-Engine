@@ -45,6 +45,7 @@ func Register(L *lua.LState, g *api.Game) error {
 		registerGroups(L, gameBinder{g: g})    // persistent unit-group verbs (PRD2 02, #566)
 		registerKV(L, gameBinder{g: g})        // key-value store verbs (PRD2 03, #573)
 		registerCustomEvents(L, gameBinder{g: g}) // custom-event verbs (PRD2 04, #619)
+		registerMovers(L, gameBinder{g: g})       // unified-mover verbs (PRD2 05, #591)
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
 		registerScriptTriggers(L, g)           // CreateTrigger/TriggerRegisterX/... ECA bindings (#463)
