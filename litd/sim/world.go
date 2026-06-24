@@ -25,6 +25,7 @@ type Caps struct {
 	RuntimeAbilityDefs int // dynamic ability rows appended after bound data
 	RuntimeEffects     int // modder-registered effect primitives (#477)
 	Triggers           int // first-class ECA trigger slab (#456)
+	Timers             int // serializable timer wheel pool (PRD2 01, #551)
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
@@ -41,6 +42,7 @@ var EngineCaps = Caps{
 	RuntimeAbilityDefs: 1024,
 	RuntimeEffects:     256,
 	Triggers:           4096,
+	Timers:             4096,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -65,6 +67,7 @@ func (c Caps) resolve() Caps {
 		RuntimeAbilityDefs: clampCap(c.RuntimeAbilityDefs, EngineCaps.RuntimeAbilityDefs),
 		RuntimeEffects:     clampCap(c.RuntimeEffects, EngineCaps.RuntimeEffects),
 		Triggers:           clampCap(c.Triggers, EngineCaps.Triggers),
+		Timers:             clampCap(c.Timers, EngineCaps.Timers),
 	}
 }
 
@@ -390,6 +393,11 @@ type World struct {
 	// first-class ECA trigger slab (#456): gen-checked handles holding
 	// events/condition/actions/enabled/initially-on. Hashes + serializes.
 	Triggers *TriggerStore
+	// serializable timer wheel (PRD2 01, #544): self-pooled timers with
+	// stable TimerID handles, continuation (not closure) payloads, and
+	// (WakeTick,Seq) fire ordering. Pool foundation lands in #551; modes
+	// (#552), schedule index (#553), and hash/save (#555) build on it.
+	Timers *TimerStore
 	// boolexpr condition arena (#457): flat And/Or/Not/Cond nodes indexed
 	// by ExprRef. Cold-path authoring; hashes + serializes.
 	exprArena []exprNode
@@ -482,6 +490,7 @@ func NewWorld(requested Caps) *World {
 		handlers:           make(map[HandlerID]EventHandler),
 		handlerReg:         newHandlerRegistry(),
 		Triggers:           NewTriggerStore(caps.Triggers),
+		Timers:             NewTimerStore(caps.Timers),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),
