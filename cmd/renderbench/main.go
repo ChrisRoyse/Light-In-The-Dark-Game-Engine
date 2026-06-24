@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"time"
 
 	litapi "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
@@ -111,7 +112,12 @@ func main() {
 	shotsDir := flag.String("shots", "", "output directory for -all/-gate keyframes + report (default artifacts/)")
 	shotPath := flag.String("shot", "", "write screenshot PNG (last replay frame)")
 	dumpPath := flag.String("dump", "", "write benchmark JSON")
+	memProfDir := flag.String("memprofile", "", "dir for before/after heap profiles around a steady frame (#537 alloc attribution); diff with `go tool pprof -alloc_objects -base`")
 	flag.Parse()
+
+	if *memProfDir != "" {
+		runtime.MemProfileRate = 1 // record every allocation (default samples ~1/512KiB)
+	}
 
 	if *all {
 		if err := runAll(*shotsDir); err != nil {
@@ -233,6 +239,21 @@ func main() {
 			os.Exit(0)
 		}
 		applyCamKey(cam, stream.Camera[frame])
+
+		// #537 alloc attribution: capture cumulative heap profiles bracketing one
+		// steady-state frame; their pprof -base diff is exactly that frame's allocs.
+		if *memProfDir != "" && (frame == stream.Frames-3 || frame == stream.Frames-2) {
+			name := "before.prof"
+			if frame == stream.Frames-2 {
+				name = "after.prof"
+			}
+			runtime.GC()
+			f, err := os.Create(filepath.Join(*memProfDir, name))
+			if err == nil {
+				_ = pprof.WriteHeapProfile(f)
+				_ = f.Close()
+			}
+		}
 
 		var m0 runtime.MemStats
 		runtime.ReadMemStats(&m0)

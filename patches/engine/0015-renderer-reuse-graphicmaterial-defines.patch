@@ -1,0 +1,27 @@
+diff --git a/renderer/renderer.go b/renderer/renderer.go
+index cf77fb1..60b9bf2 100644
+--- a/renderer/renderer.go
++++ b/renderer/renderer.go
+@@ -304,8 +386,20 @@ func (r *Renderer) renderGraphicMaterial(grmat *graphic.GraphicMaterial) error {
+ 	geom := grmat.IGraphic().GetGeometry()
+ 	gr := grmat.IGraphic().GetGraphic()
+ 
+-	// Add defines from material, geometry and graphic
+-	r.specs.Defines = *gls.NewShaderDefines()
++	// Add defines from material, geometry and graphic.
++	// LITD-PATCH (#537): reuse the defines map in place instead of make()-ing a
++	// fresh one per graphic-material per frame (133 graphics → a dominant chunk of
++	// the ~268 steady-state map allocs). Safe: SetProgram→ShaderSpecs.copy()
++	// deep-copies Defines into its own map, so the shader cache never retains this
++	// one. Clear-in-place lowers to runtime.mapclear (engine go.mod is go1.13, no
++	// clear() builtin).
++	if r.specs.Defines == nil {
++		r.specs.Defines = *gls.NewShaderDefines()
++	} else {
++		for k := range r.specs.Defines {
++			delete(r.specs.Defines, k)
++		}
++	}
+ 	r.specs.Defines.Add(&mat.ShaderDefines)
+ 	r.specs.Defines.Add(&geom.ShaderDefines)
+ 	r.specs.Defines.Add(&gr.ShaderDefines)

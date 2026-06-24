@@ -15,5 +15,9 @@
 | `0009-instance-team-color-buffer.patch` | Per-instance team-color buffer and shader plumbing for instanced draws. |
 | `0010-fog-of-war-shader-term.patch` | Per-fragment fog-of-war texture term (`LITD_FOG`) in both the standard and physical (PBR) shaders: samples the visibility-grid fog texture by world XZ (`ModelMatrix * localPos`, so world-baked terrain and translated unit meshes both fog by world position) and dims in three zones (hidden/explored/visible). Drives `litd/render.FogTerrainMesh` (#161, #536). |
 | `0011-gls-framebuffer-delete-wrappers.patch` | `GLS.DeleteFramebuffers` / `GLS.DeleteRenderbuffers` Go wrappers (upstream `gls` ships `GenFramebuffer`/`GenRenderbuffer` but no matching deletes) so offscreen render targets release their GL objects instead of leaking. Drives `litd/render.PortraitTarget` (#193). |
+| `0012-renderer-panel-material-no-escape.patch` | Per-panel `GraphicMaterial` pointer no longer escapes (mirror the graphics path: `&mats[0]` into the panel's own slice). Minor — measured ~1 alloc/frame in max-battle (only 1 panel), not the dominant source (#537). |
+| `0013-renderer-reuse-zlayers-map.patch` | Reuse the `zLayers` GUI map in place (`delete`-clear, no per-frame `make`). Minor — 1 map/frame (#537). |
+| `0014-renderer-reuse-cull-frustum.patch` | Cull frustum allocated once in `NewRenderer`, planes re-set in place each frame via `SetFromMatrix` (was `make([]math32.Plane,6)` per frame). Minor — 1 slice/frame (#537). |
+| `0015-renderer-reuse-graphicmaterial-defines.patch` | Reuse `r.specs.Defines` map in place in `renderGraphicMaterial` instead of `make()` per graphic-material per frame. **Dominant** steady-state source: max-battle 433→286 allocs/frame, scene hash unchanged (#537). |
 
 Issue #107 does not add a new engine patch. Its rigid-only instancing floor uses patches `0005`, `0006`, and `0009`, with policy/FSV evidence in `litd/render` and `cmd/renderbench`; skinned GLB sink work remains tracked by #308.
