@@ -114,7 +114,15 @@ func (w *World) moverStepHoming(r int32) {
 	if ar := w.Transforms.Row(ms.Anchor[r]); ar != -1 {
 		desired := w.Transforms.Pos[ar].Sub(pos)
 		if desired.X != 0 || desired.Y != 0 {
-			ms.Dir[r] = w.turnToward(ms.Dir[r], desired, ms.TurnRate[r])
+			if ms.TurnRate[r] == 0 {
+				// Instant turn: beeline along the raw desired vector. unitStep
+				// normalizes it, so this is byte-identical to a point/missile
+				// step — NO angle-LUT round-trip (the #593 parity fix; the LUT
+				// quantizes to 16-bit BAM and would drift the low bits).
+				ms.Dir[r] = desired
+			} else {
+				ms.Dir[r] = w.turnToward(ms.Dir[r], desired, ms.TurnRate[r])
+			}
 		}
 	}
 	w.moverWrite(tr, pos.Add(unitStep(ms.Dir[r], ms.Speed[r])))
