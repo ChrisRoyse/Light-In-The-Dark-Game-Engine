@@ -1,0 +1,30 @@
+# Template: Homing Bolt — single-target seeker (mover: homing).
+# Spawn a projectile that seeks the ordered target and detonates on contact.
+[ability]
+id         = "homing_bolt"
+name       = "Homing Bolt"
+cast_type  = "active"
+indicator  = "none"
+cast_range = 800
+mana_cost  = 50
+cooldown   = 4.0
+
+[ability.timing]
+precast    = 0.25
+backswing  = 0.3
+
+[[ability.on_cast]]
+op         = "spawn_projectile"
+projectile = "arcane_orb"
+
+[[ability.on_cast]]
+op    = "attach_mover"
+mover = "homing"
+speed = 22
+fx = { hit = "enemy", radius = 48, pierce = 1, done = "expire", effects = "bolt_hit" }
+
+[ability.effects.bolt_hit]
+ops = [
+  { effect = "damage", amount = 180, type = "magic" },
+  { effect = "emit_event", name = "ability.impact", arg = "caster" },
+]

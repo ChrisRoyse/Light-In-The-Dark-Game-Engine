@@ -62,6 +62,13 @@ func (w *World) EventKindByName(name string) (uint16, bool) {
 
 // MoverKindByName resolves a mover-kind name. Part of AbilityResolver.
 func (w *World) MoverKindByName(name string) (MoverKind, bool) {
+	return MoverKindFromName(name)
+}
+
+// MoverKindFromName resolves a mover-kind name without a World — for offline
+// validators (tools/abilitycheck) that compile specs against the fixed
+// vocabulary. The single source of truth is moverKindNames.
+func MoverKindFromName(name string) (MoverKind, bool) {
 	k, ok := moverKindNames[name]
 	return k, ok
 }

@@ -1,0 +1,31 @@
+# Template: Persistent Field — ground AoE over time (timer + group DoT).
+# A zone at the cast point pulses damage to enemies inside it several times.
+[ability]
+id         = "persistent_field"
+name       = "Persistent Field"
+cast_type  = "active"
+indicator  = "circle"
+cast_range = 700
+mana_cost  = 100
+cooldown   = 14.0
+
+[ability.timing]
+precast    = 0.3
+backswing  = 0.35
+
+[[ability.on_cast]]
+op    = "times"
+count = 6      # six pulses
+arg   = 10     # every 10 ticks (0.5s)
+children = [
+  { op = "fill_group", hit = "enemy", radius = 250 },
+  { op = "for_each_in_group", children = [
+      { op = "run_effects", effects = "field_pulse" },
+  ] },
+]
+
+[ability.effects.field_pulse]
+ops = [
+  { effect = "damage", amount = 30, type = "magic" },
+  { effect = "emit_event", name = "ability.impact", arg = "caster" },
+]

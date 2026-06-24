@@ -1,0 +1,31 @@
+# Template: Chain Bounce — bouncing chain with decay (mover: homing + pierce).
+# A bolt seeks the target, pierces through several enemies, hitting each once
+# (the mover's already-hit ring + pierce budget give the chain behavior).
+[ability]
+id         = "chain_bounce"
+name       = "Chain Bounce"
+cast_type  = "active"
+indicator  = "none"
+cast_range = 700
+mana_cost  = 65
+cooldown   = 7.0
+
+[ability.timing]
+precast    = 0.2
+backswing  = 0.3
+
+[[ability.on_cast]]
+op         = "spawn_projectile"
+projectile = "chain_spark"
+
+[[ability.on_cast]]
+op    = "attach_mover"
+mover = "homing"
+speed = 26
+fx = { hit = "enemy", radius = 56, pierce = 4, done = "expire", effects = "chain_hit" }
+
+[ability.effects.chain_hit]
+ops = [
+  { effect = "damage", amount = 90, type = "magic" },
+  { effect = "emit_event", name = "ability.impact", arg = "caster" },
+]

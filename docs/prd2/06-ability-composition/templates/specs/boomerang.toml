@@ -1,0 +1,31 @@
+# Template: Boomerang — out-and-back double hit (mover: spline).
+# The projectile follows a spline path away from and back to the caster,
+# hitting enemies twice (once outbound, once on return).
+[ability]
+id         = "boomerang"
+name       = "Boomerang"
+cast_type  = "active"
+indicator  = "arrow"
+cast_range = 600
+mana_cost  = 55
+cooldown   = 6.0
+
+[ability.timing]
+precast    = 0.2
+backswing  = 0.3
+
+[[ability.on_cast]]
+op         = "spawn_projectile"
+projectile = "glaive"
+
+[[ability.on_cast]]
+op    = "attach_mover"
+mover = "spline"
+speed = 24
+fx = { hit = "enemy", radius = 60, pierce = 99, effects = "glaive_hit" }
+
+[ability.effects.glaive_hit]
+ops = [
+  { effect = "damage", amount = 110, type = "physical" },
+  { effect = "emit_event", name = "ability.impact", arg = "caster" },
+]

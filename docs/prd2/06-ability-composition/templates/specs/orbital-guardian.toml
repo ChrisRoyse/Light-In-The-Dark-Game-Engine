@@ -1,0 +1,31 @@
+# Template: Orbital Guardian — persistent orbiting damage (mover: orbit_unit).
+# A guardian orb circles the caster, striking enemies it sweeps over.
+[ability]
+id         = "orbital_guardian"
+name       = "Orbital Guardian"
+cast_type  = "active"
+indicator  = "circle"
+cast_range = 0
+mana_cost  = 90
+cooldown   = 12.0
+
+[ability.timing]
+precast    = 0.4
+backswing  = 0.3
+
+[[ability.on_cast]]
+op         = "spawn_projectile"
+projectile = "guardian_orb"
+
+[[ability.on_cast]]
+op     = "attach_mover"
+mover  = "orbit_unit"
+speed  = 18
+radius = 160
+fx = { hit = "enemy", radius = 40, pierce = 99, effects = "guardian_hit" }
+
+[ability.effects.guardian_hit]
+ops = [
+  { effect = "damage", amount = 35, type = "magic" },
+  { effect = "emit_event", name = "ability.impact", arg = "caster" },
+]
