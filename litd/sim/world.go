@@ -201,6 +201,10 @@ type World struct {
 	// its carrier on pickup and revokes on drop. Setup-registered, scanned
 	// (never ranged in a hot loop); not serialized.
 	itemGrants []itemAbilityGrant
+	// author-facing effect-list names (#599): name → compiled effect list, so a
+	// composable ability can reference an effect list by name. Setup-built via
+	// RegisterEffectListName; keyed lookups only; not serialized.
+	effectListNames map[string]data.EffectList
 	// modder-registered effect primitives (#477): names hash + serialize
 	// (the per-match contract); execs are re-bound in setup on load. Capped
 	// by Caps.RuntimeEffects, frozen at first Step.

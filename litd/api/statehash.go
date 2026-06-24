@@ -25,6 +25,18 @@ func (g *Game) StateHash() uint64 {
 	return g.w.HashState(reg, &statehash.Snapshot{}).Top
 }
 
+// AbilityFingerprint returns the content hash of every registered composable
+// ability (#596). It is the join/desync guard for ability files AND the
+// Go-vs-Lua authoring parity seam (#599): the same ability authored through the
+// Go AbilitySpecDef and through the Lua RegisterAbilitySpec table compiles to
+// the same spec and so hashes identically. A nil/uninitialized game hashes 0.
+func (g *Game) AbilityFingerprint() uint64 {
+	if g == nil || g.w == nil || g.w.AbilityDefs == nil {
+		return 0
+	}
+	return g.w.AbilityDefs.Fingerprint()
+}
+
 // HashSnapshot returns the full state digest broken out by system: top is the
 // same value as StateHash, and subs is the per-system sub-hash vector indexed by
 // the canonical system order (HashSystemNames). It is the seam the desync FSV
