@@ -29,6 +29,7 @@ type Caps struct {
 	UnitGroups         int // persistent unit-group slots (PRD2 02, #560)
 	GroupMembers       int // shared group-membership arena slots (PRD2 02, #560)
 	KVPairs            int // generic key-value store capacity (PRD2 03, #568)
+	CustomEventKinds   int // script-registered custom event kinds (PRD2 04, #614)
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
@@ -49,6 +50,7 @@ var EngineCaps = Caps{
 	UnitGroups:         1024,
 	GroupMembers:       65536,
 	KVPairs:            32768,
+	CustomEventKinds:   256,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -77,6 +79,7 @@ func (c Caps) resolve() Caps {
 		UnitGroups:         clampCap(c.UnitGroups, EngineCaps.UnitGroups),
 		GroupMembers:       clampCap(c.GroupMembers, EngineCaps.GroupMembers),
 		KVPairs:            clampCap(c.KVPairs, EngineCaps.KVPairs),
+		CustomEventKinds:   clampCap(c.CustomEventKinds, EngineCaps.CustomEventKinds),
 	}
 }
 
@@ -415,6 +418,9 @@ type World struct {
 	// Key)→typed-value map with intern tables. Foundation #568; interning
 	// (#569), scoped ops (#570), hash/save (#572) build on it.
 	KV *KVStore
+	// script-defined custom event kinds (PRD2 04, #547): named kinds that
+	// share the built-in event ring/dispatch. Registry foundation #614.
+	CustomEvents *CustomEventRegistry
 	// kvUserDataKey is the reserved interned key id backing the legacy
 	// per-unit custom value (GetUnitUserData) over KV (#571). Interned
 	// first at construction so its id is stable across save/load.
@@ -513,6 +519,7 @@ func NewWorld(requested Caps) *World {
 		Timers:             NewTimerStore(caps.Timers),
 		Groups:             NewGroupStore(caps.UnitGroups, caps.GroupMembers),
 		KV:                 NewKVStore(caps.KVPairs),
+		CustomEvents:       NewCustomEventRegistry(caps.CustomEventKinds),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),
