@@ -62,12 +62,19 @@ func (w *World) moverSystem() {
 		// complete the mover (#587). A consumed mover stops here. A swept
 		// linear mover already collided pre-step (#620): skip the endpoint
 		// test and instead complete (consume) when its pierce budget is spent.
+		// Deliver-on-completion projectiles (DoneImpact / DoneDetonate) do NOT
+		// take the en-route endpoint test — they deliver only at the goal, the
+		// missile point/homing model; running it too would double-deliver to a
+		// unit the projectile flies through before completing (#625).
 		if ms.live[r] {
-			if swept {
+			switch {
+			case swept:
 				if ms.Pierce[r] <= 0 {
 					w.moverComplete(r)
 				}
-			} else {
+			case MoverDoneMode(ms.DoneMode[r]) == MoverDoneImpact || MoverDoneMode(ms.DoneMode[r]) == MoverDoneDetonate:
+				// delivery happens at completion; no en-route contact test
+			default:
 				w.moverCollide(r)
 			}
 		}

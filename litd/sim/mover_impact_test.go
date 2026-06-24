@@ -249,6 +249,35 @@ func TestMoverHomingGuideDeathExpires(t *testing.T) {
 	}
 }
 
+// #625 regression: a deliver-on-completion projectile (DoneImpact) does NOT
+// take the en-route endpoint collision even when it carries a HitMask — it
+// flies THROUGH a bystander on its lane untouched and delivers only to its
+// guide on arrival. Before the fix this double-delivered (en-route + impact).
+func TestMoverImpactNoEnRouteDoubleHit(t *testing.T) {
+	w := lmWorld(t)
+	caster := atkUnit(t, w, 0, xy(1000, 1000), 0)
+	guide := atkUnit(t, w, 1, xy(1300, 1000), 0)
+	bystander := atkUnit(t, w, 1, xy(1100, 1000), 0) // squarely on the lane, mid-flight
+	body, _ := w.CreateUnit(xy(1000, 1000), 0)
+	mid := w.Movers.Create(MoverSpec{
+		Kind: MoverHoming, Target: body, Owner: caster, Anchor: guide,
+		Dir: xy(1, 0), Speed: 50 * fixed.One, TurnRate: 0,
+		Radius: 60 * fixed.One, HitMask: MissileHitEnemy, // would catch the bystander en route
+		DoneMode: MoverDoneImpact, Flags: MoverConsume,
+		Packet:   DamagePacket{Source: caster, Amount: 40 * fixed.One},
+	})
+	for i := 0; i < 10 && w.Movers.Alive(mid); i++ {
+		w.Step()
+	}
+	t.Logf("guide=%d bystander=%d (want 60 / 100 — single arrival delivery, no en-route hit)", life(w, guide), life(w, bystander))
+	if life(w, guide) != 60 {
+		t.Fatalf("guide life=%d, want 60 (one impact delivery)", life(w, guide))
+	}
+	if life(w, bystander) != 100 {
+		t.Fatalf("bystander life=%d, want 100 — DoneImpact projectile must not collide en route (#625 double-hit)", life(w, bystander))
+	}
+}
+
 // Edge 5 (determinism/save): a mover mid-flight with DoneMode=Impact saves
 // and reloads hash-identical, and the DoneMode column is real hashed state
 // (mutating it moves the hash).
