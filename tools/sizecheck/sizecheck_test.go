@@ -20,13 +20,12 @@ func TestSizecheckMeasureFSV(t *testing.T) {
 		{Path: "u2.glb", Category: "unit", Bytes: 20 * mb},
 		{Path: "b1.glb", Category: "building", Bytes: 30 * mb},
 		{Path: "icon.png", Category: "", Bytes: 5 * mb}, // uncategorized
-		{Path: "todo.glb", Category: "unit", Bytes: 0},  // unspecified → not counted
 	}
 	budget := int64(300 * mb)
 	r := Measure(50*mb, assets, budget)
 	t.Logf("BEFORE budget=%d MiB\n%s", budget/mb, r.Format())
 
-	// 50 binary + (100+20+30+5) assets = 205 MiB; todo.glb excluded.
+	// 50 binary + (100+20+30+5) assets = 205 MiB; every asset measured.
 	if r.AssetBytes != 155*mb {
 		t.Fatalf("asset bytes = %d MiB, want 155", r.AssetBytes/mb)
 	}
@@ -36,8 +35,8 @@ func TestSizecheckMeasureFSV(t *testing.T) {
 	if r.ByCategory["unit"] != 120*mb || r.ByCategory["building"] != 30*mb || r.ByCategory["uncategorized"] != 5*mb {
 		t.Fatalf("category breakdown wrong: %v", r.ByCategory)
 	}
-	if len(r.MissingBytes) != 1 || r.MissingBytes[0] != "todo.glb" {
-		t.Fatalf("missing-bytes = %v, want [todo.glb]", r.MissingBytes)
+	if len(r.MissingBytes) != 0 || r.Incomplete() {
+		t.Fatalf("all assets measured, but MissingBytes = %v", r.MissingBytes)
 	}
 	if r.OverBudget() {
 		t.Fatal("205 MiB must be within a 300 MiB budget")
@@ -49,6 +48,39 @@ func TestSizecheckMeasureFSV(t *testing.T) {
 	if Measure(50*mb, assets, budget).Format() != r.Format() {
 		t.Fatal("Format not deterministic")
 	}
+}
+
+// TestSizecheckIncompleteFailsClosedFSV: an asset with no declared size makes the
+// gate FAIL even when the measured total is within budget — otherwise a large
+// asset added without a bytes field would silently evade the 300 MiB ceiling
+// (§2.4 fail-closed). Regression for the #539/#310 gap where 0 of 632 MANIFEST
+// rows carried bytes and the budget effectively measured the binary alone.
+func TestSizecheckIncompleteFailsClosedFSV(t *testing.T) {
+	// One unmeasured asset; the measured part is trivially within budget.
+	assets := []manifest.Asset{
+		{Path: "measured.glb", Category: "unit", Bytes: 10 * mb},
+		{Path: "sneaky.glb", Category: "unit", Bytes: 0}, // no declared size
+	}
+	r := Measure(5*mb, assets, 300*mb)
+	t.Logf("incomplete report:\n%s", r.Format())
+	if r.OverBudget() {
+		t.Fatal("measured total (15 MiB) is within 300 MiB — the failure here must come from incompleteness, not over-budget")
+	}
+	if !r.Incomplete() {
+		t.Fatal("an asset with unspecified Bytes must make the report Incomplete (fail-closed)")
+	}
+	if len(r.MissingBytes) != 1 || r.MissingBytes[0] != "sneaky.glb" {
+		t.Fatalf("missing-bytes = %v, want [sneaky.glb]", r.MissingBytes)
+	}
+	if !strings.Contains(r.Format(), "GATE FAILS") {
+		t.Fatalf("incomplete report must print a GATE FAILS verdict, not within-budget:\n%s", r.Format())
+	}
+	// And a fully-measured report is NOT incomplete (the gate stays green normally).
+	ok := Measure(5*mb, []manifest.Asset{{Path: "measured.glb", Bytes: 10 * mb}}, 300*mb)
+	if ok.Incomplete() {
+		t.Fatalf("fully-measured report wrongly Incomplete: %v", ok.MissingBytes)
+	}
+	t.Log("FSV fail-closed: an unmeasured asset fails the gate; a fully-measured set passes")
 }
 
 func TestSizecheckOverBudgetFSV(t *testing.T) {

@@ -11,6 +11,7 @@ subdir=$1; pack=$2; source_url=$3; retrieved=${4:-$(date +%F)}
 find "assets/$subdir" -type f | LC_ALL=C sort | while IFS= read -r f; do
   rel="${f#assets/}"
   sha=$(sha256sum "$f" | cut -d' ' -f1)
+  bytes=$(stat -c%s "$f")
   cat >> assets/MANIFEST <<EOF
 
 [[asset]]
@@ -20,6 +21,7 @@ source = "$source_url"
 license = "CC0-1.0"
 retrieved = "$retrieved"
 sha256 = "$sha"
+bytes = "$bytes"
 EOF
 done
 echo "added $(find "assets/$subdir" -type f | wc -l) entries for assets/$subdir"

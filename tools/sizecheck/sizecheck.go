@@ -4,9 +4,10 @@
 // fails if the total exceeds binary_assets_bytes_max in benchmarks/budgets.toml
 // (PRD §5.3, hard 300 MB ceiling). It prints a category breakdown.
 //
-// Assets whose Bytes are unspecified (0) are listed, not silently counted as 0 —
-// the gate reports how much of the asset set is unmeasured so the number is never
-// quietly optimistic (§1.3 fail-closed in spirit). The cold-start ≤5 s and map-
+// Assets whose Bytes are unspecified (0) make the gate FAIL (fail-closed): an
+// unmeasured asset is not silently counted as 0, because that would let a large
+// asset added without a bytes field evade the ceiling. scripts/manifest-add.sh
+// emits bytes for every new asset, so the normal add path never trips this. The cold-start ≤5 s and map-
 // load ≤10 s halves of #310 need the render path + the firstflame archive (#209)
 // and stay gated; this is the size budget, which is honestly headless.
 package main
@@ -34,6 +35,12 @@ type Report struct {
 
 // OverBudget reports whether the gate fails.
 func (r Report) OverBudget() bool { return r.Total > r.Budget }
+
+// Incomplete reports whether any asset lacked a declared size, so the measured
+// total is only a lower bound. Fail-closed: a budget that ignores unmeasured
+// assets can be silently evaded by adding a large asset without a bytes field, so
+// an incomplete report fails the gate just like an over-budget one.
+func (r Report) Incomplete() bool { return len(r.MissingBytes) > 0 }
 
 // Measure builds the report from a binary size, the manifest assets, and a budget.
 func Measure(binaryBytes int64, assets []manifest.Asset, budget int64) Report {
@@ -75,11 +82,14 @@ func (r Report) Format() string {
 		fmt.Fprintf(&b, "    %-14s %s\n", c, mib(r.ByCategory[c]))
 	}
 	if len(r.MissingBytes) > 0 {
-		fmt.Fprintf(&b, "  %d asset(s) have unspecified Bytes (not counted) — size is a lower bound\n", len(r.MissingBytes))
+		fmt.Fprintf(&b, "  %d asset(s) have unspecified Bytes (not counted) — size is only a lower bound\n", len(r.MissingBytes))
 	}
-	if r.OverBudget() {
+	switch {
+	case r.OverBudget():
 		fmt.Fprintf(&b, "OVER BUDGET by %s\n", mib(r.Total-r.Budget))
-	} else {
+	case r.Incomplete():
+		fmt.Fprintf(&b, "GATE FAILS: %d asset(s) unmeasured — populate MANIFEST bytes (scripts/manifest-add.sh emits it); the budget cannot be certified\n", len(r.MissingBytes))
+	default:
 		fmt.Fprintf(&b, "within budget (%s headroom)\n", mib(r.Budget-r.Total))
 	}
 	return b.String()
@@ -186,7 +196,7 @@ func main() {
 
 	r := Measure(fi.Size(), assets, budget)
 	fmt.Print(r.Format())
-	if r.OverBudget() {
+	if r.OverBudget() || r.Incomplete() {
 		os.Exit(1)
 	}
 }
