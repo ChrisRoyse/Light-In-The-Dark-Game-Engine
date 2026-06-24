@@ -28,6 +28,7 @@ type Caps struct {
 	Timers             int // serializable timer wheel pool (PRD2 01, #551)
 	UnitGroups         int // persistent unit-group slots (PRD2 02, #560)
 	GroupMembers       int // shared group-membership arena slots (PRD2 02, #560)
+	KVPairs            int // generic key-value store capacity (PRD2 03, #568)
 }
 
 // EngineCaps are the engine ceilings — the §2 pool table, exactly.
@@ -47,6 +48,7 @@ var EngineCaps = Caps{
 	Timers:             4096,
 	UnitGroups:         1024,
 	GroupMembers:       65536,
+	KVPairs:            32768,
 }
 
 func clampCap(requested, ceiling int) int {
@@ -74,6 +76,7 @@ func (c Caps) resolve() Caps {
 		Timers:             clampCap(c.Timers, EngineCaps.Timers),
 		UnitGroups:         clampCap(c.UnitGroups, EngineCaps.UnitGroups),
 		GroupMembers:       clampCap(c.GroupMembers, EngineCaps.GroupMembers),
+		KVPairs:            clampCap(c.KVPairs, EngineCaps.KVPairs),
 	}
 }
 
@@ -409,6 +412,10 @@ type World struct {
 	// sets over a shared Members arena. Pool foundation #560; membership
 	// ops (#561), algebra (#562), prune (#564), hash/save (#565) build on it.
 	Groups *GroupStore
+	// generic typed key-value store (PRD2 03, #546): sorted-array (Owner,
+	// Key)→typed-value map with intern tables. Foundation #568; interning
+	// (#569), scoped ops (#570), hash/save (#572) build on it.
+	KV *KVStore
 	// boolexpr condition arena (#457): flat And/Or/Not/Cond nodes indexed
 	// by ExprRef. Cold-path authoring; hashes + serializes.
 	exprArena []exprNode
@@ -503,6 +510,7 @@ func NewWorld(requested Caps) *World {
 		Triggers:           NewTriggerStore(caps.Triggers),
 		Timers:             NewTimerStore(caps.Timers),
 		Groups:             NewGroupStore(caps.UnitGroups, caps.GroupMembers),
+		KV:                 NewKVStore(caps.KVPairs),
 		pathReqs:           make([]pathRequest, caps.PathRequests),
 		Doodads:            NewDoodadStore(caps.ScriptedDoodads, idxSpace),
 		Destructables:      NewDestructableStore(caps.Destructables, idxSpace),
