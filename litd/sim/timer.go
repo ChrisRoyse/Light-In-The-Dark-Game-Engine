@@ -78,6 +78,20 @@ type TimerStore struct {
 	// surfaces in the fingerprint — fail-closed, not silently lossy.
 	Dropped uint32
 
+	// --- schedule index (#553): a binary min-heap on (WakeTick, Seq) ---
+	// This is a DERIVED index, not primary state: it is rebuilt on load
+	// by re-inserting every live timer (#555) and is never hashed or
+	// serialized, so the heap can be retuned (e.g. to a bucketed wheel)
+	// without changing the determinism fingerprint (spec §4). Eagerly
+	// maintained: each timer that is scheduled has exactly one heap entry,
+	// and heapPos gives O(log n) removal on cancel so stale entries never
+	// accumulate (which would otherwise overflow the cap-sized backing).
+	hWake   []uint32  // heap[i] wake key
+	hSeq    []uint32  // heap[i] tie-break (the timer's alloc Seq)
+	hID     []TimerID // heap[i] timer handle (re-resolved on fire)
+	hLen    int32     // live heap entries in [0, hLen)
+	heapPos []int32   // row -> heap index, -1 if not scheduled
+
 	// DebugAssert, when non-nil, is called on contract violations
 	// (stale free, double free). The operation still degrades to the
 	// safe no-op; determinism is never sacrificed to report (§8).
@@ -105,6 +119,13 @@ func NewTimerStore(capacity int) *TimerStore {
 		Gen:       make([]uint8, n),
 		live:      make([]bool, n),
 		free:      make([]int32, 0, capacity),
+		hWake:     make([]uint32, capacity),
+		hSeq:      make([]uint32, capacity),
+		hID:       make([]TimerID, capacity),
+		heapPos:   make([]int32, n),
+	}
+	for i := range s.heapPos {
+		s.heapPos[i] = -1
 	}
 	// Seed the free list. Push high indices first so the first alloc
 	// hands out slot 1 (LIFO pop), giving stable, low-first slot
@@ -162,6 +183,9 @@ func (s *TimerStore) free_(id TimerID) bool {
 // freeRow releases a live slot by row index (no handle to validate —
 // the caller already holds a resolved row, e.g. the reschedule path).
 func (s *TimerStore) freeRow(row int32) {
+	if s.heapPos[row] >= 0 {
+		s.heapRemove(s.heapPos[row]) // unschedule (eager, keeps the heap == live entries)
+	}
 	s.live[row] = false
 	s.Gen[row]++ // wraps at 256; stale handles fail the generation check
 	// Clear references so a freed slot cannot pin an entity or leak a
@@ -233,6 +257,7 @@ func (s *TimerStore) Create(now uint32, mode TimerMode, interval, remaining uint
 	s.Cont[row] = cont
 	s.State[row] = st
 	s.Owner[row] = owner
+	s.heapPush(row) // schedule for firing at WakeTick (#553)
 	return id
 }
 

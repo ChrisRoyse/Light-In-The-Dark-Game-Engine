@@ -205,6 +205,14 @@ func (s *Scheduler) run(cont ContID, st State) {
 	fn(s, st)
 }
 
+// Invoke runs a registered continuation synchronously, exactly as the
+// sleeper drain does, with the same fail-closed posture on an unknown
+// ID. The serializable timer wheel (PRD2 01, #553) uses this to fire a
+// timer's continuation co-located with the scheduler drain, so timer
+// fires and script resumes share one wake-ordering authority and one
+// continuation registry. Like every resume, cont must not retain s.
+func (s *Scheduler) Invoke(cont ContID, st State) { s.run(cont, st) }
+
 // PendingSleepers returns how many suspensions sit in the sleep queue.
 func (s *Scheduler) PendingSleepers() int { return len(s.sleep) }
 

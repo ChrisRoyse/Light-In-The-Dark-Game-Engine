@@ -36,6 +36,11 @@ func (w *World) AfterMS(ms uint32, cont sched.ContID, st sched.State) {
 // scriptPhase is tick phase 2: resume everything due this tick.
 func (w *World) scriptPhase() {
 	w.Sched.Step()
+	// Serializable timer wheel drain (#553), co-located with the
+	// scheduler so timer fires and script resumes share one wake-order
+	// authority and one continuation registry. After Sched.Step(),
+	// Sched.Now() == w.tick, so timers fire on the same absolute tick.
+	w.Timers.advance(w.tick, w.Sched)
 	if w.OnScriptPhase != nil {
 		w.OnScriptPhase(w.tick)
 	}
