@@ -126,7 +126,7 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 38
+const SaveFormatVersion uint32 = 39
 
 // ---- little-endian writer / reader ----
 
@@ -1046,6 +1046,8 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 			s.i64(tm.State[idx][k])
 		}
 		s.ent(tm.Owner[idx])
+		s.boolean(tm.Paused[idx])  // #611
+		s.u32(tm.PausedRem[idx])   // #611
 	}
 	s.u32(uint32(len(tm.free)))
 	for _, slot := range tm.free {
@@ -1454,6 +1456,8 @@ type savedTimer struct {
 	cont      uint16
 	state     [4]int64
 	owner     EntityID
+	paused    bool   // #611
+	pausedRem uint32 // #611
 }
 
 type combatSlotSave [WeaponSlots]struct {
@@ -2880,6 +2884,8 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 			row.state[k] = r.i64()
 		}
 		row.owner = r.ent()
+		row.paused = r.boolean()  // #611
+		row.pausedRem = r.u32()   // #611
 		d.timerRows[i] = row
 	}
 	tmFreeN := r.u32()
@@ -4215,14 +4221,19 @@ func applySave(d *decodedSave, w *World) {
 		tm.State[idx] = row.state
 		tm.Owner[idx] = row.owner
 		tm.Gen[idx] = row.gen
+		tm.Paused[idx] = row.paused       // #611
+		tm.PausedRem[idx] = row.pausedRem // #611
 		tm.live[idx] = true
 		tm.count++
 	}
 	for _, f := range d.timerFree {
 		tm.free = append(tm.free, int32(f))
 	}
+	// Rebuild the heap in ascending slot order — but only for RUNNING
+	// timers; a paused timer is intentionally absent from the schedule
+	// index (it resumes back into the heap via Resume, #611).
 	for idx := int32(1); idx < int32(len(tm.live)); idx++ {
-		if tm.live[idx] {
+		if tm.live[idx] && !tm.Paused[idx] {
 			tm.heapPush(idx)
 		}
 	}

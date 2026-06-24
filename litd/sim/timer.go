@@ -67,6 +67,8 @@ type TimerStore struct {
 	State     [][4]int64 // value payload passed to the continuation
 	Owner     []EntityID // optional; 0 = unowned (auto-cancel on death, #554)
 	Gen       []uint8    // generation for the slot (handle validation)
+	Paused    []bool     // #611: frozen — removed from the heap, never fires
+	PausedRem []uint32   // #611: ticks remaining to next fire, captured at pause
 	live      []bool     // slot occupied?
 
 	free    []int32 // free-list (LIFO); serialized for slot-stable reload (#555)
@@ -117,6 +119,8 @@ func NewTimerStore(capacity int) *TimerStore {
 		State:     make([][4]int64, n),
 		Owner:     make([]EntityID, n),
 		Gen:       make([]uint8, n),
+		Paused:    make([]bool, n),
+		PausedRem: make([]uint32, n),
 		live:      make([]bool, n),
 		free:      make([]int32, 0, capacity),
 		hWake:     make([]uint32, capacity),
@@ -192,8 +196,58 @@ func (s *TimerStore) freeRow(row int32) {
 	// continuation payload across reuse (pool-reset discipline, R-GC-2).
 	s.Owner[row] = 0
 	s.State[row] = [4]int64{}
+	s.Paused[row] = false
+	s.PausedRem[row] = 0
 	s.free = append(s.free, row)
 	s.count--
+}
+
+// Pause freezes a timer: it is removed from the schedule index (so it
+// can never fire) and the ticks remaining until its next fire are
+// captured, so Resume restores the exact phase (#611, R-TMR equivalent
+// of PauseTimer). `now` is the current tick. Idempotent: pausing a
+// stale or already-paused timer is a no-op returning false.
+func (s *TimerStore) Pause(id TimerID, now uint32) bool {
+	row, ok := s.resolve(id)
+	if !ok || s.Paused[row] {
+		return false
+	}
+	rem := uint32(0)
+	if s.WakeTick[row] > now {
+		rem = s.WakeTick[row] - now
+	}
+	s.PausedRem[row] = rem
+	s.Paused[row] = true
+	if s.heapPos[row] >= 0 {
+		s.heapRemove(s.heapPos[row])
+	}
+	return true
+}
+
+// Resume restarts a paused timer from its frozen remaining time, with a
+// 1-tick floor so it cannot fire on the resume tick itself. Re-inserts
+// into the schedule index. Idempotent: resuming a running or stale timer
+// is a no-op returning false.
+func (s *TimerStore) Resume(id TimerID, now uint32) bool {
+	row, ok := s.resolve(id)
+	if !ok || !s.Paused[row] {
+		return false
+	}
+	rem := s.PausedRem[row]
+	if rem == 0 {
+		rem = 1
+	}
+	s.WakeTick[row] = now + rem
+	s.Paused[row] = false
+	s.PausedRem[row] = 0
+	s.heapPush(row)
+	return true
+}
+
+// IsPaused reports whether a live timer is frozen. Stale ⇒ false.
+func (s *TimerStore) IsPaused(id TimerID) bool {
+	row, ok := s.resolve(id)
+	return ok && s.Paused[row]
 }
 
 // resolve maps a handle to its live slot, validating the generation.

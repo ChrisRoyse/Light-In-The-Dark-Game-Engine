@@ -143,3 +143,45 @@ func TestTimerHashLocalizesToTimers(t *testing.T) {
 		t.Fatalf("corruption diverged %v, want exactly [timers]", diverged)
 	}
 }
+
+// #611 — a paused timer round-trips through save/load: hash identical,
+// pause state + remaining preserved, and it stays out of the heap.
+func TestTimerPauseSaveLoadRoundTrip(t *testing.T) {
+	src := NewWorld(Caps{Units: 8, Timers: 64})
+	src.Sched.Register(5, func(*sched.Scheduler, sched.State) {})
+	id := src.Timers.Create(src.Tick(), TimerLoop, 10, 0, 5, [4]int64{1}, 0)
+	for i := 0; i < 3; i++ {
+		src.Step()
+	}
+	if !src.Timers.Pause(id, src.Tick()) {
+		t.Fatal("Pause failed")
+	}
+	wantRem := src.Timers.PausedRem[id.Index()]
+
+	reg := NewHashRegistry()
+	var before, after statehash.Snapshot
+	src.HashState(reg, &before)
+
+	var buf bytes.Buffer
+	if err := src.SaveState(&buf, 0); err != nil {
+		t.Fatalf("SaveState: %v", err)
+	}
+	dst := NewWorld(Caps{Units: 8, Timers: 64})
+	dst.Sched.Register(5, func(*sched.Scheduler, sched.State) {})
+	if err := dst.LoadState(bytes.NewReader(buf.Bytes()), 0); err != nil {
+		t.Fatalf("LoadState: %v", err)
+	}
+	dst.HashState(reg, &after)
+	if before.Top != after.Top {
+		t.Fatalf("paused-timer save/load hash mismatch; diverged: %v", snapDiff(t, &before, &after))
+	}
+	if !dst.Timers.IsPaused(id) {
+		t.Fatal("loaded timer not paused")
+	}
+	if dst.Timers.PausedRem[id.Index()] != wantRem {
+		t.Fatalf("loaded PausedRem=%d, want %d", dst.Timers.PausedRem[id.Index()], wantRem)
+	}
+	if dst.Timers.HeapLen() != 0 {
+		t.Fatalf("paused timer re-entered heap on load (len=%d)", dst.Timers.HeapLen())
+	}
+}

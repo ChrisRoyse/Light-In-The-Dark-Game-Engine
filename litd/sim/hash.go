@@ -828,6 +828,8 @@ func (w *World) hashTimers(ht *statehash.Hasher) {
 			ht.WriteI64(ts.State[idx][k])
 		}
 		ht.WriteU32(uint32(ts.Owner[idx]))
+		ht.WriteBool(ts.Paused[idx])    // #611
+		ht.WriteU32(ts.PausedRem[idx])  // #611
 	}
 	ht.WriteU32(uint32(len(ts.free)))
 	for _, slot := range ts.free {

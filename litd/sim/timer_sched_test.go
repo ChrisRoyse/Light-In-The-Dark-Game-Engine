@@ -326,3 +326,48 @@ func TestTimerOwnerAutoCancelOnDeath(t *testing.T) {
 		t.Fatalf("survivors stopped firing: %v", fired)
 	}
 }
+
+// #611 — pause/resume preserve phase, freeze firing, and survive
+// save/load. SoT = store columns + fire log.
+func TestTimerPauseFreezesFiring(t *testing.T) {
+	var log fireLog
+	sc := newSchedWithLogger(1, &log)
+	s := NewTimerStore(16)
+	id := s.Create(0, TimerLoop, 3, 0, 1, [4]int64{}, 0) // would fire 3,6,9,...
+	// Advance to tick 2, then pause (1 tick remaining to wake@3).
+	drive(s, sc, 2)
+	if !s.Pause(id, sc.Now()) {
+		t.Fatal("Pause returned false on running timer")
+	}
+	row := int32(id.Index())
+	if s.PausedRem[row] != 1 {
+		t.Fatalf("PausedRem = %d, want 1", s.PausedRem[row])
+	}
+	if s.HeapLen() != 0 {
+		t.Fatalf("paused timer still in heap (len=%d)", s.HeapLen())
+	}
+	// Run far ahead — must NOT fire while paused.
+	drive(s, sc, 50)
+	if len(log.ticks) != 0 {
+		t.Fatalf("paused timer fired at %v", log.ticks)
+	}
+	// Double pause is a no-op.
+	if s.Pause(id, sc.Now()) {
+		t.Fatal("double Pause returned true")
+	}
+	// Resume at tick 50: remaining 1 → fires at 51, then loops 54,57...
+	if !s.Resume(id, sc.Now()) {
+		t.Fatal("Resume returned false")
+	}
+	if s.HeapLen() != 1 {
+		t.Fatalf("resumed timer not re-scheduled (heap=%d)", s.HeapLen())
+	}
+	drive(s, sc, 51)
+	if len(log.ticks) != 1 || log.ticks[0] != 51 {
+		t.Fatalf("post-resume fire = %v, want [51]", log.ticks)
+	}
+	// Double resume no-op.
+	if s.Resume(id, sc.Now()) {
+		t.Fatal("double Resume returned true")
+	}
+}
