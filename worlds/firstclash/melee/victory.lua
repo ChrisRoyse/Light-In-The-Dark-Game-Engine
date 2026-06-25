@@ -24,11 +24,12 @@ local function liveUnits(p)
 	return n
 end
 
--- score is the deterministic integer rank: unit count dominates, gold breaks
--- ties. (Lumber is intentionally omitted — not yet on the Lua surface, see the
--- filed gap; gold alone keeps the tiebreak deterministic.)
+-- score is the deterministic integer rank: live unit count dominates, then gold,
+-- then lumber breaks remaining ties. All three are on the Lua surface
+-- (Player_Gold / Player_Lumber), and all are deterministic sim reads — so the
+-- rank is total and reproducible (R-SIM-2).
 local function score(p)
-	return liveUnits(p) * 1000000 + Player_Gold(p)
+	return liveUnits(p) * 1000000000 + Player_Gold(p) * 1000 + Player_Lumber(p)
 end
 
 return function(players)
