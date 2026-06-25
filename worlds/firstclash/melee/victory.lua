@@ -36,10 +36,11 @@ return function(players)
 	melee_VictoryDefeatConditions(players) -- #646
 
 	-- #647: a Game_Every timer whose FIRST fire lands at tick 24,000 (one period),
-	-- self-stopped so it behaves as a one-shot. Game_Every is chosen over
-	-- Game_After deliberately: it is backed by a serializable periodic-timer
-	-- trigger (#464), so the timeout survives a mid-match save/load (#652) —
-	-- Game_After's one-shot callback is not yet save-serializable (#270 class).
+	-- self-stopped so it behaves as a one-shot. Game_After is now equally save-safe
+	-- (#661 backs it with the serializable single-fire timer wheel), so either verb
+	-- survives a mid-match save/load (#652); this keeps the original Game_Every
+	-- (#464) form to avoid re-baselining the firstclash determinism fixtures for a
+	-- no-op behavioral change.
 	Game_Every(TIMEOUT_SECONDS, function(timer)
 		local wi = 1
 		for i = 2, #players do
