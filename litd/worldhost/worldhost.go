@@ -59,7 +59,19 @@ func Load(world string, seed, budget int64) (*Host, error) {
 	}
 	dataFS := os.DirFS(filepath.Join(world, "data"))
 	scriptFS := os.DirFS(world)
-	return loadFS(dataFS, scriptFS, world, seed, budget, nil)
+	return loadFS(dataFS, scriptFS, world, seed, budget, false, nil)
+}
+
+// LoadRecording is Load with replay recording armed BEFORE the world's main.lua
+// runs — so commands the world's scripts issue (notably the melee AIs attached
+// during bootstrap, #642) are captured. Use Host.Game.BuildReplay() at run end.
+func LoadRecording(world string, seed, budget int64) (*Host, error) {
+	if world == "" {
+		return nil, fmt.Errorf("missing world dir")
+	}
+	dataFS := os.DirFS(filepath.Join(world, "data"))
+	scriptFS := os.DirFS(world)
+	return loadFS(dataFS, scriptFS, world, seed, budget, true, nil)
 }
 
 // LoadArchive opens and verifies a .litdworld with the production archive
@@ -83,7 +95,7 @@ func LoadArchive(archivePath, engineVersion string, seed, budget int64) (*Host, 
 		arc.Close()
 		return nil, err
 	}
-	return loadFS(dataFS, scriptFS, scriptLabel, seed, budget, func() { _ = arc.Close() })
+	return loadFS(dataFS, scriptFS, scriptLabel, seed, budget, false, func() { _ = arc.Close() })
 }
 
 func archiveScriptFS(archiveFS fs.FS, archivePath string) (fs.FS, string, error) {
@@ -138,7 +150,7 @@ func loadRuntimeMap(dataFS fs.FS) (*mapdata.Map, error) {
 	return m, nil
 }
 
-func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extraCleanup func()) (host *Host, err error) {
+func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, record bool, extraCleanup func()) (host *Host, err error) {
 	extraClosed := false
 	closeExtra := func() {
 		if extraCleanup != nil && !extraClosed {
@@ -321,6 +333,12 @@ func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extr
 		return nil, err
 	}
 	luabind.RegisterMatchSpec(interp.L, matchSpec)
+	// Arm replay recording BEFORE main.lua runs: the world's bootstrap attaches
+	// the melee AIs (#642), and the recorder must tap each controller as it issues
+	// orders. Recording after the scripts run would miss the AI's whole game.
+	if record {
+		g.RecordReplay()
+	}
 	if _, err := luabind.LoadWorldFS(interp.L, reg, scriptFS, scriptLabel); err != nil {
 		cleanup()
 		return nil, fmt.Errorf("load world: %w", err)
