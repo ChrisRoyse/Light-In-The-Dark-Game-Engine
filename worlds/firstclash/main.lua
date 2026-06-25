@@ -13,6 +13,9 @@ local STARTS = {
 	[1] = { x = 3400.0, y = 3400.0 },
 }
 
+-- spec.players is slot-ascending (LoadMatchSpec guarantees it); keep that order
+-- so the victory tiebreak (lower slot wins exact ties) is deterministic.
+local roster = {}
 for _, p in ipairs(spec.players) do
 	local player = Game_Player(p.slot)
 	local s = STARTS[p.slot]
@@ -22,4 +25,9 @@ for _, p in ipairs(spec.players) do
 	Player_SetStartLocation(player, { x = s.x, y = s.y })
 	local setup = require("melee/" .. p.race) -- loud error if the script is missing
 	setup(player, p)
+	roster[#roster + 1] = player
 end
+
+-- Wire the resolution layer: decisive last-standing (#646) + the 24,000-tick
+-- score backstop (#647), so the AI-vs-AI match always terminates with a winner.
+require("melee/victory")(roster)
