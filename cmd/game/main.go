@@ -33,6 +33,7 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	match "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/match"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/savegame"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	"github.com/g3n/engine/app"
@@ -112,6 +113,17 @@ type game struct {
 	shotPending bool
 	shotName    string
 
+	// debug console (#399, R-OBS-5)
+	console        *gui.Label
+	consoleActive  bool
+	consoleInput   string
+	consoleHist    []string
+	consoleEval    string // -console-eval: scripted FSV (open, type, submit, screenshot, exit)
+	consoleEvalRun bool   // one-shot guard for the scripted FSV
+	obsLog         *obs.Logger
+	obsCounts      *obs.Counters
+	cUnits, cTicks obs.CounterID
+
 	// autotest state
 	autotest  bool
 	autoUnit  api.Unit // the movable unit the move beat orders + re-reads (by handle)
@@ -146,6 +158,7 @@ func main() {
 	flag.IntVar(&gm.exitAt, "exit-at", 0, "advance to this sim tick, dump state + screenshot, then exit (0=off; windowed FSV hook #655/#656)")
 	flag.StringVar(&gm.exitShot, "exit-shot", "game-exit.png", "screenshot filename written at -exit-at")
 	flag.IntVar(&gm.localSlot, "local", 0, "local player slot whose result the terminal banner reports (#654)")
+	flag.StringVar(&gm.consoleEval, "console-eval", "", "scripted FSV: open the Lua console, evaluate this line, screenshot (to -exit-shot), then exit (#399)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if gm.speed < 1 {
@@ -188,6 +201,7 @@ func main() {
 	gm.buildMenu()
 	gm.buildHUD()
 	gm.buildTerminalBanner()
+	gm.buildConsole()
 	gm.bindInput()
 	gm.rebuildUnits()
 
@@ -451,6 +465,25 @@ func (gm *game) setPaused(p bool) {
 func (gm *game) bindInput() {
 	gm.app.Subscribe(window.OnKeyDown, func(_ string, ev interface{}) {
 		ke := ev.(*window.KeyEvent)
+		// Backquote toggles the debug console (#399) from any state.
+		if ke.Key == window.KeyGraveAccent {
+			gm.toggleConsole()
+			return
+		}
+		// While the console is open it owns the keyboard: edit/submit/close only,
+		// so game hotkeys never fire under the typist. Printable characters arrive
+		// via OnChar below.
+		if gm.consoleActive {
+			switch ke.Key {
+			case window.KeyEnter, window.KeyKPEnter:
+				gm.consoleSubmit()
+			case window.KeyBackspace:
+				gm.consoleBackspace()
+			case window.KeyEscape:
+				gm.toggleConsole()
+			}
+			return
+		}
 		switch ke.Key {
 		case window.KeyEscape:
 			gm.setPaused(!gm.paused)
@@ -467,6 +500,12 @@ func (gm *game) bindInput() {
 				fmt.Println("event: quit")
 				os.Exit(0)
 			}
+		}
+	})
+	// Text entry for the console (desktop glfw dispatches OnChar).
+	gm.app.Subscribe(window.OnChar, func(_ string, ev interface{}) {
+		if gm.consoleActive {
+			gm.consoleType(ev.(*window.CharEvent).Char)
 		}
 	})
 	// Mouse: left-click selects the unit nearest the picked ground point,
@@ -576,6 +615,7 @@ func (gm *game) quickload() bool {
 	gm.host.Close()
 	gm.host = fresh
 	gm.g = fresh.Game
+	gm.registerConsoleObs() // re-install obs.* on the fresh VM (#399)
 	gm.curTick = int(gm.g.Tick())
 	gm.selected = -1
 	gm.flow = match.NewFlow(gm.g, gm.g.Player(gm.localSlot))
@@ -666,6 +706,28 @@ func (gm *game) update(rend *renderer.Renderer, dt time.Duration) {
 	}
 
 	gm.syncTerminalUI()
+
+	// -console-eval: scripted console FSV (#399). On the first frame, open the
+	// console, evaluate the line, render the overlay over the scene, screenshot to
+	// -exit-shot, and exit. Drives the real console input/eval/render path.
+	if gm.consoleEval != "" && !gm.consoleEvalRun {
+		gm.consoleEvalRun = true
+		gm.runConsoleEvalFSV()
+		gm.rebuildUnits()
+		gm.hud.SetText(gm.hudText())
+		gm.renderConsole()
+		gm.day.Update(gm.tod)
+		gm.app.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
+		if err := rend.Render(gm.scene, gm.cam); err != nil {
+			fatalf("render: %v", err)
+		}
+		path := filepath.Join(gm.outDir, gm.exitShot)
+		if err := gm.screenshot(path); err != nil {
+			fatalf("console-eval screenshot: %v", err)
+		}
+		fmt.Printf("event: console-eval screenshot saved path=%s\n", path)
+		os.Exit(0)
+	}
 
 	// -exit-at: once we've reached the target tick, capture the SoT (state JSON
 	// + screenshot) and exit. Render one final frame first so the screenshot

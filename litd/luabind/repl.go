@@ -154,4 +154,13 @@ func RegisterObs(L *lua.LState, src ReplObs) {
 	}))
 
 	L.SetGlobal("obs", mod)
+
+	// obs is engine-installed debug infrastructure backed by Go functions, not world
+	// data — fold it into the builtin baseline so SaveScripts never tries to
+	// serialize it (the same treatment the require shim gets, #481). Without this a
+	// quicksave taken after the console is wired fails closed on "cannot serialize a
+	// Go-function value".
+	if s := getScheduler(L); s != nil {
+		s.markBuiltinGlobal("obs")
+	}
 }
