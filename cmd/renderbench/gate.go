@@ -13,6 +13,14 @@ const (
 	gateFPSTypical     = 60.0
 	gateFPSMaxBattle   = 30.0
 	gateAllocsPerFrame = 0
+	// gateAllocsCeiling is the ENFORCED steady-state alloc/frame regression ratchet
+	// (#541): it locks in the #537 per-graphic reductions (437 → 7/frame) so that
+	// re-introducing any dominant source — un-applying patch 0015/0016/0017/0018
+	// adds back 60–133 allocs/frame — trips the gate on a GL run. Set with headroom
+	// above the current worst steady (~10, frame-2 warm-up; series settles at 7) so
+	// it never flakes on jitter, yet far below any single regression. Tighten toward
+	// gateAllocsPerFrame (0) as the residual long tail is closed.
+	gateAllocsCeiling = 24
 )
 
 // gateVerdict is one evaluated budget line. Enforced=false means the gate is
@@ -131,8 +139,8 @@ func runGate(outDir, variant string, enforceFPS bool) error {
 		Detail:    "G3.10 stretch — recorded on recommended spec, not a low-tier gate",
 	})
 
-	// Gate 4 — allocs/frame. TRACKED pending #537 (stock-g3n render loop allocates
-	// ~437/frame; R-GC-1 currently gates LITD paths only).
+	// Gate 4 — allocs/frame == 0. Aspirational, TRACKED: the residual ~7/frame long
+	// tail (#537) is scattered, not a single dominant source.
 	worstAllocs, allocsWhere := worstSteadyAllocs(dumps)
 	add(gateVerdict{
 		Name:      "allocs/frame == 0",
@@ -140,7 +148,22 @@ func runGate(outDir, variant string, enforceFPS bool) error {
 		Threshold: fmt.Sprintf("==%d", gateAllocsPerFrame),
 		Enforced:  false,
 		Pass:      worstAllocs == gateAllocsPerFrame,
-		Detail:    "TRACKED pending #537 (stock-g3n render allocs; R-GC-1 gates LITD paths)",
+		Detail:    "TRACKED — residual #537 long tail (~7/frame, no single flat source)",
+	})
+
+	// Gate 4b — allocs/frame regression ratchet. ENFORCED (#541): locks in the #537
+	// per-graphic reductions (437 → 7/frame). Re-introducing a dominant source adds
+	// back 60–133 allocs/frame and trips this; the ceiling has warm-up headroom so
+	// it never flakes. Like the FPS floors, this is a GL-run gate (the headless
+	// matrix has no per-frame draw allocs to measure), enforced wherever -gate runs
+	// with a real context.
+	add(gateVerdict{
+		Name:      "allocs/frame regression ceiling",
+		Measured:  fmt.Sprintf("%d (%s)", worstAllocs, allocsWhere),
+		Threshold: fmt.Sprintf("<=%d", gateAllocsCeiling),
+		Enforced:  true,
+		Pass:      worstAllocs <= gateAllocsCeiling,
+		Detail:    "#541 ratchet protecting patches 0015–0018; tighten toward 0 as the tail closes",
 	})
 
 	reportPath := filepath.Join(outDir, "gates.json")
