@@ -138,6 +138,13 @@ func (g *Game) AttachMeleeAI(p Player, strat *melee.Strategy, cfg melee.Config, 
 		return // defeated player: no-op (parity with AttachAI)
 	}
 	g.w.AttachAI(idx, uint8(d)) // replay-safe sim flags (difficulty, AI-owned)
+	if g.replayDrive {
+		// Replay-apply mode: the recorded command stream stands in for the live
+		// controller. Keep the sim AI flags above (they are hashed — parity with
+		// the recorded run), but attach NO controller; SetReplayDrive's OnAIPhase
+		// hook applies the stream instead.
+		return
+	}
 	g.ensureAIDomain()
 	g.aiDomain.RemovePlayer(int(idx)) // replace any prior context wholesale
 	if strat == nil {
@@ -193,3 +200,35 @@ func (g *Game) BuildReplay() *sim.Replay {
 		Commands: append([]sim.ReplayCommand(nil), g.replayLog...),
 	}
 }
+
+// SetReplayDrive puts the Game into replay-apply mode — the mirror of
+// RecordReplay. After this call, every AttachMeleeAI keeps the sim AI flags (so
+// the replay world hashes identically to the recorded one) but registers NO live
+// controller; instead the recorded command stream cmds is applied each AI
+// sub-phase at its recorded tick, via the same OnAIPhase hook the live domain
+// uses. This is the commands-only determinism model (#404): a real AI match
+// reproduces bit-identically with the controllers detached (#649, over the
+// shipped world). cmds must be tick-ascending (the recorder's natural order).
+// Call BEFORE the world's setup script runs so AttachMeleeAI observes the mode.
+func (g *Game) SetReplayDrive(cmds []sim.ReplayCommand) {
+	g.replayDrive = true
+	g.replayApply = cmds
+	g.replayApplyNext = 0
+	resolve := melee.EntityResolver(g.w)
+	prev := g.w.OnAIPhase
+	g.w.OnAIPhase = func(tick uint32) {
+		if prev != nil {
+			prev(tick)
+		}
+		tk := g.w.Tick()
+		for g.replayApplyNext < len(g.replayApply) && g.replayApply[g.replayApplyNext].Tick == tk {
+			g.replayApply[g.replayApplyNext].Apply(g.w, resolve)
+			g.replayApplyNext++
+		}
+	}
+}
+
+// ReplayApplied reports how many recorded commands the replay drive has applied
+// so far — len(stream) at a faithful end-of-run means the tick addressing lined
+// up (no dropped/extra commands).
+func (g *Game) ReplayApplied() int { return g.replayApplyNext }

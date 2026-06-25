@@ -85,6 +85,15 @@ type Game struct {
 	replayRecording bool
 	replayLog       []sim.ReplayCommand
 
+	// replayDrive, when set (SetReplayDrive), is the mirror image of recording:
+	// AttachMeleeAI registers NO live controller, and the supplied recorded
+	// command stream is applied each AI sub-phase at its recorded tick. This is
+	// the commands-only determinism model (#404/#649) — a real match reproduces
+	// with the controllers detached. api-runtime state, never hashed.
+	replayDrive     bool
+	replayApply     []sim.ReplayCommand
+	replayApplyNext int
+
 	// debug enables R-API-5 invalid-handle assertions; off in shipped
 	// maps (WC3 forgiveness), on in development (catch the swallowed
 	// bug). Toggled via SetDebug.

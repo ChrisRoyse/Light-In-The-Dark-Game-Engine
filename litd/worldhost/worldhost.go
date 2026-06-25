@@ -59,7 +59,7 @@ func Load(world string, seed, budget int64) (*Host, error) {
 	}
 	dataFS := os.DirFS(filepath.Join(world, "data"))
 	scriptFS := os.DirFS(world)
-	return loadFS(dataFS, scriptFS, world, seed, budget, false, nil)
+	return loadFS(dataFS, scriptFS, world, seed, budget, false, nil, nil)
 }
 
 // LoadRecording is Load with replay recording armed BEFORE the world's main.lua
@@ -71,7 +71,22 @@ func LoadRecording(world string, seed, budget int64) (*Host, error) {
 	}
 	dataFS := os.DirFS(filepath.Join(world, "data"))
 	scriptFS := os.DirFS(world)
-	return loadFS(dataFS, scriptFS, world, seed, budget, true, nil)
+	return loadFS(dataFS, scriptFS, world, seed, budget, true, nil, nil)
+}
+
+// LoadReplay is Load in replay-apply mode (#649): the world's setup runs
+// identically, but its melee AIs attach NO live controller — the recorded
+// command stream cmds drives the AI players instead (applied at each command's
+// recorded tick). Loading the SAME world+seed and stepping the SAME tick count
+// must reproduce the recorded match's StateHash bit-for-bit. cmds is the stream
+// from a prior LoadRecording run (Host.Game.BuildReplay().Commands).
+func LoadReplay(world string, seed, budget int64, cmds []sim.ReplayCommand) (*Host, error) {
+	if world == "" {
+		return nil, fmt.Errorf("missing world dir")
+	}
+	dataFS := os.DirFS(filepath.Join(world, "data"))
+	scriptFS := os.DirFS(world)
+	return loadFS(dataFS, scriptFS, world, seed, budget, false, cmds, nil)
 }
 
 // LoadArchive opens and verifies a .litdworld with the production archive
@@ -95,7 +110,7 @@ func LoadArchive(archivePath, engineVersion string, seed, budget int64) (*Host, 
 		arc.Close()
 		return nil, err
 	}
-	return loadFS(dataFS, scriptFS, scriptLabel, seed, budget, false, func() { _ = arc.Close() })
+	return loadFS(dataFS, scriptFS, scriptLabel, seed, budget, false, nil, func() { _ = arc.Close() })
 }
 
 func archiveScriptFS(archiveFS fs.FS, archivePath string) (fs.FS, string, error) {
@@ -150,7 +165,7 @@ func loadRuntimeMap(dataFS fs.FS) (*mapdata.Map, error) {
 	return m, nil
 }
 
-func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, record bool, extraCleanup func()) (host *Host, err error) {
+func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, record bool, replayCmds []sim.ReplayCommand, extraCleanup func()) (host *Host, err error) {
 	extraClosed := false
 	closeExtra := func() {
 		if extraCleanup != nil && !extraClosed {
@@ -338,6 +353,12 @@ func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, reco
 	// orders. Recording after the scripts run would miss the AI's whole game.
 	if record {
 		g.RecordReplay()
+	}
+	// Replay-apply mode (#649): arm BEFORE main.lua so the bootstrap's
+	// AttachMeleeAI attaches no live controller — the recorded stream drives the
+	// AI players instead. record and replayCmds are mutually exclusive.
+	if replayCmds != nil {
+		g.SetReplayDrive(replayCmds)
 	}
 	if _, err := luabind.LoadWorldFS(interp.L, reg, scriptFS, scriptLabel); err != nil {
 		cleanup()
