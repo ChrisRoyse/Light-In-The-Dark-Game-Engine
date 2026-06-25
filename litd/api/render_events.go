@@ -89,10 +89,7 @@ func (g *Game) RenderEvents(buf []RenderEvent) []RenderEvent {
 			Kind:     kind,
 			UnitType: UnitType{ref: e.Data + 1}, // Data = unit-type id
 			UnitKey:  e.Ent.Index(),
-			Owner:    -1,
-		}
-		if or := g.w.Owners.Row(e.Ent); or >= 0 {
-			re.Owner = int(g.w.Owners.Player[or])
+			Owner:    int(e.Owner), // captured at emit time (#666) — valid even for a since-removed dying unit
 		}
 		// Position from the same snapshot — the unit appears this tick (a dying
 		// unit is published in phase 7 before its removal; a trained unit is live).

@@ -69,11 +69,12 @@ type MissileSnapEntry struct {
 // the next snapshot — e.g. a missile impact removes its missile that
 // tick (#309); it is the zero vector for cues that don't use it.
 type RenderEvent struct {
-	Tick uint32
-	Kind uint8
-	Ent  EntityID
-	Data uint16
-	Pos  fixed.Vec2
+	Tick  uint32
+	Kind  uint8
+	Ent   EntityID
+	Data  uint16
+	Owner int16 // owning player slot at emit time, -1 if none (#666)
+	Pos   fixed.Vec2
 }
 
 // RenderEvent kind values. Append-only: render consumers may switch on
@@ -176,7 +177,16 @@ func (w *World) EmitRenderEventAt(kind uint8, ent EntityID, data uint16, pos fix
 		w.renderEvDropped++
 		return false
 	}
-	w.renderEvStaging = append(w.renderEvStaging, RenderEvent{Kind: kind, Ent: ent, Data: data, Pos: pos})
+	// Capture the owning player NOW, while ent is still alive. A death cue
+	// (#666) is drained after the unit is removed, so a live Owners.Row lookup at
+	// drain time would return -1 — the owner must be snapshot at emit time so a
+	// consumer can attribute "whose unit died". Non-hashing presentation data, so
+	// this never affects the state hash.
+	owner := int16(-1)
+	if or := w.Owners.Row(ent); or >= 0 {
+		owner = int16(w.Owners.Player[or])
+	}
+	w.renderEvStaging = append(w.renderEvStaging, RenderEvent{Kind: kind, Ent: ent, Data: data, Owner: owner, Pos: pos})
 	return true
 }
 
