@@ -86,6 +86,18 @@ type game struct {
 	curTick  int
 	acc      time.Duration
 
+	// tick-rate control (#655): speed multiplies ticks advanced per sim-step
+	// interval; maxspeed ungates the wall-clock so the sim runs as fast as
+	// render frames allow. Neither touches sim math — both only change how many
+	// deterministic Advance(1) calls happen per render frame, so the final
+	// StateHash is identical across speeds (R-SIM-2). exitAt drives the windowed
+	// shell to a deterministic tick, dumps state+screenshot, then exits (the
+	// FSV/acceptance hook — #655/#656).
+	speed     int
+	maxspeed  bool
+	exitAt    int
+	exitShot  string
+
 	shotPending bool
 	shotName    string
 
@@ -117,8 +129,15 @@ func main() {
 	flag.StringVar(&gm.savePath, "save", "", "quicksave file path (default <out>/quicksave.litdsave)")
 	flag.StringVar(&gm.outDir, "out", "artifacts", "screenshot/save output directory")
 	flag.BoolVar(&gm.autotest, "autotest", false, "scripted FSV run, then exit")
+	flag.IntVar(&gm.speed, "speed", 1, "sim ticks advanced per render frame interval (#655)")
+	flag.BoolVar(&gm.maxspeed, "maxspeed", false, "ungate the wall-clock: advance -speed ticks every render frame (#655)")
+	flag.IntVar(&gm.exitAt, "exit-at", 0, "advance to this sim tick, dump state + screenshot, then exit (0=off; windowed FSV hook #655/#656)")
+	flag.StringVar(&gm.exitShot, "exit-shot", "game-exit.png", "screenshot filename written at -exit-at")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+	if gm.speed < 1 {
+		fatalf("-speed must be >= 1, got %d", gm.speed)
+	}
 
 	if *showVersion {
 		fmt.Printf("game %s\n", engineVersion())
@@ -508,15 +527,39 @@ func (gm *game) advanceSim(ticks int) {
 func (gm *game) update(rend *renderer.Renderer, dt time.Duration) {
 	if gm.autotest {
 		gm.autotestStep()
+	} else if gm.maxspeed {
+		// Ungated: advance speed ticks every render frame, as fast as the
+		// frame loop runs. Outcome identical to real-time — only cadence differs.
+		gm.advanceSim(gm.speed)
 	} else {
 		// Real-time loop: accumulate wall time, step the sim at a fixed rate
-		// unless paused.
+		// unless paused. -speed multiplies ticks advanced per interval.
 		gm.acc += dt
 		tickDur := time.Second / ticksPerSecond
 		for gm.acc >= tickDur {
-			gm.advanceSim(1)
+			gm.advanceSim(gm.speed)
 			gm.acc -= tickDur
 		}
+	}
+
+	// -exit-at: once we've reached the target tick, capture the SoT (state JSON
+	// + screenshot) and exit. Render one final frame first so the screenshot
+	// reflects the post-advance world.
+	if gm.exitAt > 0 && gm.curTick >= gm.exitAt {
+		gm.rebuildUnits()
+		gm.hud.SetText(gm.hudText())
+		gm.day.Update(gm.tod)
+		gm.app.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
+		if err := rend.Render(gm.scene, gm.cam); err != nil {
+			fatalf("render: %v", err)
+		}
+		path := filepath.Join(gm.outDir, gm.exitShot)
+		if err := gm.screenshot(path); err != nil {
+			fatalf("exit screenshot: %v", err)
+		}
+		fmt.Printf("event: exit-at screenshot saved path=%s\n", path)
+		gm.printState("exit-at")
+		os.Exit(0)
 	}
 
 	gm.rebuildUnits()
@@ -564,10 +607,14 @@ func (gm *game) printState(tag string) {
 		p := u.Position()
 		rows = append(rows, map[string]any{"id": u.ID(), "x": p.X, "y": p.Y, "life": u.Life()})
 	}
+	results := make(map[string]int)
+	for _, p := range gm.g.AllPlayers() {
+		results[fmt.Sprintf("p%d", p.Slot())] = int(p.Result())
+	}
 	s := map[string]any{
 		"tag": tag, "tick": gm.curTick, "paused": gm.paused,
 		"tod": gm.g.TimeOfDay(), "hash": fmt.Sprintf("%#x", gm.g.StateHash()),
-		"selected": gm.selected, "units": rows,
+		"selected": gm.selected, "units": rows, "results": results,
 	}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
