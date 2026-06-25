@@ -13,7 +13,9 @@
 // presentation sinks (OnAudio, OnCamera) set a Game field and never touch the
 // sim, so they are not flagged.
 //
-// Usage: presentlint <dir> [<dir>...]   (defaults to litd/render litd/audio)
+// Usage: presentlint <dir> [<dir>...]   (defaults to litd/render litd/audio
+// litd/match — match-flow drives presentation UI and must stay off the hashing
+// path too, #665)
 package main
 
 import (
@@ -95,7 +97,7 @@ func scanDirs(dirs []string) ([]finding, error) {
 func main() {
 	dirs := os.Args[1:]
 	if len(dirs) == 0 {
-		dirs = []string{"litd/render", "litd/audio"}
+		dirs = []string{"litd/render", "litd/audio", "litd/match"}
 	}
 	findings, err := scanDirs(dirs)
 	if err != nil {

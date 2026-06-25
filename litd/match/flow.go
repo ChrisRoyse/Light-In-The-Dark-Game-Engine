@@ -153,9 +153,12 @@ type Flow struct {
 	stats     Stats
 	startTick uint32
 
-	trainedSub api.Subscription
-	deathSub   api.Subscription
-	subscribed bool
+	// evbuf is the reusable drain buffer for this tick's presentation cues.
+	// Stats are counted from the NON-HASHING render-event snapshot (#665), never
+	// via Game.OnEvent — counting on the hashing path would make a flow-UI-on game
+	// hash differently than a flow-UI-off one (R-SIM-6), violating this package's
+	// "no flow state in the sim tick, lockstep-safe" invariant.
+	evbuf []api.RenderEvent
 }
 
 // NewFlow builds a flow for game g whose local player is local (the player whose
@@ -222,27 +225,34 @@ func (f *Flow) BeginRoster(roster []PlayerSlot) bool {
 	return true
 }
 
-// StartPlay advances PhaseCountdown → PhasePlay: it subscribes the stat counters
-// and stamps the play-start tick. No-op (false) outside PhaseCountdown.
+// StartPlay advances PhaseCountdown → PhasePlay: it stamps the play-start tick.
+// No-op (false) outside PhaseCountdown. Stats are accrued by Poll draining the
+// render-event snapshot each tick (#665) — there is no subscription to install.
 func (f *Flow) StartPlay() bool {
 	if f.phase != PhaseCountdown {
 		return false
 	}
-	f.subscribeStats()
 	f.startTick = f.g.Tick()
 	f.phase = PhasePlay
 	return true
 }
 
-// Poll advances the live match. During PhasePlay it reads the local player's
-// result; once a terminal result latches it freezes the duration, transitions to
-// PhaseTerminal, and shows the end-match screen. It is a no-op in any other
-// phase, so the driver can call it unconditionally every tick. Returns true on
-// the tick the terminal transition happens.
+// Poll advances the live match. During PhasePlay it first drains this tick's
+// presentation cues to accrue the local player's stats (units trained/lost) off
+// the NON-HASHING render-event snapshot (#665), then reads the result; once a
+// terminal result latches it freezes the duration, transitions to PhaseTerminal,
+// and shows the end-match screen. It is a no-op in any other phase.
+//
+// CONTRACT: call Poll exactly once per sim tick during play, interleaved with
+// Advance(1) — `for { g.Advance(1); flow.Poll() }`. The cue stream is the current
+// snapshot's, so polling more than once per tick double-counts and polling fewer
+// times than ticks advanced (e.g. once after Advance(N)) drops the intermediate
+// ticks' cues. Returns true on the tick the terminal transition happens.
 func (f *Flow) Poll() bool {
 	if f.phase != PhasePlay {
 		return false
 	}
+	f.drainStats()
 	r := f.local.Result()
 	if r == api.ResultPlaying {
 		return false
@@ -254,23 +264,24 @@ func (f *Flow) Poll() bool {
 	return true
 }
 
-// ExitToMenu advances PhaseTerminal → PhaseExit and tears the match down (cancel
-// subscriptions, hide the terminal screen). No-op (false) outside PhaseTerminal.
+// ExitToMenu advances PhaseTerminal → PhaseExit and tears the match down (hide
+// the terminal screen). No-op (false) outside PhaseTerminal. There is no
+// subscription to cancel — stats are pull-drained per tick (#665).
 func (f *Flow) ExitToMenu() bool {
 	if f.phase != PhaseTerminal {
 		return false
 	}
-	f.cancelStats()
 	f.g.UI().Hide(TerminalScreenID)
 	f.phase = PhaseExit
 	return true
 }
 
 // Reset returns the flow to PhaseSetup for a clean second match in the same
-// process: it cancels any live subscriptions and zeroes all per-match state, so
-// no stats, result, or start tick leak from the previous match. Idempotent.
+// process: it zeroes all per-match state, so no stats, result, or start tick leak
+// from the previous match. Because stats are pull-drained (no subscription),
+// teardown is inherently clean — a torn-down flow that is no longer polled simply
+// stops counting. Idempotent.
 func (f *Flow) Reset() {
-	f.cancelStats()
 	f.phase = PhaseSetup
 	f.setup = Setup{}
 	f.roster = nil
@@ -279,36 +290,26 @@ func (f *Flow) Reset() {
 	f.startTick = 0
 }
 
-// subscribeStats wires the trained/death counters, filtered to the local player.
-// Idempotent: a second call without an intervening cancel is ignored so the
-// counters can't double-count.
-func (f *Flow) subscribeStats() {
-	if f.subscribed {
-		return
-	}
+// drainStats counts this tick's local-player trained/death cues off the
+// render-event snapshot (#665) — the NON-HASHING presentation channel. It never
+// touches the sim hash. The RenderUnitReady / RenderUnitDied cues carry Owner, so
+// the count is filtered to the local player exactly as the old OnEvent path did,
+// but without registering a sim-hashing subscription.
+func (f *Flow) drainStats() {
 	slot := f.local.Slot()
-	f.trainedSub = f.g.OnEvent(api.EventUnitTrained, func(e api.Event) {
-		if e.Unit().Owner().Slot() == slot {
-			f.stats.UnitsTrained++
+	f.evbuf = f.g.RenderEvents(f.evbuf)
+	for i := range f.evbuf {
+		e := f.evbuf[i]
+		if e.Owner != slot {
+			continue
 		}
-	})
-	f.deathSub = f.g.OnEvent(api.EventUnitDeath, func(e api.Event) {
-		if e.Unit().Owner().Slot() == slot {
+		switch e.Kind {
+		case api.RenderUnitReady:
+			f.stats.UnitsTrained++
+		case api.RenderUnitDied:
 			f.stats.UnitsLost++
 		}
-	})
-	f.subscribed = true
-}
-
-// cancelStats tears down the stat subscriptions. Safe to call when not
-// subscribed (no orphan subscriptions survive a Reset/exit).
-func (f *Flow) cancelStats() {
-	if !f.subscribed {
-		return
 	}
-	f.trainedSub.Cancel()
-	f.deathSub.Cancel()
-	f.subscribed = false
 }
 
 // showTerminal pushes the end-match UIScreen: locale-key chrome only (the

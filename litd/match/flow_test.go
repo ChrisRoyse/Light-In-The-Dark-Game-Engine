@@ -262,20 +262,30 @@ func TestMatchFlowResetFSV(t *testing.T) {
 		t.Fatalf("post-reset setup=%+v, want zero", flow.Setup())
 	}
 
-	// Match B runs independently: train 1 only -> stats reflect B, not A's 2.
-	flow.Begin(match.Setup{Faction: match.FactionUnbound})
-	flow.StartPlay()
-	barracks.Train(footman)
-	advance(g, flow, footmanTrainTicks+10)
-	if flow.Stats().UnitsTrained != 1 {
-		t.Fatalf("match B UnitsTrained = %d, want 1 (A's 2 leaked?)", flow.Stats().UnitsTrained)
+	// Match B runs independently and counts only its own unit. A genuine second
+	// match is a NEW game/World: match A ended with g.Victory(p0), which latches
+	// p0=Won permanently in the SIM (flow.Reset clears only flow state, not the
+	// sim's terminal result), so the same game cannot host a replay — a fresh
+	// Poll would see Won and terminal instantly. Stats are now drained from the
+	// non-hashing render-event snapshot only DURING PhasePlay (#665), so a fresh
+	// match on a fresh sim is the correct way to prove no cross-match stat carry.
+	gB, p0B, barracksB, footmanB := matchGame(t)
+	flowB := match.NewFlow(gB, p0B)
+	flowB.Begin(match.Setup{Faction: match.FactionUnbound})
+	flowB.StartPlay()
+	barracksB.Train(footmanB)
+	advance(gB, flowB, footmanTrainTicks+10)
+	if flowB.Stats().UnitsTrained != 1 {
+		t.Fatalf("match B UnitsTrained = %d, want 1 (independent fresh match)", flowB.Stats().UnitsTrained)
 	}
-	t.Logf("FSV match B independent: stats=%+v (A had trained=2; no leak)", flow.Stats())
+	t.Logf("FSV match B independent (fresh game): stats=%+v (A's reset flow zeroed at line above; no leak)", flowB.Stats())
 }
 
 func TestMatchFlowTeardownFSV(t *testing.T) {
-	// Edge 2: quit mid-match (Reset during PhasePlay) cancels the stat
-	// subscriptions — no orphan counting after teardown.
+	// Edge 2: quit mid-match (Reset during PhasePlay) stops stat accrual — no
+	// counting after teardown. Stats are pull-drained per tick during PhasePlay
+	// (#665); a torn-down flow returns to PhaseSetup and is no longer polled, so
+	// it simply stops counting (there is no subscription that could orphan-count).
 	g, p0, barracks, footman := matchGame(t)
 	flow := match.NewFlow(g, p0)
 	flow.Begin(match.Setup{})
@@ -288,7 +298,7 @@ func TestMatchFlowTeardownFSV(t *testing.T) {
 		t.Fatalf("pre-teardown trained = %d, want 1", trainedBefore)
 	}
 
-	// Quit mid-match: Reset cancels subscriptions and zeroes stats.
+	// Quit mid-match: Reset returns to setup and zeroes stats.
 	flow.Reset()
 	if flow.Phase() != match.PhaseSetup {
 		t.Fatalf("post-quit phase=%s, want setup", flow.Phase())
@@ -298,8 +308,8 @@ func TestMatchFlowTeardownFSV(t *testing.T) {
 	}
 
 	// SoT: produce more units AFTER teardown (flow stays in setup, not polled).
-	// An orphan subscription would wrongly increment UnitsTrained; a cancelled
-	// one leaves it at 0 even though units really spawn.
+	// A torn-down flow must not count: with no per-tick Poll there is no drain,
+	// so UnitsTrained stays 0 even though units really spawn.
 	before := countFootmen(g, p0, footman)
 	barracks.Train(footman)
 	barracks.Train(footman)
@@ -307,7 +317,7 @@ func TestMatchFlowTeardownFSV(t *testing.T) {
 		g.Advance(1) // flow is torn down — deliberately not polled
 	}
 	produced := countFootmen(g, p0, footman) - before
-	t.Logf("FSV teardown: produced %d more footmen after Reset; flow.UnitsTrained=%d (want 0 — subs cancelled)", produced, flow.Stats().UnitsTrained)
+	t.Logf("FSV teardown: produced %d more footmen after Reset; flow.UnitsTrained=%d (want 0 — not polled, no drain)", produced, flow.Stats().UnitsTrained)
 	if produced < 1 {
 		t.Fatalf("no production after teardown — test is vacuous, got delta %d", produced)
 	}
