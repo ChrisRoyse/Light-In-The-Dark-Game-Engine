@@ -60,4 +60,18 @@ func registerScriptWeapon(L *lua.LState, g *api.Game) {
 		L.Push(lua.LBool(argUnit(L, 1).Cast(argAbility(L, 2), argUnit(L, 3))))
 		return 1
 	}))
+
+	// Unit_CastAbilityRef(caster, ref, target) -> bool — save-safe cast-by-ref
+	// (#667, from the #663 footgun). Re-derives the ability handle from its REF
+	// internally via the idempotent Unit.AddAbility, so a script never has to hold
+	// an Ability handle across a tick — an Ability upvalue is not marshalable and
+	// kills savegame.Write (#663). A closure that captures only the ref (an int from
+	// Game_AbilityRef) plus the unit/target handles is save-safe and casts through
+	// the exact same cast machine as Unit_CastAbility.
+	L.SetGlobal("Unit_CastAbilityRef", L.NewFunction(func(L *lua.LState) int {
+		caster := argUnit(L, 1)
+		ability := caster.AddAbility(argAbilityRef(L, 2))
+		L.Push(lua.LBool(caster.Cast(ability, argUnit(L, 3))))
+		return 1
+	}))
 }
