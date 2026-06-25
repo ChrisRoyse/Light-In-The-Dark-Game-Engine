@@ -1,0 +1,32 @@
+diff --git a/graphic/sprite.go b/graphic/sprite.go
+index bd45673..4f73ba4 100644
+--- a/graphic/sprite.go
++++ b/graphic/sprite.go
+@@ -14,8 +14,9 @@ import (
+ 
+ // Sprite is a potentially animated image positioned in space that always faces the camera.
+ type Sprite struct {
+-	Graphic             // Embedded graphic
+-	uniMVPM gls.Uniform // Model view projection matrix uniform location cache
++	Graphic                    // Embedded graphic
++	uniMVPM    gls.Uniform     // Model view projection matrix uniform location cache
++	scratchMVP math32.Matrix4  // LITD-PATCH(#537): persistent MVP scratch. As a local its &mvpm[0] escapes to the heap through the cgo UniformMatrix4fv call (1 alloc per sprite per frame — 60/frame in the max-battle health-bar overlay); as a Sprite field it is allocated once with the sprite.
+ }
+ 
+ // NewSprite creates and returns a pointer to a sprite with the specified dimensions and material
+@@ -86,9 +87,11 @@ func (s *Sprite) RenderSetup(gs *gls.GLS, rinfo *core.RenderInfo) {
+ 	var mvmNew math32.Matrix4
+ 	mvmNew.Compose(&position, &quaternion, &scale)
+ 
+-	// Calculates final MVP and updates uniform
+-	var mvpm math32.Matrix4
+-	mvpm.MultiplyMatrices(&rinfo.ProjMatrix, &mvmNew)
++	// Calculates final MVP and updates uniform.
++	// LITD-PATCH(#537): compose into the persistent s.scratchMVP field rather than a
++	// local — &mvpm[0] escapes to the heap through the cgo UniformMatrix4fv call, so
++	// a local allocates once per sprite per frame.
++	s.scratchMVP.MultiplyMatrices(&rinfo.ProjMatrix, &mvmNew)
+ 	location := s.uniMVPM.Location(gs)
+-	gs.UniformMatrix4fv(location, 1, false, &mvpm[0])
++	gs.UniformMatrix4fv(location, 1, false, &s.scratchMVP[0])
+ }
