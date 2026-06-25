@@ -255,14 +255,16 @@ func TestArchiveTamperedHash(t *testing.T) {
 	}
 }
 
-// TestArchiveLuaForbidden — io.open is flagged with the file and line; the
-// "ghost" string literal in the SAME file is not a false positive.
+// TestArchiveLuaForbidden — io.open / os.execute / dofile are flagged with the
+// file and line; the "ghost" string literal is not a false positive, and require
+// is NOT flagged (#664: the runtime require is the caged sibling-only resolver).
 func TestArchiveLuaForbidden(t *testing.T) {
 	lua := "local name = \"ghost\"\n" + // line 1: string contains "os" — must NOT flag
 		"local g = 5\n" + // line 2
 		"local f = io.open(\"x\")\n" + // line 3: io -> flag
 		"os.execute(\"ls\")\n" + // line 4: os -> flag
-		"require(\"evil\")\n" // line 5: require -> flag
+		"dofile(\"evil\")\n" + // line 5: dofile (arbitrary code load) -> flag
+		"require(\"melee/vigil\")\n" // line 6: require -> NOT flagged (#664, caged resolver)
 	files := map[string]string{"scripts/bad.lua": lua}
 	arc := buildArchive(t, files, "*", nil, false)
 	got := runArchive(t, arc)
@@ -274,13 +276,17 @@ func TestArchiveLuaForbidden(t *testing.T) {
 		}
 	}
 	if len(luaFindings) != 3 {
-		t.Fatalf("want exactly 3 ARCHIVE-LUA (io, os, require), got %v", got)
+		t.Fatalf("want exactly 3 ARCHIVE-LUA (io, os, dofile), got %v", got)
 	}
 	joined := fmt.Sprint(luaFindings)
-	for _, want := range []string{"line 3", "line 4", "line 5", "\"io\"", "\"os\"", "\"require\""} {
+	for _, want := range []string{"line 3", "line 4", "line 5", "\"io\"", "\"os\"", "\"dofile\""} {
 		if !strings.Contains(joined, want) {
 			t.Fatalf("missing %q in lua findings: %v", want, luaFindings)
 		}
+	}
+	// #664: require must NOT be flagged — it is the caged composition shim.
+	if strings.Contains(joined, "\"require\"") || strings.Contains(joined, "line 6") {
+		t.Fatalf("require must not be flagged (#664 caged resolver): %v", luaFindings)
 	}
 	if strings.Contains(joined, "line 1") {
 		t.Fatalf("string literal \"ghost\" must not be flagged: %v", luaFindings)

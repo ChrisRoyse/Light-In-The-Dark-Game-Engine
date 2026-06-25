@@ -3,10 +3,25 @@
 // path (litd/asset/worldarchive) so both enforce the SAME rule with one
 // implementation. A minimal Lua lexer walks the source skipping comments and
 // string literals, then flags any reference to a sandbox-forbidden global
-// (io, os, net) or a code-loading function (require, loadfile, dofile). Because
+// (io, os, net) or an arbitrary-code-loading function (loadfile, dofile). Because
 // strings and comments are skipped, a literal like "ghost" (containing "os") is
 // never a false positive, and a field access like t.os (preceded by '.'/':')
 // is not the global os.
+//
+// require is DELIBERATELY NOT forbidden (#664). The stdlib require is stripped at
+// runtime (luabind/sandbox.go) and replaced by a caged composition shim
+// (luabind.installRequire) that resolves ONLY against the world's own compiled
+// chunks — a pure closed-set lookup over the registered chunk rels
+// (luabind.resolveModule), with no filesystem, no path resolution, and no `..`
+// traversal. In an archive those chunks are exactly the hash-verified entries, so
+// an archive-internal require is provably equivalent to inlining the sibling
+// chunk and cannot escape the verified tree (proven by luabind's require-escape
+// tests). Banning the keyword bought no security — the runtime require can never
+// reach host code — and broke the swappable-script modularity (#638) that lets a
+// world dispatch per-race/per-mission files. loadfile/dofile stay forbidden by
+// this static lint (they CAN load arbitrary code and have no caged equivalent);
+// load/loadstring/module are additionally stripped by the runtime sandbox
+// (luabind/sandbox.go), which is the defense-in-depth second layer.
 package lualint
 
 import (
@@ -18,7 +33,6 @@ var forbidden = map[string]string{
 	"io":       "sandbox-forbidden global",
 	"os":       "sandbox-forbidden global",
 	"net":      "sandbox-forbidden global",
-	"require":  "code-loading function",
 	"loadfile": "code-loading function",
 	"dofile":   "code-loading function",
 }
