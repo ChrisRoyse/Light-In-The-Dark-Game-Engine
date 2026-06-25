@@ -42,21 +42,35 @@ func registerScriptEvents(L *lua.LState, g *api.Game) {
 		return 1
 	}))
 	// Game_After(secs, fn) schedules fn to run once after secs of GAME time
-	// (#267). The generated dispatch defers Game.After for its func() callback;
-	// this binds it through the same scheduler the coroutine bridge uses
-	// (g.After), with the callback's errors routed to OnScriptError — exactly the
-	// OnEvent posture. Returns the Timer handle (Timer_Pause/Stop/... are bound).
-	// Pending callbacks are not yet save-serializable (same #270 limit as Run).
+	// (#267). Since #661 it is backed by a SERIALIZABLE single-fire timer
+	// (g.AfterCont on the timer wheel), not a raw Go-closure timer: the callback is
+	// interned by slot (onceActions) so a one-shot still pending at save time
+	// round-trips — the timer carries its slot in the payload and re-resolves to the
+	// scriptAfterCont bridge on load (resolving the #270/#557 limit for one-shots,
+	// the analogue of the #464 Game_Every migration). Returns the backing Timer
+	// handle (Valid/Pause/Stop work). Errors route to OnScriptError.
+	//
+	// With no scheduler (no save layer) it falls back to the live-only Go-closure
+	// timer — it cannot round-trip, but neither could the old timer.
 	L.SetGlobal("Game_After", L.NewFunction(func(L *lua.LState) int {
 		secs := float64(L.CheckNumber(1))
 		fn := L.CheckFunction(2)
-		timer := g.After(time.Duration(secs*float64(time.Second)), func() {
-			if err := L.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true}); err != nil {
-				if s := getScheduler(L); s != nil {
-					s.reportError(err)
+		d := time.Duration(secs * float64(time.Second))
+		s := getScheduler(L)
+		if s == nil {
+			timer := g.After(d, func() {
+				if err := L.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true}); err != nil {
+					if sc := getScheduler(L); sc != nil {
+						sc.reportError(err)
+					}
 				}
-			}
-		})
+			})
+			L.Push(pushHandle(L, timer))
+			return 1
+		}
+		idx := len(s.onceActions)
+		s.onceActions = append(s.onceActions, fn)
+		timer := g.AfterCont(d, scriptAfterCont, api.Payload{A: int64(idx)})
 		L.Push(pushHandle(L, timer))
 		return 1
 	}))

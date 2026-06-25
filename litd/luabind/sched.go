@@ -50,6 +50,17 @@ import (
 // the wake record is fully descriptive and serializes for a mid-wait save (#270).
 const scriptResumeCont uint32 = 1
 
+// scriptAfterCont is the second luabind-reserved continuation id (after
+// scriptResumeCont=1): the bridge a serializable Game_After single-fire timer
+// names instead of a Go closure (#661). Its backing AfterCont timer (the
+// serializable timer wheel) carries the pooled onceActions slot in Payload.A; on
+// fire onAfterFire reads the slot back and runs the Lua fn ONCE. Like
+// scriptResumeCont it is registered at VM setup on BOTH the original and any
+// save-loaded world, so a one-shot pending at save time round-trips. It shares the
+// scheduler ContID space, so it must stay distinct from scriptResumeCont and any
+// world's own RegisterCont ids (a collision panics loudly at registration).
+const scriptAfterCont api.Cont = 2
+
 // scriptThread is one slot in the per-LState coroutine table. gen is bumped on
 // retire so a wake record queued for a finished/recycled coroutine is detected
 // as stale (mirrors api/thread.go's Go-thread table).
@@ -84,6 +95,15 @@ type scriptScheduler struct {
 	// slot on load. The backing trigger + its periodic schedule live in the sim
 	// save; re-running the entry on load re-creates them and re-reads this slot.
 	periodicActions []*lua.LFunction
+	// onceActions records every Game_After(secs, fn) callback (#661) — the
+	// single-fire analogue of periodicActions. The fn interns into the shared save
+	// pool so a one-shot still pending at save time round-trips; its backing
+	// AfterCont timer (serializable timer wheel) carries this slot in Payload.A and
+	// re-resolves to scriptAfterCont on load. Append-only like periodicActions: a
+	// fired slot lingers harmlessly — its wheel timer is already freed, so it never
+	// re-fires, and the stable index keeps the save pool's counts aligned across the
+	// load-time entry re-run.
+	onceActions []*lua.LFunction
 	// pendingWaitSecs carries the seconds a coroutine asked to wait, from the
 	// PolledWait native to resume(), WITHOUT pushing it through the Lua value
 	// stack (#265). Passing it as a Lua value forced an LNumber→interface box
@@ -212,6 +232,10 @@ func registerScriptThreads(L *lua.LState, g *api.Game) {
 	// load the scheduler rebuilds its registry from this call (it runs at
 	// Register time, before any LoadState), so serialized wake records resolve.
 	g.RegisterScriptCont(scriptResumeCont, s.onWake)
+	// Register the Game_After single-fire bridge (#661) on this game's timer-wheel
+	// continuation registry, once at setup (before any LoadState) so a restored
+	// one-shot timer resolves its Cont to this handler.
+	g.RegisterCont(scriptAfterCont, s.onAfterFire)
 	// Register the single event-wake dispatcher at setup (before any LoadState),
 	// so a restored event-wait subscription (kind → this handler) resolves (#413).
 	// It receives the sim kind, which matches the sim kind stored in waitKind.
@@ -318,6 +342,28 @@ func (s *scriptScheduler) onWake(a, b int64) {
 	e.waiting = false
 	s.pending--
 	s.resume(slot)
+}
+
+// onAfterFire runs a Game_After one-shot's Lua callback once (#661), looked up by
+// the onceActions slot the timer carried in Payload.A — read back by slot, NOT by
+// capture, so after a load-and-rebind the restored closure (with its restored
+// upvalues) is the one that fires. A stale/cleared slot is a no-op. Errors route to
+// OnScriptError, never unwinding the sim. Single-fire: the wheel timer is consumed
+// by this fire, so there is no re-arm — the slot is left interned for save-pool
+// consistency.
+func (s *scriptScheduler) onAfterFire(_ *api.Game, p api.Payload) {
+	idx := int(p.A)
+	if idx < 0 || idx >= len(s.onceActions) {
+		return
+	}
+	fn := s.onceActions[idx]
+	if fn == nil {
+		return
+	}
+	s.L.Push(fn)
+	if err := s.L.PCall(0, 0, nil); err != nil {
+		s.reportError(err)
+	}
 }
 
 // resume drives co one slice forward: it resumes the coroutine (on the sim

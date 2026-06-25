@@ -78,11 +78,17 @@ func SaveScripts(L *lua.LState, reg *ChunkRegistry, w io.Writer) error {
 	// through the same shared graph; LoadScripts splits the two back apart at
 	// len(eventHandlers) (both tables are rebuilt to the same counts by the
 	// entry re-run on load).
-	hfns := make([]lua.LValue, 0, len(s.eventHandlers)+len(s.periodicActions))
+	// Pool order: OnEvent handlers, then Game_Every periodic actions (#464), then
+	// Game_After one-shot actions (#661). LoadScripts splits on the three counts,
+	// each rebuilt to the same length by the load-time entry re-run.
+	hfns := make([]lua.LValue, 0, len(s.eventHandlers)+len(s.periodicActions)+len(s.onceActions))
 	for _, h := range s.eventHandlers {
 		hfns = append(hfns, h.fn)
 	}
 	for _, f := range s.periodicActions {
+		hfns = append(hfns, f)
+	}
+	for _, f := range s.onceActions {
 		hfns = append(hfns, f)
 	}
 	sb, err := serializeScheduler(reg, L, alive, s.worldGlobals(), hfns, handles)
@@ -213,19 +219,28 @@ func LoadScripts(L *lua.LState, reg *ChunkRegistry, r io.Reader) error {
 	// periodic-action closures (#464); split at len(eventHandlers). Both tables
 	// were rebuilt to their saved counts by the entry re-run, so the totals must
 	// line up or the save is internally inconsistent (fail-closed).
+	// The pool carries OnEvent handlers, then Game_Every periodic actions (#464),
+	// then Game_After one-shot actions (#661): split at len(eventHandlers) and
+	// len(eventHandlers)+len(periodicActions). All three tables were rebuilt to
+	// their saved counts by the entry re-run, so the totals must line up or the
+	// save is internally inconsistent (fail-closed).
 	nEvt := len(s.eventHandlers)
-	if len(handlerFns) != nEvt+len(s.periodicActions) {
-		return fmt.Errorf("luabind: LoadScripts: %d pooled closures but %d handler + %d periodic registrations", len(handlerFns), nEvt, len(s.periodicActions))
+	nPer := len(s.periodicActions)
+	if len(handlerFns) != nEvt+nPer+len(s.onceActions) {
+		return fmt.Errorf("luabind: LoadScripts: %d pooled closures but %d handler + %d periodic + %d once registrations", len(handlerFns), nEvt, nPer, len(s.onceActions))
 	}
 	for i, hf := range handlerFns {
 		fn, ok := hf.(*lua.LFunction)
 		if !ok {
 			return fmt.Errorf("luabind: LoadScripts: pooled closure %d decoded to %s, not a function", i, hf.Type())
 		}
-		if i < nEvt {
+		switch {
+		case i < nEvt:
 			s.eventHandlers[i].fn = fn
-		} else {
+		case i < nEvt+nPer:
 			s.periodicActions[i-nEvt] = fn
+		default:
+			s.onceActions[i-nEvt-nPer] = fn
 		}
 	}
 
