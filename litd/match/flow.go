@@ -14,8 +14,13 @@
 package match
 
 import (
+	"fmt"
+	"log"
+	"sort"
+
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/locale"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 )
 
 // Phase is the match-flow state. The zero value is PhaseSetup, so a fresh Flow
@@ -64,10 +69,62 @@ const (
 	FactionUnbound
 )
 
-// Setup is the match configuration chosen during PhaseSetup.
+// Setup is the legacy 2-faction match configuration chosen during PhaseSetup —
+// the local player's faction and the AI opponent's. It is kept as a comparable
+// convenience for the 1-v-1 callers (renderdemo); Begin expands it into the
+// general N-player roster (see Roster). New code should prefer BeginRoster /
+// MatchSpec, which support arbitrary CPU/user slots.
 type Setup struct {
 	Faction  Faction // the local player's faction
 	Opponent Faction // the AI opponent's faction
+}
+
+// Race renders a Faction as its data-table race token (the name a faction TOML /
+// melee start-script is keyed by). Only the two built-in factions are mapped;
+// any other value falls back to "vigil" (the zero faction).
+func (f Faction) Race() string {
+	switch f {
+	case FactionUnbound:
+		return "unbound"
+	default:
+		return "vigil"
+	}
+}
+
+// roster is the general N-player match roster: one PlayerSlot per participating
+// slot, ordered by slot ascending (deterministic, R-SIM-2). PlayerSlot is the
+// validated MatchSpec roster entry (slot/race/controller/difficulty/ai_strategy),
+// so a roster is built directly from a loaded match.toml via RosterFromSpec.
+type PlayerSlot = PlayerSpec
+
+// RosterFromSpec returns a match roster from a validated MatchSpec. The spec's
+// Players are already slot-sorted and duplicate-free (LoadMatchSpec guarantees
+// it); the result is a copy so a later spec mutation cannot alter a begun match.
+func RosterFromSpec(s *MatchSpec) []PlayerSlot {
+	if s == nil {
+		return nil
+	}
+	return append([]PlayerSlot(nil), s.Players...)
+}
+
+// validateRoster fails closed on a structurally unusable roster: zero players,
+// an out-of-range slot, or a duplicate slot. Uniqueness uses a fixed-size array,
+// never a map, so there is no map-order dependence. Returns the reason or nil.
+func validateRoster(roster []PlayerSlot) error {
+	if len(roster) == 0 {
+		return fmt.Errorf("match: empty roster (need at least one player)")
+	}
+	var seen [sim.MaxPlayers]bool
+	for i, ps := range roster {
+		if ps.Slot < 0 || ps.Slot >= sim.MaxPlayers {
+			return fmt.Errorf("match: roster[%d] slot %d out of range [0,%d)", i, ps.Slot, sim.MaxPlayers)
+		}
+		if seen[ps.Slot] {
+			return fmt.Errorf("match: roster[%d] duplicate slot %d", i, ps.Slot)
+		}
+		seen[ps.Slot] = true
+	}
+	return nil
 }
 
 // Stats are the per-match numbers shown on the terminal screen. Duration is in
@@ -91,6 +148,7 @@ type Flow struct {
 
 	phase     Phase
 	setup     Setup
+	roster    []PlayerSlot
 	result    api.MatchResult
 	stats     Stats
 	startTick uint32
@@ -119,13 +177,47 @@ func (f *Flow) Stats() Stats { return f.stats }
 // Setup returns the chosen match configuration.
 func (f *Flow) Setup() Setup { return f.setup }
 
-// Begin records the setup and advances PhaseSetup → PhaseCountdown. It is a
-// no-op (returns false) outside PhaseSetup — fail-closed against double-start.
+// Roster returns the match's N-player roster (a copy, slot-ascending). Non-empty
+// once Begin or BeginRoster has been accepted; nil before, and after Reset.
+func (f *Flow) Roster() []PlayerSlot { return append([]PlayerSlot(nil), f.roster...) }
+
+// Begin records the legacy 2-faction setup and advances PhaseSetup →
+// PhaseCountdown. It is a no-op (returns false) outside PhaseSetup — fail-closed
+// against double-start. The setup is also expanded into the general roster: the
+// local player at slot 0 (user) and the AI opponent at slot 1 (cpu), so a
+// 1-v-1 begun the old way still exposes the same Roster the N-player path does.
 func (f *Flow) Begin(s Setup) bool {
 	if f.phase != PhaseSetup {
 		return false
 	}
 	f.setup = s
+	f.roster = []PlayerSlot{
+		{Slot: 0, Race: s.Faction.Race(), Controller: ControllerUser, Difficulty: api.DifficultyNormal},
+		{Slot: 1, Race: s.Opponent.Race(), Controller: ControllerCPU, Difficulty: api.DifficultyNormal},
+	}
+	f.phase = PhaseCountdown
+	return true
+}
+
+// BeginRoster records an arbitrary N-player roster (from a MatchSpec via
+// RosterFromSpec, or hand-built) and advances PhaseSetup → PhaseCountdown. It is
+// fail-closed twice over: a no-op outside PhaseSetup (double-start guard), and a
+// no-op on a structurally invalid roster — empty, an out-of-range slot, or a
+// duplicate slot — returning false WITHOUT transitioning, so a bad roster cannot
+// silently start a match. On success the roster is stored slot-ascending (a copy,
+// so a later caller mutation cannot change a begun match). Phase behavior is
+// otherwise identical to Begin.
+func (f *Flow) BeginRoster(roster []PlayerSlot) bool {
+	if f.phase != PhaseSetup {
+		return false
+	}
+	if err := validateRoster(roster); err != nil {
+		log.Printf("%s — match start refused", err.Error()) // loud refusal, never a silent skip
+		return false
+	}
+	r := append([]PlayerSlot(nil), roster...)
+	sort.Slice(r, func(a, b int) bool { return r[a].Slot < r[b].Slot })
+	f.roster = r
 	f.phase = PhaseCountdown
 	return true
 }
@@ -181,6 +273,7 @@ func (f *Flow) Reset() {
 	f.cancelStats()
 	f.phase = PhaseSetup
 	f.setup = Setup{}
+	f.roster = nil
 	f.result = api.ResultPlaying
 	f.stats = Stats{}
 	f.startTick = 0
