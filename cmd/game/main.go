@@ -33,6 +33,7 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	match "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/match"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/savegame"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
@@ -86,6 +87,7 @@ type game struct {
 	flow *match.Flow
 
 	world, archive, savePath, outDir string
+	seed, budget                     int64 // retained so a quickload can re-run the world (#204)
 	tod                              float64
 	cx, cy, scale                    float64
 
@@ -160,14 +162,16 @@ func main() {
 		fatalf("pass exactly one of -world or -archive")
 	}
 	if gm.savePath == "" {
-		gm.savePath = filepath.Join(gm.outDir, "quicksave.litdsave")
+		gm.savePath = defaultSavePath(gm.outDir)
 	}
+	fmt.Printf("event: quicksave file = %s\n", gm.savePath)
 
-	host, err := gm.loadHost(*seed, *budget)
+	gm.seed, gm.budget = *seed, *budget
+	host, err := gm.loadHost(gm.seed, gm.budget)
 	if err != nil {
 		fatalf("load world: %v", err)
 	}
-	defer host.Close()
+	defer func() { gm.host.Close() }() // gm.host, not host — quickload swaps it (#204)
 	gm.host = host
 	gm.g = host.Game
 	fmt.Printf("event: world loaded units=%d seed=%d\n", len(gm.g.AllUnits(nil)), *seed)
@@ -197,6 +201,17 @@ func main() {
 	fmt.Printf("event: match flow started phase=%s local=slot%d\n", gm.flow.Phase(), gm.localSlot)
 
 	gm.app.Run(gm.update)
+}
+
+// defaultSavePath puts quicksaves under the platform user-config dir (#204
+// "saves under user dir") — e.g. ~/.config/litd/saves on Linux — so they survive
+// the binary/artifacts being cleaned and are discoverable. Falls back to the
+// screenshot out dir if the OS gives no config dir (headless/CI).
+func defaultSavePath(outDir string) string {
+	if cfg, err := os.UserConfigDir(); err == nil && cfg != "" {
+		return filepath.Join(cfg, "litd", "saves", "quicksave.litdsave")
+	}
+	return filepath.Join(outDir, "quicksave.litdsave")
 }
 
 func (gm *game) loadHost(seed, budget int64) (*worldhost.Host, error) {
@@ -500,8 +515,14 @@ func (gm *game) orderSelectedForward() (api.Vec2, bool) {
 	return target, ok
 }
 
-// --- save / load (sim-state quicksave; full Lua-coroutine save is #204) ---
+// --- save / load (D-9 full mid-game save: sim + event handlers + Lua scheduler) ---
 
+// quicksave writes the FULL save container (savegame.Write): sim state, OnEvent
+// handler subscriptions, AND the suspended Lua scheduler — coroutines, Game_Every
+// timers, captured upvalues. The earlier sim-only g.SaveState path (#204) silently
+// dropped the scheduler, so a match with any pending Lua action (every melee world
+// has them: the victory timer, AI cadence) resumed dead. Writing must not perturb
+// the running sim — asserted by re-reading the hash after the write.
 func (gm *game) quicksave() {
 	if err := os.MkdirAll(filepath.Dir(gm.savePath), 0o755); err != nil {
 		fmt.Printf("event: quicksave FAILED mkdir: %v\n", err)
@@ -513,25 +534,54 @@ func (gm *game) quicksave() {
 		return
 	}
 	defer f.Close()
-	if err := gm.g.SaveState(f, saveFingerprint); err != nil {
+	before := gm.g.StateHash()
+	if err := savegame.Write(f, gm.g, gm.host.L, gm.host.Reg, saveFingerprint); err != nil {
 		fmt.Printf("event: quicksave FAILED: %v\n", err)
 		return
+	}
+	if after := gm.g.StateHash(); after != before {
+		fmt.Printf("event: quicksave WARNING write perturbed sim %#x -> %#x\n", before, after)
 	}
 	fmt.Printf("event: quicksave path=%s tick=%d hash=%#x\n", gm.savePath, gm.curTick, gm.g.StateHash())
 }
 
+// quickload restores the full container into a FRESH world (the proven #652 path):
+// re-run the world entry so its triggers, periodic-action registry, and AI domain
+// are rebuilt, THEN savegame.Load overwrites sim + scheduler to the saved point.
+// Loading into the already-run live world is NOT the validated path; a fresh re-run
+// is. Fail-closed: any failure leaves the CURRENT match untouched (no partial load)
+// — the fresh host is only swapped in after a clean load.
 func (gm *game) quickload() bool {
+	fresh, err := gm.loadHost(gm.seed, gm.budget)
+	if err != nil {
+		fmt.Printf("event: quickload FAILED reload world: %v\n", err)
+		return false
+	}
 	f, err := os.Open(gm.savePath)
 	if err != nil {
+		fresh.Close()
 		fmt.Printf("event: quickload FAILED open: %v\n", err)
 		return false
 	}
 	defer f.Close()
-	if err := gm.g.LoadState(f, saveFingerprint); err != nil {
+	if err := savegame.Load(f, fresh.Game, fresh.L, fresh.Reg, saveFingerprint); err != nil {
+		fresh.Close()
 		fmt.Printf("event: quickload FAILED: %v\n", err)
 		return false
 	}
-	fmt.Printf("event: quickload path=%s hash=%#x\n", gm.savePath, gm.g.StateHash())
+
+	// Clean load — swap the fresh world in and re-bind the observers. The per-frame
+	// unit sync rebuilds from gm.g, so the next frame renders the restored state.
+	gm.host.Close()
+	gm.host = fresh
+	gm.g = fresh.Game
+	gm.curTick = int(gm.g.Tick())
+	gm.selected = -1
+	gm.flow = match.NewFlow(gm.g, gm.g.Player(gm.localSlot))
+	gm.flow.Begin(match.Setup{})
+	gm.flow.StartPlay()
+	gm.rebuildUnits()
+	fmt.Printf("event: quickload path=%s tick=%d hash=%#x\n", gm.savePath, gm.curTick, gm.g.StateHash())
 	return true
 }
 
