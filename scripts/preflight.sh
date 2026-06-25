@@ -14,6 +14,11 @@
 # asset/multi-OS halves stay deferred on their own issues, never proxied here):
 #   - #310: firstlight binary-size ceiling
 #   - #210: headless .litdreplay record -> verify file round-trip determinism
+#   - #658/#657: the ultimate AI-vs-AI full match — a complete firstclash match
+#     run through the public Lua + melee-AI loop to a deterministic terminal
+#     result (the "ultimate AI-vs-AI match (matchfsv)" step below). One-command
+#     standalone: `go run ./cmd/matchfsv -world worlds/firstclash`. The deeper
+#     determinism/save-load/bisection FSV over that world run via `go test ./...`.
 #
 # Fail-closed: the first failing gate aborts the run with a nonzero exit. Run
 # this and see "PREFLIGHT: ALL GATES GREEN" before merging any branch to main.
@@ -177,6 +182,27 @@ step "generated artifacts in sync" git diff --exit-code HEAD -- api-manifest.jso
 # stay in sync with api-manifest.json. This is the no-CI equivalent of "drift
 # between manifest and published docs fails the build".
 step "lua-api-doc drift (#187)" go run ./tools/luadoc -check
+
+# --- ultimate AI-vs-AI full match (#658 epic, ultimate-test-plan Phase 7/#657) -
+# The one-command ultimate test: run a COMPLETE firstclash match through the
+# public Lua + melee-AI loop to a real terminal result, recording a .litdreplay
+# and a state dump. This gates the end-to-end runner binary (world load → dual AI
+# attach → step-until-terminal → artifact emit) and proves two CPU players play a
+# declarative match to a deterministic winner. It runs in BOTH modes (the "core
+# once" in --fast). The deeper determinism/save-load/bisection FSV over this same
+# world (TestFirstclash*: record→replay-no-controllers, 3x repeat + GOMAXPROCS,
+# induced-fault bisection, mid-match save/load, corrupt-save refusal) self-skip
+# under -short, so they run in the FULL `go test ./...` cell above, not in --fast.
+step "ultimate AI-vs-AI match (matchfsv, #658/#657)" bash -c '
+  set -e
+  d=$(mktemp -d)
+  go build -o "$d/matchfsv" ./cmd/matchfsv
+  "$d/matchfsv" -world worlds/firstclash -seed 1337 -max-ticks 30000 \
+    -replay "$d/firstclash.litdreplay" -dump "$d/firstclash.json" | tee "$d/out.txt"
+  grep -q "TERMINAL @ tick" "$d/out.txt" || { echo "matchfsv reached no terminal result (stalemate?)" >&2; exit 1; }
+  grep -q "winner=slot" "$d/out.txt"      || { echo "matchfsv produced no winner" >&2; exit 1; }
+  test -s "$d/firstclash.litdreplay"      || { echo "matchfsv wrote no replay" >&2; exit 1; }
+  test -s "$d/firstclash.json"            || { echo "matchfsv wrote no state dump" >&2; exit 1; }'
 
 # --- determinism traces (determinism.yml) -----------------------------------
 # The 10k-tick sim+AI fixtures self-skip under -short. In FAST mode the main
