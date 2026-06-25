@@ -34,7 +34,18 @@ func (h GameHandles) MarshalUserData(ud *lua.LUserData) ([]byte, error) {
 	}
 	ref, ok := api.RefOf(hd)
 	if !ok {
-		return nil, fmt.Errorf("handle %T is not marshalable through the entity-backed seam", hd)
+		// #663: a captured non-entity-backed handle (Ability, Camera, ...) cannot
+		// survive save/load. The old error ("not marshalable through the
+		// entity-backed seam") gave the author no hint that a closure upvalue was
+		// the cause or how to fix it. Name the type, the root reason, and the
+		// save-safe pattern (capture a ref/id, re-derive inside the callback).
+		return nil, fmt.Errorf("cannot serialize a captured %T handle (#663): it is not "+
+			"entity-backed and cannot survive save/load, so a Game_Every / Game_After / "+
+			"OnEvent closure must not hold one as an upvalue. Capture a marshal-safe value "+
+			"instead — e.g. the ability REF (the int from Game_AbilityRef) plus the unit "+
+			"handle — and re-derive the handle inside the callback (Unit_AddAbility(unit, "+
+			"ref) is idempotent). Entity-backed handles (Unit, Player) marshal fine; "+
+			"Ability and Camera do not", hd)
 	}
 	return json.Marshal(ref)
 }

@@ -94,7 +94,9 @@ func TestPushHandleMarshalContract(t *testing.T) {
 		wantFrag string
 	}{
 		// Timer satisfies api.Handle (Valid+IsZero) but has no entity-backed ref.
-		{"Timer", g.After(time.Second, func() {}), "not marshalable through the entity-backed seam"},
+		// #663: the message is now actionable (names the cause + the save-safe ref
+		// pattern); it still names the concrete type via %T (checked below).
+		{"Timer", g.After(time.Second, func() {}), "not entity-backed and cannot survive save/load"},
 		// Trigger/Subscription/Order are not api.Handle at all (missing Valid or IsZero).
 		{"Trigger", g.NewTrigger(), "not an api.Handle"},
 		{"Subscription", g.OnAttack(func(api.Event) {}), "not an api.Handle"},
