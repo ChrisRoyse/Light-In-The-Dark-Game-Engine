@@ -16,11 +16,17 @@ import (
 	"fmt"
 
 	litmapdata "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/mapdata"
-	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/math32"
 )
+
+// vertexColorShaderDefine mirrors litd/render.VertexColorShaderDefine (the shader's
+// LITD_VERTEX_COLOR toggle). It is duplicated rather than imported because terrain is
+// a SUBpackage of litd/render, and importing the parent creates a cycle the moment
+// render's own internal tests import terrain (#78 regression). Both must name the
+// same shader define; this string is the contract.
+const vertexColorShaderDefine = "LITD_VERTEX_COLOR"
 
 // SplatLayers are the four representative ground colors the splat weights blend
 // between — layer A/B/C/D, each the mean color of that layer's biome-atlas region.
@@ -136,11 +142,11 @@ func ApplySplatVertexColors(igeom geometry.IGeometry, m *litmapdata.Map, layers 
 			return SplatSnapshot{}, over
 		}
 	}
-	litrender.EnableVertexColor(geom)
+	geom.ShaderDefines.Set(vertexColorShaderDefine, "1") // same effect as render.EnableVertexColor
 	return SplatSnapshot{
 		VertexCount:    vertexCount,
 		ExistingColors: existing,
-		ShaderDefine:   geom.ShaderDefines[litrender.VertexColorShaderDefine] == "1",
+		ShaderDefine:   geom.ShaderDefines[vertexColorShaderDefine] == "1",
 		VertexColorVBO: geom.VBO(gls.VertexColor) != nil,
 	}, nil
 }

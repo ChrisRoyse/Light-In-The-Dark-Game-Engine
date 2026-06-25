@@ -31,9 +31,9 @@ import (
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
-	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	match "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/match"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/obs"
+	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/savegame"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	"github.com/g3n/engine/app"
@@ -44,6 +44,7 @@ import (
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
+	"github.com/g3n/engine/loader/gltf"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
@@ -77,6 +78,20 @@ type game struct {
 
 	unitsRoot *core.Node
 	menuRoot  *core.Node
+
+	// unit model rendering: real GLB models built ONCE per sim unit and reused +
+	// animated across frames (rebuildUnits runs every frame, so per-frame GLB loads
+	// are forbidden). modelDocs caches parsed GLB docs; unitViz maps unit id → its
+	// live scene node + idle animation; selCap is the single reused selection marker.
+	// typeModel binds each live unit type to its declared model path (from the
+	// world's data, via worldhost), the source the preloader + per-unit attach read.
+	modelDocs   map[string]*gltf.GLTF
+	unitViz     map[uint32]*unitVisual
+	selCap      *graphic.Mesh
+	typeModel   map[api.UnitType]string
+	modelWarned map[string]bool // declared paths already logged as substituted (no spam)
+	seen        map[uint32]bool // reused per-frame liveness set (avoids per-frame alloc)
+
 	hud       *gui.Label
 	menuText  *gui.Label
 	termLabel *gui.Label // terminal victory/defeat banner (#654)
@@ -203,6 +218,8 @@ func main() {
 	gm.buildTerminalBanner()
 	gm.buildConsole()
 	gm.bindInput()
+	gm.buildModelIndex()
+	gm.preloadModels() // warm the GLB cache so first spawns drop in with no hitch
 	gm.rebuildUnits()
 
 	// Drive the match-flow state machine over the loaded world (#654). The world's
@@ -361,33 +378,47 @@ func (gm *game) orderSelectedTo(pt api.Vec2) {
 	fmt.Printf("event: order-pick unit=%d to (%.0f,%.0f) accepted=%v\n", gm.selected, pt.X, pt.Y, ok)
 }
 
-// rebuildUnits mirrors the live sim units as team-tinted boxes; the selected unit
-// gets a bright emissive cap so the selection is visible on screen.
+// rebuildUnits mirrors the live sim units as real animated models. Each unit's
+// model node is built ONCE (keyed by stable unit id) and reused across frames —
+// this runs every frame, so the only GLB load here is for a newly-spawned unit; a
+// dead unit's node is removed. The selected unit gets a bright emissive cap. The
+// model for a unit is resolved from its type's declared art (gm.typeModel, loaded
+// from the world data via worldhost), falling back to an existing CC0 model by
+// category when the declared asset is not yet provisioned (logged, never silent).
 func (gm *game) rebuildUnits() {
-	gm.scene.Remove(gm.unitsRoot)
-	gm.unitsRoot = core.NewNode()
-	gm.scene.Add(gm.unitsRoot)
+	if gm.unitViz == nil {
+		gm.buildModelIndex()
+	}
 	us := gm.g.AllUnits(nil)
+	clear(gm.seen)
+	var selX, selZ float32
+	haveSel := false
 	for i, u := range us {
-		p := u.Position()
-		slot := u.Owner().Slot()
-		col := teamColors[0]
-		if slot >= 0 && slot < len(teamColors) {
-			col = teamColors[slot]
+		id := u.ID()
+		gm.seen[id] = true
+		x, z := gm.simToWorld(u.Position())
+		v, ok := gm.unitViz[id]
+		if !ok {
+			node, idle := gm.buildUnitVisual(u)
+			v = &unitVisual{node: node, idle: idle}
+			gm.unitViz[id] = v
+			gm.unitsRoot.Add(node)
 		}
-		box := graphic.NewMesh(geometry.NewBox(0.6, 1.2, 0.6), material.NewStandard(&col))
-		x, z := gm.simToWorld(p)
-		box.SetPosition(x, 0.6, z)
-		box.SetRotationY(float32(u.Facing().Radians()))
-		gm.unitsRoot.Add(box)
+		n := v.node.GetNode()
+		n.SetPosition(x, 0, z)
+		n.SetRotationY(float32(u.Facing().Radians()))
 		if i == gm.selected {
-			capMat := material.NewStandard(&math32.Color{R: 1, G: 0.95, B: 0.4})
-			capMat.SetEmissiveColor(&math32.Color{R: 0.9, G: 0.8, B: 0.2})
-			selCap := graphic.NewMesh(geometry.NewSphere(0.28, 12, 8), capMat)
-			selCap.SetPosition(x, 1.5, z)
-			gm.unitsRoot.Add(selCap)
+			selX, selZ, haveSel = x, z, true
 		}
 	}
+	// Remove visuals for units that died (no longer in the live set).
+	for id, v := range gm.unitViz {
+		if !gm.seen[id] {
+			gm.unitsRoot.Remove(v.node)
+			delete(gm.unitViz, id)
+		}
+	}
+	gm.updateSelectionCap(haveSel, selX, selZ)
 }
 
 // buildMenu makes the pause overlay: a dark translucent quad in front of the
@@ -621,6 +652,8 @@ func (gm *game) quickload() bool {
 	gm.flow = match.NewFlow(gm.g, gm.g.Player(gm.localSlot))
 	gm.flow.Begin(match.Setup{})
 	gm.flow.StartPlay()
+	gm.resetUnitVisuals() // host swapped + units renumbered — rebuild visuals/index
+	gm.buildModelIndex()
 	gm.rebuildUnits()
 	fmt.Printf("event: quickload path=%s tick=%d hash=%#x\n", gm.savePath, gm.curTick, gm.g.StateHash())
 	return true
@@ -750,6 +783,7 @@ func (gm *game) update(rend *renderer.Renderer, dt time.Duration) {
 	}
 
 	gm.rebuildUnits()
+	gm.animateUnits(float32(dt.Seconds()))
 	gm.hud.SetText(gm.hudText())
 	gm.day.Update(gm.tod)
 	gm.app.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)

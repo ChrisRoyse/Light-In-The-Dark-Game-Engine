@@ -39,6 +39,13 @@ type Host struct {
 	L    *lua.LState
 	Reg  *luabind.ChunkRegistry
 
+	// UnitModels maps each unit type code (data.Unit.ID) to its declared model
+	// asset path (data.Unit.Model, "" if the type declares none). Retained at load
+	// so the render layer can preload a model per unit type and attach it on spawn:
+	// the deterministic sim is model-agnostic (presentation never enters the hashing
+	// core, PRD §4.1), so this is the one place the type→art binding survives load.
+	UnitModels map[string]string
+
 	closeFn func()
 }
 
@@ -364,7 +371,11 @@ func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, reco
 		cleanup()
 		return nil, fmt.Errorf("load world: %w", err)
 	}
-	return &Host{Game: g, L: interp.L, Reg: reg, closeFn: cleanup}, nil
+	unitModels := make(map[string]string, len(tables.Units))
+	for i := range tables.Units {
+		unitModels[tables.Units[i].ID] = tables.Units[i].Model
+	}
+	return &Host{Game: g, L: interp.L, Reg: reg, UnitModels: unitModels, closeFn: cleanup}, nil
 }
 
 // loadMatchSpec reads and validates an optional match.toml from the world's
