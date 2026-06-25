@@ -32,6 +32,7 @@ import (
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/buildinfo"
 	litrender "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/render"
+	match "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/match"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/worldhost"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
@@ -76,6 +77,13 @@ type game struct {
 	menuRoot  *core.Node
 	hud       *gui.Label
 	menuText  *gui.Label
+	termLabel *gui.Label // terminal victory/defeat banner (#654)
+
+	// flow is the match-flow state machine (#654): Setup→Countdown→Play→Terminal.
+	// It observes the loaded world (the world's Lua runs setup + the AI match);
+	// flow tracks phases, drains stats off the non-hashing render-event channel
+	// (#665), and on a terminal result drives the on-screen end banner.
+	flow *match.Flow
 
 	world, archive, savePath, outDir string
 	tod                              float64
@@ -97,6 +105,7 @@ type game struct {
 	maxspeed  bool
 	exitAt    int
 	exitShot  string
+	localSlot int
 
 	shotPending bool
 	shotName    string
@@ -133,6 +142,7 @@ func main() {
 	flag.BoolVar(&gm.maxspeed, "maxspeed", false, "ungate the wall-clock: advance -speed ticks every render frame (#655)")
 	flag.IntVar(&gm.exitAt, "exit-at", 0, "advance to this sim tick, dump state + screenshot, then exit (0=off; windowed FSV hook #655/#656)")
 	flag.StringVar(&gm.exitShot, "exit-shot", "game-exit.png", "screenshot filename written at -exit-at")
+	flag.IntVar(&gm.localSlot, "local", 0, "local player slot whose result the terminal banner reports (#654)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if gm.speed < 1 {
@@ -172,8 +182,19 @@ func main() {
 	gm.scene.Add(gm.unitsRoot)
 	gm.buildMenu()
 	gm.buildHUD()
+	gm.buildTerminalBanner()
 	gm.bindInput()
 	gm.rebuildUnits()
+
+	// Drive the match-flow state machine over the loaded world (#654). The world's
+	// Lua has already spawned factions + attached the melee AI; flow observes:
+	// Setup→Countdown→Play now, then Poll latches Terminal when slot 0's result
+	// resolves. Local player = slot 0 (the player whose result the banner reports).
+	gm.flow = match.NewFlow(gm.g, gm.g.Player(gm.localSlot))
+	if !gm.flow.Begin(match.Setup{}) || !gm.flow.StartPlay() {
+		fatalf("match flow failed to reach play (phase=%s)", gm.flow.Phase())
+	}
+	fmt.Printf("event: match flow started phase=%s local=slot%d\n", gm.flow.Phase(), gm.localSlot)
 
 	gm.app.Run(gm.update)
 }
@@ -391,6 +412,8 @@ func (gm *game) hudText() string {
 	state := "playing"
 	if gm.paused {
 		state = "PAUSED"
+	} else if gm.flow != nil {
+		state = gm.flow.Phase().String()
 	}
 	return fmt.Sprintf("LitD  tick=%d  %s  tod=%.2f  units=%d  selected=%s\n[LMB select · RMB move · Tab cycle · Space fwd · F5/F9 save/load · Esc menu]",
 		gm.curTick, state, gm.g.TimeOfDay(), len(us), sel)
@@ -521,6 +544,55 @@ func (gm *game) advanceSim(ticks int) {
 	for i := 0; i < ticks; i++ {
 		gm.g.Advance(1)
 		gm.curTick++
+		// Poll the flow once per tick (its render-event stat drain needs every
+		// tick; #665). Poll latches Terminal on the tick slot 0's result resolves.
+		if gm.flow != nil && gm.flow.Poll() {
+			fmt.Printf("event: match TERMINAL phase=%s result=%d tick=%d stats=%+v\n",
+				gm.flow.Phase(), int(gm.flow.Result()), gm.curTick, gm.flow.Stats())
+		}
+	}
+}
+
+// buildTerminalBanner makes the hidden end-match banner (#654): a screen-space
+// gui label centered over the field, shown only in PhaseTerminal.
+func (gm *game) buildTerminalBanner() {
+	gm.termLabel = gui.NewLabel("")
+	gm.termLabel.SetPosition(520, 300)
+	gm.termLabel.SetColor(&math32.Color{R: 1, G: 0.92, B: 0.45})
+	gm.termLabel.SetVisible(false)
+	gm.scene.Add(gm.termLabel)
+}
+
+// syncTerminalUI shows/hides the terminal banner from the flow phase (#654). On
+// PhaseTerminal it spells out slot 0's result + the drained stats — the on-screen
+// truth the FSV compares against the state JSON.
+func (gm *game) syncTerminalUI() {
+	if gm.flow == nil || gm.termLabel == nil {
+		return
+	}
+	if gm.flow.Phase() != match.PhaseTerminal {
+		gm.termLabel.SetVisible(false)
+		return
+	}
+	head := "DEFEAT"
+	if gm.flow.Result() == api.ResultWon {
+		head = "VICTORY"
+	}
+	st := gm.flow.Stats()
+	gm.termLabel.SetText(fmt.Sprintf("—  %s  —\n\nslot %d: %s\nduration %d ticks   trained %d   lost %d\n[Q] quit",
+		head, gm.localSlot, resultName(gm.flow.Result()), st.DurationTicks, st.UnitsTrained, st.UnitsLost))
+	gm.termLabel.SetVisible(true)
+}
+
+// resultName renders a MatchResult for HUD/JSON chrome.
+func resultName(r api.MatchResult) string {
+	switch r {
+	case api.ResultWon:
+		return "WON"
+	case api.ResultLost:
+		return "LOST"
+	default:
+		return "playing"
 	}
 }
 
@@ -541,6 +613,8 @@ func (gm *game) update(rend *renderer.Renderer, dt time.Duration) {
 			gm.acc -= tickDur
 		}
 	}
+
+	gm.syncTerminalUI()
 
 	// -exit-at: once we've reached the target tick, capture the SoT (state JSON
 	// + screenshot) and exit. Render one final frame first so the screenshot
@@ -615,6 +689,10 @@ func (gm *game) printState(tag string) {
 		"tag": tag, "tick": gm.curTick, "paused": gm.paused,
 		"tod": gm.g.TimeOfDay(), "hash": fmt.Sprintf("%#x", gm.g.StateHash()),
 		"selected": gm.selected, "units": rows, "results": results,
+	}
+	if gm.flow != nil {
+		s["phase"] = gm.flow.Phase().String()
+		s["flowResult"] = resultName(gm.flow.Result())
 	}
 	out, _ := json.Marshal(s)
 	fmt.Printf("state: %s\n", out)
