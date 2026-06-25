@@ -18,7 +18,9 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"os"
 	"path"
+	"strings"
 
 	api "github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/api"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/campaign"
@@ -32,6 +34,12 @@ type Options struct {
 	Budget     int64 // Lua instruction budget per world (0 -> a sane default)
 	MaxTicks   int   // safety cap on ticks per mission (0 -> DefaultMaxTicks)
 	PlayerSlot int   // the local player whose result ends a mission
+
+	// EngineVersion, when non-empty, is checked against each archived mission's
+	// engine-range (a shipped campaign refuses to run on an incompatible engine).
+	// Empty skips only the semver gate — the archive's content hash is always
+	// fully verified — which is the convenient dev-directory posture.
+	EngineVersion string
 }
 
 // DefaultMaxTicks bounds a single mission so a world that never resolves cannot
@@ -88,7 +96,7 @@ func Run(def campaign.Definition, archivesRoot string, hooks fs.FS, opts Options
 			}
 		}
 
-		host, err := worldhost.Load(path.Join(archivesRoot, m.Archive), opts.Seed, opts.Budget)
+		host, err := loadMission(path.Join(archivesRoot, m.Archive), opts.EngineVersion, opts.Seed, opts.Budget)
 		if err != nil {
 			return res, fmt.Errorf("campaignrun: load mission %q: %w", m.ID, err)
 		}
@@ -141,6 +149,33 @@ func Run(def campaign.Definition, archivesRoot string, hooks fs.FS, opts Options
 	res.Completed = true
 	res.StoreBlob = carry
 	return res, nil
+}
+
+// loadMission loads one mission world, transparently handling both shipped
+// archives and dev directories so a campaign authored as loose directories and the
+// same campaign packed to `.litdworld` archives play identically (#312, D-14). The
+// candidate is the manifest's archive path joined to the campaign root; it resolves
+// in this order: an explicit `.litdworld` file (or a regular file at the exact
+// name) loads through the verified archive path; a `<candidate>.litdworld` sibling
+// loads the packed form when the manifest names the bare mission; otherwise a
+// directory loads through the dev path. A name that resolves to nothing fails loud.
+func loadMission(candidate, engineVersion string, seed, budget int64) (*worldhost.Host, error) {
+	if strings.HasSuffix(candidate, ".litdworld") {
+		return worldhost.LoadArchive(candidate, engineVersion, seed, budget)
+	}
+	if fi, err := os.Stat(candidate); err == nil {
+		if fi.IsDir() {
+			return worldhost.Load(candidate, seed, budget)
+		}
+		// A regular file at the exact archive name is a packed world.
+		return worldhost.LoadArchive(candidate, engineVersion, seed, budget)
+	}
+	// The bare name did not resolve — prefer a packed sibling before giving up, so
+	// a manifest can name "kindle" and ship "kindle.litdworld".
+	if _, err := os.Stat(candidate + ".litdworld"); err == nil {
+		return worldhost.LoadArchive(candidate+".litdworld", engineVersion, seed, budget)
+	}
+	return nil, fmt.Errorf("no mission world at %q (tried it as a directory, as an archive, and as %q)", candidate, candidate+".litdworld")
 }
 
 // stepUntilTerminal advances g one tick at a time until the player in slot resolves
