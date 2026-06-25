@@ -34,7 +34,12 @@ end
 return function(players)
 	melee_VictoryDefeatConditions(players) -- #646
 
-	Game_After(TIMEOUT_SECONDS, function() -- #647
+	-- #647: a Game_Every timer whose FIRST fire lands at tick 24,000 (one period),
+	-- self-stopped so it behaves as a one-shot. Game_Every is chosen over
+	-- Game_After deliberately: it is backed by a serializable periodic-timer
+	-- trigger (#464), so the timeout survives a mid-match save/load (#652) —
+	-- Game_After's one-shot callback is not yet save-serializable (#270 class).
+	Game_Every(TIMEOUT_SECONDS, function(timer)
 		local wi = 1
 		for i = 2, #players do
 			if score(players[i]) > score(players[wi]) then
@@ -47,5 +52,6 @@ return function(players)
 				Game_Defeat(players[i], "firstclash: 24,000-tick score-decide timeout")
 			end
 		end
+		Timer_Stop(timer) -- one-shot: do not re-fire after the decision
 	end)
 end
