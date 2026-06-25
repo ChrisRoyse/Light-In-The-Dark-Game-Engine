@@ -115,3 +115,28 @@ mirrors how the missile/buff pools hash their free-lists.
 - **Continuation re-bind:** every `ContID` used by gameplay/ability code is present in the
   registry on load; a test enumerates registered IDs and fails if an ability template
   references an unregistered one.
+
+## 5. Author rule — capture refs, not handles, across a tick (#663/#667)
+
+The same "no Go closures in persisted state" discipline applies one level up, to **Lua**
+script closures. A `Game_Every` / `Game_After` / `OnEvent` callback's captured upvalues
+are serialized into the save (#464). Entity-backed handles — `Unit`, `Player` — marshal
+fine (they round-trip through a stable `HandleRef`). **Non-entity-backed handles do not:**
+an `Ability`, `Camera`, or raw `Timer` handle has no stable ref, so capturing one as a
+closure upvalue makes `savegame.Write` fail at the marshal seam.
+
+```lua
+-- ✗ BAD: the Ability HANDLE is captured → save dies (#663).
+local ab = Unit_AddAbility(hero, smiteRef)
+Game_Every(0.5, function() Unit_CastAbility(hero, ab, target) end)
+
+-- ✓ GOOD: capture the REF (an int) + entity-backed handles; re-derive inside.
+local smiteRef = Game_AbilityRef("warden_smite")   -- a plain int
+Game_Every(0.5, function() Unit_CastAbilityRef(hero, smiteRef, target) end)
+```
+
+`Unit_CastAbilityRef(caster, ref, target)` (#667) folds the re-derive (idempotent
+`Unit_AddAbility`) + cast into one verb so a script never holds an `Ability` handle. The
+marshal seam now fails *loudly and actionably* when this rule is broken — the error names
+the captured type and points at this pattern (see `litd/luabind/handle_marshal.go`,
+regression `handle_marshal_dx_test.go`). Worked example: `worlds/firstclash/melee/vigil.lua`.
