@@ -86,6 +86,7 @@ Verification of any visual/behavioral change follows `prompts/fsv.md`: run the t
 
 ## Known environment issues (WSL2/WSLg)
 
+- **Windowed rendering + screenshots DO work here when the display is healthy** — do NOT assume render/screenshot FSV is impossible. With `DISPLAY=:0` and a single X11 listener (`ss -xl | grep -c X11` == 1, not 2), `./bin/firstlight -autotest -shot <png>` and `./bin/game -world <dir> -exit-at <tick> -exit-shot <name> [-maxspeed -speed N]` both render a real frame and write a readable PNG (verified 2026-06-25: firstclash slice rendered terrain + units + HUD headless). Run timeout-guarded in case of the glfw hang below; if it hangs, that is the duplicate-listener bug, not a hard limitation. `-exit-shot` is written under `-out` (default `artifacts/`), so pass a bare filename to avoid an `artifacts/artifacts/` path. So screenshot-based acceptance (#212/#656/#525/#193) is runnable in this environment, not blocked.
 - **`glfwCreateWindow` hangs forever (no error):** stale/duplicate Xwayland listener on `/tmp/.X11-unix/X0` (check `ss -xl | grep X11` — two LISTEN entries = bug). Fix: `wsl --shutdown` from Windows, reopen. See https://github.com/microsoft/wslg/issues/1291
 - **`MESA: error: Failed to attach to x11 shm`:** same root cause as above.
 - **EGL fallback:** `G3N_EGL=1` env makes the vendored g3n request an EGL context instead of GLX (LITD-PATCH in `repoes/engine/window/glfw.go`) — workaround for broken GLX context creation under WSLg per https://github.com/glfw/glfw/issues/2284

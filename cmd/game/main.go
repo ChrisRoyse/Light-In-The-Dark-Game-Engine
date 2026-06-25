@@ -114,6 +114,7 @@ type game struct {
 
 	// autotest state
 	autotest  bool
+	autoUnit  api.Unit // the movable unit the move beat orders + re-reads (by handle)
 	phase     int
 	beforePos api.Vec2
 	target    api.Vec2
@@ -766,13 +767,28 @@ func (gm *game) autotestStep() {
 		if len(us) == 0 {
 			fatalf("autotest: world has no units to order")
 		}
-		gm.selected = 0
-		gm.beforePos = us[0].Position()
+		// Select the first MOVABLE unit. us[0] is often a building (firstclash's
+		// bastion has MoveSpeed 0 and cannot accept a move order), which would make
+		// the move beat spuriously fail (the engine is fine; the target can't move).
+		gm.selected = -1
+		for i, u := range us {
+			if u.MoveSpeed() > 0 {
+				gm.selected = i
+				break
+			}
+		}
+		if gm.selected < 0 {
+			fatalf("autotest: world has no movable unit to order (all MoveSpeed 0)")
+		}
+		gm.autoUnit = us[gm.selected]
+		gm.beforePos = gm.autoUnit.Position()
 		gm.target, _ = gm.orderSelectedForward()
 		gm.startDist = dist(gm.beforePos, gm.target)
 	case 2:
 		gm.advanceSim(80)
-		after := gm.g.AllUnits(nil)[0].Position()
+		// Read the SAME unit by handle (the AllUnits slice order/length can shift as
+		// the AI trains/loses units over 80 ticks; the handle is stable).
+		after := gm.autoUnit.Position()
 		nowDist := dist(after, gm.target)
 		gm.moveOK = nowDist < gm.startDist && after != gm.beforePos
 		fmt.Printf("FSV move: before=(%.0f,%.0f) after=(%.0f,%.0f) target=(%.0f,%.0f) startDist2=%.0f nowDist2=%.0f moved=%v\n",
