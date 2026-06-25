@@ -26,6 +26,7 @@ import (
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/asset/worldarchive"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/data"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/luabind"
+	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/match"
 	"github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/litd/sim"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -308,11 +309,41 @@ func loadFS(dataFS, scriptFS fs.FS, scriptLabel string, seed, budget int64, extr
 		return nil, fmt.Errorf("register bindings: %w", err)
 	}
 	luabind.InstallWorldLoader(g, interp.L, reg)
+	// Optional match descriptor: a world that ships match.toml (the custom-game
+	// spec, #635/#638) gets it parsed + validated here and exposed to its main.lua
+	// via Game_MatchSpec(). Absent match.toml is fine (most worlds have none) — the
+	// verb is still installed and raises loudly if a script asks for a spec that
+	// was never loaded. A PRESENT-but-malformed match.toml fails the load (loud,
+	// fail-closed) — a broken descriptor never silently starts a partial match.
+	matchSpec, err := loadMatchSpec(scriptFS)
+	if err != nil {
+		cleanup()
+		return nil, err
+	}
+	luabind.RegisterMatchSpec(interp.L, matchSpec)
 	if _, err := luabind.LoadWorldFS(interp.L, reg, scriptFS, scriptLabel); err != nil {
 		cleanup()
 		return nil, fmt.Errorf("load world: %w", err)
 	}
 	return &Host{Game: g, L: interp.L, Reg: reg, closeFn: cleanup}, nil
+}
+
+// loadMatchSpec reads and validates an optional match.toml from the world's
+// script root. Returns (nil, nil) when the world ships no match.toml (the common
+// case); a present-but-invalid descriptor is a loud error that fails the load.
+func loadMatchSpec(scriptFS fs.FS) (*match.MatchSpec, error) {
+	blob, err := fs.ReadFile(scriptFS, "match.toml")
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read match.toml: %w", err)
+	}
+	spec, err := match.LoadMatchSpec(blob)
+	if err != nil {
+		return nil, fmt.Errorf("load match.toml: %w", err)
+	}
+	return spec, nil
 }
 
 // uninstallableTables is the registration point for content-table types that have
