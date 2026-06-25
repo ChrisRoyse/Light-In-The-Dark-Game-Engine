@@ -94,6 +94,33 @@ func (f *Faction) validate() error {
 	return nil
 }
 
+// SpawnHero creates the hero named by heroCode for p at pos facing the given
+// angle, returning the hero unit. Unlike the forgiving Game.CreateUnit (which
+// silently returns the zero Unit on a bad code, R-API-5), this fails CLOSED and
+// LOUDLY: an unknown code, or a code that resolves to a non-hero unit type, is
+// an error and NOTHING is spawned. That loud-on-typo behavior is what a
+// start-script (human- or AI-authored) needs — a misspelled hero code must
+// surface as a setup defect, not a missing hero discovered mid-match. The
+// hero-ness is checked BEFORE creation (Game.IsHeroType) so the all-or-nothing
+// contract holds: on error the unit count is unchanged.
+func SpawnHero(g *litd.Game, p litd.Player, heroCode string, pos litd.Vec2, facing litd.Angle) (litd.Unit, error) {
+	if g == nil {
+		return litd.Unit{}, fmt.Errorf("melee: SpawnHero nil game")
+	}
+	t := g.UnitType(heroCode)
+	if t.IsZero() {
+		return litd.Unit{}, fmt.Errorf("melee: SpawnHero code %q not bound in unit table", heroCode)
+	}
+	if !g.IsHeroType(t) {
+		return litd.Unit{}, fmt.Errorf("melee: SpawnHero code %q is not a hero type", heroCode)
+	}
+	u := g.CreateUnit(p, t, pos, facing)
+	if !u.Valid() {
+		return litd.Unit{}, fmt.Errorf("melee: SpawnHero %q create failed (unit cap or foreign owner)", heroCode)
+	}
+	return u, nil
+}
+
 // Setup binds one player slot to the faction it will play.
 type Setup struct {
 	Player  litd.Player

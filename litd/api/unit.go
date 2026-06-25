@@ -91,6 +91,20 @@ func (g *Game) CreateUnit(owner Player, typ UnitType, pos Vec2, facing Angle) Un
 	return Unit{id: id, g: g}
 }
 
+// IsHeroType reports whether a bound unit type spawns a hero (a unit with a
+// progression row: levels, XP, attributes) rather than a plain unit. It lets an
+// authoring layer (the melee start-script's hero spawn) reject a non-hero code
+// BEFORE creating anything, so a typo'd hero code fails closed with zero units
+// spawned instead of silently dropping a regular unit. The null UnitType is not
+// a hero. JASS: no direct native (the editor's "is hero" data flag).
+func (g *Game) IsHeroType(t UnitType) bool {
+	if g == nil || g.w == nil || t.IsZero() {
+		return false
+	}
+	_, ok := g.w.HeroTypeForUnit(t.ref - 1)
+	return ok
+}
+
 // Type returns the unit's bound type — the same UnitType passed to CreateUnit —
 // or the null UnitType on an invalid handle or a unit with no type row. The
 // returned value round-trips with Game.CreateUnit and Game.UnitType. JASS:

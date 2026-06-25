@@ -47,6 +47,7 @@ func Register(L *lua.LState, g *api.Game) error {
 		registerCustomEvents(L, gameBinder{g: g}) // custom-event verbs (PRD2 04, #619)
 		registerMovers(L, gameBinder{g: g})       // unified-mover verbs (PRD2 05, #591)
 		registerAbilitySpecs(L, gameBinder{g: g}) // composable-ability authoring (PRD2 06, #599)
+		registerMelee(L, gameBinder{g: g})        // melee setup verbs (#637, ultimate-test-plan Phase 1)
 		registerScriptThreads(L, g)            // Run/PolledWait cooperative threads (#269)
 		registerScriptEvents(L, g)             // OnEvent/Cancel handler bridge (#269)
 		registerScriptTriggers(L, g)           // CreateTrigger/TriggerRegisterX/... ECA bindings (#463)
