@@ -1,0 +1,38 @@
+diff --git a/graphic/mesh.go b/graphic/mesh.go
+index 00433a7..ef0b923 100644
+--- a/graphic/mesh.go
++++ b/graphic/mesh.go
+@@ -14,11 +14,12 @@ import (
+ 
+ // Mesh is a Graphic with uniforms for the model, view, projection, and normal matrices.
+ type Mesh struct {
+-	Graphic             // Embedded graphic
+-	uniMm   gls.Uniform // Model matrix uniform location cache
+-	uniMVm  gls.Uniform // Model view matrix uniform location cache
+-	uniMVPm gls.Uniform // Model view projection matrix uniform cache
+-	uniNm   gls.Uniform // Normal matrix uniform cache
++	Graphic                   // Embedded graphic
++	uniMm     gls.Uniform     // Model matrix uniform location cache
++	uniMVm    gls.Uniform     // Model view matrix uniform location cache
++	uniMVPm   gls.Uniform     // Model view projection matrix uniform cache
++	uniNm     gls.Uniform     // Normal matrix uniform cache
++	scratchNm math32.Matrix3  // LITD-PATCH(#537): persistent normal-matrix scratch. As a local its &nm[0] escapes to the heap through the cgo UniformMatrix3fv call (1 alloc per mesh per frame); as a Mesh field it is allocated once with the mesh, so RenderSetup is zero-alloc in steady state.
+ }
+ 
+ // NewMesh creates and returns a pointer to a mesh with the specified geometry and material.
+@@ -103,9 +104,11 @@ func (m *Mesh) RenderSetup(gs *gls.GLS, rinfo *core.RenderInfo) {
+ 	location = m.uniMVPm.Location(gs)
+ 	gs.UniformMatrix4fv(location, 1, false, &mvpm[0])
+ 
+-	// Calculates normal matrix and transfer uniform
+-	var nm math32.Matrix3
+-	nm.GetNormalMatrix(mvm)
++	// Calculates normal matrix and transfer uniform.
++	// LITD-PATCH(#537): compute into the persistent m.scratchNm field rather than a
++	// local — &nm[0] escapes to the heap through the cgo UniformMatrix3fv call, so a
++	// local allocates once per mesh per frame. The field is allocated with the mesh.
++	m.scratchNm.GetNormalMatrix(mvm)
+ 	location = m.uniNm.Location(gs)
+-	gs.UniformMatrix3fv(location, 1, false, &nm[0])
++	gs.UniformMatrix3fv(location, 1, false, &m.scratchNm[0])
+ }

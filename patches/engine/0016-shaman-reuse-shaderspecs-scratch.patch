@@ -1,0 +1,112 @@
+diff --git a/renderer/shaman.go b/renderer/shaman.go
+index 1b21044..f555509 100644
+--- a/renderer/shaman.go
++++ b/renderer/shaman.go
+@@ -54,6 +54,7 @@ type Shaman struct {
+ 	proginfo map[string]shaders.ProgramInfo // maps name of the program to ProgramInfo
+ 	programs []ProgSpecs                    // list of compiled programs with specs
+ 	specs    ShaderSpecs                    // Current shader specs
++	scratch  ShaderSpecs                    // LITD-PATCH(#537): reused per-SetProgram scratch; its Defines map is refilled in place each call (never retained), so a steady-state frame does not make() a fresh map per graphic-material.
+ }
+ 
+ // NewShaman creates and returns a pointer to a new shader manager
+@@ -125,9 +126,13 @@ func (sm *Shaman) AddProgram(name, vertexName, fragName string, others ...string
+ // number of lights depending on the UseLights flags.
+ func (sm *Shaman) SetProgram(s *ShaderSpecs) (bool, error) {
+ 
+-	// Checks material use lights bit mask
+-	var specs ShaderSpecs
+-	specs.copy(s)
++	// Checks material use lights bit mask.
++	// LITD-PATCH(#537): copy the request into the reused scratch (Defines map
++	// refilled in place) rather than a fresh local — the early-out and cache-hit
++	// paths below then cost zero allocations in steady state. Only a genuine cache
++	// MISS retains a stable copy (its own map) in the program list.
++	specs := &sm.scratch
++	specs.copyReuse(s)
+ 	if (specs.UseLights & material.UseLightAmbient) == 0 {
+ 		specs.AmbientLightsMax = 0
+ 	}
+@@ -142,29 +147,34 @@ func (sm *Shaman) SetProgram(s *ShaderSpecs) (bool, error) {
+ 	}
+ 
+ 	// If current shader specs are the same as the specified specs, nothing to do.
+-	if sm.specs.equals(&specs) {
++	if sm.specs.equals(specs) {
+ 		return false, nil
+ 	}
+ 
+ 	// Search for compiled program with the specified specs
+ 	for _, pinfo := range sm.programs {
+-		if pinfo.specs.equals(&specs) {
++		if pinfo.specs.equals(specs) {
+ 			sm.gs.UseProgram(pinfo.program)
+-			sm.specs = specs
++			sm.specs.copyReuse(specs) // current specs we own — reuse its map
+ 			return true, nil
+ 		}
+ 	}
+ 
+-	// Generates new program with the specified specs
+-	prog, err := sm.GenProgram(&specs)
++	// Generates new program with the specified specs. This is a cache MISS, so the
++	// specs are retained in sm.programs and must keep their own stable Defines map
++	// (NOT the reused scratch) — deep-copy via copy(). Misses occur only as new
++	// shader permutations appear (first frames), not in steady state.
++	var retained ShaderSpecs
++	retained.copy(specs)
++	prog, err := sm.GenProgram(&retained)
+ 	if err != nil {
+ 		return false, err
+ 	}
+-	log.Debug("Created new shader:%v", specs.Name)
++	log.Debug("Created new shader:%v", retained.Name)
+ 
+ 	// Save specs as current specs, adds new program to the list and activates the program
+-	sm.specs = specs
+-	sm.programs = append(sm.programs, ProgSpecs{prog, specs})
++	sm.specs.copyReuse(&retained)
++	sm.programs = append(sm.programs, ProgSpecs{prog, retained})
+ 	sm.gs.UseProgram(prog)
+ 	return true, nil
+ }
+@@ -332,6 +342,39 @@ func (ss *ShaderSpecs) copy(other *ShaderSpecs) {
+ 	}
+ }
+ 
++// copyReuse copies other into ss but REUSES ss's existing Defines backing map
++// (clear-in-place + refill) instead of make()-ing a fresh one, so a steady-state
++// SetProgram does not allocate a map per graphic-material per frame (LITD-PATCH
++// #537 — the dominant remaining steady-state alloc after 0015). It allocates only
++// when ss has no map yet (first use) or must grow. Use ONLY for transient/current
++// specs that ss owns exclusively (sm.scratch, sm.specs); NEVER for specs retained
++// in the program cache — those must keep their own stable map (use copy()).
++func (ss *ShaderSpecs) copyReuse(other *ShaderSpecs) {
++
++	defs := ss.Defines // preserve our backing map across the struct copy
++	*ss = *other
++	if other.Defines == nil {
++		if defs != nil {
++			for k := range defs {
++				delete(defs, k)
++			}
++		}
++		ss.Defines = defs
++		return
++	}
++	if defs == nil {
++		defs = gls.ShaderDefines(make(map[string]string, len(other.Defines)))
++	} else {
++		for k := range defs {
++			delete(defs, k)
++		}
++	}
++	for k, v := range map[string]string(other.Defines) {
++		defs[k] = v
++	}
++	ss.Defines = defs
++}
++
+ // equals compares two ShaderSpecs and returns true if they are effectively equal.
+ func (ss *ShaderSpecs) equals(other *ShaderSpecs) bool {
+ 
