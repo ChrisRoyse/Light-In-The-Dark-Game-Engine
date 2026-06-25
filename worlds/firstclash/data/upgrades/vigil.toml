@@ -1,0 +1,73 @@
+# The Vigil — upgrade tables (#303; validation-and-data.md §3.3: per-level stat
+# deltas applied by the sim modifier system). Researched at Vigil buildings
+# (see researches lists in data/units/vigil_buildings.toml). Authored in
+# seconds / sim points; the loader converts research-seconds -> 50 ms ticks and
+# stat adds -> sim units (attack-damage/armor integer points, move-speed wu/s ->
+# per-tick fixed, attack-cooldown seconds -> ticks). Per-level mod contribution
+# at player level L is Add x L. Defensive/support faction texture (identity.md
+# §2): the two faction techs harden and sustain rather than push damage.
+
+# Tempered Arms — the Vigil weapon line (1-3). Modest +2 damage/level on the
+# military line; the Vigil out-armors rather than out-hits.
+[[upgrade]]
+id = "vigil_weapon"
+applies-to = ["oathsworn", "pyre_archer", "flame_cleric"]
+[[upgrade.level]]
+research-seconds = 55.0
+costs = { gold = 100, lumber = 40 }
+[[upgrade.level]]
+research-seconds = 70.0
+costs = { gold = 175, lumber = 90 }
+[[upgrade.level]]
+research-seconds = 85.0
+costs = { gold = 250, lumber = 150 }
+[[upgrade.mod]]
+stat = "attack-damage"
+add = 2
+
+# Plated Vigil — the Vigil armor line (1-3). +1 armor/level on the military
+# line; the defensive backbone.
+[[upgrade]]
+id = "vigil_armor"
+applies-to = ["oathsworn", "pyre_archer", "flame_cleric"]
+[[upgrade.level]]
+research-seconds = 55.0
+costs = { gold = 90, lumber = 50 }
+[[upgrade.level]]
+research-seconds = 70.0
+costs = { gold = 150, lumber = 110 }
+[[upgrade.level]]
+research-seconds = 85.0
+costs = { gold = 215, lumber = 175 }
+[[upgrade.mod]]
+stat = "armor"
+add = 1
+
+# Beacon Warding (faction tech, 1-2) — the defensive identity. +1 armor/level to
+# EVERY owned unit (applies-to omitted = army-wide warding aura).
+[[upgrade]]
+id = "beacon_warding"
+[[upgrade.level]]
+research-seconds = 60.0
+costs = { gold = 125, lumber = 75 }
+[[upgrade.level]]
+research-seconds = 90.0
+costs = { gold = 225, lumber = 150 }
+[[upgrade.mod]]
+stat = "armor"
+add = 1
+
+# Votive Tempering (faction tech, 1-2) — the support identity. The flame_cleric
+# attacks/channels faster: -0.05 s cooldown/level (one tick quicker per level).
+[[upgrade]]
+id = "votive_tempering"
+applies-to = ["flame_cleric"]
+[[upgrade.level]]
+research-seconds = 65.0
+costs = { gold = 110, lumber = 90 }
+[[upgrade.level]]
+research-seconds = 95.0
+costs = { gold = 200, lumber = 160 }
+[[upgrade.mod]]
+stat = "attack-cooldown"
+add = -0.05

@@ -1,0 +1,62 @@
+# The Unbound hero abilities (#154; identity.md §2 fire/mobility/storm-calling,
+# §4 heroes carry the magic). Four spells = the three skill-tree branches
+# (Battle / Command / Mysticism analogues) plus the ultimate. Mirrors the Vigil
+# hero's structure with the Unbound texture: a mobile gap-closer, a storm nuke,
+# a fire aura, and a firestorm ult. Cast params seconds (50 ms-divisible) / wu.
+
+# Battle — Ember Dash: a fast burning lunge at a target (gap-closer texture; the
+# dash movement is wired with the cast, this is the strike).
+[[ability]]
+id = "ember_dash"
+name = "Ember Dash"
+mana-cost = 60
+cooldown = 8.0
+cast-point = 0.1
+backswing = 0.2
+cast-range = 500.0
+[[ability.effects]]
+prim = "damage"
+amount = 55
+attack-type = "normal"
+
+# Command — Storm Call: a called-down burst of storm-light over an area.
+[[ability]]
+id = "storm_call"
+name = "Storm Call"
+mana-cost = 95
+cooldown = 11.0
+cast-point = 0.4
+backswing = 0.3
+cast-range = 600.0
+[[ability.effects]]
+prim = "area"
+radius = 220.0
+max-targets = 6
+[[ability.effects.effects]]
+prim = "damage"
+amount = 40
+attack-type = "magic"
+
+# Mysticism — Flame Aura: a passive ring of carried fire. Stub (no effect prims
+# yet); the damage/vision aura is wired with the buff/aura system (#160, #171).
+[[ability]]
+id = "flame_aura"
+name = "Flame Aura"
+
+# Ultimate — Firestorm: the chief calls a wide storm of ember and flame.
+[[ability]]
+id = "firestorm"
+name = "Firestorm"
+mana-cost = 150
+cooldown = 40.0
+cast-point = 0.5
+backswing = 0.4
+cast-range = 700.0
+[[ability.effects]]
+prim = "area"
+radius = 350.0
+max-targets = 12
+[[ability.effects.effects]]
+prim = "damage"
+amount = 90
+attack-type = "magic"

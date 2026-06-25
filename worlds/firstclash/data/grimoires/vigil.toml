@@ -1,0 +1,39 @@
+# Grimoire of the Long Vigil (#155; identity.md §4 — themed research track,
+# defense/healing). An ordered 4-tier track researched at the scriptorium; each
+# tier grants units/abilities/upgrades by ID (all resolve against the Vigil
+# tables). The Slot marks the foreclosure group — committing to this track in
+# the "vigil_doctrine" slot locks an alternative track (runtime-enforced).
+# Tier 4 is a strong capstone, not an army transformation (identity.md §8).
+
+[[grimoire]]
+id = "long_vigil"
+name = "Grimoire of the Long Vigil"
+slot = "vigil_doctrine"
+researched-at = "scriptorium"
+
+# Tier 1 — the warding doctrine: army-wide armor.
+[[grimoire.tier]]
+research-seconds = 30.0
+costs = { gold = 100, lumber = 50 }
+grants-upgrades = ["beacon_warding"]
+
+# Tier 2 — fortify: unlock the defensive tower + the armor line.
+[[grimoire.tier]]
+research-seconds = 45.0
+costs = { gold = 150, lumber = 100 }
+grants-units = ["watchfire_tower"]
+grants-upgrades = ["vigil_armor"]
+
+# Tier 3 — the long watch: faster clerics (sustain) + the rally support spell.
+[[grimoire.tier]]
+research-seconds = 60.0
+costs = { gold = 200, lumber = 150 }
+grants-upgrades = ["votive_tempering"]
+grants-abilities = ["warden_rally"]
+
+# Tier 4 — capstone: tempered arms + the hero's light-burst.
+[[grimoire.tier]]
+research-seconds = 80.0
+costs = { gold = 300, lumber = 250 }
+grants-upgrades = ["vigil_weapon"]
+grants-abilities = ["warden_lantern_ward"]

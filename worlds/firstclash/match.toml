@@ -1,0 +1,19 @@
+# firstclash — the minimal AI-vs-AI melee descriptor (#635/#638, ultimate-test-
+# plan §6). Two CPU players, score-decide at the 20-minute (24,000-tick) backstop.
+seed = 1337
+victory = "score"
+time_limit_ticks = 24000
+
+[[players]]
+slot = 0
+race = "vigil"
+controller = "cpu"
+difficulty = "normal"
+ai_strategy = "vigil"
+
+[[players]]
+slot = 1
+race = "unbound"
+controller = "cpu"
+difficulty = "normal"
+ai_strategy = "unbound"

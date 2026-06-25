@@ -1,0 +1,118 @@
+# The Vigil — building tables (R-AST-1; identity.md §2: feudal beacon-keepers,
+# fortified + siegecraft). Buildings are trainable-producer entries in the same
+# [[unit]] schema family (validation-and-data.md §3.2): footprint > 0 +
+# build-seconds > 0 marks a worker-constructable building. Costs resolve against
+# the economy registry (gold/lumber); trains/researches resolve to defined
+# entries. Tech-tree gating (requires) lives in data/tech/upgrades.toml.
+# Original balance (PRD §2.2). Defensive faction texture: fortified armor, a
+# real defensive tower.
+
+# Bastion — town hall (tier 1 root). Trains the worker; the gold/lumber drop-off
+# (depot-for); provides starting food. High HP, fortified — the Vigil turtles.
+[[unit]]
+id = "bastion"
+life = 1500
+armor = 5
+armor-type = "fortified"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 48
+pathing = "ground"
+sight-day = 1400
+sight-night = 1000
+model = "buildings/vigil/bastion.glb"
+footprint = 4
+build-seconds = 90.0
+food-provided = 10
+costs = { gold = 385, lumber = 185 }
+depot-for = ["gold", "lumber"]
+trains = ["lamplighter", "beacon_warden"]
+revives-heroes = true
+
+# Hearth_hall — supply (food). Cheap, low footprint; raises the population cap.
+[[unit]]
+id = "hearth_hall"
+life = 550
+armor = 5
+armor-type = "fortified"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 32
+pathing = "ground"
+sight-day = 1000
+sight-night = 800
+model = "buildings/vigil/hearth_hall.glb"
+footprint = 2
+build-seconds = 35.0
+food-provided = 10
+costs = { gold = 80 }
+
+# Muster_hall — barracks. Trains the Vigil military line.
+[[unit]]
+id = "muster_hall"
+life = 1100
+armor = 5
+armor-type = "fortified"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 48
+pathing = "ground"
+sight-day = 1200
+sight-night = 900
+model = "buildings/vigil/muster_hall.glb"
+footprint = 4
+build-seconds = 60.0
+costs = { gold = 160, lumber = 40 }
+trains = ["oathsworn", "pyre_archer", "flame_cleric"]
+researches = ["vigil_weapon", "vigil_armor"]
+
+# Watchfire_tower — defensive tower (the faction texture). Piercing attack,
+# long range, fortified; cannot move or train.
+[[unit]]
+id = "watchfire_tower"
+life = 700
+armor = 6
+armor-type = "fortified"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 32
+pathing = "ground"
+acquisition-range = 700
+sight-day = 1800
+sight-night = 1200
+model = "buildings/vigil/watchfire_tower.glb"
+footprint = 2
+build-seconds = 45.0
+costs = { gold = 120, lumber = 40 }
+
+[[unit.attack]]
+type = "piercing"
+range = 600
+damage-base = 22
+dice = 1
+sides = 4
+cooldown = 1.5
+damage-point = 0.3
+backswing = 0.3
+delivery = "projectile"
+projectile-speed = 1000
+targets-allowed = ["ground", "air", "structure"]
+
+# Scriptorium — grimoire research building. Research lists are wired with the
+# upgrade tables (#121); for now it stands as the research seat (fortified).
+[[unit]]
+id = "scriptorium"
+life = 850
+armor = 5
+armor-type = "fortified"
+move-speed = 0
+turn-rate = 0.1
+collision-size = 32
+pathing = "ground"
+sight-day = 1100
+sight-night = 800
+model = "buildings/vigil/scriptorium.glb"
+footprint = 3
+build-seconds = 55.0
+costs = { gold = 130, lumber = 130 }
+researches = ["beacon_warding", "votive_tempering"]

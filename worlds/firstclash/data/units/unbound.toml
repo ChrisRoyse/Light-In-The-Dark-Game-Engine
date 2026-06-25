@@ -1,0 +1,185 @@
+# The Unbound — playable unit roster (R-AST-1; identity.md §2: "Aggression,
+# mobility, portable light"; §3: carried flame = moving vision/aura). Authored
+# in seconds / units-per-second / revolutions-per-second; the loader converts to
+# 50 ms ticks and 32.32 fixed-point. Original balance (PRD §2.2, no WC3 data
+# copying). Faction texture = MOBILITY/AGGRESSION BIAS, the mirror of the Vigil:
+# every Unbound unit moves FASTER than its Vigil counterpart and wears LIGHTER
+# armor, trading durability for speed and damage.
+#
+# Cooldowns are whole multiples of 50 ms: 1.50 s = 30 t, 1.25 s = 25 t,
+# 1.75 s = 35 t.
+
+# Forager — worker. Faster and flimsier than the Vigil lamplighter; the Unbound
+# economy keeps moving. Light melee tap only.
+[[unit]]
+id = "forager"
+life = 220
+regen = 0.25
+armor = 0
+armor-type = "light"
+move-speed = 300
+turn-rate = 0.8
+collision-size = 16
+pathing = "ground"
+acquisition-range = 400
+sight-day = 1600
+sight-night = 800
+model = "units/unbound/forager.glb"
+food-cost = 1
+costs = { gold = 50 }
+train-seconds = 11.0
+harvest = { gather-seconds = 1.0, capacity = 10, resources = ["gold", "lumber"] }
+
+[[unit.attack]]
+type = "normal"
+range = 80
+damage-base = 5
+dice = 1
+sides = 2
+cooldown = 1.75
+damage-point = 0.5
+backswing = 0.5
+delivery = "instant"
+targets-allowed = ["ground", "structure"]
+
+# Ashblade — aggressive raider melee. Much faster than the Oathsworn anvil,
+# light armor, hits harder; carries Sprint to dictate engagements (mobility).
+# Lower life — this is a hammer, not an anvil.
+[[unit]]
+id = "ashblade"
+life = 360
+regen = 0.20
+armor = 1
+armor-type = "light"
+move-speed = 320
+turn-rate = 0.9
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+sight-day = 1800
+sight-night = 800
+model = "units/unbound/ashblade.glb"
+abilities = ["sprint"]
+food-cost = 2
+costs = { gold = 130, lumber = 10 }
+train-seconds = 20.0
+
+[[unit.attack]]
+type = "normal"
+range = 90
+damage-base = 16
+dice = 1
+sides = 3
+cooldown = 1.25
+damage-point = 0.4
+backswing = 0.4
+delivery = "instant"
+targets-allowed = ["ground", "structure"]
+
+# Storm_caller — mobile magic skirmisher. Faster than the Vigil flame_cleric,
+# fragile, throws a magic bolt; carries Firebolt. Kite-and-burn identity.
+[[unit]]
+id = "storm_caller"
+life = 250
+regen = 0.15
+armor = 0
+armor-type = "light"
+move-speed = 300
+turn-rate = 0.9
+collision-size = 16
+pathing = "ground"
+acquisition-range = 650
+sight-day = 1800
+sight-night = 900
+model = "units/unbound/storm_caller.glb"
+abilities = ["firebolt"]
+food-cost = 3
+costs = { gold = 125, lumber = 35 }
+train-seconds = 26.0
+
+[[unit.attack]]
+type = "magic"
+range = 450
+damage-base = 11
+dice = 1
+sides = 3
+cooldown = 1.75
+damage-point = 0.4
+backswing = 0.4
+delivery = "projectile"
+projectile-speed = 850
+targets-allowed = ["ground", "air", "structure"]
+
+# Pyre_wagon — the portable-flame carrier (identity.md §3). Noncombat-leaning:
+# a token ram attack only; its real job is the LARGE sight radius that the
+# portable-flame aura mechanic (#171) consumes as moving vision. sight-night ==
+# sight-day on purpose: the carried light is its own source, so the Flicker dim
+# (#170) does NOT shrink it (identity.md §2 "the point of carrying your own
+# light"). Every other unit's sight-night < sight-day and dims with the cycle.
+# Heavier and slower than the rest — the one Unbound unit that trades mobility
+# for the light it carries.
+[[unit]]
+id = "pyre_wagon"
+life = 420
+regen = 0.25
+armor = 2
+armor-type = "medium"
+move-speed = 240
+turn-rate = 0.5
+collision-size = 24
+pathing = "ground"
+acquisition-range = 300
+sight-day = 2400
+sight-night = 2400
+model = "units/unbound/pyre_wagon.glb"
+food-cost = 4
+costs = { gold = 180, lumber = 90 }
+train-seconds = 32.0
+
+[[unit.attack]]
+type = "siege"
+range = 90
+damage-base = 8
+dice = 1
+sides = 2
+cooldown = 1.75
+damage-point = 0.6
+backswing = 0.6
+delivery = "instant"
+targets-allowed = ["ground", "structure"]
+
+# Ember Chief — the Unbound hero (#154; identity.md §4 heroes carry the magic,
+# §2 fire/mobility/storm). The mirror of the Vigil's Beacon Warden: Agility-
+# primary (a fast, hard-hitting striker), lighter and quicker, with the four
+# fire/storm hero spells. Skill tree in data/heroes/heroes.toml; trained +
+# revived at the fire_kraal (the Unbound hero seat for v0.1).
+[[unit]]
+id = "ember_chief"
+life = 620
+regen = 1.2
+armor = 2
+armor-type = "medium"
+move-speed = 330
+turn-rate = 0.9
+collision-size = 16
+pathing = "ground"
+acquisition-range = 600
+sight-day = 1800
+sight-night = 1000
+model = "units/unbound/ember_chief.glb"
+abilities = ["ember_dash", "storm_call", "flame_aura", "firestorm"]
+food-cost = 5
+costs = { gold = 420, lumber = 80 }
+train-seconds = 52.0
+
+[[unit.attack]]
+type = "normal"
+range = 90
+damage-base = 30
+dice = 2
+sides = 5
+cooldown = 1.5
+damage-point = 0.35
+backswing = 0.35
+delivery = "instant"
+targets-allowed = ["ground", "structure"]

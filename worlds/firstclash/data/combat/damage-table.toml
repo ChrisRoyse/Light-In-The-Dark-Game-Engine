@@ -1,0 +1,14 @@
+# Attack-type × armor-type coefficient matrix (combat-and-orders.md §4).
+# Values are integer per-mille (1000 = 100%). Original balance data —
+# illustrative starter values, tuned during M3 (PRD §2.2 non-goals).
+
+attack-types = ["normal", "piercing", "siege", "magic", "chaos"]
+armor-types = ["unarmored", "light", "medium", "heavy", "fortified"]
+
+[coefficients]
+# unarmored light medium heavy fortified
+normal = [1000, 1000, 1500, 1000, 700]
+piercing = [1500, 2000, 750, 1000, 350]
+siege = [1500, 1000, 500, 1000, 1500]
+magic = [1000, 1250, 750, 2000, 350]
+chaos = [1000, 1000, 1000, 1000, 1000]

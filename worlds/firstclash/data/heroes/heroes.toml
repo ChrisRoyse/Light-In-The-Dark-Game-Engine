@@ -1,0 +1,85 @@
+# Hero system tables (#153/#154; validation-and-data.md §3.3, identity.md §4).
+# This is the single shared hero file: the XP curve, attribute-growth rules, and
+# revive economy are global (one ruleset for both factions, WC3-style), while
+# each faction contributes one [[hero]] row with its own base stats and 3-branch
+# skill tree. Authored in seconds / sim points / XP; the loader converts times
+# to 50 ms ticks and stats to 32.32 fixed-point. Max hero level v0.1 = 5.
+
+# Cumulative XP thresholds — index i = total XP to reach level i+1. Must start at
+# 0 and strictly increase. 5 entries = max level 5.
+xp-curve = [0, 240, 580, 1020, 1560]
+
+[xp]
+share-radius = 1200.0      # allies within this range split kill XP
+split = "equal"            # equal share among eligible heroes
+death-penalty-permille = 250
+start-skill-points = 1
+
+# Per-point attribute growth (the modifier system reads these): Strength -> HP +
+# regen, Agility -> armor (+ cooldown), Intelligence -> mana + mana regen.
+[attributes]
+str-hp = 25.0
+str-regen = 0.06
+agi-armor = 0.15
+int-mana = 15.0
+int-mana-regen = 0.05
+
+# Hero revival cost/time scales with the dead hero's level.
+[revive]
+base-seconds = 40.0
+seconds-per-level = 8.0
+costs-base = { gold = 200, lumber = 40 }
+costs-per-level = { gold = 40, lumber = 10 }
+
+# --- The Vigil hero (#153) ---------------------------------------------------
+# Beacon Warden — Strength primary (the battle axe) with deep Intelligence (the
+# light magic). Three branch spells, each learnable at 3 ranks (hero L1/3/5),
+# plus the ultimate at L5. With ~5 points by L5 you cannot max everything — the
+# tree shape is the CHOICE (identity.md §4).
+[[hero]]
+unit = "beacon_warden"
+str = 24.0
+agi = 16.0
+int = 20.0
+str-per-level = 2.7
+agi-per-level = 1.5
+int-per-level = 2.3
+
+[[hero.skill]]
+ability = "warden_smite"        # Battle
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "warden_rally"        # Command
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "warden_lantern_ward" # Mysticism
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "beacon_blaze"        # Ultimate
+min-hero-level = [5]
+
+# --- The Unbound hero (#154) -------------------------------------------------
+# Ember Chief — Agility primary (the fast striker) mirroring the Vigil warden's
+# Strength. Same shared XP curve + attribute rules above (v0.1 parity); the
+# faction difference is base stats and the fire/mobility/storm spell set.
+[[hero]]
+unit = "ember_chief"
+str = 18.0
+agi = 24.0
+int = 18.0
+str-per-level = 1.8
+agi-per-level = 2.8
+int-per-level = 2.0
+
+[[hero.skill]]
+ability = "ember_dash"          # Battle
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "storm_call"          # Command
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "flame_aura"          # Mysticism
+min-hero-level = [1, 3, 5]
+[[hero.skill]]
+ability = "firestorm"           # Ultimate
+min-hero-level = [5]

@@ -1,0 +1,152 @@
+# Tiered hero gear (#157; identity.md §4 tiered items 1-4 found/bought/crafted,
+# §6.5 original medieval+magic names). Passive stat gear carried in the hero
+# inventory (canonical items API). Stat modifiers are the #162 vocabulary
+# (move-speed wu/s, armor points, attack-cooldown seconds, attack-damage points)
+# — life/regen mods await that vocabulary's extension. Values scale with tier;
+# crafted items assemble strictly-lower-tier components (acyclic, validator-
+# enforced). Tier 4 = a strong capstone artifact, NOT an army transformation
+# (transformations are post-v0.1, identity.md §8). Bought items priced in gold.
+
+# ---- Tier 1 — basic gear --------------------------------------------------
+[[item]]
+id = "oak_buckler"
+name = "Oak Buckler"
+class = "permanent"
+tier = 1
+acquisition = "found"
+[[item.mod]]
+stat = "armor"
+add = 2
+
+[[item]]
+id = "whetstone"
+name = "Whetstone"
+class = "permanent"
+tier = 1
+acquisition = "bought"
+costs = { gold = 75 }
+[[item.mod]]
+stat = "attack-damage"
+add = 3
+
+[[item]]
+id = "traveler_boots"
+name = "Traveler's Boots"
+class = "permanent"
+tier = 1
+acquisition = "bought"
+costs = { gold = 60 }
+[[item.mod]]
+stat = "move-speed"
+add = 20
+
+# ---- Tier 2 — tempered gear -----------------------------------------------
+[[item]]
+id = "iron_aegis"
+name = "Iron Aegis"
+class = "permanent"
+tier = 2
+acquisition = "bought"
+costs = { gold = 175 }
+[[item.mod]]
+stat = "armor"
+add = 4
+
+[[item]]
+id = "keen_edge"
+name = "Keen Edge"
+class = "permanent"
+tier = 2
+acquisition = "crafted"
+recipe = ["whetstone", "oak_buckler"]
+[[item.mod]]
+stat = "attack-damage"
+add = 6
+
+[[item]]
+id = "swift_treads"
+name = "Swift Treads"
+class = "permanent"
+tier = 2
+acquisition = "bought"
+costs = { gold = 160 }
+[[item.mod]]
+stat = "move-speed"
+add = 35
+
+# ---- Tier 3 — master gear -------------------------------------------------
+[[item]]
+id = "bulwark_plate"
+name = "Bulwark Plate"
+class = "permanent"
+tier = 3
+acquisition = "bought"
+costs = { gold = 320 }
+[[item.mod]]
+stat = "armor"
+add = 7
+
+[[item]]
+id = "reaver_axe"
+name = "Reaver Axe"
+class = "permanent"
+tier = 3
+acquisition = "crafted"
+recipe = ["keen_edge", "whetstone"]
+[[item.mod]]
+stat = "attack-damage"
+add = 12
+
+[[item]]
+id = "phantom_stride"
+name = "Phantom Stride"
+class = "permanent"
+tier = 3
+acquisition = "bought"
+costs = { gold = 300 }
+[[item.mod]]
+stat = "move-speed"
+add = 50
+[[item.mod]]
+stat = "attack-cooldown"
+add = -0.10
+
+# ---- Tier 4 — capstone artifacts ------------------------------------------
+[[item]]
+id = "aegis_eternal"
+name = "Aegis Eternal"
+class = "artifact"
+tier = 4
+acquisition = "crafted"
+recipe = ["bulwark_plate", "iron_aegis"]
+[[item.mod]]
+stat = "armor"
+add = 12
+
+[[item]]
+id = "sunforged_blade"
+name = "Sunforged Blade"
+class = "artifact"
+tier = 4
+acquisition = "crafted"
+recipe = ["reaver_axe", "keen_edge"]
+[[item.mod]]
+stat = "attack-damage"
+add = 20
+[[item.mod]]
+stat = "attack-cooldown"
+add = -0.10
+
+[[item]]
+id = "windrunner_regalia"
+name = "Windrunner Regalia"
+class = "artifact"
+tier = 4
+acquisition = "crafted"
+recipe = ["phantom_stride", "swift_treads"]
+[[item.mod]]
+stat = "move-speed"
+add = 70
+[[item.mod]]
+stat = "attack-cooldown"
+add = -0.15

@@ -1,0 +1,67 @@
+# The Vigil hero abilities (#153; identity.md §2 light-infused support magic,
+# §4 army-scale hero). Four spells = the three skill-tree branches (Battle /
+# Command / Mysticism) plus the ultimate. Damage spells carry an effect
+# composition (compiled into the flat effect arena, #294/#296); the support
+# spell is a stub until the buff/aura effect prims land (#160) — like the core
+# defend/sprint rows. Cast params are seconds (50 ms-divisible) and world units.
+
+# Battle — Warden's Smite: a single-target bolt of beacon-light.
+[[ability]]
+id = "warden_smite"
+name = "Warden's Smite"
+mana-cost = 75
+cooldown = 6.0
+cast-point = 0.3
+backswing = 0.3
+cast-range = 600.0
+[[ability.effects]]
+prim = "damage"
+amount = 60
+attack-type = "magic"
+
+# Command — Rally the Vigil: a support rallying cry. Stub (no effect prims yet);
+# the morale/armor aura is wired with the buff system (#160).
+[[ability]]
+id = "warden_rally"
+name = "Rally the Vigil"
+mana-cost = 50
+cooldown = 12.0
+cast-point = 0.2
+cast-range = 500.0
+
+# Mysticism — Lantern Ward: a consecrated burst of light that scours nearby
+# enemies (area).
+[[ability]]
+id = "warden_lantern_ward"
+name = "Lantern Ward"
+mana-cost = 90
+cooldown = 10.0
+cast-point = 0.4
+backswing = 0.3
+cast-range = 500.0
+[[ability.effects]]
+prim = "area"
+radius = 250.0
+max-targets = 6
+[[ability.effects.effects]]
+prim = "damage"
+amount = 35
+attack-type = "magic"
+
+# Ultimate — Beacon Blaze: the warden ignites a beacon, a wide nova of light.
+[[ability]]
+id = "beacon_blaze"
+name = "Beacon Blaze"
+mana-cost = 150
+cooldown = 40.0
+cast-point = 0.5
+backswing = 0.4
+cast-range = 700.0
+[[ability.effects]]
+prim = "area"
+radius = 350.0
+max-targets = 12
+[[ability.effects.effects]]
+prim = "damage"
+amount = 90
+attack-type = "magic"
