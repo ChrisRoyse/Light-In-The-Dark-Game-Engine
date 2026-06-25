@@ -126,7 +126,12 @@ const SaveMagic = "LITDSAV\x01"
 // rally) appended after the harvest rows.
 // v2: economy sections (#300) — resource counters, node/econ/harvest
 // stores — appended after doodads.
-const SaveFormatVersion uint32 = 48 // v48: "missiles" section retired — projectiles are mover-driven (#590)
+// v49: per-player foodCap[] persisted in the economy section (#652). foodCap is
+// authoritative mutable state (a SetFoodCap base PLUS AddEcon building
+// contributions), NOT purely derived — the prior load recomputed it from econ
+// rows alone, silently dropping any SetFoodCap base (e.g. a melee starting
+// supply cap) across save/load.
+const SaveFormatVersion uint32 = 49
 
 // ---- little-endian writer / reader ----
 
@@ -533,8 +538,10 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		s.ent(d.Entity[i])
 	}
 
-	// economy (#300): counters + the three stores. Food ledgers are
-	// derived (recomputed from econ rows at load) and not written.
+	// economy (#300): counters + the three stores. foodUsed is derived
+	// (recomputed from econ rows + queued reservations at load) and not written.
+	// foodCap is NOT derived (#652): it carries a SetFoodCap base on top of the
+	// AddEcon building contributions, so it is persisted directly (v49).
 	s.u32(uint32(w.resourceCount))
 	for pl := 0; pl < MaxPlayers; pl++ {
 		if w.resourceCount == 0 {
@@ -543,6 +550,9 @@ func (w *World) SaveState(out io.Writer, fingerprint uint64) error {
 		for _, v := range w.resources[pl] {
 			s.i64(v)
 		}
+	}
+	for pl := 0; pl < MaxPlayers; pl++ {
+		s.i32(w.foodCap[pl])
 	}
 	nd := w.Nodes
 	s.u32(uint32(nd.count))
@@ -1311,6 +1321,7 @@ type decodedSave struct {
 
 	resourceCount int32
 	resources     [][]int64
+	foodCap       [MaxPlayers]int32
 
 	ndN    int32
 	ndE    []EntityID
@@ -2145,6 +2156,15 @@ func decodeBody(r *saveReader, d *decodedSave, w *World) error {
 				d.resources[pl][ri] = r.i64()
 			}
 		}
+	}
+	// foodCap[] (v49, #652): authoritative per-player supply cap, restored
+	// directly rather than recomputed from econ rows.
+	r.what = "food cap"
+	for pl := 0; pl < MaxPlayers; pl++ {
+		d.foodCap[pl] = r.i32()
+	}
+	if r.err != nil {
+		return r.err
 	}
 	if n, err = r.section("resource nodes", len(w.Nodes.Resource)); err != nil {
 		return err
@@ -4274,9 +4294,9 @@ func applySave(d *decodedSave, w *World) {
 	ec := w.Econs
 	ec.count = d.ecN
 	resetRowOf(ec.rowOf)
-	for pl := range w.foodUsed { // ledger is derived: recompute below
-		w.foodUsed[pl] = 0
-		w.foodCap[pl] = 0
+	for pl := range w.foodUsed {
+		w.foodUsed[pl] = 0           // derived: recomputed from econ rows below
+		w.foodCap[pl] = d.foodCap[pl] // authoritative: restored directly (#652)
 	}
 	for i := int32(0); i < d.ecN; i++ {
 		ec.Entity[i] = d.ecE[i]
@@ -4287,7 +4307,8 @@ func applySave(d *decodedSave, w *World) {
 		if or := w.Owners.Row(d.ecE[i]); or != -1 {
 			if pl := w.Owners.Player[or]; pl < MaxPlayers {
 				w.foodUsed[pl] += int32(d.ecCost[i])
-				w.foodCap[pl] += int32(d.ecProv[i])
+				// foodCap is restored directly above — NOT re-added from rows,
+				// which would double-count the building contributions (#652).
 			}
 		}
 	}
