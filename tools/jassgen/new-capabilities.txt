@@ -215,6 +215,10 @@ exact   StartingUnits
 exact   VictoryDefeatConditions
 exact   Standard
 exact   PlayerUnitCount
+# SpawnHero (#637): fail-closed pre-validated hero spawn for melee setup — checks
+# the code is a known hero type before creating it. LitD-original — JASS spawns
+# heroes via CreateUnit on a hero rawcode, with no pre-spawn type guard.
+exact   SpawnHero
 
 # cooperative script threads (#377): the green-thread execution model over
 # the stackless scheduler. The canonical JASS PolledWait/TriggerSleepAction
@@ -237,6 +241,17 @@ exact   Game.DetachAI
 exact   Game.ElapsedTime
 exact   Game.Every
 exact   Game.IsAIPlayer
+# Game.IsHeroType (#637): pre-spawn predicate — is this UnitType a hero? LitD-
+# original; JASS has no pre-creation hero-type query (you create then test the
+# unit). Backs melee SpawnHero's fail-closed guard.
+exact   Game.IsHeroType
+# Replay-determinism harness (#404/#649): RecordReplay/BuildReplay/ReplayCommands
+# are manifest-adjacent; SetReplayDrive puts the game in commands-only replay-
+# apply mode (controllers detached, recorded stream drives the AI players) and
+# ReplayApplied reports stream consumption. LitD-original — the commands-only
+# determinism model has no JASS analog (WC3 replays are an opaque client format).
+exact   Game.SetReplayDrive
+exact   Game.ReplayApplied
 exact   Game.IsReplay
 exact   Game.Localize
 exact   Game.RegisterAbility
