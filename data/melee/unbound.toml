@@ -6,13 +6,13 @@ gold = 500
 lumber = 150
 food_cap = 11
 
-town_hall = "fire_kraal"
+town_hall = "ugol"
 
 [workers]
-code = "forager"
+code = "uaco"
 count = 5
 
-# Unbound opens with one extra soldier.
+# Unbound opens with one extra scout.
 [[extra]]
-code = "ashblade"
+code = "ushd"
 count = 1
