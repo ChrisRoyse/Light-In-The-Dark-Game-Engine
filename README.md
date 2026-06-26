@@ -39,9 +39,34 @@ The Warcraft III World Editor was legendary because it was **opinionated and eff
 
 > We build the **editor first** (the Warcraft III model — make the World Editor, *then* make the world with it). Here is what that editor looks like and how you author a game in it. *Mock-ups of the target UI — every panel here maps to a tracked engine epic.*
 
+#### The world view — where you build
+
+![The world view](docs/readme/ED11-world-view.png)
+
+**This is the heart of the editor.** You build from a **bird's-eye view of your whole world**, rendered live at game quality, with an always-on **minimap** — in the layout millions already know from the Warcraft III World Editor: mode tabs across the top (*Terrain · Objects · Triggers · Cinematics · VFX · AI Co-Author*), a world hierarchy on the left, the active tool on the right, your asset library along the bottom. Easy to work by hand — and the **AI Co-Author** sits right beside the manual tools for when you want it. Most people will start by hand and reach for the AI over time; both drive the same world (#1225 / #1226 / #1229 / #1230).
+
+**Press Playtest — and it snaps into the game.** The bird's-eye edit camera drops straight into the actual game camera — top-down, isometric, over-the-shoulder, or first-person — so you *are* inside your world in one click, then snap right back to keep building (#1227 / #1228).
+
+<table>
+<tr>
+<td width="50%">
+
+![Play — top-down](docs/readme/ED12-play-topdown.png)
+**Top-down / ARPG.** Snap into the action camera with the full game HUD.
+
+</td>
+<td width="50%">
+
+![Play — first person](docs/readme/ED13-play-firstperson.png)
+**First-person.** Or drop all the way in — same world, same click.
+
+</td>
+</tr>
+</table>
+
 ![The editor shell](docs/readme/ED01-editor-shell.png)
 
-**One workspace.** A dockable shell — scene hierarchy, a real-time PBR viewport with transform gizmos, an inspector, and a content browser of your assets. The same look your finished game ships with, live while you build it.
+**One workspace.** A dockable shell — scene hierarchy, a real-time PBR viewport with transform gizmos, an inspector, and a content browser of your assets. The same look your finished game ships with, live while you build it. *(Each tool panel below pops out and gets as rich as it needs — built individually.)*
 
 <table>
 <tr>
@@ -108,6 +133,15 @@ The Warcraft III World Editor was legendary because it was **opinionated and eff
 </td>
 </tr>
 </table>
+
+#### How you iterate — two fast feedback loops
+
+Great games are *found* by iterating fast — the best teams ship many playable builds a day to "find the fun." So the editor is built around two tight feedback loops, **for humans and for AI, and they look completely different** (#1166):
+
+- **Humans** get the *instant, immersive* loop: one click into your world, hot-reload while you play, a live game-feel/responsiveness readout, and a place to drop notes mid-play — then snap back and tweak. The metric is *time-to-fun* (#1168).
+- **AI agents** get the *headless, verdicted* loop: spin up the deterministic sim with no window, run assertions and frame-watching bug oracles in parallel, and get back a structured, fix-oriented pass/fail with the actual values — *the error is the prompt* — so an agent can test everything it just built and iterate in seconds (#1167).
+
+Both run on **Calyx**: Aster snapshots fork and restore world-state, the Loom reactive engine streams events, the Ledger records every turn for replay, and Assay / Oracle / Ward give balance, what-if, and safety signals *before* a run even starts.
 
 ## 🧠 An AI builds your game — the engine *is* an MCP server
 
