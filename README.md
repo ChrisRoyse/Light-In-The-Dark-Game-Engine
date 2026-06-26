@@ -31,7 +31,7 @@ Players don't stay for stats — they stay for **emotion, character, and choices
 
 ## 🛠️ The no-code editor — the World Editor, reborn
 
-![The editor](docs/readme/04-editor.png)
+![The world view](docs/readme/ED11-world-view.png)
 
 The Warcraft III World Editor was legendary because it was **opinionated and effortless**: copy a unit, tweak its stats, snap together Event → Condition → Action blocks, and you had a game. We're rebuilding that magic. An **Object Editor** to copy-paste-customize units, heroes, abilities, and items; a visual **Trigger Editor** for no-code logic; a **Terrain Editor**; asset managers; live in-editor playtest. WC3-simple on the surface, infinitely deep underneath. *The magic is the simplicity of piecing together an entire game.*
 
@@ -40,8 +40,6 @@ The Warcraft III World Editor was legendary because it was **opinionated and eff
 > We build the **editor first** (the Warcraft III model — make the World Editor, *then* make the world with it). Here is what that editor looks like and how you author a game in it. *Mock-ups of the target UI — every panel here maps to a tracked engine epic.*
 
 #### The world view — where you build
-
-![The world view](docs/readme/ED11-world-view.png)
 
 **This is the heart of the editor.** You build from a **bird's-eye view of your whole world**, rendered live at game quality, with an always-on **minimap** — in the layout millions already know from the Warcraft III World Editor: mode tabs across the top (*Terrain · Objects · Triggers · Cinematics · VFX · AI Co-Author*), a world hierarchy on the left, the active tool on the right, your asset library along the bottom. Easy to work by hand — and the **AI Co-Author** sits right beside the manual tools for when you want it. Most people will start by hand and reach for the AI over time; both drive the same world (#1225 / #1226 / #1229 / #1230).
 
