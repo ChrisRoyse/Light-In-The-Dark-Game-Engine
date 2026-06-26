@@ -6,7 +6,7 @@
 
 ### A no-code, AI-native game engine for building living worlds — and **Ashen Reach**, the multiplayer RPG being built with it.
 
-*Direct beautiful visual stories. Fill them with characters who are genuinely alive. Build it all without code — and let an AI build it with you. Powered by **Calyx** (grounded AI) and rendered by **g3n**, on one machine.*
+*Direct beautiful visual stories. Fill them with characters who are genuinely alive. Build it all without code — and let an AI build it with you. A **proprietary game engine written in Rust, built on Calyx** (grounded AI), rendering Warcraft‑class worlds — all on one machine.*
 
 </div>
 
@@ -61,7 +61,7 @@ Not scripted behavior trees — **actual AI agents**, right-sized to their role:
 
 ![Gameplay](docs/readme/08-gameplay.png)
 
-Everything is rendered by **g3n** — and **g3n generates everything**: every object, model, material, and particle is g3n-native, pushed to its high-tech ceiling on the RTX 5090. *Honest visual target:* best-in-class **stylized real-time PBR** — the look of *Sunderfolk*, *Warcraft III Reforged*, or *League of Legends*, at high framerate. Beautiful and achievable, not pre-rendered film CGI.
+Everything is rendered by **our own proprietary game engine, written in Rust on `wgpu`** (Vulkan/DX12/Metal) — built on permissive open-source foundations, with our own WGSL shaders. *Honest visual target:* best-in-class **stylized real-time PBR** — the look of *Sunderfolk*, *Warcraft III Reforged*, or *League of Legends*: Forward+ lighting, cascaded shadows, bloom/tonemap/color-grade, dense GPU particles. Beautiful, achievable, and — critically — it **scales down** to run on a modest PC where photoreal can't.
 
 <table>
 <tr>
@@ -85,13 +85,22 @@ Everything is rendered by **g3n** — and **g3n generates everything**: every ob
 ![Three-tier architecture](docs/readme/10-architecture.png)
 
 ```
-🧠 KNOWLEDGE / AI TIER  — Calyx (Rust, GPU) + the 50-lens brain + AI agents
-        │  one-way "lowering valve"  (offline, fingerprinted)
-⚙️ DETERMINISTIC SIM    — fixed-point, zero-alloc Go core   ← AI never runs here
-🎨 PRESENTATION         — g3n render + audio (GPU per-frame) ← AI never in the frame
+🧠 CALYX — the knowledge + backend layer (Rust, GPU, 50 lenses): the database, search,
+           dedup, provenance, the AI agent runtime, and orchestration
+   │  the ENGINE is BUILT ON Calyx   │  ── lowering valve (one-way, frozen) ──►
+🦀 ENGINE (Rust, on Calyx):
+   ⚙️ deterministic SIM  — fixed-point, zero-alloc, replayable   ← only place excluded from live Calyx
+   🎨 RENDERER (wgpu)    — Forward+ PBR, shadows, post-FX, particles ← consumes a sim snapshot
+🛠️ EDITOR (egui, on engine + Calyx) — the product + an MCP server
 ```
 
-The AI tier is brilliant but non-deterministic; the sim core is bit-exact and replayable; the **lowering valve** is the only bridge. This is what lets a world be *alive* and *deterministic* at once. It all runs **locally on one workstation** — Ryzen 9 9950X3D, RTX 5090 (32 GB), 128 GB RAM — maxed out, no cloud.
+It's **all Rust now** — a single proprietary engine **built on Calyx** as its backend brain (we dropped g3n and Go entirely; no cgo). The sim core is bit-exact and replayable; the **lowering valve** is the only bridge to it, so the world is *alive* and *deterministic* at once. It runs **locally on one workstation** — Ryzen 9 9950X3D, RTX 5090 (32 GB), 128 GB RAM — maxed out for *creating*.
+
+### 🖥️ Create on a beast, play on anything
+The Battle.net model: you **build** with the full power of a high-end workstation, but the **games you ship run on a $500–$1,000 Windows PC** (~Ryzen 5 / RX 6600 / 16 GB) at 1080p60, scaling up to ultra on a 5090. A graphics quality scale (with open-source FSR upscaling) carries the stylized look from min-spec to max — and the engine ships that look **by default**, so a non-coder gets Warcraft-class quality with zero tuning.
+
+### 🌐 An ecosystem, not just an engine
+Beyond building games, the platform is a **Battle.net-style ecosystem**: publish and share your games, browse and download others', host servers (200–500 players), join via localhost / LAN / SSH / invite, climb ladders, and play each other's worlds. *Build it, share it, play together.*
 
 ![The living world](docs/readme/S20-living-world.png)
 
@@ -351,6 +360,172 @@ Every faction's power flows from a single **item-of-power**, guarded by Inner an
 ---
 
 # ⚔️ Part III · How You Play
+
+## 🎮 What it looks like in play
+
+*These are the **gameplay benchmark** — actual top-down/isometric real-time RPG play: full HUD, ability hotbars, floating damage, minimaps, party frames. This is the quality bar every game built in the editor should reach, and it runs on a $500–$1,000 PC.*
+
+![Combat](docs/readme/GP03-combat.png)
+*Real-time party combat — a boss health bar, floating crits, a named ability hotbar, chat, and minimap. Deep, readable, fast.*
+
+<table>
+<tr>
+<td width="50%">
+
+![Town](docs/readme/GP01-town.png)
+**The world.** Bustling towns, merchants, questgivers — a living hub.
+
+</td>
+<td width="50%">
+
+![Exploration](docs/readme/GP02-exploration.png)
+**Exploration.** Venture the grey wilds with your party toward a glowing objective.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Dungeon](docs/readme/GP05-dungeon.png)
+**Dungeons.** Torch-lit delves full of undead, traps, and treasure.
+
+</td>
+<td width="50%">
+
+![Party](docs/readme/GP08-party.png)
+**Party play.** Tank, healer, mage, archer — coordinate or die.
+
+</td>
+</tr>
+</table>
+
+### Deep classes — 20–30 skills each, 60–100 spells for casters
+
+*Every class is a deep toolkit. Martials master ~20–30 skills and specializations; spellcasters and priests command **60–100 spells** across schools and paths. Build your character; no two are alike.*
+
+<table>
+<tr>
+<td width="50%">
+
+![Spellbook](docs/readme/GP19-spellbook.png)
+**The spellbook.** Dozens of spells across Fire, Frost, Lightning, Shadow, Arcane, Nature — each with rank, cooldown, and cost.
+
+</td>
+<td width="50%">
+
+![Talents](docs/readme/GP20-talents.png)
+**Skills & talents.** A packed hotbar and a branching talent tree — deep build customization.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Mage](docs/readme/GP04-mage-spell.png)
+**Spellcasting.** Ground-targeted AoE, vivid particles, real consequences.
+
+</td>
+<td width="50%">
+
+![Necromancer](docs/readme/GP15-necromancer.png)
+**Summoners.** Raise an undead host and overwhelm your foes.
+
+</td>
+</tr>
+</table>
+
+### The stakes — PvP, full loot, faction war
+
+<table>
+<tr>
+<td width="50%">
+
+![PvP](docs/readme/GP06-pvp.png)
+**Full-loot PvP.** Kill anyone, loot everything. No safe ground.
+
+</td>
+<td width="50%">
+
+![Full loot](docs/readme/GP13-full-loot.png)
+**The spoils.** A fallen player drops it all — grab what you can.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Soul-knight](docs/readme/GP16-soulknight.png)
+**The Unhallowed Knight.** A soul-bound blade that grows with every kill.
+
+</td>
+<td width="50%">
+
+![Faction war](docs/readme/GP18-faction-war.png)
+**Faction war.** Dozens of players clash over an item-of-power.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Boss](docs/readme/GP07-boss.png)
+**Boss raids.** Bring a party and a plan for the Ashen Dragons.
+
+</td>
+<td width="50%">
+
+![Infernal Deeps](docs/readme/GP14-infernal.png)
+**The Infernal Deeps.** Hell's end-game, where the best loot — and worst deaths — live.
+
+</td>
+</tr>
+</table>
+
+### Systems & roleplay
+
+<table>
+<tr>
+<td width="33%">
+
+![Inventory](docs/readme/GP09-inventory.png)
+**Gear & stats.** Equip, compare, build your character.
+
+</td>
+<td width="33%">
+
+![Dialogue](docs/readme/GP10-dialogue.png)
+**Dialogue.** Branching, choice-driven conversations.
+
+</td>
+<td width="33%">
+
+![Quests](docs/readme/GP11-quest.png)
+**Quests.** Trackers, markers, and epic questlines.
+
+</td>
+</tr>
+<tr>
+<td width="33%">
+
+![Tavern](docs/readme/GP17-tavern.png)
+**Roleplay.** Gather, scheme, and tell stories in-character.
+
+</td>
+<td width="33%">
+
+![Hideout](docs/readme/GP12-faction-hideout.png)
+**Faction halls.** Your order's hideout and item-of-power.
+
+</td>
+<td width="33%">
+
+*…and it all runs on a modest PC, built no-code in the Editor.*
+
+</td>
+</tr>
+</table>
+
+---
 
 ## Become someone
 
@@ -717,7 +892,7 @@ This is the most ambitious no-code game creator ever attempted: **the depth of a
 - **#886** Visual storytelling & narrative → directorial layer **#909–914**, children **#887–897**
 - **#898** End-user UX & onboarding → **#899–906**
 - **#916** MCP control surface → tool-groups **#917–927**
-- **#861** g3n exposed no-code + **#873** render/animation integration; *g3n generates everything* **#929/#930**
+- **#1072** Custom proprietary Rust engine (BUILD PRIORITY #1) → subsystem epics: foundation #1074 · core/ECS #1080 · renderer(wgpu) #1085 · assets #1098 · animation #1104 · physics #1109 · **Calyx backend #1113** · audio #1125 · VFX #1128 · deterministic sim #1132 · editor(egui) #1137 · MCP #1143 · quality/acceptance #1146 (engine doctrine #1071; dep policy #1073). *(g3n #861/#873 dropped/superseded.)*
 - **#744** Particle & VFX editor → **#745–753**
 - **#781** In-game AI agents (every NPC/object a Calyx agent) → **#783–788, #859–860, #965–971**
 - **#782** AI asset-generation pipeline → **#789–796**
@@ -739,7 +914,7 @@ Every content category has both an illustrated overview here **and** an exhausti
 - **21 Kindreds** (races) — overview table above; full per-race specs (stat caps, resistances, innate gifts, allowed classes, lifespan, model) at **#999–1019**.
 - **17 Classes** — overview table above; full per-class specs (leveled ability lists, specializations/paths/forms, restrictions) at **#1020–1036**.
 - **7 Factions** + **7 Gods** — lore in Part II; mechanics & per-entity build at **#945/#948/#949/#990**, world bible **#1055**, lore compendium **#1056–1059**.
-- **Bestiary & bosses** — the 10 mightiest beings gallery + the Ashen Dragons & Outer Dark above; all mobs/creatures/bosses generated as data + g3n models + Calyx agents at **#991**.
+- **Bestiary & bosses** — the 10 mightiest beings gallery + the Ashen Dragons & Outer Dark above; all mobs/creatures/bosses = data + engine-native models + Calyx agents at **#991**.
 - **Abilities/spells/skills/songs/powers** — one universal ability framework **#961**; per-ability content + VFX at **#988**.
 - **Items** — scarcity-tiered itemization **#972–981**; full item set + models at **#989**.
 - **World/regions, quests, lore text** — gazetteer above; areas **#987**, quests **#931/#992**, original lore authored via **#1048–1059**.
@@ -755,6 +930,6 @@ The README is the illustrated map; the issues are the exhaustive, build-ready sp
 
 *Light in the Dark · the world of Ashen Reach*
 
-**[📋 Browse the 400+ issue backlog →](../../issues)** · Built with Calyx + g3n · Windows · RTX 5090
+**[📋 Browse the 470+ issue backlog →](../../issues)** · A proprietary Rust engine built on Calyx · Windows · RTX 5090
 
 </div>
