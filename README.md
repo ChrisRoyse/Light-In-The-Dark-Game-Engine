@@ -6,7 +6,7 @@
 
 ### The ultimate **RPG creation engine** — where you build living worlds by telling visual stories, and every character is alive.
 
-*Single-player, local-first, AI-native. A no-code Warcraft III World Editor for the age of grounded AI — powered by [Calyx](#-calyx--the-living-world-brain) and rendered by [g3n](#-what-your-games-look-like).*
+*A multiplayer, PvP, full-loot, roleplay-enforced living world — and the no-code editor to build it. A Warcraft III World Editor for the age of grounded AI, powered by [Calyx](#-calyx--the-living-world-brain) and rendered by [g3n](#-what-your-games-look-like).*
 
 </div>
 
