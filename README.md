@@ -35,6 +35,80 @@ Players don't stay for stats — they stay for **emotion, character, and choices
 
 The Warcraft III World Editor was legendary because it was **opinionated and effortless**: copy a unit, tweak its stats, snap together Event → Condition → Action blocks, and you had a game. We're rebuilding that magic. An **Object Editor** to copy-paste-customize units, heroes, abilities, and items; a visual **Trigger Editor** for no-code logic; a **Terrain Editor**; asset managers; live in-editor playtest. WC3-simple on the surface, infinitely deep underneath. *The magic is the simplicity of piecing together an entire game.*
 
+### 🖥️ Inside the editor — what it looks like, how it works
+
+> We build the **editor first** (the Warcraft III model — make the World Editor, *then* make the world with it). Here is what that editor looks like and how you author a game in it. *Mock-ups of the target UI — every panel here maps to a tracked engine epic.*
+
+![The editor shell](docs/readme/ED01-editor-shell.png)
+
+**One workspace.** A dockable shell — scene hierarchy, a real-time PBR viewport with transform gizmos, an inspector, and a content browser of your assets. The same look your finished game ships with, live while you build it.
+
+<table>
+<tr>
+<td width="50%">
+
+![Terrain editor](docs/readme/ED02-terrain-editor.png)
+**Sculpt the world.** Raise, carve, and paint terrain; splat grass, rock, and snow; scatter trees, props, and regions with a brush.
+
+</td>
+<td width="50%">
+
+![Object editor](docs/readme/ED03-object-editor.png)
+**Copy → tweak → done.** The WC3 Object Editor: pick a unit, hero, ability, or item and change its fields. Live validation keeps every value legal.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Trigger editor](docs/readme/ED04-trigger-editor.png)
+**No-code logic.** Snap together **Event → Condition → Action**: *a unit enters the crypt → if the party is level 10 → spawn the Wraith King.* No programming, ever.
+
+</td>
+<td width="50%">
+
+![Material & asset editor](docs/readme/ED06-material-assets.png)
+**Author the look.** Metallic-roughness PBR materials, imported models and textures — this is where the Warcraft-class look is dialed in, by default.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Cinematic director](docs/readme/ED07-cinematic-director.png)
+**Direct the story, visually.** A timeline for camera, lighting, character expression, dialogue, and score — stage a cutscene with no code. *Visual storytelling is goal #1.*
+
+</td>
+<td width="50%">
+
+![VFX editor](docs/readme/ED08-vfx-editor.png)
+**Particles & VFX.** Build a swirling soul-flame from emitters, curves, and gradient ramps — or just describe it and let Calyx generate it. Live preview as you tune.
+
+</td>
+</tr>
+</table>
+
+![Humans and AI co-author the same project](docs/readme/ED05-ai-coauthor.png)
+
+**Humans *and* AI — both, on the same canvas.** Every capability is one shared layer with two front-ends: the GUI *and* an MCP tool. A person can build the whole game by hand; an AI agent can build the whole game through tools; or both work the same project at once — say *"make this forest feel haunted at dusk"* and watch the fog roll in, the spirits appear, and the color grade cool. Nothing is human-only; nothing is AI-only.
+
+<table>
+<tr>
+<td width="50%">
+
+![Test in editor](docs/readme/ED09-test-in-editor.png)
+**Play it instantly.** Hit Play and your world runs *inside* the editor — full HUD, hot-reload, live debug — no export, no waiting.
+
+</td>
+<td width="50%">
+
+![Publish to the ecosystem](docs/readme/ED10-publish-ecosystem.png)
+**Ship it.** Seal the game into our runtime and publish to the ecosystem; others discover, host, and play it — Battle.net-style. Games run only on our runtime.
+
+</td>
+</tr>
+</table>
+
 ## 🧠 An AI builds your game — the engine *is* an MCP server
 
 ![AI builds your game](docs/readme/03-mcp-agent.png)
