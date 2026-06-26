@@ -1,0 +1,12 @@
+# Historical gitleaks fingerprints present before PH61 T07.
+# These are tracked as exact commit/file/rule/line fingerprints so new leaks
+# still fail the gate. Do not add credential values here.
+cc9f57b0a9c426b7b66899bdec323eba74fe223e:crates/calyx-aster/src/dedup/audit_tests.rs:generic-api-key:58
+# Deterministic synthetic UUID used by the audit tests, not a credential.
+cd36ec3bde859ac50519299bcf1cc198f7852fcb:crates/calyx-aster/src/dedup/audit_tests.rs:generic-api-key:58
+
+# Same deterministic ULID fixture in the squashed public-release history.
+c6a4556309b6e0e523b2c30fd9e20b024133b9cd:crates/calyx-aster/src/dedup/audit_tests.rs:generic-api-key:58
+
+# Same fixture in the first public sync before the test stopped using a string literal.
+a8ad85dc9078b342b099b809c455dcae23a67f35:crates/calyx-aster/src/dedup/audit_tests.rs:generic-api-key:58

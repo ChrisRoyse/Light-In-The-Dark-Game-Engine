@@ -1,60 +1,26 @@
-# Vendored reference repositories (cloned, not ours to track)
-repoes/
+# ── Claude Code local data ─────────────────────────────────────────────
+# Session worktrees grew to 15+ GB — never track. Same for credentials and
+# per-session scratch state. settings.json / agents / commands are kept.
+.claude/worktrees/
+.claude/.credentials.json
+.claude/shell-snapshots/
+.claude/todos/
+.claude/projects/
+.claude/history.jsonl
+.claude/statsig/
 
-# Go
-/bin/
-*.exe
-*.test
-*.out
+# ── Secrets ────────────────────────────────────────────────────────────
+# .env.example templates are still tracked (pattern below only hits real ones).
+**/.env
+**/.env.local
+**/.env.*.local
+*.pem
+*.key
+*.pfx
+*.p12
 
-# Editor/OS
+# ── OS / editor ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
 .idea/
 .vscode/
-.DS_Store
-
-# Scratch debug binaries/code
-/cmd/dbg/
-# Test/FSV artifacts (screenshots, state dumps)
-/artifacts/
-benchmarks/history.jsonl
-
-# Asset binaries: NOT tracked. assets/MANIFEST is the tracked provenance
-# ledger (path/pack/source/license/sha256); restore binaries from the
-# MANIFEST source URLs. assetcheck runs locally against the real files.
-assets/**/*.glb
-assets/**/*.png
-assets/**/*.ogg
-
-# Tool build artifacts: `go build ./tools/<name>` (no -o) writes ./<name> into the
-# repo root — a 4-5 MB regenerable binary that must never be tracked (a stray
-# `git add .` would otherwise commit it). Root-anchored (leading /) so each entry
-# ignores ONLY the root binary, never the tracked tools/<name>/ source. One line per
-# tool dir; add new tools here. (apilint kept first for its original call-out.)
-/apilint
-/assetcheck
-/assetgen
-/benchharness
-/changelog
-/datadump
-/desyncbisect
-/determlint
-/fsv
-/godoclint
-/importcheck
-/jassgen
-/luadoc
-/presentlint
-/release
-/renderevidence
-/sizecheck
-/uiatlas
-/worldpack
-
-# worldrender FSV harness build artifact (go build -o worldrender ./cmd/worldrender,
-# #490) — regenerable binary, never track
-/worldrender
-
-# world archives are reproducible build artifacts (scripts/pack-world.sh packs
-# them deterministically from map data + world Lua; CI re-produces + validates
-# on every build) — ship via releases, never track the binary (#209).
-*.litdworld

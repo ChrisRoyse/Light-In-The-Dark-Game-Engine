@@ -1,0 +1,43 @@
+[package]
+name = "calyx-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "calyx"
+path = "src/main.rs"
+
+[features]
+default = []
+cuda = ["calyx-forge/cuda", "calyx-registry/candle-cuda", "calyx-sextant/cuda"]
+
+[dependencies]
+calyx-assay = { path = "../calyx-assay" }
+calyx-anneal = { path = "../calyx-anneal" }
+calyx-aster = { path = "../calyx-aster" }
+calyx-core = { path = "../calyx-core" }
+calyx-forge = { path = "../calyx-forge" }
+calyx-ledger = { path = "../calyx-ledger" }
+calyx-lodestar = { path = "../calyx-lodestar" }
+calyx-loom = { path = "../calyx-loom" }
+calyx-oracle = { path = "../calyx-oracle" }
+calyx-paths = { path = "../calyx-paths" }
+calyx-registry = { path = "../calyx-registry" }
+calyx-sextant = { path = "../calyx-sextant" }
+calyx-ward = { path = "../calyx-ward" }
+calyxd = { path = "../calyxd" }
+blake3.workspace = true
+crc32fast.workspace = true
+rayon.workspace = true
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+ulid.workspace = true
+
+[dev-dependencies]
+calyx-testkit = { path = "../calyx-testkit" }
+proptest.workspace = true

@@ -1,0 +1,41 @@
+[package]
+name = "calyx-sextant"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+cuda = ["dep:cudarc", "dep:cuvs-sys"]
+
+[dependencies]
+blake3.workspace = true
+calyx-anneal = { path = "../calyx-anneal" }
+calyx-aster = { path = "../calyx-aster" }
+calyx-core = { path = "../calyx-core" }
+calyx-paths = { path = "../calyx-paths" }
+calyx-ward = { path = "../calyx-ward" }
+cudarc = { workspace = true, optional = true, features = ["std", "driver", "dynamic-linking", "cuda-13020"] }
+cuvs-sys = { workspace = true, optional = true }
+memmap2.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+zeroize = "1"
+zstd.workspace = true
+
+[dev-dependencies]
+calyx-loom = { path = "../calyx-loom" }
+calyx-oracle = { path = "../calyx-oracle" }
+criterion.workspace = true
+proptest.workspace = true
+sha2.workspace = true
+
+[[bench]]
+name = "bench_diskann_1e6"
+harness = false
