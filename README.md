@@ -4,143 +4,74 @@
 
 # Light in the Dark
 
-### The ultimate **RPG creation engine** — where you build living worlds by telling visual stories, and every character is alive.
+### A no-code, AI-native game engine for building living worlds — and **Ashen Reach**, the flagship multiplayer RPG being built with it.
 
-*A multiplayer, PvP, full-loot, roleplay-enforced living world — and the no-code editor to build it. A Warcraft III World Editor for the age of grounded AI, powered by [Calyx](#-calyx--the-living-world-brain) and rendered by [g3n](#-what-your-games-look-like).*
+*Direct beautiful visual stories. Fill them with characters who are genuinely alive. Build it all without code — and let an AI build it with you. Powered by **Calyx** (grounded AI) and rendered by **g3n**, running entirely on one machine.*
 
 </div>
 
 ---
 
-> **Status:** Active development. This README tells the story of **what is coming** — the vision we are building toward, captured as a living backlog of atomic tasks. **State lives in [GitHub Issues](../../issues)** (start at the pinned **START HERE** issue). Nothing here is marketing fluff; every capability below is an open, tracked issue.
+> **Status — active development.** This README is the *vision* of what is being built, captured as a living backlog of **400+ atomic tasks**. **State lives in [GitHub Issues](../../issues)** (start at the pinned **START HERE**). Every capability shown is a tracked issue, not marketing.
+>
+> **Two things live here:** **① the Engine** ("Light in the Dark") — a Warcraft-III-World-Editor-class no-code creation platform; and **② the flagship Game** ("Ashen Reach") — an original, multiplayer, full-loot, roleplay-enforced RPG built *with* the engine to prove it can build anything.
 
 ---
 
-## ✨ What is this?
-
-**Light in the Dark** turns a deterministic Go game engine into a **WC3-World-Editor-class, no-code creation platform** for building deep, beautiful **RPGs** — the kind of worlds that birthed DotA, Tower Defense, and thousands of legendary custom games, reborn for the age of AI.
-
-Three things make it different:
-
-1. **🥇 Visual storytelling is the heart of it.** You don't write code — you *direct scenes*. Stage characters, set mood and lighting, frame the camera, branch the dialogue, and let the world tell an unforgettable story.
-2. **🧠 Every NPC, creature, and object is a living AI agent.** Not scripted behavior trees — actual AI, orchestrated by **Calyx**, a grounded-association intelligence that watches everything happening and decides when to bring the world to life.
-3. **🛠️ An AI can build the entire game for you.** The whole engine is an **MCP server** — every capability is a tool an AI agent can call. Describe what you want; watch it get built.
-
-Our **north-star end goal**: faithfully recreate the systemic depth of **[Carrion Fields](https://carrionfields.net)** — a 30-year-old MUD that is the benchmark for RPG depth — *visually*, with AI running every Immortal, cabal, and NPC. **If the engine can build Carrion Fields, it can build any RPG you can imagine.**
-
----
+# Part I · The Engine
 
 ## 🥇 Visual storytelling, first
 
 ![Visual storytelling](docs/readme/02-storytelling.png)
 
-Players don't stay for stats — they stay for **emotion, character, and meaningful choices.** So the entire engine is optimized for telling stories *visually and textually*, every way a story can be told:
+Players don't stay for stats — they stay for **emotion, character, and choices that matter.** So the whole engine is optimized to tell stories *visually*. You don't write code; you **direct scenes**: stage characters, set the mood and lighting, frame the camera, branch the dialogue, score the moment. Branching dialogue trees, cinematics, environmental storytelling, a Calyx-grounded lore bible, and an AI co-writer make telling an unforgettable story feel like play. *Show, don't tell.*
 
-- **Branching dialogue** editor (Ink/Yarn-class) — write a screenplay, get a living conversation.
-- A **directorial layer**: scene staging, **mood & atmosphere** (pick a *feeling* — dread, warmth, awe — not a shader), **camera as director**, character **expression & emotion**, and **adaptive emotional scoring**.
-- **Environmental storytelling**, **cinematics/cutscenes**, **quests & epic questlines**, a **Calyx-grounded lore bible** that keeps your world consistent, and an **AI co-writer** that drafts scenes you edit.
-- A **visual-novel mode** for image-and-text stories with zero 3D work.
+## 🛠️ The no-code editor — the World Editor, reborn
 
-> *Show, don't tell.* Text is first-class — but the engine leads with the image.
+![The editor](docs/readme/04-editor.png)
 
----
+The Warcraft III World Editor was legendary because it was **opinionated and effortless**: copy a unit, tweak its stats, snap together Event → Condition → Action blocks, and you had a game. We're rebuilding that magic with modern tech. **Object Editor** (copy-paste-customize units, heroes, abilities, items), **Trigger Editor** (visual no-code logic), **Terrain Editor**, asset managers, live in-editor playtest — all WC3-simple on the surface, infinitely deep underneath. *The magic is the simplicity of piecing together an entire game.*
 
 ## 🧠 An AI builds your game — the engine *is* an MCP server
 
 ![AI builds your game](docs/readme/03-mcp-agent.png)
 
-This is the core architectural bet: **every single capability of the editor is an agent-controllable MCP tool.** The GUI and the MCP server are two faces of one capability layer — if a human can do it, an AI agent can do it, and vice versa.
-
-Tell an agent *"build a 4-player dungeon crawl with an emotional intro cutscene and a boss that taunts the party"* — and it authors the terrain, units, abilities, triggers, dialogue, VFX, and agents end-to-end, then plays it back to verify its own work. No clicking required.
-
----
-
-## 🛠️ The no-code editor — Warcraft III's World Editor, reborn
-
-![The editor](docs/readme/04-editor.png)
-
-The WC3 World Editor was legendary because it was **opinionated and effortless** — copy a unit, tweak its stats, and you had a new character; snap together Event → Condition → Action blocks, and you had a game. We're rebuilding that magic with modern tech and AI underneath:
-
-- **Object Editor** — copy-paste-customize units, heroes, abilities, items, buffs, upgrades, tech trees.
-- **Trigger Editor** — visual Event/Condition/Action logic, no code (Lua escape hatch when you want it).
-- **Terrain Editor** — paint tiles, cliffs, water, doodads, regions, cameras, weather.
-- **Asset & Object managers**, live in-editor playtest, undo/redo, autosave.
-
-The whole surface stays **WC3-simple** even as the power underneath grows — because *the magic is the simplicity of piecing together an entire game.*
-
----
+The core architectural bet: **every capability of the editor is an agent-controllable MCP tool.** The GUI and the MCP server are two faces of one capability layer. Tell an AI agent *"build a dungeon crawl with an emotional intro and a boss that taunts the party"* — and it authors the terrain, units, abilities, triggers, dialogue, VFX, and agents end-to-end, then plays it back to verify its own work. No clicking required.
 
 ## 🧠 Calyx — the living-world brain
 
 ![Calyx and its lenses](docs/readme/05-calyx-lenses.png)
 
-**Calyx** is a Rust grounded-association semantic engine — an *intelligent database* that ingests everything (logs, bits, game-state signals), finds associations with grounded intelligence, and **decides when to activate and prompt AI agents** to make the world feel alive.
+**Calyx** is a Rust grounded-association engine — an *intelligent database* that ingests everything (logs, bits, game-state signals), finds associations, and **decides when to wake and prompt the world's AI agents.** It runs locally on the RTX 5090 with **50 diverse embedder "lenses"** (image, audio, text, semantic, medical, legal, finance, code, DNA, molecule, protein) so it understands content across every modality. Crucially, Calyx keeps the AI *honest*: anything out-of-distribution — a wrong answer, impossible physics, broken behavior — **fails closed** rather than hallucinating. Its intelligence is "lowered" one-way into frozen game data, so the simulation stays bit-exact and replayable.
 
-It runs locally on the RTX 5090 with a curated roster of **50 diverse embedder "lenses"** — image, audio, text, semantic, medical, legal, finance, code, DNA, molecule, protein — so it understands content across every modality. Calyx grounds the AI: agents can only do what's *in distribution*. Out-of-distribution answers, physics, or behavior **fail closed** — never hallucinated.
-
-> Calyx never touches the deterministic game loop. Its intelligence is **"lowered"** — one-way — into frozen, fingerprinted game data. The game stays bit-exact and replayable; the AI stays out of the frame.
-
----
-
-## 👹 Every NPC is alive
+## 👹 Every NPC, creature, and object is alive
 
 ![Living-world AI agents](docs/readme/06-living-agents.png)
 
-Every creature you fight, every NPC you talk to, every object in the world can be a **Calyx-driven AI agent** — right-sized to its role:
-
-- **Object/visual micro-agents** (~5–20 MB tiny models) bring props and particles to life.
-- **Conversational NPCs** run small local LLMs (Gemma-class 2–4B) for in-character dialogue, grounded by Calyx.
-- **AI agents run the world's factions** — they play the Immortals, lead the cabals and religions, and even occupy player-character slots, fighting and roleplaying alongside humans.
-
-A guardian envelope (**Ward**) bounds what agents can do — creative *inside* the envelope, impossible physics *refused* at the edge. Bind a prompt, pick a model, attach it to an object. Set them loose.
-
----
+Not scripted behavior trees — **actual AI agents**, right-sized to their role: tiny ~5 MB models animate objects and particles; small local LLMs (Gemma-class 2–4B) give NPCs in-character conversation. A guardian system (**Ward**) bounds what agents may do — creative *inside* the envelope, impossible actions *refused* at the edge. Calyx decides who wakes and when, so the world feels alive whether two players or two hundred are online.
 
 ## 🎮 What your games look like
 
 ![Gameplay](docs/readme/08-gameplay.png)
 
-Everything is rendered by **g3n** — and **g3n generates everything**: every object, model, material, and particle is g3n-native, pushed to its high-tech ceiling on the RTX 5090. PBR materials, dynamic shadows, custom GLSL shaders, dense GPU particle VFX, bloom and color grading.
+Everything is rendered by **g3n** — and **g3n generates everything**: every object, model, material, and particle is g3n-native, pushed to its high-tech ceiling on the RTX 5090. *Honest visual target:* best-in-class **stylized real-time PBR** — the look of *Sunderfolk*, *Warcraft III Reforged*, or *League of Legends*, at high framerate. Beautiful and achievable, not pre-rendered film CGI.
 
-> **Honest visual target:** best-in-class **stylized real-time PBR** — the look of *Sunderfolk*, *Warcraft III Reforged*, or *League of Legends*, running smoothly at high framerate. Beautiful and achievable, not pre-rendered film CGI.
-
-### 🔥 Particles & VFX — just describe it
+<table>
+<tr>
+<td width="50%">
 
 ![VFX editor](docs/readme/09-vfx.png)
+**Particles & VFX — just describe it.** Fireballs, lightning, explosions: author them with emitters and curves, or describe them in words and let Calyx generate the effect. All g3n-native, all real-time.
 
-Fireballs, explosions, lightning strikes, magic vortexes — author them visually with emitters and curves, or **describe them in words** and let Calyx generate the effect. All g3n-native, all real-time.
-
-### 🎨 AI asset pipeline — text → playable creature
+</td>
+<td width="50%">
 
 ![AI asset pipeline](docs/readme/07-asset-pipeline.png)
+**Text → playable creature.** Describe it and watch it become real: prompt → 2D concept → 3D mesh → auto-rig → animated, game-ready model, ingested into Calyx.
 
-Describe a creature and watch it become real: **prompt → 2D concept → 3D mesh → auto-rig → animated, game-ready model**, conformed to the render budget and ingested into Calyx for semantic search and dedup.
-
----
-
-## ⚔️ The ultimate RPG creator
-
-RPG is the **flagship** — because RPGs are *stories*, and stories are what we're built for. Everything the great MUDs and ORPGs had, made buildable with no code:
-
-| System | What you get |
-|---|---|
-| **Characters** | Races (traits, resistances, restrictions), classes & multi-class, alignment × ethos, character creation |
-| **Growth** | Skill/talent trees, leveling, attributes & derived stats, ability framework (skills/spells/songs/powers), specializations & legacies |
-| **Loot & gear** | Equipment slots, set bonuses, **scarcity-tiered itemization** (see below), ARPG affixes |
-| **Factions** | Cabals/guilds/religions with deities, **AI-led ranks**, item-of-power warfare/raiding |
-| **World** | Zones with resets/repop, navigation, quests & epic questlines, interactables, bestiary |
-| **Risk** | Permadeath, aging, survival needs, **full-loot PvP**, configurable PK rules |
-| **Roleplay** | Character roles, **Calyx-measured RP quality** that advances your rank and unlocks powers |
-
-### 💎 A scarcity economy with real stakes
-
-The most powerful items are **finite in the entire world** — maybe one or two legendaries exist, ever. While you hold one, the monster that drops it *can't respawn with it*. Want it? **Kill the holder and loot everything.** Common gear is unlimited so you can always re-equip and get back in the fight. And if you hoard rare items and stop logging in for a week, they **decay back into the world** — power must be *used*, not locked away.
-
-### 🎭 Roleplay *is* progression
-
-AI cabal and religion leaders **watch how you play** and measure — with Calyx's grounded intelligence — how well you embody your faction's theme. Roleplay well, and they promote you, interact with you, and unlock new powers. This is a primary way you *grow*.
-
----
+</td>
+</tr>
+</table>
 
 ## 🏛️ Architecture — three tiers, strictly separated
 
@@ -153,38 +84,241 @@ AI cabal and religion leaders **watch how you play** and measure — with Calyx'
 🎨 PRESENTATION         — g3n render + audio (GPU per-frame) ← AI never in the frame
 ```
 
-The AI tier is brilliant but non-deterministic; the sim core is bit-exact and replayable. The **lowering valve** is the only bridge — learned intelligence becomes frozen game data, one way. This is what lets the world be *alive* and *deterministic* at the same time.
+The AI tier is brilliant but non-deterministic; the sim core is bit-exact and replayable; the **lowering valve** is the only bridge. This is what lets a world be *alive* and *deterministic* at the same time. It all runs **locally on one workstation** — Ryzen 9 9950X3D, RTX 5090 (32 GB), 128 GB RAM — maxed out, no cloud.
 
 ---
 
-## 💻 Built for your machine — maxed out
+# Part II · The World of **Ashen Reach**
 
-No compromises, no min-spec. The engine targets one high-end workstation and uses every watt of it:
+*The flagship game built in the editor: an original world (working name **Ashen Reach**, realm of **Vhael**) with the systemic depth of the legendary permadeath PvP-roleplay MUDs — every name, god, faction, and tale entirely our own. In Vhael, death is permanent, and your **name** is the only thing that outlives you.*
 
-| | |
-|---|---|
-| **CPU** | AMD Ryzen 9 9950X3D — 16C/32T, 128 MB 3D V-Cache, AVX-512 |
-| **GPU** | NVIDIA RTX 5090 — 32 GB GDDR7, Blackwell (sm_120), CUDA 13.3 |
-| **RAM** | 128 GB DDR5 |
-| **Everything local** | Calyx + 50 embedders + AI agents + g3n, all on one box. No cloud. |
+<table>
+<tr>
+<td width="50%">
+
+![The Weave and the Hollow](docs/readme/L01-weave-hollow.png)
+**The Weave & the Hollow.** Vhael hangs between the **Weave** — the lattice of living order — and the **Outer Dark**, a starless beyond where hungry things drift. Magic is *reaching*: pull a thread of the Weave, or open a seam to the Hollow and let something answer.
+
+</td>
+<td width="50%">
+
+![The Sundering](docs/readme/L02-sundering.png)
+**The Sundering.** Ages ago, pact-makers tore a seam to the Hollow seeking deathless power. The dead walked; provinces were unmade; the gods spent their strength to seal it — and grew distant, working now through mortal servants.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![The Ashen Reach](docs/readme/L03-ashen-reach.png)
+**The Ashen Reach.** The scar of the Sundering: a grey, half-real wilderness where the Weave is thin and the Hollow leaks through. Magic is cheap and dangerous here, the monsters worst — and the rarest relics in the world wash up at the edge of nothing.
+
+</td>
+<td width="50%">
+
+![Galdmere and the mourning-wall](docs/readme/L04-galdmere.png)
+**Galdmere & the Mourning.** The great free city, neutral crossroads of the realm. At its heart stands the **mourning-wall**, carved with the names of the remembered dead. You do not play to win — you play to be *remembered*.
+
+</td>
+</tr>
+</table>
+
+## ⚡ The Seven Gods of Vhael
+
+![The Pantheon](docs/readme/L05-pantheon.png)
+
+Seven gods watch over Vhael. They rarely act directly — they work through sworn mortals, granting **supplications** to priests who prove their devotion through roleplay. A god may favor you with power, or forsake you for betraying their nature.
+
+<table>
+<tr>
+<td width="33%">
+
+![Korthac](docs/readme/L06-god-war.png)
+**Korthac, the Unbroken** — War, Combat, Victory. Honors strength tested; scorns the unblooded.
+
+</td>
+<td width="33%">
+
+![Mphirae](docs/readme/L07-god-death.png)
+**Mphirae, the Last Veil** — Death, Shadow, Secrets. Keeper of the mourning and the door to the Hollow. Neither cruel nor kind — only final.
+
+</td>
+<td width="33%">
+
+![Aelinor](docs/readme/L08-god-healing.png)
+**Aelinor, the Mended Hand** — Healing, Reason, Revelation. A light that questions as well as comforts.
+
+</td>
+</tr>
+<tr>
+<td width="33%">
+
+![Skarn](docs/readme/L09-god-greed.png)
+**Skarn, the Open Maw** — Greed, Envy, Wrath. Promises everything, keeps nothing.
+
+</td>
+<td width="33%">
+
+![Vessimir](docs/readme/L10-god-magic.png)
+**Vessimir, the Clear Glass** — Magic, Truth, Honesty. The Weave made conscience.
+
+</td>
+<td width="33%">
+
+*…and **Whisanne** (Passion, Courage, Wisdom) and **Orthuun** (Order, Dedication, Judgment) complete the seven.*
+
+</td>
+</tr>
+</table>
+
+## ⚔️ The Seven Factions
+
+*Player-run orders, each sworn to a cause. Join one, rise through its ranks by roleplay, and wage war for its survival. Membership is lifelong; betrayal is costly.*
+
+<table>
+<tr>
+<td width="50%">
+
+![The Ironbound](docs/readme/L11-faction-ironbound.png)
+**The Ironbound** *(Any)* — a brotherhood of warriors who **despise magic** and believe the Weave should be fought, not wielded. Lead them as the **Warmaster**.
+
+</td>
+<td width="50%">
+
+![The Dawnward](docs/readme/L12-faction-dawnward.png)
+**The Dawnward** *(Good)* — knights and clerics holding the line against the Hollow's corruption. Lead as the **High Lantern**.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![The Vesper Court](docs/readme/L13-faction-vesper.png)
+**The Vesper Court** *(Any)* — keepers of song, story, and memory. They decide who is *remembered*. Lead as the **First Voice**.
+
+</td>
+<td width="50%">
+
+![The Iron Verdict](docs/readme/L14-faction-verdict.png)
+**The Iron Verdict** *(Orderly)* — judges who impose law on a lawless realm. Lead as the **Magistrate**.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![The Onyx Dominion](docs/readme/L15-faction-onyx.png)
+**The Onyx Dominion** *(Evil/Orderly)* — an empire that would rule all Vhael by iron and fear. Its throne, the **Sovereign**, is earnable — climb the ranks and become emperor.
+
+</td>
+<td width="50%">
+
+![The Thornwild](docs/readme/L16-faction-thornwild.png)
+**The Thornwild** *(Neutral/Chaotic)* — wild folk and druids who would see civilization swallowed by root and storm. Lead as the **Greenfather**.
+
+</td>
+</tr>
+<tr>
+<td colspan="2">
+
+![The Hollow Pact](docs/readme/L17-faction-hollow.png)
+**The Hollow Pact** *(Evil)* — scholars and cultists who bargain with the beings of the Outer Dark for power no one should hold. Lead as the **Chancellor of the Veil**.
+
+</td>
+</tr>
+</table>
+
+### 🏴 Item-of-power warfare
+
+![Faction warfare](docs/readme/L18-raid-warfare.png)
+
+Every faction's power flows from a single **item-of-power**, guarded by Inner and Outer guardians in its hideout. **Steal a rival's item** and carry it to your shrine, and *their members lose their powers* until they take it back. This drives perpetual, high-stakes **raiding warfare**, shifting alliances, and faction politics — the endgame of Vhael. Cabal powers unlock by rank; rank is earned by roleplay.
+
+### 🐉 Legends of the Reach
+
+<table>
+<tr>
+<td width="50%">
+
+![The Ashen Dragons](docs/readme/L19-ashen-dragon.png)
+**The Ashen Dragons** of Drakemarch — eldest and most feared of monsters, scaled in grey Reach-ash, each hoarding **legendary relics** torn from the Sundering. To slay one is to be sung of for an age.
+
+</td>
+<td width="50%">
+
+![The Outer Dark](docs/readme/L20-outer-dark.png)
+**The Hollow's Children** — silent veil-walkers and hungering grey things that seep through thin places in reality. Near the Reach, the dark gets very close.
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 🗺️ Roadmap
+# Part III · How You Play
 
-- **Phase 1 — Single-player, local-only, fully agent-driven.** Every NPC, creature, and object is a Calyx agent. Build toward recreating Carrion Fields, solo and local.
-- **Phase 2 — Multiplayer & persistent world.** Full-loot PvP, anti-hoard item decay, AI agents as player characters, persistent ORPG characters.
-- **Future expansion** *(deferred)* — cloud hosting and a creator marketplace, once the local engine is complete.
+<table>
+<tr>
+<td width="50%">
+
+![Character creation](docs/readme/12-character-creation.png)
+**Create your character.** Pick from generic fantasy races (human, elf, dwarf, orc, gnome…) and class archetypes (warrior, mage, thief, cleric, ranger, necromancer…), roll your six attributes, and choose your alignment and ethos. No two characters need ever be alike.
+
+</td>
+<td width="50%">
+
+![Write your role](docs/readme/13-role-creation.png)
+**Write your role.** Who are you? What drives you? Compose your character's backstory and ambition. In Vhael, **roleplay is required and enforced** — and how well you live your role is how you *grow*.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Classes](docs/readme/14-class-showcase.png)
+**17 classes, deep specialization.** Warriors master weapons and gain fearsome signature techniques; mages bend the elements, the body, or summon the dead; priests earn divine power through devotion; thieves brew poisons and set traps. Each branches into specializations and paths.
+
+</td>
+<td width="50%">
+
+![Races](docs/readme/15-race-showcase.png)
+**A realm of peoples.** Generic kindreds plus original ones — the wind-born **Sylphkin**, the grey Hollow-touched **Ashkin**. Each has its own stat tendencies, resistances, innate gifts, and place in the world.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![PvP duel](docs/readme/16-pvp-duel.png)
+**PvP, full loot.** This is a multiplayer world from day one. You can kill anyone — and killing a player lets you **loot everything they carry**. Common gear is unlimited so you can re-equip and get back in. The rarest relics are finite in the whole world, decay if hoarded, and can only be taken by force.
+
+</td>
+<td width="50%">
+
+![Boss fight](docs/readme/17-boss-dragon.png)
+**Face the eldest things.** Party up to challenge the Ashen Dragons and the horrors of the Reach for the realm's greatest relics — powers like stone skin that, stacked, make you nigh-unkillable, and the most hunted soul in Vhael.
+
+</td>
+</tr>
+</table>
+
+### 🎭 Roleplay *is* progression — and the Immortals are watching
+
+Calyx measures how well you embody your race, class, faction, and god — and **good roleplay advances your rank and unlocks new powers**, while **bad roleplay is punished**. The gods and faction leaders are played by **AI agents and human admins, seamlessly** — a single Immortal like the war-god Korthac might be driven by AI one hour and a human admin the next, granting boons, tattoos, titles, and rulings to those who earn them. Skill in combat and PvP is rewarded too.
+
+### 🌍 Multiplayer, self-hosted, dead-simple
+
+Anyone can **host a world on their own machine** — up to ~500 players — and friends connect over **localhost, LAN, an SSH tunnel, or a direct invite**. Server admins get full control: who may play, how strictly roleplay is watched, how richly it's rewarded. **The benchmark for success: the entire world runs on one personal computer** — which means anyone can host it for everyone else.
 
 ---
 
-## 🎯 The end goal
+# Part IV · The Road Ahead
 
 ![What will you build](docs/readme/11-future.png)
 
-> **Recreate Carrion Fields** — every system, rendered visually, with AI running every Immortal, cabal, and NPC. When we can do that, we can build *anything* — and every other kind of game becomes a small feature add-on.
+**The end goal:** build *Ashen Reach* — an original RPG world with the depth of a 30-year MUD, rendered beautifully, with AI running every god, faction, and NPC. When the engine can build *that*, it can build anything — and every other kind of game becomes a small feature add-on.
 
-This is the most ambitious no-code game creator ever attempted: **the depth of a 30-year MUD, the accessibility of the Warcraft III editor, the beauty of a modern real-time engine, and the soul of an AI that brings every world to life.**
+This is the most ambitious no-code game creator ever attempted: **the depth of a classic MUD, the accessibility of the Warcraft III editor, the beauty of a modern real-time engine, and the soul of an AI that brings every world to life.**
 
 **What will you build?**
 
@@ -192,8 +326,9 @@ This is the most ambitious no-code game creator ever attempted: **the depth of a
 
 <div align="center">
 
-*Light in the Dark — by what name do you wish to be remembered?*
+*Light in the Dark · the world of Ashen Reach*
+**By what name do you wish to be remembered?**
 
-**[📋 Browse the backlog →](../../issues)** · Built with Calyx + g3n · Windows + RTX 5090
+**[📋 Browse the 400+ issue backlog →](../../issues)** · Built with Calyx + g3n · Windows · RTX 5090
 
 </div>
