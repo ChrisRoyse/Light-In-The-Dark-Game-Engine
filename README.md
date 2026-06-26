@@ -137,6 +137,21 @@ The AI tier is brilliant but non-deterministic; the sim core is bit-exact and re
 </tr>
 </table>
 
+### 🧭 The Realm of Vhael — a gazetteer
+
+*The world is built as connected top-down regions, each with its own dangers, inhabitants, and resets. Among them:*
+
+- **Galdmere** — the great free city and neutral crossroads; home of the mourning-wall.
+- **The Ashen Reach** — the grey, half-real scar of the Sundering; thin Weave, the rarest relics, the worst monsters.
+- **Vael Mourn** — a drowned coastal city of bells; seat of the Vesper Court.
+- **Karthspire** — a black fortress-mountain; throne of the Onyx Dominion.
+- **The Sunspire** — the white citadel of the Dawnward.
+- **The Verdict Halls** — fortified courts of the Iron Verdict.
+- **The Thornwilds** — trackless ancient forest and moor; domain of the Thornwild and the druids.
+- **Hollowgate Deeps** — caverns where the Hollow Pact keeps its shrines and the Outer Dark leaks closest.
+- **Drakemarch** — highland lairs of the Ashen Dragons.
+- **The Infernal Deeps** — the brutal hell-realm at the bottom of the world, where the most insane relics are born.
+
 ## ⚡ The Seven Gods of Vhael
 
 ![The Pantheon](docs/readme/L05-pantheon.png)
@@ -378,11 +393,63 @@ Every faction's power flows from a single **item-of-power**, guarded by Inner an
 <td width="50%">
 
 ![A tavern](docs/readme/S14-tavern-rp.png)
-**Live among the living.** The realm is a real society — full of the whole range of people. Gather in taverns, scheme, ally, and tell your story in-character.
+**Live among the living.** The realm is a real society — full of the whole range of people, the brilliant and the foolish, the brave and the craven. Gather in taverns, scheme, ally, and tell your story in-character.
 
 </td>
 </tr>
 </table>
+
+### The 21 Kindreds (Races)
+
+*Generic fantasy peoples plus original kindreds of Vhael. Lifespan (and so death-by-aging) varies by kindred — elves and giants outlast humans by generations. Each has its own attribute caps, resistances, innate gifts, and allowed classes.*
+
+| Kindred | Nature | Lifespan |
+|---|---|---|
+| **Human** | versatile, ambitious, found everywhere | short |
+| **Elf** | keen-minded and quick, but frail | very long |
+| **Half-Elf** | balanced and adaptable | long |
+| **Wood-Elf** | sturdier, nature-bound elves | very long |
+| **Dark-Elf** | nimble, intelligent, drawn to shadow | very long |
+| **Ashkin** *(original)* | grey, Hollow-touched elves — distrusted, gifted in thin places | very long |
+| **Dwarf** | hardy, poison/magic-resistant, proud | long |
+| **Deep Dwarf** | evil, agile kin of the dwarves | long |
+| **Gnome** | small, tough, wisest of folk | long |
+| **Deep Gnome** | strong, very wise cavern gnomes | long |
+| **Orc** | savage, strong, destructive | short |
+| **Goblin** | cunning, weak, sly | short |
+| **Minotaur** | rare, mighty, fierce | medium |
+| **Centaur** | swift, proud, untamed | medium |
+| **Storm Giant** | towering, lightning-blooded | very long |
+| **Fire Giant** | burning, brutal | very long |
+| **Frost Giant** | immense, cold-hearted | very long |
+| **Cloud Giant** | vast and aloof | very long |
+| **Sylphkin** *(original)* | winged bird-folk of the high crags | medium |
+| **Felisar** *(original)* | agile cat-kin of the southern wastes | medium |
+| **Saur** *(original)* | cold-blooded scale-folk of the drowned coasts | medium |
+
+### The 17 Classes
+
+*Generic archetypes, deeply specialized. Attributes use Vhael's six pillars — **Might, Finesse, Intellect, Spirit, Endurance, Presence**. Priests (✝) must earn divine **empowerment** through roleplay to unlock their full power.*
+
+| Class | Role | Prime | Alignment |
+|---|---|---|---|
+| **Warrior** | peerless weapons master; weapon specializations + signature legacies | Might | Any |
+| **Berserker** | frenzied destroyer (the savage kindreds' calling) | Might | Evil |
+| **Raider** | savage skirmisher — warrior/thief hybrid | Might/Finesse | Neutral/Evil |
+| **Ranger** | wilderness warrior, archery & beast-companions | Might | Any |
+| **Thief** | stealthy rogue — poisons, traps, theft, paths of specialization | Finesse | Any |
+| **Assassin** | poisoner & martial artist | Finesse | Any |
+| **Bard** | musician & loremaster; songs of power | Presence | Any |
+| **Paladin** ✝ | holy knight, blade and blessing | Might | Good |
+| **Unhallowed Knight** ✝ | unholy knight; soul-bound weapon grows with every kill | Might | Evil |
+| **Shaman** ✝ | offensive war-priest; deity-granted paths | Spirit | Good/Evil |
+| **Healer** ✝ | defensive priest, unmatched at mending | Spirit | Any |
+| **Druid** ✝ | nature priest; beast-forms, wilderness power | Spirit | Neutral |
+| **Invoker** | elementalist mage — seven elemental paths | Intellect | Any |
+| **Transmuter** | alteration mage — twist body and matter | Intellect | Any |
+| **Conjurer** | summoner mage — bind extraplanar allies | Presence | Any |
+| **Necromancer** | death mage — undead, life-drain; may undergo the Withering | Intellect | Evil |
+| **Shapeshifter** | form-changing mage — animal & monstrous forms | Intellect | Any |
 
 ## Fight, win, lose everything
 
@@ -593,6 +660,19 @@ This is the most ambitious no-code game creator ever attempted: **the depth of a
 - Mortality & the dark paths: **#1060** constitution/permadeath/aging · **#1061** undeath (the Withering) · **#1062** the Unhallowed Knight soul-weapon · **#1063** the Infernal Deeps (Hell) · **#1064** hardest raid + secret undeath path · **#1065** the Hall of the Remembered (memorial)
 - Content build: **#984** full world build → **#985–994**; **21 races #999–1019**; **17 classes #1020–1036**
 - Lore: **#1048** lore system → **#1049–1054**; world bible **#1055**; lore compendium **#1056–1059**
+
+### 🧱 Content completeness — nothing planned is left out
+Every content category has both an illustrated overview here **and** an exhaustive, atomic spec in the issues:
+- **21 Kindreds** (races) — overview table above; full per-race specs (stat caps, resistances, innate gifts, allowed classes, lifespan, model) at **#999–1019**.
+- **17 Classes** — overview table above; full per-class specs (leveled ability lists, specializations/paths/forms, restrictions) at **#1020–1036**.
+- **7 Factions** + **7 Gods** — lore in Part II; mechanics & per-entity build at **#945/#948/#949/#990**, world bible **#1055**, lore compendium **#1056–1059**.
+- **Bestiary & bosses** — the 10 mightiest beings gallery + the Ashen Dragons & Outer Dark above; all mobs/creatures/bosses generated as data + g3n models + Calyx agents at **#991**.
+- **Abilities/spells/skills/songs/powers** — one universal ability framework **#961**; per-ability content + VFX at **#988**.
+- **Items** — scarcity-tiered itemization **#972–981**; full item set + models at **#989**.
+- **World/regions, quests, lore text** — gazetteer above; areas **#987**, quests **#931/#992**, original lore authored via **#1048–1059**.
+- **Mortality, undeath, the Infernal Deeps, the Hall of the Remembered** — **#1060–1065**.
+
+The README is the illustrated map; the issues are the exhaustive, build-ready specification. Together they leave no blindspot.
 
 > **For agents:** start at the pinned **START HERE** issue (#780), then the doctrine above. Every task carries a Full-State-Verification-in-reality close gate (#800). State lives in the issues — keep them current.
 
