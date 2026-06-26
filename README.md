@@ -547,24 +547,97 @@ In Galdmere, the **mourning-wall** carries the names of the fallen, carved in st
 </tr>
 </table>
 
-## The end-game: the Infernal Deeps
+---
+
+## 🔥 The Ultra End-Game · The Infernal Deeps
+
+![The Infernal Deeps](docs/readme/S06-infernal-deeps.png)
+
+*At the bottom of the world, below the scar of the Sundering, lies **Hell** — the Infernal Deeps. A realm of devils and fire ruled by arch-tyrants, where the Weave is gone entirely and only ferocity and ambition survive. It is the single most lethal place in Vhael — and the only source of the world's mightiest relics. This is where legends are forged, and where most of them die.*
+
+> The Deeps are **ordered** hell — hierarchy, legions, and bargains — distinct from the formless eldritch horror of the Outer Dark. Here, everything wants something from you, and everything can be negotiated with… for a price.
+
+### Getting in — you do not simply walk into Hell
+
+There is **no recall into the Deeps.** You earn the descent, by one of several perilous paths:
 
 <table>
 <tr>
 <td width="50%">
 
-![The Infernal Deeps](docs/readme/S06-infernal-deeps.png)
-**Hell itself.** The deepest, most lethal region in the world — a brutal infernal realm of brimstone, lava, and towering devils. Extremely dangerous, hard to navigate, and survivable only by the strongest groups. Most who descend never return.
+![The Gate of Cinders](docs/readme/H01-gate-of-cinders.png)
+**The Gate of Cinders.** A colossal sealed hellgate at the bottom of the Sunken Vaults. It opens only to one who bears a **Cindermark** — an infernal sigil earned through a deadly questline, or branded onto you by a devil who will want it repaid.
 
 </td>
 <td width="50%">
 
-![Legendary loot](docs/readme/S07-legendary-loot.png)
-**Where the insane items come from.** The world's most coveted, world-finite legendary artifacts originate here — earned only by braving the worst the realm can offer. The ultimate risk for the ultimate reward.
+![The Descent](docs/readme/H02-descent.png)
+**The Long Descent.** First you must *reach* the Gate — a grueling delve through the deepest dungeon in the world. Others bargain a **pact** with a lesser devil for passage; the **Hollow Pact** can tear a temporary seam; and the unlucky are simply *dragged under* when they die in a thin place.
+**Once inside, escape magic fails. You find a way out — or you die there.**
 
 </td>
 </tr>
 </table>
+
+### The Seven Circles
+
+*Hell descends in seven circles, each deadlier than the last, each with its own hazards, its own legions, and its own ruling lord.*
+
+<table>
+<tr>
+<td width="50%">
+
+![The Ember Wastes](docs/readme/H03-ember-wastes.png)
+**I–II · The Threshold & the Ember Wastes.** Past the entry waste of the damned lie burning plains of lava and ash where infernal behemoths roam. The very air *burns* — heat drains your life the longer you linger.
+
+</td>
+<td width="50%">
+
+![The Iron Bastion](docs/readme/H04-iron-bastion.png)
+**III · The Iron Bastion.** A vast fortress-city of disciplined devil-legions under the **Iron Praetor** — ordered, militaristic, and patrolled. Brute force fails here; you must outwit an army.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![The Hungering Dark](docs/readme/H05-hungering-dark.png)
+**IV · The Hungering Dark.** Pitch-black caverns where eyeless soul-eaters crawl from the walls, ruled by **the Maw**. Your torch is a fragile thing, and the dark presses in. Sanity and supplies both run short.
+
+</td>
+<td width="50%">
+
+![The Wailing Tombs](docs/readme/H06-bone-choir.png)
+**V · The Wailing Tombs.** A vast ossuary where the souls of the damned are tormented under **the Choirmaster** — wraiths, undead, and dread. Necromancers covet it: the rarest reagents for the path to undeath are found nowhere else.
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="50%">
+
+![The Obsidian Throne](docs/readme/H07-obsidian-throne.png)
+**VI–VII · The Molten Throne-road & the Obsidian Throne.** The deadliest road in the game leads to the seat of **Maldrithax, the Ashen Tyrant** — the arch-devil who rules the Deeps, and the apex boss of the world. Few parties ever stand before him; fewer leave.
+
+</td>
+<td width="50%">
+
+![The relic vault](docs/readme/H08-relic-vault.png)
+**The hell-forged vaults.** Guarded by chained demon-wardens, the relic vaults hold the world's mightiest, world-finite **legendary artifacts** — the crowns, soul-blades, and cursed relics that make a character nigh-unkillable. There is no other source of such power anywhere in Vhael.
+
+</td>
+</tr>
+</table>
+
+### Why it is brutal — and why it matters
+
+![Legendary loot](docs/readme/S07-legendary-loot.png)
+
+The Deeps are the purest expression of the realm's creed: **the greatest power demands the greatest risk.** There is no recall and no safety; demon patrols never stop; the environment itself — heat, dark, soul-drain — wears your **life and constitution** down with every step. Die deep in Hell and your corpse, and *everything you carry*, is all but unrecoverable — a full-loot prize for demons or rival players. A single Infernal run can cost a character their life **permanently.**
+
+But those who conquer it return with the artifacts that reshape the balance of the entire world — and a name that will be carved on the mourning-wall and sung of for an age. **To descend into the Deeps and walk back out is the pinnacle of any story in Ashen Reach.**
 
 ## Rise through the ranks — by *roleplay*
 
