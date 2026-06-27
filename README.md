@@ -12,6 +12,18 @@
 
 ---
 
+<div align="center">
+
+### 🎥 Watch the full breakdown — the vision in one video
+
+[![Light in the Dark — the full breakdown](https://img.youtube.com/vi/zsJuTphZv_o/maxresdefault.jpg)](https://youtu.be/zsJuTphZv_o)
+
+**▶ [Watch on YouTube](https://youtu.be/zsJuTphZv_o)** · the AI-native, no-code engine and *Ashen Reach*, the permadeath RPG built with it — broken down end to end.
+
+</div>
+
+---
+
 > **Status — active development.** This README is the *vision*, captured as a living backlog of **400+ atomic tasks**. **State lives in [GitHub Issues](../../issues)** (start at the pinned **START HERE**).
 >
 > **Two things live here:** **① the Engine** ("Light in the Dark") — a Warcraft-III-World-Editor-class no-code creation platform; and **② the first Game** ("Ashen Reach") — an original, multiplayer, full-loot, roleplay-enforced RPG built *with* the engine to prove it can build anything. Every name, god, and tale in Ashen Reach is wholly original.
