@@ -11,8 +11,10 @@ use sha2::{Digest, Sha256};
 use super::config::LearnerOriginConfig;
 use super::metrics::OriginMetrics;
 use super::model::{
-    ENDPOINT_DECIDE, ENDPOINT_OUTCOMES, ENDPOINT_SIGNALS, KIND_DECISION, KIND_OUTCOME,
-    KIND_SIGNAL_BATCH,
+    ENDPOINT_DECIDE, ENDPOINT_MASTERY_ESTIMATE, ENDPOINT_ORACLE_FORECAST, ENDPOINT_OUTCOMES,
+    ENDPOINT_REACTIVE_AFFECT, ENDPOINT_SIGNALS, ENDPOINT_TRACK_SPINES, KIND_DECISION,
+    KIND_MASTERY_ESTIMATE, KIND_ORACLE_FORECAST, KIND_OUTCOME, KIND_REACTIVE_AFFECT,
+    KIND_SIGNAL_BATCH, KIND_TRACK_SPINES,
 };
 use crate::error::DaemonError;
 
@@ -34,6 +36,7 @@ const STATUS_FORBIDDEN: &str = "403 Forbidden";
 const STATUS_NOT_FOUND: &str = "404 Not Found";
 const STATUS_METHOD_NOT_ALLOWED: &str = "405 Method Not Allowed";
 const STATUS_CONFLICT: &str = "409 Conflict";
+const STATUS_UNPROCESSABLE: &str = "422 Unprocessable Entity";
 const STATUS_INTERNAL: &str = "500 Internal Server Error";
 
 pub struct OriginResponse {
@@ -165,6 +168,10 @@ impl LearnerOriginService {
                 OriginRoute::SignalBatch => self.handle_signal_batch(body),
                 OriginRoute::Decision => self.handle_decision(body),
                 OriginRoute::Outcome { decision_id } => self.handle_outcome(decision_id, body),
+                OriginRoute::MasteryEstimate => self.handle_mastery_estimate(body),
+                OriginRoute::OracleForecast => self.handle_oracle_forecast(body),
+                OriginRoute::ReactiveAffect => self.handle_reactive_affect(body),
+                OriginRoute::TrackSpines => self.handle_track_spines(body),
             }
         };
         let response = match outcome {
@@ -207,6 +214,10 @@ enum OriginRoute {
     SignalBatch,
     Decision,
     Outcome { decision_id: String },
+    MasteryEstimate,
+    OracleForecast,
+    ReactiveAffect,
+    TrackSpines,
 }
 
 impl OriginRoute {
@@ -215,6 +226,10 @@ impl OriginRoute {
             Self::SignalBatch => ENDPOINT_SIGNALS,
             Self::Decision => ENDPOINT_DECIDE,
             Self::Outcome { .. } => ENDPOINT_OUTCOMES,
+            Self::MasteryEstimate => ENDPOINT_MASTERY_ESTIMATE,
+            Self::OracleForecast => ENDPOINT_ORACLE_FORECAST,
+            Self::ReactiveAffect => ENDPOINT_REACTIVE_AFFECT,
+            Self::TrackSpines => ENDPOINT_TRACK_SPINES,
         }
     }
 
@@ -223,6 +238,10 @@ impl OriginRoute {
             Self::SignalBatch => KIND_SIGNAL_BATCH,
             Self::Decision => KIND_DECISION,
             Self::Outcome { .. } => KIND_OUTCOME,
+            Self::MasteryEstimate => KIND_MASTERY_ESTIMATE,
+            Self::OracleForecast => KIND_ORACLE_FORECAST,
+            Self::ReactiveAffect => KIND_REACTIVE_AFFECT,
+            Self::TrackSpines => KIND_TRACK_SPINES,
         }
     }
 }
@@ -258,6 +277,18 @@ fn route_for_path(path: &str) -> Option<OriginRoute> {
     }
     if path == "/v1/interventions/decide" {
         return Some(OriginRoute::Decision);
+    }
+    if path == "/v1/mastery/estimate" {
+        return Some(OriginRoute::MasteryEstimate);
+    }
+    if path == "/v1/oracle/forecast" {
+        return Some(OriginRoute::OracleForecast);
+    }
+    if path == "/v1/reactive/affect-signals" {
+        return Some(OriginRoute::ReactiveAffect);
+    }
+    if path == "/v1/kernel/track-spines" {
+        return Some(OriginRoute::TrackSpines);
     }
     let rest = path.strip_prefix("/v1/interventions/")?;
     let decision_id = rest.strip_suffix("/outcomes")?;

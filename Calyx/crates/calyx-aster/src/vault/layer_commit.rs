@@ -76,10 +76,13 @@ where
             &durable::RecoveredBatches {
                 batches,
                 last_recovered_seq: self.latest_seq(),
+                wal_replay_floor_seq: 0,
+                derived_content_floor_seq: 0,
                 torn_tail: None,
                 temporal_policy: None,
                 dedup_policy: None,
                 retention_horizon: crate::timetravel::RetentionHorizon::default(),
+                router_latest_readback: false,
             },
             None,
         )

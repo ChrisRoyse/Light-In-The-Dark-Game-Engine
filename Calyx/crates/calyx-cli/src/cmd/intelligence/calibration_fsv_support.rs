@@ -2,7 +2,9 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use calyx_assay::{AssayCacheKey, AssayStore, AssaySubject, EstimatorKind, MiEstimate, TrustTag};
+use calyx_assay::{
+    AssayCacheKey, AssayStore, AssaySubject, EstimatorKind, MiEstimate, PowerCalibration, TrustTag,
+};
 use calyx_aster::cf::ColumnFamily;
 use calyx_aster::vault::{AsterVault, VaultOptions};
 use calyx_core::{
@@ -27,7 +29,8 @@ pub(super) fn put_oracle_evidence(
     store.put(
         key.clone(),
         AssaySubject::Panel,
-        estimate(panel_bits, EstimatorKind::PanelSufficiency),
+        estimate(panel_bits, EstimatorKind::PanelSufficiency)
+            .with_power_calibration(passed_power_calibration(slot_bits.len())),
         "issue873 oracle panel bits",
         1,
     );
@@ -209,7 +212,11 @@ pub(super) fn scan_count(vault: &AsterVault, cf: ColumnFamily) -> usize {
 }
 
 fn estimate(bits: f32, estimator: EstimatorKind) -> MiEstimate {
-    MiEstimate::point(bits, 120, estimator, TrustTag::Trusted)
+    MiEstimate::new(bits, bits, bits, 120, estimator, TrustTag::Trusted)
+}
+
+fn passed_power_calibration(n_features: usize) -> PowerCalibration {
+    PowerCalibration::new(1.0, 1.0, 0.50, 120, n_features.max(1), 0).unwrap()
 }
 
 pub(super) fn vault_id() -> VaultId {
@@ -238,8 +245,8 @@ pub(super) struct FsvPaths {
 
 impl FsvPaths {
     pub fn new() -> Self {
-        let (root, keep) = match std::env::var_os("CALYX_FSV_ROOT") {
-            Some(value) => (PathBuf::from(value), true),
+        let (root, keep) = match calyx_fsv::fsv_root("CALYX_FSV_ROOT") {
+            Some(value) => (value, true),
             None => (
                 std::env::temp_dir().join(format!(
                     "calyx-issue873-calibration-fsv-{}",

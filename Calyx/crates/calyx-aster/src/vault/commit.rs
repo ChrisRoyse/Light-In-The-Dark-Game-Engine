@@ -52,9 +52,24 @@ where
                 durable.root(),
                 &recovered,
                 durable.ledger_checkpoint(),
+                durable.tiering_policy(),
             )?;
         }
         self.replace_retention_horizon(recovered.retention_horizon.clone())?;
+        self.rows
+            .advance_derived_content_seq_to_at_least(recovered.derived_content_floor_seq);
+        durable.advance_derived_content_watermark_to_at_least(recovered.derived_content_floor_seq);
+        // WAL-tail batches from a foreign writer have no durable-batch SSTs
+        // yet; stage them here so this handle's next checkpoint flush cannot
+        // advance the manifest past them if that writer dies (issue #1132).
+        durable.stage_recovered_wal_batches(
+            recovered
+                .batches
+                .iter()
+                .filter(|batch| batch.seq > recovered.wal_replay_floor_seq)
+                .map(|batch| (batch.seq, batch.rows.clone()))
+                .collect(),
+        )?;
         for batch in &recovered.batches {
             if batch.seq <= current {
                 continue;
@@ -98,6 +113,9 @@ where
     }
 
     fn commit_prepared_rows(&self, rows: &[encode::WriteRow]) -> Result<Seq> {
+        if !rows.is_empty() {
+            self.ensure_writeable("commit")?;
+        }
         self.rows.ensure_memtable_admission(
             rows.iter()
                 .map(|row| (row.cf, row.key.as_slice(), row.value.as_slice())),

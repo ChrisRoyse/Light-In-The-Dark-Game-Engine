@@ -3,12 +3,13 @@ mod recall;
 
 use calyx_aster::cf::{ColumnFamily, slot_key};
 use calyx_aster::vault::AsterVault;
-use calyx_core::{Clock, CxId, QuantPolicy, Result, Seq, Slot};
+use calyx_core::{Clock, CxId, LensId, QuantPolicy, Result, Seq, Slot};
+use calyx_forge::AssayQuantSafety;
 use serde::{Deserialize, Serialize};
 
 use crate::spec::LensSpec;
 pub use codec::decode_stored_slot_envelope;
-use codec::{EncodedRow, encode_rows, fallback_policy};
+use codec::{EncodedRow, encode_rows};
 pub use recall::matryoshka_truncate_renormalize;
 use recall::{recall_at_k, recall_drop, validate_batch};
 
@@ -25,6 +26,7 @@ pub enum StoredSlotCodec {
     RawF32,
     TurboQuantBits3p5,
     TurboQuantBits2p5,
+    ScalarInt8,
     MxFp4,
     MxFp8,
     Binary,
@@ -67,6 +69,66 @@ pub struct StoredSlotEnvelope {
     pub payload_bytes: usize,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MxFp4AssayEvidence {
+    pub slot_id: u16,
+    pub slot_key: String,
+    pub lens_id: LensId,
+    pub dim: u32,
+    pub written_at_seq: Seq,
+    pub current_seq: Seq,
+    pub safety: AssayQuantSafety,
+}
+
+impl MxFp4AssayEvidence {
+    pub fn validate<'a>(
+        &'a self,
+        slot: &Slot,
+        lens: &LensSpec,
+        stored_dim: u32,
+    ) -> Result<&'a AssayQuantSafety> {
+        let lens_id = lens.lens_id();
+        if self.slot_id != slot.slot_id.get() {
+            return Err(mxfp4_evidence_error(format!(
+                "wrong slot id: evidence={} requested={}",
+                self.slot_id,
+                slot.slot_id.get()
+            )));
+        }
+        if self.slot_key != slot.slot_key.key() {
+            return Err(mxfp4_evidence_error(format!(
+                "wrong slot key: evidence={} requested={}",
+                self.slot_key,
+                slot.slot_key.key()
+            )));
+        }
+        if self.lens_id != lens_id {
+            return Err(mxfp4_evidence_error(format!(
+                "wrong lens id: evidence={} requested={lens_id}",
+                self.lens_id
+            )));
+        }
+        if self.dim != stored_dim {
+            return Err(mxfp4_evidence_error(format!(
+                "wrong dim: evidence={} requested={stored_dim}",
+                self.dim
+            )));
+        }
+        if self.written_at_seq != self.current_seq {
+            return Err(mxfp4_evidence_error(format!(
+                "stale assay evidence: written_at_seq={} current_seq={}",
+                self.written_at_seq, self.current_seq
+            )));
+        }
+        if !self.safety.passes() {
+            return Err(mxfp4_evidence_error(
+                "assay safety metrics failed MXFP4 thresholds",
+            ));
+        }
+        Ok(&self.safety)
+    }
+}
+
 pub fn write_compressed_slot_batch<C: Clock>(
     vault: &AsterVault<C>,
     slot: &Slot,
@@ -75,7 +137,20 @@ pub fn write_compressed_slot_batch<C: Clock>(
     queries: &[Vec<f32>],
     k: usize,
 ) -> Result<SlotCompressionReport> {
-    let mut report = compress_slot_batch(slot, lens, rows, queries, k)?;
+    write_compressed_slot_batch_with_assay_evidence(vault, slot, lens, rows, queries, k, None)
+}
+
+pub fn write_compressed_slot_batch_with_assay_evidence<C: Clock>(
+    vault: &AsterVault<C>,
+    slot: &Slot,
+    lens: &LensSpec,
+    rows: &[(CxId, Vec<f32>)],
+    queries: &[Vec<f32>],
+    k: usize,
+    mxfp4_evidence: Option<&MxFp4AssayEvidence>,
+) -> Result<SlotCompressionReport> {
+    let mut report =
+        compress_slot_batch_with_assay_evidence(slot, lens, rows, queries, k, mxfp4_evidence)?;
     let mut writes = Vec::with_capacity(report.rows.len() * 2);
     for row in &report.rows {
         let key = slot_key(row.cx_id);
@@ -101,40 +176,33 @@ pub fn compress_slot_batch(
     queries: &[Vec<f32>],
     k: usize,
 ) -> Result<SlotCompressionReport> {
+    compress_slot_batch_with_assay_evidence(slot, lens, rows, queries, k, None)
+}
+
+pub fn compress_slot_batch_with_assay_evidence(
+    slot: &Slot,
+    lens: &LensSpec,
+    rows: &[(CxId, Vec<f32>)],
+    queries: &[Vec<f32>],
+    k: usize,
+    mxfp4_evidence: Option<&MxFp4AssayEvidence>,
+) -> Result<SlotCompressionReport> {
     validate_batch(slot, lens, rows, queries, k)?;
-    let initial = encode_rows(slot, lens, rows, lens.quant_default, None)?;
-    let mut report = build_report(slot, lens, rows, queries, k, initial, None)?;
+    let initial = encode_rows(slot, lens, rows, lens.quant_default, mxfp4_evidence)?;
+    let report = build_report(slot, lens, rows, queries, k, initial, None)?;
     if recall_drop(&report) <= lens.recall_delta {
         return Ok(report);
     }
 
-    let fallback_policy = fallback_policy(lens.quant_default);
-    let reason = format!(
-        "recall drop {:.6} exceeded declared delta {:.6}; fallback {:?} -> {:?}",
-        recall_drop(&report),
-        lens.recall_delta,
-        lens.quant_default,
-        fallback_policy
-    );
-    let fallback = encode_rows(slot, lens, rows, fallback_policy, Some(reason.clone()))?;
-    report = build_report(slot, lens, rows, queries, k, fallback, Some(reason))?;
-    if recall_drop(&report) <= lens.recall_delta || report.stored_codec == StoredSlotCodec::RawF32 {
-        return Ok(report);
-    }
-
-    let raw_reason = format!(
-        "fallback recall drop {:.6} still exceeded declared delta {:.6}; storing raw f32",
-        recall_drop(&report),
-        lens.recall_delta
-    );
-    let raw = encode_rows(
-        slot,
-        lens,
-        rows,
-        QuantPolicy::None,
-        Some(raw_reason.clone()),
-    )?;
-    build_report(slot, lens, rows, queries, k, raw, Some(raw_reason))
+    Err(compression_error(
+        CALYX_VECTOR_COMPRESSION_INVALID,
+        format!(
+            "requested quant policy {:?} failed recall contract: recall drop {:.6} exceeded declared delta {:.6}; no fallback codec was written",
+            lens.quant_default,
+            recall_drop(&report),
+            lens.recall_delta
+        ),
+    ))
 }
 
 fn build_report(
@@ -186,4 +254,14 @@ fn compression_error(code: &'static str, message: impl Into<String>) -> calyx_co
         message: message.into(),
         remediation: COMPRESSION_REMEDIATION,
     }
+}
+
+fn mxfp4_evidence_error(message: impl Into<String>) -> calyx_core::CalyxError {
+    compression_error(
+        CALYX_VECTOR_COMPRESSION_INVALID,
+        format!(
+            "MXFP4 requires current assay safety evidence for exact slot/lens/dim; {}; no fallback codec was written",
+            message.into()
+        ),
+    )
 }

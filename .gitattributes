@@ -1,0 +1,4 @@
+
+# Shell scripts must keep LF endings or bash chokes on the CR (#1546).
+scripts/*.sh text eol=lf
+docs/licenses/*.txt text eol=lf

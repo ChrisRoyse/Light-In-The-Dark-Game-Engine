@@ -1,0 +1,98 @@
+# Light in the Dark — proprietary Rust game engine + editor, built on Calyx.
+# Workspace root. Calyx (the backend) is its own workspace under ./Calyx and is excluded here.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+exclude = ["Calyx"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+license = "LicenseRef-Proprietary"
+publish = false
+authors = ["Light in the Dark"]
+
+# Approved permissive foundation crates (license policy #1073). No GPL/copyleft.
+[workspace.dependencies]
+wgpu = "27"
+winit = "0.30"
+pollster = "0.3"
+egui = "0.33.2"
+egui-wgpu = "0.33.2"
+egui-winit = "0.33.2"
+epaint_default_fonts = "=0.33.3"
+glam = { version = "0.29", features = ["serde"] }
+gltf = "1.4"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+fontdue = "0.9.3"
+rustybuzz = "0.20.1"
+unicode-bidi = "0.3.18"
+unicode-segmentation = "1.13.3"
+meshopt = "0.6.2"
+basis-universal = "0.3.1"
+ktx2 = "0.5.0"
+bytemuck = { version = "1", features = ["derive"] }
+bincode = { package = "bincode_reloaded", version = "3.1.6", features = ["serde"] }
+mint = "0.5.9"
+hound = "3.5"
+lewton = "0.10"
+kira = { version = "0.12.1", default-features = false, features = ["cpal", "ogg", "pcm", "vorbis", "wav"] }
+ron = "0.8"
+# JSON Schema generation (schemars) + validation (jsonschema) for the agent-response gate (#1548).
+# `jsonschema` MUST stay `default-features = false`: its default `resolve-http` feature pulls in
+# reqwest/rustls and would let a `$ref: "https://..."` inside a schema become an outbound request
+# — an SSRF surface inside the component whose entire job is to distrust remote input.
+# Both crates are MIT, satisfying the permissive-only license policy (#1073).
+jsonschema = { version = "0.47", default-features = false }
+schemars = "1.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+thiserror = "2"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+zip = { version = "7.2.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+rapier3d = "0.34.0"
+rayon = "1"
+wasm-encoder = { version = "=0.251.0", default-features = false, features = ["std"] }
+wasmparser = { version = "=0.251.0", default-features = false, features = ["features", "std", "validate"] }
+wasmtime = { version = "=46.0.2", default-features = false, features = ["anyhow", "cranelift", "pooling-allocator", "runtime", "std"] }
+wat = { version = "=1.251.0", default-features = false }
+
+litd-engine = { path = "crates/litd-engine" }
+litd-hash = { path = "crates/litd-hash" }
+litd-game-cli = { path = "crates/litd-game-cli" }
+
+[profile.dev]
+opt-level = 1          # keep the editor responsive even in debug
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+opt-level = 3          # always optimize dependencies (wgpu/naga) for usable debug perf
+debug = false          # deps are never stepped into by the gate; strip their debuginfo.
+                       # Mirrors Calyx/Cargo.toml — biggest target-size/link-time cut with
+                       # zero loss of first-party debuggability (#1500).
+
+# Build scripts and proc-macros run at build time and are never debugged or shipped;
+# building them unoptimized with no debuginfo is a pure compile-time win (#1500).
+[profile.dev.build-override]
+opt-level = 0
+debug = false
+
+[profile.test.build-override]
+opt-level = 0
+debug = false
+
+[profile.release]
+# Shipped binaries (packaging/package-windows.ps1 builds --release). The cargo
+# default leaves debuginfo in and codegen-units=16, producing a larger, less
+# optimized .exe than a shipped engine warrants (#1492). thin LTO gives most of
+# the size/perf win at far lower link cost than fat LTO across this 40+-crate
+# graph; codegen-units=1 maximizes optimization; strip drops debug symbols from
+# the shipped binary. panic stays the default `unwind` — the engine's panic hook
+# + FSV-stats readback (main_lifecycle.rs) depend on unwinding, so it is NOT set
+# to abort here.
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"

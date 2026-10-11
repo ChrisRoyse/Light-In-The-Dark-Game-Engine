@@ -82,14 +82,46 @@ fn run_matrix_logs_productive_unique_grounded_hits() {
     .unwrap();
 
     assert_eq!(log.records.len(), 5);
-    assert_eq!(log.productive.len(), 1);
+    assert_eq!(log.productive.len(), 5);
     assert_eq!(log.productive[0].fusion, ProbeFusionMode::WeightedRrf);
     assert_eq!(log.productive[0].unique_hit_count, 1);
+    assert!(log.productive.iter().all(|row| row.accepted_hit_count > 0));
     assert!(log.records.iter().any(|record| record.refusals.len() == 1));
     assert!(
         log.records
             .iter()
             .all(|record| !record.unique_grounded_hits.contains(&ungrounded))
+    );
+}
+
+#[test]
+fn repeated_grounded_hits_are_productive_for_single_slot_probe() {
+    let spec = ProbeMatrixSpec {
+        frontier: "anchored single slot".to_string(),
+        active_slots: vec![SlotId::new(15)],
+        weighted_profiles: vec![RrfProfile::Code],
+        phrasings: vec![ProbePhrasing::Terse],
+        lengths: vec![ProbeLength::Phrase],
+        top_k: 3,
+    };
+    let shared = id("same-grounded-hit-across-variants");
+    let log = run_probe_matrix(&spec, |_| {
+        Ok(ProbeResponse {
+            hits: vec![hit(shared, 0.99, true)],
+            refusals: Vec::new(),
+        })
+    })
+    .unwrap();
+
+    assert_eq!(log.records.len(), 5);
+    assert!(log.records.iter().all(|record| {
+        record.accepted_hit_count == 1 && record.unique_grounded_hits.is_empty()
+    }));
+    assert_eq!(log.productive.len(), 5);
+    assert!(
+        log.productive
+            .iter()
+            .all(|row| row.accepted_hit_count == 1 && row.unique_hit_count == 0)
     );
 }
 
@@ -131,7 +163,7 @@ fn invalid_probe_response_fails_closed() {
 
 #[test]
 fn writes_fsv_readback_when_root_is_set() {
-    let Ok(root) = std::env::var("CALYX_FSV_ROOT") else {
+    let Some(root) = calyx_fsv::fsv_root("CALYX_FSV_ROOT") else {
         return;
     };
     let spec = ProbeMatrixSpec {
@@ -171,12 +203,12 @@ fn writes_fsv_readback_when_root_is_set() {
         "full_log": log,
     });
     fs::create_dir_all(&root).unwrap();
-    let path = std::path::Path::new(&root).join("issue879_probe_matrix_readback.json");
+    let path = root.join("issue879_probe_matrix_readback.json");
     fs::write(&path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
     let bytes = fs::read(&path).unwrap();
     let readback: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(readback["variant_count"], 5);
-    assert_eq!(readback["productive_count"], 1);
+    assert_eq!(readback["productive_count"], 5);
     assert_eq!(readback["refusal_count"], 1);
     println!("issue879_fsv_path={} bytes={}", path.display(), bytes.len());
 }

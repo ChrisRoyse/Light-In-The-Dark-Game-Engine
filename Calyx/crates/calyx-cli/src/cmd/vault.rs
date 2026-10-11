@@ -6,9 +6,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use calyx_aster::vault::{AsterVault, VaultOptions};
 use calyx_core::{Asymmetry, CalyxError, Panel, SlotId, SlotState, VaultId};
 use calyx_registry::{
-    Registry, SlotSpec, SwapController, bio_default, civic_default, code_default, legal_default,
-    list_panel, load_vault_panel_state, media_default, medical_default, persist_vault_panel_state,
-    profile_lens, text_default,
+    PanelTemplate, Registry, SlotSpec, SwapController, bio_default, civic_default, code_default,
+    legal_default, list_panel, load_vault_panel_state, materialize_panel_template, media_default,
+    medical_default, persist_vault_panel_state, profile_lens, text_default,
 };
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
@@ -16,9 +16,11 @@ use ulid::Ulid;
 use super::lens::{build_lens, built_modality, profile_probes};
 use super::{
     AddLensArgs, CreateVaultArgs, ProfileLensArgs, SlotCommandArgs, Subcommand, VaultRefArgs,
+    vault_retire,
 };
 use crate::error::{CliError, CliResult};
 use crate::output::{print_json, print_table};
+use crate::panel_commands::{build_saved_template_panel, saved_template_names};
 
 const DEFAULT_TEMPLATE: &str = "text-default";
 const DEFAULT_PROFILE_NAME: &str = "profile-lens";
@@ -28,6 +30,7 @@ pub(crate) fn run(command: Subcommand) -> CliResult {
         Subcommand::AddLens(args) => add_lens(args),
         Subcommand::RetireLens(args) => set_lens_state(args, LensStateAction::Retire),
         Subcommand::ParkLens(args) => set_lens_state(args, LensStateAction::Park),
+        Subcommand::RetireVault(args) => vault_retire::run(args),
         Subcommand::ListPanel(args) => list_panel_command(args),
         Subcommand::ProfileLens(args) => profile_lens_command(args),
         _ => unreachable!("non-vault command routed to vault module"),
@@ -39,6 +42,14 @@ struct CreateVaultReport {
     vault_id: String,
     name: String,
     panel_template: String,
+    runtime_provider: &'static str,
+    template_source: String,
+    content_lens_count: usize,
+    registered_lenses_added: usize,
+    registry_snapshot_written: bool,
+    inactive_unmaterialized_slots: Vec<String>,
+    a37_gate_eligible: bool,
+    a37_status: String,
 }
 
 #[derive(Serialize)]
@@ -55,8 +66,11 @@ struct LifecycleReport {
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
 struct VaultIndex {
     vaults: Vec<VaultIndexEntry>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    retired_vaults: Vec<serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -80,6 +94,17 @@ enum LensStateAction {
     Park,
 }
 
+struct PreparedVaultPanel {
+    panel: Panel,
+    registry: Registry,
+    template_source: String,
+    content_lens_count: usize,
+    registered_lenses_added: usize,
+    inactive_unmaterialized_slots: Vec<String>,
+    a37_gate_eligible: bool,
+    a37_status: String,
+}
+
 fn create_vault(args: CreateVaultArgs) -> CliResult {
     let home = home_dir()?;
     let template = args.panel_template.as_deref().unwrap_or(DEFAULT_TEMPLATE);
@@ -92,6 +117,7 @@ fn create_vault(args: CreateVaultArgs) -> CliResult {
         )));
     }
 
+    let prepared = prepare_vault_panel(&home, template, args.cpu_explicit)?;
     let vault_id = VaultId::from_ulid(Ulid::new());
     let relative = format!("vaults/{vault_id}");
     let vault_dir = home.join(&relative);
@@ -100,9 +126,8 @@ fn create_vault(args: CreateVaultArgs) -> CliResult {
             "vault directory for {vault_id} already exists"
         )));
     }
-    let panel = panel_for_template(template)?;
     let options = VaultOptions {
-        panel: Some(panel),
+        panel: Some(prepared.panel.clone()),
         ..VaultOptions::default()
     };
     AsterVault::new_durable(
@@ -111,6 +136,8 @@ fn create_vault(args: CreateVaultArgs) -> CliResult {
         vault_salt(vault_id, &args.name),
         options,
     )?;
+    persist_vault_panel_state(&vault_dir, &prepared.panel, &prepared.registry)?;
+    let registry_snapshot_written = true;
 
     index.vaults.push(VaultIndexEntry {
         name: args.name.clone(),
@@ -126,6 +153,18 @@ fn create_vault(args: CreateVaultArgs) -> CliResult {
         vault_id: vault_id.to_string(),
         name: args.name,
         panel_template: template.to_string(),
+        runtime_provider: if args.cpu_explicit {
+            "cpu_explicit,no_cuda"
+        } else {
+            "template_default"
+        },
+        template_source: prepared.template_source,
+        content_lens_count: prepared.content_lens_count,
+        registered_lenses_added: prepared.registered_lenses_added,
+        registry_snapshot_written,
+        inactive_unmaterialized_slots: prepared.inactive_unmaterialized_slots,
+        a37_gate_eligible: prepared.a37_gate_eligible,
+        a37_status: prepared.a37_status,
     })
 }
 
@@ -241,8 +280,7 @@ fn list_panel_command(args: VaultRefArgs) -> CliResult {
             ]
         })
         .collect::<Vec<_>>();
-    print_table(&["slot", "name", "state", "bits", "ci_lo", "ci_hi"], &rows);
-    Ok(())
+    print_table(&["slot", "name", "state", "bits", "ci_lo", "ci_hi"], &rows)
 }
 
 fn profile_lens_command(args: ProfileLensArgs) -> CliResult {
@@ -264,8 +302,8 @@ fn profile_lens_command(args: ProfileLensArgs) -> CliResult {
     print_json(&card)
 }
 
-fn panel_for_template(name: &str) -> CliResult<Panel> {
-    let template = match name {
+fn builtin_panel_template(name: &str) -> CliResult<PanelTemplate> {
+    Ok(match name {
         "text-default" => text_default(),
         "code-default" => code_default(),
         "civic-default" => civic_default(),
@@ -279,8 +317,62 @@ fn panel_for_template(name: &str) -> CliResult<Panel> {
                 super::PANEL_TEMPLATES.join(", ")
             )));
         }
-    };
-    Ok(calyx_registry::instantiate_panel(&template, now_ms()).panel)
+    })
+}
+
+fn prepare_vault_panel(
+    home: &Path,
+    template: &str,
+    cpu_explicit: bool,
+) -> CliResult<PreparedVaultPanel> {
+    if super::PANEL_TEMPLATES.contains(&template) {
+        let materialized =
+            materialize_panel_template(&builtin_panel_template(template)?, now_ms())?;
+        return Ok(PreparedVaultPanel {
+            content_lens_count: panel_content_lens_count(&materialized.panel),
+            panel: materialized.panel,
+            registry: materialized.registry,
+            template_source: "built_in_materialized".to_string(),
+            registered_lenses_added: materialized.registered_lenses_added,
+            inactive_unmaterialized_slots: materialized.inactive_unmaterialized_slots,
+            a37_gate_eligible: false,
+            a37_status: "built_in_template_not_a37_profiled".to_string(),
+        });
+    }
+
+    match build_saved_template_panel(home, template, now_ms(), cpu_explicit) {
+        Ok(saved) => Ok(PreparedVaultPanel {
+            panel: saved.panel,
+            registry: saved.registry,
+            template_source: format!("saved:{}:{}", saved.template_name, saved.template_id),
+            content_lens_count: saved.content_lens_count,
+            registered_lenses_added: saved.registered_lenses_added,
+            inactive_unmaterialized_slots: Vec::new(),
+            a37_gate_eligible: saved.a37_gate_eligible,
+            a37_status: saved.a37_status,
+        }),
+        Err(error) if error.code() == "CALYX_PANEL_TEMPLATE_NOT_FOUND" => {
+            let saved = saved_template_names(home).unwrap_or_default();
+            Err(CliError::usage(format!(
+                "unknown --panel-template {template}; built-ins are {}; saved templates in {} are [{}]",
+                super::PANEL_TEMPLATES.join(", "),
+                home.join("panels")
+                    .join("templates")
+                    .join("index.json")
+                    .display(),
+                saved.join(", ")
+            )))
+        }
+        Err(error) => Err(error),
+    }
+}
+
+fn panel_content_lens_count(panel: &Panel) -> usize {
+    panel
+        .slots
+        .iter()
+        .filter(|slot| !slot.retrieval_only && !slot.excluded_from_dedup)
+        .count()
 }
 
 pub(crate) fn home_dir() -> CliResult<PathBuf> {
@@ -294,7 +386,9 @@ fn read_index(home: &Path) -> CliResult<VaultIndex> {
     if !path.exists() {
         return Ok(VaultIndex::default());
     }
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
+    serde_json::from_slice(&fs::read(&path)?).map_err(|error| {
+        CliError::runtime(format!("parse vault index {}: {error}", path.display()))
+    })
 }
 
 fn write_index(home: &Path, index: &VaultIndex) -> CliResult {
@@ -302,88 +396,17 @@ fn write_index(home: &Path, index: &VaultIndex) -> CliResult {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(path, serde_json::to_vec_pretty(index)?)?;
-    Ok(())
+    let value = serde_json::to_value(index)
+        .map_err(|error| CliError::runtime(format!("serialize vault index: {error}")))?;
+    crate::durable_write::write_json_value_atomic(&path, &value, "vault index")
 }
 
 fn index_path(home: &Path) -> PathBuf {
     home.join("vaults").join("index.json")
 }
 
-pub(crate) fn resolve_vault(home: &Path, vault: &str) -> CliResult<PathBuf> {
-    resolve_vault_info(home, vault).map(|resolved| resolved.path)
-}
-
-pub(crate) fn resolve_vault_info(home: &Path, vault: &str) -> CliResult<ResolvedVault> {
-    let index = read_index(home)?;
-    let direct = PathBuf::from(vault);
-    if direct.exists() {
-        if let Some(resolved) = resolve_direct_indexed(home, &index, &direct)? {
-            return Ok(resolved);
-        }
-        let vault_id = direct
-            .file_name()
-            .and_then(|name| name.to_str())
-            .and_then(|name| name.parse::<VaultId>().ok())
-            .ok_or_else(|| {
-                CalyxError::vault_access_denied(
-                    "direct vault path must end in a vault id or be present in the CLI index",
-                )
-            })?;
-        return Ok(ResolvedVault {
-            path: direct,
-            name: vault_id.to_string(),
-            vault_id,
-        });
-    }
-    if let Ok(vault_id) = vault.parse::<VaultId>() {
-        let path = home.join("vaults").join(vault_id.to_string());
-        if path.exists() {
-            if let Some(entry) = index.vaults.iter().find(|entry| entry.vault_id == vault_id) {
-                return Ok(resolve_entry(home, entry));
-            }
-            return Ok(ResolvedVault {
-                path,
-                name: vault_id.to_string(),
-                vault_id,
-            });
-        }
-    }
-    if let Some(entry) = index
-        .vaults
-        .iter()
-        .find(|entry| entry.name == vault || entry.vault_id.to_string() == vault)
-    {
-        let resolved = resolve_entry(home, entry);
-        if resolved.path.exists() {
-            return Ok(resolved);
-        }
-    }
-    Err(CalyxError::vault_access_denied(format!("vault {vault} does not exist")).into())
-}
-
-fn resolve_direct_indexed(
-    home: &Path,
-    index: &VaultIndex,
-    direct: &Path,
-) -> CliResult<Option<ResolvedVault>> {
-    let direct = direct.canonicalize()?;
-    for entry in &index.vaults {
-        let path = home.join(&entry.path);
-        if path.exists() && path.canonicalize()? == direct {
-            return Ok(Some(resolve_entry(home, entry)));
-        }
-    }
-    Ok(None)
-}
-
-fn resolve_entry(home: &Path, entry: &VaultIndexEntry) -> ResolvedVault {
-    ResolvedVault {
-        path: home.join(&entry.path),
-        name: entry.name.clone(),
-        vault_id: entry.vault_id,
-    }
-}
+mod resolve;
+pub(crate) use resolve::{resolve_vault, resolve_vault_info};
 
 pub(crate) fn vault_salt(vault_id: VaultId, name: &str) -> Vec<u8> {
     format!("calyx-cli-vault:{vault_id}:{name}").into_bytes()
@@ -396,16 +419,4 @@ pub(crate) fn now_ms() -> u64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn already_retired_slot_is_structured_error() {
-        let mut panel = calyx_registry::instantiate_panel(&text_default(), 0).panel;
-        let slot = panel.slots[0].slot_id;
-        panel.slots[0].state = SlotState::Retired;
-
-        let err = ensure_slot_can_transition(&panel, slot, LensStateAction::Retire).unwrap_err();
-        assert_eq!(err.code(), "CALYX_LENS_FROZEN_VIOLATION");
-    }
-}
+mod tests;

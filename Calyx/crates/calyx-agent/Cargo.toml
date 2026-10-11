@@ -1,0 +1,29 @@
+[package]
+name = "calyx-agent"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "Domain-neutral, fail-closed LLM chat-completions transport atom for systems built on Calyx"
+autoexamples = false
+
+[features]
+default = []
+# Enables the FSV example binary (a one-shot verification program that calls the REAL
+# provider with the REAL Infisical-injected key). Off by default so routine `cargo test`
+# never requires a secret and never touches the network.
+fsv = []
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+ureq = { workspace = true }
+zeroize = { workspace = true }
+
+[[example]]
+name = "issue1454_deepseek_agent_fsv"
+path = "examples/issue1454_deepseek_agent_fsv.rs"
+required-features = ["fsv"]
+harness = false

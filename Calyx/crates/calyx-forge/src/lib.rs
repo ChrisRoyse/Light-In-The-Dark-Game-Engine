@@ -1,5 +1,10 @@
 //! Forge math runtime skeleton for CPU, CUDA, and quantized kernels.
 
+/// True when this build compiled the CUDA kernel backend (`cuda` feature).
+/// Exported for build-info capability readback (#1130): deploy gates assert
+/// this resolved value, not a top-level feature spelling.
+pub const CUDA_COMPILED: bool = cfg!(feature = "cuda");
+
 pub mod autotune;
 mod backend;
 pub mod compression_report;
@@ -16,9 +21,11 @@ pub mod vram;
 
 pub use autotune::{
     AbHook, AutotuneCache, AutotuneKey, BenchCudaContext, BenchResult, EPSILON, Explorer,
-    ExplorerPolicy, MIN_PROMOTE_MARGIN, MIN_PROMOTE_TRIALS, PromotionAction, PromotionEvent,
-    autotune, log_promotion, microbench, next_candidate, promote_if_winner, record_trial,
-    rollback_promotion, should_promote, should_use_challenger,
+    ExplorerPolicy, MIN_PROMOTE_MARGIN, MIN_PROMOTE_TRIALS, PROMOTION_LEDGER_SCHEMA_VERSION,
+    PromotionAction, PromotionEvent, autotune, decode_promotion_ledger_payload, log_promotion,
+    microbench, next_candidate, promote_if_winner, promotion_ledger_events,
+    promotion_ledger_subject, record_trial, rollback_promotion, should_promote,
+    should_use_challenger,
 };
 pub use backend::{
     Backend, BackendKind, BestConfig, CUDA_EXACT_TOPK_MAX_K, DeviceInfo,
@@ -32,11 +39,11 @@ pub use compression_report::{
 pub use cpu::CpuBackend;
 #[cfg(feature = "cuda")]
 pub use cuda::{
-    AbsentSlotSentinel, CudaBackend, CudaContext, GemmProblem, GroupedGemmExecutionMode,
-    GroupedGemmPlan, RaggedBatch, build_grouped_gemm_plan, build_ragged_batch,
-    build_ragged_batch_from_slabs, execute_grouped_gemm, execute_grouped_gemm_strict,
-    extract_ragged_results, init_cuda, query_device_info, read_grouped_gemm_output,
-    try_extract_ragged_results,
+    AbsentSlotSentinel, CudaBackend, CudaContext, CudaGreenContextStream, GemmProblem,
+    GroupedGemmExecutionMode, GroupedGemmPlan, RaggedBatch, build_grouped_gemm_plan,
+    build_ragged_batch, build_ragged_batch_from_slabs, execute_grouped_gemm,
+    execute_grouped_gemm_strict, extract_ragged_results, init_cuda, query_device_info,
+    read_grouped_gemm_output, try_extract_ragged_results,
 };
 pub use error::ForgeError;
 pub use mxfp4::{
@@ -49,9 +56,10 @@ pub use mxfp8::{
 };
 pub use quant::{
     AssayQuantSafety, BinaryCodec, CURRENT_SEED_VERSION, MxFp4Codec, QjlResidual, QuantLevel,
-    QuantizedVec, Quantizer, RotationSeed, SeedId, TurboQuantCodec, apply_inverse_rotation,
-    apply_rotation, apply_rotation_batch, binary_prefilter, dot_estimate_unbiased,
-    dot_qjl_correction, encode_qjl_residual, hamming_dot_estimate, new_seed, seed_id_hex,
+    QuantizedVec, Quantizer, RotationSeed, ScalarInt8Codec, SeedId, TurboQuantCodec,
+    apply_inverse_rotation, apply_rotation, apply_rotation_batch, binary_prefilter,
+    dot_estimate_unbiased, dot_qjl_correction, encode_qjl_residual, hamming_dot_estimate, new_seed,
+    seed_id_hex,
 };
 #[cfg(feature = "cuda")]
 pub use vram::CudaStream;

@@ -168,10 +168,13 @@ fn router_failure_vault(dir: &Path) -> AsterVault<FixedClock> {
         &durable::RecoveredBatches {
             batches: Vec::new(),
             last_recovered_seq: 0,
+            wal_replay_floor_seq: 0,
+            derived_content_floor_seq: 0,
             torn_tail: None,
             temporal_policy: None,
             dedup_policy: None,
             retention_horizon: crate::timetravel::RetentionHorizon::default(),
+            router_latest_readback: false,
         },
         None,
     )
@@ -185,6 +188,7 @@ fn router_failure_vault(dir: &Path) -> AsterVault<FixedClock> {
         dedup_policy: DedupPolicy::default(),
         retention_horizon: std::sync::Mutex::new(crate::timetravel::RetentionHorizon::default()),
         ledger_hook: Some(ledger_hook),
+        read_only: false,
         recurrence_write_lock: std::sync::Mutex::new(()),
         recovery_report: VaultRecoveryReport {
             last_recovered_seq: 0,
@@ -277,9 +281,9 @@ fn row_index(rows: &[encode::WriteRow], cf: ColumnFamily) -> usize {
 }
 
 fn fsv_root() -> PathBuf {
-    std::env::var("CALYX_FSV_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| std::env::temp_dir().join("calyx-ph35-group-commit-atomicity-fsv"))
+    calyx_fsv::fsv_root_or_else("CALYX_FSV_ROOT", || {
+        std::env::temp_dir().join("calyx-ph35-group-commit-atomicity-fsv")
+    })
 }
 
 fn test_dir(name: &str) -> PathBuf {

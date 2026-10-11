@@ -4,7 +4,7 @@ use calyx_core::CxId;
 use calyx_paths::{AssocGraph, Edge, attenuate};
 use serde::{Deserialize, Serialize};
 
-use crate::{LodestarError, Result, groundedness_distance};
+use crate::{LodestarError, Result};
 
 pub const DISCOVERY_CHAIN_SCHEMA_VERSION: u32 = 1;
 
@@ -70,6 +70,10 @@ pub struct DiscoveryAcceptedHop {
     pub to: CxId,
     pub candidate_score: f32,
     pub gate_confidence: f32,
+    #[serde(default)]
+    pub gate_code: String,
+    #[serde(default)]
+    pub gate_evidence: Vec<String>,
     pub path: Vec<CxId>,
 }
 
@@ -100,9 +104,10 @@ pub fn run_grounded_discovery_chain(
     anchors: &[CxId],
     params: &DiscoveryChainParams,
 ) -> Result<DiscoveryChainLog> {
-    run_discovery_chain_with_gate(graph, starts, anchors, params, |candidate| {
-        grounded_gate(candidate, params)
-    })
+    validate_inputs(graph, starts, anchors, params)?;
+    Err(no_sufficiency_assay(
+        "discovery-chain requires an injected calibrated bits-sufficiency gate; reachability is only a prior",
+    ))
 }
 
 pub fn run_discovery_chain_with_gate<G>(
@@ -116,6 +121,7 @@ where
     G: FnMut(&DiscoveryCandidate) -> DiscoveryGateVerdict,
 {
     validate_inputs(graph, starts, anchors, params)?;
+    let grounding = GroundingIndex::new(graph, anchors);
 
     let mut log = DiscoveryChainLog {
         schema_version: DISCOVERY_CHAIN_SCHEMA_VERSION,
@@ -160,10 +166,9 @@ where
                     attenuated_path_score: attenuate(raw_path_score, hop as u32),
                     novelty_score: ranked.novelty_score,
                     candidate_score: ranked.candidate_score,
-                    groundedness_distance: groundedness_distance(
+                    groundedness_distance: grounding.distance(
                         graph,
                         ranked.to,
-                        anchors,
                         params.max_groundedness_distance,
                     )?,
                     provenance: candidate_provenance(node.id, ranked.to, &path),
@@ -213,6 +218,8 @@ where
                 to: pass.candidate.to,
                 candidate_score: pass.candidate.candidate_score,
                 gate_confidence: pass.gate.confidence,
+                gate_code: pass.gate.code.clone(),
+                gate_evidence: pass.gate.evidence.clone(),
                 path: pass.path.clone(),
             });
             next_frontier.push(FrontierNode {
@@ -227,7 +234,7 @@ where
     Ok(log)
 }
 
-fn grounded_gate(
+pub fn reachability_prior_gate(
     candidate: &DiscoveryCandidate,
     params: &DiscoveryChainParams,
 ) -> DiscoveryGateVerdict {
@@ -238,8 +245,8 @@ fn grounded_gate(
                 DiscoveryGateVerdict {
                     passed: true,
                     confidence,
-                    code: "CALYX_DISCOVERY_GATE_PASS".to_string(),
-                    reason: "candidate reaches an anchored node within the groundedness radius"
+                    code: "CALYX_DISCOVERY_REACHABILITY_PRIOR_PASS".to_string(),
+                    reason: "diagnostic prior only: candidate reaches an anchor within radius"
                         .to_string(),
                     evidence: vec![format!("groundedness_distance={distance}")],
                 }
@@ -264,6 +271,12 @@ fn grounded_gate(
             reason: "candidate has no reachable anchor inside the groundedness radius".to_string(),
             evidence: vec!["groundedness_distance=null".to_string()],
         },
+    }
+}
+
+fn no_sufficiency_assay(detail: impl Into<String>) -> LodestarError {
+    LodestarError::DiscoveryNoSufficiencyAssay {
+        detail: detail.into(),
     }
 }
 
@@ -410,4 +423,49 @@ struct PassedCandidate {
     candidate: DiscoveryCandidate,
     gate: DiscoveryGateVerdict,
     path: Vec<CxId>,
+}
+
+struct GroundingIndex {
+    anchor_ids: BTreeSet<CxId>,
+    anchor_indices: BTreeSet<usize>,
+}
+
+impl GroundingIndex {
+    fn new(graph: &AssocGraph, anchors: &[CxId]) -> Self {
+        Self {
+            anchor_ids: anchors.iter().copied().collect(),
+            anchor_indices: anchors
+                .iter()
+                .filter_map(|anchor| graph.node_index(*anchor))
+                .collect(),
+        }
+    }
+
+    fn distance(&self, graph: &AssocGraph, node: CxId, max_hops: usize) -> Result<Option<usize>> {
+        let start = graph.require_node_index(node)?;
+        if self.anchor_ids.contains(&node) {
+            return Ok(Some(0));
+        }
+        if self.anchor_indices.is_empty() {
+            return Ok(None);
+        }
+        let mut seen = BTreeSet::from([start]);
+        let mut queue = std::collections::VecDeque::from([(start, 0_usize)]);
+        while let Some((current, hops)) = queue.pop_front() {
+            if hops == max_hops {
+                continue;
+            }
+            for edge in graph.out_edges_by_index(current) {
+                if !seen.insert(edge.dst) {
+                    continue;
+                }
+                let next_hops = hops + 1;
+                if self.anchor_indices.contains(&edge.dst) {
+                    return Ok(Some(next_hops));
+                }
+                queue.push_back((edge.dst, next_hops));
+            }
+        }
+        Ok(None)
+    }
 }

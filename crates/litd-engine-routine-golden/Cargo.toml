@@ -1,0 +1,12 @@
+[package]
+name = "litd-engine-routine-golden"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Production-profile deterministic engine golden path for the fast feedback loop."
+
+[dependencies]
+litd-engine.workspace = true
+litd-hash.workspace = true
+serde_json.workspace = true

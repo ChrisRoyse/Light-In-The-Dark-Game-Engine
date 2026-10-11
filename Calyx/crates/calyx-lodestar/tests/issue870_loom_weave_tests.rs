@@ -141,12 +141,16 @@ fn loom_weave_report_fails_closed_on_empty_graph_and_invalid_params() {
     let empty_graph = AssocGraph::builder().build();
     let empty_err =
         loom_weave_report(&empty_graph, &provenance, &[cx(20)], &Default::default()).unwrap_err();
-    let mut bad_fraction = LoomWeaveReportParams::default();
-    bad_fraction.min_groundedness_fraction = 1.1;
+    let bad_fraction = LoomWeaveReportParams {
+        min_groundedness_fraction: 1.1,
+        ..Default::default()
+    };
     let fraction_err =
         loom_weave_report(&graph, &provenance, &[cx(20)], &bad_fraction).unwrap_err();
-    let mut bad_top_edges = LoomWeaveReportParams::default();
-    bad_top_edges.max_top_edges = 0;
+    let bad_top_edges = LoomWeaveReportParams {
+        max_top_edges: 0,
+        ..Default::default()
+    };
     let top_edges_err =
         loom_weave_report(&graph, &provenance, &[cx(20)], &bad_top_edges).unwrap_err();
 
@@ -189,9 +193,9 @@ fn synthetic_graph() -> (AssocGraph, Vec<calyx_lodestar::LoomAssocEdgeProvenance
 }
 
 fn fsv_root(case: &str) -> PathBuf {
-    let base = std::env::var("CALYX_FSV_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| std::env::temp_dir().join("calyx-issue870-loom-weave"));
+    let base = calyx_fsv::fsv_root_or_else("CALYX_FSV_ROOT", || {
+        std::env::temp_dir().join("calyx-issue870-loom-weave")
+    });
     base.join(case)
 }
 

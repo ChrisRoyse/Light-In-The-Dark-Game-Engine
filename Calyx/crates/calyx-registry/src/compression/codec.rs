@@ -1,13 +1,14 @@
 use calyx_aster::vault::encode;
 use calyx_core::{CalyxError, CxId, QuantPolicy, Result, Slot, SlotVector};
 use calyx_forge::{
-    BinaryCodec, MxFp4Codec, QuantLevel, QuantizedVec, Quantizer, TurboQuantCodec, new_seed,
+    BinaryCodec, MxFp4Codec, QuantLevel, QuantizedVec, Quantizer, ScalarInt8Codec, TurboQuantCodec,
+    new_seed,
 };
 
 use super::recall::prepare_dense;
 use super::{
     CALYX_VECTOR_COMPRESSION_INVALID, COMPRESSED_SLOT_TAG, COMPRESSED_SLOT_VERSION,
-    StoredSlotCodec, StoredSlotEnvelope, compression_error,
+    MxFp4AssayEvidence, StoredSlotCodec, StoredSlotEnvelope, compression_error,
 };
 use crate::spec::LensSpec;
 
@@ -26,24 +27,19 @@ pub(super) fn encode_rows(
     lens: &LensSpec,
     rows: &[(CxId, Vec<f32>)],
     policy: QuantPolicy,
-    fallback_reason: Option<String>,
+    mxfp4_evidence: Option<&MxFp4AssayEvidence>,
 ) -> Result<Vec<EncodedRow>> {
     rows.iter()
         .map(|(cx_id, raw)| {
             let prepared = prepare_dense(raw, lens.truncate_dim)?;
             let raw_bytes = raw_bytes(raw)?;
-            let encoded = encode_prepared(slot, lens, *cx_id, &prepared, policy)?;
-            let stored_bytes = if encoded.codec == StoredSlotCodec::RawF32 {
-                raw_bytes.clone()
-            } else {
-                encode_envelope(
-                    encoded.codec,
-                    &encoded.qv,
-                    raw.len() as u32,
-                    lens.truncate_dim,
-                    fallback_reason.is_some(),
-                )
-            };
+            let encoded = encode_prepared(slot, lens, *cx_id, &prepared, policy, mxfp4_evidence)?;
+            let stored_bytes = encode_envelope(
+                encoded.codec,
+                &encoded.qv,
+                raw.len() as u32,
+                lens.truncate_dim,
+            )?;
             Ok(EncodedRow {
                 cx_id: *cx_id,
                 prepared,
@@ -56,31 +52,12 @@ pub(super) fn encode_rows(
         .collect()
 }
 
-pub(super) fn fallback_policy(policy: QuantPolicy) -> QuantPolicy {
-    match policy {
-        QuantPolicy::TurboQuant {
-            bits_per_channel_x2: 5,
-        }
-        | QuantPolicy::Binary
-        | QuantPolicy::Pq { .. } => QuantPolicy::turboquant_default(),
-        QuantPolicy::MxFp4 => QuantPolicy::Float8,
-        QuantPolicy::TurboQuant { .. } | QuantPolicy::Float8 | QuantPolicy::None => {
-            QuantPolicy::None
-        }
-    }
-}
-
 pub fn decode_stored_slot_envelope(bytes: &[u8]) -> Result<StoredSlotEnvelope> {
     if bytes.first().copied() != Some(COMPRESSED_SLOT_TAG) {
-        return Ok(StoredSlotEnvelope {
-            codec: StoredSlotCodec::RawF32,
-            level: "f32".to_string(),
-            raw_dim: 0,
-            stored_dim: 0,
-            fallback: false,
-            truncated: false,
-            payload_bytes: bytes.len(),
-        });
+        return Err(compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            "stored slot bytes are missing compressed slot envelope tag",
+        ));
     }
     if bytes.len() < 53 {
         return Err(compression_error(
@@ -97,6 +74,7 @@ pub fn decode_stored_slot_envelope(bytes: &[u8]) -> Result<StoredSlotEnvelope> {
     }
     let codec = decode_codec(bytes[2])?;
     let level = decode_level(bytes[3])?;
+    validate_codec_level(codec, level)?;
     let raw_dim = u32::from_be_bytes(bytes[4..8].try_into().unwrap());
     let stored_dim = u32::from_be_bytes(bytes[8..12].try_into().unwrap());
     let flags = bytes[12];
@@ -106,6 +84,10 @@ pub fn decode_stored_slot_envelope(bytes: &[u8]) -> Result<StoredSlotEnvelope> {
             CALYX_VECTOR_COMPRESSION_INVALID,
             "compressed slot payload length mismatch",
         ));
+    }
+    let payload = &bytes[53..];
+    if codec == StoredSlotCodec::RawF32 {
+        validate_raw_f32_payload(raw_dim, stored_dim, payload)?;
     }
     Ok(StoredSlotEnvelope {
         codec,
@@ -130,6 +112,7 @@ fn encode_prepared(
     cx_id: CxId,
     prepared: &[f32],
     policy: QuantPolicy,
+    mxfp4_evidence: Option<&MxFp4AssayEvidence>,
 ) -> Result<EncodedPrepared> {
     match policy {
         QuantPolicy::None => Ok(EncodedPrepared {
@@ -140,10 +123,15 @@ fn encode_prepared(
         QuantPolicy::TurboQuant {
             bits_per_channel_x2,
         } => encode_turbo(lens, cx_id, prepared, bits_per_channel_x2),
-        QuantPolicy::MxFp4 => encode_mxfp(slot, prepared, true),
-        QuantPolicy::Float8 => encode_mxfp(slot, prepared, false),
+        QuantPolicy::MxFp4 => encode_mxfp4(slot, lens, prepared, mxfp4_evidence),
+        QuantPolicy::Float8 => encode_mxfp8(prepared),
         QuantPolicy::Binary => encode_binary(lens, cx_id, prepared),
-        QuantPolicy::Pq { .. } => encode_turbo(lens, cx_id, prepared, 7),
+        QuantPolicy::Pq { m, nbits } => Err(compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            format!(
+                "PQ codec is not implemented for m={m} nbits={nbits}; refusing TurboQuant substitution"
+            ),
+        )),
     }
 }
 
@@ -154,6 +142,7 @@ fn encode_turbo(
     bits_per_channel_x2: u8,
 ) -> Result<EncodedPrepared> {
     let level = match bits_per_channel_x2 {
+        16 => return encode_scalar_int8(prepared),
         7 => QuantLevel::Bits3p5,
         5 => QuantLevel::Bits2p5,
         other => {
@@ -178,18 +167,71 @@ fn encode_turbo(
     })
 }
 
-fn encode_mxfp(slot: &Slot, prepared: &[f32], assay_safe: bool) -> Result<EncodedPrepared> {
-    let codec = MxFp4Codec::new(prepared.len());
-    let qv = codec
-        .encode_assay_checked(slot.slot_key.key(), prepared, assay_safe)
-        .map_err(forge_error)?;
+fn encode_scalar_int8(prepared: &[f32]) -> Result<EncodedPrepared> {
+    let codec = ScalarInt8Codec::new(prepared.len());
+    let qv = codec.encode(prepared).map_err(forge_error)?;
     let decoded = codec.decode(&qv).map_err(forge_error)?;
     Ok(EncodedPrepared {
-        codec: if qv.level == QuantLevel::Bits4Fp {
-            StoredSlotCodec::MxFp4
-        } else {
-            StoredSlotCodec::MxFp8
-        },
+        qv,
+        decoded,
+        codec: StoredSlotCodec::ScalarInt8,
+    })
+}
+
+fn encode_mxfp4(
+    slot: &Slot,
+    lens: &LensSpec,
+    prepared: &[f32],
+    evidence: Option<&MxFp4AssayEvidence>,
+) -> Result<EncodedPrepared> {
+    let evidence = evidence.ok_or_else(|| {
+        compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            format!(
+                "MXFP4 requires current assay safety evidence for slot={} lens={} dim={}; no fallback codec was written",
+                slot.slot_key.key(),
+                lens.lens_id(),
+                prepared.len()
+            ),
+        )
+    })?;
+    let safety = evidence.validate(slot, lens, prepared.len() as u32)?;
+    let codec = MxFp4Codec::new(prepared.len());
+    let qv = codec
+        .encode_assay_checked(slot.slot_key.key(), prepared, safety)
+        .map_err(forge_error)?;
+    let decoded = codec.decode(&qv).map_err(forge_error)?;
+    if qv.level != QuantLevel::Bits4Fp {
+        return Err(compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            format!(
+                "MXFP4 encoder returned non-MXFP4 level {:?}; no fallback codec was written",
+                qv.level
+            ),
+        ));
+    }
+    Ok(EncodedPrepared {
+        codec: StoredSlotCodec::MxFp4,
+        qv,
+        decoded,
+    })
+}
+
+fn encode_mxfp8(prepared: &[f32]) -> Result<EncodedPrepared> {
+    let codec = MxFp4Codec::new(prepared.len());
+    let qv = codec.encode_mxfp8(prepared).map_err(forge_error)?;
+    let decoded = codec.decode(&qv).map_err(forge_error)?;
+    if qv.level != QuantLevel::Bits8Fp {
+        return Err(compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            format!(
+                "MXFP8 encoder returned non-MXFP8 level {:?}; no fallback codec was written",
+                qv.level
+            ),
+        ));
+    }
+    Ok(EncodedPrepared {
+        codec: StoredSlotCodec::MxFp8,
         qv,
         decoded,
     })
@@ -218,10 +260,48 @@ fn raw_qv(prepared: &[f32]) -> QuantizedVec {
     QuantizedVec {
         level: QuantLevel::F32,
         dim: prepared.len(),
-        bytes: Vec::new(),
+        bytes: raw_f32_payload(prepared),
         scale: 1.0,
         seed_id: [0; 32],
     }
+}
+
+fn raw_f32_payload(values: &[f32]) -> Vec<u8> {
+    let mut bytes = Vec::with_capacity(std::mem::size_of_val(values));
+    for value in values {
+        bytes.extend_from_slice(&value.to_bits().to_be_bytes());
+    }
+    bytes
+}
+
+fn validate_raw_f32_payload(raw_dim: u32, stored_dim: u32, payload: &[u8]) -> Result<()> {
+    if raw_dim == 0 || stored_dim == 0 {
+        return Err(compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            "raw f32 envelope dimensions must be positive",
+        ));
+    }
+    let expected = stored_dim as usize * std::mem::size_of::<f32>();
+    if payload.len() != expected {
+        return Err(compression_error(
+            CALYX_VECTOR_COMPRESSION_INVALID,
+            format!(
+                "raw f32 payload length {} does not match stored_dim {}",
+                payload.len(),
+                stored_dim
+            ),
+        ));
+    }
+    for (idx, chunk) in payload.chunks_exact(std::mem::size_of::<f32>()).enumerate() {
+        let value = f32::from_bits(u32::from_be_bytes(chunk.try_into().unwrap()));
+        if !value.is_finite() {
+            return Err(compression_error(
+                CALYX_VECTOR_COMPRESSION_INVALID,
+                format!("raw f32 payload contains non-finite coefficient at index {idx}"),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn encode_envelope(
@@ -229,21 +309,21 @@ fn encode_envelope(
     qv: &QuantizedVec,
     raw_dim: u32,
     truncate_dim: Option<u32>,
-    fallback: bool,
-) -> Vec<u8> {
-    let mut out = Vec::with_capacity(49 + qv.bytes.len());
+) -> Result<Vec<u8>> {
+    validate_codec_level(codec, qv.level)?;
+    let mut out = Vec::with_capacity(53 + qv.bytes.len());
     out.push(COMPRESSED_SLOT_TAG);
     out.push(COMPRESSED_SLOT_VERSION);
     out.push(codec_code(codec));
     out.push(level_code(qv.level));
     out.extend_from_slice(&raw_dim.to_be_bytes());
     out.extend_from_slice(&(qv.dim as u32).to_be_bytes());
-    out.push(u8::from(fallback) | (u8::from(truncate_dim.is_some()) << 1));
+    out.push(u8::from(truncate_dim.is_some()) << 1);
     out.extend_from_slice(&qv.scale.to_bits().to_be_bytes());
     out.extend_from_slice(&qv.seed_id);
     out.extend_from_slice(&(qv.bytes.len() as u32).to_be_bytes());
     out.extend_from_slice(&qv.bytes);
-    out
+    Ok(out)
 }
 
 fn seed_entropy(lens: &LensSpec, cx_id: CxId) -> [u8; 32] {
@@ -258,9 +338,10 @@ fn codec_code(codec: StoredSlotCodec) -> u8 {
         StoredSlotCodec::RawF32 => 0,
         StoredSlotCodec::TurboQuantBits3p5 => 1,
         StoredSlotCodec::TurboQuantBits2p5 => 2,
-        StoredSlotCodec::MxFp4 => 3,
-        StoredSlotCodec::MxFp8 => 4,
-        StoredSlotCodec::Binary => 5,
+        StoredSlotCodec::ScalarInt8 => 3,
+        StoredSlotCodec::MxFp4 => 4,
+        StoredSlotCodec::MxFp8 => 5,
+        StoredSlotCodec::Binary => 6,
     }
 }
 
@@ -269,14 +350,35 @@ fn decode_codec(code: u8) -> Result<StoredSlotCodec> {
         0 => Ok(StoredSlotCodec::RawF32),
         1 => Ok(StoredSlotCodec::TurboQuantBits3p5),
         2 => Ok(StoredSlotCodec::TurboQuantBits2p5),
-        3 => Ok(StoredSlotCodec::MxFp4),
-        4 => Ok(StoredSlotCodec::MxFp8),
-        5 => Ok(StoredSlotCodec::Binary),
+        3 => Ok(StoredSlotCodec::ScalarInt8),
+        4 => Ok(StoredSlotCodec::MxFp4),
+        5 => Ok(StoredSlotCodec::MxFp8),
+        6 => Ok(StoredSlotCodec::Binary),
         _ => Err(compression_error(
             CALYX_VECTOR_COMPRESSION_INVALID,
             format!("unknown stored slot codec code {code}"),
         )),
     }
+}
+
+fn validate_codec_level(codec: StoredSlotCodec, level: QuantLevel) -> Result<()> {
+    let valid = matches!(
+        (codec, level),
+        (StoredSlotCodec::RawF32, QuantLevel::F32)
+            | (StoredSlotCodec::TurboQuantBits3p5, QuantLevel::Bits3p5)
+            | (StoredSlotCodec::TurboQuantBits2p5, QuantLevel::Bits2p5)
+            | (StoredSlotCodec::ScalarInt8, QuantLevel::Bits8)
+            | (StoredSlotCodec::MxFp4, QuantLevel::Bits4Fp)
+            | (StoredSlotCodec::MxFp8, QuantLevel::Bits8Fp)
+            | (StoredSlotCodec::Binary, QuantLevel::Bits1)
+    );
+    if valid {
+        return Ok(());
+    }
+    Err(compression_error(
+        CALYX_VECTOR_COMPRESSION_INVALID,
+        format!("stored slot codec/level mismatch: codec={codec:?} level={level:?}"),
+    ))
 }
 
 fn level_code(level: QuantLevel) -> u8 {

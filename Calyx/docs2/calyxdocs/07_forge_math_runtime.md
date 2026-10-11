@@ -198,7 +198,7 @@ Shared fail-closed helpers, re-exported as `cpu::{check_finite, check_norm_posit
 
 The entire `cuda` module is `#[cfg(feature = "cuda")]` (`lib.rs` line 7–8). It
 is built on `cudarc` with features `std, driver, cublas, nvrtc,
-dynamic-loading, cuda-13020` (`Cargo.toml`). When the feature is off, none of
+dynamic-linking, cuda-13030` (`Cargo.toml`). When the feature is off, none of
 `CudaBackend`, `CudaContext`, grouped/ragged GEMM, or the CUDA VRAM probe types
 are compiled or exported.
 
@@ -207,7 +207,7 @@ are compiled or exported.
 `build.rs` compiles the `.cu` kernels **only if the `cuda` feature is enabled**
 (`cuda_feature_enabled()` checks `cfg!(feature="cuda")` or `CARGO_FEATURE_CUDA`);
 otherwise it emits a warning and skips. Constants: `CUDA_PATH_DEFAULT =
-"/usr/local/cuda-13.2"`, `CUDA_ARCH = "sm_120"`. `nvcc` is located at
+"/usr/local/cuda-13.3"`, `CUDA_ARCH = "sm_120"`. `nvcc` is located at
 `$CUDA_PATH/bin/nvcc` (panics if missing). For each kernel it compiles **both a
 PTX and a cubin** with deterministic math flags:
 
@@ -233,7 +233,7 @@ The three `.cu` kernel sources: `distance`, `topk`, `mxfp4_gemm`.
 `init_cuda(device_idx, determinism) -> Result<CudaContext>` initializes the
 device, queries name/compute-capability/`mem_get_info`, and **fails closed** if
 free VRAM `< MIN_FREE_VRAM_MIB = 4096` (4 GiB) — the remediation string names
-CUDA 13.2 at `/usr/local/cuda-13.2` and the RTX 5090. `query_device_info` returns
+CUDA 13.3 at `/usr/local/cuda-13.3` and the RTX 5090. `query_device_info` returns
 a `DeviceInfo { kind: Cuda, name, avx512: false, vram_mib: Some(total_mem_mib) }`.
 `free_device_vram_bytes()` calls `cudaMemGetInfo` live on every call (never
 `nvidia-smi`, never a fixed 32 GiB); a driver error surfaces as
@@ -364,16 +364,15 @@ container is `QuantizedVec { level, dim, bytes: Vec<u8>, scale: f32, seed_id:
 | `QuantLevel` | `bits_per_channel()` | `is_lossy()` | Codec | Scheme |
 |---|---|---|---|---|
 | `F32` | 32.0 | false | (none / passthrough) | full precision |
-| `Bits8` | 8.0 | false | — (declared non-lossy; no scalar-int8 codec ships) | 8-bit |
-| `Bits8Fp` | 8.0 | true | `MxFp4Codec` (MXFP8 fallback) | MXFP8 microscaling (E4M3 + E8M0) |
+| `Bits8` | 8.0 | true | `ScalarInt8Codec` | scalar signed INT8 with scale |
+| `Bits8Fp` | 8.0 | true | `MxFp4Codec` (MXFP8) | MXFP8 microscaling (E4M3 + E8M0) |
 | `Bits4Fp` | 4.0 | true | `MxFp4Codec` | MXFP4 microscaling (E8M0 block scale) |
 | `Bits3p5` | 3.5 | true | `TurboQuantCodec` | rotate → 7-bit scalar quant + 1-bit QJL residual |
 | `Bits2p5` | 2.5 | true | `TurboQuantCodec` | rotate → base-5 scalar quant + 1-bit QJL residual |
 | `Bits1` | 1.0 | true | `BinaryCodec` | rotate → sign bits (1-bit) |
 
-`is_lossy()` is `false` only for `F32` and `Bits8`. (`Bits8` has no encode/decode
-implementation in this crate — it is declared in the enum but no codec produces
-it; the only 8-bit codec output is `Bits8Fp` via MXFP8.)
+`is_lossy()` is `false` only for `F32`. `Bits8` is implemented by the scalar INT8
+codec; FP8 uses the separate `Bits8Fp` level.
 
 ### 5.2 Rotation (`src/quant/rotation.rs`) — shared front-end
 
@@ -518,6 +517,9 @@ A25 "measured intelligence preservation" contract from planning doc 23.
   centi-units for key equality. Promotion/exploration helpers (`Explorer`,
   `should_promote`, `promote_if_winner`, `rollback_promotion`, A/B `autotune`)
   live alongside; constants `EPSILON`, `MIN_PROMOTE_MARGIN`, `MIN_PROMOTE_TRIALS`.
+  Promotion and rollback audit records are appended to the hash-chained
+  `calyx-ledger` as `calyx.forge.autotune.promotion.v1`; JSONL output is an
+  optional export mirror, not the source of truth.
   This is the mechanism by which a backend/config is *selected per (op, shape,
   device)* — but selection is recorded, not auto-applied within `Backend` calls.
 
@@ -593,8 +595,6 @@ ethos).
   `bilinear_cross_term`, `graph_ops`, `colbert_maxsim` are declared in
   `FORGE_DEFERRED_BACKEND_OPS` but **not implemented** as `Backend` methods. The
   planning-doc catalogs (13/23) list them as design targets only (issue #338).
-- **`Bits8`:** present in `QuantLevel`, declared non-lossy, but no codec in this
-  crate produces or consumes it (the only 8-bit output is `Bits8Fp` via MXFP8).
 - **No native FP4 cuBLAS GEMM:** the MXFP4 device path is a custom one-cell-per-
   thread kernel (fp32 accumulate); an optimized CUTLASS grouped MXFP4 tensor-core
   path is referenced in comments as future work. MXFP8 GEMM decodes to fp32 and

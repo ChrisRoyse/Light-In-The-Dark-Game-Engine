@@ -2,8 +2,12 @@ use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub(crate) struct I8binEnsembleRequest {
-    pub(crate) plan: PathBuf,
+    pub(crate) plan: Option<PathBuf>,
+    pub(crate) plan_cf_root: Option<PathBuf>,
+    pub(crate) plan_key: String,
     pub(crate) rows_jsonl: PathBuf,
+    pub(crate) labels_cf_root: Option<PathBuf>,
+    pub(crate) labels_key: String,
     pub(crate) stream_report: Option<PathBuf>,
     pub(crate) metrics_dir: PathBuf,
     pub(crate) cf_root: PathBuf,
@@ -16,6 +20,7 @@ pub(crate) struct I8binEnsembleRequest {
     pub(crate) max_redundancy: f32,
     pub(crate) nmi_bins: usize,
     pub(crate) mode: A37CardMode,
+    pub(crate) emit_artifacts: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -39,8 +44,12 @@ impl A37CardMode {
 
 impl I8binEnsembleRequest {
     pub(crate) fn parse(args: &[String]) -> Result<Self, String> {
-        let mut plan = PathBuf::new();
+        let mut plan = None;
+        let mut plan_cf_root = None;
+        let mut plan_key = crate::partitioned_bench::rrf_plan::DEFAULT_ASSOCIATION_KEY.to_string();
         let mut rows_jsonl = PathBuf::new();
+        let mut labels_cf_root = None;
+        let mut labels_key = super::label_store::DEFAULT_ASSOCIATION_KEY.to_string();
         let mut stream_report = None;
         let mut metrics_dir = PathBuf::new();
         let mut cf_root = None;
@@ -53,15 +62,32 @@ impl I8binEnsembleRequest {
         let mut max_redundancy = calyx_assay::DEFAULT_MAX_REDUNDANCY;
         let mut nmi_bins = 10_usize;
         let mut mode = A37CardMode::Gate;
+        let mut emit_artifacts = true;
         let mut idx = 0;
         while idx < args.len() {
             match args[idx].as_str() {
                 "--plan" => {
-                    plan = PathBuf::from(value(args, idx, "--plan")?);
+                    plan = Some(PathBuf::from(value(args, idx, "--plan")?));
+                    idx += 2;
+                }
+                "--plan-cf-root" => {
+                    plan_cf_root = Some(PathBuf::from(value(args, idx, "--plan-cf-root")?));
+                    idx += 2;
+                }
+                "--plan-key" | "--plan-association-key" => {
+                    plan_key = value(args, idx, "--plan-key")?.to_string();
                     idx += 2;
                 }
                 "--rows-jsonl" => {
                     rows_jsonl = PathBuf::from(value(args, idx, "--rows-jsonl")?);
+                    idx += 2;
+                }
+                "--labels-cf-root" => {
+                    labels_cf_root = Some(PathBuf::from(value(args, idx, "--labels-cf-root")?));
+                    idx += 2;
+                }
+                "--labels-key" | "--label-key" | "--labels-association-key" => {
+                    labels_key = value(args, idx, "--labels-key")?.to_string();
                     idx += 2;
                 }
                 "--stream-report" => {
@@ -116,6 +142,10 @@ impl I8binEnsembleRequest {
                     mode = A37CardMode::Diagnostic;
                     idx += 1;
                 }
+                "--db-only" | "--no-artifacts" => {
+                    emit_artifacts = false;
+                    idx += 1;
+                }
                 other => {
                     return Err(format!(
                         "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: unknown arg {other}"
@@ -123,10 +153,23 @@ impl I8binEnsembleRequest {
                 }
             }
         }
-        let cf_root = cf_root.unwrap_or_else(|| metrics_dir.join("assay_cf"));
+        let cf_root = match cf_root {
+            Some(path) => path,
+            None if !metrics_dir.as_os_str().is_empty() => metrics_dir.join("assay_cf"),
+            None => {
+                return Err(
+                    "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: --cf-root is required when --db-only omits --metrics-dir"
+                        .to_string(),
+                );
+            }
+        };
         let request = Self {
             plan,
+            plan_cf_root,
+            plan_key,
             rows_jsonl,
+            labels_cf_root,
+            labels_key,
             stream_report,
             metrics_dir,
             cf_root,
@@ -139,18 +182,56 @@ impl I8binEnsembleRequest {
             max_redundancy,
             nmi_bins,
             mode,
+            emit_artifacts,
         };
         request.validate()?;
         Ok(request)
     }
 
     fn validate(&self) -> Result<(), String> {
-        if self.plan.as_os_str().is_empty()
-            || self.rows_jsonl.as_os_str().is_empty()
-            || self.metrics_dir.as_os_str().is_empty()
-        {
+        let has_plan_file = self.plan.is_some();
+        let has_plan_db = self.plan_cf_root.is_some();
+        if has_plan_file == has_plan_db {
             return Err(
-                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: --plan, --rows-jsonl, and --metrics-dir are required"
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: provide exactly one of --plan <json> or --plan-cf-root <aster-dir>"
+                    .to_string(),
+            );
+        }
+        if self.plan_key.trim().is_empty() {
+            return Err(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: --plan-key must be non-empty"
+                    .to_string(),
+            );
+        }
+        let has_rows_file = !self.rows_jsonl.as_os_str().is_empty();
+        let has_labels_db = self.labels_cf_root.is_some();
+        if has_rows_file == has_labels_db {
+            return Err(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: provide exactly one of --rows-jsonl <rows.jsonl> or --labels-cf-root <aster-dir>"
+                    .to_string(),
+            );
+        }
+        if has_labels_db && self.labels_key.trim().is_empty() {
+            return Err(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: --labels-key must be non-empty"
+                    .to_string(),
+            );
+        }
+        if self.mode.requires_gate() && !has_labels_db {
+            return Err(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: gate mode requires --labels-cf-root; --rows-jsonl labels are diagnostic/import-only"
+                    .to_string(),
+            );
+        }
+        if self.emit_artifacts && self.metrics_dir.as_os_str().is_empty() {
+            return Err(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: --metrics-dir is required unless --db-only is set"
+                    .to_string(),
+            );
+        }
+        if self.cf_root.as_os_str().is_empty() {
+            return Err(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_INVALID_CONFIG: --cf-root must be non-empty"
                     .to_string(),
             );
         }
@@ -185,16 +266,17 @@ impl I8binEnsembleRequest {
     }
 
     pub(crate) fn ensure_fresh_outputs(&self) -> Result<(), String> {
-        for (label, path) in [
-            ("metrics_dir", &self.metrics_dir),
-            ("cf_root", &self.cf_root),
-        ] {
-            if path.exists() {
-                return Err(format!(
-                    "CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS: {label} already exists: {}",
-                    path.display()
-                ));
-            }
+        if self.emit_artifacts && self.metrics_dir.exists() {
+            return Err(format!(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS: metrics_dir already exists: {}",
+                self.metrics_dir.display()
+            ));
+        }
+        if self.emit_artifacts && self.cf_root.exists() {
+            return Err(format!(
+                "CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS: cf_root already exists: {}",
+                self.cf_root.display()
+            ));
         }
         Ok(())
     }

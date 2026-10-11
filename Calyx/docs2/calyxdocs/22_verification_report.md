@@ -31,7 +31,7 @@
 | CUDA kernels (`.cu`) | **3** (`distance.cu`, `topk.cu`, `mxfp4_gemm.cu`) | in `crates/calyx-forge` |
 | Fuzz targets | **6** | `ls fuzz/fuzz_targets/` |
 | CI workflows | **1** (`.github/workflows/ci.yml`) | `ls .github/workflows/` |
-| MCP tools | **30** (pinned by `tests/stdio.rs::EXPECTED_TOOLS`) | [19](19_mcp_api_tools_reference.md) |
+| MCP tools | **31** (pinned by `tests/stdio.rs::EXPECTED_TOOLS`) | [19](19_mcp_api_tools_reference.md) |
 | CLI structured subcommands | **~20** + legacy + domain command groups | [20](20_cli_and_daemon_reference.md) |
 | Column families (static) | **33** (`ColumnFamily::STATIC`, indices 0–32) + parameterized slot CFs | `crates/calyx-aster/src/cf/family.rs` |
 | Core closed error catalog | **38** codes (`CalyxErrorCode` / `CALYX_ERROR_CODES`) | [05](05_core.md) |
@@ -189,13 +189,13 @@ Consolidated in [24_roadmap.md](24_roadmap.md) §4. Highlights:
 
 | Gap | Subsystem | Source doc |
 |---|---|---|
-| LP/min-cut/FVS solver not implemented — heuristic DFVS fallback only | mincut / lodestar | [17](17_graph_mincut_paths.md), [12](12_lodestar_kernel.md) |
+| LP/min-cut/FVS solver not implemented — direct LP-round requests fail closed unless a valid external solution is supplied | mincut / lodestar | [17](17_graph_mincut_paths.md), [12](12_lodestar_kernel.md) |
 | Kernel build pipeline does not measure recall (defaults to 0) | lodestar | [12](12_lodestar_kernel.md) |
 | MCP-over-socket transport not wired into the live daemon | calyxd | [20](20_cli_and_daemon_reference.md) |
-| `Bits8` quantization level has no shipping codec | forge | [07](07_forge_math_runtime.md) |
+| RawF32 compression rows still need a verifiable envelope | registry / aster | GitHub #925 |
 | Multimodal / commissioned lenses emit hash projections, not learned vectors | registry | [08](08_registry_lenses.md) |
 | `AnnealHook` is an interim pre-PH48 shim | ward / anneal | [13](13_ward_guard.md) |
-| MCP `search.fresh` parsed-but-unused; `search.guard=in_region` always errors | mcp | [19](19_mcp_api_tools_reference.md) |
+| CLI and MCP search implementations still diverge instead of sharing one persisted-index path | cli / mcp / sextant | GitHub #923 |
 | Aster compaction cadence fixed (`FIXME(PH46)`); crate self-labeled "skeleton" | aster | [06](06_aster_storage_engine.md) |
 | PRD column-family numbering (Ledger=2/Assay=6) ≠ implemented tags (Ledger=8/Assay=7) | aster | [04](04_storage_and_schema.md) |
 | No code-coverage tooling | repo-wide | [21](21_test_suite.md) |
@@ -206,7 +206,7 @@ Consolidated in [24_roadmap.md](24_roadmap.md) §4. Highlights:
 
 | Dimension | State |
 |---|---|
-| Build | CPU-only by default; CUDA opt-in (`--features cuda`, requires sm_120 / CUDA 13.2) |
+| Build | CPU-only by default; CUDA opt-in (`--features cuda`, requires sm_120 / CUDA 13.3 on aiwonder) |
 | Maturity | pre-1.0 (`0.1.0`); on-disk format & interfaces explicitly unstable |
 | Gating | single CI workflow enforcing fmt + clippy(-D) + check + nextest + doctests + hygiene; FSV/CUDA tests gated off CI |
 | Provenance/safety posture | fail-closed error catalog, per-slot guard, hash-chained ledger — all implemented |

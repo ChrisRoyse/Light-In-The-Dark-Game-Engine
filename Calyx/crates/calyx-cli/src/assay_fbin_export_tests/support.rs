@@ -112,6 +112,7 @@ pub(super) fn write_algorithmic_manifests(root: &Path, names: &[String]) -> Vec<
                 truncate_dim: None,
                 recall_delta: calyx_registry::spec::default_recall_delta(),
                 max_batch: None,
+                batch_policy: None,
             };
             fs::write(&path, serde_json::to_vec_pretty(&manifest).unwrap()).unwrap();
             path
@@ -198,7 +199,22 @@ fn write_bits(path: &Path, lenses: &[String], admitted: usize) {
         .collect::<Vec<_>>();
     fs::write(
         path,
-        serde_json::to_vec_pretty(&serde_json::json!({ "lenses": lenses })).unwrap(),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "lenses": lenses,
+            // #1140 fail-closed: gate eligibility must be an explicit
+            // affirmative audit; fixtures state it instead of relying on
+            // defaults.
+            "anchor_audit": {
+                "anchor_leaks_into_input": false,
+                "trivial_anchor": false,
+                "grounded_gate_eligible": true,
+                "label_recoverable_from_input": false,
+                "audit_kind": "unit_fixture_affirmative",
+                "source": "export-fbin unit fixture",
+                "reason": "fixture anchor audited eligible for gate tests"
+            }
+        }))
+        .unwrap(),
     )
     .unwrap();
 }
@@ -235,6 +251,7 @@ fn write_manifests(root: &Path, names: &[String]) -> Vec<PathBuf> {
                 truncate_dim: None,
                 recall_delta: calyx_registry::spec::default_recall_delta(),
                 max_batch: None,
+                batch_policy: None,
             };
             fs::write(&path, serde_json::to_vec_pretty(&manifest).unwrap()).unwrap();
             path

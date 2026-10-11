@@ -45,8 +45,8 @@ fn kernel_graph_selects_two_hubs_and_reports_fraction() {
 }
 
 #[test]
-fn lp_round_selects_solution_values_and_fallback_warns() {
-    let graph = hub_graph();
+fn lp_round_solves_direct_path_and_rejects_bad_solver_output() {
+    let graph = triangle_graph();
     let scc = tarjan_scc(&graph);
     let bet = betweenness(&graph).unwrap();
     let heuristic = select_kernel_graph(
@@ -55,63 +55,163 @@ fn lp_round_selects_solution_values_and_fallback_warns() {
         &bet,
         &[],
         &KernelGraphParams {
-            target_fraction: 0.40,
+            target_fraction: 1.0,
             ..KernelGraphParams::default()
         },
     )
     .unwrap();
+    let direct = lp_round_kernel_graph(&heuristic, &LpRoundParams::default()).unwrap();
     let solution = LpSolution {
-        values: vec![0.9, 0.3, 0.7, 0.1],
-        objective_value: 1.6,
+        values: vec![0.9, 0.3, 0.7],
+        objective_value: 1.9,
         status: SolveStatus::Optimal,
     };
     let rounded =
         lp_round_kernel_graph_from_solution(&heuristic, &LpRoundParams::default(), &solution)
             .unwrap();
-    let fallback = lp_round_kernel_graph(&heuristic, &LpRoundParams::default()).unwrap();
-    let strict_err = lp_round_kernel_graph(
+    let fallback_flag_err = lp_round_kernel_graph(
         &heuristic,
         &LpRoundParams {
-            fallback_to_heuristic: false,
+            fallback_to_heuristic: true,
             ..LpRoundParams::default()
         },
     )
     .unwrap_err();
-    let fallback_is_heuristic = fallback.selected == heuristic.selected
-        && fallback.lp_fraction == Some(heuristic.source_fraction);
+    let not_solved = LpSolution {
+        values: vec![0.9, 0.3, 0.7],
+        objective_value: 1.9,
+        status: SolveStatus::NotSolved,
+    };
+    let not_solved_err =
+        lp_round_kernel_graph_from_solution(&heuristic, &LpRoundParams::default(), &not_solved)
+            .unwrap_err();
+    let nan_value = LpSolution {
+        values: vec![0.9, f64::NAN, 0.7],
+        objective_value: 1.7,
+        status: SolveStatus::Optimal,
+    };
+    let nan_value_err =
+        lp_round_kernel_graph_from_solution(&heuristic, &LpRoundParams::default(), &nan_value)
+            .unwrap_err();
+    let inf_objective = LpSolution {
+        values: vec![0.9, 0.3, 0.7],
+        objective_value: f64::INFINITY,
+        status: SolveStatus::Optimal,
+    };
+    let inf_objective_err =
+        lp_round_kernel_graph_from_solution(&heuristic, &LpRoundParams::default(), &inf_objective)
+            .unwrap_err();
+    let out_of_range = LpSolution {
+        values: vec![0.9, 1.2, 0.7],
+        objective_value: 2.8,
+        status: SolveStatus::Optimal,
+    };
+    let out_of_range_err =
+        lp_round_kernel_graph_from_solution(&heuristic, &LpRoundParams::default(), &out_of_range)
+            .unwrap_err();
+    let objective_mismatch = LpSolution {
+        values: vec![0.9, 0.3, 0.7],
+        objective_value: 1.0,
+        status: SolveStatus::Optimal,
+    };
+    let objective_mismatch_err = lp_round_kernel_graph_from_solution(
+        &heuristic,
+        &LpRoundParams::default(),
+        &objective_mismatch,
+    )
+    .unwrap_err();
+    let all_zero_cyclic = LpSolution {
+        values: vec![0.0, 0.0, 0.0],
+        objective_value: 0.0,
+        status: SolveStatus::Optimal,
+    };
+    let all_zero_cyclic_err = lp_round_kernel_graph_from_solution(
+        &heuristic,
+        &LpRoundParams::default(),
+        &all_zero_cyclic,
+    )
+    .unwrap_err();
+
+    let dag = {
+        let mut builder = builder_with_nodes(&[4, 5, 6]);
+        builder
+            .add_edge(cx(4), cx(5), 1.0)
+            .unwrap()
+            .add_edge(cx(5), cx(6), 1.0)
+            .unwrap();
+        builder.build()
+    };
+    let dag_scc = tarjan_scc(&dag);
+    let dag_bet = betweenness(&dag).unwrap();
+    let dag_heuristic = select_kernel_graph(
+        &dag,
+        &dag_scc,
+        &dag_bet,
+        &[],
+        &KernelGraphParams {
+            target_fraction: 1.0,
+            ..KernelGraphParams::default()
+        },
+    )
+    .unwrap();
+    let dag_direct = lp_round_kernel_graph(&dag_heuristic, &LpRoundParams::default()).unwrap();
 
     println!(
-        "LP_ROUND_READBACK rounded={:?} strict_error={} fallback_warnings={:?}",
+        "LP_ROUND_READBACK direct={:?} rounded={:?} fallback_flag_error={} not_solved={} nan_value={} inf_objective={} out_of_range={} objective_mismatch={} all_zero_cyclic={} dag={:?}",
+        direct.selected,
         rounded.selected,
-        strict_err.code(),
-        fallback.warnings
+        fallback_flag_err.code(),
+        not_solved_err.code(),
+        nan_value_err.code(),
+        inf_objective_err.code(),
+        out_of_range_err.code(),
+        objective_mismatch_err.code(),
+        all_zero_cyclic_err.code(),
+        dag_direct.selected
     );
     write_readback(
         "ph32-lp-round-readback.json",
         json!({
-            "contract": "lp_solver_unconfigured_scaffold",
+            "contract": "bounded_exact_mfvs_solver",
+            "direct_solver_selected": direct.selected,
+            "direct_solver_lp_fraction": direct.lp_fraction,
             "rounded": rounded.selected,
             "lp_fraction": rounded.lp_fraction,
-            "injected_solution_source": "test-provided LpSolution, not external solver output",
-            "strict_error": strict_err.code(),
-            "strict_error_message": strict_err.to_string(),
+            "injected_solution_source": "test-provided feasible LpSolution",
+            "fallback_flag_error": fallback_flag_err.code(),
+            "fallback_flag_error_message": fallback_flag_err.to_string(),
+            "not_solved_error": not_solved_err.code(),
+            "not_solved_error_message": not_solved_err.to_string(),
+            "invalid_solution_edges": {
+                "nan_value_error": nan_value_err.code(),
+                "nan_value_message": nan_value_err.to_string(),
+                "inf_objective_error": inf_objective_err.code(),
+                "inf_objective_message": inf_objective_err.to_string(),
+                "out_of_range_error": out_of_range_err.code(),
+                "out_of_range_message": out_of_range_err.to_string(),
+                "objective_mismatch_error": objective_mismatch_err.code(),
+                "objective_mismatch_message": objective_mismatch_err.to_string(),
+                "all_zero_cyclic_error": all_zero_cyclic_err.code(),
+                "all_zero_cyclic_message": all_zero_cyclic_err.to_string(),
+            },
+            "dag_direct_selected": dag_direct.selected,
+            "dag_direct_lp_fraction": dag_direct.lp_fraction,
             "heuristic_selected": heuristic.selected,
             "heuristic_source_fraction": heuristic.source_fraction,
-            "fallback_selected": fallback.selected,
-            "fallback_lp_fraction": fallback.lp_fraction,
-            "fallback_is_heuristic": fallback_is_heuristic,
-            "fallback_warnings": fallback.warnings.clone(),
         }),
     );
+    assert_eq!(direct.selected, vec![cx(1)]);
+    assert!((direct.lp_fraction.unwrap() - (1.0_f32 / 3.0)).abs() <= 1.0e-6);
     assert_eq!(rounded.selected, vec![cx(1), cx(3)]);
-    assert_eq!(strict_err.code(), "CALYX_KERNEL_LP_UNAVAILABLE");
-    assert!(fallback_is_heuristic);
-    assert!(
-        fallback
-            .warnings
-            .iter()
-            .any(|warning| warning.starts_with("CALYX_KERNEL_LP_UNAVAILABLE"))
-    );
+    assert_eq!(fallback_flag_err.code(), "CALYX_KERNEL_LP_UNAVAILABLE");
+    assert_eq!(not_solved_err.code(), "CALYX_KERNEL_LP_UNAVAILABLE");
+    assert_eq!(nan_value_err.code(), "CALYX_KERNEL_INVALID_PARAMS");
+    assert_eq!(inf_objective_err.code(), "CALYX_KERNEL_INVALID_PARAMS");
+    assert_eq!(out_of_range_err.code(), "CALYX_KERNEL_INVALID_PARAMS");
+    assert_eq!(objective_mismatch_err.code(), "CALYX_KERNEL_INVALID_PARAMS");
+    assert_eq!(all_zero_cyclic_err.code(), "CALYX_KERNEL_LP_INFEASIBLE");
+    assert!(dag_direct.selected.is_empty());
+    assert_eq!(dag_direct.lp_fraction, Some(0.0));
 }
 
 #[test]
@@ -150,12 +250,22 @@ fn dfvs_triangle_planted_and_dag_cases_are_verified() {
             "planted_method": planted_kernel.estimator_provenance,
             "dag_members": dag_kernel.members,
             "dag_method": dag_kernel.estimator_provenance,
+            "dag_grounded_fraction": dag_kernel.groundedness.reached_anchor,
+            "dag_warnings": dag_kernel.warnings,
         }),
     );
     assert!(triangle_kernel.recall.approx_factor <= 3.0);
     assert!(planted_members.contains(&cx(1)));
     assert!(planted_members.contains(&cx(4)));
     assert!(dag_kernel.members.is_empty());
+    assert_eq!(dag_kernel.groundedness.reached_anchor, 0.0);
+    assert!(dag_kernel.estimator_provenance.contains("trust=empty"));
+    assert!(
+        dag_kernel
+            .warnings
+            .iter()
+            .any(|warning| warning.starts_with("CALYX_KERNEL_EMPTY"))
+    );
 }
 
 #[test]
@@ -376,84 +486,5 @@ fn incremental_leaf_dirty_cycle_full_rebuild_and_member_remove() {
     ));
 }
 
-#[test]
-fn fail_closed_edges_report_catalog_codes() {
-    let graph = triangle_graph();
-    let scc = tarjan_scc(&graph);
-    let bet = betweenness(&graph).unwrap();
-    assert_eq!(
-        select_kernel_graph(
-            &graph,
-            &scc,
-            &bet,
-            &[],
-            &KernelGraphParams {
-                target_fraction: 0.0,
-                ..KernelGraphParams::default()
-            },
-        )
-        .unwrap_err()
-        .code(),
-        "CALYX_KERNEL_INVALID_PARAMS"
-    );
-    let heuristic =
-        select_kernel_graph(&graph, &scc, &bet, &[], &KernelGraphParams::default()).unwrap();
-    let zeros = LpSolution {
-        values: vec![0.0],
-        objective_value: 0.0,
-        status: SolveStatus::Optimal,
-    };
-    assert!(matches!(
-        lp_round_kernel_graph_from_solution(&heuristic, &LpRoundParams::default(), &zeros),
-        Err(LodestarError::KernelEmptyResult)
-    ));
-}
-
-proptest! {
-    #[test]
-    fn selected_count_stays_within_ceiling(n in 1u8..20) {
-        let mut builder = builder_with_nodes(&(1..=n).collect::<Vec<_>>());
-        for seed in 1..n {
-            builder.add_edge(cx(seed), cx(seed + 1), 1.0).unwrap();
-        }
-        let graph = builder.build();
-        let scc = tarjan_scc(&graph);
-        let bet = betweenness(&graph).unwrap();
-        let params = KernelGraphParams {
-            target_fraction: 0.25,
-            ..KernelGraphParams::default()
-        };
-        let selected = select_kernel_graph(&graph, &scc, &bet, &[], &params).unwrap();
-        prop_assert!(selected.selected.len() <= ((n as f32 * 0.25).ceil() as usize).max(1));
-    }
-
-    #[test]
-    fn tournament_approx_removes_cycles(bits in any::<u16>()) {
-        let mut builder = builder_with_nodes(&[1, 2, 3, 4]);
-        let mut bit = 0;
-        for a in 1..=4 {
-            for b in a + 1..=4 {
-                if (bits >> bit) & 1 == 0 {
-                    builder.add_edge(cx(a), cx(b), 1.0).unwrap();
-                } else {
-                    builder.add_edge(cx(b), cx(a), 1.0).unwrap();
-                }
-                bit += 1;
-            }
-        }
-        let graph = builder.build();
-        let result = tournament_2approx(&graph).unwrap();
-        let kernel = calyx_lodestar::KernelGraph {
-            graph,
-            selected: vec![cx(1), cx(2), cx(3), cx(4)],
-            source_fraction: 1.0,
-            lp_fraction: None,
-            params: KernelGraphParams::default(),
-            scores: Vec::new(),
-            warnings: Vec::new(),
-        };
-        let dfvs = dfvs_approx(&kernel).unwrap();
-        prop_assert_eq!(result.method, DfvsMethod::Tournament2Approx);
-        prop_assert_eq!(dfvs.method, DfvsMethod::Tournament2Approx);
-    }
-}
+#[path = "support/ph32_lodestar_edge_tests.rs"]
+mod ph32_lodestar_edge_tests;

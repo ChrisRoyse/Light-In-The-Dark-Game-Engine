@@ -1,0 +1,10 @@
+[package]
+name = "litd-editor-routine-golden"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Lightweight production MCP golden-path target for the editor feedback loop."
+
+[dependencies]
+litd-editor-mcp = { path = "../litd-editor-mcp" }

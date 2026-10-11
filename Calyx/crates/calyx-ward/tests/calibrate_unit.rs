@@ -373,82 +373,67 @@ fn calibrate_fsv_fixture_writes_readback_artifacts() {
     );
 }
 
-fn calibration_input(slot: SlotId, slot_kind: SlotKind, target_far: f32) -> CalibrationInput {
-    CalibrationInput {
-        slot,
-        good_scores: (0..100).map(|i| 0.80 + i as f32 * 0.001).collect(),
-        bad_scores: (0..100).map(|i| 0.30 + i as f32 * 0.003).collect(),
-        slot_kind,
-        target_far,
-    }
+#[path = "calibrate_unit/support.rs"]
+mod support;
+use support::*;
+
+// #1899 — per-slot aspect (SlotKind) is persisted in the calibrated profile and
+// surfaced via the per-slot calibration meta. Real calibrate(), no mocks.
+#[test]
+fn calibration_persists_per_slot_aspect() {
+    let clock = FixedClock::new(1_785_400_000);
+    let identity = calibration_input(slot(1), SlotKind::Identity, 0.01);
+    let content = calibration_input(slot(3), SlotKind::Content, 0.03);
+
+    let profile = calibrate(profile_template(), vec![identity, content], 0.05, &clock)
+        .expect("calibrate two slots");
+    let per_slot = &profile
+        .calibration
+        .as_ref()
+        .expect("calibration present")
+        .per_slot;
+
+    assert_eq!(
+        per_slot.get(&slot(1)).and_then(|meta| meta.slot_kind),
+        Some(SlotKind::Identity),
+        "slot 1 aspect persisted as Identity"
+    );
+    assert_eq!(
+        per_slot.get(&slot(3)).and_then(|meta| meta.slot_kind),
+        Some(SlotKind::Content),
+        "slot 3 aspect persisted as Content"
+    );
+
+    // Survives a serde round-trip (the wire form the vault Guard CF stores).
+    let json = serde_json::to_string(&profile).expect("serialize");
+    let restored: GuardProfile = serde_json::from_str(&json).expect("deserialize");
+    let restored_per_slot = &restored.calibration.expect("calibration").per_slot;
+    assert_eq!(
+        restored_per_slot
+            .get(&slot(1))
+            .and_then(|meta| meta.slot_kind),
+        Some(SlotKind::Identity),
+        "aspect survives serialize/deserialize"
+    );
 }
 
-fn confidence_supported_input(
-    slot: SlotId,
-    slot_kind: SlotKind,
-    target_far: f32,
-) -> CalibrationInput {
-    CalibrationInput {
-        slot,
-        good_scores: (0..1_000).map(|i| 0.80 + i as f32 * 0.0001).collect(),
-        bad_scores: (0..1_000).map(|i| 0.30 + i as f32 * 0.0003).collect(),
-        slot_kind,
-        target_far,
-    }
-}
-
-fn profile_template() -> GuardProfile {
-    GuardProfile {
-        guard_id: guard_id(),
-        panel_version: 42,
-        domain: "synthetic".to_string(),
-        tau: BTreeMap::new(),
-        required_slots: Vec::new(),
-        policy: GuardPolicy::AllRequired,
-        calibration: None,
-        novelty_action: NoveltyAction::Quarantine,
-    }
-}
-
-fn error_json(error: &WardError) -> serde_json::Value {
-    json!({
-        "code": error.code(),
-        "message": error.to_string(),
-    })
-}
-
-fn write_json<T: serde::Serialize>(root: &str, name: &str, value: &T) {
-    let path = std::path::Path::new(root).join(name);
-    let file = std::fs::File::create(path).expect("create fsv json");
-    serde_json::to_writer_pretty(file, value).expect("write fsv json");
-}
-
-fn write_sha_manifest(root: &str) {
-    let root = std::path::Path::new(root);
-    let mut lines = Vec::new();
-    for entry in std::fs::read_dir(root).expect("read fsv root") {
-        let path = entry.expect("dir entry").path();
-        if path.is_file() && path.file_name().unwrap() != "sha256-manifest.txt" {
-            let bytes = std::fs::read(&path).expect("read fsv file");
-            lines.push(format!(
-                "{:x}  {}\n",
-                Sha256::digest(bytes),
-                path.file_name().unwrap().to_string_lossy()
-            ));
-        }
-    }
-    lines.sort();
-    std::fs::write(root.join("sha256-manifest.txt"), lines.concat()).expect("write sha manifest");
-}
-
-fn hash_hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
-}
-
-fn guard_id() -> GuardId {
-    GUARD_UUID.parse().expect("guard id")
-}
-
-const fn slot(value: u16) -> SlotId {
-    SlotId::new(value)
+#[test]
+fn legacy_per_slot_without_aspect_deserializes_as_none() {
+    // A profile calibrated before slot_kind existed: the field is absent from the
+    // JSON. It must deserialize to None (honest unknown aspect), never a default.
+    let zeros: [u8; 32] = [0; 32];
+    let legacy = json!({
+        "corpus_hash": zeros,
+        "estimator": "conformal_quantile_v1",
+        "far": 0.01,
+        "frr": 0.0,
+        "confidence": 0.95,
+        "ts": 1_785_400_000
+    });
+    let meta: calyx_ward::SlotCalibrationMeta =
+        serde_json::from_value(legacy).expect("legacy per-slot meta deserializes");
+    assert_eq!(
+        meta.slot_kind, None,
+        "absent aspect -> None, not a fabricated default"
+    );
 }

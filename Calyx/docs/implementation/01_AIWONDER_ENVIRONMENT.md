@@ -1,7 +1,7 @@
 # 01 — aiwonder Environment & the Self-Contained Calyx Layout
 
 Everything Calyx is built/stored/run/tested here. This doc is the **live,
-verified** picture of the box (readback 2026-06-18) and the binding rule that
+verified** picture of the box (readback 2026-07-06) and the binding rule that
 **Calyx is self-contained under one root and touches nothing else.**
 
 ---
@@ -30,7 +30,7 @@ verified** picture of the box (readback 2026-06-18) and the binding rule that
    `CARGO_TARGET_DIR` for that command and rejects unresolved ELF dynamic
    dependencies without relying on `LD_LIBRARY_PATH`.
 
-## 2. Verified hardware & OS (live readback 2026-06-18)
+## 2. Verified hardware & OS (live readback 2026-07-06)
 
 | Resource | Value (confirmed) |
 |---|---|
@@ -57,7 +57,9 @@ verified** picture of the box (readback 2026-06-18) and the binding rule that
 ### Resident services to REUSE (loopback; do not start throwaways — PRD `16 §9`)
 | Port | Service |
 |---|---|
-| `127.0.0.1:8088` | TEI general embedder (gte-multilingual-base, 768-d) |
+| `127.0.0.1:18190` | Calyx-owned TEI multilingual E5 embedder (float16, Flash Attention, 768-d, client batch 64) |
+| `127.0.0.1:18188` | Calyx-owned TEI BGE-M3 embedder (float16, Flash Attention, 1024-d, client batch 64) |
+| `127.0.0.1:8088` | Shared legacy TEI general embedder (gte-multilingual-base, float16, 768-d) |
 | `127.0.0.1:8089` | TEI GTE reranker |
 | `127.0.0.1:8090` | TEI legal ModernBERT (768-d) |
 | `127.0.0.1:9090/9091/9093/9094` | Prometheus / pushgateway / Alertmanager |
@@ -68,6 +70,19 @@ host-mounted entrypoint on driver-610 hosts. That wrapper parses both
 `CUDA Version` and `CUDA UMD Version` from `nvidia-smi`, strips stale
 `/usr/local/cuda/compat` from `LD_LIBRARY_PATH` on CUDA 13.3, and fails closed
 if `text-embeddings-router` would still map the CUDA 12.9 compat `libcuda`.
+Current Calyx-owned containers run `ghcr.io/leapable/tei-blackwell:phase0-wrapper`,
+a pinned Blackwell SM120 TEI image based on Hugging Face TEI `120-1.9.3`; image
+labels point at upstream `text-embeddings-inference` and describe an RTX
+50-series Blackwell embeddings build. The wrapper only fixes driver-610 library
+resolution and keeps the model path GPU-resident. Live readback on 2026-07-06
+showed RTX 5090 compute capability 12.0, CUDA 13.3, `DTYPE=float16`,
+`text-embeddings-router 1.9.3`, host `libcuda.so.1`, and `FlashBert` starting
+on `CudaDevice` for both owned TEI services. A 2026-07-06T13:41Z E5 probe on
+`:18190` returned 64 normalized 768-d vectors in 13.414 ms end-to-end while
+`nvidia-smi` showed resident `text-embeddings-router` GPU processes. Upstream
+Hugging Face TEI now publishes a Blackwell 12.0 image line; keep the current
+wrapper unless an A/B restart proves the upstream image is at least as fast and
+preserves driver-610 CUDA resolution.
 Install or refresh the systemd drop-ins with
 `sudo infra/aiwonder/bin/install-tei-driver610-runtime.sh --restart`.
 
@@ -196,8 +211,8 @@ host loss is accepted posture.
 ## 8. One-paragraph summary
 Calyx is built and lives **only** on aiwonder, under `/home/croyse/calyx`,
 reachable as `croyse@aiwonder.mst.com` over the Cisco VPN, using the box's
-already-installed Rust + CUDA 13.3 + RTX 5090 (sm_120) and its resident TEI
-lenses, with all build output, data, datasets, and caches kept inside that one
+already-installed Rust + CUDA 13.3 + RTX 5090 (sm_120) and its Calyx-owned FP16
+resident TEI lenses, with all build output, data, datasets, and caches kept inside that one
 root, dedicated ZFS datasets provisioned by a one-time authorized sudo step,
 password-backed sudo available for gated host work when needed, and absolutely
 no contact with the existing

@@ -1,6 +1,7 @@
 //! Ward guard profile types for per-slot cosine policy enforcement.
 
 pub mod calibrate;
+pub mod calibration_guard;
 pub mod drift;
 pub mod error;
 pub mod generate;
@@ -20,13 +21,19 @@ pub mod verdict;
 
 pub use calibrate::{
     CalibrationInput, ESTIMATOR, MIN_BAD_SCORES, SlotKind, TAU_COLD_START, calibrate,
-    calibrate_slot,
+    calibrate_slot, validate_calibration_slots,
+};
+pub use calibration_guard::{
+    DEFAULT_MAX_FPR_AT_TPR, DEFAULT_MIN_AUROC, DEFAULT_MIN_SEPARATION_MARGIN, DEFAULT_TPR_TARGET,
+    SeparationReport, SeparationThresholds, assess_separation,
 };
 pub use drift::{
     AnnealHook, DEFAULT_DRIFT_CHANNEL_CAPACITY, DEFAULT_DRIFT_WINDOW, DriftEvent, DriftMonitor,
     GuardHealth, REJECTION_RATE_DRIFT_MULTIPLIER, guard_health,
 };
 pub use error::{
+    CALYX_GUARD_CALIBRATION_SLOT_SHAPE, CALYX_GUARD_CALIBRATION_SLOT_STATE,
+    CALYX_GUARD_CALIBRATION_SLOT_UNKNOWN, CALYX_GUARD_DEGENERATE_CALIBRATION,
     CALYX_GUARD_ID_MISMATCH, CALYX_GUARD_IDENTITY_SLOT_NOT_REQUIRED, CALYX_GUARD_INERT_PROFILE,
     CALYX_GUARD_MISSING_SLOT, CALYX_GUARD_NOT_A_FAILURE, CALYX_GUARD_NOVELTY_SINK, CALYX_GUARD_OOD,
     CALYX_GUARD_POLICY_VIOLATION, CALYX_GUARD_PROVISIONAL, CALYX_WARD_INVALID_DOMAIN,

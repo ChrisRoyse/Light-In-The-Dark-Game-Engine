@@ -1,0 +1,5 @@
+# Line-count ratchet baseline (#1466). One row per .rs file currently >=500 lines (violates
+# #800 sec.6 <500-line doctrine). Format: <repo-relative-path>\t<current_line_count>. The gate
+# (scripts/check-line-count.ps1) fails if a NON-listed file reaches 500 lines, or a LISTED file
+# GROWS beyond its recorded count. When a listed file is split below 500, DELETE its row to lock
+# the win in (it can then never regress). Goal: shrink this file to empty (#1466 accept gate).

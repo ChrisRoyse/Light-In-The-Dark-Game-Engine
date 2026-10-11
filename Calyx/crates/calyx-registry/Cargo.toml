@@ -8,6 +8,7 @@ publish.workspace = true
 
 [features]
 default = []
+cuda = ["candle-cuda", "calyx-forge/cuda"]
 candle-cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda", "fastembed/cuda"]
 
 [dependencies]
@@ -29,7 +30,17 @@ serde_json.workspace = true
 sha2.workspace = true
 tokenizers = { version = "0.22.2", default-features = false, features = ["onig"] }
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_JobObjects",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
+] }
+
 [dev-dependencies]
+calyx-fsv = { path = "../calyx-fsv" }
 calyx-loom = { path = "../calyx-loom" }
 calyx-sextant = { path = "../calyx-sextant" }
 proptest.workspace = true

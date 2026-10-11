@@ -66,7 +66,7 @@ impl FastembedSparseLens {
         cache_dir: PathBuf,
         provider_policy: OnnxProviderPolicy,
     ) -> Result<Self> {
-        super::dynamic_ort::ensure_dynamic_ort()?;
+        super::dynamic_ort::ensure_dynamic_ort(provider_policy)?;
         let name = name.into();
         let info = SparseTextEmbedding::get_model_info(&model_name);
         let model = SparseTextEmbedding::try_new(
@@ -76,7 +76,7 @@ impl FastembedSparseLens {
                 .with_intra_threads(1)
                 .with_execution_providers(super::fastembed_runtime::execution_providers(
                     provider_policy,
-                )),
+                )?),
         )
         .map_err(|err| CalyxError::lens_unreachable(format!("sparse init failed: {err}")))?;
         let model = CudaDropGuard::new(model, provider_policy);
@@ -102,7 +102,10 @@ impl FastembedSparseLens {
         ))
     }
 
-    pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
+    pub fn from_lens_spec_with_policy(
+        spec: &LensSpec,
+        provider_policy: OnnxProviderPolicy,
+    ) -> Result<Self> {
         let LensRuntime::FastembedSparse { model_id, .. } = &spec.runtime else {
             return Err(super::config_invalid(
                 "LensSpec runtime is not fastembed-sparse",
@@ -112,10 +115,14 @@ impl FastembedSparseLens {
             spec.name.clone(),
             model_id,
             super::fastembed_runtime::default_cache_root(),
-            OnnxProviderPolicy::CudaFailLoud,
+            provider_policy,
         )?;
         ensure_spec_match(lens.shape(), lens.contract.weights_sha256(), spec)?;
         Ok(lens)
+    }
+
+    pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
+        Self::from_lens_spec_with_policy(spec, OnnxProviderPolicy::CudaFailLoud)
     }
 
     fn new(
@@ -165,7 +172,7 @@ impl FastembedBgem3Lens {
         cache_dir: PathBuf,
         provider_policy: OnnxProviderPolicy,
     ) -> Result<Self> {
-        super::dynamic_ort::ensure_dynamic_ort()?;
+        super::dynamic_ort::ensure_dynamic_ort(provider_policy)?;
         let name = name.into();
         let info = Bgem3Embedding::get_model_info(&model_name);
         let model = Bgem3Embedding::try_new(
@@ -175,7 +182,7 @@ impl FastembedBgem3Lens {
                 .with_intra_threads(1)
                 .with_execution_providers(super::fastembed_runtime::execution_providers(
                     provider_policy,
-                )),
+                )?),
         )
         .map_err(|err| CalyxError::lens_unreachable(format!("BGE-M3 init failed: {err}")))?;
         let model = CudaDropGuard::new(model, provider_policy);
@@ -205,7 +212,10 @@ impl FastembedBgem3Lens {
         ))
     }
 
-    pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
+    pub fn from_lens_spec_with_policy(
+        spec: &LensSpec,
+        provider_policy: OnnxProviderPolicy,
+    ) -> Result<Self> {
         let LensRuntime::FastembedBgem3 {
             model_id, output, ..
         } = &spec.runtime
@@ -219,10 +229,14 @@ impl FastembedBgem3Lens {
             model_id,
             *output,
             super::fastembed_runtime::default_cache_root(),
-            OnnxProviderPolicy::CudaFailLoud,
+            provider_policy,
         )?;
         ensure_spec_match(lens.shape(), lens.contract.weights_sha256(), spec)?;
         Ok(lens)
+    }
+
+    pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
+        Self::from_lens_spec_with_policy(spec, OnnxProviderPolicy::CudaFailLoud)
     }
 
     fn new(
@@ -276,7 +290,7 @@ impl FastembedRerankerLens {
         cache_dir: PathBuf,
         provider_policy: OnnxProviderPolicy,
     ) -> Result<Self> {
-        super::dynamic_ort::ensure_dynamic_ort()?;
+        super::dynamic_ort::ensure_dynamic_ort(provider_policy)?;
         let name = name.into();
         let info = TextRerank::get_model_info(&model_name);
         let model = TextRerank::try_new(
@@ -286,7 +300,7 @@ impl FastembedRerankerLens {
                 .with_intra_threads(1)
                 .with_execution_providers(super::fastembed_runtime::execution_providers(
                     provider_policy,
-                )),
+                )?),
         )
         .map_err(|err| CalyxError::lens_unreachable(format!("reranker init failed: {err}")))?;
         let model = CudaDropGuard::new(model, provider_policy);

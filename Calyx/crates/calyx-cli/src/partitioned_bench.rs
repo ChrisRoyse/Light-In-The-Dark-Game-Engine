@@ -10,7 +10,8 @@
 use std::time::Instant;
 
 use calyx_sextant::index::{
-    DenseVectorFile, I32BinMatrix, PartitionDistanceMetric, PartitionedSearch, gen_row,
+    DenseVectorFile, I32BinMatrix, PartitionDistanceMetric, PartitionedSearch,
+    PartitionedSearchOptions, gen_row,
 };
 use serde_json::json;
 
@@ -25,13 +26,25 @@ mod build;
 mod multi_rrf;
 #[path = "partitioned_bench/progress.rs"]
 mod progress;
+#[path = "partitioned_bench/report_readback.rs"]
+mod report_readback;
+#[path = "partitioned_bench/rrf_plan.rs"]
+pub(crate) mod rrf_plan;
+#[path = "partitioned_bench/rrf_plan_remap.rs"]
+mod rrf_plan_remap;
 #[path = "partitioned_bench/slot_truth_generate.rs"]
 mod slot_truth_generate;
+#[path = "partitioned_bench/slot_truth_store.rs"]
+mod slot_truth_store;
 #[path = "partitioned_bench/summary.rs"]
 mod summary;
+#[path = "partitioned_bench/timeline_import.rs"]
+mod timeline_import;
+#[path = "partitioned_bench/timeline_store.rs"]
+pub(crate) mod timeline_store;
 #[path = "partitioned_bench/tuner_status.rs"]
 mod tuner_status;
-use args::{SearchArgs, parse, parse_recall_floor};
+use args::{SearchArgs, parse, parse_pruning_epsilon, parse_recall_floor};
 use brute_force::{brute_force_topk, brute_force_topk_vecfile};
 #[cfg(test)]
 pub(crate) use build::BuildArgs;
@@ -186,8 +199,52 @@ pub(crate) fn run_rrf(args: &[String]) -> CliResult {
     multi_rrf::run(args)
 }
 
+pub(crate) fn run_rrf_plan(args: &[String]) -> CliResult {
+    rrf_plan::run_import(args)
+}
+
+pub(crate) fn run_rrf_plan_remap(args: &[String]) -> CliResult {
+    rrf_plan_remap::run(args)
+}
+
+pub(crate) fn run_rrf_report_readback(args: &[String]) -> CliResult {
+    report_readback::run(args)
+}
+
 pub(crate) fn run_rrf_slot_truth(args: &[String]) -> CliResult {
     slot_truth_generate::run(args)
+}
+
+pub(crate) fn run_rrf_timeline(args: &[String]) -> CliResult {
+    timeline_import::run(args)
+}
+
+pub(crate) fn is_topic(topic: &str) -> bool {
+    matches!(
+        topic,
+        "partitioned-search"
+            | "partitioned-rrf"
+            | "partitioned-rrf-plan"
+            | "partitioned-rrf-plan-remap"
+            | "partitioned-rrf-report-readback"
+            | "partitioned-rrf-slot-truth"
+            | "partitioned-rrf-timeline"
+    )
+}
+
+pub(crate) fn run_topic(topic: &str, args: &[String]) -> CliResult {
+    match topic {
+        "partitioned-search" => run_search(args),
+        "partitioned-rrf" => run_rrf(args),
+        "partitioned-rrf-plan" => run_rrf_plan(args),
+        "partitioned-rrf-plan-remap" => run_rrf_plan_remap(args),
+        "partitioned-rrf-report-readback" => run_rrf_report_readback(args),
+        "partitioned-rrf-slot-truth" => run_rrf_slot_truth(args),
+        "partitioned-rrf-timeline" => run_rrf_timeline(args),
+        _ => Err(CliError::usage(format!(
+            "unknown partitioned bench topic: {topic}"
+        ))),
+    }
 }
 
 /// REAL-data search: real query embeddings + brute-force ground truth over the REAL
@@ -219,11 +276,16 @@ fn run_search_real(args: &SearchArgs) -> CliResult {
     let gt_n = args.ground_truth.min(n);
     let mut gt_queries: Vec<Vec<f32>> = Vec::with_capacity(gt_n);
     let mut gt_ann: Vec<Vec<u64>> = Vec::with_capacity(gt_n);
+    let search_opts = PartitionedSearchOptions {
+        n_probe: args.n_probe,
+        region_beam: args.region_beam,
+        pruning_epsilon: args.pruning_epsilon,
+    };
     for i in 0..n {
         let q = row_for_metric(&q_vecs, i as u64, distance_metric);
         let started = Instant::now();
         let readback = search
-            .search_with_readback(&q, args.k, args.n_probe, args.region_beam)
+            .search_with_readback_opts(&q, args.k, search_opts)
             .map_err(CliError::Calyx)?;
         let hits = readback.hits;
         if first_touched_regions.is_empty() {
@@ -284,6 +346,7 @@ fn run_search_real(args: &SearchArgs) -> CliResult {
         "k": args.k,
         "n_probe": args.n_probe,
         "region_beam": args.region_beam,
+        "pruning_epsilon": args.pruning_epsilon,
         "strategy": "KernelFirstPartitioned",
         "distance_metric": distance_metric.as_str(),
         "region_touch_count": summarize_u64(&region_touch_counts),
@@ -299,7 +362,8 @@ fn run_search_real(args: &SearchArgs) -> CliResult {
     });
     println!(
         "{}",
-        serde_json::to_string_pretty(&report).map_err(CliError::from)?
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| CliError::runtime(format!("serialize bench report: {error}")))?
     );
     Ok(())
 }
@@ -320,12 +384,17 @@ fn run_search_synthetic(args: &SearchArgs) -> CliResult {
     let gt_n = args.ground_truth.min(args.n);
     let mut gt_queries: Vec<Vec<f32>> = Vec::with_capacity(gt_n);
     let mut gt_ann: Vec<Vec<u64>> = Vec::with_capacity(gt_n);
+    let search_opts = PartitionedSearchOptions {
+        n_probe: args.n_probe,
+        region_beam: args.region_beam,
+        pruning_epsilon: args.pruning_epsilon,
+    };
     for i in 0..args.n {
         let idx = (seed.wrapping_add(i as u64 * 7919)) % n_cx;
         let q = gen_row(seed, idx, dim);
         let started = Instant::now();
         let readback = search
-            .search_with_readback(&q, args.k, args.n_probe, args.region_beam)
+            .search_with_readback_opts(&q, args.k, search_opts)
             .map_err(CliError::Calyx)?;
         let hits = readback.hits;
         if first_touched_regions.is_empty() {
@@ -389,6 +458,7 @@ fn run_search_synthetic(args: &SearchArgs) -> CliResult {
         "k": args.k,
         "n_probe": args.n_probe,
         "region_beam": args.region_beam,
+        "pruning_epsilon": args.pruning_epsilon,
         "strategy": "KernelFirstPartitioned",
         "region_touch_count": summarize_u64(&region_touch_counts),
         "max_touched_regions": region_touch_counts.iter().copied().max().unwrap_or(0),
@@ -403,7 +473,8 @@ fn run_search_synthetic(args: &SearchArgs) -> CliResult {
     });
     println!(
         "{}",
-        serde_json::to_string_pretty(&report).map_err(CliError::from)?
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| CliError::runtime(format!("serialize bench report: {error}")))?
     );
     Ok(())
 }
@@ -414,3 +485,9 @@ mod partitioned_bench_progress_tests;
 #[cfg(test)]
 #[path = "partitioned_bench_tests.rs"]
 mod partitioned_bench_tests;
+#[cfg(test)]
+#[path = "partitioned_bench/rrf_failed_truth_write_tests.rs"]
+mod rrf_failed_truth_write_tests;
+#[cfg(test)]
+#[path = "partitioned_bench/spann_knob_tests.rs"]
+mod spann_knob_tests;

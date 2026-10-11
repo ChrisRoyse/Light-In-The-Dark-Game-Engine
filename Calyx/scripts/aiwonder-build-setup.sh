@@ -98,11 +98,7 @@ fi
 echo "[setup] cargo-sweep: $(command -v cargo-sweep) ($(cargo-sweep --version 2>/dev/null || echo '?'))"
 
 # 2b) cargo-nextest: parallel test runner used by scripts/check.sh.
-if ! command -v cargo-nextest >/dev/null 2>&1; then
-  echo "[setup] installing cargo-nextest ..."
-  cargo install cargo-nextest --locked
-fi
-echo "[setup] cargo-nextest: $(command -v cargo-nextest) ($(cargo-nextest --version 2>/dev/null || echo '?'))"
+bash "$repo_root/scripts/install-cargo-nextest.sh"
 
 # 3) Daily user cron to bound the canonical checkout's opt-in shared target dir.
 #    Always reference the canonical checkout ($CALYX_HOME/repo), never $repo_root:
@@ -121,10 +117,10 @@ echo "[setup] done. Verify a build produces the expected binary:"
 echo "        cd $CALYX_HOME/repo && scripts/build-verified-calyx.sh --require-string calyx"
 
 # ----------------------------------------------------------------------------
-#  4. Install the repo pre-push hook (cargo fmt --check gate). Version-controlled
+#  4. Install the repo hooks (gitleaks/public leak/fmt gates). Version-controlled
 #     in .githooks/; core.hooksPath is per-clone local config, so wire it here.
 #     Idempotent. Prevents the fmt-dirty-merge class of breakage that bit
 #     PRs #530/#517/#475/#453 when the manual gate was skipped.
 # ----------------------------------------------------------------------------
 git -C "$repo_root" config core.hooksPath .githooks
-echo "setup: core.hooksPath set to .githooks (pre-push fmt gate active)"
+echo "setup: core.hooksPath set to .githooks (pre-commit secret/public scans and pre-push secret/public/fmt gates active)"

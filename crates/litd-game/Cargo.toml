@@ -1,0 +1,55 @@
+[package]
+name = "litd-game"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Light in the Dark game runner — runs a packaged .litdgame on the engine runtime."
+# FSV example binaries are gated behind the `fsv` feature and declared explicitly below, so a
+# routine `cargo test` gate never compiles+links them (#1497). autoexamples=false disables
+# auto-discovery so a new example that skips the gate is a hard "no such target", not a
+# silent addition to every test build.
+autoexamples = false
+
+[features]
+# Enables the FSV example binaries (one-shot verification programs). Off by default so
+# `cargo test` skips them; run with `cargo run --features fsv --example <name>`.
+fsv = []
+
+[[bin]]
+name = "litd-game"
+path = "src/main.rs"
+
+[dependencies]
+litd-hash.workspace = true
+litd-game-cli.workspace = true
+litd-engine = { path = "../litd-engine", default-features = false, features = ["runtime"] }
+pollster.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+wgpu.workspace = true
+winit.workspace = true
+
+[dev-dependencies]
+# hound is used only by examples (positional-audio / frame-loop FSV), not by src/. (#1491)
+hound.workspace = true
+
+[[example]]
+name = "game_positional_audio_fsv"
+path = "examples/game_positional_audio_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1460_frame_loop_fsv"
+path = "examples/issue1460_frame_loop_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1891_package_map_rts_fsv"
+path = "examples/issue1891_package_map_rts_fsv.rs"
+required-features = ["fsv"]
+harness = false

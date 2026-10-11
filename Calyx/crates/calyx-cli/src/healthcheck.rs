@@ -4,17 +4,23 @@
 //! env, the Calyx home, and any requested vault/metrics source, then writes
 //! `latest.json` and reads it back before returning.
 
+mod resident_probe;
+mod scrape;
+
 use std::collections::BTreeSet;
 use std::fs;
-use std::io::{Read, Write};
-use std::net::TcpStream;
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use scrape::{metrics_have_verified_target, scrape_metrics};
+
 use calyx_core::CalyxError;
 use calyxd::verify::verify_restore;
 use serde::Serialize;
+
+use crate::error::{CliError, CliResult};
 
 const DEFAULT_OUT: &str = "/zfs/hot/logs/calyx-health/latest.json";
 const DEFAULT_SECRET_ENV: &str = "/run/leapable/secrets/calyx.env";
@@ -33,6 +39,7 @@ struct HealthArgs {
     required_env: Vec<String>,
     vault: Option<PathBuf>,
     metrics_url: Option<String>,
+    resident_probe: Option<SocketAddr>,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,7 +49,17 @@ struct HealthReport {
     checked_at_unix_secs: u64,
     status: &'static str,
     failure_count: usize,
+    binary: BinaryIdentity,
     checks: Vec<HealthCheck>,
+}
+
+/// Identity of the binary that wrote this report (#1108): lets operators
+/// spot a stale deployed runner straight from `latest.json`.
+#[derive(Debug, Serialize)]
+struct BinaryIdentity {
+    #[serde(flatten)]
+    build: calyx_buildinfo::BuildInfo,
+    executable: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -73,7 +90,7 @@ pub(crate) fn run(args: &[String]) -> crate::error::CliResult {
 }
 
 impl HealthArgs {
-    fn parse(args: &[String]) -> Result<Self, String> {
+    fn parse(args: &[String]) -> CliResult<Self> {
         let mut request = Self {
             wait_secs: 0,
             out: env_path("CALYX_HEALTH_LOG_PATH").unwrap_or_else(|| PathBuf::from(DEFAULT_OUT)),
@@ -86,6 +103,10 @@ impl HealthArgs {
                 .collect(),
             vault: env_path("CALYX_HEALTH_VAULT"),
             metrics_url: std::env::var("CALYX_HEALTH_METRICS_URL").ok(),
+            resident_probe: match std::env::var("CALYX_HEALTH_RESIDENT_ADDR") {
+                Ok(raw) => Some(parse_addr("CALYX_HEALTH_RESIDENT_ADDR", &raw)?),
+                Err(_) => None,
+            },
         };
 
         let mut i = 0;
@@ -115,17 +136,25 @@ impl HealthArgs {
                     request.metrics_url = Some(value(args, i)?.to_string());
                     i += 2;
                 }
+                "--resident-probe" => {
+                    request.resident_probe = Some(parse_addr("--resident-probe", value(args, i)?)?);
+                    i += 2;
+                }
                 "--require-env" => {
                     request.required_env.push(value(args, i)?.to_string());
                     i += 2;
                 }
                 other => {
-                    return Err(format!("CALYX_HEALTH_CONFIG_INVALID: unknown arg {other}"));
+                    return Err(CliError::usage(format!(
+                        "CALYX_HEALTH_CONFIG_INVALID: unknown arg {other}"
+                    )));
                 }
             }
         }
         if request.required_env.iter().any(|name| name.is_empty()) {
-            return Err("CALYX_HEALTH_CONFIG_INVALID: empty --require-env".to_string());
+            return Err(CliError::usage(
+                "CALYX_HEALTH_CONFIG_INVALID: empty --require-env",
+            ));
         }
         Ok(request)
     }
@@ -142,6 +171,9 @@ fn build_report(request: &HealthArgs) -> HealthReport {
     if let Some(url) = &request.metrics_url {
         checks.push(check_metrics(url));
     }
+    if let Some(addr) = request.resident_probe {
+        checks.push(resident_probe::check_resident_parallelism(addr));
+    }
     let failure_count = checks.iter().filter(|check| check.status != "pass").count();
     HealthReport {
         run_id: format!("calyx-health-{}-{}", unix_secs(), std::process::id()),
@@ -149,7 +181,17 @@ fn build_report(request: &HealthArgs) -> HealthReport {
         checked_at_unix_secs: unix_secs(),
         status: if failure_count == 0 { "pass" } else { "fail" },
         failure_count,
+        binary: binary_identity(),
         checks,
+    }
+}
+
+fn binary_identity() -> BinaryIdentity {
+    BinaryIdentity {
+        build: calyx_buildinfo::build_info!(capabilities: crate::capabilities::COMPILED),
+        executable: std::env::current_exe()
+            .map(|path| path.display().to_string())
+            .unwrap_or_else(|error| format!("unavailable: {error}")),
     }
 }
 
@@ -164,6 +206,9 @@ fn source_of_truth(request: &HealthArgs) -> Vec<String> {
     }
     if let Some(url) = &request.metrics_url {
         sources.push(url.clone());
+    }
+    if let Some(addr) = request.resident_probe {
+        sources.push(addr.to_string());
     }
     sources
 }
@@ -289,98 +334,44 @@ fn check_metrics(url: &str) -> HealthCheck {
     }
 }
 
-fn write_and_read_back(path: &Path, report: &HealthReport) -> std::result::Result<(), String> {
+fn write_and_read_back(path: &Path, report: &HealthReport) -> CliResult {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| {
-            format!(
+            CliError::io(format!(
                 "CALYX_HEALTH_WRITEBACK: create {}: {error}",
                 parent.display()
-            )
+            ))
         })?;
     }
-    let json = serde_json::to_string_pretty(report).map_err(|error| error.to_string())?;
-    fs::write(path, format!("{json}\n"))
-        .map_err(|error| format!("CALYX_HEALTH_WRITEBACK: write {}: {error}", path.display()))?;
-    let readback = fs::read_to_string(path)
-        .map_err(|error| format!("CALYX_HEALTH_WRITEBACK: read {}: {error}", path.display()))?;
-    let value: serde_json::Value = serde_json::from_str(&readback)
-        .map_err(|error| format!("CALYX_HEALTH_WRITEBACK: parse readback: {error}"))?;
+    let json = serde_json::to_string_pretty(report).map_err(|error| {
+        CliError::runtime(format!("CALYX_HEALTH_WRITEBACK: serialize report: {error}"))
+    })?;
+    fs::write(path, format!("{json}\n")).map_err(|error| {
+        CliError::io(format!(
+            "CALYX_HEALTH_WRITEBACK: write {}: {error}",
+            path.display()
+        ))
+    })?;
+    let readback = fs::read_to_string(path).map_err(|error| {
+        CliError::io(format!(
+            "CALYX_HEALTH_WRITEBACK: read {}: {error}",
+            path.display()
+        ))
+    })?;
+    let value: serde_json::Value = serde_json::from_str(&readback).map_err(|error| {
+        CliError::runtime(format!("CALYX_HEALTH_WRITEBACK: parse readback: {error}"))
+    })?;
     let status = value
         .get("status")
         .and_then(serde_json::Value::as_str)
-        .ok_or_else(|| "CALYX_HEALTH_WRITEBACK: readback missing status".to_string())?;
+        .ok_or_else(|| CliError::runtime("CALYX_HEALTH_WRITEBACK: readback missing status"))?;
     if status != report.status {
-        return Err(format!(
+        return Err(CliError::runtime(format!(
             "CALYX_HEALTH_WRITEBACK: status mismatch wrote={} read={status}",
             report.status
-        ));
+        )));
     }
     Ok(())
-}
-
-fn scrape_metrics(url: &str) -> Result<String, String> {
-    let parsed = ParsedHttpUrl::parse(url)?;
-    let mut stream = TcpStream::connect((&*parsed.host, parsed.port))
-        .map_err(|error| format!("connect {url}: {error}"))?;
-    stream
-        .set_read_timeout(Some(Duration::from_secs(5)))
-        .map_err(|error| format!("set read timeout: {error}"))?;
-    stream
-        .set_write_timeout(Some(Duration::from_secs(5)))
-        .map_err(|error| format!("set write timeout: {error}"))?;
-    let request = format!(
-        "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-        parsed.path, parsed.host
-    );
-    stream
-        .write_all(request.as_bytes())
-        .map_err(|error| format!("write request: {error}"))?;
-    let mut response = String::new();
-    stream
-        .read_to_string(&mut response)
-        .map_err(|error| format!("read response: {error}"))?;
-    if !response.starts_with("HTTP/1.1 200") && !response.starts_with("HTTP/1.0 200") {
-        let status = response.lines().next().unwrap_or("empty response");
-        return Err(format!("{url} returned {status}"));
-    }
-    Ok(response)
-}
-
-fn metrics_have_verified_target(body: &str) -> bool {
-    body.lines()
-        .filter(|line| line.starts_with("calyx_ledger_chain_verify_ok"))
-        .any(|line| line.split_whitespace().last() == Some("1"))
-}
-
-struct ParsedHttpUrl {
-    host: String,
-    port: u16,
-    path: String,
-}
-
-impl ParsedHttpUrl {
-    fn parse(url: &str) -> Result<Self, String> {
-        let rest = url.strip_prefix("http://").ok_or_else(|| {
-            "CALYX_HEALTH_CONFIG_INVALID: metrics URL must use http://".to_string()
-        })?;
-        let (authority, path) = match rest.split_once('/') {
-            Some((authority, path)) => (authority, format!("/{path}")),
-            None => (rest, "/".to_string()),
-        };
-        if authority.is_empty() {
-            return Err("CALYX_HEALTH_CONFIG_INVALID: metrics URL host is empty".to_string());
-        }
-        let (host, port) = match authority.rsplit_once(':') {
-            Some((host, port)) => (
-                host.to_string(),
-                port.parse::<u16>().map_err(|error| {
-                    format!("CALYX_HEALTH_CONFIG_INVALID: metrics URL port: {error}")
-                })?,
-            ),
-            None => (authority.to_string(), 80),
-        };
-        Ok(Self { host, port, path })
-    }
 }
 
 #[cfg(unix)]
@@ -418,19 +409,29 @@ fn env_names(text: &str) -> BTreeSet<String> {
         .collect()
 }
 
-fn value(args: &[String], index: usize) -> Result<&str, String> {
+fn value(args: &[String], index: usize) -> CliResult<&str> {
     args.get(index + 1).map(String::as_str).ok_or_else(|| {
-        format!(
+        CliError::usage(format!(
             "CALYX_HEALTH_CONFIG_INVALID: {} requires a value",
             args[index]
-        )
+        ))
     })
 }
 
-fn parse_u64(flag: &str, value: &str) -> Result<u64, String> {
-    value
-        .parse()
-        .map_err(|error| format!("CALYX_HEALTH_CONFIG_INVALID: {flag} {value}: {error}"))
+fn parse_u64(flag: &str, value: &str) -> CliResult<u64> {
+    value.parse().map_err(|error| {
+        CliError::usage(format!(
+            "CALYX_HEALTH_CONFIG_INVALID: {flag} {value}: {error}"
+        ))
+    })
+}
+
+fn parse_addr(flag: &str, value: &str) -> CliResult<SocketAddr> {
+    value.parse().map_err(|error| {
+        CliError::usage(format!(
+            "CALYX_HEALTH_CONFIG_INVALID: {flag} {value}: {error}"
+        ))
+    })
 }
 
 fn env_path(name: &str) -> Option<PathBuf> {

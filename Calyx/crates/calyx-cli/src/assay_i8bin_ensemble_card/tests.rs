@@ -53,13 +53,141 @@ fn i8bin_card_reads_vector_bytes_and_persists_payload() {
 }
 
 #[test]
-fn default_gate_mode_refuses_homogeneous_panel_before_outputs() {
-    let root = temp_root("i8bin-ensemble-card-a37-gate-refuses");
+fn i8bin_card_db_only_persists_without_metrics_artifacts() {
+    let root = temp_root("i8bin-ensemble-card-db-only");
     fs::create_dir_all(&root).unwrap();
     let rows = root.join("rows.jsonl");
     write_rows(&rows, 120);
     let plan = write_plan(&root, 10, 120);
     let mut request = request_for(&root, plan, rows, None, 80, Some(60));
+    request.emit_artifacts = false;
+    request.metrics_dir = PathBuf::new();
+    request.cf_root = root.join("shared-assay-cf");
+
+    let report = evaluate(&request).unwrap();
+    let evidence = write_outputs(&request, &report).unwrap();
+
+    assert_eq!(evidence.artifact_mode, "db_only");
+    assert_eq!(evidence.assay_cf_rows_persisted, 58);
+    assert!(evidence.ensemble_card_payload_readback);
+    assert!(evidence.a37_report_path.is_empty());
+    assert!(evidence.matrix_path.is_empty());
+    assert!(!root.join("metrics").exists());
+    assert!(request.cf_root.join("cf").join("assay").is_dir());
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn i8bin_card_reads_plan_from_graph_cf() {
+    let root = temp_root("i8bin-ensemble-card-plan-db");
+    fs::create_dir_all(&root).unwrap();
+    let rows = root.join("rows.jsonl");
+    write_rows(&rows, 120);
+    let plan = write_plan(&root, 10, 120);
+    let loaded = crate::partitioned_bench::rrf_plan::load_from_file(&plan).unwrap();
+    let plan_cf_root = root.join("plan-cf");
+    crate::partitioned_bench::rrf_plan::write(
+        &plan_cf_root,
+        crate::partitioned_bench::rrf_plan::DEFAULT_ASSOCIATION_KEY,
+        &crate::partitioned_bench::rrf_plan::PartitionedRrfPlanRecord {
+            format: crate::partitioned_bench::rrf_plan::FORMAT.to_string(),
+            mode: crate::partitioned_bench::rrf_plan::MODE.to_string(),
+            imported_plan_sha256: loaded.plan_sha256,
+            base_dir: loaded.base_dir,
+            plan: loaded.plan,
+        },
+    )
+    .unwrap();
+    let mut request = request_for(&root, PathBuf::new(), rows, None, 80, Some(60));
+    request.plan = None;
+    request.plan_cf_root = Some(plan_cf_root.clone());
+    request.emit_artifacts = false;
+    request.metrics_dir = PathBuf::new();
+    request.cf_root = root.join("shared-assay-cf");
+
+    let report = evaluate(&request).unwrap();
+    let evidence = write_outputs(&request, &report).unwrap();
+
+    assert_eq!(report.plan_source.mode, "aster_graph_cf");
+    let expected_cf_root = plan_cf_root.display().to_string();
+    assert_eq!(
+        report.plan_source.cf_root.as_deref(),
+        Some(expected_cf_root.as_str())
+    );
+    assert!(report.plan_source.db_readback.unwrap().readback_matches);
+    assert_eq!(evidence.artifact_mode, "db_only");
+    assert_eq!(evidence.assay_cf_subject_counts["ensemble_card"], 1);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn i8bin_card_reads_labels_from_graph_cf() {
+    let root = temp_root("i8bin-ensemble-card-labels-db");
+    fs::create_dir_all(&root).unwrap();
+    let rows = root.join("rows.jsonl");
+    write_rows(&rows, 120);
+    let labels_cf_root = write_labels_db(&root, &rows, 1);
+    let plan = write_plan(&root, 10, 120);
+    let mut request = request_for(&root, plan, PathBuf::new(), None, 80, Some(60));
+    request.labels_cf_root = Some(labels_cf_root.clone());
+    request.labels_key = "unit_labels".to_string();
+    request.emit_artifacts = false;
+    request.metrics_dir = PathBuf::new();
+    request.cf_root = root.join("shared-assay-cf");
+
+    let report = evaluate(&request).unwrap();
+    let evidence = write_outputs(&request, &report).unwrap();
+
+    assert_eq!(report.label_source.mode, "aster_graph_cf");
+    assert_eq!(report.label_source.row_count, 120);
+    assert_eq!(report.label_source.positive_count, 60);
+    assert_eq!(report.rows_jsonl, "");
+    assert!(
+        report
+            .label_source
+            .db_readback
+            .as_ref()
+            .unwrap()
+            .readback_matches
+    );
+    assert_eq!(evidence.artifact_mode, "db_only");
+    assert_eq!(evidence.assay_cf_subject_counts["ensemble_card"], 1);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn label_import_limit_per_class_matches_stream_selection() {
+    let root = temp_root("i8bin-label-limit-per-class");
+    fs::create_dir_all(&root).unwrap();
+    let rows = root.join("rows.jsonl");
+    write_rows(&rows, 10);
+
+    let imported = super::label_store::load_rows_jsonl(
+        &rows,
+        1,
+        &super::label_store::AnchorSpec::Label,
+        Some(3),
+    )
+    .unwrap();
+
+    assert_eq!(imported.labels.len(), 6);
+    assert_eq!(imported.labels.iter().filter(|value| **value).count(), 3);
+    assert_eq!(imported.label_counts["0"], 3);
+    assert_eq!(imported.label_counts["1"], 3);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn default_gate_mode_refuses_homogeneous_panel_before_outputs() {
+    let root = temp_root("i8bin-ensemble-card-a37-gate-refuses");
+    fs::create_dir_all(&root).unwrap();
+    let rows = root.join("rows.jsonl");
+    write_rows(&rows, 120);
+    let labels_cf_root = write_labels_db(&root, &rows, 1);
+    let plan = write_plan(&root, 10, 120);
+    let mut request = request_for(&root, plan, PathBuf::new(), None, 80, Some(60));
+    request.labels_cf_root = Some(labels_cf_root);
+    request.labels_key = "unit_labels".to_string();
     request.mode = A37CardMode::Gate;
 
     let report = evaluate(&request).unwrap();
@@ -70,6 +198,25 @@ fn default_gate_mode_refuses_homogeneous_panel_before_outputs() {
     assert!(!request.metrics_dir.exists());
     assert!(!request.cf_root.exists());
     let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn gate_mode_rejects_file_label_authority_at_parse() {
+    let args = [
+        "--plan",
+        "plan.json",
+        "--rows-jsonl",
+        "rows.jsonl",
+        "--cf-root",
+        "assay-cf",
+    ]
+    .iter()
+    .map(|value| value.to_string())
+    .collect::<Vec<_>>();
+
+    let error = I8binEnsembleRequest::parse(&args).unwrap_err();
+
+    assert!(error.contains("gate mode requires --labels-cf-root"));
 }
 
 #[test]
@@ -120,7 +267,7 @@ fn existing_metrics_dir_fails_closed_before_overwrite() {
 
     let error = write_outputs(&request, &report).unwrap_err();
 
-    assert!(error.starts_with("CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS"));
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS");
     assert_eq!(
         fs::read_to_string(request.metrics_dir.join("sentinel.txt")).unwrap(),
         "preserve"
@@ -143,7 +290,7 @@ fn existing_cf_root_fails_closed_before_mixing_rows() {
 
     let error = write_outputs(&request, &report).unwrap_err();
 
-    assert!(error.starts_with("CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS"));
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_I8BIN_CARD_OUTPUT_EXISTS");
     assert_eq!(
         fs::read_to_string(request.cf_root.join("sentinel.txt")).unwrap(),
         "preserve-cf"
@@ -162,8 +309,12 @@ fn request_for(
 ) -> I8binEnsembleRequest {
     let metrics = root.join("metrics");
     I8binEnsembleRequest {
-        plan,
+        plan: Some(plan),
+        plan_cf_root: None,
+        plan_key: crate::partitioned_bench::rrf_plan::DEFAULT_ASSOCIATION_KEY.to_string(),
         rows_jsonl: rows,
+        labels_cf_root: None,
+        labels_key: super::label_store::DEFAULT_ASSOCIATION_KEY.to_string(),
         stream_report,
         metrics_dir: metrics.clone(),
         cf_root: metrics.join("assay_cf"),
@@ -176,7 +327,31 @@ fn request_for(
         max_redundancy: 0.6,
         nmi_bins: 8,
         mode: A37CardMode::Diagnostic,
+        emit_artifacts: true,
     }
+}
+
+fn write_labels_db(root: &Path, rows: &Path, target_class: usize) -> PathBuf {
+    let imported = super::label_store::load_rows_jsonl(
+        rows,
+        target_class,
+        &super::label_store::AnchorSpec::Label,
+        None,
+    )
+    .unwrap();
+    let labels_cf_root = root.join("labels-cf");
+    super::label_store::write(
+        &labels_cf_root,
+        "unit_labels",
+        "unit",
+        target_class,
+        &imported.source_sha256,
+        &imported.label_counts,
+        &imported.labels,
+        32,
+    )
+    .unwrap();
+    labels_cf_root
 }
 
 fn write_rows(path: &Path, rows: usize) {

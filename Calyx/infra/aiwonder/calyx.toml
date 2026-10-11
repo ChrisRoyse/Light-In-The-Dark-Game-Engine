@@ -25,10 +25,11 @@ bind_addr = "127.0.0.1:7700"
 vault_path = "$CALYX_HOME/data/vault"
 
 # VRAM budget for Forge, in MiB. Must be in 1..=30000.
-# The aiwonder RTX 5090 exposes 32607 MiB; the 30000 ceiling leaves headroom for
-# the three resident TEI servers and the CUDA context. Out-of-range values abort
-# with CALYX_FORGE_VRAM_BUDGET.
-vram_budget_mib = 8192
+# The aiwonder RTX 5090 exposes 32607 MiB. The 12288 MiB production ceiling leaves
+# headroom for resident TEI/HHEM services and the CUDA context while still failing
+# closed before Calyx can crowd out the co-tenant GPU workloads. Out-of-range
+# values abort with CALYX_FORGE_VRAM_BUDGET.
+vram_budget_mib = 12288
 
 # Directory for daemon log files.
 log_dir = "/zfs/hot/logs/calyx"
@@ -38,8 +39,11 @@ log_dir = "/zfs/hot/logs/calyx"
 health_log_path = "/zfs/hot/logs/calyx-health/latest.json"
 
 # Text-Embeddings-Inference (TEI) endpoints the daemon expects to be resident.
-# On aiwonder these are the three loopback model servers on :8088/:8089/:8090.
+# Calyx-owned FP16 embedders live on :18190/:18188. The :8088/:8089/:8090
+# endpoints are shared legacy services kept for explicit FSV/manual workflows.
 tei_endpoints = [
+  "http://127.0.0.1:18190",
+  "http://127.0.0.1:18188",
   "http://127.0.0.1:8088",
   "http://127.0.0.1:8089",
   "http://127.0.0.1:8090",

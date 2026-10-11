@@ -4,7 +4,7 @@ use std::str::FromStr;
 use calyx_core::{CalyxError, Modality, Result, SlotShape};
 use fastembed::{EmbeddingModel, TextEmbedding, TextInitOptions};
 use hf_hub::api::sync::ApiBuilder;
-use ort::ep;
+use ort::ep::{self, ArenaExtendStrategy, cuda::ConvAlgorithmSearch};
 
 use super::cuda_guard::CudaDropGuard;
 use super::{OnnxLens, OnnxModelFiles, OnnxProviderPolicy};
@@ -38,20 +38,11 @@ pub fn from_model_with_policy(
     cache_dir: PathBuf,
     provider_policy: OnnxProviderPolicy,
 ) -> Result<OnnxLens> {
-    let _ort_dylib = super::dynamic_ort::ensure_dynamic_ort()?;
+    let _ort_dylib = super::dynamic_ort::ensure_dynamic_ort(provider_policy)?;
     let name = name.into();
     let info = TextEmbedding::get_model_info(&model_name).map_err(|err| {
         CalyxError::lens_unreachable(format!("fastembed model metadata failed: {err}"))
     })?;
-    let model = TextEmbedding::try_new(
-        TextInitOptions::new(model_name.clone())
-            .with_cache_dir(cache_dir.clone())
-            .with_show_download_progress(false)
-            .with_intra_threads(1)
-            .with_execution_providers(execution_providers(provider_policy)),
-    )
-    .map_err(|err| CalyxError::lens_unreachable(format!("ONNX runtime init failed: {err}")))?;
-    let model = CudaDropGuard::new(model, provider_policy);
     let effective_cache = fastembed_cache_root(&cache_dir);
     let files = resolve_files(
         &effective_cache,
@@ -59,6 +50,20 @@ pub fn from_model_with_policy(
         &info.model_file,
         &info.additional_files,
     )?;
+    super::arena::preflight_gpu_mem_limit_for_artifacts(
+        &format!("onnx-fastembed:{}", info.model_code),
+        provider_policy,
+        files.artifact_paths().iter().map(|path| path.as_path()),
+    )?;
+    let model = TextEmbedding::try_new(
+        TextInitOptions::new(model_name.clone())
+            .with_cache_dir(cache_dir.clone())
+            .with_show_download_progress(false)
+            .with_intra_threads(1)
+            .with_execution_providers(execution_providers(provider_policy)?),
+    )
+    .map_err(|err| CalyxError::lens_unreachable(format!("ONNX runtime init failed: {err}")))?;
+    let model = CudaDropGuard::new(model, provider_policy);
     let weights_sha256 = hash_files(&files.artifact_paths())?;
     let corpus_hash = sha256_digest(&[
         b"onnx-fastembed-mean-pool-v1",
@@ -155,22 +160,46 @@ pub fn model_from_name(raw: &str) -> Result<EmbeddingModel> {
 
 pub fn execution_providers(
     policy: OnnxProviderPolicy,
-) -> Vec<fastembed::ExecutionProviderDispatch> {
+) -> Result<Vec<fastembed::ExecutionProviderDispatch>> {
+    execution_providers_on_device(policy, 0)
+}
+
+pub fn execution_providers_on_device(
+    policy: OnnxProviderPolicy,
+    device_id: i32,
+) -> Result<Vec<fastembed::ExecutionProviderDispatch>> {
+    execution_providers_on_device_with_stream(policy, device_id, None)
+}
+
+pub fn execution_providers_on_device_with_stream(
+    policy: OnnxProviderPolicy,
+    device_id: i32,
+    compute_stream: Option<*mut ()>,
+) -> Result<Vec<fastembed::ExecutionProviderDispatch>> {
     match policy {
-        // Keep ORT's default kNextPowerOfTwo arena: it pre-grows a pooled block
-        // that absorbs the large, variable transient attention buffers real
-        // (long) clinical sequences demand. SameAsRequested was tried to shrink
-        // resident VRAM but fragmented the arena and failed to allocate a 256 MiB
-        // attention buffer mid-ingest on long PubMedQA inputs. VRAM is instead
-        // controlled by sizing the panel (fewer, less-redundant lenses), which
-        // does not risk a hard OOM on a sequence-length spike.
-        OnnxProviderPolicy::CudaFailLoud => vec![
-            ep::CUDA::default()
-                .with_device_id(0)
-                .build()
-                .error_on_failure(),
-        ],
-        OnnxProviderPolicy::CpuExplicit => vec![ep::CPU::default().build()],
+        OnnxProviderPolicy::CudaFailLoud => {
+            // #1143: the default kNextPowerOfTwo strategy over-reserves the
+            // BFC device arena on every extension; dynamic (batch, seq)
+            // workloads are our norm, so extend exactly as requested and let
+            // the optional limit turn exhaustion into a structured error at
+            // a defined budget.
+            let mut cuda = ep::CUDA::default()
+                .with_device_id(device_id)
+                .with_conv_algorithm_search(ConvAlgorithmSearch::Heuristic)
+                .with_conv_max_workspace(false)
+                .with_arena_extend_strategy(ArenaExtendStrategy::SameAsRequested);
+            if super::session::configured_cuda_graphs()? {
+                cuda = cuda.with_cuda_graph(true);
+            }
+            if let Some(stream) = compute_stream {
+                cuda = unsafe { cuda.with_compute_stream(stream) };
+            }
+            if let Some(limit) = super::arena::configured_gpu_mem_limit()? {
+                cuda = cuda.with_memory_limit(limit);
+            }
+            Ok(vec![cuda.build().error_on_failure()])
+        }
+        OnnxProviderPolicy::CpuExplicit => Ok(vec![ep::CPU::default().build()]),
     }
 }
 

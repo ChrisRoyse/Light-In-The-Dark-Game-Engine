@@ -1,42 +1,42 @@
-use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 mod a38_bundle;
+mod batch_limit;
+mod manifest_restore;
+mod registry_contract;
+mod resident;
 mod template_cards;
 mod template_model;
 mod template_store;
 mod templates;
+mod warm;
+
+pub(crate) use resident::measure_batch_at as measure_resident_batch_at;
+pub(crate) use resident::ready_value_at as resident_ready_value_at;
+pub(crate) use resident::{ResidentDiscovery, read_resident_discovery, resident_discovery_path};
 
 use calyx_assay::{PanelResourceBudget, ResourceDensity, ResourceUsage, pack_panel_by_density};
-use calyx_core::{LensCost, Placement, SlotState};
+use calyx_core::{CalyxError, Input, LensCost, LensId, Modality, Panel, Placement, SlotState};
 use calyx_registry::{
-    LensHealth, PanelSlotListing, lens_spec_from_manifest_path, list_panel, load_vault_panel_state,
+    LensHealth, PanelSlotListing, Registry, RegistryBatchLimitChange, RegistryBatchLimitUpdate,
+    RegistrySnapshotMeasureStats, VaultRegistrySnapshot, apply_registry_snapshot_batch_limits,
+    lens_spec_from_manifest_path, list_panel, load_vault_panel_state,
+    measure_registry_snapshot_lens_batch_with_stats, set_vault_registry_batch_limits,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::error::{CliError, CliResult};
+use crate::lens_commands::catalog::{catalog_path, read_catalog};
 use crate::output::print_json;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct LensCatalog {
-    lenses: Vec<LensCatalogEntry>,
-}
+use manifest_restore::manifest_restore;
+use registry_contract::{registry_audit, registry_repair};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct LensCatalogEntry {
-    lens_id: String,
-    name: String,
-    modality: String,
-    runtime: String,
-    dim: u32,
-    weights_sha256: String,
-    manifest: PathBuf,
-    #[serde(default)]
-    cost: LensCost,
-    #[serde(default)]
-    placement: Placement,
-}
+#[cfg(test)]
+pub(crate) use crate::lens_commands::catalog::LensCatalog;
+pub(crate) use crate::lens_commands::catalog::LensCatalogEntry;
 
 #[derive(Serialize)]
 struct PanelStatusReport {
@@ -99,15 +99,99 @@ struct PanelSlotStatus {
     remaining_budget_after: Option<ResourceUsage>,
 }
 
+pub(crate) struct SavedTemplatePanelBuild {
+    pub template_id: String,
+    pub template_name: String,
+    pub panel: Panel,
+    pub registry: Registry,
+    pub content_lens_count: usize,
+    pub a37_gate_eligible: bool,
+    pub a37_status: String,
+    pub registered_lenses_added: usize,
+}
+
+pub(crate) fn build_saved_template_panel(
+    home: &Path,
+    selector: &str,
+    now_ms: u64,
+    cpu_explicit: bool,
+) -> CliResult<SavedTemplatePanelBuild> {
+    build_saved_template_panel_with_progress(home, selector, now_ms, cpu_explicit, None)
+}
+
+fn build_saved_template_panel_with_progress(
+    home: &Path,
+    selector: &str,
+    now_ms: u64,
+    cpu_explicit: bool,
+    progress: Option<&mut dyn FnMut(template_store::TemplateLensProgress) -> CliResult<()>>,
+) -> CliResult<SavedTemplatePanelBuild> {
+    let store = template_store::TemplateStore::open(home);
+    let mut template = store.load(selector)?;
+    template.validate()?;
+    let a37 = template.a37_admission();
+    let template_id = template_store::id_for_loaded(&template)?;
+    let mut registry = Registry::new();
+    let registered_lenses_added = template_store::register_template_lenses_with_progress(
+        &mut registry,
+        &mut template,
+        cpu_explicit,
+        progress,
+    )?;
+    let mut panel = template.to_target_panel(now_ms);
+    if cpu_explicit {
+        for slot in &mut panel.slots {
+            if !slot.retrieval_only && !slot.excluded_from_dedup {
+                slot.resource.cost.vram_bytes = 0;
+                slot.resource.placement = Placement::Cpu;
+            }
+        }
+    }
+    let content_lens_count = a37.content_lens_count.max(panel_content_lens_count(&panel));
+    Ok(SavedTemplatePanelBuild {
+        template_id,
+        template_name: template.name,
+        panel,
+        registry,
+        content_lens_count,
+        a37_gate_eligible: a37.gate_eligible,
+        a37_status: a37.status,
+        registered_lenses_added,
+    })
+}
+
+pub(crate) fn saved_template_names(home: &Path) -> CliResult<Vec<String>> {
+    let store = template_store::TemplateStore::open(home);
+    Ok(store
+        .list()?
+        .into_iter()
+        .map(|template| template.name)
+        .collect())
+}
+
 pub(crate) fn run(topic: &str, rest: &[String]) -> CliResult {
     match topic {
         "a38-bundle" => a38_bundle::run(rest),
+        "batch-limit" => batch_limit::batch_limit(rest),
+        "manifest-restore" => manifest_restore(rest),
+        "registry-audit" => registry_audit(rest),
+        "registry-repair" => registry_repair(rest),
         "status" => status(rest),
         "template" => templates::run(rest),
+        "resident" => resident::run(rest),
+        "warm" => warm::run(rest),
         other => Err(CliError::usage(format!(
-            "unknown panel subcommand {other}; expected a38-bundle, status, or template"
+            "unknown panel subcommand {other}; expected a38-bundle, batch-limit, manifest-restore, registry-audit, registry-repair, status, template, resident, or warm"
         ))),
     }
+}
+
+fn panel_content_lens_count(panel: &Panel) -> usize {
+    panel
+        .slots
+        .iter()
+        .filter(|slot| !slot.retrieval_only && !slot.excluded_from_dedup)
+        .count()
 }
 
 fn status(args: &[String]) -> CliResult {
@@ -310,25 +394,6 @@ fn value<'a>(args: &'a [String], index: usize, flag: &str) -> CliResult<&'a str>
     args.get(index)
         .map(String::as_str)
         .ok_or_else(|| CliError::usage(format!("{flag} requires a value")))
-}
-
-fn catalog_path(home: Option<&Path>) -> CliResult<PathBuf> {
-    let root = match home {
-        Some(path) => path.to_path_buf(),
-        None => env::var_os("CALYX_HOME")
-            .map(PathBuf::from)
-            .ok_or_else(|| CliError::usage("CALYX_HOME is required or pass --home <dir>"))?,
-    };
-    Ok(root.join("lenses").join("registry.json"))
-}
-
-fn read_catalog(path: &Path) -> CliResult<LensCatalog> {
-    if !path.exists() {
-        return Ok(LensCatalog { lenses: Vec::new() });
-    }
-    let bytes = fs::read(path)?;
-    serde_json::from_slice(&bytes)
-        .map_err(|err| CliError::usage(format!("parse lens catalog {}: {err}", path.display())))
 }
 
 fn read_budget(path: &Path) -> CliResult<PanelResourceBudget> {

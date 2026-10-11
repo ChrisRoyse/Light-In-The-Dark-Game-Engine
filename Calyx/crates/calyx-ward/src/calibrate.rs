@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use calyx_core::{Clock, SlotId};
+use calyx_core::{Clock, Panel, SlotId, SlotShape, SlotState};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -30,6 +30,15 @@ impl SlotKind {
             Self::Content => 0.03,
         }
     }
+
+    /// Stable lowercase wire label for the aspect (`/v1/guard perSlot.aspect`).
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Identity => "identity",
+            Self::Stylistic => "stylistic",
+            Self::Content => "content",
+        }
+    }
 }
 
 /// Grounded calibration scores for one slot.
@@ -40,6 +49,57 @@ pub struct CalibrationInput {
     pub bad_scores: Vec<f32>,
     pub slot_kind: SlotKind,
     pub target_far: f32,
+}
+
+/// Fail-closed gate that every calibration input names a slot the calibrated
+/// profile can actually guard (#1120). `calibrate` copies every input slot
+/// into `required_slots`, and the Ward guard compares dense vectors only, so
+/// a sparse/multi, unknown, or non-active slot would persist a profile that
+/// fails every guarded query at query time instead of failing here.
+///
+/// Callers that persist a profile for a concrete vault panel (CLI and MCP
+/// `guard calibrate`) must call this before `calibrate`.
+pub fn validate_calibration_slots(
+    inputs: &[CalibrationInput],
+    panel: &Panel,
+) -> Result<(), WardError> {
+    for input in inputs {
+        let slot = panel
+            .slots
+            .iter()
+            .find(|slot| slot.slot_id == input.slot)
+            .ok_or(WardError::CalibrationSlotUnknown {
+                slot: input.slot,
+                panel_version: panel.version,
+            })?;
+        let inactive = match slot.state {
+            SlotState::Active => None,
+            SlotState::Parked => Some("parked"),
+            SlotState::Retired => Some("retired"),
+        };
+        if let Some(state) = inactive {
+            return Err(WardError::CalibrationSlotState {
+                slot: input.slot,
+                state: state.to_string(),
+            });
+        }
+        match slot.shape {
+            SlotShape::Dense(_) => {}
+            SlotShape::Sparse(dim) => {
+                return Err(WardError::CalibrationSlotShape {
+                    slot: input.slot,
+                    shape: format!("sparse({dim})"),
+                });
+            }
+            SlotShape::Multi { token_dim } => {
+                return Err(WardError::CalibrationSlotShape {
+                    slot: input.slot,
+                    shape: format!("multi(token_dim={token_dim})"),
+                });
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Calibrates one slot's tau from known-bad scores and reports achieved FAR/FRR.
@@ -115,7 +175,7 @@ pub fn calibrate(
         if !profile_template.required_slots.contains(&input.slot) {
             profile_template.required_slots.push(input.slot);
         }
-        metas.push((input.slot, meta));
+        metas.push((input.slot, input.slot_kind, meta));
     }
     profile_template.required_slots.sort_unstable();
     profile_template.required_slots.dedup();
@@ -226,7 +286,7 @@ fn binomial_cdf_at_most(successes: usize, trials: usize, probability: f64) -> f6
 }
 
 fn merge_meta(
-    metas: &[(SlotId, CalibrationMeta)],
+    metas: &[(SlotId, SlotKind, CalibrationMeta)],
     alpha: f32,
     clock: &dyn Clock,
 ) -> Result<CalibrationMeta, WardError> {
@@ -239,12 +299,15 @@ fn merge_meta(
     let mut far = 0.0_f32;
     let mut frr = 0.0_f32;
     let mut per_slot = BTreeMap::new();
-    for (slot, meta) in metas {
+    for (slot, slot_kind, meta) in metas {
         hasher.update(slot.get().to_be_bytes());
         hasher.update(meta.corpus_hash);
         far = far.max(meta.far);
         frr = frr.max(meta.frr);
-        per_slot.insert(*slot, SlotCalibrationMeta::from_calibration(meta));
+        per_slot.insert(
+            *slot,
+            SlotCalibrationMeta::from_calibration(meta, *slot_kind),
+        );
     }
     let hash = hasher.finalize();
     let mut corpus_hash = [0_u8; 32];

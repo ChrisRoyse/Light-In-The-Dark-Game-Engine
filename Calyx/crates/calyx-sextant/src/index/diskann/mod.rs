@@ -5,7 +5,7 @@
 
 pub mod build;
 pub mod concat;
-#[cfg(feature = "cuda")]
+#[cfg(sextant_cuvs)]
 mod cuvs_cagra;
 pub mod dual;
 pub mod graph;
@@ -15,7 +15,8 @@ pub mod token;
 mod token_sidecar;
 
 pub use build::{
-    DiskAnnBuildBackend, DiskAnnBuildParams, build_diskann_graph, build_diskann_graph_with_backend,
+    DiskAnnBuildBackend, DiskAnnBuildParams, DiskAnnBuildProgress, build_diskann_graph,
+    build_diskann_graph_with_backend, build_diskann_graph_with_backend_and_progress,
 };
 pub use concat::{ConcatCrossTermDiskAnn, ConcatCrossTermHit, ConcatCrossTermKey};
 pub use dual::{

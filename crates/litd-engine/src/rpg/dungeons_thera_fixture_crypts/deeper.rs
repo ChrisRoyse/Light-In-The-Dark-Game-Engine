@@ -1,0 +1,405 @@
+use crate::rpg::{
+    AreaSpec, ConnectionDirection, ConnectionDiscovery, RoomConcealment, RoomKind, TravelKind,
+};
+
+use super::super::rpg_dungeons_thera_support::{
+    ARKHAM_AREA_ID, DungeonSpecInput, EASTSTRIDE_REACH_AREA_ID, EIL_SHAERIA_AREA_ID,
+    FORGOTTEN_CRYPTS_AREA_ID, NORTHWEST_REACHES_AREA_ID, RUINS_OF_MAETHIEN_AREA_ID, dungeon_spec,
+    external, hidden_internal, internal, locked_internal, room,
+};
+
+// #1657 Forgotten Crypts (6-30 CF; zombies/skeletons; beneath Arkham, #1641).
+pub(crate) fn forgotten_crypts_area_spec() -> AreaSpec {
+    let a = FORGOTTEN_CRYPTS_AREA_ID;
+    dungeon_spec(DungeonSpecInput {
+        area_id: a,
+        display_name: "The Forgotten Crypts",
+        source_issue: 1657,
+        extra_canon: &[1600, 1628, 1641],
+        level: (6, 30),
+        summary: "The buried crypts beneath Arkham, long forgotten and full of restless zombies and \
+            skeletons. A maze of collapsed passages descending toward a grave-priest's oratory.",
+        slug: "forgotten_crypts",
+        silhouette: "collapsed under-city crypts of broken passages beneath Arkham",
+        extra_props: &["prop.crypt.collapsed_arch", "prop.crypt.bone_pile"],
+        notes: &[
+            "Level band 6-30 and zombie/skeleton roster are factual (CF registry + #1657); tied to \
+                Arkham (#1641); originalized name/lore only (#984).",
+            "Undead use sound-only perception (#1600); crypt-echo acoustics (#1628).",
+        ],
+        rooms: vec![
+            room(
+                "room.forgotten_crypts.descent",
+                "Forgotten Descent",
+                RoomKind::Gate,
+                "A caved-in stair beneath Arkham dropping into the forgotten crypts.",
+                RoomConcealment::GateChokepoint,
+                &["npc.forgotten_crypts.grave_ward"],
+            ),
+            room(
+                "room.forgotten_crypts.passages",
+                "Broken Passages",
+                RoomKind::Intersection,
+                "A junction of collapsed passages where skeletons rattle in the dust.",
+                RoomConcealment::None,
+                &["npc.forgotten_crypts.skeleton"],
+            ),
+            room(
+                "room.forgotten_crypts.ossuary",
+                "Ossuary",
+                RoomKind::Chamber,
+                "Walls of stacked bone; zombies claw free of the ossuary niches.",
+                RoomConcealment::HiddenLayer,
+                &["npc.forgotten_crypts.zombie"],
+            ),
+            room(
+                "room.forgotten_crypts.flooded",
+                "Flooded Undercrypt",
+                RoomKind::Chamber,
+                "A knee-deep flooded crypt where drowned dead drift in the black water.",
+                RoomConcealment::HiddenLayer,
+                &["npc.forgotten_crypts.drowned_dead"],
+            ),
+            room(
+                "room.forgotten_crypts.oratory",
+                "Grave-Priest's Oratory",
+                RoomKind::Chamber,
+                "The oratory of a long-dead grave-priest who still keeps his rites.",
+                RoomConcealment::None,
+                &["npc.forgotten_crypts.grave_priest"],
+            ),
+            room(
+                "room.forgotten_crypts.vault",
+                "Sealed Ossuary Vault",
+                RoomKind::Landmark,
+                "A bone-sealed vault of the crypt's oldest offerings.",
+                RoomConcealment::HiddenLayer,
+                &[],
+            ),
+        ],
+        connections: vec![
+            external(
+                "conn.forgotten_crypts.to_arkham",
+                "room.forgotten_crypts.descent",
+                ARKHAM_AREA_ID,
+                ConnectionDirection::Up,
+                TravelKind::Stair,
+                ConnectionDiscovery::Visible,
+            ),
+            internal(
+                "conn.forgotten_crypts.enter",
+                a,
+                "room.forgotten_crypts.descent",
+                "room.forgotten_crypts.passages",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+            ),
+            internal(
+                "conn.forgotten_crypts.to_ossuary",
+                a,
+                "room.forgotten_crypts.passages",
+                "room.forgotten_crypts.ossuary",
+                ConnectionDirection::North,
+                TravelKind::Path,
+            ),
+            internal(
+                "conn.forgotten_crypts.descend",
+                a,
+                "room.forgotten_crypts.ossuary",
+                "room.forgotten_crypts.flooded",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+            ),
+            internal(
+                "conn.forgotten_crypts.to_boss",
+                a,
+                "room.forgotten_crypts.flooded",
+                "room.forgotten_crypts.oratory",
+                ConnectionDirection::In,
+                TravelKind::Path,
+            ),
+            locked_internal(
+                "conn.forgotten_crypts.vault_door",
+                a,
+                "room.forgotten_crypts.oratory",
+                "room.forgotten_crypts.vault",
+                ConnectionDirection::In,
+                TravelKind::Stair,
+                "lock.forgotten_crypts.vault",
+            ),
+            hidden_internal(
+                "conn.forgotten_crypts.secret",
+                a,
+                "room.forgotten_crypts.passages",
+                "room.forgotten_crypts.vault",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+                ConnectionDiscovery::Hidden,
+            ),
+        ],
+    })
+}
+
+// #1657 Eil Shaeria (35-50 CF; ghasts good, shapeshifters 35-40 evil; far-east reach, #1632).
+pub(crate) fn eil_shaeria_area_spec() -> AreaSpec {
+    let a = EIL_SHAERIA_AREA_ID;
+    dungeon_spec(DungeonSpecInput {
+        area_id: a,
+        display_name: "Eil Shaeria",
+        source_issue: 1657,
+        extra_canon: &[1600, 1628],
+        level: (35, 50),
+        summary: "A haunted reach in the far east where the veil is thin. Ghasts stalk the righteous; \
+            shapeshifters (35-40) prey on the wicked amid mist-drowned barrows.",
+        slug: "eil_shaeria",
+        silhouette: "mist-drowned haunted reach of barrow-mounds under a thin veil",
+        extra_props: &["prop.crypt.barrow_mound", "prop.crypt.veil_mist"],
+        notes: &[
+            "Level band 35-50, ghast (good) and shapeshifter (35-40 evil) rosters are factual \
+                (CF registry + #1657); originalized name/lore only (#984).",
+            "Undead sound-only perception (#1600); veil-echo acoustics (#1628).",
+        ],
+        rooms: vec![
+            room(
+                "room.eil_shaeria.veil_gate",
+                "Veil Gate",
+                RoomKind::Gate,
+                "Where the eastern road ends and the thin veil parts onto the haunted reach.",
+                RoomConcealment::GateChokepoint,
+                &["npc.eil_shaeria.veil_watcher"],
+            ),
+            room(
+                "room.eil_shaeria.barrows",
+                "Barrow Fields",
+                RoomKind::Chamber,
+                "Fog-wreathed barrow-mounds where ghasts rise at every step.",
+                RoomConcealment::HiddenLayer,
+                &["npc.eil_shaeria.ghast"],
+            ),
+            room(
+                "room.eil_shaeria.mistways",
+                "Mistways",
+                RoomKind::Intersection,
+                "Shifting mist-paths where shapeshifters wear the faces of the lost.",
+                RoomConcealment::HiddenLayer,
+                &["npc.eil_shaeria.shapeshifter"],
+            ),
+            room(
+                "room.eil_shaeria.hollow",
+                "Hollow Barrow",
+                RoomKind::Chamber,
+                "A great hollowed barrow sinking beneath the reach into old dark.",
+                RoomConcealment::None,
+                &["npc.eil_shaeria.ghast"],
+            ),
+            room(
+                "room.eil_shaeria.veiled_lord",
+                "The Veiled Lord's Barrow",
+                RoomKind::Chamber,
+                "The barrow of the reach's veiled lord, who wears a hundred stolen faces.",
+                RoomConcealment::None,
+                &["npc.eil_shaeria.veiled_lord"],
+            ),
+            room(
+                "room.eil_shaeria.reliquary",
+                "Veil Reliquary",
+                RoomKind::Landmark,
+                "A veil-warded reliquary of grave-silver behind a sealed barrow door.",
+                RoomConcealment::HiddenLayer,
+                &[],
+            ),
+        ],
+        connections: vec![
+            external(
+                "conn.eil_shaeria.to_eaststride",
+                "room.eil_shaeria.veil_gate",
+                EASTSTRIDE_REACH_AREA_ID,
+                ConnectionDirection::West,
+                TravelKind::Road,
+                ConnectionDiscovery::Visible,
+            ),
+            internal(
+                "conn.eil_shaeria.enter",
+                a,
+                "room.eil_shaeria.veil_gate",
+                "room.eil_shaeria.barrows",
+                ConnectionDirection::In,
+                TravelKind::Path,
+            ),
+            internal(
+                "conn.eil_shaeria.to_mistways",
+                a,
+                "room.eil_shaeria.barrows",
+                "room.eil_shaeria.mistways",
+                ConnectionDirection::East,
+                TravelKind::ConcealedTrail,
+            ),
+            internal(
+                "conn.eil_shaeria.descend",
+                a,
+                "room.eil_shaeria.mistways",
+                "room.eil_shaeria.hollow",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+            ),
+            internal(
+                "conn.eil_shaeria.to_boss",
+                a,
+                "room.eil_shaeria.hollow",
+                "room.eil_shaeria.veiled_lord",
+                ConnectionDirection::In,
+                TravelKind::Path,
+            ),
+            locked_internal(
+                "conn.eil_shaeria.reliquary_door",
+                a,
+                "room.eil_shaeria.veiled_lord",
+                "room.eil_shaeria.reliquary",
+                ConnectionDirection::In,
+                TravelKind::Stair,
+                "lock.eil_shaeria.reliquary",
+            ),
+            hidden_internal(
+                "conn.eil_shaeria.secret",
+                a,
+                "room.eil_shaeria.mistways",
+                "room.eil_shaeria.reliquary",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+                ConnectionDiscovery::ConcealedTrail,
+            ),
+        ],
+    })
+}
+
+// #1657 Ruins of Maethien (40-51 CF; nightwalkers; NW endgame undead ruin, #1632).
+pub(crate) fn ruins_of_maethien_area_spec() -> AreaSpec {
+    let a = RUINS_OF_MAETHIEN_AREA_ID;
+    dungeon_spec(DungeonSpecInput {
+        area_id: a,
+        display_name: "The Ruins of Maethien",
+        source_issue: 1657,
+        extra_canon: &[1600, 1628],
+        level: (40, 51),
+        summary: "A fallen city in the northwest reaches, now an endgame undead ruin. Nightwalkers \
+            stride its shattered halls beneath a starless dark. Its Past counterpart lies elsewhere.",
+        slug: "ruins_of_maethien",
+        silhouette: "shattered fallen city of toppled towers under a starless dark",
+        extra_props: &["prop.crypt.toppled_column", "prop.crypt.grave_beacon"],
+        notes: &[
+            "Level band 40-51 and nightwalker roster are factual (CF registry + #1657); the Past \
+                counterpart is authored by the Past issue; originalized name/lore only (#984).",
+            "Undead sound-only perception (#1600); ruin-echo acoustics (#1628).",
+        ],
+        rooms: vec![
+            room(
+                "room.ruins_of_maethien.gate",
+                "Broken Gate",
+                RoomKind::Gate,
+                "The toppled gate of Maethien, where the northwest road dies in rubble.",
+                RoomConcealment::GateChokepoint,
+                &["npc.ruins_of_maethien.gate_shade"],
+            ),
+            room(
+                "room.ruins_of_maethien.plaza",
+                "Shattered Plaza",
+                RoomKind::Intersection,
+                "A ruined plaza of fallen statuary where nightwalkers gather in the gloom.",
+                RoomConcealment::None,
+                &["npc.ruins_of_maethien.nightwalker"],
+            ),
+            room(
+                "room.ruins_of_maethien.halls",
+                "Sunken Halls",
+                RoomKind::Chamber,
+                "Collapsed halls descending under the ruin, thick with grave-cold.",
+                RoomConcealment::HiddenLayer,
+                &["npc.ruins_of_maethien.nightwalker"],
+            ),
+            room(
+                "room.ruins_of_maethien.undervault",
+                "The Undervault",
+                RoomKind::Chamber,
+                "A vast undervault where the city's dead were interred en masse.",
+                RoomConcealment::HiddenLayer,
+                &["npc.ruins_of_maethien.grave_horror"],
+            ),
+            room(
+                "room.ruins_of_maethien.throne",
+                "The Nightwalker Throne",
+                RoomKind::Chamber,
+                "The throne of the ruin's nightwalker king, wreathed in starless dark.",
+                RoomConcealment::None,
+                &["npc.ruins_of_maethien.nightwalker_king"],
+            ),
+            room(
+                "room.ruins_of_maethien.crypt_hoard",
+                "The Crypt Hoard",
+                RoomKind::Landmark,
+                "The sealed hoard of a fallen city behind a king-warded door.",
+                RoomConcealment::HiddenLayer,
+                &[],
+            ),
+        ],
+        connections: vec![
+            external(
+                "conn.ruins_of_maethien.to_nw",
+                "room.ruins_of_maethien.gate",
+                NORTHWEST_REACHES_AREA_ID,
+                ConnectionDirection::North,
+                TravelKind::Road,
+                ConnectionDiscovery::Visible,
+            ),
+            internal(
+                "conn.ruins_of_maethien.enter",
+                a,
+                "room.ruins_of_maethien.gate",
+                "room.ruins_of_maethien.plaza",
+                ConnectionDirection::In,
+                TravelKind::Path,
+            ),
+            internal(
+                "conn.ruins_of_maethien.descend",
+                a,
+                "room.ruins_of_maethien.plaza",
+                "room.ruins_of_maethien.halls",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+            ),
+            internal(
+                "conn.ruins_of_maethien.deeper",
+                a,
+                "room.ruins_of_maethien.halls",
+                "room.ruins_of_maethien.undervault",
+                ConnectionDirection::Down,
+                TravelKind::Stair,
+            ),
+            internal(
+                "conn.ruins_of_maethien.to_boss",
+                a,
+                "room.ruins_of_maethien.undervault",
+                "room.ruins_of_maethien.throne",
+                ConnectionDirection::In,
+                TravelKind::Path,
+            ),
+            locked_internal(
+                "conn.ruins_of_maethien.hoard_door",
+                a,
+                "room.ruins_of_maethien.throne",
+                "room.ruins_of_maethien.crypt_hoard",
+                ConnectionDirection::In,
+                TravelKind::Stair,
+                "lock.ruins_of_maethien.hoard",
+            ),
+            hidden_internal(
+                "conn.ruins_of_maethien.secret",
+                a,
+                "room.ruins_of_maethien.halls",
+                "room.ruins_of_maethien.crypt_hoard",
+                ConnectionDirection::Down,
+                TravelKind::Descend,
+                ConnectionDiscovery::Hidden,
+            ),
+        ],
+    })
+}

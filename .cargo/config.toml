@@ -1,0 +1,28 @@
+[build]
+# Cap parallel codegen units. The cargo default is one rustc per logical CPU (32 here);
+# that was the paging-exhaustion risk the previous `jobs = 1` guarded against — but jobs = 1
+# serialized ALL compilation on a 16-core / 125 GB host, which was the single biggest drag on
+# the build gate.
+#
+# Measured on this host (rustc 1.95.0, cold `cargo build -p litd-engine` = wgpu + naga +
+# rapier + 40 Calyx path crates): at jobs = 8, peak commit charge was 52.6 GB against the
+# 141.6 GB commit limit (125.6 GB RAM + 16 GB pagefile) — ~63% headroom, room for several
+# concurrent agents. jobs = 8 uses half the physical cores, leaving the rest for other agents
+# and keeping peak memory far from the paging cliff. Override per-invocation with
+# CARGO_BUILD_JOBS if a host has more/less headroom (#1496).
+jobs = 8
+
+[target.x86_64-pc-windows-msvc]
+# Link with the toolchain-bundled rust-lld (LLVM lld) instead of MSVC link.exe (#1500 lever 3).
+# link time dominates warm builds on this workspace; measured on this host (rustc 1.95.0), a
+# warm one-line-change relink of litd-game dropped 3.54s -> 2.41s (~32%), and the win scales
+# with binary size (litd-editor pulls in wgpu/egui). rustc resolves the bare name to its own
+# bundled copy (lib/rustlib/x86_64-pc-windows-msvc/bin/rust-lld.exe) — no PATH or extra install
+# — so this is portable across machines on the same toolchain.
+#
+# Validated clean before adopting: all three binaries (litd-engine, litd-editor, litd-game) link;
+# `cargo test -p litd-engine --lib` (489 pass; the only 2 failures are the pre-existing
+# ORT-not-bootstrapped CALYX_LENS_UNREACHABLE ones, linker-independent) and litd-editor lib tests
+# pass; FSV examples run; and the release thin-LTO build links. Same production choice as Bevy
+# (wgpu stack) on Windows. Revert by deleting this section if a future toolchain regresses.
+linker = "rust-lld.exe"

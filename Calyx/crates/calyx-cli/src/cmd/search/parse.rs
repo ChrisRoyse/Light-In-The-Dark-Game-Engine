@@ -1,13 +1,6 @@
-use calyx_core::SlotId;
-use calyx_sextant::{FusionStrategy, RrfProfile};
-
 use super::super::{Subcommand, value};
 use crate::error::{CliError, CliResult};
-
-#[cfg(test)]
-use super::filters;
-#[cfg(test)]
-use calyx_sextant::{FreshnessRequirement, Query};
+use std::net::{IpAddr, SocketAddr};
 
 pub(super) const DEFAULT_K: usize = 10;
 
@@ -22,6 +15,7 @@ pub(crate) struct SearchArgs {
     pub provenance: bool,
     pub freshness: SearchFreshnessArg,
     pub filter: Option<String>,
+    pub resident_addr: Option<SocketAddr>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -70,6 +64,7 @@ pub(crate) fn parse_search(rest: &[String]) -> CliResult<Subcommand> {
         provenance: true,
         freshness: SearchFreshnessArg::Fresh,
         filter: None,
+        resident_addr: None,
     };
     let mut freshness_seen = None;
     let mut idx = 2;
@@ -96,7 +91,14 @@ pub(crate) fn parse_search(rest: &[String]) -> CliResult<Subcommand> {
             }
             "--filter" => {
                 idx += 1;
-                args.filter = Some(value(rest, idx, "--filter")?.to_string());
+                let raw = value(rest, idx, "--filter")?.to_string();
+                calyx_search::filters::parse(Some(&raw))?;
+                args.filter = Some(raw);
+            }
+            "--resident-addr" => {
+                idx += 1;
+                args.resident_addr =
+                    Some(parse_resident_addr(value(rest, idx, "--resident-addr")?)?);
             }
             other => return Err(CliError::usage(format!("unexpected search flag {other}"))),
         }
@@ -155,6 +157,21 @@ fn validate_query_text(value: &str) -> CliResult {
     Ok(())
 }
 
+pub(crate) fn parse_resident_addr(raw: &str) -> CliResult<SocketAddr> {
+    let addr = raw
+        .parse::<SocketAddr>()
+        .map_err(|error| CliError::usage(format!("parse --resident-addr {raw}: {error}")))?;
+    match addr.ip() {
+        IpAddr::V4(ip) if ip.is_loopback() => Ok(addr),
+        IpAddr::V6(ip) if ip.is_loopback() => Ok(addr),
+        _ => Err(CliError::from(calyx_core::CalyxError {
+            code: "CALYX_SEARCH_RESIDENT_ADDR_REFUSED",
+            message: format!("--resident-addr {addr} is not loopback"),
+            remediation: "bind and use the resident measurement service only on 127.0.0.1 or [::1]",
+        })),
+    }
+}
+
 fn set_freshness(
     seen: &mut Option<SearchFreshnessArg>,
     args: &mut SearchArgs,
@@ -178,24 +195,6 @@ impl SearchFusionArg {
             other => Err(CliError::usage(format!("unknown --fusion {other}"))),
         }
     }
-
-    pub(super) fn to_strategy(self, slots: &[SlotId]) -> CliResult<FusionStrategy> {
-        match self {
-            Self::Rrf => Ok(FusionStrategy::Rrf),
-            Self::WeightedRrf => Ok(FusionStrategy::WeightedRrf {
-                profile: RrfProfile::General,
-            }),
-            Self::SingleLens => slots
-                .first()
-                .copied()
-                .map(|slot| FusionStrategy::SingleLens { slot })
-                .ok_or_else(|| CliError::usage("single-lens search has no active lens slot")),
-            Self::KernelFirst => Ok(FusionStrategy::WeightedRrf {
-                profile: RrfProfile::Kernel,
-            }),
-            Self::Pipeline => Ok(FusionStrategy::Pipeline),
-        }
-    }
 }
 
 impl SearchGuardArg {
@@ -205,23 +204,6 @@ impl SearchGuardArg {
             "in-region" => Ok(Self::InRegion),
             other => Err(CliError::usage(format!("unknown --guard {other}"))),
         }
-    }
-}
-
-#[cfg(test)]
-impl SearchArgs {
-    pub(crate) fn to_query(&self, slots: &[SlotId]) -> CliResult<Query> {
-        let mut query = Query::new(self.query.clone());
-        query.k = self.k;
-        query.explain = self.explain;
-        query.require_stored_provenance = self.provenance;
-        query.freshness = match self.freshness {
-            SearchFreshnessArg::Fresh => FreshnessRequirement::FreshDerived,
-            SearchFreshnessArg::StaleOk => FreshnessRequirement::StaleOk { seq_lag: u64::MAX },
-        };
-        query.fusion = Some(self.fusion.to_strategy(slots)?);
-        query.filters = filters::parse(self.filter.as_deref())?;
-        Ok(query)
     }
 }
 
@@ -249,6 +231,9 @@ pub(crate) fn search_tokens(args: &SearchArgs) -> Vec<String> {
     }
     if let Some(filter) = &args.filter {
         out.extend(["--filter".to_string(), filter.clone()]);
+    }
+    if let Some(addr) = args.resident_addr {
+        out.extend(["--resident-addr".to_string(), addr.to_string()]);
     }
     out
 }

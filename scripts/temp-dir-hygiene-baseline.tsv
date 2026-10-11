@@ -1,0 +1,5 @@
+﻿# Raw env::temp_dir() ratchet baseline (#1535). One row per .rs file still calling raw
+# std::env::temp_dir() (test_temp.rs, the sanctioned TestTempDir home, is excluded). Format:
+# <repo-relative-path>\t<occurrence_count>. The gate (scripts/check-temp-dir-hygiene.ps1)
+# fails if a NON-listed file gains a call, or a LISTED file's count GROWS. When a file is
+# migrated to TestTempDir (0 calls), DELETE its row to lock the win. Goal: empty (#1535).

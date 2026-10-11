@@ -1,0 +1,12 @@
+{
+  "env": {
+    "CGREALITY_STOP_MEJEPA_LOG": "/tmp/cgreality-stop-mejepa.jsonl",
+    "CGREALITY_STOP_MEJEPA_BLOCKED_DIR": "/tmp/cgreality-stop-mejepa-blocked",
+    "CGREALITY_STOP_MEJEPA_BREAKER_STATE_DIR": "/tmp/cgreality-stop-mejepa-breaker"
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "claude-flow",
+    "context-graph"
+  ]
+}

@@ -5,13 +5,14 @@ use std::path::{Path, PathBuf};
 use calyx_core::Modality;
 use serde::Serialize;
 
+use super::LensCatalogEntry;
 use super::template_store::{
     MIN_CONTENT_LENSES, TEMPLATE_INVALID, TemplateDraft, TemplateSave, TemplateStore,
     ensemble_card_from_capability_cards, lens_ref_from_catalog, template_error,
 };
-use super::{LensCatalogEntry, catalog_path, read_catalog};
 use crate::cmd::vault;
 use crate::error::{CliError, CliResult};
+use crate::lens_commands::catalog::{catalog_path, read_catalog};
 use crate::output::print_json;
 
 #[derive(Default)]
@@ -69,10 +70,11 @@ pub(super) fn run(rest: &[String]) -> CliResult {
         "save" => save(args),
         "list" => list(args),
         "fork" => fork(args),
+        "refresh" => refresh(args),
         "profile" => profile(args),
         "swap" => swap(args),
         other => Err(CliError::usage(format!(
-            "unknown panel template subcommand {other}; expected seed, save, list, fork, profile, or swap"
+            "unknown panel template subcommand {other}; expected seed, save, list, fork, refresh, profile, or swap"
         ))),
     }
 }
@@ -160,6 +162,63 @@ fn fork(args: &[String]) -> CliResult {
     let store = TemplateStore::open(&home);
     let save = store.fork(&from, name, flags.notes, vault::now_ms())?;
     print_json(&save_report("fork", save))
+}
+
+fn refresh(args: &[String]) -> CliResult {
+    let flags = Flags::parse(args)?;
+    let home = home(flags.home.clone())?;
+    let selector = flags.template.ok_or_else(|| {
+        CliError::usage("panel template refresh requires --template <name-or-id>")
+    })?;
+    let catalog = read_catalog(&catalog_path(Some(&home))?)?;
+    let store = TemplateStore::open(&home);
+    let source = store.load(&selector)?;
+    let mut lenses = Vec::with_capacity(source.lenses.len());
+    for old in &source.lenses {
+        let entry = catalog
+            .lenses
+            .iter()
+            .find(|entry| entry.name == old.lens_name)
+            .ok_or_else(|| {
+                template_error(
+                    TEMPLATE_INVALID,
+                    format!(
+                        "template {} lens {} is not present in the current catalog",
+                        source.name, old.lens_name
+                    ),
+                    "repair the lens catalog with `calyx lens add --manifest <manifest> --home <dir>` before refreshing",
+                )
+            })?;
+        let mut refreshed = lens_ref_from_catalog(entry)?;
+        if refreshed.modality != old.modality || refreshed.shape != old.shape {
+            return Err(template_error(
+                TEMPLATE_INVALID,
+                format!(
+                    "template {} lens {} changed contract from {:?}/{:?} to {:?}/{:?}",
+                    source.name,
+                    old.lens_name,
+                    old.modality,
+                    old.shape,
+                    refreshed.modality,
+                    refreshed.shape
+                ),
+                "do not refresh across modality or shape changes; save an intentional new template instead",
+            ));
+        }
+        refreshed.slot_key.clone_from(&old.slot_key);
+        refreshed.counts_toward_a35 = old.counts_toward_a35;
+        lenses.push(refreshed);
+    }
+    let save = store.save(
+        TemplateDraft {
+            name: source.name,
+            notes: flags.notes.unwrap_or(source.notes),
+            lenses,
+            ensemble_card: source.ensemble_card,
+        },
+        vault::now_ms(),
+    )?;
+    print_json(&save_report("refresh", save))
 }
 
 fn profile(args: &[String]) -> CliResult {
@@ -309,70 +368,7 @@ fn card_paths(flags: &Flags) -> CliResult<Vec<PathBuf>> {
     Ok(paths)
 }
 
-impl Flags {
-    fn parse(args: &[String]) -> CliResult<Self> {
-        let mut flags = Self::default();
-        let mut idx = 0;
-        while idx < args.len() {
-            match args[idx].as_str() {
-                "--home" => {
-                    idx += 1;
-                    flags.home = Some(value(args, idx, "--home")?.into());
-                }
-                "--name" => {
-                    idx += 1;
-                    flags.name = Some(value(args, idx, "--name")?.to_string());
-                }
-                "--notes" => {
-                    idx += 1;
-                    flags.notes = Some(value(args, idx, "--notes")?.to_string());
-                }
-                "--from" => {
-                    idx += 1;
-                    flags.from = Some(value(args, idx, "--from")?.to_string());
-                }
-                "--template" => {
-                    idx += 1;
-                    flags.template = Some(value(args, idx, "--template")?.to_string());
-                }
-                "--vault" => {
-                    idx += 1;
-                    flags.vault = Some(value(args, idx, "--vault")?.to_string());
-                }
-                "--all-current" => flags.all_current = true,
-                "--modality" => {
-                    idx += 1;
-                    flags.modality = Some(parse_modality(value(args, idx, "--modality")?)?);
-                }
-                "--lens" => {
-                    idx += 1;
-                    flags.lenses.push(value(args, idx, "--lens")?.to_string());
-                }
-                "--card" => {
-                    idx += 1;
-                    flags.cards.push(value(args, idx, "--card")?.into());
-                }
-                "--card-dir" => {
-                    idx += 1;
-                    flags.card_dir = Some(value(args, idx, "--card-dir")?.into());
-                }
-                "--assay-card" => {
-                    idx += 1;
-                    flags.assay_card = Some(value(args, idx, "--assay-card")?.into());
-                }
-                "--a37-admission-card" => {
-                    idx += 1;
-                    flags.a37_admission_card =
-                        Some(value(args, idx, "--a37-admission-card")?.into());
-                }
-                "--require-a37-gate" => flags.require_a37_gate = true,
-                other => return Err(CliError::usage(format!("unexpected template flag {other}"))),
-            }
-            idx += 1;
-        }
-        Ok(flags)
-    }
-}
+mod flags;
 
 fn save_report(action: &'static str, save: TemplateSave) -> SaveReport {
     let content_lens_count = save.template.content_lens_count();
@@ -441,53 +437,4 @@ fn modality_name(value: Modality) -> &'static str {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parses_repeated_lenses() {
-        let flags = Flags::parse(&[
-            "--name".to_string(),
-            "text-deep".to_string(),
-            "--lens".to_string(),
-            "a".to_string(),
-            "--lens".to_string(),
-            "b".to_string(),
-        ])
-        .unwrap();
-
-        assert_eq!(flags.name.as_deref(), Some("text-deep"));
-        assert_eq!(flags.lenses, ["a", "b"]);
-    }
-
-    #[test]
-    fn parses_a37_template_flags() {
-        let flags = Flags::parse(&[
-            "--template".to_string(),
-            "text-deep".to_string(),
-            "--assay-card".to_string(),
-            "ensemble_card.json".to_string(),
-            "--require-a37-gate".to_string(),
-            "--a37-admission-card".to_string(),
-            "multi_anchor_card.json".to_string(),
-        ])
-        .unwrap();
-
-        assert_eq!(flags.template.as_deref(), Some("text-deep"));
-        assert_eq!(
-            flags.assay_card.as_deref(),
-            Some(Path::new("ensemble_card.json"))
-        );
-        assert_eq!(
-            flags.a37_admission_card.as_deref(),
-            Some(Path::new("multi_anchor_card.json"))
-        );
-        assert!(flags.require_a37_gate);
-    }
-
-    #[test]
-    fn modality_parser_matches_catalog_strings() {
-        assert_eq!(modality_name(parse_modality("text").unwrap()), "text");
-        assert!(parse_modality("temporal").is_err());
-    }
-}
+mod tests;

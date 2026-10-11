@@ -1,0 +1,215 @@
+use std::{collections::BTreeMap, fs, path::Path};
+
+use litd_engine::fsv_artifacts::begin_issue_run;
+use litd_hash::sha256_hex;
+use serde_json::json;
+
+const DOC_PATH: &str = "docs/lore/ashen-reach-cosmology.md";
+const ROOT_PATH: &str = "docs/lore/ashen-reach-world-bible.md";
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    litd_engine::init_logging();
+    let run = begin_issue_run("issue1056_ashen_reach_cosmology")?;
+    let doc_bytes = fs::read(Path::new(DOC_PATH))?;
+    let root_bytes = fs::read(Path::new(ROOT_PATH))?;
+    let text = String::from_utf8(doc_bytes.clone())?;
+    let root = String::from_utf8(root_bytes.clone())?;
+    let report = validate_cosmology(&text, &root)?;
+    let doc_sha256 = sha256_hex(&doc_bytes);
+    let root_sha256 = sha256_hex(&root_bytes);
+    let edge_results = edge_checks(&text, &root);
+    let all_edges_passed = edge_results.values().all(|passed| *passed);
+    let fsv_report = json!({
+        "schema_version": 1,
+        "issue": 1056,
+        "source_of_truth": {
+            "doc_path": DOC_PATH,
+            "doc_bytes": doc_bytes.len(),
+            "doc_sha256": doc_sha256,
+            "root_path": ROOT_PATH,
+            "root_bytes": root_bytes.len(),
+            "root_sha256": root_sha256,
+            "research_refs": [
+                "https://www.copyright.gov/what-is-copyright/",
+                "https://www.copyright.gov/help/faq/faq-protect.html"
+            ],
+            "readme_refs": [
+                "docs/readme/S18-lore-authoring.png",
+                "docs/readme/L03-ashen-reach.png",
+                "docs/readme/L05-pantheon.png"
+            ]
+        },
+        "sufficiency_argument": "The #1056 artifact is a detailed canon document rooted in #1055. Physical disk readback plus required-content validation is sufficient because the task is to persist original lore canon, not run a gameplay system. The happy path proves every required cosmology element is present; edge probes prove missing Hollow, missing current, stale g3n wording, protected-copy instructions, and root detachment are rejected.",
+        "happy_path": report,
+        "edges": edge_results,
+        "assertions": {
+            "required_founts": 3,
+            "required_currents": 7,
+            "all_edges_passed": all_edges_passed
+        }
+    });
+    if !all_edges_passed {
+        return Err("issue1056 edge validation failed".into());
+    }
+    let readback = run.write_report(&fsv_report)?;
+    if sha256_hex(&readback.bytes) != readback.sha256 {
+        return Err("issue1056 report hash readback mismatch".into());
+    }
+    println!(
+        "ISSUE1056_COSMOLOGY_FSV report={} bytes={} sha256={} doc={} doc_sha256={} root_sha256={}",
+        readback.path.display(),
+        readback.bytes.len(),
+        readback.sha256,
+        DOC_PATH,
+        doc_sha256,
+        root_sha256
+    );
+    Ok(())
+}
+
+fn validate_cosmology(
+    text: &str,
+    root: &str,
+) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let sections = [
+        "# Ashen Reach Cosmology",
+        "## Originality Boundary",
+        "## The Two Truths",
+        "## Magic Is Reaching",
+        "## The Three Founts",
+        "## Invocation",
+        "## Supplication",
+        "## Pact",
+        "## Death And Memory",
+        "## The Sundering",
+        "## Editor And System Hooks",
+        "## Forbidden Drift",
+        "## Canon Links",
+    ];
+    let founts = ["Invocation", "Supplication", "Pact"];
+    let currents = ["Fire", "Stone", "Air", "Tide", "Frost", "Mire", "Storm"];
+    let required_terms = [
+        "Vhael",
+        "the Weave",
+        "the Hollow",
+        "Outer Dark",
+        "The Ashen Reach",
+        "the Sundering",
+        "permanent death",
+        "by what name will you be mourned",
+        "Mage authoring",
+        "Priest authoring",
+        "Hollow Pact authoring",
+        "Zone authoring",
+        "AI co-authoring",
+    ];
+    require_all(text, "sections", &sections)?;
+    require_all(text, "founts", &founts)?;
+    require_all(text, "currents", &currents)?;
+    require_all(text, "terms", &required_terms)?;
+    require_all(
+        text,
+        "engine_current",
+        &[
+            "LitD editor",
+            "Rust/wgpu",
+            "Do not describe current implementation as g3n",
+        ],
+    )?;
+    require_all(
+        text,
+        "issue_links",
+        &["#1055", "#1056", "#1057", "#1058", "#1059"],
+    )?;
+    require_absent(text, "blocked", &blocked_phrases())?;
+    require_all(root, "root_anchor", &["#1056", "Vhael", "The Ashen Reach"])?;
+    Ok(json!({
+        "section_count": sections.len(),
+        "fount_count": founts.len(),
+        "current_count": currents.len(),
+        "doc_line_count": text.lines().count(),
+        "contains_originality_boundary": text.contains("all-original LitD setting expression"),
+        "contains_permanent_death_rule": text.contains("Resurrection is not normal cosmology in Vhael"),
+        "contains_current_engine_wording": text.contains("Rust/wgpu"),
+        "root_contains_issue1056": root.contains("#1056")
+    }))
+}
+
+fn edge_checks(text: &str, root: &str) -> BTreeMap<String, bool> {
+    let mut results = BTreeMap::new();
+    results.insert(
+        "missing_hollow_rejected".to_string(),
+        validate_cosmology(&text.replace("the Hollow", "the Missing"), root)
+            .unwrap_err()
+            .to_string()
+            .contains("terms"),
+    );
+    results.insert(
+        "missing_current_rejected".to_string(),
+        validate_cosmology(&text.replace("Storm", "Tempest"), root)
+            .unwrap_err()
+            .to_string()
+            .contains("currents"),
+    );
+    results.insert(
+        "stale_g3n_wording_rejected".to_string(),
+        validate_cosmology(&text.replace("Rust/wgpu", "g3n"), root)
+            .unwrap_err()
+            .to_string()
+            .contains("engine_current"),
+    );
+    results.insert(
+        "copy_instruction_rejected".to_string(),
+        validate_cosmology(&format!("{text}\nCopy Planescape prose verbatim."), root)
+            .unwrap_err()
+            .to_string()
+            .contains("blocked"),
+    );
+    results.insert(
+        "root_detachment_rejected".to_string(),
+        validate_cosmology(text, &root.replace("#1056", "#missing"))
+            .unwrap_err()
+            .to_string()
+            .contains("root_anchor"),
+    );
+    results
+}
+
+fn require_all(text: &str, label: &str, values: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
+    let missing = values
+        .iter()
+        .filter(|value| !text.contains(**value))
+        .copied()
+        .collect::<Vec<_>>();
+    if !missing.is_empty() {
+        return Err(format!("{label} missing: {}", missing.join(", ")).into());
+    }
+    Ok(())
+}
+
+fn require_absent(
+    text: &str,
+    label: &str,
+    values: &[&str],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let lower = text.to_ascii_lowercase();
+    let present = values
+        .iter()
+        .filter(|value| lower.contains(&value.to_ascii_lowercase()))
+        .copied()
+        .collect::<Vec<_>>();
+    if !present.is_empty() {
+        return Err(format!("{label} present: {}", present.join(", ")).into());
+    }
+    Ok(())
+}
+
+fn blocked_phrases() -> [&'static str; 5] {
+    [
+        "copy planescape",
+        "copy forgotten realms",
+        "verbatim",
+        "g3n zone",
+        "top-down g3n",
+    ]
+}

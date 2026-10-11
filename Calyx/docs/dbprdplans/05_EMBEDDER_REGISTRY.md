@@ -31,7 +31,7 @@ Lens {
 
 | Runtime | Mechanism | aiwonder fit |
 |---|---|---|
-| `tei-http` | resident HF TEI endpoint | reuse `:8088` general, `:8090` legal, `:8089` reranker — **never start throwaway TEI** (gotcha) |
+| `tei-http` | resident HF TEI endpoint | use Calyx-owned resident FP16 endpoints for Calyx vaults (`multilingual-e5-base` `:18190` as the 768-d default, BGE-M3 `:18188` when the 1024-d/multivector model is explicitly needed); default client batches are 64 to match the owned services; Leapable-owned `:8088`/`:8090`/`:8089` are separate-tenant legacy/manual services, not Calyx defaults |
 | `candle-local` | weights loaded into Forge (candle/cudarc), run on sm_120 | new bespoke lenses, low-latency, no HTTP hop |
 | `onnx` | ORT CUDA EP | portability, embedded vaults |
 | `external-cmd` | spawn a process, typed stdin/stdout protocol | exotic modalities (audio WavLM, image CLIP) |
@@ -156,10 +156,10 @@ remain serialized as sidecars and never count toward the content-lens floor.
 
 ## 9. The 10+ roster: which lenses to try first, where to get them, how to value them
 
-**Where to get them (all free / open-weight, A34; HuggingFace via `hf_hub_token`).** Run dense lenses on the resident TEI services (`§2`, never throwaway TEI); image/audio via `external-cmd`/`onnx`; temporal/graph/scalar via `algorithmic`.
+**Where to get them (all free / open-weight, A34; HuggingFace via `hf_hub_token`).** Run dense lenses on Calyx-owned resident FP16 TEI/Candle GPU services (`§2`, never ad-hoc throwaway TEI and never a cross-tenant Leapable container); image/audio via `external-cmd`/`onnx`; temporal/graph/scalar via `algorithmic`.
 
 **Text (dense + sparse) — try first, pick 5–7 *diverse* ones (diversity = low redundancy, A7):**
-- `gte-multilingual-base` (already live, TEI `:8088`) · `Qwen3-Embedding` (top MTEB multilingual/code) · `BGE-M3` (dense+sparse+multi-vector, 100+ langs) · `intfloat/e5-mistral-7b-instruct` · `nomic-embed-text-v1.5` · `jinaai/jina-embeddings-v3` · `NV-Embed-v2` · `Alibaba-NLP/gte-Qwen2` · `dunzhang/stella_en_1.5B_v5`.
+- `multilingual-e5-base` (owned FP16 TEI `:18190`, current Calyx dense default) · `BGE-M3` (owned FP16 TEI `:18188`, dense+sparse+multi-vector, use deliberately for diversity) · `Qwen3-Embedding-0.6B` (Blackwell FP16 candidate only when measured `bits / VRAM-MB` beats smaller E5; 4B/8B only as tier-3 probes) · `gte-multilingual-base` · `nomic-embed-text-v1.5` · `jinaai/jina-embeddings-v3` · `NV-Embed-v2` · `Alibaba-NLP/gte-Qwen2` · `dunzhang/stella_en_1.5B_v5`.
 - **Sparse / lexical (a different signal, not just another dense model):** `naver/splade-v3` (the full-text lens, `DOCTRINE §3`).
 - **Reranker (cross-encoder, asymmetric):** the resident `gte` reranker (TEI `:8089`).
 
@@ -214,6 +214,15 @@ Assay CF writes unless the gate evidence is eligible. Homogeneous or control
 runs must say `--diagnostic` / `--baseline`; those runs still persist streamed
 bytes, the matrix, marginal/PID readout, and temporal sidecar evidence, but the
 evidence is marked diagnostic-only and cannot be used as an A37 gate verdict.
+`stream-fbin` also persists the partitioned RRF plan into Aster Graph CF at
+`partitioned_rrf_plan_cf` and the event-time timeline into chunked
+`partitioned_rrf_timeline_cf` Graph CF rows. Gate-bearing `i8bin-ensemble-card`
+and `partitioned-rrf` runs must read roster/time-walk authority with
+`--plan-cf-root` and `--timeline-cf-root` so association and temporal gate state
+come from Calyx/Aster. Gate-bearing fused recall must read accepted-reference
+truth from Calyx/Aster as `--fused-ground-truth-cf-root` or
+`--slot-ground-truth-cf-root`; legacy JSON/I32BIN truth files are migration
+diagnostics or one-time import bytes, not association authority.
 Temporal lanes remain the time-control surface for as-of, forward, and backward
 traversal; they are serialized in the A37 readout but never count toward the
 content-family floor.

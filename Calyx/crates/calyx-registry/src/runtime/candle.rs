@@ -231,6 +231,29 @@ impl CandleLens {
     }
 
     pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
+        Self::from_lens_spec_with_policy(spec, CandleDevicePolicy::CudaFailLoud { ordinal: 0 })
+    }
+
+    /// Build a candle-local lens from a persisted spec under an EXPLICIT device
+    /// policy. `from_lens_spec` pins `CudaFailLoud` (the default no-silent-fallback
+    /// GPU contract). The engine CPU-explicit content panel (#1775) calls this with
+    /// `CandleDevicePolicy::CpuExplicit` so an active candle_local learned text slot
+    /// can be surfaced and measured on CPU -- an EXPLICIT device choice, never a
+    /// silent CPU fallback from a failed CUDA init.
+    pub fn from_lens_spec_with_policy(
+        spec: &LensSpec,
+        device_policy: CandleDevicePolicy,
+    ) -> Result<Self> {
+        Self::from_files(Self::file_spec_from_lens_spec(spec, device_policy)?)
+    }
+
+    /// Resolve a persisted `LensSpec` into a concrete `CandleFileSpec` under the given
+    /// device policy WITHOUT loading the model. Kept separate so the device-policy
+    /// threading is unit-testable without a real BERT checkpoint on disk.
+    pub(crate) fn file_spec_from_lens_spec(
+        spec: &LensSpec,
+        device_policy: CandleDevicePolicy,
+    ) -> Result<CandleFileSpec> {
         let LensRuntime::CandleLocal {
             model_id,
             files,
@@ -254,7 +277,7 @@ impl CandleLens {
             .parent()
             .map(Path::to_path_buf)
             .unwrap_or_else(|| PathBuf::from("."));
-        Self::from_files(CandleFileSpec {
+        Ok(CandleFileSpec {
             name: spec.name.clone(),
             model_id: model_id.clone(),
             cache_dir,
@@ -262,7 +285,7 @@ impl CandleLens {
             tokenizer: tokenizer.clone(),
             weights: weights.clone(),
             max_tokens: DEFAULT_MAX_TOKENS,
-            device_policy: CandleDevicePolicy::CudaFailLoud { ordinal: 0 },
+            device_policy,
             precision: CandlePrecision::parse(dtype)?,
             pooling: CandlePoolingPolicy::parse(pooling)?,
             norm_policy: spec.norm_policy,

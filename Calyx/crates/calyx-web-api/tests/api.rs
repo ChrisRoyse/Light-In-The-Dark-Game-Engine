@@ -18,7 +18,9 @@ use axum::{
     middleware::from_fn_with_state,
     routing::get,
 };
-use calyx_web_api::{ErrorCode, Guardrails, app, build_app, guardrails, panic_catch_layer};
+use calyx_web_api::{
+    AuthCtx, ErrorCode, Guardrails, app, build_app, guardrails, panic_catch_layer, require_bearer,
+};
 use http_body_util::BodyExt;
 use serde_json::Value;
 use tower::ServiceExt;
@@ -88,6 +90,17 @@ async fn scaffolded_route_returns_not_implemented_envelope() {
     let (status, body) = call(
         app(),
         Request::post("/v1/measure").body(Body::empty()).unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NOT_IMPLEMENTED);
+    assert_envelope(&body, ErrorCode::NotImplemented);
+}
+
+#[tokio::test]
+async fn scaffolded_assay_bits_route_returns_not_implemented_envelope() {
+    let (status, body) = call(
+        app(),
+        Request::get("/v1/assay/bits").body(Body::empty()).unwrap(),
     )
     .await;
     assert_eq!(status, StatusCode::NOT_IMPLEMENTED);
@@ -285,4 +298,161 @@ fn measure_ctx_load_rejects_non_vault_id_dir_name() {
             Err(e) => e,
         };
     assert!(err.contains("not a vault id"), "got: {err}");
+}
+
+// --- #1906: fail-closed bearer auth (the origin is never anonymous) ---
+
+async fn bearer_ok() -> StatusCode {
+    StatusCode::OK
+}
+
+/// Build a minimal router behind the REAL `require_bearer` layer with a known
+/// secret — exercises the actual middleware, not a stand-in.
+fn bearer_app(secret: &str) -> Router {
+    let auth = Arc::new(AuthCtx::new(secret).expect("non-empty secret"));
+    Router::new()
+        .route("/v1/measure", get(bearer_ok))
+        .layer(from_fn_with_state(auth, require_bearer))
+}
+
+#[tokio::test]
+async fn missing_bearer_is_401_envelope_with_www_authenticate() {
+    let app = bearer_app("s3cret-FSV");
+    let resp = app
+        .oneshot(Request::get("/v1/measure").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        resp.headers()
+            .get(header::WWW_AUTHENTICATE)
+            .and_then(|v| v.to_str().ok()),
+        Some("Bearer realm=\"calyx-origin\""),
+        "401 must carry the Bearer challenge"
+    );
+    let bytes = resp.into_body().collect().await.unwrap().to_bytes();
+    let body: Value = serde_json::from_slice(&bytes).unwrap();
+    assert_envelope(&body, ErrorCode::Unauthorized);
+}
+
+#[tokio::test]
+async fn wrong_bearer_is_401() {
+    let app = bearer_app("s3cret-FSV");
+    let (status, body) = call(
+        app,
+        Request::get("/v1/measure")
+            .header(header::AUTHORIZATION, "Bearer not-the-secret")
+            .body(Body::empty())
+            .unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_envelope(&body, ErrorCode::Unauthorized);
+}
+
+#[tokio::test]
+async fn valid_bearer_reaches_the_handler() {
+    let app = bearer_app("s3cret-FSV");
+    let resp = app
+        .oneshot(
+            Request::get("/v1/measure")
+                .header(header::AUTHORIZATION, "Bearer s3cret-FSV")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK, "valid bearer passes through");
+}
+
+#[test]
+fn auth_ctx_rejects_empty_secret_loud() {
+    assert!(
+        AuthCtx::new("   ").is_err(),
+        "an empty/blank bearer secret must fail loud, never anonymous"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// #1908: HHEM faithfulness liveness probe aggregated into /v1/health.
+//
+// FSV with REAL loopback sockets (no mocks): each test binds a synthetic TCP
+// listener exhibiting one HHEM failure/success mode and asserts the probe's
+// verdict. Known synthetic input -> known expected output. Covers the happy
+// path (live, even a 401), and three edges: silent hang (timeout), non-HTTP
+// bytes, and connection refused (truly down). The socket-activation rationale
+// (#1807) is exactly why a bare TCP connect is INSUFFICIENT and we read a
+// status line instead.
+// ---------------------------------------------------------------------------
+
+use calyx_web_api::probe_hhem_faithfulness_at;
+
+/// Bind a loopback listener, run `behavior` on the first accepted connection in
+/// a background task, and return the bound address string for the probe.
+async fn spawn_synthetic_hhem<F, Fut>(behavior: F) -> String
+where
+    F: FnOnce(tokio::net::TcpStream) -> Fut + Send + 'static,
+    Fut: std::future::Future<Output = ()> + Send,
+{
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind synthetic HHEM listener");
+    let addr = listener.local_addr().expect("local_addr").to_string();
+    tokio::spawn(async move {
+        if let Ok((stream, _)) = listener.accept().await {
+            behavior(stream).await;
+        }
+    });
+    addr
+}
+
+#[tokio::test]
+async fn hhem_probe_ok_when_server_speaks_http_even_401() {
+    // A live-but-unauthorized HHEM still proves the process is SERVING.
+    let addr = spawn_synthetic_hhem(|mut stream| async move {
+        use tokio::io::AsyncWriteExt;
+        let _ = stream
+            .write_all(b"HTTP/1.0 401 Unauthorized\r\nContent-Length: 0\r\n\r\n")
+            .await;
+        let _ = stream.shutdown().await;
+    })
+    .await;
+    assert_eq!(probe_hhem_faithfulness_at(&addr).await, "ok");
+}
+
+#[tokio::test]
+async fn hhem_probe_degraded_on_silent_hang_timeout() {
+    // Accepts the connection (socket-activation would do this) but NEVER writes
+    // a response: a bare TCP connect would falsely report "up"; the HTTP read
+    // must time out -> degraded.
+    let addr = spawn_synthetic_hhem(|stream| async move {
+        // Hold the connection open well past HHEM_PROBE_TIMEOUT (1500ms).
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        drop(stream);
+    })
+    .await;
+    assert_eq!(probe_hhem_faithfulness_at(&addr).await, "degraded");
+}
+
+#[tokio::test]
+async fn hhem_probe_degraded_on_non_http_bytes() {
+    let addr = spawn_synthetic_hhem(|mut stream| async move {
+        use tokio::io::AsyncWriteExt;
+        let _ = stream.write_all(b"GARBAGE-NOT-HTTP\r\n").await;
+        let _ = stream.shutdown().await;
+    })
+    .await;
+    assert_eq!(probe_hhem_faithfulness_at(&addr).await, "degraded");
+}
+
+#[tokio::test]
+async fn hhem_probe_degraded_when_connection_refused() {
+    // Reserve a port, then drop the listener so nothing is listening: connect
+    // is refused -> degraded (the genuinely-down case).
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind");
+    let addr = listener.local_addr().expect("local_addr").to_string();
+    drop(listener);
+    assert_eq!(probe_hhem_faithfulness_at(&addr).await, "degraded");
 }

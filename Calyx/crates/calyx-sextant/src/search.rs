@@ -20,7 +20,7 @@ use crate::search_support::{
     text_to_sparse,
 };
 use crate::slot_index_map::SlotIndexMap;
-use crate::util::{event_time_secs_from_ts, hex32, stub_ledger};
+use crate::util::{event_time_secs_from_ts, hex32};
 
 const DEFAULT_PIPELINE_RECALL_MULTIPLIER: usize = 10;
 
@@ -182,12 +182,7 @@ impl SearchEngine {
         let dropped_guard_hits = apply_query_guard(&self.docs, query, &mut hits)?;
         hits.truncate(query.k);
         self.renumber_hits(&mut hits);
-        self.attach_provenance_and_freshness(
-            &mut hits,
-            &slots,
-            &query.freshness,
-            query.require_stored_provenance,
-        )?;
+        self.attach_provenance_and_freshness(&mut hits, &slots, &query.freshness)?;
         Ok(GuardedSearchReport {
             hits,
             dropped_guard_hits,
@@ -373,12 +368,14 @@ impl SearchEngine {
             match requirement {
                 FreshnessRequirement::FreshDerived if stale_by > 0 => {
                     return Err(CalyxError::stale_derived(format!(
-                        "slot {slot} stale by {stale_by} seq"
+                        "slot {slot} stale by {stale_by} seq (built_at_seq {}, base_seq {}; both must come from the same vault commit-seq pin)",
+                        stats.built_at_seq, stats.base_seq
                     )));
                 }
                 FreshnessRequirement::StaleOk { seq_lag } if stale_by > *seq_lag => {
                     return Err(CalyxError::stale_derived(format!(
-                        "slot {slot} stale by {stale_by} > lag {seq_lag}"
+                        "slot {slot} stale by {stale_by} > lag {seq_lag} (built_at_seq {}, base_seq {})",
+                        stats.built_at_seq, stats.base_seq
                     )));
                 }
                 _ => {}
@@ -392,7 +389,6 @@ impl SearchEngine {
         hits: &mut [Hit],
         slots: &[SlotId],
         freshness: &FreshnessRequirement,
-        require_stored: bool,
     ) -> Result<()> {
         let stats = self.indexes.stats();
         let base = slots
@@ -413,14 +409,11 @@ impl SearchEngine {
                 };
                 hit.provenance = cx.provenance.clone();
                 hit.provenance_source = ProvenanceSource::Stored;
-            } else if require_stored {
+            } else {
                 return Err(crate::error::sextant_error(
                     crate::error::CALYX_SEXTANT_PROVENANCE_MISSING,
                     format!("stored constellation missing for hit {}", hit.cx_id),
                 ));
-            } else {
-                hit.provenance = stub_ledger(hit.cx_id, hit.rank as u64);
-                hit.provenance_source = ProvenanceSource::Stub;
             }
             hit.freshness = match freshness {
                 FreshnessRequirement::FreshDerived => FreshnessTag::fresh(base.1),

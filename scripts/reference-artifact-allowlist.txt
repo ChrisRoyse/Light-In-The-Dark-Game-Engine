@@ -1,0 +1,16 @@
+# Reference-artifact ANNOTATION exemptions (#1510). Consumed by scripts/check-reference-artifacts.ps1.
+#
+# One repo-relative forward-slash markdown path per line. A listed file is exempt ONLY from the
+# UNANNOTATED_FLOOR rule -- i.e. it may name a FORBIDDEN_NAV artifact without carrying the
+# DOCTRINE-OBSOLETE-NAV annotation. It is STILL checked for dangling references.
+#
+# The bar for an entry: the file mentions artifact filenames as DATA, never as a visual target.
+# A repo-size runbook listing the largest PNGs is data. A README caption showing the image and
+# telling agents to reproduce it is NOT data -- that is a floor, and it must carry the
+# annotation. Do not add a file here to silence a real contradiction; fix the caption instead.
+#
+# '#' comments and blank lines are ignored.
+
+# Repo-size/LFS runbook: enumerates PNG filenames and byte sizes as measurements. It never
+# presents any image as a quality or layout target.
+docs2/decisions/DEC-1526-repo-size-runbook.md

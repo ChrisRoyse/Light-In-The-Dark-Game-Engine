@@ -471,6 +471,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
+name = "calyx-agent"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+ "ureq",
+ "zeroize",
+]
+
+[[package]]
 name = "calyx-anneal"
 version = "0.1.0"
 dependencies = [
@@ -479,6 +490,7 @@ dependencies = [
  "calyx-aster",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-registry",
  "ciborium",
@@ -501,6 +513,7 @@ dependencies = [
  "calyx-anneal",
  "calyx-aster",
  "calyx-core",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-lodestar",
  "calyx-loom",
@@ -525,7 +538,9 @@ dependencies = [
  "blake3",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
+ "calyx-mincut",
  "calyx-paths",
  "crc32fast",
  "criterion",
@@ -534,6 +549,7 @@ dependencies = [
  "nix",
  "proptest",
  "rand 0.8.6",
+ "rayon",
  "serde",
  "serde_json",
  "sha2",
@@ -544,25 +560,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "calyx-buildinfo"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "calyx-cli"
 version = "0.1.0"
 dependencies = [
+ "bincode_reloaded",
  "blake3",
  "calyx-anneal",
  "calyx-assay",
  "calyx-aster",
+ "calyx-buildinfo",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-lodestar",
  "calyx-loom",
  "calyx-oracle",
  "calyx-paths",
  "calyx-registry",
+ "calyx-search",
  "calyx-sextant",
  "calyx-testkit",
  "calyx-ward",
  "calyxd",
+ "ciborium",
  "crc32fast",
  "proptest",
  "rayon",
@@ -571,6 +599,8 @@ dependencies = [
  "serde_json",
  "sha2",
  "ulid",
+ "ureq",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -593,8 +623,10 @@ name = "calyx-forge"
 version = "0.1.0"
 dependencies = [
  "calyx-core",
+ "calyx-fsv",
+ "calyx-ledger",
  "criterion",
- "cudarc 0.19.7",
+ "cudarc 0.19.8",
  "nvml-wrapper",
  "proptest",
  "rand 0.8.6",
@@ -607,6 +639,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "calyx-fsv"
+version = "0.1.0"
+
+[[package]]
 name = "calyx-hazard-soak"
 version = "0.1.0"
 dependencies = [
@@ -615,9 +651,11 @@ dependencies = [
  "calyx-aster",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-registry",
  "calyx-sextant",
+ "calyxd",
  "criterion",
  "rand 0.8.6",
  "serde",
@@ -631,6 +669,7 @@ dependencies = [
  "bincode_reloaded",
  "blake3",
  "calyx-core",
+ "calyx-fsv",
  "ed25519-dalek",
  "proptest",
  "serde",
@@ -646,6 +685,7 @@ dependencies = [
  "calyx-aster",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-loom",
  "calyx-mincut",
@@ -653,8 +693,10 @@ dependencies = [
  "calyx-sextant",
  "calyx-ward",
  "proptest",
+ "rayon",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.18",
 ]
 
@@ -666,6 +708,7 @@ dependencies = [
  "calyx-aster",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-ward",
  "proptest",
@@ -682,7 +725,9 @@ dependencies = [
  "calyx-anneal",
  "calyx-assay",
  "calyx-aster",
+ "calyx-buildinfo",
  "calyx-core",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-loom",
  "calyx-paths",
@@ -700,8 +745,10 @@ name = "calyx-mincut"
 version = "0.1.0"
 dependencies = [
  "calyx-core",
+ "calyx-fsv",
  "calyx-paths",
  "proptest",
+ "rayon",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -717,6 +764,7 @@ dependencies = [
  "calyx-aster",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-lodestar",
  "calyx-loom",
@@ -733,10 +781,42 @@ name = "calyx-paths"
 version = "0.1.0"
 dependencies = [
  "calyx-core",
+ "calyx-fsv",
  "proptest",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "calyx-poly"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "calyx-anneal",
+ "calyx-assay",
+ "calyx-aster",
+ "calyx-core",
+ "calyx-ledger",
+ "calyx-lodestar",
+ "calyx-loom",
+ "calyx-mincut",
+ "calyx-oracle",
+ "calyx-paths",
+ "calyx-registry",
+ "calyx-sextant",
+ "calyx-ward",
+ "rand 0.8.6",
+ "rand_chacha 0.3.1",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.18",
+ "toml",
+ "tracing",
+ "tungstenite",
+ "ureq",
+ "zeroize",
 ]
 
 [[package]]
@@ -748,6 +828,7 @@ dependencies = [
  "calyx-aster",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
  "calyx-loom",
  "calyx-sextant",
@@ -763,22 +844,45 @@ dependencies = [
  "serde_json",
  "sha2",
  "tokenizers",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "calyx-search"
+version = "0.1.0"
+dependencies = [
+ "bincode_reloaded",
+ "calyx-aster",
+ "calyx-core",
+ "calyx-fsv",
+ "calyx-ledger",
+ "calyx-registry",
+ "calyx-sextant",
+ "calyx-ward",
+ "rayon",
+ "serde",
+ "serde_json",
+ "sha2",
+ "ulid",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "calyx-sextant"
 version = "0.1.0"
 dependencies = [
+ "bincode_reloaded",
  "blake3",
  "calyx-anneal",
  "calyx-aster",
  "calyx-core",
+ "calyx-fsv",
  "calyx-loom",
  "calyx-oracle",
  "calyx-paths",
  "calyx-ward",
  "criterion",
- "cudarc 0.19.7",
+ "cudarc 0.19.8",
  "cuvs-sys",
  "memmap2",
  "proptest",
@@ -831,7 +935,11 @@ dependencies = [
  "axum",
  "calyx-aster",
  "calyx-core",
+ "calyx-ledger",
+ "calyx-lodestar",
  "calyx-registry",
+ "calyx-search",
+ "calyx-ward",
  "http-body-util",
  "serde",
  "serde_json",
@@ -847,11 +955,18 @@ name = "calyxd"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "calyx-assay",
  "calyx-aster",
+ "calyx-buildinfo",
  "calyx-core",
  "calyx-forge",
+ "calyx-fsv",
  "calyx-ledger",
+ "calyx-lodestar",
+ "calyx-loom",
  "calyx-mcp",
+ "calyx-oracle",
+ "calyx-ward",
  "nvml-wrapper",
  "prometheus",
  "rcgen",
@@ -865,6 +980,7 @@ dependencies = [
  "toml",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -876,7 +992,7 @@ dependencies = [
  "byteorder",
  "candle-kernels",
  "candle-ug",
- "cudarc 0.19.7",
+ "cudarc 0.19.8",
  "float8",
  "gemm 0.19.0",
  "half",
@@ -1222,9 +1338,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-epoch"
-version = "0.9.18"
+version = "0.9.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
+checksum = "2d6914041f254d6e9176c01941b21115dcfb7089e55135a35411081bd106ef3f"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -1292,9 +1408,9 @@ dependencies = [
 
 [[package]]
 name = "cudarc"
-version = "0.19.7"
+version = "0.19.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cea5f10a99e025c1b44ae2354c2d8326b25ddbd0baf76bde8e55cfd4018a2cc"
+checksum = "42310153e06cf4cd532901f7096beb27504d681736a29ee90728ae4e2d93b2a8"
 dependencies = [
  "float8",
  "half",
@@ -2345,7 +2461,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tower-service",
- "webpki-roots",
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]
@@ -2812,9 +2928,9 @@ checksum = "6b947ae49db0d222b1dbc6b113ce7248a3fc3a6ca21b696717bfc000ba4484d8"
 
 [[package]]
 name = "memmap2"
-version = "0.9.10"
+version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "714098028fe011992e1c3962653c96b2d578c4b4bce9036e15ff220319b1e0e3"
+checksum = "d1219ed1b7f229ee7104d281dd01d6802fe28bb6e95d292942c4daacdeb798c0"
 dependencies = [
  "libc",
  "stable_deref_trait",
@@ -3817,7 +3933,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
- "webpki-roots",
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]
@@ -4103,6 +4219,17 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "sha1"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3bf829a2d51ab4a5ddf1352d8470c140cadc8301b2ae1789db023f01cedd6ba"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.2.17",
+ "digest",
 ]
 
 [[package]]
@@ -4681,6 +4808,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
+name = "tungstenite"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c01152af293afb9c7c2a57e4b559c5620b421f6d133261c60dd2d0cdb38e6b8"
+dependencies = [
+ "bytes",
+ "data-encoding",
+ "http",
+ "httparse",
+ "log",
+ "rand 0.9.4",
+ "rustls",
+ "rustls-pki-types",
+ "sha1",
+ "thiserror 2.0.18",
+ "webpki-roots 0.26.11",
+]
+
+[[package]]
 name = "typed-path"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4828,7 +4974,7 @@ dependencies = [
  "socks",
  "ureq-proto",
  "utf8-zero",
- "webpki-roots",
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]
@@ -5086,6 +5232,15 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.26.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
+dependencies = [
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]

@@ -1,0 +1,1231 @@
+Name: a pearlescent bridal gown Area: The Oryx Steppes Item Type: clothing Wear: body Material: silk Level: 51 Weight: 3 lb 12 oz Flags: glowing magic noremove female_only
+
+- Modifies dexterity by -1
+- Modifies hp by 10
+- Modifies moves by -20
+
+Name: a ruby-encrusted bridal diadem Area: The Oryx Steppes Item Type: treasure Wear: head Material: ruby Level: 51 Weight: 1 lb 9 oz Flags: glowing humming dark magic noremove female_only
+
+- Modifies hp by 10
+- Modifies intelligence by -2
+
+Name: a suit of pure jadeite Area: The Oryx Steppes Item Type: clothing Wear: body Material: silk Level: 51 Weight: 5 lb 8 oz Flags: glowing humming
+
+- Modifies armor class by -5
+- Modifies hit roll by 2
+
+Name: a cincture of pure jadeite Area: The Oryx Steppes Item Type: clothing Wear: waist Material: silk Level: 51 Weight: 2 lb 10 oz Flags: humming
+
+- Modifies hit roll by 1
+- Modifies save vs breath by -3
+- Modifies save vs paralysis by -5
+- Modifies save vs spell by -2
+
+Name: some Primate's robes Area: The Basilica Item Type: clothing Wear: about Material: cloth Level: 51 Weight: 5 lb 4 oz Flags: dark evil anti_good anti_neutral
+
+- Modifies charisma by -5
+- Modifies mana by 20
+- Modifies save vs spell by -5
+
+Name: a blackened opal necklace Area: Underdark Item Type: treasure Wear: neck Material: gem Level: 51 Weight: 4 lb 12 oz Flags: magic
+
+- Modifies mana by 35
+
+Name: a bracelet of human teeth Area: The Sea of Despair Item Type: clothing Wear: wrist Material: bone Level: 51 Weight: 0 lb 10 oz Flags: evil anti_good human_only
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+- Modifies wisdom by -4
+
+Name: a pair of blackened leather gloves Area: Pine Forest Item Type: armor Wear: hands Material: leather Level: 51 Weight: 1 lb 10 oz Flags: giant_only Amor Class: Pierce: 13 Bash: 7 Slash: 13 Magic: 3 Element: 14
+
+- Modifies armor class by 10
+- Modifies damage roll by 2
+- Modifies save vs breath by -5
+
+Name: a choker of black light Area: The Seaport of Hamsah Mu'tazz Item Type: treasure Wear: neck Material: energy Level: 51 Weight: 0 lb 4 oz Flags: humming evil magic
+
+- Modifies mana by 35
+- Modifies save vs breath by -8
+
+Name: a flawless diamond necklace Area: High Lord's Keep Item Type: treasure Wear: neck Material: diamond Level: 51 Weight: 0 lb 14 oz Flags: glowing
+
+- Modifies age by -2
+- Modifies charisma by 2
+- Modifies mana by 5
+
+Name: a pair of shimmering opal earrings Area: High Lord's Keep Item Type: treasure Wear: ears Material: opal Level: 51 Weight: 0 lb 3 oz
+
+- Modifies charisma by 1
+- Modifies save vs paralysis by -5
+
+Name: a ghostly lute Area: High Lord's Keep Item Type: instrument Wear: hold Material: energy Level: 51 Weight: 1 lb 0 oz Flags: glowing
+
+Name: an oval sapphire pendant with a silver chain Area: Valley of Veran Item Type: treasure Wear: neck Material: silver Level: 51 Weight: 0 lb 14 oz Flags: glowing magic
+
+- Modifies mana by 10
+- Modifies save vs spell by -1
+
+Name: an oval emerald pendant with a silver chain Area: Valley of Veran Item Type: treasure Wear: neck Material: silver Level: 51 Weight: 0 lb 14 oz Flags: glowing magic
+
+- Modifies mana by 20
+- Modifies save vs spell by -2
+
+Name: a soiled and blood-soaked apron Area: Subterranean Spire Item Type: clothing Wear: about Material: cloth Level: 51 Weight: 2 lb 2 oz
+
+- Modifies charisma by -3
+- Modifies hp by 10
+- Modifies morale by -5
+
+Name: heavy plate pauldrons with attached vambraces Area: Subterranean Spire Item Type: armor Wear: arms Material: gold Level: 51 Weight: 28 lb 1 oz Amor Class: Pierce: 16 Bash: 15 Slash: 16 Magic: 15 Element: 14
+
+- Modifies constitution by 2
+- Modifies hp by 10
+- Modifies strength by 1
+
+Name: a woven silk bracer Area: Subterranean Spire Item Type: clothing Wear: wrist Material: silk Level: 51 Weight: 0 lb 7 oz Flags: glowing magic
+
+- Modifies hit roll by 2
+- Modifies intelligence by 2
+- Modifies save vs spell by -5
+
+Name: a heavy-duty leather smithing apron Area: Subterranean Spire Item Type: armor Wear: body Material: leather Level: 51 Weight: 5 lb 4 oz Amor Class: Pierce: 12 Bash: 11 Slash: 12 Magic: 11 Element: 12
+
+- Modifies fire resistance by 2
+- Modifies strength by 1
+
+Name: some heavy-duty leather smithing gloves Area: Subterranean Spire Item Type: armor Wear: hands Material: leather Level: 51 Weight: 1 lb 7 oz Amor Class: Pierce: 12 Bash: 12 Slash: 12 Magic: 11 Element: 11
+
+- Modifies hit roll by 1
+- Modifies hp by 10
+- Modifies strength by 1
+
+Name: a durable steel ball peen hammer Area: Subterranean Spire Item Type: weapon Wear: wield Material: steel Level: 51 Weight: 15 lb 13 oz Weapon Class: mace Weapon Damage: average 18 (pound)
+
+- Modifies damage roll by 1
+- Modifies hit roll by 1
+- Modifies strength by 1
+
+Name: robes of the purest white Area: The Past Grove Item Type: clothing Wear: body Material: cloth Level: 51 Weight: 5 lb 11 oz
+
+- Modifies hit roll by 2
+- Modifies save vs paralysis by -4
+
+Name: a golden band set with an opal Area: Kteng's Laboratory Item Type: treasure Wear: finger Material: gold Level: 51 Weight: 0 lb 3 oz Flags: glowing elf_only
+
+- Modifies armor class by -15
+- Modifies charisma by 2
+- Modifies mana by 30
+- Modifies save vs paralysis by -8
+
+Name: a silver bracelet adorned with bells Area: Targeth's Manor Item Type: treasure Wear: wrist Material: silver Level: 51 Weight: 0 lb 8 oz
+
+- Modifies charisma by 1
+- Modifies intelligence by 2
+- Modifies save vs mental by -6
+
+Name: a golden ring with a spider-shaped ruby Area: Velkyn Oloth Item Type: treasure Wear: finger Material: ruby Level: 51 Weight: 0 lb 3 oz Flags: glowing evil magic anti_good anti_neutral
+
+- Modifies hp by 15
+- Modifies save vs breath by -4
+- Modifies save vs spell by -4
+- Modifies strength by 1
+
+Name: a gold crown sparkling with rubies Area: Enpolad's Game Garden Item Type: treasure Wear: head Material: gold Level: 51 Weight: 10 lb 9 oz Flags: glowing evil
+
+- Modifies armor class by -12
+- Modifies intelligence by 2
+- Modifies save vs mental by -5
+- Modifies wisdom by 2
+
+Name: an unusual snake-like bracelet Area: Lower Cragstone Item Type: treasure Wear: wrist Material: gem Level: 51 Weight: 0 lb 7 oz
+
+- Modifies charisma by 2
+- Modifies save vs breath by -2
+- Modifies wisdom by 1
+
+Name: black runed crimson robes Area: Delar-Tol Item Type: clothing Wear: body Material: silk Level: 51 Weight: 4 lb 15 oz Flags: dark evil magic
+
+- Modifies armor class by -15
+- Modifies charisma by -2
+- Modifies save vs spell by -9
+- Modifies wisdom by -2
+
+Name: a sardonyx wedding band Area: The Oryx Steppes Item Type: treasure Wear: finger Material: onyx Level: 50 Weight: 0 lb 3 oz Flags: glowing humming dark magic nodrop noremove female_only
+
+Name: a carved Ankh of Tithotha Area: Darsylon Item Type: treasure Wear: neck Material: wood Level: 50 Weight: 0 lb 5 oz Flags: glowing invis magic bless anti_good anti_evil
+
+- Modifies age by 15
+- Modifies mana by 30
+- Modifies save vs spell by -6
+- Modifies wisdom by 2
+
+Name: a black-steel sword Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 11 lb 15 oz Flags: dark anti_good Weapon Class: sword Weapon Damage: average 20 (slice)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+
+Name: a cold-forged sword Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 12 lb 15 oz Weapon Class: sword Weapon Damage: average 20 (slice)
+
+- Modifies damage roll by 3
+- Modifies hit roll by -1
+
+Name: a black-steel axe Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 15 lb 15 oz Flags: dark anti_good Weapon Class: axe Weapon Damage: average 20 (chop)
+
+- Modifies damage roll by 3
+- Modifies hit roll by -1
+
+Name: a black leather whip Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: leather Level: 50 Weight: 2 lb 15 oz Flags: dark evil anti_good anti_neutral Weapon Class: whip Weapon Damage: average 20 (whip)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 1
+
+Name: a black-steel mace Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 15 lb 15 oz Flags: dark anti_good Weapon Class: mace Weapon Damage: average 20 (blast)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+
+Name: a huge steel sledge hammer Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 22 lb 15 oz Weapon Class: mace (two-handed) Weapon Damage: average 20 (crush)
+
+- Modifies damage roll by 3
+
+Name: some steel shackles Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 17 lb 15 oz Flags: noremove Weapon Class: flail Weapon Damage: average 20 (crush)
+
+- Modifies damage roll by 2
+
+Name: a small steel pickaxe Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 19 lb 15 oz Weapon Class: axe Weapon Damage: average 20 (crush)
+
+- Modifies damage roll by 3
+
+Name: a small hatchet Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 11 lb 15 oz Weapon Class: axe Weapon Damage: average 18 (chop)
+
+- Modifies damage roll by 2
+
+Name: a cold-forged harpoon Area: The Slave Mines of Sitran Item Type: weapon Wear: wield Material: steel Level: 50 Weight: 13 lb 15 oz Weapon Class: spear (two-handed) Weapon Damage: average 20 (pierce)
+
+- Modifies damage roll by 3
+
+Name: a steel collar Area: The Slave Mines of Sitran Item Type: armor Wear: neck Material: steel Level: 50 Weight: 6 lb 6 oz Amor Class: Pierce: 15 Bash: 15 Slash: 15 Magic: 3 Element: 9
+
+Name: a slaver's amulet Area: The Slave Mines of Sitran Item Type: treasure Wear: neck Material: steel Level: 50 Weight: 2 lb 13 oz
+
+Name: a monk's habit Area: The Basilica Item Type: clothing Wear: about Material: cloth Level: 50 Weight: 5 lb 8 oz Flags: bless anti_evil
+
+- Modifies armor class by -15
+- Modifies mana by 30
+- Modifies save vs spell by 5
+
+Name: a leather pirate's vest Area: The Sea of Despair Item Type: armor Wear: body Material: leather Level: 50 Weight: 7 lb 7 oz Flags: evil anti_good Amor Class: Pierce: 13 Bash: 7 Slash: 13 Magic: 3 Element: 14
+
+- Modifies armor class by -5
+- Modifies dexterity by 2
+- Modifies hit roll by 2
+
+Name: a plain red bandana Area: The Sea of Despair Item Type: clothing Wear: head Material: cloth Level: 50 Weight: 0 lb 12 oz Flags: evil anti_good
+
+- Modifies charisma by 4
+- Modifies save vs spell by -5
+
+Name: armguards shaped like two dancing women Area: The Sea of Despair Item Type: armor Wear: arms Material: leather Level: 50 Weight: 3 lb 11 oz Flags: evil magic noremove anti_good Amor Class: Pierce: 13 Bash: 7 Slash: 13 Magic: 14 Element: 14
+
+- Modifies charisma by 2
+- Modifies dexterity by 2
+- Modifies hit roll by 2
+
+Name: a supple leather vest Area: Pine Forest Item Type: armor Wear: body Material: leather Level: 50 Weight: 7 lb 7 oz Amor Class: Pierce: 13 Bash: 7 Slash: 13 Magic: 3 Element: 14
+
+- Modifies charisma by -3
+- Modifies hit roll by 3
+
+Name: a pair of supple leather pants Area: Pine Forest Item Type: clothing Wear: legs Material: leather Level: 50 Weight: 3 lb 4 oz
+
+- Modifies charisma by -3
+- Modifies dexterity by 2
+- Modifies hit roll by 2
+
+Name: a pair of supple leather boots Area: Pine Forest Item Type: clothing Wear: feet Material: leather Level: 50 Weight: 2 lb 0 oz
+
+- Modifies charisma by -3
+- Modifies hit roll by 2
+- Modifies moves by 20
+- Modifies save vs paralysis by -5
+
+Name: a gold bracer etched with hieroglyphs Area: The Pyramid of Azhan Item Type: treasure Wear: wrist Material: gold Level: 50 Weight: 3 lb 8 oz
+
+- Modifies save vs spell by -5
+
+Name: a serpent-entwined sapphire amulet Area: The Pyramid of Azhan Item Type: treasure Wear: neck Material: gold Level: 50 Weight: 7 lb 0 oz Flags: noremove
+
+- Modifies mana by -50
+- Modifies save vs paralysis by 20
+
+Name: a ring engraved with an overflowing cornucopia Area: Coven of Dralkar Wood Item Type: treasure Wear: finger Material: bone Level: 50 Weight: 0 lb 3 oz
+
+Name: a simple golden circlet Area: Mount Calandaryl Item Type: treasure Wear: head Material: gold Level: 50 Weight: 12 lb 5 oz Flags: glowing dark evil magic
+
+Name: a studded belt with a sterling silver buckle Area: High Lord's Keep Item Type: armor Wear: waist Material: leather Level: 48 Weight: 2 lb 14 oz Amor Class: Pierce: 13 Bash: 8 Slash: 13 Magic: 3 Element: 13
+
+- Modifies mana by 10
+- Modifies save vs mental by -2
+- Modifies save vs spell by -5
+- Modifies wisdom by 2
+
+Name: a cloak of midnight Area: Mortorn Item Type: clothing Wear: about Material: cloth Level: 48 Weight: 4 lb 10 oz Flags: dark invis magic nodrop anti_good
+
+- Modifies dexterity by 2
+- Modifies hit roll by 2
+- Modifies wisdom by -4
+
+Name: a corroded crown Area: Evermoon Hollow Item Type: treasure Wear: head Material: silver Level: 47 Weight: 7 lb 11 oz
+
+- Modifies intelligence by 1
+- Modifies mana by 20
+- Modifies save vs breath by -5
+- Modifies wisdom by 1
+
+Name: a green woodsman's hat Area: High Lord's Keep Item Type: clothing Wear: head Material: leather Level: 47 Weight: 2 lb 3 oz
+
+- Modifies charisma by 1
+- Modifies intelligence by 1
+- Modifies strength by 1
+- Modifies wisdom by 1
+
+Name: an ivory bracelet Area: High Lord's Keep Item Type: treasure Wear: wrist Material: ivory Level: 47 Weight: 0 lb 3 oz
+
+- Modifies armor class by -10
+- Modifies mana by 30
+
+Name: the Belt of Zurcon Area: Darsylon Item Type: clothing Wear: waist Material: leather Level: 46 Weight: 1 lb 10 oz Flags: glowing dark evil magic nodrop anti_good
+
+- Modifies damage roll by 2
+- Modifies mana by -10
+- Modifies save vs spell by 6
+
+Name: white cloak of radiance Area: Mount Kiadana-Rah Item Type: clothing Wear: neck Material: cloth Level: 46 Weight: 4 lb 13 oz Flags: glowing magic bless anti_neutral anti_evil good
+
+- Modifies intelligence by 1
+- Modifies mana by 15
+- Modifies save vs spell by -5
+- Modifies wisdom by 2
+
+Name: a staff of dragon oak Area: The Fields of Balator Item Type: weapon Wear: wield Material: wood Level: 45 Weight: 6 lb 15 oz Flags: glowing Weapon Class: staff (two-handed) Weapon Damage: average 18 (smash)
+
+- Modifies damage roll by 4
+- Modifies hit roll by 2
+
+Name: spectral diamond-studded earrings Area: The Fields of Balator Item Type: treasure Wear: ears Material: diamond Level: 45 Weight: 0 lb 3 oz Flags: glowing magic
+
+- Modifies intelligence by 1
+- Modifies save vs spell by -5
+- Modifies wisdom by 1
+
+Name: a shirt of gray lamellar armor Area: The Fields of Balator Item Type: armor Wear: body Material: steel Level: 45 Weight: 29 lb 15 oz Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 3 Element: 9
+
+- Modifies damage roll by 1
+- Modifies hit roll by 1
+
+Name: a black velvet cape Area: The Keep of Barovia Item Type: clothing Wear: about Material: cloth Level: 45 Weight: 6 lb 15 oz
+
+Name: navy-blue ribbons with gold embroidery Area: Kuo-Toa Lair Item Type: clothing Wear: wings Material: cloth Level: 45 Weight: 0 lb 11 oz Flags: anti_evil
+
+- Modifies damage roll by 1
+- Modifies dexterity by 1
+- Modifies moves by 20
+
+Name: a fish-scaled pendant Area: Kuo-Toa Lair Item Type: clothing Wear: neck Material: hide Level: 45 Weight: 0 lb 15 oz
+
+- Modifies constitution by 1
+- Modifies damage roll by 1
+- Modifies dexterity by 1
+- Modifies mana by 10
+- Modifies save vs spell by -5
+
+Name: the Royal Crown of Darsylon Area: Darsylon Item Type: treasure Wear: head Material: gold Level: 45 Weight: 12 lb 10 oz Flags: glowing magic bless anti_neutral anti_evil elf_only
+
+- Modifies armor class by -6
+- Modifies charisma by 2
+- Modifies save vs spell by -5
+
+Name: a massive breastplate Area: The Basilica Item Type: armor Wear: body Material: steel Level: 45 Weight: 29 lb 15 oz Amor Class: Pierce: 16 Bash: 17 Slash: 20 Magic: 3 Element: 9
+
+- Modifies save vs spell by -5
+
+Name: some massive steel plated leggings Area: The Basilica Item Type: armor Wear: legs Material: steel Level: 45 Weight: 22 lb 7 oz Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 3 Element: 9
+
+- Modifies save vs spell by -3
+
+Name: some massive steel plated armguards Area: The Basilica Item Type: armor Wear: arms Material: steel Level: 45 Weight: 14 lb 15 oz Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 3 Element: 9
+
+- Modifies save vs spell by -3
+
+Name: a chainmail tunic Area: The Basilica Item Type: armor Wear: body Material: steel Level: 45 Weight: 22 lb 7 oz Amor Class: Pierce: 7 Bash: 13 Slash: 15 Magic: 3 Element: 9
+
+Name: a chainmail skirt Area: The Basilica Item Type: armor Wear: legs Material: steel Level: 45 Weight: 16 lb 13 oz Amor Class: Pierce: 7 Bash: 13 Slash: 15 Magic: 3 Element: 9
+
+Name: a gleaming breastplate Area: The Basilica Item Type: armor Wear: body Material: steel Level: 45 Weight: 29 lb 15 oz Flags: glowing magic bless anti_neutral anti_evil Amor Class: Pierce: 16 Bash: 17 Slash: 20 Magic: 13 Element: 9
+
+- Modifies intelligence by 1
+- Modifies mana by 20
+- Modifies save vs spell by -5
+- Modifies wisdom by 1
+
+Name: a captain's hat Area: The Dragon Sea Item Type: clothing Wear: head Material: cloth Level: 45 Weight: 1 lb 8 oz
+
+- Modifies charisma by 3
+- Modifies hp by 10
+- Modifies mana by 10
+
+Name: a steel sword Area: The Dragon Sea Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 29 lb 15 oz Weapon Class: sword Weapon Damage: average 20 (chop)
+
+Name: a gold embroidered red sash Area: The Dragon Sea Item Type: clothing Wear: waist Material: silk Level: 45 Weight: 1 lb 6 oz Flags: magic
+
+- Modifies damage roll by 2
+- Modifies moves by 15
+
+Name: a length of tightly bound metal rope Area: Island of Corte Item Type: armor Wear: legs Material: steel Level: 45 Weight: 22 lb 7 oz Flags: glowing magic nodrop noremove Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 13 Element: 9
+
+- Modifies moves by -100
+
+Name: a leaf-imprinted clay necklace Area: Evergrove Outpost Item Type: treasure Wear: neck Material: clay Level: 45 Weight: 1 lb 12 oz
+
+- Modifies save vs mental by -5
+- Modifies save vs paralysis by -5
+
+Name: a bloody pole Area: Pine Forest Item Type: weapon Wear: wield Material: wood Level: 45 Weight: 14 lb 15 oz Weapon Class: staff (two-handed) Weapon Damage: average 15 (pound)
+
+Name: a wreath of golden wire and lapis lazuli Area: The Consortium Item Type: treasure Wear: head Material: gold Level: 45 Weight: 9 lb 4 oz Flags: magic
+
+- Modifies intelligence by 2
+- Modifies mana by 40
+- Modifies save vs mental by -5
+
+Name: a thin golden circlet Area: Ruins of the Deep Item Type: treasure Wear: head Material: gold Level: 45 Weight: 11 lb 7 oz Flags: glowing
+
+- Modifies intelligence by 1
+- Modifies mana by 10
+
+Name: a three-pronged steel trident Area: Ruins of the Deep Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 13 lb 15 oz Weapon Class: spear (two-handed) Weapon Damage: average 18 (stab)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+
+Name: a gold leaf ring Area: Evermoon Hollow Item Type: treasure Wear: finger Material: gold Level: 45 Weight: 1 lb 12 oz
+
+- Modifies charisma by 2
+- Modifies save vs spell by -10
+
+Name: an engraved, crystal encrusted steel plate Area: Mines of Zakiim Item Type: armor Wear: body Material: steel Level: 45 Weight: 29 lb 15 oz Flags: magic Amor Class: Pierce: 16 Bash: 17 Slash: 20 Magic: 13 Element: 9
+
+- Modifies damage roll by 1
+- Modifies dexterity by 2
+- Modifies hit roll by 2
+
+Name: a pair of crystal trimmed steel gauntlets Area: Mines of Zakiim Item Type: armor Wear: hands Material: steel Level: 45 Weight: 5 lb 15 oz Flags: magic Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 13 Element: 9
+
+- Modifies damage roll by 1
+- Modifies dexterity by 1
+- Modifies hit roll by 2
+
+Name: a crystal trimmed steel helm Area: Mines of Zakiim Item Type: armor Wear: head Material: steel Level: 45 Weight: 8 lb 15 oz Flags: magic Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 13 Element: 9
+
+- Modifies damage roll by 1
+- Modifies dexterity by 1
+- Modifies hit roll by 2
+
+Name: some tempered glass safety goggles Area: Subterranean Spire Item Type: clothing Wear: face Material: glass Level: 45 Weight: 1 lb 0 oz
+
+- Modifies constitution by 1
+- Modifies save vs paralysis by -3
+
+Name: a mithril-framed gallery monocle Area: Subterranean Spire Item Type: treasure Wear: face Material: glass Level: 45 Weight: 1 lb 0 oz
+
+- Modifies armor class by -5
+- Modifies charisma by 2
+- Modifies hp by 5
+- Modifies intelligence by 1
+- Modifies mana by 5
+
+Name: a burlap neck gaiter adorned with a mining squad lavaliere Area: Subterranean Spire Item Type: clothing Wear: neck Material: burlap Level: 45 Weight: 0 lb 7 oz
+
+- Modifies hit roll by 1
+- Modifies hp by 5
+
+Name: a thick gold necklace Area: Feanwyyn Weald Item Type: treasure Wear: neck Material: gold Level: 45 Weight: 7 lb 0 oz
+
+- Modifies charisma by 2
+- Modifies dexterity by -1
+- Modifies save vs paralysis by -4
+
+Name: some fine silk robes Area: Feanwyyn Weald Item Type: clothing Wear: body Material: silk Level: 45 Weight: 5 lb 2 oz
+
+- Modifies constitution by 2
+- Modifies dexterity by 2
+- Modifies intelligence by 2
+- Modifies wisdom by 2
+
+Name: a double-banded helm of iron Area: The Citadel of Ostalagiah Item Type: armor Wear: head Material: iron Level: 45 Weight: 8 lb 15 oz Amor Class: Pierce: 13 Bash: 13 Slash: 13 Magic: 3 Element: 9
+
+Name: a cloak made of a felar hide Area: Felar Encampment Item Type: armor Wear: about Material: fur Level: 45 Weight: 8 lb 5 oz Amor Class: Pierce: 12 Bash: 13 Slash: 12 Magic: 3 Element: 14
+
+- Modifies damage roll by 2
+- Modifies dexterity by 2
+- Modifies hp by 10
+- Modifies strength by -1
+
+Name: a long-hafted half-moon axe Area: Aturi Timberlands Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 46 lb 4 oz Weapon Class: axe (two-handed) Weapon Damage: average 19 (chop)
+
+- Modifies damage roll by 2
+- Modifies hit roll by -1
+- Modifies strength by 1
+
+Name: a wide-angled splitting axe Area: Aturi Timberlands Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 23 lb 2 oz Weapon Class: axe Weapon Damage: average 18 (cleave)
+
+- Modifies damage roll by 1
+- Modifies hit roll by 3
+
+Name: a thin broadaxe Area: Aturi Timberlands Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 14 lb 1 oz Weapon Class: axe Weapon Damage: average 18 (slash)
+
+- Modifies damage roll by 1
+- Modifies hit roll by 2
+
+Name: a jagged shield of branches Area: Aturi Timberlands Item Type: armor Wear: shield Material: wood Level: 45 Weight: 18 lb 0 oz Amor Class: Pierce: 12 Bash: 16 Slash: 2 Magic: 6 Element: 6
+
+- Modifies bash resistance by 3
+- Modifies slash resistance by -3
+
+Name: a worn steel longsword Area: Aturi Timberlands Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 20 lb 14 oz Weapon Class: sword Weapon Damage: average 19 (slash)
+
+- Modifies damage roll by 1
+- Modifies hit roll by 1
+- Modifies strength by 1
+
+Name: a worn steel battle axe Area: Aturi Timberlands Item Type: weapon Wear: wield Material: steel Level: 45 Weight: 22 lb 7 oz Weapon Class: axe Weapon Damage: average 19 (slash)
+
+- Modifies damage roll by 2
+- Modifies strength by 1
+
+Name: a Dairein signet ring Area: South Dairein Settlement Item Type: treasure Wear: finger Material: silver Level: 45 Weight: 0 lb 14 oz
+
+- Modifies charisma by 2
+- Modifies damage roll by -2
+- Modifies mana by 35
+
+Name: a delicate silver bracelet adorned with peridots Area: Underdark Item Type: treasure Wear: wrist Material: peridot Level: 45 Weight: 0 lb 10 oz
+
+- Modifies intelligence by 2
+- Modifies mana by 20
+- Modifies save vs mental by -6
+
+Name: a patchy green and brown cloak Area: Abandoned Siege Encampment Item Type: armor Wear: neck Material: cloth Level: 45 Weight: 3 lb 8 oz Flags: anti_evil good Amor Class: Pierce: 1 Bash: 1 Slash: 7 Magic: 5 Element: 15
+
+- Modifies hit roll by 4
+- Modifies save vs breath by -8
+- Modifies strength by 1
+
+Name: a barnacle encrusted breastplate Area: The Dragon Sea Item Type: armor Wear: body Material: iron Level: 45 Weight: 19 lb 15 oz Amor Class: Pierce: 13 Bash: 13 Slash: 13 Magic: 13 Element: 13
+
+- Modifies armor class by -25
+- Modifies dexterity by -2
+- Modifies save vs spell by -5
+
+Name: a battered shield Area: Ruins of Maethien Item Type: armor Wear: shield Material: steel Level: 45 Weight: 11 lb 15 oz Amor Class: Pierce: 14 Bash: 14 Slash: 14 Magic: 3 Element: 9
+
+Name: a fine coral necklace Area: Waters of the Deep Item Type: treasure Wear: neck Material: coral Level: 45 Weight: 0 lb 8 oz Flags: glowing anti_neutral
+
+- Modifies charisma by 2
+- Modifies intelligence by 2
+- Modifies save vs spell by -8
+
+Name: a midnight black cloak Area: Mount Kiadana-Rah Item Type: clothing Wear: neck Material: cloth Level: 45 Weight: 4 lb 13 oz Flags: humming dark evil magic nodrop noremove anti_good anti_neutral
+
+- Modifies armor class by -5
+- Modifies dexterity by 1
+- Modifies save vs paralysis by -6
+
+Name: firebrand chainmail Area: Mount Kiadana-Rah Item Type: armor Wear: body Material: steel Level: 45 Weight: 22 lb 7 oz Flags: glowing magic anti_neutral Amor Class: Pierce: 7 Bash: 13 Slash: 15 Magic: 13 Element: 9
+
+- Modifies age by 5
+- Modifies damage roll by 1
+- Modifies hit roll by 2
+- Modifies save vs paralysis by -1
+
+Name: a leather, mithril-ringed jack Area: Lower Cragstone Item Type: armor Wear: body Material: leather Level: 45 Weight: 6 lb 11 oz Flags: gnome_only Amor Class: Pierce: 12 Bash: 6 Slash: 12 Magic: 3 Element: 13
+
+- Modifies save vs paralysis by -8
+
+Name: an axe with bulette teeth blades Area: Temple of Qhabiszan Item Type: weapon Wear: wield Material: bone Level: 45 Weight: 9 lb 14 oz Weapon Class: axe Weapon Damage: average 18 (bite)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 3
+
+Name: simple gray robes Area: Maethien Item Type: clothing Wear: body Material: cloth Level: 45 Weight: 5 lb 8 oz
+
+- Modifies hp by 15
+- Modifies mana by 15
+
+Name: a jewel encrusted mithril crown Area: Delar-Tol Item Type: treasure Wear: head Material: mithril Level: 45 Weight: 2 lb 6 oz Flags: anti_good chaos
+
+- Modifies charisma by -4
+
+Name: a fur tunic Area: Balator Item Type: armor Wear: body Material: fur Level: 45 Weight: 9 lb 5 oz Amor Class: Pierce: 12 Bash: 13 Slash: 12 Magic: 3 Element: 14
+
+- Modifies hit roll by 2
+- Modifies hp by 10
+
+Name: a razor-edged shield Area: The Battlefield Item Type: armor Wear: shield Material: iron Level: 44 Weight: 11 lb 15 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 2 Element: 7
+
+- Modifies damage roll by 1
+- Modifies hit roll by 1
+- Modifies hp by 10
+
+Name: a thin platinum rapier Area: Ruins of the Deep Item Type: weapon Wear: wield Material: platinum Level: 43 Weight: 9 lb 15 oz Flags: humming bless Weapon Class: sword Weapon Damage: average 18 (stab)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 5
+
+Name: a dulled mithril broadsword Area: Ruins of the Deep Item Type: weapon Wear: wield Material: mithril Level: 43 Weight: 19 lb 15 oz Weapon Class: sword Weapon Damage: average 17 (chop)
+
+- Modifies damage roll by 1
+- Modifies hit roll by -1
+
+Name: a thin jeweled sword Area: Ruins of the Deep Item Type: weapon Wear: wield Material: titanium Level: 43 Weight: 12 lb 15 oz Flags: humming bless anti_evil Weapon Class: sword Weapon Damage: average 18 (stab)
+
+- Modifies damage roll by 5
+- Modifies hit roll by 4
+
+Name: an ornate, runed steel plate Area: Mines of Zakiim Item Type: armor Wear: body Material: steel Level: 43 Weight: 29 lb 15 oz Flags: magic Amor Class: Pierce: 14 Bash: 15 Slash: 18 Magic: 11 Element: 7
+
+- Modifies dexterity by 1
+- Modifies hit roll by 1
+
+Name: exquisite beard-tailing braids of spun mithril and lapis Area: Voralian City Item Type: treasure Wear: face Material: lapis Level: 43 Weight: 1 lb 8 oz Flags: dwarf_only
+
+- Modifies save vs mental by -6
+
+Name: a burnished copper breastplate Area: Hillcrest Item Type: armor Wear: body Material: copper Level: 42 Weight: 30 lb 5 oz Flags: glowing bless gnome_only Amor Class: Pierce: 12 Bash: 13 Slash: 16 Magic: 11 Element: 7
+
+- Modifies constitution by 1
+- Modifies damage roll by 1
+- Modifies hit roll by 3
+
+Name: a cloaker hood Area: Underdark Item Type: armor Wear: neck Material: flesh Level: 42 Weight: 1 lb 5 oz Flags: evil Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 11 Element: 11
+
+- Modifies constitution by -1
+- Modifies dexterity by 1
+- Modifies hit roll by 1
+- Modifies save vs paralysis by -3
+
+Name: a worn goo-covered bone club Area: Underdark Item Type: weapon Wear: wield Material: bone Level: 42 Weight: 15 lb 15 oz Weapon Class: mace Weapon Damage: average 17 (poisonous bite)
+
+- Modifies damage roll by 2
+- Modifies hit roll by -3
+
+Name: an ironclad buckler Area: Underdark Item Type: armor Wear: shield Material: iron Level: 42 Weight: 6 lb 11 oz Flags: magic Amor Class: Pierce: 12 Bash: 12 Slash: 12 Magic: 12 Element: 5
+
+- Modifies acid resistance by 7
+- Modifies dexterity by -2
+
+Name: dark-orchid students robes Area: Subterranean Spire Item Type: clothing Wear: body Material: silk Level: 42 Weight: 5 lb 4 oz Flags: evil anti_good
+
+- Modifies constitution by 1
+- Modifies hp by 10
+- Modifies intelligence by 2
+- Modifies mana by 15
+- Modifies strength by -1
+
+Name: a steel diadem with a sickly yellow gemstone Area: Subterranean Spire Item Type: treasure Wear: head Material: steel Level: 42 Weight: 5 lb 10 oz Flags: glowing evil magic
+
+- Modifies hp by 10
+- Modifies intelligence by -2
+- Modifies mana by -20
+- Modifies morale by -6
+- Modifies save vs paralysis by 8
+- Modifies save vs spell by 8
+- Modifies wisdom by -2
+
+Name: a tarnished adamantite breastplate Area: Subterranean Spire Item Type: armor Wear: body Material: adamantite Level: 42 Weight: 24 lb 5 oz Amor Class: Pierce: 12 Bash: 11 Slash: 12 Magic: 9 Element: 10
+
+- Modifies dexterity by -1
+- Modifies hp by 10
+- Modifies morale by -5
+- Modifies strength by -1
+
+Name: some dented adamantite greaves Area: Subterranean Spire Item Type: armor Wear: legs Material: adamantite Level: 42 Weight: 18 lb 4 oz Amor Class: Pierce: 13 Bash: 11 Slash: 12 Magic: 9 Element: 9
+
+- Modifies dexterity by -1
+- Modifies hp by 10
+- Modifies morale by -4
+- Modifies strength by -1
+
+Name: a dimpled iron kite shield Area: Subterranean Spire Item Type: armor Wear: shield Material: iron Level: 42 Weight: 11 lb 13 oz Flags: evil Amor Class: Pierce: 12 Bash: 10 Slash: 11 Magic: 9 Element: 10
+
+- Modifies damage roll by 1
+- Modifies dexterity by -1
+- Modifies hit roll by 1
+- Modifies morale by -4
+- Modifies strength by -1
+
+Name: a sapphire earring in the shape of a crescent Area: Coven of Dralkar Wood Item Type: treasure Wear: ears Material: sapphire Level: 42 Weight: 0 lb 3 oz
+
+- Modifies hit roll by 3
+- Modifies save vs mental by -6
+
+Name: a steel stringed guitar Area: Coven of Dralkar Wood Item Type: instrument Wear: hold Material: wood Level: 42 Weight: 19 lb 13 oz
+
+- Modifies charisma by 2
+- Modifies hp by 7
+- Modifies mana by 7
+
+Name: a dusty leather tunic Area: Maethien Item Type: armor Wear: body Material: leather Level: 42 Weight: 7 lb 7 oz Amor Class: Pierce: 10 Bash: 6 Slash: 10 Magic: 2 Element: 11
+
+Name: a razor-sharp adamantite battle axe Area: The Village of Barovia Item Type: weapon Wear: wield Material: adamantite Level: 40 Weight: 29 lb 15 oz Flags: evil anti_good Weapon Class: axe (two-handed) Weapon Damage: average 18 (slice)
+
+- Modifies damage roll by 6
+
+Name: an ivory pommeled shortsword Area: The Village of Barovia Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 7 lb 15 oz Weapon Class: sword Weapon Damage: average 18 (slash)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 3
+
+Name: a black and white leather bullwhip Area: The Village of Barovia Item Type: weapon Wear: wield Material: leather Level: 40 Weight: 3 lb 15 oz Weapon Class: whip Weapon Damage: average 18 (whip)
+
+Name: a jewel-encrusted engagement ring Area: The Oryx Steppes Item Type: treasure Wear: finger Material: diamond Level: 40 Weight: 0 lb 3 oz Flags: glowing dark noremove female_only
+
+Name: a crescent-shaped gorget of red hematite Area: The Oryx Steppes Item Type: armor Wear: neck Material: iron Level: 40 Weight: 7 lb 14 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 2 Element: 7
+
+- Modifies armor class by -1
+- Modifies damage roll by 1
+- Modifies save vs breath by -2
+- Modifies save vs paralysis by -2
+- Modifies save vs spell by -2
+
+Name: an obsidian circlet Area: The Coastal Plains Item Type: treasure Wear: head Material: obsidian Level: 40 Weight: 1 lb 12 oz Flags: glowing humming dark evil noremove
+
+- Modifies intelligence by 2
+- Modifies save vs mental by -5
+- Modifies wisdom by 1
+
+Name: a ring set with a green peridot Area: The Wastes of Nonviel Item Type: treasure Wear: finger Material: peridot Level: 40 Weight: 0 lb 3 oz
+
+- Modifies charisma by 1
+- Modifies damage roll by 2
+
+Name: a string of gleaming pearls Area: The Wastes of Nonviel Item Type: treasure Wear: neck Material: pearl Level: 40 Weight: 0 lb 14 oz Flags: glowing
+
+- Modifies mana by 15
+- Modifies wisdom by 3
+
+Name: a golden mask Area: The Wastes of Nonviel Item Type: treasure Wear: face Material: gold Level: 40 Weight: 13 lb 7 oz Flags: noremove
+
+- Modifies armor class by -8
+- Modifies hit roll by -5
+- Modifies mana by 25
+
+Name: an onyx pendant Area: The Wastes of Nonviel Item Type: treasure Wear: neck Material: onyx Level: 40 Weight: 0 lb 14 oz Flags: glowing
+
+- Modifies age by 3
+- Modifies mana by 10
+
+Name: a pair of garnet earrings Area: The Wastes of Nonviel Item Type: treasure Wear: ears Material: garnet Level: 40 Weight: 0 lb 3 oz
+
+- Modifies charisma by 2
+
+Name: a brooch of sapphires Area: The Wastes of Nonviel Item Type: treasure Wear: neck Material: sapphire Level: 40 Weight: 0 lb 14 oz
+
+- Modifies constitution by 1
+- Modifies intelligence by 1
+- Modifies wisdom by 1
+
+Name: a silver braided wrist band Area: The Wastes of Nonviel Item Type: treasure Wear: wrist Material: silver Level: 40 Weight: 1 lb 14 oz
+
+- Modifies damage roll by 1
+- Modifies mana by 10
+- Modifies save vs spell by -3
+
+Name: a diamond choker Area: The Wastes of Nonviel Item Type: treasure Wear: neck Material: diamond Level: 40 Weight: 0 lb 14 oz Flags: transparent
+
+- Modifies charisma by 2
+- Modifies mana by 20
+
+Name: a massive, onyx-tipped spear Area: The Wastes of Nonviel Item Type: weapon Wear: wield Material: onyx Level: 40 Weight: 23 lb 3 oz Weapon Class: spear (two-handed) Weapon Damage: average 19 (thrust)
+
+- Modifies damage roll by 5
+- Modifies dexterity by -2
+
+Name: a necklace of eyeballs strung upon green silk Area: The Ashes of NoWhere Item Type: clothing Wear: neck Material: flesh Level: 40 Weight: 7 lb 11 oz Flags: anti_good
+
+- Modifies dexterity by 1
+- Modifies hit roll by 4
+
+Name: the bone scourge, 'Slavebreaker' Area: Goblin Outpost Item Type: weapon Wear: wield Material: bone Level: 40 Weight: 10 lb 3 oz Flags: evil anti_good Weapon Class: whip Weapon Damage: average 20 (flogging)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+- Modifies strength by 2
+
+Name: an alchemist's ring Area: Khardrath's Planar Sanctum Item Type: treasure Wear: finger Material: gold Level: 40 Weight: 1 lb 13 oz Flags: magic
+
+- Modifies constitution by 2
+- Modifies wisdom by 2
+
+Name: a silk sash Area: Kuo-Toa Lair Item Type: clothing Wear: waist Material: silk Level: 40 Weight: 1 lb 6 oz Flags: anti_evil
+
+- Modifies moves by 20
+- Modifies save vs paralysis by -6
+
+Name: a heavy wolfskin cape Area: Kuo-Toa Lair Item Type: armor Wear: about Material: fur Level: 40 Weight: 8 lb 6 oz Amor Class: Pierce: 10 Bash: 11 Slash: 10 Magic: 2 Element: 12
+
+- Modifies moves by 30
+- Modifies save vs breath by -12
+
+Name: a shield emblazoned with a silver phoenix Area: Kuo-Toa Lair Item Type: armor Wear: shield Material: wood Level: 40 Weight: 6 lb 11 oz Flags: glowing bless anti_neutral anti_evil good Amor Class: Pierce: 10 Bash: 7 Slash: 7 Magic: 11 Element: 12
+
+- Modifies save vs breath by -4
+
+Name: velvet-trimmed Robes of State Area: Darsylon Item Type: armor Wear: about Material: cloth Level: 40 Weight: 3 lb 15 oz Flags: glowing bless anti_neutral anti_evil Amor Class: Pierce: 0 Bash: 0 Slash: 0 Magic: 0 Element: 0
+
+- Modifies intelligence by 1
+- Modifies wisdom by 1
+
+Name: a radiant elven royal wedding gown Area: Darsylon Item Type: clothing Wear: body Material: cloth Level: 40 Weight: 3 lb 8 oz Flags: glowing magic
+
+- Modifies charisma by 4
+
+Name: a black jagged sword Area: Village of Mal'trakis Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 19 lb 15 oz Flags: dark evil anti_good Weapon Class: sword Weapon Damage: average 14 (slash)
+
+Name: a black steel tipped spear Area: Village of Mal'trakis Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 19 lb 15 oz Flags: dark evil anti_good Weapon Class: spear (two-handed) Weapon Damage: average 14 (pierce)
+
+Name: an axe entwined with serpents Area: Village of Mal'trakis Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 19 lb 15 oz Flags: dark evil anti_good Weapon Class: axe (two-handed) Weapon Damage: average 14 (chop)
+
+Name: a strange bracelet Area: The Basilica Item Type: treasure Wear: wrist Material: energy Level: 40 Weight: 0 lb 2 oz Flags: humming dark evil invis magic noremove
+
+- Modifies mana by 10
+- Modifies save vs spell by -5
+
+Name: an oily whip Area: Island of Corte Item Type: weapon Wear: wield Material: leather Level: 40 Weight: 5 lb 15 oz Weapon Class: whip Weapon Damage: average 20 (whip)
+
+Name: a long black chainmail shirt Area: Island of Corte Item Type: armor Wear: body Material: steel Level: 40 Weight: 22 lb 7 oz Flags: evil anti_good anti_neutral Amor Class: Pierce: 6 Bash: 11 Slash: 13 Magic: 2 Element: 7
+
+- Modifies armor class by -4
+- Modifies hp by 5
+
+Name: cats-eye earrings of amber, glaring malevolently Area: Island of Corte Item Type: treasure Wear: ears Material: amber Level: 40 Weight: 0 lb 8 oz Flags: felar_only
+
+- Modifies charisma by 2
+- Modifies save vs paralysis by -5
+- Modifies save vs spell by -5
+- Modifies strength by 1
+
+Name: elegant beard braids of spun mithril Area: Akan Item Type: treasure Wear: face Material: mithril Level: 40 Weight: 0 lb 4 oz Flags: dwarf_only
+
+- Modifies charisma by 2
+- Modifies intelligence by 1
+- Modifies wisdom by 1
+
+Name: a primitive heavy spear of bone Area: Underdark Item Type: weapon Wear: wield Material: bone Level: 40 Weight: 20 lb 1 oz Weapon Class: spear (two-handed) Weapon Damage: average 16 (pierce)
+
+- Modifies damage roll by 2
+- Modifies dexterity by -1
+
+Name: heavily-worn cavefisher hide Area: Underdark Item Type: armor Wear: about Material: bone Level: 40 Weight: 3 lb 4 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 11 Element: 5
+
+- Modifies armor class by -6
+- Modifies constitution by 2
+- Modifies poison resistance by 5
+
+Name: a ring set with a single rune Area: Abandoned Mines Item Type: treasure Wear: finger Material: energy Level: 40 Weight: 0 lb 0 oz Flags: glowing magic anti_neutral
+
+- Modifies hit roll by 2
+- Modifies mana by 20
+- Modifies save vs spell by -3
+
+Name: a throwing axe Area: The Sea of Despair Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 4 lb 15 oz Flags: evil anti_good Weapon Class: axe Weapon Damage: average 20 (chop)
+
+Name: a pirate cudgel Area: The Sea of Despair Item Type: weapon Wear: wield Material: wood Level: 40 Weight: 4 lb 15 oz Flags: evil anti_good Weapon Class: mace Weapon Damage: average 20 (beating)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 3
+
+Name: a mottled gray-green wool cloak Area: Whistlewood Swamp Item Type: clothing Wear: about Material: cloth Level: 40 Weight: 4 lb 13 oz
+
+Name: a jagged black sword Area: Whistlewood Swamp Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 19 lb 15 oz Flags: dark evil anti_good Weapon Class: sword Weapon Damage: average 18 (slash)
+
+Name: a black steel-tipped spear Area: Whistlewood Swamp Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 21 lb 15 oz Flags: dark evil anti_good Weapon Class: spear (two-handed) Weapon Damage: average 18 (pierce)
+
+Name: a ragged tunic Area: Pine Forest Item Type: clothing Wear: body Material: cloth Level: 40 Weight: 1 lb 15 oz
+
+Name: a ragged pair of pants Area: Pine Forest Item Type: clothing Wear: legs Material: cloth Level: 40 Weight: 3 lb 4 oz
+
+Name: bands of blue energy Area: The Consortium Item Type: treasure Wear: arms Material: energy Level: 40 Weight: 2 lb 3 oz Flags: glowing magic
+
+- Modifies save vs breath by -5
+- Modifies save vs paralysis by -5
+- Modifies save vs spell by -5
+
+Name: a spiked leather gorget Area: The Seaport of Hamsah Mu'tazz Item Type: armor Wear: neck Material: leather Level: 40 Weight: 4 lb 6 oz Amor Class: Pierce: 10 Bash: 6 Slash: 10 Magic: 2 Element: 11
+
+- Modifies save vs breath by -10
+- Modifies strength by 2
+
+Name: a red coral ring set with a black pearl Area: The Seaport of Hamsah Mu'tazz Item Type: treasure Wear: finger Material: pearl Level: 40 Weight: 0 lb 3 oz
+
+- Modifies intelligence by 1
+- Modifies save vs paralysis by -10
+- Modifies wisdom by 1
+
+Name: a pair of bloody iron-spiked bracers Area: The Seaport of Hamsah Mu'tazz Item Type: armor Wear: arms Material: iron Level: 40 Weight: 14 lb 15 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 2 Element: 7
+
+- Modifies constitution by 2
+- Modifies save vs paralysis by -4
+- Modifies strength by 2
+
+Name: a gem-encrusted long sword Area: Ruins of the Deep Item Type: weapon Wear: wield Material: titanium Level: 40 Weight: 16 lb 15 oz Flags: magic bless Weapon Class: sword Weapon Damage: average 20 (slash)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 4
+
+Name: a ring embedded with a single ruby Area: Ruins of the Deep Item Type: treasure Wear: finger Material: ruby Level: 40 Weight: 0 lb 3 oz Flags: glowing humming magic bless anti_evil
+
+- Modifies damage roll by 1
+- Modifies hit roll by 1
+- Modifies hp by 5
+- Modifies intelligence by 1
+
+Name: a billowy scarf Area: Evermoon Hollow Item Type: clothing Wear: neck Material: silk Level: 40 Weight: 0 lb 15 oz
+
+- Modifies dexterity by 2
+- Modifies moves by 20
+
+Name: a silver signet ring Area: Evermoon Hollow Item Type: treasure Wear: finger Material: silver Level: 40 Weight: 0 lb 14 oz
+
+- Modifies mana by 20
+- Modifies save vs spell by -5
+
+Name: a runed steel sabre Area: Mines of Zakiim Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 13 lb 15 oz Flags: magic Weapon Class: sword Weapon Damage: average 19 (cut)
+
+- Modifies damage roll by 4
+- Modifies hit roll by 4
+
+Name: a runed steel spear Area: Mines of Zakiim Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 14 lb 15 oz Flags: magic Weapon Class: spear (two-handed) Weapon Damage: average 19 (thrust)
+
+- Modifies damage roll by 4
+- Modifies hit roll by 4
+
+Name: an engraved, light steel breastplate Area: Mines of Zakiim Item Type: armor Wear: body Material: steel Level: 40 Weight: 29 lb 15 oz Amor Class: Pierce: 14 Bash: 15 Slash: 18 Magic: 2 Element: 7
+
+Name: a pair of light steel gauntlets Area: Mines of Zakiim Item Type: armor Wear: hands Material: steel Level: 40 Weight: 5 lb 15 oz Amor Class: Pierce: 12 Bash: 12 Slash: 12 Magic: 2 Element: 7
+
+Name: a light steel helm Area: Mines of Zakiim Item Type: armor Wear: head Material: steel Level: 40 Weight: 8 lb 15 oz Amor Class: Pierce: 12 Bash: 12 Slash: 12 Magic: 2 Element: 7
+
+Name: a plain blue cape embroidered with a scarred eye Area: Mines of Zakiim Item Type: clothing Wear: about Material: cloth Level: 40 Weight: 7 lb 1 oz
+
+- Modifies mana by 15
+
+Name: the signet ring of the Royal Academy Area: Valley of Veran Item Type: treasure Wear: finger Material: gold Level: 40 Weight: 1 lb 12 oz Flags: glowing magic
+
+- Modifies intelligence by 1
+- Modifies mana by 20
+- Modifies save vs spell by -4
+
+Name: a heartstone ring Area: Ship Graveyard Item Type: treasure Wear: finger Material: heartstone Level: 40 Weight: 0 lb 3 oz
+
+Name: the dark drakeskin Area: Grinning Skull Village Item Type: armor Wear: body Material: dragonscale Level: 40 Weight: 11 lb 3 oz Flags: glowing anti_good anti_neutral orc_only Amor Class: Pierce: 14 Bash: 9 Slash: 14 Magic: 2 Element: 16
+
+- Modifies armor class by -5
+- Modifies save vs breath by -6
+- Modifies save vs paralysis by -5
+- Modifies save vs spell by -5
+
+Name: a great elk-skin cloak Area: Grinning Skull Village Item Type: clothing Wear: about Material: fur Level: 40 Weight: 5 lb 3 oz Flags: dark evil anti_good
+
+- Modifies armor class by -10
+- Modifies strength by -2
+
+Name: a golden necklace with large moonstone pendant Area: Voralian City Item Type: treasure Wear: neck Material: moonstone Level: 40 Weight: 0 lb 14 oz Flags: glowing
+
+- Modifies save vs spell by -5
+
+Name: some frosted titanium shackles attached to a long chain Area: Subterranean Spire Item Type: armor Wear: hands Material: titanium Level: 40 Weight: 3 lb 10 oz Flags: evil magic nodrop noremove Amor Class: Pierce: 11 Bash: 10 Slash: 10 Magic: 9 Element: 9
+
+- Modifies constitution by 2
+- Modifies dexterity by -2
+- Modifies hit roll by -2
+- Modifies hp by 15
+
+Name: a reinforced leather jacket Area: Subterranean Spire Item Type: armor Wear: body Material: leather Level: 40 Weight: 13 lb 1 oz Amor Class: Pierce: 10 Bash: 10 Slash: 9 Magic: 10 Element: 11
+
+- Modifies constitution by 1
+- Modifies hp by 10
+- Modifies strength by 1
+
+Name: heavy leather boots with reinforced soles Area: Subterranean Spire Item Type: armor Wear: feet Material: leather Level: 40 Weight: 2 lb 12 oz Amor Class: Pierce: 10 Bash: 10 Slash: 11 Magic: 9 Element: 10
+
+- Modifies dexterity by 1
+- Modifies movement regeneration by 5
+- Modifies moves by 10
+
+Name: a sturdy steel mining pick Area: Subterranean Spire Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 15 lb 13 oz Weapon Class: axe Weapon Damage: average 18 (rend)
+
+Name: a fine scarf of black silk, edged with azure Area: Kteng's Laboratory Item Type: clothing Wear: neck Material: silk Level: 40 Weight: 0 lb 15 oz
+
+- Modifies armor class by -5
+- Modifies charisma by 2
+- Modifies mana by 10
+- Modifies save vs spell by -8
+
+Name: fashionable leather boots Area: Kteng's Laboratory Item Type: armor Wear: feet Material: leather Level: 40 Weight: 1 lb 13 oz Flags: elf_only Amor Class: Pierce: 10 Bash: 6 Slash: 10 Magic: 2 Element: 11
+
+- Modifies charisma by 1
+- Modifies dexterity by 2
+- Modifies moves by 35
+- Modifies save vs paralysis by -8
+
+Name: a massive half-moon axe Area: Felar Encampment Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 14 lb 15 oz Weapon Class: axe Weapon Damage: average 18 (cleave)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+
+Name: a spiked warhammer Area: Felar Encampment Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 17 lb 15 oz Weapon Class: mace (two-handed) Weapon Damage: average 18 (smash)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+- Modifies strength by 1
+
+Name: a leather apron Area: Targeth's Manor Item Type: armor Wear: body Material: leather Level: 40 Weight: 9 lb 14 oz Amor Class: Pierce: 6 Bash: 4 Slash: 5 Magic: 3 Element: 10
+
+- Modifies fire resistance by 10
+
+Name: a bright yellow vest Area: The Halfling Lands Item Type: clothing Wear: body Material: cloth Level: 40 Weight: 1 lb 13 oz Flags: bless anti_evil
+
+- Modifies armor class by -15
+- Modifies hp by 15
+- Modifies intelligence by 2
+
+Name: a pair of green breeches Area: The Halfling Lands Item Type: clothing Wear: legs Material: cloth Level: 40 Weight: 3 lb 4 oz Flags: bless anti_evil
+
+- Modifies armor class by -15
+- Modifies dexterity by 3
+- Modifies hit roll by 3
+
+Name: a battered wooden lute Area: The Halfling Lands Item Type: instrument Wear: hold Material: wood Level: 40 Weight: 7 lb 15 oz Flags: humming bless
+
+- Modifies charisma by 3
+- Modifies mana by 15
+
+Name: a pair of tight-fitting leather gloves Area: The Halfling Lands Item Type: armor Wear: hands Material: leather Level: 40 Weight: 1 lb 5 oz Flags: gnome_only Amor Class: Pierce: 10 Bash: 6 Slash: 10 Magic: 2 Element: 11
+
+- Modifies damage roll by 2
+- Modifies dexterity by 1
+- Modifies hit roll by 2
+
+Name: a pair of small, reinforced leather boots Area: The Halfling Lands Item Type: armor Wear: feet Material: leather Level: 40 Weight: 1 lb 10 oz Flags: gnome_only Amor Class: Pierce: 10 Bash: 6 Slash: 10 Magic: 2 Element: 11
+
+- Modifies damage roll by 2
+- Modifies hit roll by 2
+- Modifies moves by 10
+
+Name: a dented steel breastplate Area: Aturi Timberlands Item Type: armor Wear: body Material: steel Level: 40 Weight: 35 lb 3 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 11 Element: 11
+
+Name: gnome skull earrings Area: Aturi Timberlands Item Type: treasure Wear: ears Material: bone Level: 40 Weight: 4 lb 6 oz Flags: glowing evil anti_good size_large_only
+
+- Modifies charisma by -1
+- Modifies hp by 10
+- Modifies save vs spell by -5
+
+Name: mud-caked boots Area: Aturi Timberlands Item Type: armor Wear: feet Material: leather Level: 40 Weight: 5 lb 0 oz Amor Class: Pierce: 9 Bash: 9 Slash: 9 Magic: 9 Element: 9
+
+- Modifies damage roll by 1
+- Modifies dexterity by -2
+
+Name: a polished steel gorget Area: Aturi Timberlands Item Type: armor Wear: neck Material: steel Level: 40 Weight: 7 lb 7 oz Amor Class: Pierce: 9 Bash: 9 Slash: 9 Magic: 9 Element: 9
+
+- Modifies constitution by 1
+- Modifies strength by 1
+
+Name: a set of polished steel sabatons Area: Aturi Timberlands Item Type: armor Wear: feet Material: steel Level: 40 Weight: 7 lb 11 oz Amor Class: Pierce: 9 Bash: 9 Slash: 9 Magic: 9 Element: 9
+
+- Modifies damage roll by 1
+- Modifies moves by -25
+
+Name: a thin mail coif Area: Aturi Timberlands Item Type: armor Wear: head Material: steel Level: 40 Weight: 16 lb 8 oz Amor Class: Pierce: 7 Bash: 7 Slash: 7 Magic: 7 Element: 7
+
+- Modifies dexterity by 1
+- Modifies hp by 10
+
+Name: a thin pair of chainmail leggings Area: Aturi Timberlands Item Type: armor Wear: legs Material: steel Level: 40 Weight: 18 lb 11 oz Amor Class: Pierce: 7 Bash: 7 Slash: 7 Magic: 7 Element: 7
+
+- Modifies dexterity by 1
+
+Name: a pristine white robe embroidered with gold Area: Arkham Item Type: clothing Wear: body Material: silk Level: 40 Weight: 3 lb 8 oz Flags: bless anti_evil
+
+- Modifies save vs mental by -5
+- Modifies save vs paralysis by -5
+- Modifies save vs spell by -5
+
+Name: long chainmail sleeves Area: Aturi Timberlands Item Type: armor Wear: arms Material: steel Level: 40 Weight: 15 lb 6 oz Amor Class: Pierce: 7 Bash: 7 Slash: 7 Magic: 7 Element: 7
+
+- Modifies dexterity by 1
+
+Name: a thick engraved gold ring Area: Arkham Item Type: treasure Wear: finger Material: gold Level: 40 Weight: 1 lb 2 oz
+
+- Modifies armor class by -3
+- Modifies hp by 20
+
+Name: a pair of glasses with a golden chain Area: Arkham Item Type: treasure Wear: face Material: gold Level: 40 Weight: 2 lb 2 oz
+
+- Modifies intelligence by 2
+- Modifies mana by 15
+
+Name: a dwarven rune-carved cuirass Area: Aubade Item Type: armor Wear: body Material: steel Level: 40 Weight: 29 lb 15 oz Flags: dwarf_only Amor Class: Pierce: 9 Bash: 9 Slash: 9 Magic: 6 Element: 6
+
+- Modifies armor class by -8
+- Modifies hit roll by 1
+
+Name: a pair of copper link sleeves Area: Aubade Item Type: armor Wear: arms Material: copper Level: 40 Weight: 16 lb 13 oz Amor Class: Pierce: 3 Bash: 2 Slash: 9 Magic: 2 Element: 1
+
+- Modifies hp by 10
+- Modifies save vs spell by -5
+
+Name: titanium wing braces with trailing crimson ribbons Area: Aubade Item Type: armor Wear: wings Material: titanium Level: 40 Weight: 3 lb 11 oz Amor Class: Pierce: 8 Bash: 7 Slash: 8 Magic: 5 Element: 4
+
+- Modifies lightning resistance by 5
+
+Name: a cincher made of silver chain Area: Aubade Item Type: armor Wear: waist Material: silver Level: 40 Weight: 12 lb 7 oz Amor Class: Pierce: 8 Bash: 6 Slash: 11 Magic: 3 Element: 2
+
+- Modifies mental resistance by 2
+- Modifies save vs paralysis by -2
+
+Name: a carved red viola Area: Aubade Item Type: instrument Wear: hold Material: wood Level: 40 Weight: 0 lb 14 oz
+
+- Modifies charisma by 1
+
+Name: a pair of copper spectacles Area: Aubade Item Type: treasure Wear: face Material: copper Level: 40 Weight: 1 lb 9 oz
+
+- Modifies mana by 15
+
+Name: a black vestment Area: Galadon Item Type: clothing Wear: body Material: cloth Level: 40 Weight: 4 lb 4 oz
+
+Name: a gray bracelet Area: Galadon Item Type: treasure Wear: wrist Material: stone Level: 40 Weight: 0 lb 7 oz
+
+- Modifies hit roll by 1
+- Modifies mana by 10
+
+Name: a golden belt Area: Galadon Item Type: treasure Wear: waist Material: gold Level: 40 Weight: 14 lb 1 oz
+
+Name: an intricate circlet of gold and silver leaves Area: Eil Shaeria Item Type: treasure Wear: head Material: silver Level: 40 Weight: 3 lb 8 oz
+
+- Modifies intelligence by 1
+- Modifies mana by -10
+- Modifies save vs mental by -7
+
+Name: a silver bracer inlaid with mother of pearl Area: Eil Shaeria Item Type: treasure Wear: wrist Material: silver Level: 40 Weight: 0 lb 14 oz
+
+- Modifies save vs mental by -7
+- Modifies strength by 1
+
+Name: a wide platinum band Area: Eil Shaeria Item Type: treasure Wear: finger Material: platinum Level: 40 Weight: 0 lb 7 oz
+
+- Modifies save vs mental by -5
+
+Name: an onyx and gold ring Area: Mount Kiadana-Rah Item Type: treasure Wear: finger Material: gold Level: 40 Weight: 0 lb 3 oz
+
+- Modifies constitution by 2
+- Modifies hp by 12
+- Modifies strength by 1
+
+Name: a two-handed bastard sword Area: The Northern Mountains Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 15 lb 0 oz Flags: bless Weapon Class: sword (two-handed) Weapon Damage: average 19 (slash)
+
+- Modifies damage roll by 2
+
+Name: a two-handed steel mace Area: The Northern Mountains Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 15 lb 0 oz Flags: bless Weapon Class: mace (two-handed) Weapon Damage: average 19 (crush)
+
+- Modifies damage roll by 1
+- Modifies hit roll by 1
+
+Name: an engraved steel longsword Area: The Northern Mountains Item Type: weapon Wear: wield Material: steel Level: 40 Weight: 9 lb 15 oz Flags: bless Weapon Class: sword Weapon Damage: average 18 (slash)
+
+- Modifies damage roll by 2
+- Modifies hit roll by 1
+
+Name: a tribal headdress made from decaying leaves Area: Temple of Qhabiszan Item Type: clothing Wear: head Material: plant Level: 40 Weight: 2 lb 2 oz Flags: magic anti_good
+
+- Modifies constitution by -1
+- Modifies disease resistance by -1
+- Modifies mana by 10
+
+Name: a tribal headdress embroidered with seeds Area: Temple of Qhabiszan Item Type: clothing Wear: head Material: plant Level: 40 Weight: 2 lb 15 oz
+
+- Modifies charisma by 1
+- Modifies constitution by 2
+- Modifies hit roll by -1
+- Modifies save vs spell by -5
+
+Name: a spiked ring made from a bulette tooth Area: Temple of Qhabiszan Item Type: treasure Wear: finger Material: bone Level: 40 Weight: 0 lb 11 oz
+
+- Modifies constitution by 1
+- Modifies damage roll by 1
+
+Name: bulette scale bracer Area: Temple of Qhabiszan Item Type: armor Wear: wrist Material: hide Level: 40 Weight: 3 lb 1 oz Amor Class: Pierce: 8 Bash: 16 Slash: 11 Magic: 5 Element: 10
+
+- Modifies constitution by 1
+- Modifies damage roll by 1
+
+Name: a thin steel shield Area: Temple of Qhabiszan Item Type: armor Wear: shield Material: steel Level: 40 Weight: 3 lb 15 oz Flags: anti_good anti_neutral orderly_only Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 11 Element: 6
+
+- Modifies hp by 10
+- Modifies mana by 10
+- Modifies strength by 1
+
+Name: a scorched leather belt Area: Temple of Qhabiszan Item Type: armor Wear: waist Material: leather Level: 40 Weight: 2 lb 9 oz Amor Class: Pierce: 7 Bash: 16 Slash: 10 Magic: 11 Element: 11
+
+- Modifies cold resistance by -1
+- Modifies constitution by 1
+- Modifies hit roll by 1
+
+Name: a thin mithril vest Area: Temple of Qhabiszan Item Type: armor Wear: body Material: mithril Level: 40 Weight: 8 lb 7 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 6 Element: 6
+
+- Modifies armor class by -10
+- Modifies hp by 5
+- Modifies intelligence by 1
+
+Name: thin mithril sleeves Area: Temple of Qhabiszan Item Type: armor Wear: arms Material: mithril Level: 40 Weight: 4 lb 12 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 11 Element: 10
+
+- Modifies armor class by -10
+- Modifies dexterity by 1
+- Modifies hp by 5
+
+Name: a large cloak of forest green Area: Maethien Item Type: clothing Wear: about Material: cloth Level: 40 Weight: 5 lb 1 oz
+
+Name: a brown-furred cloak Area: Felar Encampment Item Type: armor Wear: neck Material: fur Level: 39 Weight: 8 lb 5 oz Amor Class: Pierce: 9 Bash: 10 Slash: 9 Magic: 2 Element: 11
+
+- Modifies hp by 8
+- Modifies save vs breath by -12
+
+Name: a pair of spiked gauntlets Area: Felar Encampment Item Type: armor Wear: forepaws Material: steel Level: 39 Weight: 5 lb 15 oz Amor Class: Pierce: 11 Bash: 11 Slash: 11 Magic: 2 Element: 7
+
+- Modifies damage roll by 2
+- Modifies save vs breath by -2
+- Modifies strength by 1
+
+Name: a suit of blue-green jadeite Area: The Oryx Steppes Item Type: clothing Wear: body Material: silk Level: 38 Weight: 5 lb 8 oz Flags: glowing humming
+
+- Modifies armor class by -5
+- Modifies mana by 10
+
+Name: a black steel sword Area: Seantryn Modan Item Type: weapon Wear: wield Material: steel Level: 38 Weight: 9 lb 15 oz Weapon Class: sword Weapon Damage: average 20 (slash)
+
+- Modifies damage roll by 3
+- Modifies hit roll by 3
+
+Name: a ragged robe of wilted fabric Area: Underdark Item Type: clothing Wear: about Material: cloth Level: 38 Weight: 5 lb 11 oz Flags: nodrop
+
+- Modifies charisma by -5
+
+Name: a necklace made of dried blood and seashells Area: The Seaport of Hamsah Mu'tazz Item Type: treasure Wear: neck Material: seashell Level: 38 Weight: 0 lb 9 oz
+
+- Modifies mana by 25
+- Modifies save vs spell by -5
+
+Name: a dusty, bluish leather vest Area: Mines of Zakiim Item Type: armor Wear: body Material: leather Level: 38 Weight: 7 lb 7 oz Amor Class: Pierce: 9 Bash: 5 Slash: 9 Magic: 2 Element: 10
+
+Name: a pair of exquisite diamond studded earrings Area: Voralian City Item Type: treasure Wear: ears Material: diamond Level: 38 Weight: 0 lb 3 oz

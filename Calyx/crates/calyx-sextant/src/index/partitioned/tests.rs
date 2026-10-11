@@ -87,7 +87,7 @@ fn bounded_final_assignment_caps_regions_and_preserves_ids() {
         rows.push(vec![-1.0, 0.0]);
     }
     let source = StaticSource { rows };
-    let regions = stream_assign_to_ids_bounded(
+    let (regions, _) = stream_assign_to_ids_bounded(
         &dir,
         AssignmentSink::Final,
         &centroids,
@@ -99,6 +99,8 @@ fn bounded_final_assignment_caps_regions_and_preserves_ids() {
             routing: AssignmentRouting::Hnsw,
             boundary_epsilon: 0.0,
             max_replication: 1,
+            apply_rng_rule: false,
+            rng_factor: 1.0,
         },
     )
     .expect("bounded assignment");
@@ -132,7 +134,7 @@ fn bounded_assignment_duplicates_boundary_rows_to_adjacent_ids_files() {
         rows: vec![vec![5.0, 0.0]],
     };
 
-    let regions = stream_assign_to_ids_bounded(
+    let (regions, stats) = stream_assign_to_ids_bounded(
         &dir,
         AssignmentSink::Final,
         &centroids,
@@ -144,11 +146,16 @@ fn bounded_assignment_duplicates_boundary_rows_to_adjacent_ids_files() {
             routing: AssignmentRouting::Exact,
             boundary_epsilon: 3.0,
             max_replication: 2,
+            // The row sits exactly between the two centroids (d_sq 25 each) while
+            // the centroids are 100 apart, so the RNG rule must KEEP the replica.
+            apply_rng_rule: true,
+            rng_factor: 1.0,
         },
     )
     .expect("bounded replicated assignment");
 
     assert_eq!(regions.iter().map(|r| r.count).sum::<usize>(), 2);
+    assert_eq!((stats.rows, stats.replicas_stored), (1, 1));
     assert_eq!(
         read_ids(&dir.join("idx/region_00000.ids")).unwrap(),
         vec![0]
@@ -195,7 +202,7 @@ fn assignment_writes_nofile_scale_region_count_without_stale_ids() {
         "assignment must clear stale bytes before append-mode chunk writes"
     );
 
-    let final_regions = stream_assign_to_ids_bounded(
+    let (final_regions, _) = stream_assign_to_ids_bounded(
         &dir,
         AssignmentSink::Final,
         &centroids,
@@ -207,6 +214,8 @@ fn assignment_writes_nofile_scale_region_count_without_stale_ids() {
             routing: AssignmentRouting::Exact,
             boundary_epsilon: 0.0,
             max_replication: 1,
+            apply_rng_rule: false,
+            rng_factor: 1.0,
         },
     )
     .expect("bounded assignment");
@@ -234,6 +243,11 @@ fn partitioned_self_recall_and_region_restriction() {
         region_build_parallelism: 2,
         final_assignment_probe: DEFAULT_FINAL_ASSIGNMENT_PROBE,
         final_assignment_cap: None,
+        balance_cap: None,
+        assignment_boundary_epsilon: 0.10,
+        assignment_max_replication: 2,
+        assignment_rng_rule: true,
+        assignment_rng_factor: 1.0,
     };
     let manifest = build_partitioned_vault(&dir, p).expect("build");
     assert_eq!(manifest.region_build_parallelism, 2);
@@ -295,6 +309,11 @@ fn search_readback_reports_only_touched_region_graphs() {
         region_build_parallelism: 2,
         final_assignment_probe: DEFAULT_FINAL_ASSIGNMENT_PROBE,
         final_assignment_cap: None,
+        balance_cap: None,
+        assignment_boundary_epsilon: 0.10,
+        assignment_max_replication: 2,
+        assignment_rng_rule: true,
+        assignment_rng_factor: 1.0,
     };
     let manifest = build_partitioned_vault(&dir, p).expect("build");
     assert_eq!(manifest.region_build_parallelism, 2);
@@ -334,6 +353,11 @@ fn region_build_parallelism_is_effective_cap_and_zero_rejected() {
         region_build_parallelism: 64,
         final_assignment_probe: 4,
         final_assignment_cap: Some(128),
+        balance_cap: None,
+        assignment_boundary_epsilon: 0.10,
+        assignment_max_replication: 2,
+        assignment_rng_rule: true,
+        assignment_rng_factor: 1.0,
     };
 
     let manifest = build_partitioned_vault(&dir, p).expect("build");

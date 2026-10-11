@@ -8,11 +8,17 @@ use calyx_aster::layers::kv::kv_key;
 use calyx_aster::layers::{
     DocumentLayer, KvLayer, RecordKey, RecordValue, RelationalLayer, Row, TimeSeriesLayer,
 };
+use calyx_aster::plain_graph::{PlainGraph, PlainGraphDirection, TraverseOptions};
 use calyx_aster::vault::AsterVault;
 use calyx_core::{CxId, FixedClock, LensId, VaultId};
 use proptest::prelude::*;
 use serde_json::json;
+use std::collections::BTreeSet;
 
+use crate::error::{
+    CALYX_SEXTANT_ASSOC_GRAPH_MISSING, CALYX_SEXTANT_GRAPH_HOP_KIND_UNKNOWN,
+    CALYX_SEXTANT_TRAVERSE_HOPS, CALYX_SEXTANT_VECTOR_FUSION_UNWIRED,
+};
 use crate::query::{
     AggOp, AggSpec, CrossModelPlan, DocPathFilter, FieldOp, FieldPredicate, PlanStep,
 };
@@ -35,6 +41,10 @@ fn fixed_vault(now: u64) -> AsterVault<FixedClock> {
 
 fn vault_id() -> VaultId {
     "01ARZ3NDEKTSV4RRFFQ69G5FAV".parse().unwrap()
+}
+
+fn cx(byte: u8) -> CxId {
+    CxId::from_bytes([byte; 16])
 }
 
 fn collection(name: &str, mode: CollectionMode) -> Collection {
@@ -291,68 +301,7 @@ fn empty_collection_and_expired_kv_are_absent_not_errors() {
     assert!(expired.rows.is_empty());
 }
 
-#[test]
-fn graph_stub_passes_input_cx_ids_and_vector_empty_candidates_stays_empty() {
-    let first = CxId::from_input(b"first", 1, b"salt");
-    let second = CxId::from_input(b"second", 1, b"salt");
-    let graph = execute(
-        &vault(),
-        plan(vec![PlanStep::GraphHop {
-            from_cx_ids: vec![first, second],
-            hop_kind: "related".to_string(),
-        }]),
-    )
-    .unwrap();
-    assert_eq!(graph.rows.len(), 2);
-    assert_eq!(graph.rows[0].key.as_bytes(), first.as_bytes());
-    assert_eq!(graph.rows[1].key.as_bytes(), second.as_bytes());
-
-    let vector = execute(
-        &vault(),
-        plan(vec![PlanStep::VectorFusion {
-            lens_ids: vec![LensId::from_parts("sem", b"w", b"c", b"shape")],
-            query_vec: vec![0.1, 0.2],
-            limit: 3,
-        }]),
-    )
-    .unwrap();
-    assert!(vector.rows.is_empty());
-}
-
-#[test]
-fn relational_btree_index_path_filters_candidates() {
-    let vault = vault();
-    let mut orders = orders();
-    orders.indexes.push(SecondaryIndexSpec {
-        name: "orders_qty".to_string(),
-        kind: SecondaryIndexKind::Btree,
-        fields: vec!["qty".to_string()],
-    });
-    for qty in [1, 3, 5, 7] {
-        put_order(&vault, &orders, qty as u64, qty);
-    }
-
-    let result = execute(
-        &vault,
-        plan(vec![PlanStep::RelationalScan {
-            collection: orders.clone(),
-            filter: vec![FieldPredicate {
-                field: "qty".to_string(),
-                op: FieldOp::Gte,
-                value: json!(5),
-            }],
-            index: Some(orders.indexes[0].clone()),
-        }]),
-    )
-    .unwrap();
-    let pks = result
-        .rows
-        .iter()
-        .map(|row| key_u64(&row.key))
-        .collect::<Vec<_>>();
-
-    assert_eq!(pks, vec![5, 7]);
-}
+mod graph_vector_cases;
 
 proptest! {
     #[test]

@@ -6,7 +6,6 @@ use std::time::Instant;
 #[cfg(not(test))]
 use std::{env, process::Command};
 
-use calyx_registry::lens_spec_from_manifest_path;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -21,6 +20,9 @@ use super::paths::{display, display_final, lens_prefix};
 use super::progress::LensProgressMeta;
 use super::selection::{SelectedLens, selected_lenses_for_worker};
 use super::{LensStream, create_sink, elapsed_ms, finish_sink, stream_lens};
+
+mod report;
+use report::read_worker_report;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct StreamWorkerReport {
@@ -49,6 +51,11 @@ impl StreamWorkerReport {
     pub(crate) fn into_lens_evidence(self, args: &Args) -> CliResult<LensEvidence> {
         let prefix = lens_prefix(self.slot as usize, &self.name);
         let ext = args.vector_format.extension();
+        let manifest = if args.lens_template_cf_root.is_some() {
+            args.lens_descriptor_ref(&self.name)
+        } else {
+            self.manifest.clone()
+        };
         Ok(LensEvidence {
             slot: self.slot,
             name: self.name,
@@ -63,7 +70,7 @@ impl StreamWorkerReport {
             effective_batch_size: self.effective_batch_size,
             elapsed_ms: self.elapsed_ms,
             ms_per_input: self.ms_per_input,
-            manifest: self.manifest,
+            manifest,
             corpus_path: display_final(
                 args,
                 &format!("{}/{prefix}_corpus.{ext}", args.vector_format.dir_name()),
@@ -95,13 +102,7 @@ pub(super) fn lens_meta(
     slot: usize,
     selected: &SelectedLens,
 ) -> CliResult<LensProgressMeta> {
-    let spec = lens_spec_from_manifest_path(&selected.manifest).map_err(|error| {
-        local_error(
-            "CALYX_FSV_ASSAY_STREAM_FBIN_LENS_LOAD",
-            format!("{}: {}", selected.manifest.display(), error.message),
-            "fix the frozen lens manifest before streaming FBIN",
-        )
-    })?;
+    let spec = &selected.spec;
     let effective_batch_size = spec
         .max_batch
         .filter(|value| *value > 0)
@@ -118,7 +119,7 @@ pub(super) fn lens_meta(
         dim: projected_slot_dim(spec.output) as usize,
         max_batch: spec.max_batch,
         effective_batch_size,
-        manifest: display(&selected.manifest),
+        manifest: selected.descriptor_ref.clone(),
     })
 }
 
@@ -130,6 +131,33 @@ pub(super) fn run_one_worker(
     staging: &Path,
     root: &Path,
 ) -> CliResult<StreamWorkerReport> {
+    if selected.manifest.is_none() {
+        let mut runtime_args = args.clone();
+        runtime_args.out_dir = staging.to_path_buf();
+        eprintln!(
+            "{}",
+            json!({
+                "event": "assay_stream_fbin_worker_start",
+                "slot": slot,
+                "descriptor": selected.descriptor_ref,
+                "rows": stats.rows
+            })
+        );
+        let report = stream_selected(&runtime_args, stats, slot, selected, None)?;
+        verify_worker_counts(args, stats, slot, &report)?;
+        eprintln!(
+            "{}",
+            json!({
+                "event": "assay_stream_fbin_worker_finish",
+                "slot": slot,
+                "lens": report.name,
+                "worker_pid": report.worker_pid,
+                "corpus_rows": report.corpus_rows_written,
+                "query_rows": report.query_rows_written
+            })
+        );
+        return Ok(report);
+    }
     let report_path = root.join(format!("lens-{slot:02}.json"));
     let stdout_path = root.join(format!("lens-{slot:02}.stdout.json"));
     let stderr_path = root.join(format!("lens-{slot:02}.stderr.log"));
@@ -141,23 +169,15 @@ pub(super) fn run_one_worker(
         json!({
             "event": "assay_stream_fbin_worker_start",
             "slot": slot,
-            "manifest": selected.manifest,
+            "descriptor": selected.descriptor_ref,
             "worker_report": report_path,
             "rows": stats.rows
         })
     );
     let status = run_worker_process(args, selected, slot, staging, &report_path, stdout, stderr)?;
-    let mut report = read_worker_report(&report_path, &stderr_path, status, &selected.manifest)?;
-    if report.corpus_rows_written != stats.rows || report.query_rows_written != args.query_count {
-        return Err(local_error(
-            "CALYX_FSV_ASSAY_STREAM_FBIN_WORKER_COUNT_MISMATCH",
-            format!(
-                "slot={slot} corpus={} queries={} expected corpus={} queries={}",
-                report.corpus_rows_written, report.query_rows_written, stats.rows, args.query_count
-            ),
-            "inspect worker report and streamed row selection before trusting FBIN output",
-        ));
-    }
+    let mut report =
+        read_worker_report(&report_path, &stderr_path, status, &selected.descriptor_ref)?;
+    verify_worker_counts(args, stats, slot, &report)?;
     report.worker_report_path = Some(display(&report_path));
     report.worker_stderr_path = Some(display(&stderr_path));
     eprintln!(
@@ -186,6 +206,14 @@ fn run_worker_process(
 ) -> Result<ExitStatus, crate::error::CliError> {
     let mut command = Command::new(env::current_exe().map_err(io_error)?);
     add_worker_args(&mut command, args, selected, slot, staging, report);
+    if let Some(limit_mib) = args.worker_gpu_mem_limit_mib {
+        // #1160/#1143: every co-resident worker session gets an explicit CUDA
+        // arena budget so K-way parallelism fails at a defined limit.
+        command.env(
+            crate::assay_corpus_build::parallel::GPU_MEM_LIMIT_ENV,
+            limit_mib.to_string(),
+        );
+    }
     command
         .stdout(stdout)
         .stderr(stderr)
@@ -227,8 +255,18 @@ pub(crate) fn run_worker(args: &Args) -> CliResult<StreamWorkerReport> {
     })?;
     let mut selected = selected_lenses_for_worker(args)?;
     let selected = selected.remove(0);
-    let lens = selected.load_runtime(args)?;
     let stats = rows::scan(args)?;
+    stream_selected(args, &stats, slot, &selected, Some(report_path))
+}
+
+fn stream_selected(
+    args: &Args,
+    stats: &RowStats,
+    slot: usize,
+    selected: &SelectedLens,
+    report_path: Option<&Path>,
+) -> CliResult<StreamWorkerReport> {
+    let lens = selected.load_runtime()?;
     let vector_dir = args.out_dir.join(args.vector_format.dir_name());
     let vault_root = args.out_dir.join("vaults");
     fs::create_dir_all(&vector_dir).map_err(io_error)?;
@@ -243,7 +281,7 @@ pub(crate) fn run_worker(args: &Args) -> CliResult<StreamWorkerReport> {
     stream_lens(
         LensStream {
             args,
-            stats: &stats,
+            stats,
             lens: &lens,
             effective_batch_size,
             sink: &mut sink,
@@ -278,18 +316,41 @@ pub(crate) fn run_worker(args: &Args) -> CliResult<StreamWorkerReport> {
         corpus_rows_written: sink.corpus_written,
         query_rows_written: sink.query_written,
         worker_pid: Some(std::process::id()),
-        worker_report_path: Some(display(report_path)),
+        worker_report_path: report_path.map(display),
         worker_stderr_path: None,
     };
-    if let Some(parent) = report_path.parent() {
-        fs::create_dir_all(parent).map_err(io_error)?;
+    if let Some(report_path) = report_path {
+        if let Some(parent) = report_path.parent() {
+            fs::create_dir_all(parent).map_err(io_error)?;
+        }
+        fs::write(
+            report_path,
+            serde_json::to_vec(&report).map_err(|error| {
+                crate::error::CliError::runtime(format!("serialize worker report: {error}"))
+            })?,
+        )
+        .map_err(io_error)?;
     }
-    fs::write(
-        report_path,
-        serde_json::to_vec(&report).map_err(crate::error::CliError::from)?,
-    )
-    .map_err(io_error)?;
     Ok(report)
+}
+
+fn verify_worker_counts(
+    args: &Args,
+    stats: &RowStats,
+    slot: usize,
+    report: &StreamWorkerReport,
+) -> CliResult {
+    if report.corpus_rows_written != stats.rows || report.query_rows_written != args.query_count {
+        return Err(local_error(
+            "CALYX_FSV_ASSAY_STREAM_FBIN_WORKER_COUNT_MISMATCH",
+            format!(
+                "slot={slot} corpus={} queries={} expected corpus={} queries={}",
+                report.corpus_rows_written, report.query_rows_written, stats.rows, args.query_count
+            ),
+            "inspect worker report and streamed row selection before trusting FBIN output",
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(not(test))]
@@ -312,14 +373,17 @@ fn add_worker_args(
         .arg(&args.dataset)
         .arg("--target-class")
         .arg(args.target_class.to_string())
-        .arg("--bits-report")
-        .arg(&args.bits_report)
         .arg("--query-count")
         .arg(args.query_count.to_string())
         .arg("--batch-size")
         .arg(args.batch_size.to_string())
         .arg("--manifest")
-        .arg(&selected.manifest)
+        .arg(
+            selected
+                .manifest
+                .as_ref()
+                .expect("file-mode worker must have a manifest"),
+        )
         .arg("--min-bits")
         .arg(args.min_bits.to_string())
         .arg("--vector-format")
@@ -330,6 +394,7 @@ fn add_worker_args(
         .arg(report)
         .arg("--worker-slot")
         .arg(slot.to_string());
+    add_admission_args(command, args);
     if let Some(limit) = args.limit_per_class {
         command.arg("--limit-per-class").arg(limit.to_string());
     }
@@ -338,6 +403,22 @@ fn add_worker_args(
     }
     if let Some(id) = &args.embedding_model_id {
         command.arg("--embedding-model-id").arg(id);
+    }
+    if !args.emit_artifacts {
+        command.arg("--db-only");
+    }
+}
+
+#[cfg(not(test))]
+fn add_admission_args(command: &mut Command, args: &Args) {
+    if let Some(path) = &args.bits_report {
+        command.arg("--bits-report").arg(path);
+    }
+    if let Some(path) = &args.a37_admission_cf_root {
+        command.arg("--a37-admission-cf-root").arg(path);
+        command
+            .arg("--a37-admission-key")
+            .arg(&args.a37_admission_key);
     }
 }
 
@@ -351,49 +432,15 @@ fn worker_args(
 ) -> Args {
     let mut worker_args = args.clone();
     worker_args.out_dir = staging.to_path_buf();
-    worker_args.manifests = vec![selected.manifest.clone()];
+    worker_args.manifests = vec![
+        selected
+            .manifest
+            .clone()
+            .expect("file-mode worker must have a manifest"),
+    ];
     worker_args.worker_report = Some(report.to_path_buf());
     worker_args.worker_slot = Some(slot);
     worker_args
-}
-
-fn read_worker_report(
-    report: &Path,
-    stderr: &Path,
-    status: ExitStatus,
-    manifest: &Path,
-) -> CliResult<StreamWorkerReport> {
-    let bytes = fs::read(report).map_err(|error| {
-        local_error(
-            "CALYX_FSV_ASSAY_STREAM_FBIN_WORKER_REPORT_MISSING",
-            format!(
-                "manifest={} status={status}; read {} failed: {error}; {}",
-                manifest.display(),
-                report.display(),
-                stderr_tail(stderr)
-            ),
-            "inspect the lens worker stderr and rerun after fixing the runtime",
-        )
-    })?;
-    if !status.success() {
-        return Err(local_error(
-            "CALYX_FSV_ASSAY_STREAM_FBIN_WORKER_FAILED",
-            format!(
-                "manifest={} status={status}; {}; report_bytes={}",
-                manifest.display(),
-                stderr_tail(stderr),
-                bytes.len()
-            ),
-            "inspect the lens worker stderr and rerun after fixing the runtime",
-        ));
-    }
-    serde_json::from_slice(&bytes).map_err(|error| {
-        local_error(
-            "CALYX_FSV_ASSAY_STREAM_FBIN_WORKER_REPORT_INVALID",
-            format!("parse {} failed: {error}", report.display()),
-            "fix worker report serialization before trusting streamed FBIN",
-        )
-    })
 }
 
 fn remove_stale(path: &Path) -> CliResult {
@@ -401,22 +448,6 @@ fn remove_stale(path: &Path) -> CliResult {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(io_error(error)),
-    }
-}
-
-fn stderr_tail(path: &Path) -> String {
-    const TAIL_BYTES: usize = 4096;
-    match fs::read(path) {
-        Ok(bytes) if bytes.is_empty() => format!("stderr {} was empty", path.display()),
-        Ok(bytes) => {
-            let start = bytes.len().saturating_sub(TAIL_BYTES);
-            format!(
-                "stderr_tail {}: {}",
-                path.display(),
-                String::from_utf8_lossy(&bytes[start..]).trim()
-            )
-        }
-        Err(error) => format!("read stderr {} failed: {error}", path.display()),
     }
 }
 

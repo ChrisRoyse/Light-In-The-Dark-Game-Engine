@@ -85,6 +85,38 @@ fn verify_migration_reports_missing_cx_id_as_zero_actual_hash() {
 }
 
 #[test]
+fn require_backfill_rejects_slot_rows_without_provenance() {
+    let root = temp_root("verify-backfill-provenance");
+    let sqlite = root.join("source.db");
+    let vault_dir = root.join("vault.calyx");
+    std::fs::create_dir_all(&root).unwrap();
+    seed_numbered_sqlite(&sqlite, 1);
+    migrate_vault(&sqlite, &vault_dir, MigrationOptions::default()).unwrap();
+    let manifest = MigrationManifest::load(&vault_dir).unwrap();
+    let rows = stream_rows(&open_sqlite(&sqlite).unwrap()).unwrap();
+    let vault = open_vault(&vault_dir, &manifest).unwrap();
+    let adapter = adapter(&manifest).unwrap();
+    let cx_id = adapter.cx_id(&rows[0]);
+
+    for slot in backfill::default_slot_ids().into_iter().skip(1) {
+        vault
+            .put_slot_vector(
+                cx_id,
+                slot,
+                &calyx_core::SlotVector::Absent {
+                    reason: calyx_core::AbsentReason::Deferred,
+                },
+            )
+            .unwrap();
+    }
+    let error = verify_migration(&vault, &rows, &adapter, true).unwrap_err();
+
+    assert_eq!(error.code, errors::CALYX_MIGRATE_BACKFILL_INCOMPLETE);
+    assert!(error.message.contains("missing provenance rows"));
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn empty_sqlite_ignores_extra_vault_constellations() {
     let root = temp_root("verify-empty-extra");
     let source = root.join("source.db");
@@ -140,19 +172,24 @@ fn temp_root(name: &str) -> PathBuf {
 }
 
 fn seed_numbered_sqlite(path: &Path, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    create_chunks_table(&conn);
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,'db',?2,?3)",
-            params![
-                format!("chunk-{idx}"),
-                format!("content-{idx}"),
-                embedding(idx as f32)
-            ],
-        )
-        .unwrap();
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_chunks_table(&transaction);
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,'db',?2,?3)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("chunk-{idx}"),
+                    format!("content-{idx}"),
+                    embedding(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn create_chunks_table(conn: &Connection) {

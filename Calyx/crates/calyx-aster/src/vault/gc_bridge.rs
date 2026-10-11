@@ -10,6 +10,7 @@ use crate::storage_names::{classify_sst, sst_order_key};
 use crate::vault::AsterVault;
 use calyx_core::{CalyxError, Clock, Result};
 use std::fs;
+use std::path::PathBuf;
 
 impl<C> AsterVault<C>
 where
@@ -58,6 +59,16 @@ where
     }
 
     fn reclaim_snapshot_ssts(&self, safe_point: u64, max_input_files: usize) -> Result<GcResult> {
+        self.with_durable_commit_lock(|| {
+            self.reclaim_snapshot_ssts_locked(safe_point, max_input_files)
+        })
+    }
+
+    fn reclaim_snapshot_ssts_locked(
+        &self,
+        safe_point: u64,
+        max_input_files: usize,
+    ) -> Result<GcResult> {
         let Some(durable) = &self.durable else {
             return Ok(GcResult {
                 safe_point_seq: safe_point,
@@ -72,8 +83,8 @@ where
             });
         }
 
-        durable.flush()?;
-        self.rows.flush_all_cfs()?;
+        self.flush_locked()?;
+        let manifest_durable_seq = self.verified_durable_coverage_seq(durable)?;
         let catalog = catalog_from_vault_tiers(durable.root(), durable.tiering_policy())?;
         let mut bytes_freed = 0usize;
         let mut files_seen = 0usize;
@@ -86,7 +97,11 @@ where
                 let Some(order) = sst_order_key(&shard.path)? else {
                     continue;
                 };
-                if order.seq < safe_point {
+                // `safe_point` is a commit seq; only commit-domain files
+                // (epoch 1) can be compared against it. Legacy router flushes
+                // carry flush ordinals (issue #1138) and are adopted via the
+                // CLI compact path instead of snapshot GC.
+                if order.epoch == 1 && order.seq < safe_point {
                     inputs.push(shard);
                     files_seen += 1;
                     if files_seen == max_input_files {
@@ -102,6 +117,10 @@ where
             if let CompactionResult::Compacted(report) =
                 compact_shards(cf, &inputs, output, CompactionThrottle::unlimited())?
             {
+                super::compaction_bridge::ensure_reclaim_outputs_manifest_bounded(
+                    &report.output_paths,
+                    manifest_durable_seq,
+                )?;
                 let net = report.input_bytes.saturating_sub(report.output_bytes) as usize;
                 reclaim_snapshot_inputs(&report)?;
                 bytes_freed = bytes_freed.saturating_add(net);
@@ -117,15 +136,14 @@ where
 }
 
 fn reclaim_snapshot_inputs(report: &crate::compaction::CompactionReport) -> Result<usize> {
-    let output = fs::canonicalize(&report.output_path)
-        .map_err(|error| CalyxError::disk_pressure(format!("stat snapshot GC output: {error}")))?;
+    let outputs = canonical_output_paths(report)?;
     let mut reclaimed = 0;
     for input in &report.input_paths {
         let input = match fs::canonicalize(input) {
             Ok(path) => path,
             Err(_) => continue,
         };
-        if input == output {
+        if outputs.contains(&input) {
             continue;
         }
         if classify_sst(&input)?.is_none() {
@@ -140,4 +158,16 @@ fn reclaim_snapshot_inputs(report: &crate::compaction::CompactionReport) -> Resu
         reclaimed += 1;
     }
     Ok(reclaimed)
+}
+
+fn canonical_output_paths(report: &crate::compaction::CompactionReport) -> Result<Vec<PathBuf>> {
+    report
+        .output_paths
+        .iter()
+        .map(|path| {
+            fs::canonicalize(path).map_err(|error| {
+                CalyxError::disk_pressure(format!("stat snapshot GC output: {error}"))
+            })
+        })
+        .collect()
 }

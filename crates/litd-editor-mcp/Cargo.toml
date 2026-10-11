@@ -1,0 +1,48 @@
+[package]
+name = "litd-editor-mcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Light in the Dark lightweight editor MCP manifest and tool-surface model."
+
+[features]
+default = []
+calyx-surface = ["dep:calyx-mcp", "dep:serde_json", "dep:tracing"]
+calyx-live-calls = ["calyx-surface", "dep:calyx-core"]
+# Child-process stdio JSON-RPC transport to the installed calyx-mcp addon (#1792/#1790).
+# Deliberately links NONE of the Calyx crates: the base editor keeps this transport while
+# dropping the in-process McpServer + ML stack. Enables the FSV example harness.
+calyx-sidecar = ["dep:serde_json", "dep:tracing"]
+fsv = ["calyx-sidecar"]
+
+[dependencies]
+calyx-core = { path = "../../Calyx/crates/calyx-core", optional = true }
+calyx-mcp = { path = "../../Calyx/crates/calyx-mcp", default-features = false, optional = true }
+ron.workspace = true
+serde.workspace = true
+litd-hash.workspace = true
+serde_json = { workspace = true, optional = true }
+thiserror.workspace = true
+tracing = { workspace = true, optional = true }
+
+[dev-dependencies]
+litd-engine.workspace = true
+serde_json.workspace = true
+
+# FSV harness for the calyx-mcp stdio sidecar (#1792). Gated behind fsv + calyx-surface so a
+# routine `cargo test` never builds it; run with:
+#   cargo run -p litd-editor-mcp --features fsv,calyx-surface --example calyx_sidecar_fsv
+[[example]]
+name = "calyx_sidecar_fsv"
+path = "examples/calyx_sidecar_fsv.rs"
+required-features = ["fsv", "calyx-surface"]
+harness = false
+
+# Hermetic fault-injection stub spawned by the sidecar concurrency tests (#1792). Gated
+# behind calyx-sidecar so a default `cargo build` never builds it; its path is handed to
+# the tests via CARGO_BIN_EXE_calyx_sidecar_stub. Not the real addon -- test-only.
+[[bin]]
+name = "calyx_sidecar_stub"
+path = "src/bin/calyx_sidecar_stub.rs"
+required-features = ["calyx-sidecar"]

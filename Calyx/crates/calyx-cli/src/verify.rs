@@ -2,11 +2,13 @@ use std::ops::Range;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use calyx_aster::cf::{ColumnFamily, ledger_key};
 use calyx_aster::manifest::{ManifestStore, QuarantineRecord, is_vault_seq_quarantined};
 use calyx_core::CalyxError;
-use calyx_ledger::{DirectoryLedgerStore, LedgerCfStore, VerifyResult, verify_chain};
+use calyx_ledger::{DirectoryLedgerStore, VerifyResult, verify_chain};
 
-use crate::cf_read::hex_bytes;
+use crate::cf_read::{hex_bytes, latest_cf_row};
+use crate::cmd::vault::{home_dir, resolve_vault_info};
 use crate::ledger_store::AsterLedgerCfStore;
 use crate::merkle::parse_range;
 
@@ -24,23 +26,41 @@ pub fn verify_vault(vault: &Path, range: Range<u64>) -> crate::error::CliResult 
     print_verify_result(result)
 }
 
+pub fn verify_vault_ref(vault: &str, range: Range<u64>) -> crate::error::CliResult {
+    let direct = Path::new(vault);
+    // A bare ref (one path component) is a vault id or CLI-index name and
+    // must never be captured by an incidental same-named cwd entry (#1082).
+    // Explicit filesystem paths (absolute or multi-component like ./dir)
+    // keep direct verification semantics for unregistered vault dirs.
+    let explicit_path = direct.is_absolute() || direct.components().count() > 1;
+    if explicit_path {
+        if direct.exists() {
+            return verify_vault(direct, range);
+        }
+        return Err(CalyxError::vault_access_denied(format!(
+            "direct vault path {} does not exist; pass an existing vault directory, a vault id, or a CLI-index name",
+            direct.display()
+        ))
+        .into());
+    }
+    let resolved = resolve_vault_info(&home_dir()?, vault)?;
+    verify_vault(&resolved.path, range)
+}
+
 pub fn readback_ledger_seq(vault: &Path, seq: u64) -> crate::error::CliResult {
     if is_vault_seq_quarantined(vault, seq)? {
         return Err(
             CalyxError::ledger_chain_broken(format!("ledger seq {seq} is quarantined")).into(),
         );
     }
-    let store = AsterLedgerCfStore::open(vault)?;
-    let rows = store.scan()?;
-    let row = rows
-        .into_iter()
-        .find(|row| row.seq == seq)
+    let key = ledger_key(seq);
+    let bytes = latest_cf_row(vault, ColumnFamily::Ledger, &key)?
         .ok_or_else(|| CalyxError::ledger_corrupt(format!("missing ledger row for seq {seq}")))?;
     println!(
         "CF\tledger\tSEQ\t{}\tKEY\t{}\tVALUE\t{}",
-        row.seq,
-        hex_bytes(&row.seq.to_be_bytes()),
-        hex_bytes(&row.bytes)
+        seq,
+        hex_bytes(&key),
+        hex_bytes(&bytes)
     );
     Ok(())
 }
@@ -51,24 +71,19 @@ pub fn parse_seq(value: &str) -> Result<u64, String> {
         .map_err(|error| format!("invalid --seq: {error}"))
 }
 
-pub fn parse_verify_range(value: &str) -> Result<Range<u64>, String> {
+pub fn parse_verify_range(value: &str) -> crate::error::CliResult<Range<u64>> {
     parse_range(value)
 }
 
-fn write_quarantine(
-    vault: &Path,
-    range: Range<u64>,
-    at_seq: u64,
-) -> std::result::Result<(), String> {
+fn write_quarantine(vault: &Path, range: Range<u64>, at_seq: u64) -> crate::error::CliResult {
     let detected_at_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|error| format!("system clock before unix epoch: {error}"))?
+        .map_err(|error| {
+            crate::error::CliError::runtime(format!("system clock before unix epoch: {error}"))
+        })?
         .as_secs();
-    let record = QuarantineRecord::new(range.start, range.end, at_seq, detected_at_ts)
-        .map_err(|error| error.to_string())?;
-    ManifestStore::open(vault)
-        .append_quarantine(record)
-        .map_err(|error| error.to_string())?;
+    let record = QuarantineRecord::new(range.start, range.end, at_seq, detected_at_ts)?;
+    ManifestStore::open(vault).append_quarantine(record)?;
     Ok(())
 }
 

@@ -11,10 +11,10 @@ use std::time::{Duration, Instant};
 use calyx_core::{CxId, FixedClock};
 use calyx_ledger::{
     AnswerTrace, DirectoryLedgerStore, EntryKind, LedgerAppender, LedgerCfStore, LedgerEntry,
-    LedgerRow, QuarantineSet, decode, get_answer_trace,
+    LedgerRow, MemoryLedgerStore, QuarantineSet, decode, get_answer_trace,
 };
 use calyx_lodestar::{
-    AnswerPath, Kernel, RecallQuery, append_kernel_build_entry, build_kernel_index, kernel_answer,
+    AnswerPath, Kernel, RecallQuery, append_kernel_build_entry, build_kernel_index,
     kernel_answer_with_ledger,
 };
 use serde::Serialize;
@@ -230,13 +230,17 @@ fn select_fixture(case: &CorpusCase, kernel: &Kernel) -> Option<LedgerAnswerFixt
         .filter(|anchor| kernel.members.contains(anchor))
         .collect::<Vec<_>>();
     for query in &case.rows {
-        let Ok(answer) = kernel_answer(
+        let mut appender =
+            LedgerAppender::open(MemoryLedgerStore::default(), FixedClock::new(1_785_631_000))
+                .ok()?;
+        let Ok(answer) = kernel_answer_with_ledger(
             &index,
             case.graph(),
             query.cx_id,
             &query.vector,
             &anchors,
             MAX_ANSWER_HOPS,
+            &mut appender,
         ) else {
             continue;
         };
@@ -311,9 +315,9 @@ fn chain_ok(entries: &[LedgerEntry]) -> bool {
 }
 
 fn fsv_root(home: &Path) -> PathBuf {
-    std::env::var("CALYX_FSV_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| home.join("fsv").join("ph33-real-ledger-answer"))
+    calyx_fsv::fsv_root_or_else("CALYX_FSV_ROOT", || {
+        home.join("fsv").join("ph33-real-ledger-answer")
+    })
 }
 
 fn reset_dir(dir: &Path) {

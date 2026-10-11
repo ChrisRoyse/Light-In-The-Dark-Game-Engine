@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 use calyx_assay::EnsembleCard;
 use serde::{Deserialize, Serialize};
@@ -12,11 +13,18 @@ pub(crate) struct InputReport {
 
 #[derive(Clone, Debug)]
 pub(crate) struct LoadedReport {
-    pub(crate) path: std::path::PathBuf,
+    pub(crate) source: String,
     pub(crate) report: InputReport,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug)]
+pub(crate) struct DbReportRef {
+    pub(crate) cf_root: PathBuf,
+    pub(crate) domain: String,
+    pub(crate) target_class: usize,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct MultiAnchorReport {
     pub(crate) schema_version: u32,
     pub(crate) role: String,
@@ -42,7 +50,7 @@ pub(crate) struct MultiAnchorReport {
     pub(crate) source_reports: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct TargetSummary {
     pub(crate) target_class: usize,
     pub(crate) domain: String,
@@ -58,7 +66,7 @@ pub(crate) struct TargetSummary {
     pub(crate) park_count: usize,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct LensEvidence {
     pub(crate) slot: u16,
     pub(crate) name: String,
@@ -71,7 +79,7 @@ pub(crate) struct LensEvidence {
     pub(crate) target_values: Vec<TargetLensValue>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct TargetLensValue {
     pub(crate) target_class: usize,
     pub(crate) domain: String,

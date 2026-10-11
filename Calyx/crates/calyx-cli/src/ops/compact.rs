@@ -2,25 +2,22 @@ use super::{parse_cf, unix_millis};
 use calyx_aster::cf::ColumnFamily;
 use calyx_aster::compaction::{
     CompactionReport, CompactionResult, CompactionThrottle, SstShard, compact_shards,
+    durable_compaction_slot_path,
 };
 use calyx_aster::manifest::ManifestStore;
 use calyx_aster::storage_names::{SstName, classify_sst};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::cf_read::list_sst_files;
-
-const DURABLE_COMPACT_FIRST_INDEX: u16 = 9_000;
-const DURABLE_COMPACT_LAST_INDEX: u16 = 9_999;
+use crate::error::{CliError, CliResult};
 
 pub fn compact(vault: &Path, cf_name: &str) -> crate::error::CliResult {
-    let cf = parse_cf(cf_name)?;
+    let cf = parse_cf(cf_name).map_err(CliError::usage)?;
     let cf_dir = vault.join("cf").join(cf.name());
-    let files = list_sst_files(&cf_dir)?;
+    let files = list_sst_files_for_adoption(&cf_dir)?;
     let output = compaction_output_path(vault, &cf_dir, &files)?;
     let shards = shards_for(cf, &files)?;
-    let result = compact_shards(cf, &shards, &output, CompactionThrottle::unlimited())
-        .map_err(|error| error.to_string())?;
+    let result = compact_shards(cf, &shards, &output, CompactionThrottle::unlimited())?;
     match result {
         CompactionResult::Skipped { debt } => {
             println!(
@@ -38,27 +35,22 @@ pub fn compact(vault: &Path, cf_name: &str) -> crate::error::CliResult {
     Ok(())
 }
 
-fn compaction_output_path(
-    vault: &Path,
-    cf_dir: &Path,
-    files: &[PathBuf],
-) -> Result<PathBuf, String> {
+fn compaction_output_path(vault: &Path, cf_dir: &Path, files: &[PathBuf]) -> CliResult<PathBuf> {
     if !vault.join("CURRENT").exists() {
         // Canonical compacted-class name so fail-closed scans accept it.
         return Ok(cf_dir.join(format!("compacted-{:020}.sst", unix_millis())));
     }
-    let durable_seq = ManifestStore::open(vault)
-        .load_current()
-        .map_err(|error| format!("load durable manifest for CLI compact: {error}"))?
-        .durable_seq;
+    let durable_seq = ManifestStore::open(vault).load_current()?.durable_seq;
     validate_durable_inputs(files, durable_seq)?;
     if durable_seq == 0 && files.len() >= 2 {
-        return Err("refusing durable CLI compact before CURRENT durable_seq advances".to_string());
+        return Err(CliError::runtime(
+            "refusing durable CLI compact before CURRENT durable_seq advances",
+        ));
     }
-    durable_compaction_output_path(cf_dir, durable_seq)
+    Ok(durable_compaction_slot_path(cf_dir, durable_seq)?)
 }
 
-fn validate_durable_inputs(files: &[PathBuf], durable_seq: u64) -> Result<(), String> {
+fn validate_durable_inputs(files: &[PathBuf], durable_seq: u64) -> CliResult {
     let hidden = files
         .iter()
         .filter(|file| !durable_input_is_manifest_bounded(file, durable_seq))
@@ -67,51 +59,72 @@ fn validate_durable_inputs(files: &[PathBuf], durable_seq: u64) -> Result<(), St
     if hidden.is_empty() {
         return Ok(());
     }
-    Err(format!(
+    Err(CliError::runtime(format!(
         "refusing durable CLI compact; {} SST file(s) are not bounded by CURRENT durable_seq {}: {}",
         hidden.len(),
         durable_seq,
         hidden.join(", ")
-    ))
+    )))
 }
 
-fn durable_compaction_output_path(cf_dir: &Path, durable_seq: u64) -> Result<PathBuf, String> {
-    for index in (DURABLE_COMPACT_FIRST_INDEX..=DURABLE_COMPACT_LAST_INDEX).rev() {
-        let path = cf_dir.join(format!("{durable_seq:020}-{index:04}.sst"));
-        if !path.exists() {
-            return Ok(path);
+/// Lists a CF directory's canonical SST files in epoch order WITHOUT the
+/// `CALYX_ASTER_SST_ORDER_AMBIGUOUS` gate that every read path enforces.
+///
+/// CLI compact is the sanctioned repair path that gate's remediation points
+/// to, so it must be able to run on the ambiguous layout it repairs. Merging
+/// legacy flush files epoch-first assumes the durable-coverage invariant
+/// (every committed row also has a commit-domain home, enforced fail-closed
+/// since #1132/#1139) — the same assumption every pre-#1138 read of a
+/// non-overlapping layout already made — and the adopted output replaces all
+/// inputs in the commit domain, clearing the ambiguity. Non-canonical names
+/// still fail closed.
+fn list_sst_files_for_adoption(dir: &Path) -> CliResult<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    if !dir.exists() {
+        return Ok(files);
+    }
+    for entry in fs::read_dir(dir)? {
+        let path = entry?.path();
+        if classify_sst(&path)?.is_some() {
+            files.push(path);
         }
     }
-    Err(format!(
-        "no durable CLI compaction output slot remains for seq {durable_seq}"
-    ))
+    files.sort_by(|left, right| {
+        crate::cf_read::sst_order(left)
+            .cmp(&crate::cf_read::sst_order(right))
+            .then(left.cmp(right))
+    });
+    Ok(files)
 }
 
 fn durable_input_is_manifest_bounded(path: &Path, durable_seq: u64) -> bool {
     match classify_sst(path) {
-        Ok(Some(
-            SstName::Router { seq }
-            | SstName::DurableBatch { seq, .. }
-            | SstName::Compacted { seq },
-        )) => seq <= durable_seq,
+        // Legacy flush files carry per-CF flush ordinals with no
+        // commit-domain bound; adopting them into the durable domain is
+        // exactly what CLI compact is for (issues #1132/#1138), and their
+        // content is covered by the durable-coverage invariant plus the
+        // seq-domain order gate in `list_sst_files`.
+        Ok(Some(SstName::RouterLegacy { .. })) => true,
+        Ok(Some(SstName::Flush { watermark, .. })) => watermark <= durable_seq,
+        Ok(Some(SstName::DurableBatch { seq, .. } | SstName::Compacted { seq })) => {
+            seq <= durable_seq
+        }
         _ => false,
     }
 }
 
-fn shards_for(cf: ColumnFamily, files: &[PathBuf]) -> Result<Vec<SstShard>, String> {
-    files
+fn shards_for(cf: ColumnFamily, files: &[PathBuf]) -> CliResult<Vec<SstShard>> {
+    Ok(files
         .iter()
-        .map(|file| SstShard::new(cf, file, 0).map_err(|error| error.to_string()))
-        .collect()
+        .map(|file| SstShard::new(cf, file, 0))
+        .collect::<Result<Vec<_>, _>>()?)
 }
 
-fn remove_compacted_inputs(
-    files: &[PathBuf],
-    report: &CompactionReport,
-) -> std::result::Result<(), String> {
+fn remove_compacted_inputs(files: &[PathBuf], report: &CompactionReport) -> CliResult {
     for file in files {
         if file != &report.output_path {
-            fs::remove_file(file).map_err(|error| format!("remove compacted input: {error}"))?;
+            fs::remove_file(file)
+                .map_err(|error| CliError::io(format!("remove compacted input: {error}")))?;
         }
     }
     Ok(())

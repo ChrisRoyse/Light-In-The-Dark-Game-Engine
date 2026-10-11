@@ -8,7 +8,7 @@ use calyx_core::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::frozen::NormPolicy;
+use crate::frozen::{FrozenLensContract, LensDType, NormPolicy};
 
 const LENS_UNREACHABLE: &str = "CALYX_LENS_UNREACHABLE";
 #[cfg(not(feature = "candle-cuda"))]
@@ -118,6 +118,18 @@ pub enum LensHealth {
 }
 
 impl LensSpec {
+    pub fn declared_contract(&self) -> FrozenLensContract {
+        FrozenLensContract::new(
+            self.name.clone(),
+            self.weights_sha256,
+            self.corpus_hash,
+            self.output,
+            self.modality,
+            LensDType::F32,
+            self.norm_policy,
+        )
+    }
+
     pub fn lens_id(&self) -> LensId {
         let output = format!(
             "shape={:?};norm={:?};runtime={:?}",
@@ -189,7 +201,7 @@ fn default_candle_pooling() -> String {
 }
 
 fn default_qwen3_dtype() -> String {
-    "bf16".to_string()
+    "f16".to_string()
 }
 
 pub const fn default_quant_default() -> QuantPolicy {
@@ -352,5 +364,10 @@ mod tests {
         let spec = candle_spec(vec![std::env::temp_dir().join("calyx-missing-candle-file")]);
 
         assert_eq!(spec.health(), LensHealth::Cold);
+    }
+
+    #[test]
+    fn qwen3_default_dtype_is_fp16_for_blackwell() {
+        assert_eq!(default_qwen3_dtype(), "f16");
     }
 }

@@ -140,6 +140,78 @@ fn half_cuda_requests_f32_finite_replay() {
     ));
 }
 
+fn candle_local_spec() -> LensSpec {
+    use crate::spec::default_recall_delta;
+    use calyx_core::{Asymmetry, QuantPolicy};
+    LensSpec {
+        name: "candle-local-e5".to_string(),
+        runtime: LensRuntime::CandleLocal {
+            model_id: "intfloat/e5-large".to_string(),
+            files: vec![
+                PathBuf::from("model.safetensors"),
+                PathBuf::from("tokenizer.json"),
+                PathBuf::from("config.json"),
+            ],
+            dtype: "f32".to_string(),
+            pooling: "mean".to_string(),
+        },
+        output: SlotShape::Dense(1024),
+        modality: Modality::Text,
+        weights_sha256: [5; 32],
+        corpus_hash: [6; 32],
+        norm_policy: NormPolicy::unit(),
+        max_batch: None,
+        axis: None,
+        asymmetry: Asymmetry::None,
+        quant_default: QuantPolicy::turboquant_default(),
+        truncate_dim: None,
+        recall_delta: default_recall_delta(),
+        retrieval_only: false,
+        excluded_from_dedup: false,
+    }
+}
+
+#[test]
+fn candle_from_lens_spec_defaults_to_cuda_fail_loud_device_policy() {
+    // The default persisted-spec path stays on the no-silent-fallback GPU contract.
+    let file_spec = CandleLens::file_spec_from_lens_spec(
+        &candle_local_spec(),
+        CandleDevicePolicy::CudaFailLoud { ordinal: 0 },
+    )
+    .unwrap();
+    assert_eq!(
+        file_spec.device_policy,
+        CandleDevicePolicy::CudaFailLoud { ordinal: 0 }
+    );
+    assert_eq!(file_spec.expected_dim, Some(1024));
+    assert_eq!(file_spec.pooling, CandlePoolingPolicy::Mean);
+    assert_eq!(file_spec.precision, CandlePrecision::F32);
+}
+
+#[test]
+fn candle_cpu_explicit_policy_threads_through_to_file_spec() {
+    // #1775: the engine CPU-explicit content panel surfaces an active candle_local
+    // slot by resolving the spec under CpuExplicit -- an explicit CPU device choice
+    // that never touches CUDA.
+    let file_spec =
+        CandleLens::file_spec_from_lens_spec(&candle_local_spec(), CandleDevicePolicy::CpuExplicit)
+            .unwrap();
+    assert_eq!(file_spec.device_policy, CandleDevicePolicy::CpuExplicit);
+    assert_eq!(file_spec.device_policy.as_str(), "cpu_explicit,no_cuda");
+}
+
+#[test]
+fn candle_file_spec_rejects_non_candle_runtime() {
+    let mut spec = candle_local_spec();
+    spec.runtime = LensRuntime::Onnx {
+        model_id: "dense".to_string(),
+        files: vec![PathBuf::from("model.onnx")],
+    };
+    let error =
+        CandleLens::file_spec_from_lens_spec(&spec, CandleDevicePolicy::CpuExplicit).unwrap_err();
+    assert_eq!(error.code, "CALYX_LENS_CONFIG_INVALID");
+}
+
 #[test]
 fn candle_device_policy_reports_cpu_and_cuda_truth() {
     assert_eq!(
@@ -162,8 +234,8 @@ fn candle_device_policy_reports_cpu_and_cuda_truth() {
         Some(error)
     };
 
-    if let Some(root) = std::env::var_os("CALYX_FSV_ROOT") {
-        write_device_policy_readback(Path::new(&root), cuda_feature, cuda_error);
+    if let Some(root) = calyx_fsv::fsv_root("CALYX_FSV_ROOT") {
+        write_device_policy_readback(&root, cuda_feature, cuda_error);
     }
 }
 

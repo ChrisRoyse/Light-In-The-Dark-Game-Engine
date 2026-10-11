@@ -1,20 +1,23 @@
 use std::fs;
+use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use calyx_core::{Asymmetry, CalyxError, Modality, QuantPolicy, Result, SlotShape};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::frozen::{NormPolicy, sha256_digest};
+use crate::frozen::{LengthDelimitedSha256, NormPolicy, sha256_digest};
 use crate::runtime::adapters::{allow_noncommercial_from_env, ensure_license_allowed};
 use crate::spec::LensSpec;
 
 use super::algorithmic_manifest::{
-    is_algorithmic_runtime, output_shape as algorithmic_output_shape,
+    frozen_contract as algorithmic_frozen_contract, is_algorithmic_runtime,
+    output_shape as algorithmic_output_shape,
 };
 use super::manifest_runtime::runtime_from_manifest;
 
 const CONFIG_INVALID: &str = "CALYX_LENS_CONFIG_INVALID";
+const STREAM_HASH_BUFFER_BYTES: usize = 1024 * 1024;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LensForgeFile {
@@ -88,6 +91,44 @@ pub struct LensForgeManifest {
     pub recall_delta: f32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_batch: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch_policy: Option<LensForgeBatchPolicy>,
+}
+
+/// Commission-time batch-limit provenance (#1157). GPU lenses must never be
+/// pinned at `max_batch: 1` without evidence: this records where `max_batch`
+/// came from (measured preflight vs operator assertion), the per-level probe
+/// results, and the explicit operator justification when a batch-1 or an
+/// unverified commission was allowed.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct LensForgeBatchPolicy {
+    /// `preflight-measured` (probe ran, max_batch = largest passing level),
+    /// `operator-verified` (operator requested max_batch, probe confirmed it),
+    /// or `operator-unverified` (preflight explicitly skipped).
+    pub max_batch_source: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch_1_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preflight_skip_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preflight_cap: Option<usize>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub preflight_levels: Vec<LensForgeBatchProbeLevel>,
+}
+
+/// One measured batch level from the commission preflight probe.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct LensForgeBatchProbeLevel {
+    pub batch: usize,
+    pub passed: bool,
+    pub elapsed_ms: u64,
+    pub ms_per_row: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_cosine_vs_single: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_abs_delta_vs_single: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub failure: Option<String>,
 }
 
 impl LensForgeManifest {
@@ -156,16 +197,32 @@ pub fn lens_spec_from_manifest_with_license_override(
     )?;
     let artifacts = read_and_verify_files(manifest, base_dir)?;
     let output = manifest.output_shape()?;
-    let weights_sha256 = spec_weights_sha256(manifest, &artifacts)?;
-    let corpus_hash = sha256_digest(&[
-        b"lensforge-manifest-v1",
-        manifest.name.as_bytes(),
-        manifest.source_hf_id.as_bytes(),
-        manifest.runtime.as_bytes(),
-        modality_token(manifest.modality).as_bytes(),
-        manifest.pooling.as_bytes(),
-        manifest.norm.as_bytes(),
-    ]);
+    let algorithmic_contract =
+        algorithmic_frozen_contract(&manifest.name, &manifest.runtime, manifest.modality, output)?;
+    let (output, weights_sha256, corpus_hash, norm_policy) =
+        if let Some(contract) = algorithmic_contract {
+            (
+                contract.shape(),
+                contract.weights_sha256(),
+                contract.corpus_hash(),
+                contract.norm_policy(),
+            )
+        } else {
+            (
+                output,
+                spec_weights_sha256(manifest, &artifacts)?,
+                sha256_digest(&[
+                    b"lensforge-manifest-v1",
+                    manifest.name.as_bytes(),
+                    manifest.source_hf_id.as_bytes(),
+                    manifest.runtime.as_bytes(),
+                    modality_token(manifest.modality).as_bytes(),
+                    manifest.pooling.as_bytes(),
+                    manifest.norm.as_bytes(),
+                ]),
+                norm_policy(&manifest.norm)?,
+            )
+        };
     let retrieval_only = is_retrieval_only_runtime(&manifest.runtime);
     Ok(LensSpec {
         name: manifest.name.clone(),
@@ -174,7 +231,7 @@ pub fn lens_spec_from_manifest_with_license_override(
         modality: manifest.modality,
         weights_sha256,
         corpus_hash,
-        norm_policy: norm_policy(&manifest.norm)?,
+        norm_policy,
         max_batch: manifest.max_batch,
         axis: Some(manifest.name.clone()),
         asymmetry: Asymmetry::None,
@@ -239,165 +296,12 @@ fn validate_required(manifest: &LensForgeManifest) -> Result<()> {
 pub(super) struct VerifiedFile {
     pub(super) role: String,
     pub(super) path: PathBuf,
-    bytes: Vec<u8>,
+    sha256: String,
+    bytes: u64,
 }
 
-fn read_and_verify_files(
-    manifest: &LensForgeManifest,
-    base_dir: &Path,
-) -> Result<Vec<VerifiedFile>> {
-    let mut files = Vec::with_capacity(manifest.files.len());
-    for file in ordered_manifest_files(&manifest.files) {
-        let path = resolve_manifest_path(base_dir, &file.path);
-        let bytes = fs::read(&path).map_err(|err| {
-            config_invalid(format!(
-                "read lensforge artifact {} failed: {err}",
-                path.display()
-            ))
-        })?;
-        let actual = plain_sha256_hex(&bytes);
-        if !hex_eq(&actual, &file.sha256) {
-            return Err(CalyxError::lens_frozen_violation(format!(
-                "lensforge artifact {} sha256 {} != manifest {}",
-                path.display(),
-                actual,
-                file.sha256
-            )));
-        }
-        if file.bytes != 0 && file.bytes != bytes.len() as u64 {
-            return Err(config_invalid(format!(
-                "lensforge artifact {} byte count {} != manifest {}",
-                path.display(),
-                bytes.len(),
-                file.bytes
-            )));
-        }
-        files.push(VerifiedFile {
-            role: file.role.clone(),
-            path,
-            bytes,
-        });
-    }
-    Ok(files)
-}
-
-fn spec_weights_sha256(
-    manifest: &LensForgeManifest,
-    artifacts: &[VerifiedFile],
-) -> Result<[u8; 32]> {
-    if is_algorithmic_runtime(&manifest.runtime) && artifacts.is_empty() {
-        return Ok(sha256_digest(&[
-            b"lensforge-algorithmic-v1",
-            manifest.name.as_bytes(),
-            manifest.runtime.as_bytes(),
-            &manifest.dim.to_be_bytes(),
-            modality_token(manifest.modality).as_bytes(),
-        ]));
-    }
-    let model = weight_anchor(manifest, artifacts)?;
-    let model_sha = plain_sha256_hex(&model.bytes);
-    if !hex_eq(&model_sha, &manifest.weights_sha256) {
-        return Err(CalyxError::lens_frozen_violation(format!(
-            "lensforge model weights sha256 {model_sha} != manifest {}",
-            manifest.weights_sha256
-        )));
-    }
-    if let Some(expected) = &manifest.artifact_set_sha256 {
-        let contract_artifacts = contract_artifacts(manifest, artifacts)?;
-        let parts = contract_artifacts
-            .iter()
-            .map(|file| file.bytes.as_slice())
-            .collect::<Vec<_>>();
-        let actual = hex_from_bytes(&sha256_digest(&parts));
-        if !hex_eq(&actual, expected) {
-            return Err(CalyxError::lens_frozen_violation(format!(
-                "lensforge artifact_set_sha256 {actual} != manifest {expected}"
-            )));
-        }
-        parse_hex_32(expected)
-    } else {
-        parse_hex_32(&manifest.weights_sha256)
-    }
-}
-
-fn weight_anchor<'a>(
-    manifest: &LensForgeManifest,
-    artifacts: &'a [VerifiedFile],
-) -> Result<&'a VerifiedFile> {
-    artifacts
-        .iter()
-        .find(|file| is_model_role(&file.role))
-        .or_else(|| {
-            is_adapter_runtime(&manifest.runtime)
-                .then(|| artifacts.iter().find(|file| file.role == "adapter"))
-                .flatten()
-        })
-        .ok_or_else(|| config_invalid("lensforge manifest requires a model file"))
-}
-
-fn is_tei_runtime(runtime: &str) -> bool {
-    matches!(runtime, "tei" | "tei-http" | "tei_http")
-}
-
-fn is_adapter_runtime(runtime: &str) -> bool {
-    matches!(
-        runtime,
-        "adapter" | "multimodal-adapter" | "multimodal_adapter"
-    )
-}
-
-fn ordered_manifest_files(files: &[LensForgeFile]) -> Vec<&LensForgeFile> {
-    let mut ordered = files.iter().collect::<Vec<_>>();
-    ordered.sort_by_key(|file| (role_rank(&file.role), file.path.clone()));
-    ordered
-}
-
-fn role_rank(role: &str) -> u8 {
-    match role {
-        "model" | "weights" | "embeddings" => 0,
-        "tokenizer" => 1,
-        "config" => 2,
-        "preprocessor" => 3,
-        "tokenizer_config" => 4,
-        "special_tokens_map" => 5,
-        _ => 9,
-    }
-}
-
-fn contract_artifacts<'a>(
-    manifest: &LensForgeManifest,
-    artifacts: &'a [VerifiedFile],
-) -> Result<Vec<&'a VerifiedFile>> {
-    match manifest.runtime.as_str() {
-        "model2vec" | "static_lookup" | "static-lookup" => Ok(vec![
-            artifact_ref_by_role(artifacts, is_model_role)?,
-            artifact_ref_by_role(artifacts, |role| role == "tokenizer")?,
-        ]),
-        _ => Ok(artifacts.iter().collect()),
-    }
-}
-
-fn artifact_ref_by_role(
-    artifacts: &[VerifiedFile],
-    predicate: impl Fn(&str) -> bool,
-) -> Result<&VerifiedFile> {
-    artifacts
-        .iter()
-        .find(|file| predicate(&file.role))
-        .ok_or_else(|| config_invalid("lensforge manifest missing static lookup artifact"))
-}
-
-fn is_model_role(role: &str) -> bool {
-    matches!(role, "model" | "weights" | "embeddings")
-}
-
-fn resolve_manifest_path(base_dir: &Path, path: &Path) -> PathBuf {
-    if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        base_dir.join(path)
-    }
-}
+mod artifacts;
+use artifacts::{is_tei_runtime, read_and_verify_files, spec_weights_sha256};
 
 fn norm_policy(raw: &str) -> Result<NormPolicy> {
     match raw {
@@ -423,11 +327,6 @@ pub(super) fn modality_token(modality: Modality) -> &'static str {
         Modality::Structured => "structured",
         Modality::Mixed => "mixed",
     }
-}
-
-fn plain_sha256_hex(bytes: &[u8]) -> String {
-    let digest: [u8; 32] = Sha256::digest(bytes).into();
-    hex_from_bytes(&digest)
 }
 
 fn parse_hex_32(raw: &str) -> Result<[u8; 32]> {

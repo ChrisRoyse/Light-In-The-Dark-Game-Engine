@@ -10,15 +10,25 @@ use crate::frozen::{FrozenLensContract, NormPolicy};
 use crate::runtime::common::{normalize_unit, text_from_input};
 use crate::spec::{LensRuntime, LensSpec};
 
+mod arena;
+mod batch_scope;
 mod colbert;
 mod colbert_files;
 mod colbert_tokens;
+mod cpu_fallback_audit;
+mod cuda_graphs;
 mod cuda_guard;
 mod custom;
 mod dynamic_ort;
 mod fastembed_runtime;
+mod green_context;
+mod io_binding;
+mod session;
 mod special;
+mod windows_cuda_dlls;
 
+pub(in crate::runtime::onnx) use batch_scope::scoped_max_batch;
+pub(crate) use batch_scope::with_runtime_batch_limit;
 pub use colbert::{DEFAULT_ANSWERAI_COLBERT_MODEL, OnnxColbertFileSpec, OnnxColbertLens};
 pub use special::{FastembedBgem3Lens, FastembedRerankerLens, FastembedSparseLens};
 
@@ -36,8 +46,8 @@ pub struct OnnxLens {
 }
 
 enum OnnxBackend {
-    FastEmbed(Mutex<TextEmbedding>),
-    Custom(Mutex<custom::CustomOnnxRuntime>),
+    FastEmbed(Box<Mutex<TextEmbedding>>),
+    Custom(Box<Mutex<custom::CustomOnnxRuntime>>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -50,7 +60,9 @@ pub enum OnnxProviderPolicy {
 impl OnnxProviderPolicy {
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::CudaFailLoud => "cuda:0,error_on_failure,no_cpu_fallback",
+            Self::CudaFailLoud => {
+                "cuda:0,error_on_failure,no_cpu_fallback,cudnn_conv_algo=HEURISTIC,cudnn_workspace_cap=32MiB"
+            }
             Self::CpuExplicit => "cpu_explicit,no_cuda",
         }
     }
@@ -262,18 +274,11 @@ impl OnnxLens {
     }
 
     pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
-        let LensRuntime::Onnx { model_id, files } = &spec.runtime else {
+        let LensRuntime::Onnx { model_id: _, files } = &spec.runtime else {
             return Err(config_invalid("LensSpec runtime is not onnx"));
         };
-        if is_fastembed_manifest(model_id, files) {
-            let lens = fastembed_runtime::from_model_name_with_policy(
-                spec.name.clone(),
-                model_id,
-                fastembed_runtime::default_cache_root(),
-                OnnxProviderPolicy::CudaFailLoud,
-            )?;
-            ensure_fastembed_spec_match(&lens, spec)?;
-            return Ok(lens);
+        if is_fastembed_manifest(files) {
+            return Self::from_files(OnnxFileSpec::from_lens_spec(spec)?);
         }
         Self::from_files(OnnxFileSpec::from_lens_spec(spec)?)
     }
@@ -293,7 +298,7 @@ impl OnnxLens {
             files,
             provider_policy,
             max_batch: None,
-            backend: Some(OnnxBackend::FastEmbed(Mutex::new(model))),
+            backend: Some(OnnxBackend::FastEmbed(Box::new(Mutex::new(model)))),
         }
     }
 
@@ -311,7 +316,7 @@ impl OnnxLens {
             files,
             provider_policy,
             max_batch,
-            backend: Some(OnnxBackend::Custom(Mutex::new(runtime))),
+            backend: Some(OnnxBackend::Custom(Box::new(Mutex::new(runtime)))),
         }
     }
 
@@ -358,28 +363,11 @@ impl OnnxLens {
     }
 }
 
-fn is_fastembed_manifest(model_id: &str, files: &[PathBuf]) -> bool {
-    fastembed_runtime::model_from_name(model_id).is_ok()
-        && files.iter().any(|path| {
-            path.components()
-                .any(|component| component.as_os_str() == OsStr::new("fastembed-artifacts"))
-        })
-}
-
-fn ensure_fastembed_spec_match(lens: &OnnxLens, spec: &LensSpec) -> Result<()> {
-    if lens.contract().shape() != spec.output {
-        return Err(CalyxError::lens_dim_mismatch(format!(
-            "fastembed ONNX output shape {:?} != declared {:?}",
-            lens.contract().shape(),
-            spec.output
-        )));
-    }
-    if lens.contract().weights_sha256() != spec.weights_sha256 {
-        return Err(CalyxError::lens_frozen_violation(
-            "fastembed ONNX artifact hash does not match LensSpec",
-        ));
-    }
-    Ok(())
+fn is_fastembed_manifest(files: &[PathBuf]) -> bool {
+    files.iter().any(|path| {
+        path.components()
+            .any(|component| component.as_os_str() == OsStr::new("fastembed-artifacts"))
+    })
 }
 
 impl Lens for OnnxLens {
@@ -388,7 +376,7 @@ impl Lens for OnnxLens {
     }
 
     fn shape(&self) -> SlotShape {
-        SlotShape::Dense(self.dim)
+        self.contract.shape()
     }
 
     fn modality(&self) -> Modality {
@@ -412,15 +400,8 @@ impl Lens for OnnxLens {
                 let mut runtime = runtime.lock().map_err(|_| {
                     CalyxError::lens_unreachable("custom ONNX session mutex was poisoned")
                 })?;
-                let chunk_size = self.max_batch.unwrap_or(inputs.len()).max(1);
-                if chunk_size >= inputs.len() {
-                    return runtime.measure_batch(self, inputs);
-                }
-                let mut out = Vec::with_capacity(inputs.len());
-                for chunk in inputs.chunks(chunk_size) {
-                    out.extend(runtime.measure_batch(self, chunk)?);
-                }
-                Ok(out)
+                let max_batch = scoped_max_batch(self.max_batch)?;
+                runtime.measure_batch(self, inputs, max_batch)
             }
         }
     }

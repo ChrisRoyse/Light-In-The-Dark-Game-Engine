@@ -1,0 +1,82 @@
+# cargo-deny gate (engine dependency & license policy #1073; advisories #1516).
+# Run: cargo deny check   (licenses + bans + advisories + sources)
+
+[graph]
+# The project ships exactly ONE target: x86_64-pc-windows-msvc (rust-toolchain.toml declares
+# it as the sole target; non-Windows support was formally dropped in #713). By default
+# cargo-deny evaluates EVERY crate cargo resolves — including platform-specific deps that are
+# never compiled or linked on Windows. Scoping the graph to the real ship target prunes the
+# Linux-only Wayland stack (winit → smithay-client-toolkit → wayland-scanner), which is the
+# ONLY consumer of quick-xml 0.39.4 in the tree — the crate behind both quick-xml DoS
+# advisories (RUSTSEC-2026-0194 quadratic dup-attr scan, RUSTSEC-2026-0195 NsReader
+# allocation). Those DoS advisories require parsing UNTRUSTED XML at run time; the sole path
+# here (wayland-scanner) is a build-time proc-macro that parses trusted, first-party Wayland
+# protocol definitions on Linux only, and is never present in the shipped Windows product
+# (verified: `cargo tree -i quick-xml@0.39.4 --target x86_64-pc-windows-msvc` → empty).
+# This is NOT an ignore that hides a real DoS — cargo-deny simply stops evaluating a platform
+# we do not ship. If a non-Windows target is ever re-added (#713), add its triple here and
+# the quick-xml advisories must be resolved (upstream wayland-scanner 0.31.10, the latest,
+# still pins quick-xml "^0.39"). Refs: #1516, #713, #1073.
+targets = ["x86_64-pc-windows-msvc"]
+
+# cargo-deny license gate (engine dependency & license policy #1073).
+# Run: cargo deny check licenses
+[licenses]
+allow = [
+    "MIT",
+    "MIT-0",              # MIT No Attribution - borrow-or-share (permissive, #1073/#1728)
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "Zlib",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "MPL-2.0",
+    "CC0-1.0",
+    "BSL-1.0",
+    # Permissive licenses actually present in the dependency tree (all non-copyleft,
+    # consistent with the permissive-only mandate #1073). Surfaced by the lint gate
+    # (#1492 item 3):
+    "OFL-1.1",            # SIL Open Font License — egui default fonts (epaint_default_fonts)
+    "Ubuntu-font-1.0",    # Ubuntu Font License — egui default fonts (epaint_default_fonts)
+    "NCSA",               # U. of Illinois/NCSA (BSD/MIT-style) — libfuzzer-sys
+    "CDLA-Permissive-2.0", # Community Data License Agreement Permissive — webpki-roots (Mozilla CA roots)
+]
+# Our own crates are proprietary; they carry a LicenseRef and are not published.
+private = { ignore = true }
+confidence-threshold = 0.9
+
+[bans]
+# No copyleft/GPL creeping in.
+deny = []
+
+[advisories]
+yanked = "deny"
+# Documented, justified ignores (#1516). No silent ignores: every entry carries a rationale
+# and a re-evaluation trigger. Both are UNMAINTAINED advisories (not exploitable CVEs) on
+# transitive deps with no first-party fix short of forking the UI / ML stacks. The quick-xml
+# DoS vulnerabilities (RUSTSEC-2026-0194/0195) are handled structurally by [graph].targets
+# above (Wayland is not shipped) — they are deliberately NOT ignored here.
+ignore = [
+    # paste 1.0.15 — unmaintained (RUSTSEC-2024-0436). Compile-time token-paste proc-macro,
+    # transitive via gemm → candle-core (the Calyx ML stack). No runtime code, no untrusted
+    # input. Upstream candle/gemm have not migrated off `paste` (successor: `pastey`).
+    # Re-evaluate when candle-core drops the `paste` dependency. Tracked: #1516.
+    { id = "RUSTSEC-2024-0436", reason = "paste unmaintained; transitive compile-time proc-macro via gemm/candle-core; no first-party fix, no untrusted input. Re-evaluate on candle migration to pastey. Tracked in #1516." },
+    # ttf-parser 0.21.1 (via fontdue) & 0.25.1 (via egui/ab_glyph/owned_ttf_parser + rustybuzz)
+    # — unmaintained (RUSTSEC-2026-0192); upstream recommends `skrifa` (Google fontations).
+    # Transitive across the egui + fontdue text stack; no first-party fix without forking the
+    # UI stack. Re-evaluate when egui/fontdue migrate to skrifa. Tracked: #1516.
+    { id = "RUSTSEC-2026-0192", reason = "ttf-parser unmaintained (0.21.1 fontdue, 0.25.1 egui/rustybuzz); transitive UI-text dep, upstreams not yet migrated to skrifa. Re-evaluate on egui/fontdue skrifa migration. Tracked in #1516." },
+    # rustybuzz 0.20.1 — unmaintained (RUSTSEC-2026-0206). Maintainer has declared the crate
+    # unmaintained (harfbuzz/rustybuzz#166). It is the pure-Rust harfbuzz shaping port used by
+    # litd-engine's text-shaping stack (crates/litd-engine/src/render/text_shaping.rs); it shapes
+    # only first-party, in-app authored strings — no untrusted/network input. No first-party fix
+    # short of migrating shaping to a maintained successor (e.g. swash/cosmic-text or a maintained
+    # rustybuzz fork), which is a UI-stack change, not a drop-in bump. It also anchors the already-
+    # ignored ttf-parser 0.25.1 (RUSTSEC-2026-0192). Re-evaluate on the text-shaping migration.
+    # Tracked: #1583.
+    { id = "RUSTSEC-2026-0206", reason = "rustybuzz unmaintained (harfbuzz/rustybuzz#166); harfbuzz shaping port used by litd-engine text_shaping over first-party authored text only, no untrusted input. No first-party fix short of migrating shaping to a maintained successor (swash/cosmic-text). Re-evaluate on text-shaping migration. Tracked in #1583." },
+]

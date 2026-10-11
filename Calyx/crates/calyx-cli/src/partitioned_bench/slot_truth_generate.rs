@@ -6,45 +6,25 @@ use std::process;
 use std::time::Instant;
 
 use calyx_sextant::index::{DenseVectorFile, cuvs_bruteforce_topk};
-use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::a35_signal::require_recorded_countable_content_signal_kind;
 use crate::error::{CliError, CliResult};
+use crate::partitioned_bench::rrf_plan::{self, LoadedPlan, Plan, PlanSlot};
+use crate::partitioned_bench::slot_truth_store::{FORMAT, MODE, ROW_ID_SPACE};
 
+#[path = "slot_truth_generate/args.rs"]
+mod args;
+#[path = "slot_truth_generate/db.rs"]
+mod db;
 #[path = "slot_truth_generate/support.rs"]
 mod support;
 
+use args::Args;
 use support::{io_error, sha256_file, st_error};
 
-const FORMAT: &str = "calyx-partitioned-rrf-slot-ground-truth-v1";
-const MODE: &str = "per_slot_ranked_rrf_reference";
-const ROW_ID_SPACE: &str = "partitioned_rrf_plan_corpus_row_idx";
 const BACKEND: &str = "cuvs-bruteforce-chunked-v1";
-const DEFAULT_CHUNK_ROWS: usize = 100_000;
 const MIN_A35_LENSES: usize = 10;
-#[derive(Clone, Debug)]
-struct Args {
-    plan: PathBuf,
-    out_dir: PathBuf,
-    query_count: usize,
-    truth_depth: usize,
-    chunk_rows: usize,
-}
-#[derive(Clone, Debug, Deserialize)]
-struct Plan {
-    slots: Vec<PlanSlot>,
-}
-#[derive(Clone, Debug, Deserialize)]
-struct PlanSlot {
-    slot: u16,
-    name: Option<String>,
-    lens_id: Option<String>,
-    weights_sha256: Option<String>,
-    signal_kind: Option<String>,
-    corpus: PathBuf,
-    queries: PathBuf,
-}
 #[derive(Clone, Debug)]
 struct SlotEvidence {
     slot: u16,
@@ -57,68 +37,37 @@ struct SlotEvidence {
     width: usize,
     corpus: String,
     queries: String,
+    query_start_row: u64,
     dim: usize,
     chunks: usize,
     elapsed_ms: u128,
-}
-impl Args {
-    fn parse(raw: &[String]) -> CliResult<Self> {
-        let mut plan = None;
-        let mut out_dir = None;
-        let mut query_count = None;
-        let mut truth_depth = None;
-        let mut chunk_rows = DEFAULT_CHUNK_ROWS;
-        let mut it = raw.iter();
-        while let Some(flag) = it.next() {
-            let mut next = || {
-                it.next()
-                    .cloned()
-                    .ok_or_else(|| CliError::usage(format!("{flag} requires a value")))
-            };
-            match flag.as_str() {
-                "--plan" => plan = Some(PathBuf::from(next()?)),
-                "--out-dir" => out_dir = Some(PathBuf::from(next()?)),
-                "--query-count" => query_count = Some(super::parse(&next()?, "--query-count")?),
-                "--truth-depth" => truth_depth = Some(super::parse(&next()?, "--truth-depth")?),
-                "--chunk-rows" => chunk_rows = super::parse(&next()?, "--chunk-rows")?,
-                other => return Err(CliError::usage(format!("unknown flag: {other}"))),
-            }
-        }
-        let plan = plan.ok_or_else(|| CliError::usage("--plan <json> is required"))?;
-        let out_dir = out_dir.ok_or_else(|| CliError::usage("--out-dir <dir> is required"))?;
-        let query_count =
-            query_count.ok_or_else(|| CliError::usage("--query-count <n> is required"))?;
-        let truth_depth =
-            truth_depth.ok_or_else(|| CliError::usage("--truth-depth <n> is required"))?;
-        if query_count == 0 || truth_depth == 0 || chunk_rows == 0 {
-            return Err(CliError::usage(
-                "--query-count, --truth-depth, and --chunk-rows must be > 0",
-            ));
-        }
-        Ok(Self {
-            plan,
-            out_dir,
-            query_count,
-            truth_depth,
-            chunk_rows,
-        })
-    }
+    rank_rows: Vec<Vec<u64>>,
 }
 
 pub(crate) fn run(raw: &[String]) -> CliResult {
     let args = Args::parse(raw)?;
-    fail_if_exists(&args.out_dir)?;
-    let staging = staging_dir(&args.out_dir);
+    if args.emit_artifacts {
+        run_file_mode(&args)
+    } else {
+        db::run(&args)
+    }
+}
+
+fn run_file_mode(args: &Args) -> CliResult {
+    let out_dir = args.out_dir.as_ref().expect("validated");
+    fail_if_exists(out_dir)?;
+    let staging = staging_dir(out_dir);
     fail_if_exists(&staging)?;
-    create_parent(&args.out_dir)?;
+    create_parent(out_dir)?;
     fs::create_dir(&staging).map_err(io_error)?;
-    let result = run_staged(&args, &staging);
-    match result {
+    match run_staged(args, &staging) {
         Ok(report) => {
-            fs::rename(&staging, &args.out_dir).map_err(io_error)?;
+            fs::rename(&staging, out_dir).map_err(io_error)?;
             println!(
                 "{}",
-                serde_json::to_string_pretty(&report).map_err(CliError::from)?
+                serde_json::to_string_pretty(&report).map_err(|error| {
+                    CliError::runtime(format!("serialize slot-truth generation report: {error}"))
+                })?
             );
             Ok(())
         }
@@ -130,12 +79,59 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
 }
 
 fn run_staged(args: &Args, staging: &Path) -> CliResult<Value> {
-    let plan = load_plan(&args.plan)?;
-    validate_plan(&plan)?;
-    let plan_sha256 = sha256_file(&args.plan)?;
-    let plan_base = args.plan.parent().unwrap_or_else(|| Path::new(""));
-    let first_corpus = DenseVectorFile::open(&resolve(plan_base, &plan.slots[0].corpus))
-        .map_err(CliError::Calyx)?;
+    let out_dir = args.out_dir.as_ref().expect("validated");
+    let (plan_sha256, corpus_rows, slots) = generate(args, Some(staging))?;
+    let manifest = manifest(args, &plan_sha256, corpus_rows, &slots);
+    let manifest_path = staging.join("manifest.json");
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).map_err(|error| {
+            CliError::runtime(format!("serialize slot-truth manifest: {error}"))
+        })?,
+    )
+    .map_err(io_error)?;
+    let report = json!({
+        "trigger": "calyx bench partitioned-rrf-slot-truth",
+        "format": FORMAT,
+        "mode": MODE,
+        "row_id_space": ROW_ID_SPACE,
+        "reference_backend": BACKEND,
+        "scale_suitable": true,
+        "plan": args.plan,
+        "plan_cf_root": args.plan_cf_root,
+        "plan_key": args.plan_key,
+        "plan_sha256": plan_sha256,
+        "out_dir": out_dir,
+        "manifest": out_dir.join("manifest.json"),
+        "manifest_sha256": sha256_file(&manifest_path)?,
+        "query_count": args.query_count,
+        "truth_depth": args.truth_depth,
+        "corpus_rows": corpus_rows,
+        "chunk_rows": args.chunk_rows,
+        "slots": slots.iter().map(slot_report).collect::<Vec<_>>(),
+    });
+    fs::write(
+        staging.join("generation_report.json"),
+        serde_json::to_vec_pretty(&report).map_err(|error| {
+            CliError::runtime(format!("serialize slot-truth generation report: {error}"))
+        })?,
+    )
+    .map_err(io_error)?;
+    Ok(report)
+}
+
+fn generate(
+    args: &Args,
+    artifact_dir: Option<&Path>,
+) -> CliResult<(String, usize, Vec<SlotEvidence>)> {
+    let loaded_plan = load_plan(args)?;
+    let plan = &loaded_plan.plan;
+    validate_plan(plan)?;
+    let first_corpus = DenseVectorFile::open(&rrf_plan::resolve(
+        &loaded_plan.base_dir,
+        &plan.slots[0].corpus,
+    ))
+    .map_err(CliError::Calyx)?;
     let corpus_rows = usize::try_from(first_corpus.count()).map_err(|_| {
         st_error(
             "CALYX_FSV_PARTITIONED_RRF_SLOT_TRUTH_INVALID",
@@ -153,55 +149,38 @@ fn run_staged(args: &Args, staging: &Path) -> CliResult<Value> {
     drop(first_corpus);
     let mut slots = Vec::with_capacity(plan.slots.len());
     for slot in &plan.slots {
-        slots.push(generate_slot(args, staging, plan_base, slot, corpus_rows)?);
+        slots.push(generate_slot(
+            args,
+            artifact_dir,
+            &loaded_plan.base_dir,
+            slot,
+            corpus_rows,
+        )?);
     }
-    let manifest = manifest(args, &plan_sha256, corpus_rows, &slots);
-    let manifest_path = staging.join("manifest.json");
-    fs::write(
-        &manifest_path,
-        serde_json::to_vec_pretty(&manifest).map_err(CliError::from)?,
-    )
-    .map_err(io_error)?;
-    let report = json!({
-        "trigger": "calyx bench partitioned-rrf-slot-truth",
-        "format": FORMAT,
-        "mode": MODE,
-        "row_id_space": ROW_ID_SPACE,
-        "reference_backend": BACKEND,
-        "scale_suitable": true,
-        "plan": args.plan,
-        "plan_sha256": plan_sha256,
-        "out_dir": args.out_dir,
-        "manifest": args.out_dir.join("manifest.json"),
-        "manifest_sha256": sha256_file(&manifest_path)?,
-        "query_count": args.query_count,
-        "truth_depth": args.truth_depth,
-        "corpus_rows": corpus_rows,
-        "chunk_rows": args.chunk_rows,
-        "slots": slots.iter().map(slot_report).collect::<Vec<_>>(),
-    });
-    fs::write(
-        staging.join("generation_report.json"),
-        serde_json::to_vec_pretty(&report).map_err(CliError::from)?,
-    )
-    .map_err(io_error)?;
-    Ok(report)
+    Ok((loaded_plan.plan_sha256, corpus_rows, slots))
 }
 
 fn generate_slot(
     args: &Args,
-    staging: &Path,
+    artifact_dir: Option<&Path>,
     plan_base: &Path,
     slot: &PlanSlot,
     corpus_rows: usize,
 ) -> CliResult<SlotEvidence> {
     let started = Instant::now();
-    let corpus_path = resolve(plan_base, &slot.corpus);
-    let query_path = resolve(plan_base, &slot.queries);
+    let corpus_path = rrf_plan::resolve(plan_base, &slot.corpus);
+    let query_path = rrf_plan::resolve(plan_base, &slot.queries);
     let corpus = DenseVectorFile::open(&corpus_path).map_err(CliError::Calyx)?;
     let queries = DenseVectorFile::open(&query_path).map_err(CliError::Calyx)?;
-    validate_files(&corpus, &queries, args, corpus_rows, slot.slot)?;
-    let mut query_rows = load_rows(&queries, 0, args.query_count)?;
+    let query_start = usize::try_from(slot.query_start_row).map_err(|_| {
+        st_error(
+            "CALYX_FSV_PARTITIONED_RRF_SLOT_TRUTH_INVALID",
+            "query_start_row exceeds usize",
+            "use a query selector within the supported row-id range",
+        )
+    })?;
+    validate_files(&corpus, &queries, args, corpus_rows, slot, query_start)?;
+    let mut query_rows = load_rows(&queries, query_start, args.query_count)?;
     let mut merged = vec![Vec::<(u64, f32)>::new(); args.query_count];
     let mut chunks = 0usize;
     let mut base = 0usize;
@@ -222,23 +201,39 @@ fn generate_slot(
         chunks += 1;
         base += take;
     }
-    let file_name = format!("slot_{:02}_truth.i32bin", slot.slot);
-    let file_path = staging.join(&file_name);
-    write_i32bin(&file_path, &merged, args.truth_depth)?;
+    let rows = merged
+        .iter()
+        .map(|row| {
+            row.iter()
+                .take(args.truth_depth)
+                .map(|(id, _)| *id)
+                .collect()
+        })
+        .collect::<Vec<Vec<u64>>>();
+    let (file_name, file_sha256) = if let Some(dir) = artifact_dir {
+        let file_name = format!("slot_{:02}_truth.i32bin", slot.slot);
+        let file_path = dir.join(&file_name);
+        write_i32bin(&file_path, &rows, args.truth_depth)?;
+        (file_name, sha256_file(&file_path)?)
+    } else {
+        (String::new(), String::new())
+    };
     Ok(SlotEvidence {
         slot: slot.slot,
         lens_id: required(&slot.lens_id, "lens_id", slot.slot)?,
         weights_sha256: required(&slot.weights_sha256, "weights_sha256", slot.slot)?,
         signal_kind: required(&slot.signal_kind, "signal_kind", slot.slot)?,
         file: file_name,
-        file_sha256: sha256_file(&file_path)?,
+        file_sha256,
         rows: args.query_count,
         width: args.truth_depth,
         corpus: corpus_path.display().to_string(),
         queries: query_path.display().to_string(),
+        query_start_row: slot.query_start_row,
         dim: corpus.dim(),
         chunks,
         elapsed_ms: started.elapsed().as_millis(),
+        rank_rows: rows,
     })
 }
 
@@ -313,18 +308,28 @@ fn validate_files(
     queries: &DenseVectorFile,
     args: &Args,
     corpus_rows: usize,
-    slot: u16,
+    slot: &PlanSlot,
+    query_start: usize,
 ) -> CliResult {
+    let needed_queries = query_start.checked_add(args.query_count).ok_or_else(|| {
+        st_error(
+            "CALYX_FSV_PARTITIONED_RRF_SLOT_TRUTH_MISMATCH",
+            "query_start_row + query_count overflows",
+            "choose a bounded query selector",
+        )
+    })?;
     if corpus.count() as usize != corpus_rows
-        || queries.count() < args.query_count as u64
+        || queries.count() < needed_queries as u64
         || corpus.dim() != queries.dim()
     {
         return Err(st_error(
             "CALYX_FSV_PARTITIONED_RRF_SLOT_TRUTH_MISMATCH",
             format!(
-                "slot {slot} corpus_rows={} expected={corpus_rows} queries={} needs={} corpus_dim={} query_dim={}",
+                "slot {} corpus_rows={} expected={corpus_rows} queries={} start={} needs={} corpus_dim={} query_dim={}",
+                slot.slot,
                 corpus.count(),
                 queries.count(),
+                slot.query_start_row,
                 args.query_count,
                 corpus.dim(),
                 queries.dim()
@@ -343,7 +348,7 @@ fn load_rows(file: &DenseVectorFile, start: usize, rows: usize) -> CliResult<Vec
     Ok(out)
 }
 
-fn write_i32bin(path: &Path, rows: &[Vec<(u64, f32)>], width: usize) -> CliResult {
+fn write_i32bin(path: &Path, rows: &[Vec<u64>], width: usize) -> CliResult {
     let mut out = BufWriter::new(File::create(path).map_err(io_error)?);
     out.write_all(&(rows.len() as u32).to_le_bytes())
         .map_err(io_error)?;
@@ -357,7 +362,7 @@ fn write_i32bin(path: &Path, rows: &[Vec<(u64, f32)>], width: usize) -> CliResul
                 "inspect cuVS chunk output and corpus row count",
             ));
         }
-        for (id, _) in row.iter().take(width) {
+        for id in row.iter().take(width) {
             let id = i32::try_from(*id).map_err(|_| {
                 st_error(
                     "CALYX_FSV_PARTITIONED_RRF_SLOT_TRUTH_INVALID",
@@ -393,6 +398,7 @@ fn manifest(args: &Args, plan_sha256: &str, corpus_rows: usize, slots: &[SlotEvi
             "file_sha256": slot.file_sha256,
             "rows": slot.rows,
             "width": slot.width,
+            "query_start_row": slot.query_start_row,
         })).collect::<Vec<_>>(),
     })
 }
@@ -409,29 +415,19 @@ fn slot_report(slot: &SlotEvidence) -> Value {
         "width": slot.width,
         "corpus": slot.corpus,
         "queries": slot.queries,
+        "query_start_row": slot.query_start_row,
         "dim": slot.dim,
         "chunks": slot.chunks,
         "elapsed_ms": slot.elapsed_ms,
     })
 }
 
-fn load_plan(path: &Path) -> CliResult<Plan> {
-    let text = fs::read_to_string(path).map_err(io_error)?;
-    serde_json::from_str(&text).map_err(|error| {
-        st_error(
-            "CALYX_FSV_PARTITIONED_RRF_SLOT_TRUTH_PLAN_INVALID",
-            format!("parse {} failed: {error}", path.display()),
-            "pass a partitioned_rrf_plan.json produced by assay export-fbin",
-        )
-    })
-}
-
-fn resolve(base: &Path, path: &Path) -> PathBuf {
-    if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        base.join(path)
+fn load_plan(args: &Args) -> CliResult<LoadedPlan> {
+    if let Some(path) = &args.plan {
+        return rrf_plan::load_from_file(path);
     }
+    let cf_root = args.plan_cf_root.as_ref().expect("validated");
+    rrf_plan::load_from_db(cf_root, &args.plan_key)
 }
 
 fn required(value: &Option<String>, field: &'static str, slot: u16) -> CliResult<String> {

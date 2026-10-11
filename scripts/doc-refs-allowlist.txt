@@ -1,0 +1,22 @@
+# Allowlist for scripts/check-doc-refs.ps1 (#1465).
+# One repo-relative forward-slash path per line; '#' comments and blanks ignored.
+# A listed path is exempt from the tracked-ness check. Use ONLY for references that
+# are deliberately outside the git index (e.g. illustrative example paths in prose,
+# or paths that live in ANOTHER repository's tree).
+
+# docs2/AICodingAgentSuperPrompt.md and docs2/EMBEDDER_ROSTER_REPORT.md are recovered
+# verbatim from the Calyx-Dev project; these refs point into CALYX-DEV'S OWN repo tree
+# (on aiwonder), not this repo. Kept verbatim for fidelity to the recovered source.
+docs/dbprdplans/DOCTRINE.md
+docs/dbprdplans/05_EMBEDDER_REGISTRY.md
+docs/dbprdplans/05a_EMBEDDER_ROSTER_VRAM_BUDGET.md
+docs/implementation/01_AIWONDER_ENVIRONMENT.md
+docs/implementation/03_PHASE_MAP.md
+
+# docs2/compressionprompt.md section 4.20 uses this as an ILLUSTRATIVE EXAMPLE path
+# ("Follow FSV protocol per ...") - it never existed and is not meant to resolve.
+docs/futurebuild/specs/FSV-PROTOCOL.md
+
+# .claude/skills/issueflow/references/issue-template.md uses this as an ILLUSTRATIVE
+# EXAMPLE deliverable-doc path ("e.g. docs2/MUD_TO_3D.md") in prose; not a real file.
+docs2/MUD_TO_3D.md

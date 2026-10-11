@@ -2,23 +2,29 @@ use super::*;
 
 #[test]
 fn streams_rows_in_rowid_order_and_preserves_empty_identity_fields() {
-    let conn = Connection::open_in_memory().unwrap();
-    conn.execute(
-        "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
-        [],
-    )
-    .unwrap();
-    for (chunk_id, database_name, content, first) in [
-        ("c3", "db", "gamma", 3.0),
-        ("", "db", "empty chunk", 2.0),
-        ("c1", "", "empty db", 1.0),
-    ] {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,?2,?3,?4)",
-            (chunk_id, database_name, content, embedding_blob(first)),
+    let mut conn = Connection::open_in_memory().unwrap();
+    let transaction = conn.transaction().unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
+            [],
         )
         .unwrap();
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,?2,?3,?4)")
+            .unwrap();
+        for (chunk_id, database_name, content, first) in [
+            ("c3", "db", "gamma", 3.0),
+            ("", "db", "empty chunk", 2.0),
+            ("c1", "", "empty db", 1.0),
+        ] {
+            insert
+                .execute((chunk_id, database_name, content, embedding_blob(first)))
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 
     let rows = stream_rows(&conn).unwrap();
 

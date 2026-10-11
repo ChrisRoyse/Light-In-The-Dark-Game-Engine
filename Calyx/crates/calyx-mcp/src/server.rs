@@ -92,6 +92,17 @@ impl McpServer {
         self.tools.len()
     }
 
+    /// Static authn classification for `name`: `Some(true)` if the registered tool
+    /// declares it mutates durable state (and therefore requires a caller identity),
+    /// `Some(false)` for a read-only tool, `None` if no tool is registered under that
+    /// name. This reads the tool's own [`Tool::requires_authn`] declaration WITHOUT
+    /// dispatching `tools/call`, so callers can classify a tool as mutating/readback
+    /// without executing its body against live state (#1488). Callers should fail
+    /// CLOSED on `None` (treat an unknown tool as mutating).
+    pub fn tool_requires_authn(&self, name: &str) -> Option<bool> {
+        self.tools.get(name).map(|tool| tool.requires_authn())
+    }
+
     /// Routes a decoded request to its handler, always returning a response.
     pub fn dispatch(&self, request: JsonRpcRequest) -> JsonRpcResponse {
         self.dispatch_with_authn(request, None)
@@ -369,6 +380,43 @@ mod tests {
             .to_string();
         let payload: Value = serde_json::from_str(&text).unwrap();
         assert_eq!(payload["writes"], 1);
+        assert_eq!(writes.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn tool_requires_authn_classifies_statically_without_executing() {
+        // #1488: mutation classification must read each tool's static
+        // `requires_authn()` declaration and NEVER execute the tool body. Register a
+        // write-counting mutating tool plus a read-only tool, classify both, and prove
+        // the write counter stays at zero (no side effect during classification) and
+        // the values are authoritative (cannot fail open on an error-shape drift).
+        let writes = Arc::new(AtomicUsize::new(0));
+        let mut server = McpServer::new();
+        server
+            .register(Box::new(MutatingTool {
+                writes: Arc::clone(&writes),
+            }))
+            .unwrap();
+        server.register(Box::new(EchoTool)).unwrap();
+
+        assert_eq!(server.tool_requires_authn("mutate"), Some(true));
+        assert_eq!(server.tool_requires_authn("echo"), Some(false));
+        // Fail closed: an unregistered tool cannot be classified read-only by omission.
+        assert_eq!(server.tool_requires_authn("not.registered"), None);
+
+        // Source of truth: classification executed no tool body.
+        assert_eq!(writes.load(Ordering::SeqCst), 0);
+
+        // Contrast: the write counter IS live — an actual authenticated dispatch runs
+        // the body (writes -> 1). This is exactly the per-descriptor execution #1488
+        // removed from the classification path.
+        let authn = AuthN::InProcess {
+            host_app_id: "calyx-mcp-test".into(),
+        };
+        server.dispatch_with_authn(
+            req(r#"{"jsonrpc":"2.0","id":99,"method":"tools/call","params":{"name":"mutate","arguments":{}}}"#),
+            Some(&authn),
+        );
         assert_eq!(writes.load(Ordering::SeqCst), 1);
     }
 

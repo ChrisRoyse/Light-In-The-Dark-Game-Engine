@@ -1,3 +1,0 @@
-# Kindle economy registry (#300/#312). Just the resource vocabulary the hero
-# revive costs resolve against; the demo has no harvesting, so no nodes.
-resource-types = ["gold", "lumber"]

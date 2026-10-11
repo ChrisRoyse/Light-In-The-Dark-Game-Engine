@@ -85,8 +85,8 @@ foundation depended on by all 18 other crates.
 | Surface | Binary | Crate | Transport / port | Purpose |
 |---|---|---|---|---|
 | CLI | `calyx` | `calyx-cli` | process invocation; JSON error envelope on stderr | Drive every engine operation from the shell; ~20 structured subcommands + legacy/domain command families |
-| Daemon | `calyxd` | `calyxd` | HTTP `GET /metrics` (Prometheus 0.0.4) on loopback, default `127.0.0.1:7700` | Long-running service: startup CUDA/VRAM probes, health probe, Prometheus metrics, `verify-restore` tool. A loopback MCP-over-socket transport (length-framed) exists in the library but is **not wired into the live daemon** (serves only `/metrics`) |
-| MCP server | `calyx-mcp` | `calyx-mcp` | **stdio only**, line-delimited JSON-RPC 2.0, MCP protocol `2024-11-05` | Agent-facing tool surface: 30 `calyx.*` tools |
+| Daemon | `calyxd` | `calyxd` | HTTP `GET /metrics` (Prometheus 0.0.4) on loopback, default `127.0.0.1:7700`; optional Worker-only learner-origin JSON routes on the same listener | Long-running service: startup CUDA/VRAM probes, health probe, Prometheus metrics, `verify-restore` tool, and configured learner-origin writes. A loopback MCP-over-socket transport (length-framed) exists in the library but is **not wired into the live daemon** |
+| MCP server | `calyx-mcp` | `calyx-mcp` | **stdio only**, line-delimited JSON-RPC 2.0, MCP protocol `2024-11-05` | Agent-facing tool surface: 31 `calyx.*` tools |
 | Soak/hazard harness | `calyx-hazard-soak` | `calyx-hazard-soak` | CLI binary | 25 fault-injection probes (H1–H25) + a long integrated soak; emits JSON + Prometheus evidence |
 
 ### 2.3 Technology stack
@@ -100,7 +100,7 @@ foundation depended on by all 18 other crates.
 | Serialization | `serde`, `serde_json`, `bincode_reloaded` (3.1.6), `ciborium` | `1` / `1` / `3.1.6` / `0.2` |
 | Storage | `memmap2` `0.9`, `crc32fast` `1`, `zstd` `0.13`, `filetime` `0.2`, `nix` `0.30` (fs) | mmap tables, CRC, posting-list compression |
 | CPU math | `wide` `1` (SIMD), `rayon` `1` (parallelism) | Forge CPU backend |
-| GPU math (opt-in) | `cudarc` `0.19.7`, `nvml-wrapper` `0.10` | CUDA 13.2, `sm_120`; feature `cuda`, default off |
+| GPU math (opt-in) | `cudarc` `0.19.8`, `nvml-wrapper` `0.10` | CUDA 13.3, `sm_120`; feature `cuda`, default off |
 | SQLite (import-only) | `rusqlite` `0.40.1` (bundled) | only the `calyx migrate` CLI reads external SQLite |
 | IDs / time | `ulid` `1`, `uuid` `1` (dep present; core uses ULID), Unix-ms `Ts` | |
 | Randomness | `rand` `0.8`, `rand_chacha` `0.3` | deterministic seeded RNG |
@@ -121,7 +121,7 @@ and the shared `target/` dir ballooning to ~190 GB. See
 
 ## 3. Public surfaces (APIs / tools / commands)
 
-### 3.1 MCP tools — 30 total (`calyx.*`), grouped by domain
+### 3.1 MCP tools — 31 total (`calyx.*`), grouped by domain
 
 Full parameter/return/error tables in [19_mcp_api_tools_reference.md](19_mcp_api_tools_reference.md).
 The tool set is pinned by `crates/calyx-mcp/tests/stdio.rs::EXPECTED_TOOLS`.
@@ -129,7 +129,7 @@ The tool set is pinned by `crates/calyx-mcp/tests/stdio.rs::EXPECTED_TOOLS`.
 | Domain | Tools |
 |---|---|
 | Vault & panel (6) | `create_vault`, `add_lens`, `retire_lens`, `park_lens`, `list_panel`, `profile_lens` |
-| Ingest & measure (3) | `ingest`, `anchor`, `measure` |
+| Ingest & measure (4) | `ingest`, `ingest_media`, `anchor`, `measure` |
 | Search & navigate (10) | `search`, `kernel_answer`, `neighbors`, `agree`, `disagree`, `define`, `guard_generate`, `traverse`, `skills`, `search_skill` |
 | Intelligence (6) | `abundance`, `bits`, `kernel`, `guard.calibrate`, `guard.check`, `propose_lens` |
 | Provenance & ops (5) | `provenance`, `answer_trace`, `verify_chain`, `reproduce`, `anneal.status` |
@@ -146,11 +146,15 @@ families) and domain command groups (`navigate`, `sextant`, `media`, `lodestar`,
 emits a JSON `{code,message,remediation}` envelope on stderr with exit code 2. Full
 tables in [20_cli_and_daemon_reference.md](20_cli_and_daemon_reference.md).
 
-### 3.3 Daemon endpoint
+### 3.3 Daemon endpoints
 
-`calyxd` serves exactly one HTTP route, `GET /metrics` (Prometheus text format 0.0.4) on
-loopback. Metric families and startup probes are documented in
-[20_cli_and_daemon_reference.md](20_cli_and_daemon_reference.md).
+`calyxd` always serves `GET /metrics` (Prometheus text format 0.0.4) on loopback. When
+`[learner_origin]` is configured it also serves bearer-authenticated Worker-only JSON POST
+routes, including `/v1/mastery/estimate` for Oracle-backed mastery completion and trust
+gating and `/v1/oracle/forecast` for sufficiency-gated consequence-tree, reverse-query, and
+transfer-entropy prereq forecasts, and `/v1/reactive/affect-signals` for Loom/Ward/Assay-backed
+reactive affect intervention signals. Metric families, startup probes, and origin routes are
+documented in [20_cli_and_daemon_reference.md](20_cli_and_daemon_reference.md).
 
 ---
 
@@ -257,7 +261,7 @@ One numeric backend implemented twice: `CpuBackend` (SIMD via `wide`) and `CudaB
 (`cudarc`), both implementing the `Backend` trait (7 ops: gemm, cosine, dot, l2,
 normalize, topk, device_info). No runtime auto-dispatch — callers pick a `dyn Backend`;
 an `AutotuneCache` records but does not auto-apply winning configs. 7 quantization levels
-(`QuantLevel`): F32, Bits8 (no codec ships), Bits8Fp (MXFP8), Bits4Fp (MXFP4), Bits3p5,
+(`QuantLevel`): F32, Bits8 (ScalarInt8), Bits8Fp (MXFP8), Bits4Fp (MXFP4), Bits3p5,
 Bits2p5 (TurboQuant + QJL residual), Bits1 (sign bits). The `cuda` feature (off by
 default) compiles 3 `.cu` kernels to PTX+cubin with `--fmad=false` for bit-near CPU/GPU
 parity; **fail-closed, no silent CPU fallback**. Default VRAM soft cap 12 GiB.
@@ -301,7 +305,7 @@ anchor_entropy_bits` (no slack). Persists to Aster `Assay` CF.
 Discovers the minimal record set (the ~1% MFVS) explaining a corpus via a staged
 approximate directed-MFVS pipeline: Tarjan SCC → Brandes betweenness → greedy top-fraction
 candidate selection (score = `0.40·degree + 0.40·betweenness + 0.20·groundedness`) →
-LP-round (heuristic fallback) → `dfvs_approx`. The kernel doubles as an HNSW index and an
+heuristic candidate graph → `dfvs_approx`. The kernel doubles as an HNSW index and an
 answer path (BFS reach with `hop_score = edge_weight·0.9^hop`). Recall gate default 0.95;
 kernel artifact `FORMAT_VERSION = 1`. The LP relaxation is not wired to a solver and the
 build pipeline does not measure recall (defaults to 0).
@@ -347,7 +351,8 @@ plans are not implemented here.
 `calyx-mincut`: Tarjan SCC + condensation, Brandes betweenness, eigenvector centrality,
 Laplacian eigenmaps / GFT, spectral gap. Despite the name, there is **no min-cut/max-flow
 or feedback-vertex-set solver** — only an LP scaffold that formulates (no cycle
-constraints, no solver), so Lodestar falls back to heuristic DFVS. `calyx-paths`:
+constraints, no solver), so Lodestar fails closed for LP-round requests unless a valid
+external `LpSolution` is injected. `calyx-paths`:
 `AssocGraph` (CSR adjacency), `reach` (bidirectional BFS), `reach_scored` (weighted
 best-first, `score·0.9^hops`).
 
@@ -362,7 +367,7 @@ deterministic scaffolding — `DEFAULT_TEST_SEED = 0xCA1A_CAFE_D15C_1A11`, `DEFA
 ### 7.15 Entry points — calyx-cli, calyxd, calyx-mcp ([19](19_mcp_api_tools_reference.md), [20](20_cli_and_daemon_reference.md))
 Thin surfaces over the engine. The CLI hand-parses args and returns JSON error envelopes;
 `calyxd` runs startup probes (T02 CUDA preflight, T03 NVML VRAM budget ≤30000 MiB, T04
-health, T05 loopback MCP transport) and serves `/metrics`; `calyx-mcp` exposes 30 tools
+health, T05 loopback MCP transport) and serves `/metrics`; `calyx-mcp` exposes 31 tools
 over stdio JSON-RPC with no auth/consent gate (vault resolution via `CALYX_HOME`).
 
 ---
@@ -382,7 +387,7 @@ over stdio JSON-RPC with no auth/consent gate (vault resolution via `CALYX_HOME`
 | DiskANN graph | `CLXDA001`, 4 KiB pages |
 | Column families | 33 static (+ parameterized slot CFs) |
 | Core error catalog | 38 codes (`CalyxErrorCode`, pinned by test) |
-| MCP tools | 30 (pinned by test) |
+| MCP tools | 31 (pinned by test) |
 | Default daemon bind | `127.0.0.1:7700` (loopback only) |
 | Default VRAM soft cap | 12 GiB (Forge); daemon `vram_budget_mib` 1..=30000 |
 
@@ -396,9 +401,9 @@ over stdio JSON-RPC with no auth/consent gate (vault resolution via `CALYX_HOME`
   absence fails loudly rather than falling back.
 - **Unwired/partial paths**: the MCP-over-socket transport in `calyxd` is library-complete
   but not served by the live daemon; the LP solver for kernel DFVS is not wired
-  (heuristic fallback only); `Bits8` quantization has no codec; multimodal/commissioned
+  (LP requests fail closed unless a valid external solution is supplied); multimodal/commissioned
   lenses emit hash projections, not learned vectors; `AnnealHook` is an interim pre-PH48
-  shim; MCP `search.fresh` is parsed but unused and `search.guard=in_region` always errors.
+  shim; CLI and MCP search still use divergent implementations pending a shared search crate.
 - **No code-coverage tooling** exists in the repo (see [21_test_suite.md](21_test_suite.md)).
 - **Design-vs-code divergences** (e.g. column-family numbering in the PRD vs implemented
   tags, Loom interaction being Hadamard-only) are captured in the relevant per-subsystem

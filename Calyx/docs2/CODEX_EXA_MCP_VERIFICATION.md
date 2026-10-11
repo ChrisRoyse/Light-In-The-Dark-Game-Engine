@@ -54,8 +54,8 @@ Direct MCP endpoint readback should list exactly the two default tools:
 Fresh Codex action probe:
 
 ```powershell
-codex exec --cd 'C:\code\Calyx' --json --output-last-message 'C:\code\Calyx\tmp\codex-exa-call-probe-output.txt' 'Use the MCP tool named web_search_exa to search for "Exa MCP Codex". If and only if that exact tool is unavailable, reply exactly EXA_UNAVAILABLE. Do not use any other search tool.' | Set-Content -LiteralPath 'C:\code\Calyx\tmp\codex-exa-call-probe-events.jsonl'
-Select-String -LiteralPath 'C:\code\Calyx\tmp\codex-exa-call-probe-events.jsonl' -Pattern '"type":"mcp_tool_call","server":"exa","tool":"web_search_exa"'
+codex exec --cd 'C:\code\GameEditor\Calyx' --json --output-last-message 'C:\code\GameEditor\Calyx\tmp\codex-exa-call-probe-output.txt' 'Use the MCP tool named web_search_exa to search for "Exa MCP Codex". If and only if that exact tool is unavailable, reply exactly EXA_UNAVAILABLE. Do not use any other search tool.' | Set-Content -LiteralPath 'C:\code\GameEditor\Calyx\tmp\codex-exa-call-probe-events.jsonl'
+Select-String -LiteralPath 'C:\code\GameEditor\Calyx\tmp\codex-exa-call-probe-events.jsonl' -Pattern '"type":"mcp_tool_call","server":"exa","tool":"web_search_exa"'
 ```
 
 Expected: the event stream contains an actual MCP tool call to `server="exa"` and `tool="web_search_exa"`.

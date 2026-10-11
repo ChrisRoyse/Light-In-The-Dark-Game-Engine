@@ -1,0 +1,1034 @@
+[package]
+name = "litd-editor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Light in the Dark editor — the no-code creation tool, built on litd-engine."
+# FSV example binaries are gated behind the `fsv` feature and declared explicitly below, so a
+# routine `cargo test` gate never compiles+links them (#1497). autoexamples=false disables
+# auto-discovery so a new example that skips the gate is a hard "no such target", not a
+# silent addition to every test build.
+autoexamples = false
+
+[features]
+# Enables the FSV example binaries (one-shot verification programs). Off by default so
+# `cargo test` skips them; run with `cargo run --features fsv --example <name>`.
+# Forwards to litd-engine/fsv so material-preview FSV examples can naga-validate WGSL (#862).
+fsv = ["litd-engine/fsv"]
+
+[[bin]]
+name = "litd-editor"
+path = "src/main.rs"
+
+[[bin]]
+name = "litd-editor-mcp-stdio"
+path = "src/bin/litd-editor-mcp-stdio.rs"
+
+[[bin]]
+name = "litd-editor-asset-floor-select"
+path = "src/bin/litd-editor-asset-floor-select.rs"
+
+[dependencies]
+calyx-aster = { path = "../../Calyx/crates/calyx-aster" }
+calyx-core = { path = "../../Calyx/crates/calyx-core" }
+calyx-loom = { path = "../../Calyx/crates/calyx-loom" }
+calyx-mcp = { path = "../../Calyx/crates/calyx-mcp" }
+calyx-paths = { path = "../../Calyx/crates/calyx-paths" }
+calyx-registry = { path = "../../Calyx/crates/calyx-registry" }
+calyx-sextant = { path = "../../Calyx/crates/calyx-sextant" }
+litd-editor-mcp = { path = "../litd-editor-mcp", features = ["calyx-live-calls"] }
+egui.workspace = true
+egui-wgpu.workspace = true
+egui-winit.workspace = true
+basis-universal.workspace = true
+gltf.workspace = true
+hound.workspace = true
+image.workspace = true
+meshopt.workspace = true
+ktx2.workspace = true
+lewton.workspace = true
+litd-hash.workspace = true
+litd-engine.workspace = true
+pollster.workspace = true
+ron.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+toml.workspace = true
+tracing.workspace = true
+wgpu.workspace = true
+winit.workspace = true
+zip.workspace = true
+
+[[example]]
+name = "agent_latency_budget_fsv"
+path = "examples/agent_latency_budget_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "agent_skills_fsv"
+path = "examples/agent_skills_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "asset_constellations_fsv"
+path = "examples/asset_constellations_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "asset_lod_fsv"
+path = "examples/asset_lod_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "asset_quality_scan"
+path = "examples/asset_quality_scan.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "asset_store_fsv"
+path = "examples/asset_store_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "asset_vault_verify_cache_fsv"
+path = "examples/asset_vault_verify_cache_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "authoring_dedup_governance_fsv"
+path = "examples/authoring_dedup_governance_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "calyx_mcp_surface_fsv"
+path = "examples/calyx_mcp_surface_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "cinematic_timeline_fsv"
+path = "examples/cinematic_timeline_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "template_gallery_fsv"
+path = "examples/template_gallery_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue899_first_launch_fsv"
+path = "examples/issue899_first_launch_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "content_trust_fsv"
+path = "examples/content_trust_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "context_feedback_fsv"
+path = "examples/context_feedback_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "edit_from_play_fsv"
+path = "examples/edit_from_play_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_adaptive_story_audio_fsv"
+path = "examples/editor_adaptive_story_audio_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_ages_gazetteer_issue1057_fsv"
+path = "examples/editor_ages_gazetteer_issue1057_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_animation_catalog_fsv"
+path = "examples/editor_animation_catalog_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_asset_drag_drop_fsv"
+path = "examples/editor_asset_drag_drop_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_asset_import_issue735_fsv"
+path = "examples/editor_asset_import_issue735_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_audio_vault_fsv"
+path = "examples/editor_audio_vault_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_authoring_fsv"
+path = "examples/editor_authoring_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_capabilities_fsv"
+path = "examples/editor_capabilities_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_cosmology_issue1056_fsv"
+path = "examples/editor_cosmology_issue1056_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_history_fsv"
+path = "examples/editor_history_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue739_sourceform_fsv"
+path = "examples/editor_issue739_sourceform_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_localization_fsv"
+path = "examples/editor_localization_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_lore_canon_issue1052_fsv"
+path = "examples/editor_lore_canon_issue1052_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_lore_cowriter_issue1053_fsv"
+path = "examples/editor_lore_cowriter_issue1053_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_lore_relationship_graph_issue1050_fsv"
+path = "examples/editor_lore_relationship_graph_issue1050_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_lore_surface_issue1051_fsv"
+path = "examples/editor_lore_surface_issue1051_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_lore_templates_issue1054_fsv"
+path = "examples/editor_lore_templates_issue1054_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_lore_world_bible_issue1049_fsv"
+path = "examples/editor_lore_world_bible_issue1049_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_map_build_fsv"
+path = "examples/editor_map_build_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_map_overlay_policy_issue1446_fsv"
+path = "examples/editor_map_overlay_policy_issue1446_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_mcp_tools_fsv"
+path = "examples/editor_mcp_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_model_previewer_fsv"
+path = "examples/editor_model_previewer_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_modules_fsv"
+path = "examples/editor_modules_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_panels_fsv"
+path = "examples/editor_panels_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_pantheon_factions_issue1058_fsv"
+path = "examples/editor_pantheon_factions_issue1058_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_peoples_mourning_issue1059_fsv"
+path = "examples/editor_peoples_mourning_issue1059_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_performance_fsv"
+path = "examples/editor_performance_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_placement_brush_fsv"
+path = "examples/editor_placement_brush_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_play_fsv"
+path = "examples/editor_play_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_prefabs_fsv"
+path = "examples/editor_prefabs_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_preferences_fsv"
+path = "examples/editor_preferences_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_project_lifecycle_issue740_fsv"
+path = "examples/editor_project_lifecycle_issue740_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_rpg_map_runtime_issue1445_fsv"
+path = "examples/editor_rpg_map_runtime_issue1445_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_scenario_availability_fsv"
+path = "examples/editor_scenario_availability_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_scenario_fsv"
+path = "examples/editor_scenario_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_schema_forms_issue742_fsv"
+path = "examples/editor_schema_forms_issue742_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_shell_fsv"
+path = "examples/editor_shell_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_sound_assignment_fsv"
+path = "examples/editor_sound_assignment_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_sound_editor_fsv"
+path = "examples/editor_sound_editor_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_spatial_audio_emitters_fsv"
+path = "examples/editor_spatial_audio_emitters_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_starter_templates_issue741_fsv"
+path = "examples/editor_starter_templates_issue741_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_starter_templates_issue858_fsv"
+path = "examples/editor_starter_templates_issue858_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_terrain_advanced_tools_fsv"
+path = "examples/editor_terrain_advanced_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_terrain_bulk_fsv"
+path = "examples/editor_terrain_bulk_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue806_tile_palette_lowering_fsv"
+path = "examples/editor_issue806_tile_palette_lowering_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue807_terrain_height_lowering_fsv"
+path = "examples/editor_issue807_terrain_height_lowering_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue811_pathing_nav_lowering_fsv"
+path = "examples/editor_issue811_pathing_nav_lowering_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue818_unit_lowering_valve_fsv"
+path = "examples/editor_issue818_unit_lowering_valve_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue819_ability_lowering_valve_fsv"
+path = "examples/editor_issue819_ability_lowering_valve_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue820_hero_lowering_valve_fsv"
+path = "examples/editor_issue820_hero_lowering_valve_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue821_822_item_shop_lowering_valve_fsv"
+path = "examples/editor_issue821_822_item_shop_lowering_valve_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue825_tech_requirements_fsv"
+path = "examples/editor_issue825_tech_requirements_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue827_gameplay_constants_fsv"
+path = "examples/editor_issue827_gameplay_constants_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_issue823_824_826_828_p2_lowering_valve_fsv"
+path = "examples/editor_issue823_824_826_828_p2_lowering_valve_fsv/main.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_terrain_heightmap_fsv"
+path = "examples/editor_terrain_heightmap_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_terrain_issue734_fsv"
+path = "examples/editor_terrain_issue734_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_terrain_pathing_fsv"
+path = "examples/editor_terrain_pathing_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_terrain_variation_fsv"
+path = "examples/editor_terrain_variation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_tower_defense_issue743_fsv"
+path = "examples/editor_tower_defense_issue743_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_trigger_issue733_fsv"
+path = "examples/editor_trigger_issue733_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_vfx_editor_fsv"
+path = "examples/editor_vfx_editor_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_viewport_transform_fsv"
+path = "examples/editor_viewport_transform_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_world_bible_issue1055_fsv"
+path = "examples/editor_world_bible_issue1055_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "editor_world_chunked_persistence_fsv"
+path = "examples/editor_world_chunked_persistence_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "gltf_asset_import_fsv"
+path = "examples/gltf_asset_import_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "human_loop_fsv"
+path = "examples/human_loop_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "immersive_play_fsv"
+path = "examples/immersive_play_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "instant_play_fsv"
+path = "examples/instant_play_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1390_editor_reactive_notifications_fsv"
+path = "examples/issue1390_editor_reactive_notifications_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1419_structured_mcp_surface_fsv"
+path = "examples/issue1419_structured_mcp_surface_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1420_editor_intelligence_surfaces_fsv"
+path = "examples/issue1420_editor_intelligence_surfaces_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1421_structured_capability_coverage_fsv"
+path = "examples/issue1421_structured_capability_coverage_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1467_gui_moderation_fixture"
+path = "examples/issue1467_gui_moderation_fixture.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1467_gui_moderation_readback"
+path = "examples/issue1467_gui_moderation_readback.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1467_surface_parity_readback"
+path = "examples/issue1467_surface_parity_readback.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1793_editor_min_spec_fsv"
+path = "examples/issue1793_editor_min_spec_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue784_agent_object_binding_fsv"
+path = "examples/issue784_agent_object_binding_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue788_agent_replay_fsv"
+path = "examples/issue788_agent_replay_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue830_event_catalog_fsv"
+path = "examples/issue830_event_catalog_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue831_condition_library_fsv"
+path = "examples/issue831_condition_library_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue832_action_library_fsv"
+path = "examples/issue832_action_library_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue852_computer_opponents_fsv"
+path = "examples/issue852_computer_opponents_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue853_campaign_editor_fsv"
+path = "examples/issue853_campaign_editor_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue854_test_in_editor_determinism_fsv"
+path = "examples/issue854_test_in_editor_determinism_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue855_multiplayer_lobby_fsv"
+path = "examples/issue855_multiplayer_lobby_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue856_replay_record_playback_fsv"
+path = "examples/issue856_replay_record_playback_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue860_no_code_agent_authoring_fsv"
+path = "examples/issue860_no_code_agent_authoring_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue862_pbr_material_editor_fsv"
+path = "examples/issue862_pbr_material_editor_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue865_lighting_rig_ambient_fsv"
+path = "examples/issue865_lighting_rig_ambient_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue866_shader_gallery_fsv"
+path = "examples/issue866_shader_gallery_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue867_primitive_builder_fsv"
+path = "examples/issue867_primitive_builder_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue868_sprite_billboard_fsv"
+path = "examples/issue868_sprite_billboard_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue870_scene_composition_fsv"
+path = "examples/issue870_scene_composition_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue872_hud_ui_builder_fsv"
+path = "examples/issue872_hud_ui_builder_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "ktx2_fixture_fsv"
+path = "examples/ktx2_fixture_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "live_hot_reload_fsv"
+path = "examples/live_hot_reload_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "local_content_store_issue776_fsv"
+path = "examples/local_content_store_issue776_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_agent_tools_fsv"
+path = "examples/mcp_agent_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_assertion_verdict_fsv"
+path = "examples/mcp_assertion_verdict_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_asset_tools_fsv"
+path = "examples/mcp_asset_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_calyx_signals_fsv"
+path = "examples/mcp_calyx_signals_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_fsv_tools_fsv"
+path = "examples/mcp_fsv_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_harness_tools_fsv"
+path = "examples/mcp_harness_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_headless_run_fsv"
+path = "examples/mcp_headless_run_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_loopback_fsv"
+path = "examples/mcp_loopback_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_object_tools_fsv"
+path = "examples/mcp_object_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_pev_transcript_fsv"
+path = "examples/mcp_pev_transcript_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_procgen_aster_fsv"
+path = "examples/mcp_procgen_aster_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_project_tools_fsv"
+path = "examples/mcp_project_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_render_tools_fsv"
+path = "examples/mcp_render_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_sandbox_batch_fsv"
+path = "examples/mcp_sandbox_batch_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_story_tools_fsv"
+path = "examples/mcp_story_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_trigger_tools_fsv"
+path = "examples/mcp_trigger_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_vfx_tools_fsv"
+path = "examples/mcp_vfx_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "mcp_world_tools_fsv"
+path = "examples/mcp_world_tools_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "regions_cameras_starts_fsv"
+path = "examples/regions_cameras_starts_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "object_editor_issue732_fsv"
+path = "examples/object_editor_issue732_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "object_manager_issue736_fsv"
+path = "examples/object_manager_issue736_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "offline_degradation_issue701_fsv"
+path = "examples/offline_degradation_issue701_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue833_835_trigger_variables_org_fsv"
+path = "examples/issue833_835_trigger_variables_org_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue834_wasm_escape_fsv"
+path = "examples/issue834_wasm_escape_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "play_responsiveness_fsv"
+path = "examples/play_responsiveness_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "quick_share_fsv"
+path = "examples/quick_share_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "render_budget_governance_fsv"
+path = "examples/render_budget_governance_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "semantic_authoring_ops_fsv"
+path = "examples/semantic_authoring_ops_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "session_capture_fsv"
+path = "examples/session_capture_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "temporal_content_fsv"
+path = "examples/temporal_content_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "test_in_editor_hot_reload_fsv"
+path = "examples/test_in_editor_hot_reload_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "texture_import_fsv"
+path = "examples/texture_import_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_end_to_end_fsv"
+path = "examples/vfx_end_to_end_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_library_fsv"
+path = "examples/vfx_library_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_text_generation_fsv"
+path = "examples/vfx_text_generation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "world_content_coverage_fsv"
+path = "examples/world_content_coverage_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "world_entity_constellations_fsv"
+path = "examples/world_entity_constellations_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "world_graph_navigation_fsv"
+path = "examples/world_graph_navigation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "world_memory_fsv"
+path = "examples/world_memory_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "world_memory_guarded_search_fsv"
+path = "examples/world_memory_guarded_search_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1843_runtime_host_fsv"
+path = "examples/issue1843_runtime_host_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1786_computer_opponent_fsv"
+path = "examples/issue1786_computer_opponent_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1787_lan_match_flow_fsv"
+path = "examples/issue1787_lan_match_flow_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1788_m1_skirmish_fsv"
+path = "examples/issue1788_m1_skirmish_fsv/main.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1788_m1_2v2_fsv"
+path = "examples/issue1788_m1_2v2_fsv/main.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1788_m1_campaign_fsv"
+path = "examples/issue1788_m1_campaign_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1788_m1_full_roster_ship_fsv"
+path = "examples/issue1788_m1_full_roster_ship_fsv/main.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1878_progressive_vault_fsv"
+path = "examples/issue1878_progressive_vault_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1822_m1_targeted_intake_fsv"
+path = "examples/issue1822_m1_targeted_intake_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1851_runtime_eca_triggers_fsv"
+path = "examples/issue1851_runtime_eca_triggers_fsv/main.rs"
+required-features = ["fsv"]
+harness = false

@@ -1,5 +1,6 @@
 pub(crate) mod adapter;
 pub(crate) mod backfill;
+pub(crate) mod backfill_origin;
 pub(crate) mod errors;
 pub(crate) mod manifest;
 pub(crate) mod reader;
@@ -27,7 +28,7 @@ use verifier::{
     verify_migration,
 };
 
-use crate::error::CliResult;
+use crate::error::{CliError, CliResult};
 use crate::output::print_json;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -84,7 +85,7 @@ pub(crate) fn run(topic: &str, rest: &[String]) -> CliResult {
             let value = run_readback(Path::new(&rest[0]), Path::new(&rest[1]), &rest[2])?;
             print_json(&value)
         }
-        _ => Err(migrate_usage().into()),
+        _ => Err(CliError::usage(migrate_usage())),
     }
 }
 
@@ -373,9 +374,9 @@ pub(crate) fn ensure_unique_cx_ids(
     Ok(())
 }
 
-fn parse_vault(rest: &[String]) -> std::result::Result<(&Path, &Path, MigrationOptions), String> {
+fn parse_vault(rest: &[String]) -> CliResult<(&Path, &Path, MigrationOptions)> {
     if rest.len() < 2 {
-        return Err(migrate_usage());
+        return Err(CliError::usage(migrate_usage()));
     }
     let mut options = MigrationOptions {
         batch_size: 100,
@@ -385,11 +386,9 @@ fn parse_vault(rest: &[String]) -> std::result::Result<(&Path, &Path, MigrationO
     Ok((Path::new(&rest[0]), Path::new(&rest[1]), options))
 }
 
-fn parse_backfill(
-    rest: &[String],
-) -> std::result::Result<(&Path, &Path, MigrationOptions), String> {
+fn parse_backfill(rest: &[String]) -> CliResult<(&Path, &Path, MigrationOptions)> {
     if rest.len() < 2 {
-        return Err(migrate_usage());
+        return Err(CliError::usage(migrate_usage()));
     }
     let mut options = MigrationOptions {
         backfill: true,
@@ -400,14 +399,14 @@ fn parse_backfill(
     Ok((Path::new(&rest[0]), Path::new(&rest[1]), options))
 }
 
-fn parse_verify(rest: &[String]) -> std::result::Result<(&Path, &Path, bool), String> {
+fn parse_verify(rest: &[String]) -> CliResult<(&Path, &Path, bool)> {
     if rest.len() < 2 {
-        return Err(migrate_usage());
+        return Err(CliError::usage(migrate_usage()));
     }
     let require_backfill = match &rest[2..] {
         [] => false,
         [flag] if flag == "--require-backfill" => true,
-        _ => return Err(migrate_usage()),
+        _ => return Err(CliError::usage(migrate_usage())),
     };
     Ok((Path::new(&rest[0]), Path::new(&rest[1]), require_backfill))
 }
@@ -416,7 +415,7 @@ fn parse_options(
     flags: &[String],
     options: &mut MigrationOptions,
     allow_verify: bool,
-) -> std::result::Result<(), String> {
+) -> CliResult {
     let mut idx = 0;
     while idx < flags.len() {
         match flags[idx].as_str() {
@@ -429,7 +428,7 @@ fn parse_options(
                 let value = flags[idx].clone();
                 value
                     .parse::<LensId>()
-                    .map_err(|err| format!("invalid --gte-lens-id: {err}"))?;
+                    .map_err(|err| CliError::usage(format!("invalid --gte-lens-id: {err}")))?;
                 options.gte_lens_id = Some(value);
             }
             "--gte-endpoint" if allow_verify && idx + 1 < flags.len() => {
@@ -440,9 +439,9 @@ fn parse_options(
                 idx += 1;
                 options.batch_size = flags[idx]
                     .parse::<usize>()
-                    .map_err(|err| format!("invalid --batch-size: {err}"))?;
+                    .map_err(|err| CliError::usage(format!("invalid --batch-size: {err}")))?;
             }
-            _ => return Err(migrate_usage()),
+            _ => return Err(CliError::usage(migrate_usage())),
         }
         idx += 1;
     }

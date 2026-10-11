@@ -5,105 +5,8 @@ use serde_json::Value;
 
 use super::args::StreamMode;
 use super::format::VectorFormat;
+use super::tests_support::{Fixture, staging_dir, write_bits_with_gate, write_legacy_bits};
 use super::write;
-
-#[path = "tests/support.rs"]
-mod support;
-
-use support::{
-    Fixture, staging_dir, write_bits_with_gate, write_bits_with_panel_names, write_legacy_bits,
-};
-
-#[test]
-fn stream_fbin_writes_structured_progress_snapshot() {
-    let fixture = Fixture::new("stream-fbin-progress", 10, 10, 50);
-    let args = fixture.args(8);
-
-    write::run(&args).unwrap();
-
-    let progress_path = fixture.out.join("stream_fbin_progress.json");
-    let progress: Value = serde_json::from_slice(&fs::read(&progress_path).unwrap()).unwrap();
-    assert_eq!(progress["schema"], "calyx-assay-stream-fbin-progress-v1");
-    assert_eq!(progress["state"], "complete");
-    assert_eq!(progress["event"], "export_complete");
-    assert_eq!(progress["dataset"], "unit_stream_fbin");
-    assert_eq!(progress["rows_total"], 50);
-    assert_eq!(progress["query_count"], 8);
-    assert_eq!(progress["lens_total"], 10);
-    assert_eq!(progress["lenses_completed"], 10);
-    assert_eq!(progress["completed_corpus_rows"], 500);
-    assert_eq!(progress["completed_query_rows"], 80);
-    assert_eq!(progress["vector_format"], "fbin");
-    assert_eq!(
-        progress["vector_storage_contract"],
-        "f32-row-major-calyx-fbin"
-    );
-    assert_eq!(progress["total_lens_corpus_rows_expected"], 500);
-    assert_eq!(progress["total_lens_query_rows_expected"], 80);
-    assert_eq!(progress["current_lens"], Value::Null);
-    assert_eq!(progress["current_lens_elapsed_ms"], Value::Null);
-    assert_eq!(progress["streaming_fbin_source"], true);
-    assert_eq!(progress["temporal_counts_toward_a35"], false);
-    assert_eq!(
-        progress["temporal_lane_role"],
-        "time_manipulation_walk_forward_backward_as_of_sidecar"
-    );
-    assert_eq!(
-        progress["progress_path"].as_str().unwrap(),
-        progress_path.display().to_string()
-    );
-
-    let report: Value =
-        serde_json::from_slice(&fs::read(fixture.out.join("stream_fbin_report.json")).unwrap())
-            .unwrap();
-    assert_eq!(
-        report["progress_path"].as_str().unwrap(),
-        progress_path.display().to_string()
-    );
-    assert_eq!(report["pre_encode_gate"]["sufficient"], true);
-    assert_eq!(
-        report["pre_encode_gate"]["estimate_bound"]
-            .as_str()
-            .unwrap(),
-        "lower_bound"
-    );
-    assert_eq!(
-        report["pre_encode_gate"]["power_calibration_status"]
-            .as_str()
-            .unwrap(),
-        "passed"
-    );
-    assert_eq!(
-        report["pre_encode_gate"]["streamed_lenses"]
-            .as_array()
-            .unwrap()
-            .len(),
-        10
-    );
-    assert_eq!(report["temporal_counts_toward_a35"], false);
-    assert_eq!(
-        report["temporal_lane_role"],
-        "time_manipulation_walk_forward_backward_as_of_sidecar"
-    );
-    let first_lens = &report["lens_roster"][0];
-    assert_eq!(first_lens["signal_kind"], "learned_encoder");
-    assert_eq!(first_lens["effective_batch_size"], 7);
-    assert!(first_lens["elapsed_ms"].as_u64().is_some());
-    let ms_per_input = first_lens["ms_per_input"].as_f64().unwrap();
-    assert!(ms_per_input.is_finite());
-    assert!(ms_per_input >= 0.0);
-
-    let plan: Value =
-        serde_json::from_slice(&fs::read(fixture.out.join("partitioned_rrf_plan.json")).unwrap())
-            .unwrap();
-    assert_eq!(plan["temporal_counts_toward_a35"], false);
-    assert_eq!(plan["slots"][0]["signal_kind"], "learned_encoder");
-    assert_eq!(
-        plan["temporal_lane_role"],
-        "time_manipulation_walk_forward_backward_as_of_sidecar"
-    );
-    let _ = fs::remove_dir_all(fixture.root);
-}
 
 #[test]
 fn stream_fbin_can_emit_i8bin_vector_sources() {
@@ -203,6 +106,62 @@ fn stream_fbin_accepts_deterministic_content_feature_manifest() {
 }
 
 #[test]
+fn lens_parallelism_produces_identical_per_lens_outputs() {
+    let sequential = Fixture::new_algorithmic("stream-fbin-k1-baseline", 10, 10, 50);
+    let sequential_args = sequential.args(8);
+    write::run(&sequential_args).unwrap();
+
+    let parallel = Fixture::new_algorithmic("stream-fbin-k3-parallel", 10, 10, 50);
+    let mut parallel_args = parallel.args(8);
+    parallel_args.lens_parallelism = 3;
+    parallel_args.worker_gpu_mem_limit_mib = Some(1024);
+    let evidence = write::run(&parallel_args).unwrap();
+    assert_eq!(evidence.lens_roster.len(), 10);
+
+    let sequential_dir = sequential.out.join("fbin");
+    let parallel_dir = parallel.out.join("fbin");
+    let mut names: Vec<_> = fs::read_dir(&sequential_dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect();
+    names.sort();
+    assert_eq!(names.len(), 20, "10 lenses x corpus+queries");
+    for name in names {
+        let baseline = fs::read(sequential_dir.join(&name)).unwrap();
+        let candidate = fs::read(parallel_dir.join(&name)).unwrap();
+        assert_eq!(
+            baseline, candidate,
+            "lens output {name:?} differs between K=1 and K=3"
+        );
+    }
+    let plan: serde_json::Value =
+        serde_json::from_slice(&fs::read(parallel.out.join("partitioned_rrf_plan.json")).unwrap())
+            .unwrap();
+    for (idx, slot) in plan["slots"].as_array().unwrap().iter().enumerate() {
+        assert_eq!(slot["slot"], idx as u64, "roster must stay slot-ordered");
+    }
+    let _ = fs::remove_dir_all(sequential.root);
+    let _ = fs::remove_dir_all(parallel.root);
+}
+
+#[test]
+fn lens_parallelism_above_one_requires_worker_vram_budget() {
+    if std::env::var("CALYX_ONNX_GPU_MEM_LIMIT_MIB").is_ok() {
+        // An outer harness budget makes K>1 legitimately runnable here.
+        return;
+    }
+    let fixture = Fixture::new_algorithmic("stream-fbin-k-unbudgeted", 10, 10, 50);
+    let mut args = fixture.args(8);
+    args.lens_parallelism = 2;
+
+    let error = write::run(&args).unwrap_err();
+
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_PARALLEL_VRAM");
+    assert!(!fixture.out.exists());
+    let _ = fs::remove_dir_all(fixture.root);
+}
+
+#[test]
 fn stream_fbin_rejects_temporal_sidecar_as_content_feature() {
     let fixture = Fixture::new_algorithmic("stream-fbin-temporal-sidecar", 10, 10, 50);
     let temporal_manifest = fixture.root.join("algorithmic/lens-0.json");
@@ -224,15 +183,18 @@ fn stream_fbin_rejects_temporal_sidecar_as_content_feature() {
 }
 
 #[test]
-fn stream_fbin_rejects_leaked_anchor_bits_before_rows() {
-    let fixture = Fixture::new("stream-fbin-leaked-anchor", 10, 10, 50);
+fn stream_fbin_rejects_json_gate_before_rows() {
+    let fixture = Fixture::new("stream-fbin-json-gate", 10, 10, 50);
     mark_bits_as_leaked(&fixture.bits);
-    let mut args = fixture.args(8);
+    let mut args = fixture.json_args(8, StreamMode::Gate);
     args.rows_jsonl = fixture.root.join("missing-rows.jsonl");
 
     let error = write::run(&args).unwrap_err();
 
-    assert_eq!(error.code(), "CALYX_FSV_ASSAY_TRIVIAL_ANCHOR");
+    assert_eq!(
+        error.code(),
+        "CALYX_FSV_ASSAY_STREAM_FBIN_LENS_TEMPLATE_DB_REQUIRED"
+    );
     assert!(!fixture.out.exists());
     assert!(!staging_dir(&fixture).exists());
     let _ = fs::remove_dir_all(fixture.root);
@@ -242,8 +204,7 @@ fn stream_fbin_rejects_leaked_anchor_bits_before_rows() {
 fn stream_fbin_diagnostic_mode_records_insufficient_panel() {
     let fixture = Fixture::new("stream-fbin-diagnostic-insufficient", 10, 10, 50);
     write_bits_with_gate(&fixture.bits, 10, 10, 0.42, "passed", 1.0);
-    let mut args = fixture.args(8);
-    args.mode = StreamMode::Diagnostic;
+    let args = fixture.json_args(8, StreamMode::Diagnostic);
 
     write::run(&args).unwrap();
 
@@ -264,8 +225,7 @@ fn stream_fbin_diagnostic_mode_records_insufficient_panel() {
 fn stream_fbin_diagnostic_mode_records_leaked_anchor() {
     let fixture = Fixture::new("stream-fbin-diagnostic-anchor-leak", 10, 10, 50);
     mark_bits_as_leaked(&fixture.bits);
-    let mut args = fixture.args(8);
-    args.mode = StreamMode::Diagnostic;
+    let args = fixture.json_args(8, StreamMode::Diagnostic);
 
     write::run(&args).unwrap();
 
@@ -301,15 +261,57 @@ fn stream_fbin_rejects_existing_output_before_loading_inputs() {
 #[test]
 fn stream_fbin_pre_gate_refuses_before_row_scan() {
     let fixture = Fixture::new("stream-fbin-pre-gate-refused", 10, 10, 8);
-    write_bits_with_gate(&fixture.bits, 10, 10, 0.42, "passed", 1.0);
+    fixture.rewrite_a37(9, None, 0.2);
     let mut args = fixture.args(2);
     args.rows_jsonl = fixture.root.join("missing-rows.jsonl");
 
     let error = write::run(&args).unwrap_err();
 
-    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_PRE_GATE_REFUSED");
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_LENS_REJECTED");
     assert!(!fixture.out.exists());
     assert!(!staging_dir(&fixture).exists());
+    let _ = fs::remove_dir_all(fixture.root);
+}
+
+#[test]
+fn stream_fbin_pre_gate_fails_closed_on_missing_anchor_audit() {
+    // #1140: a bits report with no anchor_audit (e.g. produced from rows that
+    // predate the audit machinery) must refuse gate mode, not default to
+    // eligible.
+    let fixture = Fixture::new("stream-fbin-pre-gate-no-audit", 10, 10, 50);
+    strip_bits_anchor_audit(&fixture.bits);
+    let mut args = fixture.args(8);
+    args.a37_admission_cf_root = None;
+    args.bits_report = Some(fixture.bits.clone());
+
+    let error = write::run(&args).unwrap_err();
+
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_A37_DB_REQUIRED");
+    assert!(!fixture.out.exists());
+    assert!(!staging_dir(&fixture).exists());
+    let _ = fs::remove_dir_all(fixture.root);
+}
+
+#[test]
+fn stream_fbin_pre_gate_accepts_power_adjusted_sufficiency() {
+    // #1140: the estimator's planted-perfect ceiling (power recovery 0.9)
+    // bounds what any panel can measure; a basis of 0.95 >= 1.0 * 0.9 is
+    // sufficient even though it is below the raw anchor entropy.
+    let fixture = Fixture::new("stream-fbin-pre-gate-power-adjusted", 10, 10, 50);
+    let args = fixture.args(8);
+
+    write::run(&args).unwrap();
+
+    let report: Value =
+        serde_json::from_slice(&fs::read(fixture.out.join("stream_fbin_report.json")).unwrap())
+            .unwrap();
+    assert_eq!(report["pre_encode_gate"]["sufficient"], true);
+    assert_eq!(report["pre_encode_gate"]["diagnostic_only"], false);
+    assert_eq!(
+        report["pre_encode_gate"]["power_calibration_status"],
+        "db_readback_passed"
+    );
+    assert_eq!(report["pre_encode_gate"]["deficit_bits"], 0.0);
     let _ = fs::remove_dir_all(fixture.root);
 }
 
@@ -317,11 +319,13 @@ fn stream_fbin_pre_gate_refuses_before_row_scan() {
 fn stream_fbin_pre_gate_fails_closed_on_legacy_bits_report() {
     let fixture = Fixture::new("stream-fbin-pre-gate-missing", 10, 10, 50);
     write_legacy_bits(&fixture.bits, 10, 10);
-    let args = fixture.args(8);
+    let mut args = fixture.args(8);
+    args.a37_admission_cf_root = None;
+    args.bits_report = Some(fixture.bits.clone());
 
     let error = write::run(&args).unwrap_err();
 
-    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_PRE_GATE_MISSING");
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_A37_DB_REQUIRED");
     assert!(!fixture.out.exists());
     assert!(!staging_dir(&fixture).exists());
     let _ = fs::remove_dir_all(fixture.root);
@@ -331,14 +335,13 @@ fn stream_fbin_pre_gate_fails_closed_on_legacy_bits_report() {
 fn stream_fbin_pre_gate_rejects_unpowered_panel() {
     let fixture = Fixture::new("stream-fbin-pre-gate-unpowered", 10, 10, 50);
     write_bits_with_gate(&fixture.bits, 10, 10, 1.25, "underpowered", 0.25);
-    let args = fixture.args(8);
+    let mut args = fixture.args(8);
+    args.a37_admission_cf_root = None;
+    args.bits_report = Some(fixture.bits.clone());
 
     let error = write::run(&args).unwrap_err();
 
-    assert_eq!(
-        error.code(),
-        "CALYX_FSV_ASSAY_STREAM_FBIN_PRE_GATE_UNPOWERED"
-    );
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_A37_DB_REQUIRED");
     assert!(!fixture.out.exists());
     assert!(!staging_dir(&fixture).exists());
     let _ = fs::remove_dir_all(fixture.root);
@@ -347,29 +350,30 @@ fn stream_fbin_pre_gate_rejects_unpowered_panel() {
 #[test]
 fn stream_fbin_pre_gate_rejects_mismatched_panel() {
     let fixture = Fixture::new("stream-fbin-pre-gate-mismatch", 10, 10, 50);
-    write_bits_with_panel_names(
-        &fixture.bits,
+    fixture.rewrite_a37(
         10,
-        10,
-        (0..9)
-            .map(|idx| format!("lens-{idx}"))
-            .chain(std::iter::once("lens-other".to_string()))
-            .collect(),
-        1.25,
-        "passed",
-        1.0,
+        Some(
+            (0..9)
+                .map(|idx| format!("lens-{idx}"))
+                .chain(std::iter::once("lens-other".to_string()))
+                .collect(),
+        ),
+        0.2,
     );
     let args = fixture.args(8);
 
     let error = write::run(&args).unwrap_err();
 
-    assert_eq!(
-        error.code(),
-        "CALYX_FSV_ASSAY_STREAM_FBIN_PRE_GATE_PANEL_MISMATCH"
-    );
+    assert_eq!(error.code(), "CALYX_FSV_ASSAY_STREAM_FBIN_BITS_MISSING");
     assert!(!fixture.out.exists());
     assert!(!staging_dir(&fixture).exists());
     let _ = fs::remove_dir_all(fixture.root);
+}
+
+fn strip_bits_anchor_audit(path: &std::path::Path) {
+    let mut report: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    report.as_object_mut().unwrap().remove("anchor_audit");
+    fs::write(path, serde_json::to_vec_pretty(&report).unwrap()).unwrap();
 }
 
 fn mark_bits_as_leaked(path: &std::path::Path) {

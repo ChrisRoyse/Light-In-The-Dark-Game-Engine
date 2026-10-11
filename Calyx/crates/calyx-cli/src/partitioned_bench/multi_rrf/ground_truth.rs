@@ -12,9 +12,9 @@ use sha2::{Digest, Sha256};
 use super::{Plan, report};
 use crate::error::{CliError, CliResult};
 
-const FORMAT: &str = "calyx-partitioned-rrf-ground-truth-v1";
-const MODE: &str = "fused_rrf";
-const ROW_ID_SPACE: &str = "partitioned_rrf_plan_corpus_row_idx";
+pub(super) const FORMAT: &str = "calyx-partitioned-rrf-ground-truth-v1";
+pub(super) const MODE: &str = "fused_rrf";
+pub(super) const ROW_ID_SPACE: &str = "partitioned_rrf_plan_corpus_row_idx";
 
 #[derive(Clone, Debug)]
 pub(super) struct PrecomputedTruth {
@@ -28,6 +28,7 @@ pub(super) struct Context<'a> {
     pub(super) truth_file: &'a Path,
     pub(super) manifest_file: &'a Path,
     pub(super) plan_path: &'a Path,
+    pub(super) plan_sha256: &'a str,
     pub(super) plan: &'a Plan,
     pub(super) truth_n: usize,
     pub(super) k: usize,
@@ -54,12 +55,12 @@ struct TruthManifest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-struct TruthSlot {
-    slot: u16,
-    lens_id: String,
-    weights_sha256: String,
+pub(super) struct TruthSlot {
+    pub(super) slot: u16,
+    pub(super) lens_id: String,
+    pub(super) weights_sha256: String,
     #[serde(default)]
-    signal_kind: String,
+    pub(super) signal_kind: String,
 }
 
 impl PrecomputedTruth {
@@ -146,7 +147,7 @@ pub(super) fn write(rows: &[Vec<u64>], ctx: Context<'_>) -> CliResult<Value> {
     let truth_bytes = i32bin_bytes(rows, ctx.k)?;
     write_atomic(ctx.truth_file, &truth_bytes)?;
     let truth_sha256 = sha256_bytes(&truth_bytes);
-    let plan_sha256 = sha256_file(ctx.plan_path)?;
+    let plan_sha256 = ctx.plan_sha256.to_string();
     let manifest = json!({
         "format": FORMAT,
         "mode": MODE,
@@ -164,7 +165,8 @@ pub(super) fn write(rows: &[Vec<u64>], ctx: Context<'_>) -> CliResult<Value> {
         "slots": plan_slots(ctx.plan),
         "generator": "calyx bench partitioned-rrf",
     });
-    let manifest_bytes = serde_json::to_vec_pretty(&manifest)?;
+    let manifest_bytes = serde_json::to_vec_pretty(&manifest)
+        .map_err(|error| CliError::runtime(format!("serialize truth manifest: {error}")))?;
     write_atomic(ctx.manifest_file, &manifest_bytes)?;
     Ok(json!({
         "mode": "generated_fused_rrf_i32bin",
@@ -204,9 +206,9 @@ fn validate_manifest(manifest: &TruthManifest, truth_sha256: &str, ctx: &Context
             truth_sha256,
         ));
     }
-    let plan_sha256 = sha256_file(ctx.plan_path)?;
+    let plan_sha256 = ctx.plan_sha256;
     if manifest.plan_sha256 != plan_sha256 {
-        return Err(stale("plan_sha256", &manifest.plan_sha256, &plan_sha256));
+        return Err(stale("plan_sha256", &manifest.plan_sha256, plan_sha256));
     }
     if manifest.query_count < ctx.truth_n
         || manifest.k < ctx.k
@@ -329,7 +331,7 @@ fn i32bin_bytes(rows: &[Vec<u64>], width: usize) -> CliResult<Vec<u8>> {
     Ok(bytes)
 }
 
-fn plan_slots(plan: &Plan) -> Vec<TruthSlot> {
+pub(super) fn plan_slots(plan: &Plan) -> Vec<TruthSlot> {
     plan.slots
         .iter()
         .map(|slot| TruthSlot {

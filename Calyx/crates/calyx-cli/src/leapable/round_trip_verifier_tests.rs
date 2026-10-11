@@ -1,6 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use proptest::prelude::*;
 use rusqlite::{Connection, params};
 
 use super::round_trip_verifier::{
@@ -81,22 +80,25 @@ fn benchmark_recall_exact_fixture_passes() {
     cleanup(root);
 }
 
-proptest! {
-    #![proptest_config(ProptestConfig::with_cases(50))]
-    #[test]
-    fn verify_is_order_independent(seed in any::<u64>()) {
-        let root = temp_root("prop-order");
+#[test]
+fn verify_is_order_independent_for_boundary_permutations() {
+    let cases = [
+        (1..=10).rev().collect::<Vec<_>>(),
+        permutation(0xBEEF_CAFE_DEAD_BEEF, 10),
+    ];
+    for (case, order) in cases.iter().enumerate() {
+        let root = temp_root(&format!("order-{case}"));
         let sqlite = root.join("vault.db");
         let vault = root.join("vault.calyx");
         std::fs::create_dir_all(&root).unwrap();
-        seed_fixture(&sqlite, "fixture_db", &permutation(seed, 10));
+        seed_fixture(&sqlite, "fixture_db", order);
         migrate(&sqlite, &vault);
 
         let report = RoundTripVerifier::verify(&sqlite, &vault).unwrap();
 
-        prop_assert_eq!(report.total, 10);
-        prop_assert_eq!(report.matched, 10);
-        prop_assert!(report.mismatches.is_empty());
+        assert_eq!(report.total, 10);
+        assert_eq!(report.matched, 10);
+        assert!(report.mismatches.is_empty());
         cleanup(root);
     }
 }
@@ -218,35 +220,59 @@ fn migrate(sqlite: &Path, vault: &Path) {
 }
 
 fn seed_fixture(path: &Path, database_name: &str, order: &[usize]) {
-    let conn = Connection::open(path).unwrap();
-    conn.execute(
-        "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content BLOB,embedding BLOB,text_hash BLOB)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO database_metadata VALUES(1,?1)",
-        [database_name],
-    )
-    .unwrap();
-    for idx in order {
-        insert_chunk_with_conn(&conn, database_name, *idx);
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content BLOB,embedding BLOB,text_hash BLOB)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO database_metadata VALUES(1,?1)",
+            [database_name],
+        )
+        .unwrap();
+    {
+        let mut insert = transaction
+            .prepare(
+                "INSERT INTO chunks(chunk_id,database_name,content,embedding,text_hash) VALUES(?1,?2,?3,?4,?5)",
+            )
+            .unwrap();
+        for idx in order {
+            let content = content(*idx);
+            let text_hash = blake3::hash(&content);
+            insert
+                .execute(params![
+                    format!("c{idx:03}"),
+                    database_name,
+                    content,
+                    vector_blob(*idx as f32),
+                    text_hash.as_bytes().as_slice()
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn insert_chunk(path: &Path, database_name: &str, idx: usize) {

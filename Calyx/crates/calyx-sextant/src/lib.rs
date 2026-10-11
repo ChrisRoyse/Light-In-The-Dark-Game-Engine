@@ -1,5 +1,28 @@
 //! Sextant search and navigation for Calyx retrieval.
 
+/// True when this build compiled the cuVS GPU index paths (cagra graph build
+/// and brute-force parity): the `cuda` feature was enabled on a target where
+/// libcuvs exists (Linux, `cfg(sextant_cuvs)` from build.rs). Exported for
+/// build-info capability readback (#1130) — deploy gates must assert this
+/// resolved value, never a feature spelling, because a top-level feature name
+/// cannot prove what a dependency crate actually compiled.
+pub const CUVS_COMPILED: bool = cfg!(sextant_cuvs);
+
+/// Explains, for a fail-closed stub, exactly why the cuVS GPU path is absent
+/// from this binary and how to get it (#1130): feature off vs a target OS
+/// where RAPIDS ships no libcuvs (#1016).
+pub fn cuvs_unavailable_reason(what: &str) -> String {
+    if cfg!(feature = "cuda") {
+        format!(
+            "{what} requires cuVS, which is compiled out of this binary: RAPIDS ships \
+             libcuvs for Linux only (no native Windows/macOS packages, #1016); rebuild \
+             on a Linux host (or WSL2) with --features cuda"
+        )
+    } else {
+        format!("{what} requires building calyx-sextant with --features cuda")
+    }
+}
+
 pub mod error;
 pub mod fusion;
 pub mod guarded;
@@ -18,26 +41,27 @@ pub mod temporal;
 mod util;
 
 pub use error::{
-    CALYX_ANNEAL_UNAVAILABLE, CALYX_ANSWER_UNGROUNDED, CALYX_INDEX_DIRECTION_UNAVAILABLE,
-    CALYX_INDEX_FUNNEL_VAULT_TOO_SMALL, CALYX_INDEX_KERNEL_UNAVAILABLE, CALYX_INVALID_ARGUMENT,
-    CALYX_LENS_NOT_FOUND, CALYX_PLANNER_COST_CAP, CALYX_SEXTANT_ASSOC_GRAPH_MISSING,
+    CALYX_ANNEAL_UNAVAILABLE, CALYX_ANSWER_SYNTHESIS_UNAVAILABLE, CALYX_ANSWER_UNGROUNDED,
+    CALYX_INDEX_DIRECTION_UNAVAILABLE, CALYX_INDEX_FUNNEL_VAULT_TOO_SMALL,
+    CALYX_INDEX_KERNEL_UNAVAILABLE, CALYX_INVALID_ARGUMENT, CALYX_LENS_NOT_FOUND,
+    CALYX_PLANNER_COST_CAP, CALYX_SEXTANT_ASSOC_GRAPH_MISSING,
     CALYX_SEXTANT_CONSENSUS_INSUFFICIENT_LENSES, CALYX_SEXTANT_CX_MISSING,
     CALYX_SEXTANT_DIM_MISMATCH, CALYX_SEXTANT_EF_TOO_SMALL, CALYX_SEXTANT_GPU_PARITY_UNAVAILABLE,
-    CALYX_SEXTANT_INDEX_EMPTY, CALYX_SEXTANT_NO_LENSES, CALYX_SEXTANT_PLAN_COST_EXCEEDED,
-    CALYX_SEXTANT_PLAN_UNBOUNDED, CALYX_SEXTANT_POSTINGS_CORRUPT,
+    CALYX_SEXTANT_GRAPH_HOP_KIND_UNKNOWN, CALYX_SEXTANT_INDEX_EMPTY, CALYX_SEXTANT_NO_LENSES,
+    CALYX_SEXTANT_PLAN_COST_EXCEEDED, CALYX_SEXTANT_PLAN_UNBOUNDED, CALYX_SEXTANT_POSTINGS_CORRUPT,
     CALYX_SEXTANT_POSTINGS_NOT_SORTED, CALYX_SEXTANT_PROVENANCE_MISSING, CALYX_SEXTANT_QUERY_SHAPE,
     CALYX_SEXTANT_RECURRENCE_READ_ERROR, CALYX_SEXTANT_RERANKER_ENDPOINT,
     CALYX_SEXTANT_RERANKER_NO_CANDIDATES, CALYX_SEXTANT_RERANKER_PROTOCOL,
     CALYX_SEXTANT_RERANKER_TIMEOUT, CALYX_SEXTANT_SKILL_BUDGET_EXCEEDED,
     CALYX_SEXTANT_SKILL_PAIR_NO_OVERLAP, CALYX_SEXTANT_SKILL_PARAMS, CALYX_SEXTANT_SKILL_UNKNOWN,
     CALYX_SEXTANT_SLOT_ALREADY_REGISTERED, CALYX_SEXTANT_SLOT_INACTIVE, CALYX_SEXTANT_SLOT_MISSING,
-    CALYX_SEXTANT_TRAVERSE_HOPS, CALYX_SEXTANT_VECTOR_SHAPE, CALYX_TEMPORAL_AP60_VIOLATION,
-    CALYX_TEMPORAL_INVALID_BOOST_CONFIG, CALYX_TEMPORAL_INVALID_PERIOD,
-    CALYX_TEMPORAL_INVALID_WINDOW, CALYX_TEMPORAL_WEIGHT_SUM,
+    CALYX_SEXTANT_TRAVERSE_HOPS, CALYX_SEXTANT_VECTOR_FUSION_UNWIRED, CALYX_SEXTANT_VECTOR_SHAPE,
+    CALYX_TEMPORAL_AP60_VIOLATION, CALYX_TEMPORAL_INVALID_BOOST_CONFIG,
+    CALYX_TEMPORAL_INVALID_PERIOD, CALYX_TEMPORAL_INVALID_WINDOW, CALYX_TEMPORAL_WEIGHT_SUM,
     CALYX_TEMPORAL_WINDOW_BUDGET_EXHAUSTED, sextant_error,
 };
 pub use fusion::{FusionContext, FusionStrategy, RrfProfile, WeightedProfile, weighted_profiles};
-pub use guarded::GuardedSearchReport;
+pub use guarded::{GuardedSearchReport, apply_in_region_guard_to_hits};
 pub use hit::{
     DroppedGuardHit, FreshnessTag, Hit, HitGuardEvidence, HitGuardMode, PerLensContribution,
     ProvenanceSource,

@@ -13,10 +13,28 @@ pub(super) use super::template_model::{
     CATALOG_VERSION, MIN_CONTENT_LENSES, OBJECT_VERSION, PanelTemplateCatalog,
     PanelTemplateIndexEntry, PanelTemplateVersionRef, SavedPanelTemplate, TEMPLATE_INVALID,
     TEMPLATE_NOT_FOUND, TemplateDraft, TemplateEnsembleCard, TemplateLensRef,
-    default_time_controls, lens_ref_from_catalog, template_error,
+    default_time_controls, id_for_loaded, lens_ref_from_catalog, object_bytes, template_error,
 };
-use crate::error::CliResult;
-use crate::lens_commands::support::register_manifest_runtime;
+use crate::error::{CliError, CliResult};
+use crate::lens_commands::support::{
+    prepare_manifest_runtime_for_template, register_prepared_manifest_runtime,
+};
+
+#[derive(Clone, Debug)]
+pub(super) struct TemplateLensProgress {
+    pub phase: &'static str,
+    pub ordinal: usize,
+    pub total: usize,
+    pub slot_key: String,
+    pub lens_name: String,
+    pub lens_id: String,
+    pub runtime_lens_id: Option<String>,
+    pub runtime: String,
+    pub modality: String,
+    pub shape: String,
+    pub placement: String,
+    pub manifest: String,
+}
 
 #[derive(Clone, Debug)]
 pub(super) struct TemplateStore {
@@ -235,7 +253,8 @@ impl TemplateStore {
                 templates: Vec::new(),
             });
         }
-        let catalog: PanelTemplateCatalog = serde_json::from_slice(&fs::read(&path)?)?;
+        let catalog: PanelTemplateCatalog = serde_json::from_slice(&fs::read(&path)?)
+            .map_err(|error| CliError::runtime(format!("parse template catalog: {error}")))?;
         if catalog.schema_version != CATALOG_VERSION {
             return Err(template_error(
                 TEMPLATE_INVALID,
@@ -250,7 +269,8 @@ impl TemplateStore {
     }
 
     fn write_catalog(&self, catalog: &PanelTemplateCatalog) -> CliResult {
-        let bytes = serde_json::to_vec_pretty(catalog)?;
+        let bytes = serde_json::to_vec_pretty(catalog)
+            .map_err(|error| CliError::runtime(format!("serialize template catalog: {error}")))?;
         write_atomic(&self.index_path(), &bytes)
     }
 
@@ -302,7 +322,8 @@ impl TemplateStore {
                 "do not edit immutable template objects; re-save the template",
             ));
         }
-        let template: SavedPanelTemplate = serde_json::from_slice(&bytes)?;
+        let template: SavedPanelTemplate = serde_json::from_slice(&bytes)
+            .map_err(|error| CliError::runtime(format!("parse template object: {error}")))?;
         template.validate()?;
         Ok(template)
     }
@@ -342,13 +363,29 @@ fn version_ref<'a>(
         })
 }
 
-fn register_template_lenses(
+pub(super) fn register_template_lenses(
     registry: &mut Registry,
     template: &mut SavedPanelTemplate,
 ) -> CliResult<usize> {
+    register_template_lenses_with_progress(registry, template, false, None)
+}
+
+pub(super) fn register_template_lenses_with_progress(
+    registry: &mut Registry,
+    template: &mut SavedPanelTemplate,
+    cpu_explicit: bool,
+    progress: Option<&mut dyn FnMut(TemplateLensProgress) -> CliResult<()>>,
+) -> CliResult<usize> {
+    let mut progress = progress;
     let mut added = 0;
-    for lens in &mut template.lenses {
+    let total = template.lenses.len();
+    for (idx, lens) in template.lenses.iter_mut().enumerate() {
+        emit_progress(&mut progress, lens_progress("load_start", idx, total, lens))?;
         if lens.runtime_lens_id.is_some_and(|id| registry.contains(id)) {
+            emit_progress(
+                &mut progress,
+                lens_progress("already_registered", idx, total, lens),
+            )?;
             continue;
         }
         let spec = lens_spec_from_manifest_path(Path::new(&lens.manifest))?;
@@ -363,8 +400,11 @@ fn register_template_lenses(
                 "rebuild the template from the current frozen lens manifest",
             ));
         }
-        if let Some(existing) = registry.find_lens_by_spec_id(spec_lens_id) {
-            if registry.lens_spec(existing) != Some(&spec) {
+        let prepared = prepare_manifest_runtime_for_template(spec, cpu_explicit)?;
+        let runtime_spec_lens_id = prepared.spec.lens_id();
+        let runtime_lens_id = prepared.contract.lens_id();
+        if let Some(existing) = registry.find_lens_by_spec_id(runtime_spec_lens_id) {
+            if registry.lens_spec(existing) != Some(&prepared.spec) {
                 return Err(template_error(
                     TEMPLATE_INVALID,
                     format!(
@@ -384,31 +424,41 @@ fn register_template_lenses(
                 ));
             }
             lens.runtime_lens_id = Some(existing);
+            emit_progress(
+                &mut progress,
+                lens_progress("existing_matched", idx, total, lens),
+            )?;
             continue;
         }
-        let registered = register_manifest_runtime(registry, spec)?;
         if let Some(expected) = lens.runtime_lens_id
-            && registered != expected
+            && runtime_lens_id != expected
         {
             return Err(template_error(
                 TEMPLATE_INVALID,
-                format!("runtime registered {registered}, expected {expected}"),
+                format!("runtime registered {runtime_lens_id}, expected {expected}"),
                 "recommission the lens so runtime and manifest contracts agree",
             ));
         }
+        emit_progress(
+            &mut progress,
+            lens_progress("runtime_register_start", idx, total, lens),
+        )?;
+        let registered = register_prepared_manifest_runtime(registry, prepared)?;
         lens.runtime_lens_id = Some(registered);
+        emit_progress(
+            &mut progress,
+            lens_progress("runtime_register_ok", idx, total, lens),
+        )?;
         added += 1;
     }
     Ok(added)
 }
 
-fn id_for_loaded(template: &SavedPanelTemplate) -> CliResult<String> {
-    Ok(blake3::hash(&object_bytes(template)?).to_hex().to_string())
-}
+mod progress;
+use progress::{emit_progress, lens_progress};
 
-fn object_bytes(template: &SavedPanelTemplate) -> CliResult<Vec<u8>> {
-    Ok(serde_json::to_vec_pretty(template)?)
-}
+#[cfg(test)]
+mod tests;
 
 fn object_rel_path(template_id: &str) -> String {
     format!("objects/{template_id}.json")

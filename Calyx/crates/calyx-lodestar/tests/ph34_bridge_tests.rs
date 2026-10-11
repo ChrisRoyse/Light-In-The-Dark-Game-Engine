@@ -2,11 +2,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::PathBuf;
 
-use calyx_core::{AnchorKind, CxId};
+use calyx_core::{AnchorKind, CxId, FixedClock};
+use calyx_ledger::{LedgerAppender, MemoryLedgerStore};
 use calyx_lodestar::{
-    AssocStore, CollectionId, GroundednessReport, Kernel, KernelGraphParams, KernelParams,
-    RecallReport, Scope, ScopeCache, bridges, build_kernel, build_kernel_index, kernel_answer,
-    kernel_answer_scoped, report_all_scopes,
+    AssocStore, CollectionId, GroundednessReport, Kernel, KernelGraphParams, KernelIndex,
+    KernelParams, RecallReport, Scope, ScopeCache, bridges, build_kernel, build_kernel_index,
+    kernel_answer_scoped, kernel_answer_with_ledger, report_all_scopes,
 };
 use calyx_paths::AssocGraph;
 use serde_json::json;
@@ -146,9 +147,9 @@ fn embeddings() -> BTreeMap<CxId, Vec<f32>> {
 }
 
 fn fsv_root(case: &str) -> PathBuf {
-    let base = std::env::var("CALYX_FSV_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| std::env::temp_dir().join("calyx-ph34-t05"));
+    let base = calyx_fsv::fsv_root_or_else("CALYX_FSV_ROOT", || {
+        std::env::temp_dir().join("calyx-ph34-t05")
+    });
     base.join(case)
 }
 
@@ -227,7 +228,7 @@ fn kernel_answer_scoped_blocks_out_of_scope_path_and_no_anchor() {
     let store = scoped_answer_store();
     let graph = store.full_graph().unwrap();
     let index = build_kernel_index(&kernel(vec![cx(1)]), &embeddings()).unwrap();
-    let full = kernel_answer(&index, &graph, cx(2), &[1.0, 0.0], &[cx(1)], 3).unwrap();
+    let full = answer_with_memory_ledger(&index, &graph, cx(2), &[1.0, 0.0], &[cx(1)], 3);
     let scope = Scope::Subgraph {
         query: cx(9),
         radius: 1,
@@ -256,6 +257,29 @@ fn kernel_answer_scoped_blocks_out_of_scope_path_and_no_anchor() {
     assert_eq!(full.hops.len(), 2);
     assert_eq!(scoped.code(), "CALYX_KERNEL_ANSWER_NO_PATH");
     assert_eq!(no_anchor.code(), "CALYX_KERNEL_NO_ANCHORED_NODE");
+}
+
+fn answer_with_memory_ledger(
+    index: &KernelIndex,
+    graph: &AssocGraph,
+    query_cx: CxId,
+    query_vec: &[f32],
+    anchors: &[CxId],
+    max_hops: usize,
+) -> calyx_lodestar::AnswerPath {
+    let mut appender =
+        LedgerAppender::open(MemoryLedgerStore::default(), FixedClock::new(1_785_631_000))
+            .expect("open memory ledger");
+    kernel_answer_with_ledger(
+        index,
+        graph,
+        query_cx,
+        query_vec,
+        anchors,
+        max_hops,
+        &mut appender,
+    )
+    .expect("ledger-backed answer")
 }
 
 #[test]

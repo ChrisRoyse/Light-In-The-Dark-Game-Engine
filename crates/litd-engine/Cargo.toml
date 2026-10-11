@@ -1,0 +1,1052 @@
+[package]
+name = "litd-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Light in the Dark engine core — rendering, sim, assets (built on Calyx)."
+# FSV example binaries are gated behind the `fsv` feature and declared explicitly below, so a
+# routine `cargo test` gate never compiles+links them (#1497). autoexamples=false disables
+# auto-discovery so a new example that skips the gate is a hard "no such target", not a
+# silent addition to every test build.
+autoexamples = false
+
+[features]
+default = ["full", "wasm-script"]
+# Full editor/authoring/analysis surface. The runtime game deliberately leaves this
+# disabled so authoring-only Calyx AI/registry code cannot enter its production graph.
+full = [
+    "dep:calyx-agent",
+    "dep:calyx-anneal",
+    "dep:calyx-assay",
+    "dep:calyx-ledger",
+    "dep:calyx-loom",
+    "dep:calyx-oracle",
+    "dep:calyx-registry",
+    "dep:calyx-ward",
+]
+runtime = []
+wasm-script = [
+    "dep:wasm-encoder",
+    "dep:wasmparser",
+    "dep:wasmtime",
+    "dep:wat",
+]
+cuda = ["calyx-forge/cuda"]
+# Enables the FSV example binaries (one-shot verification programs). Off by default so
+# `cargo test` skips them; run with `cargo run --features fsv --example <name>`.
+#
+# `fsv` also activates the calyx-agent LLM transport (#1548). That dependency is OPTIONAL on
+# purpose: calyx-agent carries an HTTP client, and litd-engine is linked by litd-game and
+# litd-editor. Keeping the transport out of the default graph makes "the engine cannot call a
+# model from inside a sim tick" a compile-time fact rather than a code-review convention. Only
+# the FSV example — which must call the REAL provider — ever links it.
+#
+# `fsv` also pulls in `naga` (wgpu's shader frontend, already in the tree via wgpu) so the
+# CDLOD terrain FSV (#1739) can PARSE + VALIDATE `cdlod_morph.wgsl` headlessly -- a broken
+# shader fails the example. naga is optional + fsv-only so the routine engine build never
+# links a shader compiler it does not need.
+fsv = ["dep:calyx-agent", "dep:naga"]
+
+[dependencies]
+bytemuck.workspace = true
+bincode.workspace = true
+calyx-agent = { path = "../../Calyx/crates/calyx-agent", optional = true }
+naga = { version = "27", optional = true }
+calyx-anneal = { path = "../../Calyx/crates/calyx-anneal", optional = true }
+calyx-assay = { path = "../../Calyx/crates/calyx-assay", optional = true }
+calyx-aster = { path = "../../Calyx/crates/calyx-aster" }
+calyx-core = { path = "../../Calyx/crates/calyx-core" }
+calyx-forge = { path = "../../Calyx/crates/calyx-forge", default-features = false }
+calyx-ledger = { path = "../../Calyx/crates/calyx-ledger", optional = true }
+calyx-loom = { path = "../../Calyx/crates/calyx-loom", optional = true }
+calyx-oracle = { path = "../../Calyx/crates/calyx-oracle", optional = true }
+calyx-registry = { path = "../../Calyx/crates/calyx-registry", optional = true }
+calyx-ward = { path = "../../Calyx/crates/calyx-ward", optional = true }
+fontdue.workspace = true
+epaint_default_fonts.workspace = true
+glam.workspace = true
+gltf.workspace = true
+hound.workspace = true
+jsonschema.workspace = true
+kira.workspace = true
+litd-hash.workspace = true
+mint.workspace = true
+ron.workspace = true
+rustybuzz.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+unicode-bidi.workspace = true
+unicode-segmentation.workspace = true
+pollster.workspace = true
+rapier3d.workspace = true
+rayon.workspace = true
+wgpu.workspace = true
+winit.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+wasm-encoder = { workspace = true, optional = true }
+wasmparser = { workspace = true, optional = true }
+wasmtime = { workspace = true, optional = true }
+wat = { workspace = true, optional = true }
+
+[[example]]
+name = "anneal_self_optimization_fsv"
+path = "examples/anneal_self_optimization_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1785_economy_runtime_fsv"
+path = "examples/issue1785_economy_runtime_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1755_faction_roster_fsv"
+path = "examples/issue1755_faction_roster_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "batching_fsv"
+path = "examples/batching_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue844_847_runtime_presentation_fsv"
+path = "examples/issue844_847_runtime_presentation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "clustered_lighting_fsv"
+path = "examples/clustered_lighting_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "ecs_fsv"
+path = "examples/ecs_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "engine_audio_core_fsv"
+path = "examples/engine_audio_core_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "engine_spatial_audio_fsv"
+path = "examples/engine_spatial_audio_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "forge_compute_fsv"
+path = "examples/forge_compute_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "input_fsv"
+path = "examples/input_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1742_probe_gi_fsv"
+path = "examples/issue1742_probe_gi_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1524_ecs_pool_fsv"
+path = "examples/issue1524_ecs_pool_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1524_occlusion_scaling_fsv"
+path = "examples/issue1524_occlusion_scaling_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1740_two_phase_cull_fsv"
+path = "examples/issue1740_two_phase_cull_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1482_procgen_fsv"
+path = "examples/issue1482_procgen_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1739_cdlod_terrain_fsv"
+path = "examples/issue1739_cdlod_terrain_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1604_stealth_abilities_fsv"
+path = "examples/issue1604_stealth_abilities_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1603_racial_stealth_profiles_fsv"
+path = "examples/issue1603_racial_stealth_profiles_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1623_stealth_acquisition_matrix_fsv"
+path = "examples/issue1623_stealth_acquisition_matrix_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1045_human_immortal_avatar_fsv"
+path = "examples/issue1045_human_immortal_avatar_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1046_immortal_coembodiment_fsv"
+path = "examples/issue1046_immortal_coembodiment_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1047_skilled_rewards_fsv"
+path = "examples/issue1047_skilled_rewards_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1060_mortality_fsv"
+path = "examples/issue1060_mortality_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1061_undeath_fsv"
+path = "examples/issue1061_undeath_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1062_unhallowed_knight_fsv"
+path = "examples/issue1062_unhallowed_knight_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1063_infernal_deeps_fsv"
+path = "examples/issue1063_infernal_deeps_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1064_withering_raid_path_fsv"
+path = "examples/issue1064_withering_raid_path_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1065_hall_of_remembered_fsv"
+path = "examples/issue1065_hall_of_remembered_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1066_infernal_access_fsv"
+path = "examples/issue1066_infernal_access_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1067_infernal_zones_fsv"
+path = "examples/issue1067_infernal_zones_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1636_galadon_area_fsv"
+path = "examples/issue1636_galadon_area_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1637_voralian_area_fsv"
+path = "examples/issue1637_voralian_area_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1645_copeham_inn_area_fsv"
+path = "examples/issue1645_copeham_inn_area_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1649_underdark_area_fsv"
+path = "examples/issue1649_underdark_area_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1657_graveyard_area_fsv"
+path = "examples/issue1657_graveyard_area_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1068_infernal_boss_agents_fsv"
+path = "examples/issue1068_infernal_boss_agents_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1069_infernal_relic_vaults_fsv"
+path = "examples/issue1069_infernal_relic_vaults_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1070_infernal_attrition_fsv"
+path = "examples/issue1070_infernal_attrition_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1105_skeletal_animation_fsv"
+path = "examples/issue1105_skeletal_animation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1110_rapier_physics_fsv"
+path = "examples/issue1110_rapier_physics_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1111_character_controller_fsv"
+path = "examples/issue1111_character_controller_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1112_physics_determinism_fsv"
+path = "examples/issue1112_physics_determinism_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1114_calyx_backend_architecture_fsv"
+path = "examples/issue1114_calyx_backend_architecture_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1115_calyx_persistence_fsv"
+path = "examples/issue1115_calyx_persistence_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1116_calyx_content_fsv"
+path = "examples/issue1116_calyx_content_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1117_calyx_runtime_fsv"
+path = "examples/issue1117_calyx_runtime_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1118_calyx_lowering_fsv"
+path = "examples/issue1118_calyx_lowering_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1119_calyx_semantic_fsv"
+path = "examples/issue1119_calyx_semantic_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1120_calyx_agent_runtime_fsv"
+path = "examples/issue1120_calyx_agent_runtime_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1121_calyx_ward_gate_fsv"
+path = "examples/issue1121_calyx_ward_gate_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1122_calyx_asset_pipeline_fsv"
+path = "examples/issue1122_calyx_asset_pipeline_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1123_calyx_editor_intelligence_fsv"
+path = "examples/issue1123_calyx_editor_intelligence_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1124_calyx_observability_fsv"
+path = "examples/issue1124_calyx_observability_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1548_agent_response_gate_fsv"
+path = "examples/issue1548_agent_response_gate_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+# #1552 is deterministic and offline (no model provider) at runtime, but it still uses the `fsv`
+# artifact harness (begin_issue_run) and MUST carry required-features=["fsv"] so it is gated out of
+# the routine test build like every other example (check-examples.ps1 enforces this). harness =
+# false so `cargo run --example` runs main().
+[[example]]
+name = "issue1552_ward_corpus_fsv"
+path = "examples/issue1552_ward_corpus_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1153_runtime_state_readback"
+path = "examples/issue1153_runtime_state_readback.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1418_runtime_state_readback"
+path = "examples/issue1418_runtime_state_readback.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1455_authored_content_migration_fsv"
+path = "examples/issue1455_authored_content_migration_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1455_elf_runtime_slice_fsv"
+path = "examples/issue1455_elf_runtime_slice_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1455_infernal_deeps_runtime_slice_fsv"
+path = "examples/issue1455_infernal_deeps_runtime_slice_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1455_infernal_boss_agents_runtime_slice_fsv"
+path = "examples/issue1455_infernal_boss_agents_runtime_slice_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1455_infernal_relic_vaults_runtime_slice_fsv"
+path = "examples/issue1455_infernal_relic_vaults_runtime_slice_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1455_withering_raid_path_runtime_slice_fsv"
+path = "examples/issue1455_withering_raid_path_runtime_slice_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1456_engine_content_measurement_fsv"
+path = "examples/issue1456_engine_content_measurement_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1791_pending_measurement_backfill_fsv"
+path = "examples/issue1791_pending_measurement_backfill_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1792_ai_addon_gate_fsv"
+path = "examples/issue1792_ai_addon_gate_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1890_panel_current_bootstrap_fsv"
+path = "examples/issue1890_panel_current_bootstrap_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue808_water_boundary_environment_fsv"
+path = "examples/issue808_water_boundary_environment_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue814_lighting_day_night_fsv"
+path = "examples/issue814_lighting_day_night_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue815_weather_global_fog_fsv"
+path = "examples/issue815_weather_global_fog_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue816_minimap_loading_preview_fsv"
+path = "examples/issue816_minimap_loading_preview_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1457_grounding_honesty_fsv"
+path = "examples/issue1457_grounding_honesty_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1462_text_pipeline_fsv"
+path = "examples/issue1462_text_pipeline_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue882_runtime_text_fsv"
+path = "examples/issue882_runtime_text_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue783_agent_lowering_boundary_fsv"
+path = "examples/issue783_agent_lowering_boundary_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue787_agent_anomaly_quarantine_fsv"
+path = "examples/issue787_agent_anomaly_quarantine_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue839_843_runtime_hud_fsv"
+path = "examples/issue839_843_runtime_hud_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue836_851_players_groups_fsv"
+path = "examples/issue836_851_players_groups_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue859_agent_ward_envelope_fsv"
+path = "examples/issue859_agent_ward_envelope_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue874_presentation_boundary_fsv"
+path = "examples/issue874_presentation_boundary_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue875_scene_lifecycle_fsv"
+path = "examples/issue875_scene_lifecycle_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue876_animation_state_drive_fsv"
+path = "examples/issue876_animation_state_drive_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue879_lighting_shadow_daynight_fsv"
+path = "examples/issue879_lighting_shadow_daynight_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue907_replay_analytics_fsv"
+path = "examples/issue907_replay_analytics_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue960_attributes_fsv"
+path = "examples/issue960_attributes_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue961_ability_framework_fsv"
+path = "examples/issue961_ability_framework_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue962_advancement_fsv"
+path = "examples/issue962_advancement_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue963_combat_fsv"
+path = "examples/issue963_combat_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue964_themes_fsv"
+path = "examples/issue964_themes_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue965_immortal_agents_fsv"
+path = "examples/issue965_immortal_agents_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue966_faction_leaders_fsv"
+path = "examples/issue966_faction_leaders_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue967_npc_agents_fsv"
+path = "examples/issue967_npc_agents_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue968_world_activation_fsv"
+path = "examples/issue968_world_activation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue969_model_tiering_fsv"
+path = "examples/issue969_model_tiering_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue970_local_dialogue_fsv"
+path = "examples/issue970_local_dialogue_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue971_object_micro_agents_fsv"
+path = "examples/issue971_object_micro_agents_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue999_human_race_fsv"
+path = "examples/issue999_human_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1000_elf_race_fsv"
+path = "examples/issue1000_elf_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1020_warrior_class_fsv"
+path = "examples/issue1020_warrior_class_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1021_1036_class_specs_fsv"
+path = "examples/issue1021_1036_class_specs_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1001_half_elf_race_fsv"
+path = "examples/issue1001_half_elf_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1002_ashkin_mixed_race_fsv"
+path = "examples/issue1002_ashkin_mixed_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1003_ashkin_deep_race_fsv"
+path = "examples/issue1003_ashkin_deep_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1004_wood_elf_race_fsv"
+path = "examples/issue1004_wood_elf_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1005_dwarf_race_fsv"
+path = "examples/issue1005_dwarf_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1006_onyx_kin_race_fsv"
+path = "examples/issue1006_onyx_kin_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1007_gnome_race_fsv"
+path = "examples/issue1007_gnome_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1008_deep_kin_race_fsv"
+path = "examples/issue1008_deep_kin_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1009_orc_race_fsv"
+path = "examples/issue1009_orc_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1010_goblin_race_fsv"
+path = "examples/issue1010_goblin_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1011_minotaur_race_fsv"
+path = "examples/issue1011_minotaur_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1012_storm_giant_race_fsv"
+path = "examples/issue1012_storm_giant_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1013_fire_giant_race_fsv"
+path = "examples/issue1013_fire_giant_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1014_frost_giant_race_fsv"
+path = "examples/issue1014_frost_giant_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1015_cloud_giant_race_fsv"
+path = "examples/issue1015_cloud_giant_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1016_sylphkin_race_fsv"
+path = "examples/issue1016_sylphkin_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1017_felisar_race_fsv"
+path = "examples/issue1017_felisar_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1018_saur_race_fsv"
+path = "examples/issue1018_saur_race_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "math_fsv"
+path = "examples/math_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "oracle_live_world_forecast_fsv"
+path = "examples/oracle_live_world_forecast_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "oracle_what_if_preview_fsv"
+path = "examples/oracle_what_if_preview_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "pbr_material_fsv"
+path = "examples/pbr_material_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "post_fsv"
+path = "examples/post_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "reference_gpu_scene_fsv"
+path = "examples/reference_gpu_scene_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "reference_scene_fsv"
+path = "examples/reference_scene_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "reflection_fsv"
+path = "examples/reflection_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "rts_camera_fsv"
+path = "examples/rts_camera_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "scene_fsv"
+path = "examples/scene_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "screen_space_fsv"
+path = "examples/screen_space_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1741_fsr_upscale_fsv"
+path = "examples/issue1741_fsr_upscale_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "shader_material_catalog_fsv"
+path = "examples/shader_material_catalog_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "shader_system_fsv"
+path = "examples/shader_system_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "shadow_fsv"
+path = "examples/shadow_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "sim_heap_storage_fsv"
+path = "examples/sim_heap_storage_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "sim_orders_fsv"
+path = "examples/sim_orders_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "sim_presentation_fsv"
+path = "examples/sim_presentation_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "sim_replay_fsv"
+path = "examples/sim_replay_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "sim_tick_fsv"
+path = "examples/sim_tick_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "stylized_shader_fsv"
+path = "examples/stylized_shader_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "ui_render_fsv"
+path = "examples/ui_render_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_effect_fsv"
+path = "examples/vfx_effect_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_effect_store_fsv"
+path = "examples/vfx_effect_store_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_gpu_particles_fsv"
+path = "examples/vfx_gpu_particles_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_light_atlas_fsv"
+path = "examples/vfx_light_atlas_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_render_event_fsv"
+path = "examples/vfx_render_event_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "vfx_render_workload_fsv"
+path = "examples/vfx_render_workload_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue809_doodad_scatter_fsv"
+path = "examples/issue809_doodad_scatter_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue810_destructibles_fsv"
+path = "examples/issue810_destructibles_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "match_structure_core_fsv"
+path = "examples/match_structure_core_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue850_848_game_runtime_fsv"
+path = "examples/issue850_848_game_runtime_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1852_campaign_flow_fsv"
+path = "examples/issue1852_campaign_flow_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1853_permanent_hero_death_fsv"
+path = "examples/issue1853_permanent_hero_death_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1855_session_orders_cluster_fsv"
+path = "examples/issue1855_session_orders_cluster_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1856_1883_regions_fsv"
+path = "examples/issue1856_1883_regions_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1860_engagement_fsv"
+path = "examples/issue1860_engagement_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1858_multi_wave_ai_fsv"
+path = "examples/issue1858_multi_wave_ai_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1537_ed12_doctrine_nav_fsv"
+path = "examples/issue1537_ed12_doctrine_nav_fsv.rs"
+required-features = ["fsv"]
+harness = false
+
+[[example]]
+name = "issue1558_forbidden_nav_batch_fsv"
+path = "examples/issue1558_forbidden_nav_batch_fsv.rs"
+required-features = ["fsv"]
+harness = false

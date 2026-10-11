@@ -28,17 +28,39 @@ fn migrates_and_offline_backfills_default_panel() {
     assert_eq!(report.source_rows, 2);
     assert_eq!(report.written_rows, 2);
     assert_eq!(report.skipped_rows, 0);
+    let verify = report.verify.as_ref().unwrap();
+    assert_eq!(verify.missing_backfill, Vec::<String>::new());
+    assert_eq!(verify.missing_backfill_provenance, Vec::<String>::new());
+    assert_eq!(verify.invalid_backfill_provenance, Vec::<String>::new());
+    assert_eq!(verify.learned_backfill_gate, "FAIL");
+    assert_eq!(verify.learned_tei_slot_rows_checked, 0);
+    assert_eq!(verify.offline_deterministic_model_slot_rows.len(), 6);
+    let backfill = report.backfill.as_ref().unwrap();
+    assert_eq!(backfill.backfill_mode, "offline_deterministic");
+    assert_eq!(backfill.learned_tei_slot_rows_written, 0);
+    assert_eq!(backfill.offline_deterministic_slot_rows_written, 6);
+    let status = report.status.as_ref().unwrap();
+    assert!(status.slot_rows.values().all(|count| *count == 2));
+    let readback = run_readback(&sqlite, &vault, "kernel-1").unwrap();
+    let slot_1_origin = backfill_origin::slot_origin_key(SlotId::new(1));
+    let slot_2_origin = backfill_origin::slot_origin_key(SlotId::new(2));
+    let slot_2_runtime = backfill_origin::slot_runtime_key(SlotId::new(2));
+    assert_eq!(readback["slots"]["2"]["present"], true);
+    assert_eq!(readback["metadata"][slot_1_origin.as_str()], "algorithmic");
     assert_eq!(
-        report.verify.unwrap().missing_backfill,
-        Vec::<String>::new()
+        readback["metadata"][slot_2_origin.as_str()],
+        "offline_deterministic"
     );
-    assert!(
-        report
-            .status
-            .unwrap()
-            .slot_rows
-            .values()
-            .all(|count| *count == 2)
+    assert_eq!(readback["metadata"][slot_2_runtime.as_str()], "tei_http");
+    maybe_write_fsv_json(
+        "migrate-offline-backfill-origin-readback.json",
+        &serde_json::json!({
+            "source_of_truth": "Aster base-row metadata plus slot CF rows read via migrate readback/status",
+            "backfill": backfill,
+            "verify": verify,
+            "slot_rows": status.slot_rows,
+            "kernel_readback": readback,
+        }),
     );
     std::fs::remove_dir_all(root).unwrap();
 }
@@ -287,6 +309,10 @@ fn created_at_is_preserved_and_temporal_vectors_are_active() {
     let readback = run_readback(&sqlite, &vault, "hot-2").unwrap();
 
     assert_eq!(report.status.as_ref().unwrap().temporal_active_rows, 2);
+    assert_eq!(
+        report.backfill.as_ref().unwrap().backfill_mode,
+        "offline_deterministic"
+    );
     assert_eq!(report.status.as_ref().unwrap().temporal_inactive_rows, 0);
     assert_eq!(readback["created_at"], 1_704_207_600_u64);
     assert_eq!(readback["source_event_time_secs"], 1_704_207_600_u64);
@@ -367,62 +393,92 @@ fn temp_root(name: &str) -> std::path::PathBuf {
     ))
 }
 
+fn maybe_write_fsv_json(name: &str, value: &serde_json::Value) {
+    let Some(root) = calyx_fsv::fsv_root("CALYX_FSV_ROOT") else {
+        return;
+    };
+    std::fs::create_dir_all(&root).expect("create fsv root");
+    std::fs::write(
+        root.join(name),
+        serde_json::to_vec_pretty(value).expect("fsv json"),
+    )
+    .expect("write fsv json");
+}
+
 fn seed_sqlite(path: &Path) {
-    let conn = Connection::open(path).unwrap();
-    create_chunks_table(&conn);
-    conn.execute(
-        "INSERT INTO chunks VALUES('kernel-1','db','alpha beta',?1)",
-        [embedding(1.0)],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO chunks VALUES('hot-2','db','gamma delta',?1)",
-        [embedding(0.0)],
-    )
-    .unwrap();
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_chunks_table(&transaction);
+    transaction
+        .execute(
+            "INSERT INTO chunks VALUES('kernel-1','db','alpha beta',?1)",
+            [embedding(1.0)],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO chunks VALUES('hot-2','db','gamma delta',?1)",
+            [embedding(0.0)],
+        )
+        .unwrap();
+    transaction.commit().unwrap();
 }
 
 fn seed_numbered_sqlite(path: &Path, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    create_chunks_table(&conn);
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,'db',?2,?3)",
-            params![
-                format!("chunk-{idx}"),
-                format!("content-{idx}"),
-                embedding(idx as f32)
-            ],
-        )
-        .unwrap();
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_chunks_table(&transaction);
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,'db',?2,?3)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("chunk-{idx}"),
+                    format!("content-{idx}"),
+                    embedding(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn seed_duplicate_content_sqlite(path: &Path) {
-    let conn = Connection::open(path).unwrap();
-    create_chunks_table(&conn);
-    conn.execute(
-        "INSERT INTO chunks VALUES('first','db','same content',?1)",
-        [embedding(1.0)],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO chunks VALUES('second','db','same content',?1)",
-        [embedding(2.0)],
-    )
-    .unwrap();
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_chunks_table(&transaction);
+    transaction
+        .execute(
+            "INSERT INTO chunks VALUES('first','db','same content',?1)",
+            [embedding(1.0)],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO chunks VALUES('second','db','same content',?1)",
+            [embedding(2.0)],
+        )
+        .unwrap();
+    transaction.commit().unwrap();
 }
 
 fn seed_temporal_sqlite(path: &Path, rows: &[(&str, &str, f32, &str)]) {
-    let conn = Connection::open(path).unwrap();
-    create_chunks_table_with_created_at(&conn);
-    for (chunk_id, content, first, created_at) in rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,'db',?2,?3,?4)",
-            params![chunk_id, content, embedding(*first), created_at],
-        )
-        .unwrap();
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_chunks_table_with_created_at(&transaction);
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,'db',?2,?3,?4)")
+            .unwrap();
+        for (chunk_id, content, first, created_at) in rows {
+            insert
+                .execute(params![chunk_id, content, embedding(*first), created_at])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn create_chunks_table(conn: &Connection) {

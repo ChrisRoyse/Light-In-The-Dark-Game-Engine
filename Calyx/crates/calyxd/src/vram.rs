@@ -26,7 +26,7 @@ use crate::error::DaemonError;
 const BYTES_PER_MIB: u64 = 1024 * 1024;
 
 /// TEI endpoints documented for operator-facing budget-exhaustion errors.
-const TEI_ENDPOINTS: &str = ":8088 (general), :8089 (reranker), :8090 (legal)";
+const TEI_ENDPOINTS: &str = ":18190 (calyx-e5), :18188 (calyx-bge-m3), :8088 (legacy general), :8089 (reranker), :8090 (legal)";
 
 /// A point-in-time device VRAM reading in MiB.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -164,15 +164,16 @@ impl NvmlVramUsage {
     /// Initialize NVML once (the constructor dynamically loads `libnvidia-ml`,
     /// which is comparatively expensive — hold the handle for the daemon's life).
     pub fn init() -> Result<Self, DaemonError> {
-        // Load the canonical versioned soname: driver-only hosts ship
-        // `libnvidia-ml.so.1` but not the unversioned dev symlink `libnvidia-ml.so`
-        // that nvml-wrapper loads by default.
+        // Load the driver-side library name for the host OS. Linux driver-only
+        // hosts ship `libnvidia-ml.so.1` but not the unversioned dev symlink;
+        // Windows driver hosts expose `nvml.dll` in System32.
+        let library = nvml_library_name();
         let nvml = nvml_wrapper::Nvml::builder()
-            .lib_path(std::ffi::OsStr::new("libnvidia-ml.so.1"))
+            .lib_path(std::ffi::OsStr::new(library))
             .init()
             .map_err(|err| {
                 DaemonError::device_unavailable(format!(
-                    "NVML init failed loading libnvidia-ml.so.1 (is the NVIDIA driver present?): {err}"
+                    "NVML init failed loading {library} (is the NVIDIA driver present?): {err}"
                 ))
             })?;
         Ok(Self { nvml })
@@ -200,6 +201,14 @@ impl VramUsage for NvmlVramUsage {
             total_mib,
             used_mib,
         })
+    }
+}
+
+fn nvml_library_name() -> &'static str {
+    if cfg!(windows) {
+        "nvml.dll"
+    } else {
+        "libnvidia-ml.so.1"
     }
 }
 
@@ -291,6 +300,7 @@ mod tests {
         assert_eq!(err.code(), "CALYX_FORGE_VRAM_BUDGET");
         let shown = err.to_string();
         assert!(shown.contains("already exceeds"));
+        assert!(shown.contains(":18190"));
         assert!(shown.contains(":8088"));
     }
 
@@ -303,5 +313,14 @@ mod tests {
         assert_eq!(report.device_total_mib, 32607);
         // available headroom = 8192 - 7628 = 564
         assert_eq!(budget.available_mib().unwrap(), 564);
+    }
+
+    #[test]
+    fn nvml_library_name_matches_target_os() {
+        if cfg!(windows) {
+            assert_eq!(nvml_library_name(), "nvml.dll");
+        } else {
+            assert_eq!(nvml_library_name(), "libnvidia-ml.so.1");
+        }
     }
 }

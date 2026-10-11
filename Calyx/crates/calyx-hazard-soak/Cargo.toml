@@ -15,9 +15,11 @@ calyx-anneal = { path = "../calyx-anneal" }
 calyx-aster = { path = "../calyx-aster" }
 calyx-core = { path = "../calyx-core" }
 calyx-forge = { path = "../calyx-forge" }
+calyx-fsv = { path = "../calyx-fsv" }
 calyx-ledger = { path = "../calyx-ledger" }
 calyx-registry = { path = "../calyx-registry" }
 calyx-sextant = { path = "../calyx-sextant" }
+calyxd = { path = "../calyxd" }
 blake3.workspace = true
 rand = { workspace = true, features = ["small_rng"] }
 serde.workspace = true

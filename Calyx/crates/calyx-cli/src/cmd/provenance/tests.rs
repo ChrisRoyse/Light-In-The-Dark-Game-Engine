@@ -2,14 +2,15 @@ use std::collections::BTreeMap;
 use std::fs;
 
 use calyx_aster::cf::ColumnFamily;
+use calyx_aster::ledger_view::AsterLedgerCfStore;
 use calyx_aster::vault::{AsterVault, VaultOptions};
 use calyx_core::{
     Anchor, AnchorKind, AnchorValue, Asymmetry, Constellation, CxFlags, InputRef, LedgerRef,
     LensId, Modality, Panel, QuantPolicy, Slot, SlotId, SlotKey, SlotShape, SlotState, SlotVector,
     VaultId, VaultStore,
 };
-use calyx_ledger::{ActorId, EntryKind, LedgerEntry, SubjectId};
-use serde_json::json;
+use calyx_ledger::{ActorId, EntryKind, LedgerEntry, SubjectId, get_provenance};
+use serde_json::{Value, json};
 use ulid::Ulid;
 
 use super::*;
@@ -98,6 +99,54 @@ fn provenance_lineage_handles_cli_anchor_base_provenance() {
 }
 
 #[test]
+fn provenance_lineage_refuses_generic_anchor_ledger_fallback() {
+    let (root, resolved, vault) = test_vault("anchor-fail-closed");
+    let cx = sample_constellation(&vault, resolved.vault_id);
+    let cx_id = cx.cx_id;
+    vault.put(cx).unwrap();
+    vault.flush().unwrap();
+    let anchor = Anchor {
+        kind: AnchorKind::TestPass,
+        value: AnchorValue::Bool(true),
+        source: "unit".to_string(),
+        observed_at: 12,
+        confidence: 1.0,
+    };
+    vault.anchor(cx_id, anchor).unwrap();
+    let generic_ref = vault
+        .append_ledger_entry(
+            EntryKind::Ingest,
+            SubjectId::Cx(cx_id),
+            serde_json::to_vec(&json!({
+                "mode": "cli-anchor",
+            }))
+            .unwrap(),
+            ActorId::Service("calyx-cli-test".to_string()),
+        )
+        .unwrap();
+    vault.flush().unwrap();
+
+    let stored = vault.get(cx_id, vault.snapshot()).unwrap();
+    let ledger_store = AsterLedgerCfStore::open(&resolved.path).unwrap();
+    let entries = get_provenance(&ledger_store, &NoQuarantine, cx_id).unwrap();
+    let err = lineage(&resolved, cx_id).unwrap_err();
+
+    assert_eq!(stored.anchors.len(), 1);
+    assert_eq!(generic_ref.seq, entries.last().unwrap().seq);
+    assert_eq!(err.code(), "CALYX_LEDGER_CORRUPT");
+    assert!(err.to_string().contains("no exact cli anchor ledger row"));
+    write_anchor_fsv(
+        "cli-provenance-anchor-fail-closed.json",
+        cx_id,
+        &stored,
+        &entries,
+        err.code(),
+        &err.to_string(),
+    );
+    fs::remove_dir_all(root).ok();
+}
+
+#[test]
 fn verify_chain_intact_report_is_valid_json_shape() {
     let report = VerifyChainOut {
         status: "ok",
@@ -121,6 +170,9 @@ fn verify_chain_rejects_inverted_range() {
             vault: "v".to_string(),
             from: Some(999),
             to: Some(1),
+            progress_jsonl: None,
+            time_budget_ms: None,
+            batch_size: 8192,
         })
     );
 }
@@ -272,4 +324,49 @@ fn temp_root(name: &str) -> std::path::PathBuf {
 
 fn tokens<const N: usize>(items: [&str; N]) -> Vec<String> {
     items.into_iter().map(str::to_string).collect()
+}
+
+fn write_anchor_fsv(
+    name: &str,
+    cx_id: CxId,
+    stored: &Constellation,
+    entries: &[LedgerEntry],
+    error_code: &str,
+    error_message: &str,
+) {
+    let Some(root) = calyx_fsv::fsv_root("CALYX_FSV_ROOT") else {
+        return;
+    };
+    fs::create_dir_all(&root).unwrap();
+    let payload = json!({
+        "source_of_truth": "Aster durable Base anchor list plus Ledger CF rows read through AsterLedgerCfStore",
+        "trigger": "CLI provenance lineage for base anchor with only a generic cli-anchor ledger row",
+        "cx_id": cx_id.to_string(),
+        "base_anchor_kinds": stored
+            .anchors
+            .iter()
+            .map(|anchor| anchor_kind_key(&anchor.kind))
+            .collect::<Vec<_>>(),
+        "ledger_entries": entries
+            .iter()
+            .map(|entry| {
+                let payload = json_payload(entry);
+                json!({
+                    "seq": entry.seq,
+                    "kind": format!("{:?}", entry.kind),
+                    "mode": payload.get("mode").cloned().unwrap_or(Value::Null),
+                    "anchor_kind": payload.get("anchor_kind").cloned().unwrap_or(Value::Null),
+                })
+            })
+            .collect::<Vec<_>>(),
+        "error": {
+            "code": error_code,
+            "message": error_message,
+        },
+    });
+    fs::write(
+        root.join(name),
+        serde_json::to_vec_pretty(&payload).unwrap(),
+    )
+    .unwrap();
 }

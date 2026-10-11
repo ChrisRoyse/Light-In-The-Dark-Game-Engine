@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="Light in the Dark"
+    Manufacturer="Light in the Dark"
+    Version="$(var.PackageVersion)"
+    UpgradeCode="2F3B1D41-B982-48D1-92C1-7F23B45574C9"
+    Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer Light in the Dark build is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon
+      Id="LitdProductIcon.ico"
+      SourceFile="$(var.RepoRoot)\packaging\windows\litd.ico" />
+    <Property Id="ARPCOMMENTS" Value="Windows game runtime and editor." />
+    <Property
+      Id="ARPHELPLINK"
+      Value="https://github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine/issues" />
+    <Property
+      Id="ARPURLINFOABOUT"
+      Value="https://github.com/Light-in-the-Dark-Analytics/light-in-the-dark-game-engine" />
+    <Property Id="ARPPRODUCTICON" Value="LitdProductIcon.ico" />
+    <SetProperty
+      Id="ARPINSTALLLOCATION"
+      Value="[INSTALLFOLDER]"
+      After="CostFinalize"
+      Sequence="execute" />
+    <Feature Id="Main" Title="Light in the Dark" Level="1">
+      <ComponentGroupRef Id="LitdPayload" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="InstallFolder" Name="Light in the Dark">
+        <Directory Id="LicensesFolder" Name="licenses" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="Light in the Dark" />
+    </StandardDirectory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="LitdPayload" Directory="InstallFolder">
+      <Component>
+        <File Id="LitdEditorExe" Source="$(var.SourceDir)\app\litd-editor.exe" KeyPath="yes">
+          <Shortcut
+            Id="EditorStartMenuShortcut"
+            Directory="ApplicationProgramsFolder"
+            Name="Light in the Dark Editor"
+            Description="Create and edit Light in the Dark worlds."
+            WorkingDirectory="InstallFolder"
+            Icon="LitdProductIcon.ico"
+            Advertise="no" />
+        </File>
+        <RemoveFolder
+          Id="RemoveApplicationProgramsFolder"
+          Directory="ApplicationProgramsFolder"
+          On="uninstall" />
+      </Component>
+      <Component>
+        <File Id="LitdGameExe" Source="$(var.SourceDir)\app\litd-game.exe" KeyPath="yes">
+          <Shortcut
+            Id="GameStartMenuShortcut"
+            Directory="ApplicationProgramsFolder"
+            Name="Light in the Dark Game"
+            Description="Launch the Light in the Dark game runtime."
+            WorkingDirectory="InstallFolder"
+            Icon="LitdProductIcon.ico"
+            Advertise="no" />
+        </File>
+      </Component>
+      <Component>
+        <File Id="OnnxRuntimeDll" Source="$(var.SourceDir)\app\onnxruntime.dll" KeyPath="yes" />
+        <Environment
+          Id="OrtDylibPath"
+          Name="ORT_DYLIB_PATH"
+          Value="[INSTALLFOLDER]onnxruntime.dll"
+          Action="set"
+          Part="all"
+          Permanent="no"
+          System="yes" />
+        <Environment
+          Id="CalyxOrtCapi"
+          Name="CALYX_ORT_CAPI"
+          Value="[INSTALLFOLDER]"
+          Action="set"
+          Part="all"
+          Permanent="no"
+          System="yes" />
+      </Component>
+      <Component>
+        <File Id="PackageManifest" Source="$(var.SourceDir)\package-manifest.json" KeyPath="yes" />
+      </Component>
+      <Component>
+        <File Id="Readme" Source="$(var.SourceDir)\README.md" KeyPath="yes" />
+      </Component>
+      <Component>
+        <File Id="CargoLock" Source="$(var.SourceDir)\Cargo.lock" KeyPath="yes" />
+      </Component>
+      <Component Directory="LicensesFolder">
+        <File
+          Id="UbuntuFontLicense"
+          Source="$(var.SourceDir)\licenses\Ubuntu-Font-License-1.0.txt"
+          KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

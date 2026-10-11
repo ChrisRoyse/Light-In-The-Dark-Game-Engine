@@ -1,5 +1,7 @@
 //! Panel sufficiency and deficit routing.
 
+mod joint;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use calyx_core::{Anchor, AnchorKind, CalyxError, Result, SlotId};
@@ -10,6 +12,8 @@ use crate::calibration::{PowerCalibration, PowerCalibrationStatus, underpowered}
 use crate::estimate::{
     EstimateBound, MiEstimate, TrustTag, provisional_without_anchor, trust_for_anchor,
 };
+
+pub use joint::{PanelJointBasis, panel_joint_with_union_floor};
 
 pub const CALYX_ASSAY_INVALID_SCOPE: &str = "CALYX_ASSAY_INVALID_SCOPE";
 
@@ -172,6 +176,22 @@ pub fn panel_sufficiency_from_estimate(
     slots: &[SlotAttribution],
     trust: TrustTag,
 ) -> Result<PanelSufficiency> {
+    panel_sufficiency_from_estimate_with_context(
+        estimate,
+        anchor_entropy_bits,
+        slots,
+        trust,
+        DeficitRoutingContext::default(),
+    )
+}
+
+pub fn panel_sufficiency_from_estimate_with_context(
+    estimate: &MiEstimate,
+    anchor_entropy_bits: f32,
+    slots: &[SlotAttribution],
+    trust: TrustTag,
+    context: DeficitRoutingContext,
+) -> Result<PanelSufficiency> {
     let calibration = passing_calibration(estimate)?;
     Ok(panel_sufficiency_with_trust_and_basis(
         SufficiencyBasis {
@@ -183,7 +203,7 @@ pub fn panel_sufficiency_from_estimate(
         anchor_entropy_bits,
         slots,
         provisional_without_anchor(trust),
-        DeficitRoutingContext::default(),
+        context,
     ))
 }
 

@@ -6,31 +6,31 @@ Anything not derivable from source is marked "Not determined from source".
 
 ## Source files covered
 
-- `C:\code\Calyx\.env.example` (and gitignored `.env`)
-- `C:\code\Calyx\rust-toolchain.toml`
-- `C:\code\Calyx\.cargo\config.toml`
-- `C:\code\Calyx\infra\aiwonder\calyx.toml` (reference daemon config)
-- `C:\code\Calyx\crates\calyxd\src\config.rs` (the `CalyxConfig` struct + validation)
-- `C:\code\Calyx\crates\calyxd\src\cuda_probe.rs`
-- `C:\code\Calyx\crates\calyx-forge\src\vram\budget.rs`
-- `C:\code\Calyx\crates\calyx-forge\src\vram\yield_policy.rs`
-- `C:\code\Calyx\crates\calyx-forge\build.rs`
-- `C:\code\Calyx\crates\calyx-registry\src\profile\gating.rs`
-- `C:\code\Calyx\crates\calyx-registry\src\runtime\common.rs`
-- `C:\code\Calyx\crates\calyx-registry\src\runtime\onnx\dynamic_ort.rs`
-- `C:\code\Calyx\crates\calyx-registry\src\runtime\adapters\lens.rs`
-- `C:\code\Calyx\crates\calyx-registry\src\spec.rs`
-- `C:\code\Calyx\crates\calyx-assay\src\contract.rs`
-- `C:\code\Calyx\crates\calyx-aster\src\gc\snapshot_gc\reclaimer.rs`
-- `C:\code\Calyx\crates\calyx-aster\src\compaction\tiering.rs`
-- `C:\code\Calyx\crates\calyx-cli\src\healthcheck.rs`
-- `C:\code\Calyx\crates\calyx-cli\src\merkle.rs`
-- `C:\code\Calyx\crates\calyx-cli\src\ops.rs`
-- `C:\code\Calyx\crates\calyx-cli\src\lens_commands.rs`
-- `C:\code\Calyx\crates\calyx-cli\src\panel_commands.rs`
-- `C:\code\Calyx\crates\calyx-ward\src\ort_runtime.rs`
-- `C:\code\Calyx\crates\calyx-anneal\src\propose\registry_hot_add.rs`
-- `C:\code\Calyx\crates\calyx-anneal\src\budget.rs`, `j\j_composite.rs`, `j\goodhart.rs`, `tripwire.rs`
+- `C:\code\GameEditor\Calyx\.env.example` (and gitignored `.env`)
+- `C:\code\GameEditor\Calyx\rust-toolchain.toml`
+- `C:\code\GameEditor\Calyx\.cargo\config.toml`
+- `C:\code\GameEditor\Calyx\infra\aiwonder\calyx.toml` (reference daemon config)
+- `C:\code\GameEditor\Calyx\crates\calyxd\src\config.rs` (the `CalyxConfig` struct + validation)
+- `C:\code\GameEditor\Calyx\crates\calyxd\src\cuda_probe.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-forge\src\vram\budget.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-forge\src\vram\yield_policy.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-forge\build.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-registry\src\profile\gating.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-registry\src\runtime\common.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-registry\src\runtime\onnx\dynamic_ort.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-registry\src\runtime\adapters\lens.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-registry\src\spec.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-assay\src\contract.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-aster\src\gc\snapshot_gc\reclaimer.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-aster\src\compaction\tiering.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-cli\src\healthcheck.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-cli\src\merkle.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-cli\src\ops.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-cli\src\lens_commands.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-cli\src\panel_commands.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-ward\src\ort_runtime.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-anneal\src\propose\registry_hot_add.rs`
+- `C:\code\GameEditor\Calyx\crates\calyx-anneal\src\budget.rs`, `j\j_composite.rs`, `j\goodhart.rs`, `tripwire.rs`
 
 ---
 
@@ -45,7 +45,7 @@ expected to be exported into the process environment (e.g. by a shell or
 Infisical-rendered `calyx.env`). The file is operational documentation for the
 aiwonder deployment.
 
-Variables declared in `.env.example` (`C:\code\Calyx\.env.example`):
+Variables declared in `.env.example` (`C:\code\GameEditor\Calyx\.env.example`):
 
 | Variable | Example value in template | Purpose (per template comments) |
 |---|---|---|
@@ -58,28 +58,48 @@ Variables declared in `.env.example` (`C:\code\Calyx\.env.example`):
 | `AIWONDER_USER` | `croyse` | SSH user |
 | `AIWONDER_SSH_PASSWORD` | (blank) | SSH password (secret) |
 | `AIWONDER_SUDO_PASSWORD` | (blank) | sudo password (secret) |
-| `CALYX_HOME` | `/home/croyse/calyx` | Self-contained Calyx root on aiwonder (also read by the code — see §4) |
-| `CALYX_HOT_DATASET` | `hotpool/calyx` | ZFS hot dataset name |
-| `CALYX_COLD_DATASET` | `archive/calyx` | ZFS cold/archive dataset name |
-| `CALYX_HOT_PATH` | `/zfs/hot/calyx` | ZFS hot mount path |
-| `CALYX_COLD_PATH` | `/zfs/archive/calyx` | ZFS archive mount path |
-| `CALYX_CARGO_TARGET_DIR` | `/home/croyse/calyx/target` | Shared cargo target dir |
-| `CALYX_RUST_ENV` | `/home/croyse/.cargo/env` | Path to rustup `env` script |
-| `CALYX_ORT_LIB_DIR` | `/home/croyse/calyx/vendor/onnxruntime-v1.26.0/build/Linux/Release` | aiwonder-built ONNX Runtime CUDA 13 library directory |
-| `ORT_DYLIB_PATH` | `/home/croyse/calyx/vendor/onnxruntime-v1.26.0/build/Linux/Release/libonnxruntime.so` | Dynamic ONNX Runtime library loaded by `ort/load-dynamic` |
-| `AIWONDER_TEI_GENERAL` | `http://127.0.0.1:8088` | Resident TEI general embeddings server |
+| `CALYX_HOME` | `C:\code\GameEditor\Calyx` | Sole GameEditor Calyx source/runtime root (also read by the code — see §4) |
+| `CALYX_HOT_DATASET` | (blank) | No writable remote dataset is selected for GameEditor |
+| `CALYX_COLD_DATASET` | (blank) | No writable remote archive dataset is selected for GameEditor |
+| `CALYX_HOT_PATH` | `C:\code\GameEditor\Calyx\data` | Canonical local hot-data path |
+| `CALYX_COLD_PATH` | `C:\code\GameEditor\Calyx\archive` | Canonical local cold/archive path |
+| `CALYX_CARGO_TARGET_DIR` | `C:\code\GameEditor\target` | Ephemeral shared workspace build output; delete after each owned run per #800 |
+| `CALYX_RUST_ENV` | (blank) | Windows uses the installed Rust toolchain; no alternate Calyx home is selected |
+| `CALYX_ORT_LIB_DIR` | `C:\code\GameEditor\Calyx\ort-gpu-venv\Lib\site-packages\onnxruntime\capi` | Canonical local ONNX Runtime library directory |
+| `ORT_DYLIB_PATH` | `C:\code\GameEditor\Calyx\ort-gpu-venv\Lib\site-packages\onnxruntime\capi\onnxruntime.dll` | Exact canonical local ORT library loaded by `ort/load-dynamic` |
+| `AIWONDER_TEI_E5` | `http://127.0.0.1:18190` | Calyx-owned FP16 TEI multilingual E5 embeddings server |
+| `AIWONDER_TEI_BGE_M3` | `http://127.0.0.1:18188` | Calyx-owned FP16 TEI BGE-M3 embeddings server |
+| `AIWONDER_TEI_GENERAL` | `http://127.0.0.1:8088` | Shared legacy TEI general embeddings server |
 | `AIWONDER_TEI_RERANKER` | `http://127.0.0.1:8089` | Resident TEI reranker server |
 | `AIWONDER_TEI_LEGAL` | `http://127.0.0.1:8090` | Resident TEI legal embeddings server |
 | `AIWONDER_PROMETHEUS` | `http://127.0.0.1:9090` | Prometheus endpoint |
 | `HF_TOKEN` | (blank) | Hugging Face token (secret) |
 | `HF_HUB_TOKEN` | (blank) | Hugging Face Hub token (secret) |
-| `HF_HOME` | `/home/croyse/calyx/.hf-cache` | HF cache home (also read by the code — see §4) |
-| `CALYX_REPO` | `chrisroyse/calyx-dev` | GitHub dev-state repo |
+| `HF_HOME` | `C:\code\GameEditor\Calyx\.hf-cache` | Canonical local HF cache home (also read by the code - see §4) |
+| `CALYX_REPO` | `Light-in-the-Dark-Analytics/light-in-the-dark-game-engine` | GitHub repository used for GameEditor issue state |
 
 Note: most of these names (VPN/SSH/dataset/TEI/Prometheus/`CALYX_REPO`) are **not**
 read by any `std::env::var` call in `crates/` — they are consumed by deployment
 scripts, not the Rust binaries. The Rust code reads only `CALYX_HOME`, `HF_HOME`,
 `HF_HUB_TOKEN`, `HF_TOKEN`, and `ORT_DYLIB_PATH` from this set (see §4).
+
+### GameEditor local ORT bootstrap
+
+The real CPU-explicit Calyx panel makes ONNX Runtime a hard editor-test
+dependency. Direct Cargo runs must configure the exact canonical DLL in the
+current process first:
+
+```powershell
+. C:\code\GameEditor\scripts\Set-GameEditorCalyxRuntimeEnv.ps1
+cargo test -p litd-editor --lib
+```
+
+`scripts\test-gameeditor.ps1` performs this bootstrap automatically. The
+bootstrap validates resolved-path containment beneath
+`C:\code\GameEditor\Calyx`, sets `ORT_DYLIB_PATH` and `CALYX_ORT_CAPI` only for
+the current process, records the DLL SHA-256, and fails loud for missing,
+outside-root, or link/junction paths. There is no bundled, system, or alternate
+Calyx fallback.
 
 ### 1.2 `infra/aiwonder/calyx.toml` — the daemon config (TOML)
 
@@ -94,6 +114,8 @@ vram_budget_mib = 8192
 log_dir = "/zfs/hot/logs/calyx"
 health_log_path = "/zfs/hot/logs/calyx-health/latest.json"
 tei_endpoints = [
+  "http://127.0.0.1:18190",
+  "http://127.0.0.1:18188",
   "http://127.0.0.1:8088",
   "http://127.0.0.1:8089",
   "http://127.0.0.1:8090",
@@ -137,7 +159,7 @@ Defined in `crates\calyxd\src\config.rs`. Construction is **only** via
 | `vram_budget_mib` | `u32` | **required** | none | `1..=30000` (`VRAM_BUDGET_MIB_CEILING = 30_000`); else `CALYX_FORGE_VRAM_BUDGET` | VRAM budget for Forge, MiB | `config.rs:24,57,105-111` |
 | `log_dir` | `PathBuf` | **required** | none | (none beyond presence) | Daemon log directory | `config.rs:59` |
 | `health_log_path` | `PathBuf` | optional | `/zfs/hot/logs/calyx-health/latest.json` (`default_health_log_path`) | (none) | Path the healthcheck JSON is written to | `config.rs:33-35,62-63` |
-| `tei_endpoints` | `Vec<String>` | optional | `[]` (serde `default`) | (none) | Documented TEI endpoints (`:8088`/`:8089`/`:8090`) | `config.rs:65-66` |
+| `tei_endpoints` | `Vec<String>` | optional | `[]` (serde `default`) | (none) | Documented TEI endpoints (`:18190`/`:18188` plus legacy `:8088`/`:8089`/`:8090`) | `config.rs:65-66` |
 | `healthcheck_timeout_secs` | `u32` | optional | `30` (`default_healthcheck_timeout_secs`) | (none) | Healthcheck timeout, seconds | `config.rs:37-39,68-69` |
 
 `vault_path_resolved()` substitutes the value of env var `CALYX_HOME` for

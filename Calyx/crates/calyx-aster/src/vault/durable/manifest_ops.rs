@@ -34,6 +34,14 @@ impl DurableVault {
         Ok(())
     }
 
+    /// Durable coverage watermark from the on-disk CURRENT manifest, or 0
+    /// before the first manifest write.
+    pub(in crate::vault) fn manifest_durable_seq(&self) -> Result<u64> {
+        Ok(self
+            .current_manifest()?
+            .map_or(0, |manifest| manifest.durable_seq))
+    }
+
     pub(super) fn write_manifest(&self, seq: u64) -> Result<()> {
         let manifest_seq = self.current_manifest()?.map_or(seq.max(1), |manifest| {
             manifest.manifest_seq.saturating_add(1)
@@ -57,6 +65,13 @@ impl DurableVault {
         horizon: &RetentionHorizon,
     ) -> Result<()> {
         let current = self.current_manifest()?;
+        // Durable coverage is monotone: the WAL replay floor (and segment
+        // recycling) derive from `durable_seq`, so letting a stale handle
+        // regress it would resurrect a floor below already-recycled WAL
+        // records and lose their rows (issue #1132).
+        let durable_seq = current.as_ref().map_or(durable_seq, |manifest| {
+            manifest.durable_seq.max(durable_seq)
+        });
         let (panel_ref, codebook_refs) = match (&self.panel, current.as_ref()) {
             (Some(panel), _) => ensure_manifest_assets(&self.root, Some(panel))?,
             (None, Some(manifest)) => (manifest.panel_ref.clone(), manifest.codebook_refs.clone()),
@@ -70,6 +85,17 @@ impl DurableVault {
             self.temporal_policy,
             self.dedup_policy.clone(),
         )?;
+        // The local atomic only knows about content THIS handle checkpointed.
+        // A foreign writer (second handle/process) may have recorded a higher
+        // watermark in the current manifest; a content-neutral write from this
+        // handle must never regress it, or a genuinely stale index would pass
+        // freshness (#1100 review finding).
+        let mut derived_content_seq = self.derived_content_seq_for_manifest(durable_seq);
+        if let Some(current) = current.as_ref() {
+            derived_content_seq =
+                derived_content_seq.max(current.effective_derived_content_seq().min(durable_seq));
+        }
+        manifest.derived_content_seq = Some(derived_content_seq);
         manifest.retention_horizon = horizon.clone();
         manifest.registry_ref = current.and_then(|manifest| manifest.registry_ref);
         manifest.validate()?;

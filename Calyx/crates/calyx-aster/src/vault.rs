@@ -17,18 +17,20 @@ mod htap;
 mod key;
 pub mod keyspace;
 mod layer_commit;
+mod ledger_anchor_batch;
 mod ledger_append;
 mod ledger_hook;
 pub mod ledger_stub;
+mod open;
 pub mod quota;
 mod retention_horizon;
 mod router_bridge;
+mod scan;
 mod seq_readback;
 mod slot_backfill;
 mod slot_column;
 mod store;
 mod temporal_xterm;
-
 #[cfg(test)]
 use crate::cf::ledger_key;
 use crate::cf::{CfRouter, ColumnFamily, KeyRange, anchor_key, base_key, slot_key};
@@ -73,6 +75,7 @@ pub struct AsterVault<C = SystemClock> {
     dedup_policy: DedupPolicy,
     retention_horizon: Mutex<RetentionHorizon>,
     ledger_hook: Option<AsterLedgerHook>,
+    read_only: bool,
     recurrence_write_lock: Mutex<()>,
     recovery_report: VaultRecoveryReport,
     residency: Option<crate::residency::Residency>,
@@ -128,77 +131,6 @@ where
         Self::open_with_clock(vault_dir, vault_id, vault_salt, options, clock)
     }
 
-    /// Opens a durable vault with an injected clock.
-    pub fn open_with_clock(
-        vault_dir: impl AsRef<Path>,
-        vault_id: VaultId,
-        vault_salt: impl Into<Vec<u8>>,
-        options: VaultOptions,
-        clock: C,
-    ) -> Result<Self> {
-        DurableVault::validate_options(&options)?;
-        let vault_root = vault_dir.as_ref().to_path_buf();
-        let recovery = DurableVault::recover_batches(vault_dir.as_ref(), &options)?;
-        let ledger_hook = ledger_hook::recover_hook_from_vault_dir(
-            vault_dir.as_ref(),
-            &recovery,
-            options.ledger_checkpoint.clone(),
-        )?;
-        let recovery_report = VaultRecoveryReport {
-            last_recovered_seq: recovery.last_recovered_seq,
-            torn_tail: recovery.torn_tail.clone(),
-        };
-        let router = CfRouter::open_with_tiering(
-            vault_dir.as_ref(),
-            options.memtable_byte_cap,
-            options.tiering_policy.clone(),
-        )?;
-        let rows = VersionedCfStore::new_with_router(recovery.last_recovered_seq, router);
-        for batch in recovery.batches {
-            let rows_at_seq = batch
-                .rows
-                .into_iter()
-                .map(|row| (row.cf, row.key, row.value));
-            rows.restore_batch(batch.seq, rows_at_seq)?;
-        }
-        rows.set_start_seq(recovery.last_recovered_seq)?;
-        let mut durable_options = options.clone();
-        durable_options.temporal_policy = recovery.temporal_policy;
-        durable_options.dedup_policy = recovery.dedup_policy;
-        durable_options.retention_horizon = recovery.retention_horizon.clone();
-        let dedup_policy = durable_options.dedup_policy.clone().unwrap_or_default();
-        let retention_horizon = durable_options.retention_horizon.clone();
-        let durable = DurableVault::open(vault_dir, &durable_options)?;
-        // Data residency (PRD 30 §4): a caller-supplied pin is enforced against
-        // tiering and persisted (conflict-checked, immutable); on reopen the
-        // on-disk pin is authoritative and re-enforced against tiering.
-        if let Some(pin) = &options.residency {
-            if let Some(tiering) = &options.tiering_policy {
-                pin.enforce_tier_roots(&tiering.tier_roots())?;
-            }
-            pin.persist(&vault_root)?;
-        }
-        let residency = crate::residency::Residency::load(&vault_root)?;
-        if options.residency.is_none()
-            && let (Some(pin), Some(tiering)) = (&residency, &options.tiering_policy)
-        {
-            pin.enforce_tier_roots(&tiering.tier_roots())?;
-        }
-        Ok(Self {
-            vault_id,
-            vault_salt: vault_salt.into(),
-            clock,
-            rows,
-            durable: Some(durable),
-            dedup_policy,
-            retention_horizon: Mutex::new(retention_horizon),
-            ledger_hook: Some(ledger_hook),
-            recurrence_write_lock: Mutex::new(()),
-            recovery_report,
-            residency,
-        })
-    }
-
     /// Creates a vault with an injected clock.
     pub fn with_clock(vault_id: VaultId, vault_salt: impl Into<Vec<u8>>, clock: C) -> Self {
         Self {
@@ -210,6 +142,7 @@ where
             dedup_policy: DedupPolicy::default(),
             retention_horizon: Mutex::new(RetentionHorizon::default()),
             ledger_hook: None,
+            read_only: false,
             recurrence_write_lock: Mutex::new(()),
             recovery_report: VaultRecoveryReport {
                 last_recovered_seq: 0,
@@ -222,6 +155,17 @@ where
     /// Returns the vault's data-residency pin, if one is set (PRD `30 §4`).
     pub fn residency(&self) -> Option<&crate::residency::Residency> {
         self.residency.as_ref()
+    }
+
+    pub(crate) fn ensure_writeable(&self, operation: &str) -> Result<()> {
+        if !self.read_only {
+            return Ok(());
+        }
+        Err(CalyxError {
+            code: "CALYX_VAULT_READ_ONLY",
+            message: format!("read-only Aster vault handle rejected {operation}"),
+            remediation: "open a write-capable vault handle with read_only=false for mutating operations",
+        })
     }
 
     /// Authorizes an external copy/export to `target` against the residency pin.
@@ -283,6 +227,13 @@ where
         self.rows.current_seq()
     }
 
+    /// Latest committed seq whose batch wrote derived-search-content inputs
+    /// (issue #1100). Content-neutral commits (idempotency-ledger appends,
+    /// time-index sentinels) advance [`Self::latest_seq`] but not this.
+    pub fn derived_content_seq(&self) -> Seq {
+        self.rows.derived_content_seq()
+    }
+
     pub fn recovery_report(&self) -> &VaultRecoveryReport {
         &self.recovery_report
     }
@@ -318,6 +269,16 @@ where
             .read_at(self.snapshot_handle(snapshot), cf, key, &self.clock)
     }
 
+    /// Reads one raw CF row using an already-pinned snapshot lease.
+    pub fn read_cf_snapshot(
+        &self,
+        snapshot: Snapshot,
+        cf: ColumnFamily,
+        key: &[u8],
+    ) -> Result<Option<Vec<u8>>> {
+        self.rows.read_at(snapshot, cf, key, &self.clock)
+    }
+
     /// Writes raw CF rows through the same WAL/MVCC commit path as vault puts.
     pub fn write_cf_batch(
         &self,
@@ -344,6 +305,15 @@ where
             .scan_cf_at(self.snapshot_handle(snapshot), cf, &self.clock)
     }
 
+    /// Scans visible raw CF rows using an already-pinned snapshot lease.
+    pub fn scan_cf_snapshot(
+        &self,
+        snapshot: Snapshot,
+        cf: ColumnFamily,
+    ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
+        self.rows.scan_cf_at(snapshot, cf, &self.clock)
+    }
+
     /// Scans visible raw CF rows in a key range at `snapshot`.
     pub fn scan_cf_range_at(
         &self,
@@ -353,6 +323,27 @@ where
     ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
         self.rows
             .scan_cf_range_at(self.snapshot_handle(snapshot), cf, range, &self.clock)
+    }
+
+    /// Scans visible raw CF rows in a key range using an already-pinned snapshot lease.
+    pub fn scan_cf_range_snapshot(
+        &self,
+        snapshot: Snapshot,
+        cf: ColumnFamily,
+        range: &KeyRange,
+    ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
+        self.rows.scan_cf_range_at(snapshot, cf, range, &self.clock)
+    }
+
+    /// Scans visible raw CF row keys in a key range at `snapshot`.
+    pub fn scan_cf_range_keys_at(
+        &self,
+        snapshot: Seq,
+        cf: ColumnFamily,
+        range: &KeyRange,
+    ) -> Result<Vec<Vec<u8>>> {
+        self.rows
+            .scan_cf_range_keys_at(self.snapshot_handle(snapshot), cf, range, &self.clock)
     }
 
     /// Scans at most `limit` visible raw CF rows in key order after `after_key`.
@@ -409,6 +400,11 @@ where
     }
 
     pub fn flush(&self) -> Result<()> {
+        self.with_durable_commit_lock(|| self.flush_locked())
+    }
+
+    pub(crate) fn flush_locked(&self) -> Result<()> {
+        self.ensure_writeable("flush")?;
         if let Some(durable) = &self.durable {
             durable.flush()?;
         }
@@ -476,6 +472,11 @@ where
 
 #[cfg(test)]
 mod compaction_tests;
+
+#[cfg(test)]
+mod recovery_stranding_tests;
+#[cfg(test)]
+mod seq_domain_tests;
 
 #[cfg(test)]
 mod recovery_tests;

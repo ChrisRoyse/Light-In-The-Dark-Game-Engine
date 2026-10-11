@@ -1,6 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use proptest::prelude::*;
 use rusqlite::{Connection, params};
 
 use super::dual_write::replay_existing_sqlite;
@@ -264,26 +263,27 @@ fn rollback_after_gate_fails_closed() {
     cleanup(root);
 }
 
-proptest! {
-    #![proptest_config(ProptestConfig::with_cases(50))]
-    #[test]
-    fn default_panel_install_is_idempotent_for_any_vault_type(kind in 0u8..4) {
-        let vault_type = match kind {
-            0 => VaultType::Text,
-            1 => VaultType::Code,
-            2 => VaultType::Civic,
-            _ => VaultType::Media,
-        };
-        let (root, _sqlite, _vault, mut shadow) = prepared_flipped("panel-prop", "panel_db", 1);
+#[test]
+fn default_panel_install_is_idempotent_for_every_vault_type() {
+    let cases = [
+        VaultType::Text,
+        VaultType::Code,
+        VaultType::Civic,
+        VaultType::Media,
+    ];
+    for (case, vault_type) in cases.into_iter().enumerate() {
+        let (root, _sqlite, _vault, mut shadow) =
+            prepared_flipped(&format!("panel-{case}"), "panel_db", 1);
         let options = DefaultPanelOptions {
             backfill: false,
             ..DefaultPanelOptions::default()
         };
 
         let first = DefaultPanels::install_with_options(&mut shadow, vault_type, &options).unwrap();
-        let second = DefaultPanels::install_with_options(&mut shadow, vault_type, &options).unwrap();
+        let second =
+            DefaultPanels::install_with_options(&mut shadow, vault_type, &options).unwrap();
 
-        prop_assert_eq!(second, first);
+        assert_eq!(second, first);
         shadow.close().unwrap();
         cleanup(root);
     }
@@ -309,54 +309,66 @@ fn prepared_flipped(
 }
 
 fn seed_sqlite(path: &Path, database_name: &str, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    conn.execute(
-        "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO database_metadata VALUES(1,?1)",
-        [database_name],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO creator_databases VALUES(1,?1,'2026-06-15T00:00:00Z')",
-        [database_name],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO queries VALUES(1,?1,'known query')",
-        [database_name],
-    )
-    .unwrap();
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,?2,?3,?4)",
-            params![
-                format!("c{idx:03}"),
-                database_name,
-                format!("content-{idx}"),
-                vector_blob(idx as f32)
-            ],
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
+            [],
         )
         .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO database_metadata VALUES(1,?1)",
+            [database_name],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO creator_databases VALUES(1,?1,'2026-06-15T00:00:00Z')",
+            [database_name],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO queries VALUES(1,?1,'known query')",
+            [database_name],
+        )
+        .unwrap();
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,?2,?3,?4)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("c{idx:03}"),
+                    database_name,
+                    format!("content-{idx}"),
+                    vector_blob(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn vector(first: f32) -> Vec<f32> {

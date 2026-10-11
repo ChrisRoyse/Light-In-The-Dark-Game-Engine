@@ -3,6 +3,7 @@ use calyx_registry::{
     AlgorithmicLens, CandleLens, FastembedBgem3Lens, FastembedBgem3Output, FastembedQwen3Lens,
     FastembedRerankerLens, FastembedSparseLens, LensRuntime, LensSpec, MultimodalAdapterLens,
     OnnxColbertLens, OnnxLens, StaticLookupLens, TeiHttpLens,
+    runtime::tei_http::DEFAULT_TEI_MAX_BATCH,
 };
 
 use super::super::support::dim;
@@ -135,7 +136,7 @@ pub(super) fn runtime_lens(spec: &LensSpec) -> Result<RuntimeLens, CalyxError> {
                 provider: "resident_tei_gpu_service".to_string(),
                 placement: Placement::Gpu,
                 native_batching: true,
-                max_batch: spec.max_batch.or(Some(32)),
+                max_batch: spec.max_batch.or(Some(DEFAULT_TEI_MAX_BATCH)),
                 proof: format!("tei_endpoint_vector_contract:{endpoint}"),
                 gpu_process_required: false,
             })
@@ -202,7 +203,13 @@ pub(super) fn association_family(spec: &LensSpec) -> &'static str {
     }
     match &spec.runtime {
         LensRuntime::Algorithmic { kind }
-            if kind.contains("cameo") || kind.contains("actor") || kind.contains("geo") =>
+            if kind.contains("gdelt")
+                || kind.contains("cameo")
+                || kind.contains("actor")
+                || kind.contains("geo")
+                || kind.contains("event")
+                || kind.contains("source")
+                || kind.contains("tone") =>
         {
             "entity_cameo_graph"
         }
@@ -263,6 +270,36 @@ fn algorithmic_lens(spec: &LensSpec, kind: &str) -> Result<AlgorithmicLens, Caly
             Ok(AlgorithmicLens::gdelt_cameo(&spec.name, spec.modality))
         }
         "gdelt-actor-geo" | "gdelt_actor_geo" => Ok(AlgorithmicLens::gdelt_actor_geo(
+            &spec.name,
+            spec.modality,
+            dim(spec.output),
+        )),
+        "gdelt-source-domain" | "gdelt_source_domain" => Ok(AlgorithmicLens::gdelt_source_domain(
+            &spec.name,
+            spec.modality,
+            dim(spec.output),
+        )),
+        "gdelt-event-geo" | "gdelt_event_geo" => Ok(AlgorithmicLens::gdelt_event_geo(
+            &spec.name,
+            spec.modality,
+            dim(spec.output),
+        )),
+        "gdelt-actor-pair" | "gdelt_actor_pair" => Ok(AlgorithmicLens::gdelt_actor_pair(
+            &spec.name,
+            spec.modality,
+            dim(spec.output),
+        )),
+        "gdelt-event-actor" | "gdelt_event_actor" => Ok(AlgorithmicLens::gdelt_event_actor(
+            &spec.name,
+            spec.modality,
+            dim(spec.output),
+        )),
+        "gdelt-tone-signal" | "gdelt_tone_signal" => Ok(AlgorithmicLens::gdelt_tone_signal(
+            &spec.name,
+            spec.modality,
+            dim(spec.output),
+        )),
+        "gdelt-source-event" | "gdelt_source_event" => Ok(AlgorithmicLens::gdelt_source_event(
             &spec.name,
             spec.modality,
             dim(spec.output),

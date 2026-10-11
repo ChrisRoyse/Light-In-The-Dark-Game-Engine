@@ -1,5 +1,6 @@
 //! Calyx command-line entry point.
 mod a35_signal;
+mod a37_admission_store;
 mod anneal_ab_log;
 mod anneal_autotune_report;
 mod anneal_bandit_readback;
@@ -31,7 +32,9 @@ mod assay_i8bin_ensemble_card;
 mod assay_multi_anchor_card;
 mod assay_stream_fbin;
 mod assay_verdict_metadata;
+mod bounded_progress;
 mod budget_readback;
+mod capabilities;
 mod cf_read;
 mod cli_support;
 mod cmd;
@@ -39,10 +42,18 @@ mod crash;
 mod dedup_audit_readback;
 mod dedup_readback;
 mod dispatch;
+mod durable_write;
 mod entry;
 mod error;
 mod fsv;
 mod fsv_corpus;
+mod fsv_grounding;
+mod fsv_vault_health;
+mod fsv_vault_health_grounding;
+mod fsv_vault_health_marker;
+mod fsv_vault_health_quarantine;
+#[cfg(test)]
+mod fsv_vault_health_tests;
 mod healthcheck;
 mod healthcheck_daemon;
 #[cfg(test)]
@@ -59,6 +70,9 @@ mod lodestar_kernel_validation;
 mod main_tests;
 mod manifest_readback;
 mod media_commands;
+mod media_derived_text;
+#[cfg(test)]
+mod media_derived_text_tests;
 mod media_emotion_validation;
 mod media_image_validation;
 mod media_video_validation;
@@ -71,8 +85,14 @@ mod oracle_sufficiency_validation;
 mod output;
 mod panel_commands;
 mod partitioned_bench;
+mod partitioned_manifest_readback;
+mod partitioned_rrf_report_store;
+mod path_identity;
 mod ph42_readback;
 mod provenance;
+mod provenance_read;
+#[cfg(test)]
+mod provenance_read_tests;
 mod raw_media;
 mod recurrence_readback;
 mod resource_drill;
@@ -80,6 +100,7 @@ mod resource_status;
 mod scan;
 mod sextant_bench;
 mod sextant_bench_guard;
+mod sextant_bench_io;
 mod sextant_commands;
 mod sextant_diskann_validation;
 mod sextant_recall_validation;

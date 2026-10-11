@@ -1,5 +1,5 @@
 use super::*;
-use crate::cf::{CfRouter, ColumnFamily, base_key, slot_key};
+use crate::cf::{CfRouter, ColumnFamily, KeyRange, base_key, slot_key};
 use crate::vault::AsterVault;
 use calyx_core::{
     AbsentReason, Constellation, CxFlags, CxId, FixedClock, InputRef, LedgerRef, Modality, SlotId,
@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 mod allocator;
+mod derived_content;
 mod freshness;
 mod isolation;
 mod read_barrier;

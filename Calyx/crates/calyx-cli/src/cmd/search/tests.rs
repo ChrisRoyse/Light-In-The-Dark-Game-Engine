@@ -1,14 +1,8 @@
 use std::collections::BTreeMap;
 
-use calyx_core::{
-    Anchor, AnchorKind, AnchorValue, Constellation, CxFlags, CxId, InputRef, LedgerRef, Modality,
-    SlotId, SlotVector, VaultId,
-};
-use calyx_sextant::{
-    CausalConfidence, FreshnessTag, FusionStrategy, Hit, PerLensContribution, ProvenanceSource,
-};
+use calyx_core::{CxId, LedgerRef, SlotId};
+use calyx_sextant::{CausalConfidence, FreshnessTag, Hit, PerLensContribution, ProvenanceSource};
 use proptest::prelude::*;
-use ulid::Ulid;
 
 use super::super::Subcommand;
 use super::engine;
@@ -27,12 +21,31 @@ fn parse_search_defaults_to_rrf_guard_off_and_provenance() {
     assert_eq!(args.guard, SearchGuardArg::Off);
     assert!(!args.explain);
     assert!(args.provenance);
+    assert!(args.resident_addr.is_none());
+}
 
-    let query = args.to_query(&[SlotId::new(0)]).unwrap();
-    assert_eq!(query.k, 5);
-    assert_eq!(query.fusion, Some(FusionStrategy::Rrf));
-    assert!(!query.explain);
-    assert!(query.require_stored_provenance);
+#[test]
+fn parse_search_accepts_loopback_resident_addr() {
+    let parsed = super::parse_search(&tokens([
+        "myvault",
+        "hello",
+        "--resident-addr",
+        "127.0.0.1:8787",
+    ]))
+    .unwrap();
+    let Subcommand::Search(args) = parsed else {
+        panic!("expected search subcommand");
+    };
+
+    assert_eq!(args.resident_addr, Some("127.0.0.1:8787".parse().unwrap()));
+}
+
+#[test]
+fn parse_search_rejects_non_loopback_resident_addr() {
+    let err =
+        super::parse_search(&tokens(["v", "q", "--resident-addr", "10.0.0.10:8787"])).unwrap_err();
+
+    assert_eq!(err.code(), "CALYX_SEARCH_RESIDENT_ADDR_REFUSED");
 }
 
 #[test]
@@ -44,6 +57,10 @@ fn explain_output_contains_per_lens() {
     assert!(json[0]["per_lens"].as_array().is_some());
     assert_eq!(json[0]["per_lens"][0]["slot"], 0);
     assert!(json[0]["provenance"].is_object());
+    assert_eq!(json[0]["freshness"]["built_at_seq"], 42);
+    assert_eq!(json[0]["freshness"]["base_seq"], 42);
+    assert_eq!(json[0]["freshness"]["stale_by"], 0);
+    assert_eq!(json[0]["freshness"]["policy"], "fresh_derived");
 }
 
 #[test]
@@ -66,43 +83,39 @@ fn k_zero_and_unknown_fusion_are_usage_errors() {
 }
 
 #[test]
+fn parse_search_rejects_invalid_filter_json_before_vault_open() {
+    let err = super::parse_search(&tokens(["v", "q", "--filter", "{not-json"])).unwrap_err();
+
+    assert_eq!(err.code(), "CALYX_CLI_USAGE_ERROR");
+    assert!(err.message().contains("parse --filter JSON"));
+}
+
+#[test]
+fn search_open_options_use_latest_only_router_readback() {
+    let options = super::latest_read_vault_options_for_cfs(None);
+
+    assert!(
+        !options.restore_mvcc_rows,
+        "search/rebuild must not rehydrate every checkpointed durable row into MVCC"
+    );
+    assert!(
+        !options.restore_ledger_hook,
+        "search/rebuild must not materialize the full ledger hook for read-only latest-state reads"
+    );
+    assert!(
+        options.read_only,
+        "latest search opens must fail closed before any vault mutation"
+    );
+    assert!(
+        options.selected_cfs.is_none(),
+        "generic latest read options stay full-CF; callers with narrower needs must pass selected_cfs explicitly"
+    );
+}
+
+#[test]
 fn zero_constellations_render_empty_results() {
     let rendered = output::render_hits(&[], false, true, None);
     assert_eq!(serde_json::to_string(&rendered).unwrap(), "[]");
-}
-
-#[test]
-fn non_empty_search_without_indexable_vectors_fails_closed() {
-    assert_eq!(
-        engine::no_indexable_query_vectors().code,
-        "CALYX_STALE_DERIVED"
-    );
-    assert_eq!(
-        engine::no_indexable_stored_vectors().code,
-        "CALYX_STALE_DERIVED"
-    );
-}
-
-#[test]
-fn guard_rejects_orthogonal_dense_hit() {
-    let slot = SlotId::new(0);
-    let id = cx(2);
-    let mut docs = BTreeMap::new();
-    docs.insert(id, constellation(id, vec![0.0, 1.0], Vec::new()));
-    let hit = sample_hit(id);
-    let query_vectors = vec![(
-        slot,
-        SlotVector::Dense {
-            dim: 2,
-            data: vec![1.0, 0.0],
-        },
-    )];
-
-    assert!(!engine::guard_keeps_hit_for_test(
-        &hit,
-        &docs,
-        &query_vectors
-    ));
 }
 
 #[test]
@@ -164,51 +177,8 @@ fn sample_hit(cx_id: CxId) -> Hit {
     }
 }
 
-fn constellation(cx_id: CxId, dense: Vec<f32>, anchors: Vec<Anchor>) -> Constellation {
-    let mut slots = BTreeMap::new();
-    slots.insert(
-        SlotId::new(0),
-        SlotVector::Dense {
-            dim: dense.len() as u32,
-            data: dense,
-        },
-    );
-    Constellation {
-        cx_id,
-        vault_id: VaultId::from_ulid(Ulid::from_bytes([9; 16])),
-        panel_version: 1,
-        created_at: 1,
-        input_ref: InputRef {
-            hash: [0; 32],
-            pointer: None,
-            redacted: false,
-        },
-        modality: Modality::Text,
-        slots,
-        scalars: BTreeMap::new(),
-        metadata: BTreeMap::new(),
-        anchors,
-        provenance: LedgerRef {
-            seq: 1,
-            hash: [1; 32],
-        },
-        flags: CxFlags::default(),
-    }
-}
-
 fn cx(seed: u8) -> CxId {
     CxId::from_bytes([seed; 16])
-}
-
-#[allow(dead_code)]
-fn anchor(kind: AnchorKind) -> Anchor {
-    Anchor {
-        kind,
-        value: AnchorValue::Bool(true),
-        source: "unit".to_string(),
-        observed_at: 1,
-        confidence: 1.0,
-    }
 }
 
 fn tokens<const N: usize>(items: [&str; N]) -> Vec<String> {

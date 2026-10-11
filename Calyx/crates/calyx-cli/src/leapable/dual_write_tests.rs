@@ -153,50 +153,62 @@ proptest! {
 }
 
 fn seed_dual_write_sqlite(path: &Path, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    conn.execute(
-        "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute("INSERT INTO database_metadata VALUES(1,'test_vault')", [])
-        .unwrap();
-    conn.execute(
-        "INSERT INTO creator_databases VALUES(1,'test_vault','2026-06-15T00:00:00Z')",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO queries VALUES(1,'test_vault','known query')",
-        [],
-    )
-    .unwrap();
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,'test_vault',?2,?3)",
-            params![
-                format!("c{idx:03}"),
-                format!("content-{idx}"),
-                vector_blob(idx as f32)
-            ],
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
+            [],
         )
         .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute("INSERT INTO database_metadata VALUES(1,'test_vault')", [])
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO creator_databases VALUES(1,'test_vault','2026-06-15T00:00:00Z')",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO queries VALUES(1,'test_vault','known query')",
+            [],
+        )
+        .unwrap();
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,'test_vault',?2,?3)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("c{idx:03}"),
+                    format!("content-{idx}"),
+                    vector_blob(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn dual_write_args(sqlite: &Path, vault: &Path, inject: bool) -> Vec<String> {

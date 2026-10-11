@@ -1,28 +1,28 @@
 use std::collections::BTreeMap;
-use std::path::Path;
 
 use calyx_aster::cf::ColumnFamily;
-use calyx_aster::ledger_view::AsterLedgerCfStore;
 use calyx_aster::vault::{AsterVault, VaultOptions};
 use calyx_core::{
-    AnchorKind, AnchorValue, CalyxError, Constellation, CxId, Input, LedgerRef, Modality, SlotId,
-    SlotState, SlotVector, VaultStore,
+    AnchorKind, AnchorValue, CalyxError, Constellation, CxId, Input, Modality, SlotId, SlotState,
+    SlotVector, VaultStore,
 };
-use calyx_ledger::{LedgerCfStore, SubjectId, VerifyResult, decode, verify_chain};
 use calyx_registry::{VaultPanelState, load_vault_panel_state};
 use calyx_sextant::fusion;
 use calyx_sextant::{
-    AnchorPredicate, FusionContext, FusionStrategy, Hit, HnswIndex, IndexSearchHit, InvertedIndex,
-    MaxSimIndex, MetadataPredicate, ProvenanceSource, QueryFilters, RrfProfile, ScalarOp,
-    ScalarPredicate, SextantIndex,
+    AnchorPredicate, DroppedGuardHit, FreshnessRequirement, FusionContext, FusionStrategy, Hit,
+    HnswIndex, IndexSearchHit, InvertedIndex, MaxSimIndex, MetadataPredicate, ProvenanceSource,
+    QueryFilters, RrfProfile, ScalarOp, ScalarPredicate, SextantIndex,
+    apply_in_region_guard_to_hits,
 };
+use calyx_ward::GuardProfile;
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::server::{ToolError, ToolResult};
 
 use super::output::KernelAnswerOut;
-use super::{NeighborsRequest, SearchRequest};
+use super::{NeighborsRequest, SearchGuard, SearchRequest};
+use crate::tools::search::ledger_provenance::VerifiedSearchLedger;
 use crate::tools::vault::store::{ResolvedVault, home_dir, resolve_vault_info, vault_salt};
 
 pub(super) const HNSW_SEED: u64 = 0x0050_4836_3354_3034;
@@ -30,6 +30,7 @@ pub(super) const HNSW_SEED: u64 = 0x0050_4836_3354_3034;
 pub(super) struct SearchOutcome {
     pub(super) hits: Vec<Hit>,
     pub(super) docs: BTreeMap<CxId, Constellation>,
+    pub(super) dropped_guard_hits: Vec<DroppedGuardHit>,
 }
 
 #[derive(Serialize)]
@@ -41,21 +42,24 @@ pub(super) struct NeighborOut {
 
 pub(super) fn search(request: &SearchRequest) -> ToolResult<SearchOutcome> {
     let resolved = resolve_requested_vault(&request.vault)?;
+    let ledger = VerifiedSearchLedger::open(&resolved.path)?;
     let vault = open_vault(&resolved)?;
     let state = load_vault_panel_state(&resolved.path)?;
-    let docs = filtered_docs(load_docs(&vault)?, request.filter.clone())?;
+    let loaded = load_docs(&vault)?;
+    let snapshot_seq = loaded.snapshot_seq;
+    let docs = filtered_docs(loaded.docs, request.filter.clone())?;
     if docs.is_empty() {
         return Ok(SearchOutcome {
             hits: Vec::new(),
             docs,
+            dropped_guard_hits: Vec::new(),
         });
     }
-    let ledger_refs = verify_ledger_before_provenance(&resolved.path)?;
     let query_vectors = measure_query_vectors(&state, &request.query)?;
     if query_vectors.is_empty() {
         return Err(no_indexable_query_vectors().into());
     }
-    let per_slot = search_slots(&docs, &query_vectors)?;
+    let per_slot = search_slots(&docs, &query_vectors, snapshot_seq)?;
     let slots = per_slot.keys().copied().collect::<Vec<_>>();
     if slots.is_empty() {
         return Err(no_indexable_stored_vectors().into());
@@ -69,55 +73,67 @@ pub(super) fn search(request: &SearchRequest) -> ToolResult<SearchOutcome> {
         stage1_slots: stage1_slots(&strategy, &query_vectors, &slots),
     };
     let mut hits = fusion::fuse(&per_slot, &context);
-    attach_stored_provenance(&mut hits, &docs, vault.latest_seq(), &ledger_refs)?;
+    attach_stored_provenance(&mut hits, &docs, snapshot_seq, &ledger, &request.freshness)?;
+    let dropped_guard_hits = if request.guard == SearchGuard::InRegion {
+        let before = hits.len();
+        let profile = load_default_guard_profile(&vault, &state)?;
+        let dropped =
+            apply_in_region_guard_to_hits(&docs, &profile, &query_vectors, &mut hits, true)?;
+        if before > 0 && hits.is_empty() {
+            return Err(CalyxError::guard_ood(format!(
+                "in-region guard blocked all {before} search candidates"
+            ))
+            .into());
+        }
+        dropped
+    } else {
+        Vec::new()
+    };
     renumber_and_truncate(&mut hits, request.k);
-    Ok(SearchOutcome { hits, docs })
+    Ok(SearchOutcome {
+        hits,
+        docs,
+        dropped_guard_hits,
+    })
 }
 
-fn verify_ledger_before_provenance(path: &Path) -> ToolResult<BTreeMap<CxId, LedgerRef>> {
-    let store = AsterLedgerCfStore::open(path).map_err(|error| {
-        if error.code == "CALYX_LEDGER_CORRUPT" {
-            CalyxError::ledger_chain_broken(format!(
-                "search provenance ledger chain unreadable: {}",
-                error.message
-            ))
-        } else {
-            error
-        }
+fn load_default_guard_profile(
+    vault: &AsterVault,
+    state: &VaultPanelState,
+) -> ToolResult<GuardProfile> {
+    let Some(bytes) =
+        vault.read_cf_at(vault.snapshot(), ColumnFamily::Guard, default_guard_key())?
+    else {
+        return Err(CalyxError::guard_provisional(
+            "search guard requires a calibrated default guard profile",
+        )
+        .into());
+    };
+    let profile: GuardProfile = serde_json::from_slice(&bytes).map_err(|error| {
+        CalyxError::guard_provisional(format!("decode default guard profile: {error}"))
     })?;
-    let end = store.scan()?.len() as u64;
-    match verify_chain(&store, 0..end)? {
-        VerifyResult::Intact { .. } => latest_cx_refs(&store),
-        VerifyResult::Broken { at_seq, .. } | VerifyResult::Corrupt { at_seq, .. } => {
-            Err(CalyxError::ledger_chain_broken(format!(
-                "search provenance ledger chain broken at seq={at_seq}"
-            ))
-            .into())
-        }
+    if profile.panel_version != u64::from(state.panel.version) {
+        return Err(CalyxError::guard_provisional(format!(
+            "guard profile panel_version {} does not match active panel {}",
+            profile.panel_version, state.panel.version
+        ))
+        .into());
     }
+    if !profile.is_calibrated() {
+        return Err(CalyxError::guard_provisional("search guard profile is not calibrated").into());
+    }
+    Ok(profile)
 }
 
-fn latest_cx_refs(store: &AsterLedgerCfStore) -> ToolResult<BTreeMap<CxId, LedgerRef>> {
-    let mut refs = BTreeMap::new();
-    for row in store.scan()? {
-        let entry = decode(&row.bytes)?;
-        if let SubjectId::Cx(cx_id) = entry.subject {
-            refs.insert(
-                cx_id,
-                LedgerRef {
-                    seq: entry.seq,
-                    hash: entry.entry_hash,
-                },
-            );
-        }
-    }
-    Ok(refs)
+fn default_guard_key() -> &'static [u8] {
+    b"profile\0default"
 }
 
 pub(super) fn neighbors(request: &NeighborsRequest) -> ToolResult<Vec<NeighborOut>> {
     let resolved = resolve_requested_vault(&request.vault)?;
     let vault = open_vault(&resolved)?;
-    let docs = load_docs(&vault)?;
+    let loaded = load_docs(&vault)?;
+    let docs = loaded.docs;
     let seed = docs.get(&request.cx_id).ok_or_else(|| {
         CalyxError::vault_access_denied(format!("cx_id {} does not exist in vault", request.cx_id))
     })?;
@@ -125,7 +141,7 @@ pub(super) fn neighbors(request: &NeighborsRequest) -> ToolResult<Vec<NeighborOu
     for (slot, vector) in seed.slots.iter().filter(|(slot, vector)| {
         request.slot.is_none_or(|wanted| wanted == **slot) && indexable(vector)
     }) {
-        for hit in search_one_slot(&docs, *slot, vector)?
+        for hit in search_one_slot(&docs, *slot, vector, loaded.snapshot_seq)?
             .into_iter()
             .take(request.k)
         {
@@ -187,26 +203,8 @@ pub(super) fn kernel_report(
     })
 }
 
-fn filtered_docs(
-    docs: BTreeMap<CxId, Constellation>,
-    raw_filter: Option<Value>,
-) -> ToolResult<BTreeMap<CxId, Constellation>> {
-    let filter = parse_filter(raw_filter)?;
-    Ok(docs
-        .into_iter()
-        .filter(|(_, cx)| filter_matches(cx, &filter))
-        .collect())
-}
-
-fn parse_filter(raw: Option<Value>) -> ToolResult<QueryFilters> {
-    let filters: QueryFilters = raw
-        .map(serde_json::from_value)
-        .transpose()
-        .map_err(|err| ToolError::invalid_params(format!("parse filter JSON: {err}")))?
-        .unwrap_or_default();
-    filters.validate()?;
-    Ok(filters)
-}
+mod filters;
+use filters::{filtered_docs, has_grounding};
 
 pub(super) fn measure_query_vectors(
     state: &VaultPanelState,
@@ -231,10 +229,11 @@ pub(super) fn measure_query_vectors(
 fn search_slots(
     docs: &BTreeMap<CxId, Constellation>,
     query_vectors: &[(SlotId, SlotVector)],
+    snapshot_seq: u64,
 ) -> ToolResult<BTreeMap<SlotId, Vec<IndexSearchHit>>> {
     let mut out = BTreeMap::new();
     for (slot, query) in query_vectors {
-        let hits = search_one_slot(docs, *slot, query)?;
+        let hits = search_one_slot(docs, *slot, query, snapshot_seq)?;
         if !hits.is_empty() {
             out.insert(*slot, hits);
         }
@@ -246,6 +245,7 @@ fn search_one_slot(
     docs: &BTreeMap<CxId, Constellation>,
     slot: SlotId,
     query: &SlotVector,
+    snapshot_seq: u64,
 ) -> ToolResult<Vec<IndexSearchHit>> {
     let mut index = new_index(slot, query)?;
     let mut inserted = 0usize;
@@ -253,7 +253,7 @@ fn search_one_slot(
         if let Some(vector) = cx.slots.get(&slot)
             && same_index_shape(query, vector)
         {
-            index.insert(cx.cx_id, vector.clone(), cx.provenance.seq)?;
+            index.insert(cx.cx_id, vector.clone(), snapshot_seq)?;
             inserted += 1;
         }
     }
@@ -277,8 +277,9 @@ fn new_index(slot: SlotId, query: &SlotVector) -> ToolResult<Box<dyn SextantInde
 fn attach_stored_provenance(
     hits: &mut [Hit],
     docs: &BTreeMap<CxId, Constellation>,
-    seq: u64,
-    ledger_refs: &BTreeMap<CxId, LedgerRef>,
+    snapshot_seq: u64,
+    ledger: &VerifiedSearchLedger,
+    freshness: &FreshnessRequirement,
 ) -> ToolResult<()> {
     for hit in hits {
         let cx = docs.get(&hit.cx_id).ok_or_else(|| {
@@ -287,21 +288,33 @@ fn attach_stored_provenance(
                 hit.cx_id
             ))
         })?;
-        hit.provenance = ledger_refs
-            .get(&hit.cx_id)
-            .cloned()
-            .unwrap_or_else(|| cx.provenance.clone());
+        hit.provenance = ledger.require_ref(hit.cx_id, cx.provenance.clone())?;
         hit.provenance_source = ProvenanceSource::Stored;
-        hit.freshness = if seq >= cx.provenance.seq {
-            calyx_sextant::FreshnessTag::fresh(seq)
-        } else {
-            calyx_sextant::FreshnessTag::fresh(cx.provenance.seq)
+        // The hits were computed over indexes built from the docs pinned at
+        // `snapshot_seq`, so they are fresh at exactly that seq. `provenance.seq`
+        // is a ledger ref in a different seq domain and must not leak into
+        // freshness tags (issue #1104).
+        hit.freshness = match freshness {
+            FreshnessRequirement::FreshDerived => calyx_sextant::FreshnessTag::fresh(snapshot_seq),
+            FreshnessRequirement::StaleOk { .. } => {
+                calyx_sextant::FreshnessTag::stale_ok(snapshot_seq, snapshot_seq)
+            }
         };
     }
     Ok(())
 }
 
-pub(super) fn load_docs(vault: &AsterVault) -> ToolResult<BTreeMap<CxId, Constellation>> {
+/// Documents loaded at one pinned vault snapshot together with that
+/// snapshot's commit seq. Freshness reasoning over these docs must use
+/// `snapshot_seq` only: per-doc `provenance.seq` values are ledger refs in a
+/// different seq domain and drift from vault commit seqs on group-committed
+/// vaults (issue #1104).
+pub(super) struct LoadedDocs {
+    pub(super) docs: BTreeMap<CxId, Constellation>,
+    pub(super) snapshot_seq: u64,
+}
+
+pub(super) fn load_docs(vault: &AsterVault) -> ToolResult<LoadedDocs> {
     let snapshot = vault.snapshot();
     let mut docs = BTreeMap::new();
     for (key, _) in vault.scan_cf_at(snapshot, ColumnFamily::Base)? {
@@ -311,79 +324,10 @@ pub(super) fn load_docs(vault: &AsterVault) -> ToolResult<BTreeMap<CxId, Constel
         let cx_id = CxId::from_bytes(bytes);
         docs.insert(cx_id, vault.get(cx_id, snapshot)?);
     }
-    Ok(docs)
-}
-
-fn filter_matches(cx: &Constellation, filters: &QueryFilters) -> bool {
-    filters
-        .scalars
-        .iter()
-        .all(|filter| scalar_matches(cx, filter))
-        && filters
-            .anchors
-            .iter()
-            .all(|filter| anchor_matches(cx, filter))
-        && filters
-            .metadata
-            .iter()
-            .all(|filter| metadata_matches(cx, filter))
-}
-
-fn scalar_matches(cx: &Constellation, filter: &ScalarPredicate) -> bool {
-    cx.scalars
-        .get(&filter.name)
-        .is_some_and(|actual| match filter.op {
-            ScalarOp::Eq => actual == &filter.value,
-            ScalarOp::Gt => *actual > filter.value,
-            ScalarOp::Gte => *actual >= filter.value,
-            ScalarOp::Lt => *actual < filter.value,
-            ScalarOp::Lte => *actual <= filter.value,
-        })
-}
-
-fn anchor_matches(cx: &Constellation, filter: &AnchorPredicate) -> bool {
-    cx.anchors.iter().any(|anchor| {
-        anchor.kind == filter.kind
-            && filter
-                .value
-                .as_ref()
-                .is_none_or(|value| anchor_value_matches(&anchor.value, value))
-            && filter
-                .min_confidence
-                .is_none_or(|minimum| anchor.confidence >= minimum)
-            && filter
-                .source
-                .as_ref()
-                .is_none_or(|source| &anchor.source == source)
+    Ok(LoadedDocs {
+        docs,
+        snapshot_seq: snapshot,
     })
-}
-
-fn metadata_matches(cx: &Constellation, filter: &MetadataPredicate) -> bool {
-    match filter {
-        MetadataPredicate::Vault(vault) => cx.vault_id == *vault,
-        MetadataPredicate::Modality(modality) => cx.modality == *modality,
-        MetadataPredicate::PanelVersion(version) => cx.panel_version == *version,
-        MetadataPredicate::CreatedAt { min, max } => {
-            min.is_none_or(|value| cx.created_at >= value)
-                && max.is_none_or(|value| cx.created_at <= value)
-        }
-        MetadataPredicate::InputRedacted(expected) => cx.input_ref.redacted == *expected,
-        MetadataPredicate::InputPointerContains(fragment) => cx
-            .input_ref
-            .pointer
-            .as_deref()
-            .is_some_and(|pointer| pointer.contains(fragment)),
-    }
-}
-
-fn anchor_value_matches(actual: &AnchorValue, expected: &AnchorValue) -> bool {
-    actual == expected
-}
-
-fn has_grounding(cx: &Constellation, anchor: Option<&AnchorKind>) -> bool {
-    cx.anchors
-        .iter()
-        .any(|item| anchor.is_none_or(|kind| &item.kind == kind))
 }
 
 pub(super) fn resolve_requested_vault(vault: &str) -> ToolResult<ResolvedVault> {

@@ -3,7 +3,7 @@
 This reference documents two Rust crates **strictly from their source**:
 
 - **`calyx-mcp`** — the MCP (Model Context Protocol) server library + stdio binary that exposes Calyx tools over JSON-RPC 2.0.
-- **`calyxd`** — the Calyx daemon/server: a Prometheus `/metrics` exporter, a periodic ledger chain-verify loop, a CUDA/VRAM startup preflight, a healthcheck probe, a byte-level vault read-back verifier, and a loopback MCP-over-socket transport.
+- **`calyxd`** — the Calyx daemon/server: a Prometheus `/metrics` exporter, optional Worker-only learner-origin routes, a periodic ledger chain-verify loop, a CUDA/VRAM startup preflight, a healthcheck probe, a byte-level vault read-back verifier, and a loopback MCP-over-socket transport.
 
 Where the source does not establish a fact, it is marked **"Not determined from source"**. Every claim is traced to a file path and function/type, with the owning crate noted.
 
@@ -21,12 +21,13 @@ Where the source does not establish a fact, it is marked **"Not determined from 
 - `tests/jsonrpc.rs`, `tests/stdio.rs` — integration tests (not documented in detail)
 - `Cargo.toml`
 
-**`crates/calyxd`** (20 files):
+**`crates/calyxd`**:
 - `src/main.rs` — daemon binary (`calyxd`) entrypoint + CLI arg parsing
 - `src/lib.rs` — library surface
 - `src/config.rs` — `CalyxConfig` TOML runtime config
 - `src/error.rs` — `DaemonError` taxonomy
 - `src/server.rs` — loopback HTTP `/metrics` server
+- `src/learner_origin/*` — optional Worker-only learner-origin API: learner signals, interventions, outcomes, Oracle-backed mastery estimates, Oracle forecast evidence, and reactive affect signals
 - `src/mcp_server.rs` — loopback MCP-over-socket transport (`CalyxMcpServer`)
 - `src/verify_loop.rs` — periodic chain-verify driver (binary-only module)
 - `src/verify.rs` — `verify_restore` byte-level vault read-back
@@ -157,15 +158,20 @@ The `Tool` trait (`Send + Sync`):
 
 ### A.5.3 Registered production tools
 
-**None.** The shipped binary (`src/main.rs`) and the `calyxd` MCP transport (Part B) both construct an `McpServer` with **zero tools registered**. The only `Tool` implementors in this codebase are test fixtures (`EchoTool`, `FailingTool`, `PanicTool` in `src/server.rs` tests) and an FSV-only `AdderTool` (`calyxd/examples/mcp_fsv_server.rs`). Source comments state production tool groups are deferred to later PH63 tasks.
+`calyx-mcp` registers the production tool groups from `crates/calyx-mcp/src/tools/`
+at startup. The stdio test `crates/calyx-mcp/tests/stdio.rs::EXPECTED_TOOLS` pins
+the 31 registered names and the startup banner reports the same count.
 
-| MCP tool | Params | Return | Side effects | Status / Source |
-|---|---|---|---|---|
-| *(none in production)* | — | — | — | `src/main.rs` line 16; `calyxd/src/mcp_server.rs` doc |
-| `echo` *(test only)* | `msg: string` (required) | `{ echoed: <msg> }` | none | `src/server.rs` tests |
-| `adder` *(example/FSV only)* | `a: integer`, `b: integer` (both required) | `{ sum: a+b }` | none | `calyxd/examples/mcp_fsv_server.rs` |
+Tool families:
+- Vault/panel: `create_vault`, `add_lens`, `retire_lens`, `park_lens`, `list_panel`, `profile_lens`
+- Ingest/measure: `ingest`, `ingest_media`, `anchor`, `measure`
+- Search/navigation: `search`, `kernel_answer`, `neighbors`, `agree`, `disagree`, `define`, `guard_generate`, `traverse`, `skills`, `search_skill`
+- Intelligence: `abundance`, `bits`, `kernel`, `guard.calibrate`, `guard.check`, `propose_lens`
+- Provenance/ops: `provenance`, `answer_trace`, `verify_chain`, `reproduce`, `anneal.status`
 
-> Because no production tools exist, Rule 4's "every MCP tool" table is, from source, empty. The registry, schema, and dispatch machinery are fully built; the tool catalog is not yet wired.
+The `calyxd` MCP transport in Part B is a transport library; production daemon
+startup does not yet run it with this 31-tool dispatcher. That follow-up is tracked
+in `ChrisRoyse/Calyx-Dev#959`.
 
 ## A.6 Input-schema constructors (`src/schema.rs`)
 
@@ -291,9 +297,11 @@ Validation (`validate`):
 
 Each variant carries a fixed `remediation()` hint. Daemon-local MCP codes live elsewhere: `CALYX_DAEMON_FRAME_INVALID` and `CALYX_DAEMON_CONN_PANIC` (`src/mcp_server.rs`).
 
-## B.5 HTTP `/metrics` server (`src/server.rs`)
+## B.5 HTTP `/metrics` and learner-origin server (`src/server.rs`, `src/learner_origin/*`)
 
-`MetricsServer` — a loopback-only thread-per-connection HTTP/1.1 listener serving exactly `GET /metrics`.
+`MetricsServer` — a loopback-only thread-per-connection HTTP/1.1 listener serving `GET /metrics`.
+When `[learner_origin]` is configured, the same loopback listener also serves Worker-only POST
+routes through `LearnerOriginService`; those routes require `Authorization: Bearer <shared-secret>`.
 
 Constants: `REQUEST_HEAD_LIMIT = 8192` bytes; `IO_TIMEOUT = 5s` (read + write); `CONTENT_TYPE = "text/plain; version=0.0.4"` (Prometheus exposition format v0.0.4).
 
@@ -304,19 +312,49 @@ Constants: `REQUEST_HEAD_LIMIT = 8192` bytes; `IO_TIMEOUT = 5s` (read + write); 
 Request handling (`handle_connection` → `route`):
 1. Set read/write timeouts (5s).
 2. `read_request_line` reads the full request head (through the blank line), bounded by 8192 bytes. Reading the whole head matters: closing a socket with unread bytes sends TCP RST not FIN. An unreadable/oversized head → `400 Bad Request`.
-3. `route` splits the request line:
+3. `route` first delegates configured learner-origin paths to `LearnerOriginService::handle`.
+   Those routes are POST-only, bearer-authenticated, bounded by `learner_origin.max_body_bytes`,
+   and write/read back real Aster/Ledger rows.
+4. Otherwise `route` splits the request line:
    - `GET /metrics` → `200 OK` with the encoded metric text; an encode error → `500 Internal Server Error`.
    - `GET <other path>` → `404 Not Found` ("only /metrics is served").
    - any other method → `405 Method Not Allowed`.
-4. `write_response` writes a minimal HTTP/1.1 response with `Content-Type`, `Content-Length`, `Connection: close`.
+5. `write_response` writes a minimal HTTP/1.1 response with `Content-Type`, `Content-Length`, `Connection: close`.
 
 | Path / Method | Status | Body | Source |
 |---|---|---|---|
 | `GET /metrics` | `200 OK` | Prometheus v0.0.4 text | `route` |
 | `GET /metrics` (encode error) | `500` | error text | `route` |
+| `POST /v1/learner-signals/batches` | `201`/`200`/error | JSON learner-signal source row or duplicate/error | `learner_origin::service::handle_signal_batch` |
+| `POST /v1/interventions/decide` | `201`/error | JSON intervention decision row | `handle_decision` |
+| `POST /v1/interventions/{decisionId}/outcomes` | `201`/error | JSON outcome row, learner-matched to the decision | `handle_outcome` |
+| `POST /v1/mastery/estimate` | `201`/`422`/error | JSON Oracle completion + `super_intelligence` trust report; insufficient Assay evidence fails closed | `handle_mastery_estimate` |
+| `POST /v1/oracle/forecast` | `201`/`422`/error | JSON Oracle prediction, butterfly consequence tree, reverse causes, and transfer-entropy prereq edges; insufficient evidence fails closed | `handle_oracle_forecast` |
+| `POST /v1/reactive/affect-signals` | `201`/`422`/error | JSON reactive trigger events, Ward novelty/surprise, MMD drift/change-point readback, and intervention hints/reviews; no fired signal fails closed | `handle_reactive_affect` |
 | `GET <other>` | `404` | "only /metrics is served" | `route` |
 | non-GET | `405` | "only GET /metrics is served" | `route` |
 | unreadable head | `400` | "bad request" | `handle_connection` |
+
+`/v1/mastery/estimate` builds a one-slot-per-concept mastery panel from measured concepts and
+un-probed concepts, persists a `mastery_evidence` constellation, persists Assay sufficiency rows,
+calls Oracle `complete`, calls `super_intelligence_with_ledger` across all six tiers, and then
+persists a final `mastery_estimate` origin row. Certification eligibility is true only when the
+trust report is overall true and no completion slot is provisional.
+
+`/v1/oracle/forecast` persists an `oracle_forecast_evidence` source constellation, materializes
+Oracle-readable `oracle_forecast_recurrence` base/Recurrence CF rows from origin evidence, persists
+Assay sufficiency rows, then runs the real `oracle_predict`, `butterfly::build_tree`/`select`,
+`reverse_query`, and Assay `transfer_entropy_sweep_with_config` paths. A final `oracle_forecast`
+origin row is written only after those gates complete; insufficient Oracle panel evidence or
+under-quorum transfer entropy returns HTTP 422 without the final forecast row.
+
+`/v1/reactive/affect-signals` persists matched/baseline/current `reactive_affect_*` source
+constellations plus Recurrence CF rows, then uses the real Loom `subscribe_durable`,
+`evaluate_post_ingest_durable`, and `observe_delta` flow for `DriftDetected` and `NewRegion`.
+It also reads Ward `classify_novelty`/`surprise_bits` and Assay
+`gaussian_mmd_with_config`/`mmd_change_point`. A final `reactive_affect_signal` row is written
+only when a reactive event, novelty action, or significant MMD shift produces an intervention;
+quiet known-pattern evidence returns HTTP 422 without the final row.
 
 ## B.6 MCP-over-socket transport (`src/mcp_server.rs`)
 
@@ -357,7 +395,7 @@ Any framing error closes the connection (the byte stream can no longer be truste
    - **Ok**: record notification-ness (`id.is_none()`); `dispatcher.dispatch(request)`; if notification, skip the reply; else `write_response` (length-prefixed).
    - **Err(calyx)** (malformed JSON inside a valid frame): a per-message error, not a stream error — write back a JSON-RPC error (`from_calyx`, id `null`, carrying `CALYX_MCP_JSONRPC_INVALID`) and keep serving the next frame.
 
-> The MCP method/tool semantics are identical to Part A.5 because the same `McpServer::dispatch` is used. As shipped, the dispatcher passed in carries no production tools.
+> The MCP method/tool semantics are identical to Part A.5 because the same `McpServer::dispatch` is used. As shipped, `calyxd` startup still does not run this transport with the production 31-tool dispatcher; see `ChrisRoyse/Calyx-Dev#959`.
 
 ## B.7 Periodic chain-verify (`src/verify_loop.rs`, binary-only)
 
@@ -434,7 +472,7 @@ Recording methods on `CalyxMetrics`: `observe_ingest`, `observe_search`, `set_re
 
 ## B.10 VRAM budget enforcer (`src/vram.rs`)
 
-Reads live usage via **NVML** (`nvml-wrapper`), not `cudaMemGetInfo` — NVML reports the true board total and device-wide used bytes consistent with `nvidia-smi`. `BYTES_PER_MIB = 1024*1024`. TEI endpoints documented in errors: `:8088 (general), :8089 (reranker), :8090 (legal)`.
+Reads live usage via **NVML** (`nvml-wrapper`), not `cudaMemGetInfo` — NVML reports the true board total and device-wide used bytes consistent with `nvidia-smi`. `BYTES_PER_MIB = 1024*1024`. TEI endpoints documented in errors: `:18190 (calyx-e5), :18188 (calyx-bge-m3), :8088 (legacy general), :8089 (reranker), :8090 (legal)`.
 
 - `VramReading { total_mib, used_mib }`; trait `VramUsage::read()` (production = `NvmlVramUsage`, tests inject a mock).
 - `NvmlVramUsage::init()` loads `libnvidia-ml.so.1` explicitly (driver-only hosts lack the unversioned symlink). Failure → `CALYX_FORGE_DEVICE_UNAVAILABLE`. `read()` uses device index 0's `memory_info()`.
@@ -470,10 +508,11 @@ Steps: stat WAL bytes (`wal_total_bytes` over `wal/*.wal`); `scan_vault` replays
 
 | Surface | Default address | Protocol | Source |
 |---|---|---|---|
-| HTTP `/metrics` | `127.0.0.1:7700` (`--bind` or `config.bind_addr`) | HTTP/1.1, `GET /metrics` only, loopback-only | `server.rs`, `config.rs` |
+| HTTP `/metrics` | `127.0.0.1:7700` (`--bind` or `config.bind_addr`) | HTTP/1.1 Prometheus `GET /metrics`, loopback-only | `server.rs`, `config.rs` |
+| Learner-origin API | same loopback listener when `[learner_origin]` is configured | HTTP/1.1 JSON POST, bearer-authenticated, loopback-only | `server.rs`, `learner_origin/*` |
 | MCP-over-socket | `cfg.bind_addr` (loopback-only); library API, not wired into `main` | length-prefixed JSON-RPC, loopback-only | `mcp_server.rs` |
 | MCP-over-stdio (`calyx-mcp`) | n/a (stdio) | newline-delimited JSON-RPC | `calyx-mcp/src/main.rs` |
-| TEI endpoints (documented) | `:8088` general, `:8089` reranker, `:8090` legal | external (not served by calyxd) | `vram.rs`, `config.rs` |
+| TEI endpoints (documented) | `:18190` Calyx E5, `:18188` Calyx BGE-M3, `:8088` legacy general, `:8089` reranker, `:8090` legal | external (not served by calyxd) | `vram.rs`, `config.rs` |
 
 > **Loopback-only is enforced** in three independent places: `CalyxConfig::validate` (config parse), `MetricsServer::bind`, and `CalyxMcpServer::bind`. A non-loopback address is `CALYX_DAEMON_BIND_FAILED` and the server never starts. Source comments note Cloudflare Tunnel + Caddy are the sole external ingress.
 

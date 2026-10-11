@@ -1,0 +1,16 @@
+# Search-walker exclusions (ripgrep / fd / Claude Code Grep+Glob honor .ignore with
+# precedence ABOVE .gitignore, including when hidden-dir traversal is enabled).
+#
+# ROOT CAUSE FIX (2026-07-12): repo-root searches timed out at 20s because walkers
+# traversed ~600k artifact files. Counts at fix time: target/ 276,653 files,
+# .claude/worktrees/ 276,568 (agent worktrees, each with its own target/),
+# Calyx source is NOT excluded (44k files, legitimately searchable).
+# These trees are build artifacts / binary vaults / agent scratch - never text-search them.
+/target/
+/.claude/worktrees/
+/local-asset-vault/
+/tmp/
+/.hf-cache/
+/.playwright-mcp/
+/.codex/
+/.cargo/

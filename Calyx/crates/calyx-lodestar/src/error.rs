@@ -37,6 +37,10 @@ pub enum LodestarError {
         from: calyx_core::CxId,
         to: calyx_core::CxId,
     },
+    #[error("CALYX_KERNEL_ANSWER_LEDGER_REQUIRED: {detail}")]
+    KernelAnswerLedgerRequired { detail: String },
+    #[error("CALYX_KERNEL_ANSWER_LEDGER_MISMATCH: {detail}")]
+    KernelAnswerLedgerMismatch { detail: String },
     #[error("CALYX_KERNEL_SCORE_INVALID: {detail}")]
     KernelScoreInvalid { detail: String },
     #[error("CALYX_KERNEL_LOOM_SLOT_MAPPING_MISSING: no CxId mapping for {xterm_cx}/{slot}")]
@@ -78,6 +82,34 @@ pub enum LodestarError {
     DfvsVerificationFailed { detail: String },
     #[error("CALYX_DFVS_GENUS_TOO_LARGE: genus {genus} exceeds supported bound")]
     DfvsGenusTooLarge { genus: usize },
+    #[error("CALYX_DISCOVERY_NO_SUFFICIENCY_ASSAY: {detail}")]
+    DiscoveryNoSufficiencyAssay { detail: String },
+    #[error("CALYX_DISCOVERY_RUN_MANIFEST_INVALID: {detail}")]
+    DiscoveryRunManifestInvalid { detail: String },
+    #[error(
+        "CALYX_DISCOVERY_RUN_MANIFEST_CHAIN_BROKEN: stage {stage} expected input {expected}, found {found}"
+    )]
+    DiscoveryRunManifestChainBroken {
+        stage: String,
+        expected: String,
+        found: String,
+    },
+    #[error(
+        "CALYX_DISCOVERY_RUN_MANIFEST_MISSING_UPSTREAM: stage {stage} references missing upstream {upstream}"
+    )]
+    DiscoveryRunManifestMissingUpstream { stage: String, upstream: String },
+    #[error("CALYX_DISCOVERY_RUN_MANIFEST_DRIFT: {detail}")]
+    DiscoveryRunManifestDrift { detail: String },
+    #[error("CALYX_MOLECULAR_KERNEL_MISSING: {detail}")]
+    MolecularKernelMissing { detail: String },
+    #[error("CALYX_MOLECULAR_KERNEL_UNGROUNDED: {detail}")]
+    MolecularKernelUngrounded { detail: String },
+    #[error("CALYX_HYPOTHESIS_EVIDENCE_MISSING_PROVENANCE: no evidence provenance for {cx_id}")]
+    HypothesisEvidenceMissingProvenance { cx_id: calyx_core::CxId },
+    #[error("CALYX_HYPOTHESIS_EVIDENCE_EMPTY_ABSTRACT: empty evidence text for {cx_id}")]
+    HypothesisEvidenceEmptyAbstract { cx_id: calyx_core::CxId },
+    #[error("CALYX_HYPOTHESIS_EVIDENCE_INVALID: {detail}")]
+    HypothesisEvidenceInvalid { detail: String },
     #[error("{code}: {message}")]
     TemporalKernel { code: &'static str, message: String },
     #[error("{code}: {message}")]
@@ -104,6 +136,8 @@ impl LodestarError {
             Self::KernelIndexBuild { .. } => "CALYX_KERNEL_INDEX_BUILD",
             Self::KernelNoAnchoredNode => "CALYX_KERNEL_NO_ANCHORED_NODE",
             Self::KernelAnswerNoPath { .. } => "CALYX_KERNEL_ANSWER_NO_PATH",
+            Self::KernelAnswerLedgerRequired { .. } => "CALYX_KERNEL_ANSWER_LEDGER_REQUIRED",
+            Self::KernelAnswerLedgerMismatch { .. } => "CALYX_KERNEL_ANSWER_LEDGER_MISMATCH",
             Self::KernelScoreInvalid { .. } => "CALYX_KERNEL_SCORE_INVALID",
             Self::KernelLoomSlotMappingMissing { .. } => "CALYX_KERNEL_LOOM_SLOT_MAPPING_MISSING",
             Self::KernelLoomDirectionalConfidenceMissing { .. } => {
@@ -120,6 +154,24 @@ impl LodestarError {
             Self::ScopeTenantNotFound { .. } => "CALYX_SCOPE_TENANT_NOT_FOUND",
             Self::DfvsVerificationFailed { .. } => "CALYX_DFVS_VERIFICATION_FAILED",
             Self::DfvsGenusTooLarge { .. } => "CALYX_DFVS_GENUS_TOO_LARGE",
+            Self::DiscoveryNoSufficiencyAssay { .. } => "CALYX_DISCOVERY_NO_SUFFICIENCY_ASSAY",
+            Self::DiscoveryRunManifestInvalid { .. } => "CALYX_DISCOVERY_RUN_MANIFEST_INVALID",
+            Self::DiscoveryRunManifestChainBroken { .. } => {
+                "CALYX_DISCOVERY_RUN_MANIFEST_CHAIN_BROKEN"
+            }
+            Self::DiscoveryRunManifestMissingUpstream { .. } => {
+                "CALYX_DISCOVERY_RUN_MANIFEST_MISSING_UPSTREAM"
+            }
+            Self::DiscoveryRunManifestDrift { .. } => "CALYX_DISCOVERY_RUN_MANIFEST_DRIFT",
+            Self::MolecularKernelMissing { .. } => "CALYX_MOLECULAR_KERNEL_MISSING",
+            Self::MolecularKernelUngrounded { .. } => "CALYX_MOLECULAR_KERNEL_UNGROUNDED",
+            Self::HypothesisEvidenceMissingProvenance { .. } => {
+                "CALYX_HYPOTHESIS_EVIDENCE_MISSING_PROVENANCE"
+            }
+            Self::HypothesisEvidenceEmptyAbstract { .. } => {
+                "CALYX_HYPOTHESIS_EVIDENCE_EMPTY_ABSTRACT"
+            }
+            Self::HypothesisEvidenceInvalid { .. } => "CALYX_HYPOTHESIS_EVIDENCE_INVALID",
             Self::TemporalKernel { code, .. } => code,
             Self::Ledger { code, .. } => code,
             Self::Graph { code, .. } => code,

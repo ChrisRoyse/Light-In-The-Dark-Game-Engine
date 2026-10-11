@@ -90,11 +90,13 @@ since nextest does not execute them — see `scripts/check.sh`.
 
 "FSV" is a project-specific verification discipline, not a third-party
 framework. It denotes end-to-end tests that exercise real durable storage paths
-and emit **source-of-truth evidence artifacts** (JSON logs, hex/`xxd` dumps)
-under an FSV "root" directory, which are then "signed off" on the remote build
-host (aiwonder). The README repeatedly states that components are
-"FSV-signed-off on aiwonder" and lists concrete FSV root paths such as
-`/home/croyse/calyx/data/fsv-stage5-...` (`README.md`).
+and then read authoritative Calyx/Aster rows back from the database. Diagnostic
+files such as JSON logs, hex/`xxd` dumps, reports, and shell transcripts may be
+emitted under an FSV "root" directory, but they are not the source of truth and
+cannot admit an association, gate, roster, phase exit, or provenance claim.
+The README repeatedly states that components are "FSV-signed-off on aiwonder"
+and lists concrete FSV root paths such as `/home/croyse/calyx/data/fsv-stage5-...`
+(`README.md`).
 
 How FSV is realized in code:
 
@@ -121,6 +123,17 @@ How FSV is realized in code:
   `corrupt_shard`, `readback_level`) that print tab-delimited readback lines
   (e.g. `WAL_DRILL\t...`, `CORRUPT_SHARD\t...`) for verification.
 
+- **FSV evidence roots are absolute-only.** All readers resolve `CALYX_FSV_ROOT`
+  through the `calyx-fsv` crate: unset means the test owns a temp root; a set
+  value must be an absolute path or the run fails closed with
+  `CALYX_FSV_ROOT_NOT_ABSOLUTE`/`CALYX_FSV_ROOT_EMPTY` (value, cwd, and
+  remediation in the message). Rationale: cargo runs every test from the crate
+  root, not the workspace root, so relative roots scatter evidence under
+  `crates/<name>/...` while readback looks at the workspace (`#1014`).
+  `scripts/check.sh` additionally refuses to run with a suite-wide
+  `CALYX_FSV_ROOT` set, because independent FSV tests would collide in one
+  shared evidence root.
+
 - **FSV driver scripts.** `scripts/fsv_ph36.sh` sets `CALYX_FSV_ROOT`, runs the
   ignored FSV integration test with `cargo test -p calyx-cli --test
   ph36_fsv_integration ... -- --ignored --nocapture`, tees the log, produces an
@@ -144,7 +157,7 @@ every merge (README section "Run the gate on aiwonder before every merge").
 Standard commands (from `scripts/check.sh`):
 
 ```sh
-cargo fmt --all -- --check
+bash scripts/cargo-fmt-workspace.sh --check
 cargo check --workspace --all-targets
 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace      # primary parallel test run
@@ -152,8 +165,16 @@ cargo test --workspace --doc       # doctests (nextest does not run these)
 ```
 
 - `scripts/check.sh` exports `CARGO_INCREMENTAL=0`, fails loudly if
-  `cargo-nextest` is missing, then additionally runs `scripts/orphan_rs.sh`,
-  `scripts/linecount.sh`, `scripts/verify_dataset.sh --self-test`, and
+  `cargo-nextest` is missing, and points to the focused provisioning command:
+  `bash scripts/install-cargo-nextest.sh` for Bash/WSL or
+  `pwsh -File scripts/install-cargo-nextest.ps1` for native Windows
+  PowerShell. It uses `scripts/cargo-fmt-workspace.sh` for formatting so the
+  workspace gate checks one package at a time instead of expanding the whole
+  workspace into one long rustfmt command. On native Windows, use
+  `pwsh -File scripts/cargo-fmt-workspace.ps1` for the same package-by-package
+  check, or add `-Write` to apply formatting. It then additionally runs
+  `scripts/orphan_rs.sh`, `scripts/linecount.sh`,
+  `scripts/verify_dataset.sh --self-test`, and
   `scripts/check_manifest_coverage.sh --self-test`.
 - FSV / ignored tests run explicitly, e.g.
   `cargo test -p <crate> --test <name> -- --ignored --nocapture`, usually with
@@ -181,6 +202,8 @@ are not broken.
 | Path | Purpose |
 |------|---------|
 | `scripts/check.sh` | The manual aiwonder per-merge gate: rustfmt check, `cargo check --workspace --all-targets`, `cargo clippy ... -D warnings`, `cargo nextest run --workspace`, `cargo test --workspace --doc`, `scripts/orphan_rs.sh`, `scripts/linecount.sh`, and dataset/manifest self-tests. |
+| `scripts/cargo-fmt-workspace.sh` / `.ps1` | Workspace rustfmt gate that enumerates `cargo metadata` workspace packages and runs `cargo fmt -p <package>` one package at a time. This is the native Windows-safe format check for long worktree paths; it fails on the first unformatted package and prints the exact package command. |
+| `scripts/install-cargo-nextest.sh` / `.ps1` | Idempotent local provisioning for the required `cargo-nextest` subcommand on Bash/WSL and native Windows PowerShell. |
 | `scripts/orphan_rs.sh` (+ `orphan_rs_allow.txt`) | Gate: detects `.rs` files not wired into the build. |
 | `scripts/linecount.sh` | Gate: line-count limits. |
 | `scripts/verify_dataset.sh` / `scripts/check_manifest_coverage.sh` | Dataset MANIFEST tooling self-tests (hermetic synthetic batteries). |

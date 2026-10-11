@@ -71,6 +71,28 @@ fn reopen_loads_existing_sst_files() {
 }
 
 #[test]
+fn selected_open_loads_only_requested_column_families() {
+    let dir = test_dir("selected-open");
+    let mut router = CfRouter::open(&dir, 64).unwrap();
+    router.put(ColumnFamily::Base, b"k", b"base").unwrap();
+    router.put(ColumnFamily::Graph, b"k", b"graph").unwrap();
+    router.flush_cf(ColumnFamily::Base).unwrap();
+    router.flush_cf(ColumnFamily::Graph).unwrap();
+    drop(router);
+
+    let selected = CfRouter::open_selected_cfs(&dir, 64, [ColumnFamily::Graph]).unwrap();
+
+    assert_eq!(selected.level_file_count(ColumnFamily::Graph), 1);
+    assert_eq!(selected.level_file_count(ColumnFamily::Base), 0);
+    assert_eq!(
+        selected.get(ColumnFamily::Graph, b"k").unwrap(),
+        Some(b"graph".to_vec())
+    );
+    assert_eq!(selected.get(ColumnFamily::Base, b"k").unwrap(), None);
+    cleanup(dir);
+}
+
+#[test]
 fn reopen_fails_closed_on_unrecognized_sst_name() {
     let dir = test_dir("unrecognized-sst");
     let mut router = CfRouter::open(&dir, 64).unwrap();
@@ -116,9 +138,157 @@ fn next_file_counter_resumes_past_existing_router_ssts() {
     reopened.put(ColumnFamily::Base, b"k3", b"v3").unwrap();
     let summary = reopened.flush_cf(ColumnFamily::Base).unwrap();
 
+    // Raw routers have no commit domain (watermark 0); the flush ordinal
+    // chain still resumes past existing files.
     assert_eq!(
         summary.path.file_name().unwrap().to_str().unwrap(),
-        "00000000000000000003.sst"
+        "flush-00000000000000000000-0003.sst"
+    );
+    cleanup(dir);
+}
+
+/// The flush ordinal chain also resumes past legacy-shaped flush files
+/// (`{ordinal:020}.sst`), so upgraded directories never reuse an ordinal.
+#[test]
+fn next_file_counter_resumes_past_legacy_router_ssts() {
+    let dir = test_dir("next-file-legacy-resume");
+    let base = dir.join("cf/base");
+    fs::create_dir_all(&base).unwrap();
+    crate::sst::write_sst(
+        base.join("00000000000000000002.sst"),
+        [(b"k1".as_slice(), b"legacy".as_slice())],
+    )
+    .unwrap();
+
+    let mut reopened = CfRouter::open(&dir, 64).unwrap();
+    reopened.put(ColumnFamily::Base, b"k2", b"new").unwrap();
+    let summary = reopened.flush_cf(ColumnFamily::Base).unwrap();
+
+    assert_eq!(
+        summary.path.file_name().unwrap().to_str().unwrap(),
+        "flush-00000000000000000000-0003.sst"
+    );
+    // Both flush generations stay readable, newest ordinal winning.
+    assert_eq!(
+        reopened.get(ColumnFamily::Base, b"k1").unwrap(),
+        Some(b"legacy".to_vec())
+    );
+    assert_eq!(
+        reopened.get(ColumnFamily::Base, b"k2").unwrap(),
+        Some(b"new".to_vec())
+    );
+    cleanup(dir);
+}
+
+/// Issue #1138: a legacy flush ordinal that numerically exceeds a
+/// commit-domain seq in the same CF made newest-wins ordering undefined. The
+/// open now migrates the legacy `{ordinal:020}.sst` into the commit-anchored
+/// `flush-{0:020}-{ordinal:04}.sst` shape (watermark 0 = oldest), so the
+/// ambiguity is impossible by construction and the durable batch (newer) wins
+/// deterministically instead of the open failing closed.
+#[test]
+fn reopen_migrates_legacy_ordinal_vs_commit_seq_and_serves_newest() {
+    let dir = test_dir("ambiguous-order");
+    let base = dir.join("cf/base");
+    fs::create_dir_all(&base).unwrap();
+    // Legacy flush ordinal 5 vs durable batch commit seq 4 — the #1138 repro.
+    crate::sst::write_sst(
+        base.join("00000000000000000005.sst"),
+        [(b"k".as_slice(), b"stale".as_slice())],
+    )
+    .unwrap();
+    crate::sst::write_sst(
+        base.join("00000000000000000004-0000.sst"),
+        [(b"k".as_slice(), b"newer".as_slice())],
+    )
+    .unwrap();
+
+    let reopened = CfRouter::open(&dir, 64).expect("mixed-scheme layout migrates and opens");
+
+    // The legacy file was renamed to the commit-anchored (watermark 0) shape.
+    assert!(base.join("flush-00000000000000000000-0005.sst").exists());
+    assert!(!base.join("00000000000000000005.sst").exists());
+    // Newest-wins is now well-defined: the durable batch (seq 4) beats the
+    // migrated legacy flush (watermark 0, sorts oldest).
+    assert_eq!(
+        reopened.get(ColumnFamily::Base, b"k").unwrap(),
+        Some(b"newer".to_vec())
+    );
+    cleanup(dir);
+}
+
+/// Issue #1138, faithful on-disk reproduction: a CF holding the exact
+/// 507-legacy + 507-durable mixed-scheme layout found on the blocked editor
+/// state store. Before the fix this open was rejected with
+/// `CALYX_ASTER_SST_ORDER_AMBIGUOUS` (legacy ordinal 507 > commit seq 1). The
+/// migration folds every legacy `{ordinal:020}.sst` into the watermark-0
+/// commit-anchored shape, so the open now succeeds and newest-wins returns the
+/// value from the highest-seq durable batch.
+#[test]
+fn reopen_migrates_full_507_mixed_scheme_layout() {
+    let dir = test_dir("mixed-507");
+    let graph = dir.join("cf/graph");
+    fs::create_dir_all(&graph).unwrap();
+    // 1:1 pairs, ordinals/seqs 1..=507, both carrying the shared key so that
+    // newest-wins is observable: the legacy files hold a stale value, the
+    // durable batches hold the per-seq value (highest seq is newest).
+    for n in 1..=507_u64 {
+        crate::sst::write_sst(
+            graph.join(format!("{n:020}.sst")),
+            [(b"shared".as_slice(), b"legacy-stale".as_slice())],
+        )
+        .unwrap();
+        crate::sst::write_sst(
+            graph.join(format!("{n:020}-0000.sst")),
+            [(b"shared".as_slice(), format!("v{n}").as_bytes())],
+        )
+        .unwrap();
+    }
+
+    // Precondition: the raw layout is the #1138 ambiguity (proves the repro is
+    // real, not faked away by fixtures).
+    let legacy_files: Vec<PathBuf> = fs::read_dir(&graph)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    let raw_err = crate::storage_names::ensure_unambiguous_sst_order(
+        legacy_files.iter().map(PathBuf::as_path),
+    )
+    .expect_err("raw mixed layout is ambiguous");
+    assert_eq!(raw_err.code, "CALYX_ASTER_SST_ORDER_AMBIGUOUS");
+
+    // The open migrates and succeeds.
+    let reopened = CfRouter::open(&dir, 64).expect("mixed 507 layout migrates and opens");
+
+    // No legacy-shaped files remain; every one became a watermark-0 flush.
+    let remaining: Vec<String> = fs::read_dir(&graph)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    assert!(
+        !remaining.iter().any(
+            |name| crate::storage_names::classify_sst(std::path::Path::new(name))
+                .ok()
+                .flatten()
+                .is_some_and(|sst| matches!(
+                    sst,
+                    crate::storage_names::SstName::RouterLegacy { .. }
+                ))
+        ),
+        "no RouterLegacy files may remain after migration"
+    );
+    assert_eq!(
+        remaining
+            .iter()
+            .filter(|name| name.starts_with("flush-00000000000000000000-"))
+            .count(),
+        507
+    );
+
+    // Newest-wins is deterministic: the seq-507 durable batch wins.
+    assert_eq!(
+        reopened.get(ColumnFamily::Graph, b"shared").unwrap(),
+        Some(b"v507".to_vec())
     );
     cleanup(dir);
 }

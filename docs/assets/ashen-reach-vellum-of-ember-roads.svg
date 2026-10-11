@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="980" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">Vellum of Ember Roads</title>
+  <desc id="desc">Original Ashen Reach parchment map reference for a source-gated RPG map item. It shows named places, roads, rivers, faction marks, danger marginalia, torn grey Reach zones, and no live character marker, grid, quest pin, or route ribbon.</desc>
+  <defs>
+    <linearGradient id="vellum" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ead9ad"/>
+      <stop offset="45%" stop-color="#d2b981"/>
+      <stop offset="100%" stop-color="#aa7f46"/>
+    </linearGradient>
+    <radialGradient id="reachGrey" cx="55%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#b8b5a9" stop-opacity="0.85"/>
+      <stop offset="75%" stop-color="#595851" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#312d2a" stop-opacity="0.9"/>
+    </radialGradient>
+    <filter id="inkBleed" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="1448"/>
+      <feDisplacementMap in="SourceGraphic" scale="2"/>
+    </filter>
+    <style>
+      .ink { fill: none; stroke: #3a2514; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; filter: url(#inkBleed); }
+      .thin { fill: none; stroke: #4b3019; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+      .river { fill: none; stroke: #49636b; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.75; }
+      .road { fill: none; stroke: #6e3f1d; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 18 12; }
+      .minor-road { fill: none; stroke: #76512d; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 12 9; opacity: 0.9; }
+      .label { font-family: Georgia, 'Times New Roman', serif; font-size: 28px; fill: #2e2014; letter-spacing: 0; }
+      .small { font-family: Georgia, 'Times New Roman', serif; font-size: 20px; fill: #352315; letter-spacing: 0; }
+      .tiny { font-family: Georgia, 'Times New Roman', serif; font-size: 16px; fill: #3d2817; letter-spacing: 0; }
+      .warning { font-family: Georgia, 'Times New Roman', serif; font-size: 18px; fill: #5b241c; letter-spacing: 0; font-style: italic; }
+      .place { fill: #2f2116; stroke: #120b06; stroke-width: 2; }
+      .wash { fill: #6b6a61; opacity: 0.28; }
+      .seal { fill: #8b2e21; stroke: #3a1b15; stroke-width: 2; }
+      .gold { fill: #b7832e; stroke: #4b2e12; stroke-width: 2; }
+      .forest { fill: #415338; stroke: #26321d; stroke-width: 1.5; opacity: 0.95; }
+      .mount { fill: #5b5148; stroke: #30261e; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <path d="M72 40 C218 18 336 52 478 35 C671 13 826 48 1010 32 C1136 21 1257 26 1342 57 C1360 205 1327 349 1355 489 C1385 638 1355 790 1318 922 C1144 940 976 914 788 932 C583 952 399 912 220 939 C146 950 92 930 57 887 C72 754 46 628 62 488 C81 328 47 171 72 40 Z" fill="url(#vellum)" stroke="#6c4828" stroke-width="7"/>
+  <path d="M96 75 C267 52 436 80 590 61 C780 38 954 77 1130 57 C1235 46 1284 54 1310 85 C1293 177 1318 269 1288 364 C1327 489 1296 626 1323 734 C1294 801 1282 867 1240 897 C1065 871 891 913 707 892 C498 870 321 905 134 873 C103 730 104 596 92 457 C82 312 114 201 96 75 Z" fill="none" stroke="#8e6333" stroke-width="3" stroke-dasharray="18 14" opacity="0.55"/>
+
+  <path d="M1030 120 C1123 111 1212 127 1284 166 L1325 229 L1292 328 L1332 440 L1288 563 L1320 697 L1254 832 C1182 801 1115 819 1041 783 C1084 697 1058 620 1087 546 C1044 446 1067 337 1027 260 Z" fill="url(#reachGrey)" opacity="0.77"/>
+  <path d="M1042 167 C1115 170 1184 188 1241 230 C1197 252 1191 291 1232 337 C1177 350 1140 384 1177 444 C1116 461 1112 512 1162 555 C1119 590 1098 659 1127 721 C1079 708 1039 683 1017 641 C1034 565 1008 498 1032 429 C1000 342 1019 255 1042 167 Z" class="wash"/>
+
+  <path d="M150 180 C275 220 350 315 456 363 C566 412 681 385 791 435 C887 479 965 488 1058 548" class="river"/>
+  <path d="M238 822 C332 721 455 664 558 571 C626 508 690 501 775 473 C860 446 951 397 1037 326" class="river"/>
+  <path d="M720 155 C676 231 639 281 590 352 C529 442 503 537 438 626" class="river"/>
+
+  <path d="M308 466 C426 433 538 413 642 430 C764 449 876 494 986 532" class="road"/>
+  <path d="M985 532 C1018 555 1055 585 1095 633" class="minor-road"/>
+  <path d="M308 466 C264 412 215 365 164 318" class="minor-road"/>
+  <path d="M310 466 C405 555 487 632 575 705 C656 773 742 820 842 850" class="minor-road"/>
+  <path d="M642 430 C624 352 640 278 691 210" class="minor-road"/>
+  <path d="M575 705 C491 731 394 781 295 842" class="minor-road"/>
+  <path d="M842 850 C912 785 955 720 973 640 C994 584 1031 549 1087 529" class="minor-road"/>
+  <path d="M164 318 C206 247 264 186 348 139" class="minor-road"/>
+  <path d="M691 210 C761 193 844 196 934 224" class="minor-road"/>
+
+  <g id="terrain-symbols">
+    <path d="M146 244 l37 -79 l40 86 Z" class="mount"/>
+    <path d="M178 255 l32 -70 l37 77 Z" class="mount"/>
+    <path d="M225 221 l39 -85 l44 91 Z" class="mount"/>
+    <path d="M772 188 l30 -67 l38 75 Z" class="mount"/>
+    <path d="M820 205 l35 -82 l46 90 Z" class="mount"/>
+    <path d="M894 203 l41 -89 l49 99 Z" class="mount"/>
+    <path d="M1073 268 l31 -70 l39 79 Z" class="mount"/>
+    <path d="M1140 300 l35 -75 l42 83 Z" class="mount"/>
+    <path d="M1126 682 l38 -85 l49 94 Z" class="mount"/>
+
+    <circle cx="446" cy="663" r="20" class="forest"/>
+    <circle cx="480" cy="634" r="24" class="forest"/>
+    <circle cx="508" cy="675" r="19" class="forest"/>
+    <circle cx="536" cy="633" r="24" class="forest"/>
+    <circle cx="560" cy="677" r="22" class="forest"/>
+    <circle cx="604" cy="646" r="20" class="forest"/>
+    <circle cx="634" cy="688" r="21" class="forest"/>
+  </g>
+
+  <g id="place-galdmere">
+    <rect x="266" y="420" width="84" height="66" rx="8" class="place"/>
+    <path d="M282 420 v-42 h18 v42 M318 420 v-58 h18 v58" class="place"/>
+    <text x="206" y="520" class="label">Galdmere</text>
+    <text x="220" y="548" class="tiny">Mourning Wall / East Gate</text>
+  </g>
+
+  <g id="place-ashen-reach">
+    <path d="M1110 475 c53 -42 101 -35 142 16 c-27 56 -62 86 -118 93 c-42 -18 -60 -55 -24 -109 z" fill="#565850" stroke="#2b2923" stroke-width="4"/>
+    <text x="1092" y="612" class="label">Ashen Reach</text>
+    <text x="1101" y="640" class="warning">roads change after ash storms</text>
+  </g>
+
+  <g id="place-vael-mourn">
+    <circle cx="157" cy="314" r="33" class="place"/>
+    <path d="M142 314 c16 -34 37 -34 53 0 M151 298 v42 M175 298 v42" stroke="#c1ab76" stroke-width="4" fill="none"/>
+    <text x="92" y="377" class="label">Vael Mourn</text>
+    <text x="75" y="404" class="tiny">salt bells and drowned archives</text>
+  </g>
+
+  <g id="place-karthspire">
+    <path d="M184 146 l45 -92 l49 97 l-50 38 z" fill="#221914" stroke="#090504" stroke-width="4"/>
+    <path d="M225 66 v93" stroke="#9a6b37" stroke-width="4"/>
+    <text x="78" y="176" class="label">Karthspire</text>
+    <text x="74" y="205" class="tiny">Onyx tolls; altered mile-counts</text>
+  </g>
+
+  <g id="place-thornwilds">
+    <text x="437" y="758" class="label">Thornwilds</text>
+    <text x="411" y="786" class="tiny">root bridge moves with guides</text>
+  </g>
+
+  <g id="place-hollowgate-deeps">
+    <path d="M850 760 c-52 13 -86 46 -95 97 c60 24 111 20 153 -15 c-6 -39 -23 -67 -58 -82 z" fill="#211713" stroke="#070403" stroke-width="4"/>
+    <path d="M797 833 c32 -42 62 -42 94 0" stroke="#8c6b46" stroke-width="5" fill="none"/>
+    <text x="756" y="918" class="label">Hollowgate Deeps</text>
+    <text x="787" y="946" class="warning">depth omitted</text>
+  </g>
+
+  <g id="place-sunspire">
+    <path d="M667 146 l34 -83 l38 83 l-34 57 z" class="gold"/>
+    <circle cx="704" cy="114" r="17" fill="#ead580" stroke="#4b2e12" stroke-width="3"/>
+    <text x="622" y="237" class="label">Sunspire</text>
+    <text x="586" y="264" class="tiny">lamp-road survey improves shelters</text>
+  </g>
+
+  <g id="place-verdict-halls">
+    <rect x="883" y="180" width="96" height="72" rx="6" class="place"/>
+    <path d="M897 180 v-36 h66 v36 M914 252 v-37 h34 v37" fill="#2f2116" stroke="#120b06" stroke-width="2"/>
+    <text x="839" y="286" class="label">Verdict Halls</text>
+    <text x="814" y="313" class="tiny">writs and lawful causeway marks</text>
+  </g>
+
+  <g id="place-drakemarch">
+    <path d="M1096 719 c35 -44 84 -61 146 -52 c-8 51 -39 86 -92 104 c-25 -4 -43 -21 -54 -52 z" fill="#694332" stroke="#25140d" stroke-width="4"/>
+    <path d="M1160 669 c23 -30 52 -49 87 -58 c-3 34 -19 62 -48 84" fill="none" stroke="#4b2419" stroke-width="5"/>
+    <text x="1088" y="810" class="label">Drakemarch</text>
+    <text x="1068" y="838" class="warning">lairs traded as rumor, not dots</text>
+  </g>
+
+  <g id="route-labels">
+    <text x="438" y="407" class="small">Old Ash Road</text>
+    <text x="777" y="511" class="small">Broken Lantern Shrine Road</text>
+    <text x="972" y="555" class="small">Grey Ravine Track</text>
+    <text x="111" y="279" class="small">Bell Ferry</text>
+    <text x="207" y="192" class="small">Karth Pass</text>
+    <text x="475" y="600" class="small">Thorn Bridge</text>
+    <text x="815" y="398" class="small">Verdict Causeway</text>
+    <text x="621" y="337" class="small">Lamp Road</text>
+    <text x="704" y="794" class="small">Hollowgate Descent</text>
+    <text x="940" y="763" class="small">Drakemarch High Road</text>
+  </g>
+
+  <g id="faction-symbols">
+    <circle cx="704" cy="88" r="23" class="gold"/>
+    <path d="M704 68 v40 M688 88 h32" stroke="#4b2e12" stroke-width="5"/>
+    <text x="728" y="142" class="tiny">Dawnward lamp</text>
+
+    <circle cx="932" cy="160" r="24" class="seal"/>
+    <path d="M916 160 h32 M932 144 v32" stroke="#e2c28c" stroke-width="4"/>
+    <text x="966" y="166" class="tiny">Iron Verdict writ</text>
+
+    <circle cx="230" cy="82" r="23" fill="#17120f" stroke="#84532a" stroke-width="3"/>
+    <path d="M218 92 l12 -34 l14 34" stroke="#b7832e" stroke-width="4" fill="none"/>
+    <text x="263" y="90" class="tiny">Onyx seal</text>
+
+    <path d="M497 708 c-24 -40 12 -80 52 -55 c-38 0 -47 36 -18 56 z" fill="#31512b" stroke="#182715" stroke-width="3"/>
+    <text x="541" y="720" class="tiny">Thorn mark</text>
+
+    <path d="M174 336 c-14 -30 8 -52 27 -66 c26 35 24 68 -6 88 z" fill="#6d2e2b" stroke="#2d1513" stroke-width="3"/>
+    <text x="205" y="347" class="tiny">Vesper bell</text>
+  </g>
+
+  <g id="landmarks">
+    <path d="M914 533 l15 -42 l18 42 l-17 23 z" fill="#40281a" stroke="#1c0f08" stroke-width="3"/>
+    <circle cx="930" cy="511" r="9" fill="#d08434"/>
+    <text x="875" y="580" class="tiny">Broken Lantern Shrine</text>
+
+    <path d="M1078 598 c40 -20 69 -12 92 23 c-31 22 -61 27 -96 13 z" fill="#8b8b82" stroke="#3b3935" stroke-width="3"/>
+    <text x="1040" y="681" class="tiny">Grey Ravine notch</text>
+
+    <path d="M1198 458 c15 -54 48 -75 91 -61 c-47 16 -59 46 -42 90 z" fill="#4c4c45" stroke="#26241f" stroke-width="3"/>
+    <text x="1210" y="520" class="warning">ask before crossing ash</text>
+  </g>
+
+  <g id="marginalia">
+    <path d="M1080 100 c48 -18 91 -8 132 31 c-45 -5 -82 7 -111 37 c-1 -26 -8 -49 -21 -68 z" fill="#5b241c" opacity="0.65"/>
+    <text x="1042" y="201" class="warning">Here be ash-wings</text>
+    <path d="M1194 206 c28 22 48 51 58 86 c-27 -19 -56 -25 -87 -17 c23 -20 32 -43 29 -69 z" fill="#5b241c" opacity="0.55"/>
+    <text x="1152" y="356" class="warning">road not sworn</text>
+    <text x="58" y="882" class="warning">Sera Vell copy: prices rise after war news</text>
+    <text x="800" y="125" class="warning">court roads are longer than law admits</text>
+    <text x="344" y="136" class="warning">old ink rubbed by caravan hands</text>
+  </g>
+
+  <g id="compass-and-scale-note">
+    <circle cx="1242" cy="116" r="48" fill="none" stroke="#3a2514" stroke-width="4"/>
+    <path d="M1242 66 l14 50 l-14 50 l-14 -50 z" fill="#5b241c"/>
+    <path d="M1192 116 l50 -14 l50 14 l-50 14 z" fill="#b7832e" opacity="0.75"/>
+    <text x="1233" y="55" class="tiny">N</text>
+    <text x="1295" y="123" class="tiny">E</text>
+    <text x="1235" y="183" class="tiny">S</text>
+    <text x="1180" y="123" class="tiny">W</text>
+    <text x="1048" y="910" class="tiny">No survey grid.</text>
+  </g>
+
+  <text x="418" y="62" class="label">The Vellum of Ember Roads</text>
+  <text x="348" y="93" class="tiny">Galdmere cartographer copy, amended by bells, writs, lamp-stones, roots, and frightened scouts</text>
+</svg>

@@ -1,13 +1,12 @@
 # ── Claude Code local data ─────────────────────────────────────────────
-# Session worktrees grew to 15+ GB — never track. Same for credentials and
-# per-session scratch state. settings.json / agents / commands are kept.
+# The .claude/ folder is tracked (skills, agents, commands, settings). Only two
+# things must NEVER be committed: worktrees grew to 15+ GB, and credentials are
+# secrets. Everything else in .claude/ is intentionally versioned.
 .claude/worktrees/
 .claude/.credentials.json
-.claude/shell-snapshots/
-.claude/todos/
-.claude/projects/
-.claude/history.jsonl
-.claude/statsig/
+
+# ── Browser-automation scratch (console/page dumps) ─────────────────────
+.playwright-mcp/
 
 # ── Secrets ────────────────────────────────────────────────────────────
 # .env.example templates are still tracked (pattern below only hits real ones).
@@ -24,3 +23,28 @@
 Thumbs.db
 .idea/
 .vscode/
+
+# ── Python bytecode caches ─────────────────────────────────────────────
+__pycache__/
+*.pyc
+
+**/target/
+/Cargo.lock.bak
+
+# ── Scratch ────────────────────────────────────────────────────────────
+/tmp/
+
+# ── Local binary asset vault (downloaded libraries, never track) ────────
+/local-asset-vault/
+
+# ── Model caches (downloaded weights, multi-GB — never track) ───────────
+.hf-cache/
+target-area-cities/
+target-area-regions/
+target-area-dungeons/
+
+# Local AgentDB session DB (not project source)
+agentdb.db
+agentdb.db-shm
+agentdb.db-wal
+

@@ -1,0 +1,145 @@
+# Reference-artifact doctrine manifest (#1510). Gate: scripts/check-reference-artifacts.ps1
+# (wired into scripts/check-format.ps1, the local commit gate -- this repo has no CI).
+#
+# WHY THIS FILE EXISTS. Every image in docs/readme/ is declared a quality/layout FLOOR by
+# #780/#800. docs/readme/ED12-play-topdown.png was ALSO carrying a circular minimap, two
+# quest-tracker panels and a player-position "Here" marker -- every one of which the binding
+# acquired-map doctrine (#944 / ADR-944, #800 SS17, #1447, #1448) FORBIDS in the packaged
+# player runtime. A blessed floor and a binding constraint drifted apart and nothing checked
+# that they still agreed, so the next agent doing visual work would have faithfully rebuilt
+# the omniscient navigation the operator prohibited. Prose warnings rot; this manifest does
+# not. A reference artifact cannot enter or stay in this repo without a doctrine verdict.
+#
+# COLUMNS (tab-separated): <artifact> <status> <annotation> <refs>
+#
+# status:
+#   NOT_RUNTIME    Does not depict the packaged player runtime: concept/lore art, marketing
+#                  plate, menu screen, or EDITOR tooling UI. Editor authoring overviews --
+#                  including an editor minimap / world-overview panel -- are creator tooling
+#                  and are explicitly permitted; they must simply never ship as player HUD.
+#   RUNTIME_CLEAN  Depicts packaged player runtime and is doctrine-clean: no built-in
+#                  map/minimap, no GPS player dot, no quest pins/tracker, no route ribbon, no
+#                  automatic exploration-unlocked coverage.
+#   FORBIDDEN_NAV  Depicts packaged player runtime containing at least one FORBIDDEN surface.
+#                  The artifact is OBSOLETE on those elements. Every tracked markdown that
+#                  presents it must carry the annotation token in column 3 within 8 lines of
+#                  the reference, or the commit gate FAILS.
+#
+# annotation: for FORBIDDEN_NAV, the literal token every markdown presentation must carry.
+#             For NOT_RUNTIME / RUNTIME_CLEAN it must be exactly '-'.
+#
+# HOW TO ADD AN IMAGE: look at it, decide the status, add the row. There is no default.
+# HOW TO CLEAR A FORBIDDEN_NAV ROW: replace the artifact with a doctrine-clean capture
+# (#1537 does this for ED12-play-topdown.png), then flip the row to RUNTIME_CLEAN and drop
+# the annotation from the captions. Do NOT flip the row without replacing the pixels.
+docs/readme/01-hero.png	NOT_RUNTIME	-	#1510
+docs/readme/02-storytelling.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/03-mcp-agent.png	NOT_RUNTIME	-	#1510
+docs/readme/04-editor.png	NOT_RUNTIME	-	#1510
+docs/readme/05-calyx-lenses.png	NOT_RUNTIME	-	#1510
+docs/readme/06-living-agents.png	NOT_RUNTIME	-	#1510
+docs/readme/07-asset-pipeline.png	NOT_RUNTIME	-	#1510
+docs/readme/08-gameplay.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/09-vfx.png	NOT_RUNTIME	-	#1510
+docs/readme/10-architecture.png	NOT_RUNTIME	-	#1510
+docs/readme/11-future.png	NOT_RUNTIME	-	#1510
+docs/readme/12-character-creation.png	NOT_RUNTIME	-	#1510
+docs/readme/13-role-creation.png	NOT_RUNTIME	-	#1510
+docs/readme/14-class-showcase.png	NOT_RUNTIME	-	#1510
+docs/readme/15-race-showcase.png	NOT_RUNTIME	-	#1510
+docs/readme/16-pvp-duel.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/17-boss-dragon.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/B01-archdevil.png	NOT_RUNTIME	-	#1510
+docs/readme/B02-lichlord.png	NOT_RUNTIME	-	#1510
+docs/readme/B03-dracolich.png	NOT_RUNTIME	-	#1510
+docs/readme/B04-titan.png	NOT_RUNTIME	-	#1510
+docs/readme/B05-leviathan.png	NOT_RUNTIME	-	#1510
+docs/readme/B06-eldritch.png	NOT_RUNTIME	-	#1510
+docs/readme/B07-behemoth.png	NOT_RUNTIME	-	#1510
+docs/readme/B08-giantking.png	NOT_RUNTIME	-	#1510
+docs/readme/B09-wraithking.png	NOT_RUNTIME	-	#1510
+docs/readme/B10-mummylord.png	NOT_RUNTIME	-	#1510
+docs/readme/ED01-editor-shell.png	NOT_RUNTIME	-	#1510
+docs/readme/ED02-terrain-editor.png	NOT_RUNTIME	-	#1510
+docs/readme/ED03-object-editor.png	NOT_RUNTIME	-	#1510
+docs/readme/ED04-trigger-editor.png	NOT_RUNTIME	-	#1510
+docs/readme/ED05-ai-coauthor.png	NOT_RUNTIME	-	#1510
+docs/readme/ED06-material-assets.png	NOT_RUNTIME	-	#1510
+docs/readme/ED07-cinematic-director.png	NOT_RUNTIME	-	#1510
+docs/readme/ED08-vfx-editor.png	NOT_RUNTIME	-	#1510
+docs/readme/ED09-test-in-editor.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/ED10-publish-ecosystem.png	NOT_RUNTIME	-	#1510
+docs/readme/ED11-world-view.png	NOT_RUNTIME	-	#1510
+docs/readme/ED12-play-topdown.png	RUNTIME_CLEAN	-	#1537,#944,#1510
+docs/readme/ED13-play-firstperson.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/G01-graveyard.png	NOT_RUNTIME	-	#1510
+docs/readme/G02-memorial.png	NOT_RUNTIME	-	#1510
+docs/readme/G03-funeral.png	NOT_RUNTIME	-	#1510
+docs/readme/GP01-town.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP02-exploration.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP03-combat.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP04-mage-spell.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP05-dungeon.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP06-pvp.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP07-boss.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP08-party.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP09-inventory.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/GP10-dialogue.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/GP11-quest.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP12-faction-hideout.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP13-full-loot.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP14-infernal.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP15-necromancer.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP16-soulknight.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP17-tavern.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP18-faction-war.png	RUNTIME_CLEAN	-	#1558,#1537,#944,#1510
+docs/readme/GP19-spellbook.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/GP20-talents.png	RUNTIME_CLEAN	-	#1510,#944
+docs/readme/H01-gate-of-cinders.png	NOT_RUNTIME	-	#1510
+docs/readme/H02-descent.png	NOT_RUNTIME	-	#1510
+docs/readme/H03-ember-wastes.png	NOT_RUNTIME	-	#1510
+docs/readme/H04-iron-bastion.png	NOT_RUNTIME	-	#1510
+docs/readme/H05-hungering-dark.png	NOT_RUNTIME	-	#1510
+docs/readme/H06-bone-choir.png	NOT_RUNTIME	-	#1510
+docs/readme/H07-obsidian-throne.png	NOT_RUNTIME	-	#1510
+docs/readme/H08-relic-vault.png	NOT_RUNTIME	-	#1510
+docs/readme/L01-weave-hollow.png	NOT_RUNTIME	-	#1510
+docs/readme/L02-sundering.png	NOT_RUNTIME	-	#1510
+docs/readme/L03-ashen-reach.png	NOT_RUNTIME	-	#1510
+docs/readme/L04-galdmere.png	NOT_RUNTIME	-	#1510
+docs/readme/L05-pantheon.png	NOT_RUNTIME	-	#1510
+docs/readme/L06-god-war.png	NOT_RUNTIME	-	#1510
+docs/readme/L07-god-death.png	NOT_RUNTIME	-	#1510
+docs/readme/L08-god-healing.png	NOT_RUNTIME	-	#1510
+docs/readme/L09-god-greed.png	NOT_RUNTIME	-	#1510
+docs/readme/L10-god-magic.png	NOT_RUNTIME	-	#1510
+docs/readme/L11-faction-ironbound.png	NOT_RUNTIME	-	#1510
+docs/readme/L12-faction-dawnward.png	NOT_RUNTIME	-	#1510
+docs/readme/L13-faction-vesper.png	NOT_RUNTIME	-	#1510
+docs/readme/L14-faction-verdict.png	NOT_RUNTIME	-	#1510
+docs/readme/L15-faction-onyx.png	NOT_RUNTIME	-	#1510
+docs/readme/L16-faction-thornwild.png	NOT_RUNTIME	-	#1510
+docs/readme/L17-faction-hollow.png	NOT_RUNTIME	-	#1510
+docs/readme/L18-raid-warfare.png	NOT_RUNTIME	-	#1510
+docs/readme/L19-ashen-dragon.png	NOT_RUNTIME	-	#1510
+docs/readme/L20-outer-dark.png	NOT_RUNTIME	-	#1510
+docs/readme/S01-constitution.png	NOT_RUNTIME	-	#1510
+docs/readme/S02-aging.png	NOT_RUNTIME	-	#1510
+docs/readme/S03-withering.png	NOT_RUNTIME	-	#1510
+docs/readme/S04-unhallowed-knight.png	NOT_RUNTIME	-	#1510
+docs/readme/S05-soulweapon.png	NOT_RUNTIME	-	#1510
+docs/readme/S06-infernal-deeps.png	NOT_RUNTIME	-	#1510
+docs/readme/S07-legendary-loot.png	NOT_RUNTIME	-	#1510
+docs/readme/S08-ranks.png	NOT_RUNTIME	-	#1510
+docs/readme/S09-immortal-reward.png	NOT_RUNTIME	-	#1510
+docs/readme/S10-talent-tree.png	NOT_RUNTIME	-	#1510
+docs/readme/S11-full-loot.png	NOT_RUNTIME	-	#1510
+docs/readme/S12-rarity.png	NOT_RUNTIME	-	#1510
+docs/readme/S13-multiplayer-host.png	NOT_RUNTIME	-	#1510
+docs/readme/S14-tavern-rp.png	NOT_RUNTIME	-	#1510
+docs/readme/S15-mourning.png	NOT_RUNTIME	-	#1510
+docs/readme/S16-quest-designer.png	NOT_RUNTIME	-	#1510
+docs/readme/S17-agent-binding.png	NOT_RUNTIME	-	#1510
+docs/readme/S18-lore-authoring.png	NOT_RUNTIME	-	#1510
+docs/readme/S19-hybrid-immortal.png	NOT_RUNTIME	-	#1510
+docs/readme/S20-living-world.png	NOT_RUNTIME	-	#1510

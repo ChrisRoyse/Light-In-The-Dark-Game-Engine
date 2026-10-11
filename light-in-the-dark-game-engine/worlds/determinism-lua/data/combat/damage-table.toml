@@ -1,4 +1,0 @@
-attack-types = ["normal"]
-armor-types = ["unarmored"]
-[coefficients]
-normal = [1000]

@@ -7,7 +7,7 @@ does not determine a value, the entry reads "Not determined from source".
 
 > Sibling documents: storage internals in
 > [05_aster_storage.md](05_aster_storage.md), the ledger/provenance model in
-> [11_ledger_provenance.md](11_ledger_provenance.md), lenses/registry in
+> [11_ledger_provenance.md](11_ledger_provenance.md), lenses/catalog DB in
 > [07_registry_lenses.md](07_registry_lenses.md), search in
 > [08_sextant_search.md](08_sextant_search.md). The MCP server surface (a
 > sibling front-end over the same engine) is documented in
@@ -80,7 +80,7 @@ usage text and exits success (`dispatch.rs` lines 489–496).
 
 | Env var | Used by | Effect |
 |---|---|---|
-| `CALYX_HOME` | `lens`, `panel` | Root for lens catalog `lenses/registry.json`. |
+| `CALYX_HOME` | `lens`, `panel` | Root for lens catalog DB `lenses/catalog-db`; legacy `lenses/registry.json` is migration input only. |
 | `CALYX_LEDGER_DIR` | `merkle-root --range` | Ledger dir when no `--ledger`/`--vault`. |
 | `CALYX_HEALTH_LOG_PATH`, `CALYX_SECRET_ENV`, `CALYX_HEALTH_VAULT`, `CALYX_HEALTH_METRICS_URL` | `healthcheck` | Defaults for health probe paths/URL. |
 | `CALYX_PANEL_VRAM_SOFT_CAP_BYTES`, `CALYX_TEI_RESERVED_BYTES`, `CALYX_PANEL_RAM_SOFT_CAP_BYTES`, `CALYX_CPU_LENS_POOL_CAP` | `lens add` | Placement budget caps. |
@@ -115,7 +115,7 @@ topic explicitly persists fixtures (oracle topics; see §2.4). Dispatched in
 | `readback --hex <file>` | `<file>` path | `cli_support::readback_hex` | Reads file, prints hex. |
 | `readback --vault-tree <dir>` | `<dir>` | `vault_tree::readback_vault_tree` | Reads vault dir tree. |
 | `readback --vault <dir> --verify-against <sqlite.db>` | paths | `leapable::readback_dual_write_verify` | Reads vault + SQLite; prints verify JSON. |
-| `readback --vault <dir> --show-manifest` | path | `leapable::readback_shadow_manifest` | Reads MANIFEST. |
+| `readback --vault <dir> --show-manifest` | path | `manifest_readback::readback_vault_manifest` | Auto-detects vault format from on-disk bytes (issue #1262): shadow `MANIFEST` magic `CXSHDW1!` -> shadow readback; native `CURRENT` pointer -> native Aster manifest (tagged `vault_format:"native-aster"`); neither -> `CALYX_VAULT_FORMAT_UNRECOGNIZED`. |
 | `readback vault-manifest --field <name> --vault <dir>` | `--field`, `--vault` | `manifest_readback::readback_vault_manifest_field` | Reads one manifest field. |
 | `readback --cf <name> --vault <dir>` | `--cf`, `--vault` | `ops::readback_cf` | Reads a column family. |
 | `readback --cf ledger --vault <dir> --seq <n>` | `--seq` (u64) | `verify::readback_ledger_seq` | Reads ledger entry at seq. |
@@ -132,7 +132,7 @@ topic explicitly persists fixtures (oracle topics; see §2.4). Dispatched in
 | `readback dedup-check --vault <dir> --cx-id <cx> --slot <n> --tau <f> --near-cos <f> --distinct-cos <f> --vault-id <id> --salt <s>` | all 8 | `dedup_readback::readback_dedup_check` |
 | `readback dedup-audit --vault <dir> --cx-id <cx>` | both | `dedup_audit_readback::readback_dedup_audit` |
 | `readback dedup-undo --vault <dir> --token <json>` | both | `dedup_audit_readback::readback_dedup_undo` |
-| `readback cx-list --vault <dir>` | `--vault` | `dedup_audit_readback::readback_cx_list` |
+| `readback cx-list --vault <dir>` | `--vault` plus optional `--cx-id`, `--limit`, `--include-slots` | `dedup_audit_readback::readback_cx_list` - Decodes Base CF rows, including modality/input pointer/metadata/provenance; `--include-slots` also reads physical slot CF payloads. |
 | `readback kernel-health --root <dir> --kernel-id <cx>` | both | `kernel_health_readback::readback_kernel_health` |
 | `readback recurrence-series --vault <dir> --cx-id <cx>` | both | `recurrence_readback::readback_recurrence_series` |
 | `readback periodic-recall --vault <dir> (--hour <0-23> \| --day <0-6>) [...]` | variadic | `recurrence_readback::readback_periodic_recall` |
@@ -448,17 +448,26 @@ rows for manual FSV.
 ## 8. `lens` / `panel` — registry/panel inspection
 
 See [07_registry_lenses.md](07_registry_lenses.md). Order-independent parsers.
-Catalog path resolves to `<CALYX_HOME|--home>/lenses/registry.json`.
+Catalog authority resolves to `<CALYX_HOME|--home>/lenses/catalog-db` and is
+stored as Calyx/Aster Graph CF rows. Legacy `lenses/registry.json` is read only
+by `calyx lens migrate-catalog` as an explicit import source.
 
 ### `lens add --manifest <manifest.json> [--home <dir>]`
 
 Reads lens spec, estimates cost, chooses placement (uses the
 `CALYX_PANEL_*`/`CALYX_TEI_RESERVED_BYTES`/`CALYX_CPU_LENS_POOL_CAP` env caps),
-**writes/rewrites the catalog JSON**, prints `AddReport`. Rejects `--input`/`--repeat`.
+**writes/rewrites the catalog DB rows**, proves DB readback, and prints
+`AddReport`. Rejects `--input`/`--repeat`.
 
 ### `lens list [--home <dir>]`
 
 Read-only; prints `ListReport`. Rejects `--manifest`, `--input`, `--repeat`.
+
+### `lens migrate-catalog [--home <dir>] [--from <registry.json>]`
+
+Reads a legacy JSON catalog as import input, writes authoritative Calyx/Aster
+catalog rows under `lenses/catalog-db`, and verifies DB readback. Normal catalog
+operations never use the JSON file as authority.
 
 ### `lens commission --hf <id> --runtime <onnx-int8|onnx-fp32|candle-fp16|tei> [flags]`
 

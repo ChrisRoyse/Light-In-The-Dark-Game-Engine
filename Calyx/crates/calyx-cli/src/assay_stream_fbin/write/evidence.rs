@@ -1,19 +1,38 @@
 use serde::Serialize;
 
 use crate::assay_anchor_audit::AnchorAudit;
+use crate::partitioned_bench::rrf_plan::PartitionedRrfPlanDbReadback;
+use crate::partitioned_bench::timeline_store::TimelineDbReadback;
 
 use super::super::format::VectorFormat;
 use super::super::rows::RowStats;
+use super::super::template::LensTemplateDbReadback;
 
 pub(crate) const TEMPORAL_COUNTS_TOWARD_A35: bool = false;
 pub(crate) const TEMPORAL_LANE_ROLE: &str = "time_manipulation_walk_forward_backward_as_of_sidecar";
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Evidence {
+    pub(crate) artifact_mode: String,
     pub(crate) out_dir: String,
     pub(crate) rows_jsonl: String,
+    pub(crate) lens_descriptor_source: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) lens_template_cf_root: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) lens_template_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) lens_template_db_readback: Option<LensTemplateDbReadback>,
     pub(crate) plan_path: String,
+    pub(crate) plan_cf_root: String,
+    pub(crate) plan_association_key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) plan_db_readback: Option<PartitionedRrfPlanDbReadback>,
     pub(crate) timeline_path: String,
+    pub(crate) timeline_cf_root: String,
+    pub(crate) timeline_association_key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) timeline_db_readback: Option<TimelineDbReadback>,
     pub(crate) progress_path: String,
     pub(crate) export_report_path: String,
     pub(crate) vector_dir: String,
@@ -40,6 +59,7 @@ pub(crate) struct PreEncodeGateEvidence {
     pub(crate) bits_report: String,
     pub(crate) anchor_entropy_bits: f32,
     pub(crate) sufficiency_basis_bits: f32,
+    pub(crate) power_adjusted_target_bits: f32,
     pub(crate) deficit_bits: f32,
     pub(crate) estimate_bound: String,
     pub(crate) power_calibration_status: String,

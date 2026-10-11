@@ -467,7 +467,7 @@ The universal procedure (§5) applies everywhere. Domain-specific levers vary by
 | Defined terms | `FSV`, `RCA`, `MCP`, `CLAUDE.md` — each replaces a paragraph |
 | Format | Markdown headings + code blocks + tables. Avoid JSON in input. |
 
-### 7.2 — Policy / governance / hardening (this project's `hardeningprompt.md`)
+### 7.2 — Policy / governance / hardening (this project's `hardeningprompt.md` — a working draft lost before it was ever committed, see #1465; the levers below stand on their own)
 
 | Lever | Notes |
 |---|---|
@@ -555,9 +555,9 @@ with prose narrative stripped, and questions/answers themselves edited per §4.9
 **Compression ratio.** ~2.1x.
 **Round-trip.** Model regenerates the original prose narratives correctly from the bare pairs because narrative is exactly what models reconstruct well.
 
-### 8.4 — A real-world test: try this on `hardeningprompt.md`
+### 8.4 — A real-world test: try this on a hardening-style doc
 
-`docs2/hardeningprompt.md` (this repo) is ~14 axes × ~1000 lines of prose. Apply the procedure:
+The original test target, `hardeningprompt.md`, was a working draft in this repo that was lost before it was ever committed (see #1465). The exercise remains valid for any policy/hardening document of its shape — ~14 axes × ~1000 lines of prose. Apply the procedure:
 
 1. **Load-bearing set.** RFC 2119 keywords, axis names, primitive lists, deny-list paths, threshold numbers.
 2. **Likely cuts.** Per-axis "why this matters" preambles, repeated "in this section we will..." framings, parallel restatements between universal and project-specific sections.

@@ -6,9 +6,12 @@ use calyx_core::{
 };
 use serde::{Deserialize, Serialize};
 
+mod contract;
+
 use crate::frozen::FrozenLensContract;
 use crate::ingest_microbatch::{IngestLensOutcome, IngestMicrobatchController, IngestPanelReadout};
 use crate::spec::{LensHealth, LensSpec};
+use contract::ensure_spec_declares_contract;
 
 /// Runtime registry for frozen lens measurement instruments.
 #[derive(Clone, Default)]
@@ -92,6 +95,21 @@ impl Registry {
         L: Lens + 'static,
     {
         self.register_frozen_inner(lens, contract, None, Some(spec))
+    }
+
+    /// Registers an already-constructed frozen lens with structured registry metadata.
+    pub fn register_frozen_arc_with_spec(
+        &mut self,
+        lens: Arc<dyn Lens>,
+        contract: FrozenLensContract,
+        spec: LensSpec,
+    ) -> Result<LensId> {
+        self.register_persisted_arc(
+            lens,
+            contract,
+            Some(spec),
+            DeterminismProof::ContractOnlyExemption,
+        )
     }
 
     /// Registers a frozen lens after a deterministic two-pass probe.
@@ -263,6 +281,9 @@ impl Registry {
         determinism: DeterminismProof,
     ) -> Result<LensId> {
         contract.verify_registration(lens.as_ref())?;
+        if let Some(spec) = &spec {
+            ensure_spec_declares_contract(&contract, spec)?;
+        }
         let id = lens.id();
         if self.lenses.contains_key(&id) {
             return Err(CalyxError::registry_duplicate(format!(
@@ -307,6 +328,9 @@ impl Registry {
         L: Lens + 'static,
     {
         contract.verify_registration(&lens)?;
+        if let Some(spec) = &spec {
+            ensure_spec_declares_contract(&contract, spec)?;
+        }
         if let Some(probe) = probe {
             contract.verify_determinism_probe(&lens, probe)?;
         }

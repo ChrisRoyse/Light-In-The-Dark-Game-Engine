@@ -41,6 +41,11 @@ impl BuildArgs {
         let mut region_build_parallelism = None;
         let mut final_assignment_probe = DEFAULT_FINAL_ASSIGNMENT_PROBE;
         let mut final_assignment_cap = None;
+        let mut balance_cap = None;
+        let mut assignment_epsilon: Option<f32> = None;
+        let mut max_replication: Option<usize> = None;
+        let mut rng_rule = true;
+        let mut rng_factor: Option<f32> = None;
         let mut backend = DiskAnnBuildBackend::CpuVamana;
         let mut distance_metric = PartitionDistanceMetric::UnitL2;
         let mut progress_file = None;
@@ -71,6 +76,25 @@ impl BuildArgs {
                 "--final-assignment-cap" => {
                     final_assignment_cap = Some(parse(&next()?, "--final-assignment-cap")?)
                 }
+                "--balance-cap" => balance_cap = Some(parse(&next()?, "--balance-cap")?),
+                "--assignment-epsilon" => {
+                    assignment_epsilon = Some(parse(&next()?, "--assignment-epsilon")?)
+                }
+                "--max-replication" => {
+                    max_replication = Some(parse(&next()?, "--max-replication")?)
+                }
+                "--rng-rule" => {
+                    rng_rule = match next()?.as_str() {
+                        "true" => true,
+                        "false" => false,
+                        other => {
+                            return Err(CliError::usage(format!(
+                                "--rng-rule expects true or false, got {other}"
+                            )));
+                        }
+                    }
+                }
+                "--rng-factor" => rng_factor = Some(parse(&next()?, "--rng-factor")?),
                 "--build-backend" => {
                     backend = next()?.parse().map_err(CliError::usage)?;
                 }
@@ -91,11 +115,30 @@ impl BuildArgs {
         if final_assignment_cap == Some(0) {
             return Err(CliError::usage("--final-assignment-cap must be > 0"));
         }
+        if balance_cap == Some(0) {
+            return Err(CliError::usage("--balance-cap must be > 0"));
+        }
+        if let Some(epsilon) = assignment_epsilon
+            && (!epsilon.is_finite() || epsilon < 0.0)
+        {
+            return Err(CliError::usage(
+                "--assignment-epsilon must be finite and >= 0",
+            ));
+        }
+        if max_replication == Some(0) {
+            return Err(CliError::usage("--max-replication must be >= 1"));
+        }
+        if let Some(factor) = rng_factor
+            && (!factor.is_finite() || factor <= 0.0)
+        {
+            return Err(CliError::usage("--rng-factor must be finite and > 0"));
+        }
         if vectors.is_none() && n_cx == 0 {
             return Err(CliError::usage(
                 "provide --vectors <file.fbin|file.i8bin> (real embeddings) or --n-cx (synthetic)",
             ));
         }
+        let defaults = PartitionBuildParams::new(n_cx.max(1), dim.max(1), regions, seed);
         let p = PartitionBuildParams {
             n_cx,
             dim,
@@ -109,6 +152,13 @@ impl BuildArgs {
                 .unwrap_or_else(|| PartitionBuildParams::default_region_build_parallelism(regions)),
             final_assignment_probe,
             final_assignment_cap,
+            balance_cap,
+            assignment_boundary_epsilon: assignment_epsilon
+                .unwrap_or(defaults.assignment_boundary_epsilon),
+            assignment_max_replication: max_replication
+                .unwrap_or(defaults.assignment_max_replication),
+            assignment_rng_rule: rng_rule,
+            assignment_rng_factor: rng_factor.unwrap_or(defaults.assignment_rng_factor),
         };
         Ok(Self {
             vault,
@@ -178,10 +228,28 @@ pub(crate) fn run(args: &[String]) -> CliResult {
         "final_assignment_cap": manifest.final_assignment_cap,
         "final_assignment_boundary_epsilon": manifest.final_assignment_boundary_epsilon,
         "final_assignment_max_replication": manifest.final_assignment_max_replication,
+        "final_assignment_rng_rule": manifest.final_assignment_rng_rule,
+        "final_assignment_rng_factor": manifest.final_assignment_rng_factor,
+        "final_assignment_closure": manifest.final_assignment_closure,
+        "region_balance_cap": manifest.region_balance_cap,
         "root_graph_rel": manifest.root_graph_rel,
         "centroids_rel": manifest.centroids_rel,
         "build_seconds": build_secs,
     });
+    if manifest.final_assignment_max_replication > 1
+        && let Some(closure) = &manifest.final_assignment_closure
+        && closure.replicas_stored == 0
+    {
+        eprintln!(
+            "WARN: closure replication is a no-op: max_replication={} stored 0 replicas \
+             (rng_skipped={}, epsilon_filtered={}, cap_skipped={}); at coarse geometries the \
+             RNG rule prunes all boundary replicas — raise --rng-factor or use --max-replication 1 (#1129)",
+            manifest.final_assignment_max_replication,
+            closure.rng_skipped,
+            closure.epsilon_filtered,
+            closure.cap_skipped,
+        );
+    }
     if total < manifest.n_cx as usize
         || total > max_total
         || total != manifest.stored_region_members
@@ -197,7 +265,8 @@ pub(crate) fn run(args: &[String]) -> CliResult {
     }
     println!(
         "{}",
-        serde_json::to_string_pretty(&report).map_err(CliError::from)?
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| CliError::runtime(format!("serialize partition report: {error}")))?
     );
     Ok(())
 }

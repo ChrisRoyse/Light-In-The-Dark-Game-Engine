@@ -1,0 +1,14 @@
+# Doctrine-reference integrity manifest (#1465). One repo-relative path per line: every
+# file that binding doctrine (a GitHub issue body, #800/#777/#778, or a docs2 handbook)
+# cites as authoritative and therefore MUST resolve on a clean checkout. The gate
+# (scripts/check-doctrine-refs.ps1) fails if any listed path is not tracked by git, which
+# is exactly the failure #1465 caught: fsv.md was cited by #800 but had been silently
+# deleted by the 94aa58c8 workspace-sync and lived in only one working tree.
+#
+# Add a row whenever new doctrine starts citing a file as binding. Do NOT list files that
+# are merely mentioned; list files a clean checkout must contain for doctrine to hold.
+prompts/fsv.md
+docs2/BUILDING_ON_CALYX.md
+docs2/decisions/DEC-1519-calyx-is-a-blueprint.md
+docs2/compressionprompt.md
+docs2/modulateprompt.md

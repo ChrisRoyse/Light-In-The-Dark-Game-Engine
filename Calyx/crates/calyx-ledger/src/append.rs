@@ -59,6 +59,11 @@ pub trait LedgerCfStore {
     /// Returns all rows sorted by sequence number.
     fn scan(&self) -> Result<Vec<LedgerRow>>;
 
+    /// Reads one ledger row by sequence number.
+    fn read_seq(&self, seq: u64) -> Result<Option<LedgerRow>> {
+        Ok(self.scan()?.into_iter().find(|row| row.seq == seq))
+    }
+
     /// Writes a new row. Implementations must reject overwrites.
     fn put_new(&mut self, seq: u64, bytes: &[u8]) -> Result<()>;
 
@@ -318,6 +323,13 @@ impl LedgerCfStore for MemoryLedgerStore {
             .collect())
     }
 
+    fn read_seq(&self, seq: u64) -> Result<Option<LedgerRow>> {
+        Ok(self.rows.get(&seq).map(|bytes| LedgerRow {
+            seq,
+            bytes: bytes.clone(),
+        }))
+    }
+
     fn put_new(&mut self, seq: u64, bytes: &[u8]) -> Result<()> {
         if self.rows.contains_key(&seq) {
             return Err(append_only_violation(format!(
@@ -359,6 +371,37 @@ pub fn reject_tombstone(seq: u64) -> Result<()> {
 }
 
 fn recover_tip(store: &impl LedgerCfStore) -> Result<(u64, [u8; HASH_BYTES], u64)> {
+    if let Some(anchor) = store.head_anchor()? {
+        if anchor.height == 0 {
+            return Ok((0, [0_u8; HASH_BYTES], 0));
+        }
+        let last_seq = anchor.height.saturating_sub(1);
+        let row = store.read_seq(last_seq)?.ok_or_else(|| {
+            CalyxError::ledger_chain_broken(format!(
+                "ledger end-truncated: anchored head {} requires missing seq {last_seq}",
+                anchor.height
+            ))
+        })?;
+        if row.seq != last_seq {
+            return Err(CalyxError::ledger_corrupt(format!(
+                "ledger read_seq({last_seq}) returned row seq {}",
+                row.seq
+            )));
+        }
+        let entry = decode(&row.bytes)?;
+        if entry.seq != row.seq {
+            return Err(CalyxError::ledger_corrupt(format!(
+                "ledger key seq {} != encoded seq {}",
+                row.seq, entry.seq
+            )));
+        }
+        if entry.entry_hash != anchor.tip_hash {
+            return Err(CalyxError::ledger_chain_broken(
+                "ledger anchored tip hash does not match last row",
+            ));
+        }
+        return Ok((anchor.height, anchor.tip_hash, entry.ts));
+    }
     let mut next_seq = 0_u64;
     let mut prev_hash = [0_u8; HASH_BYTES];
     let mut last_ts = 0_u64;

@@ -1,7 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
 use calyx_core::CxId;
-use calyx_mincut::{LpSolution, SccResult, SolveStatus};
+use calyx_mincut::{
+    LpSolution, MincutError, SccResult, SolveStatus, solve_mfvs_lp, verify_feedback_vertex_set,
+};
 use calyx_paths::AssocGraph;
 use serde::{Deserialize, Serialize};
 
@@ -38,7 +40,7 @@ impl Default for LpRoundParams {
     fn default() -> Self {
         Self {
             threshold: 0.5,
-            fallback_to_heuristic: true,
+            fallback_to_heuristic: false,
         }
     }
 }
@@ -135,16 +137,12 @@ pub fn lp_round_kernel_graph(
 ) -> Result<KernelGraph> {
     validate_lp_params(params)?;
     if params.fallback_to_heuristic {
-        let mut fallback = kernel_graph.clone();
-        fallback
-            .warnings
-            .push("CALYX_KERNEL_LP_UNAVAILABLE: external LP solver not configured".to_string());
-        fallback.lp_fraction = Some(fallback.source_fraction);
-        return Ok(fallback);
+        return Err(LodestarError::KernelLpUnavailable {
+            detail: "heuristic fallback is disabled for the bounded exact MFVS solver".to_string(),
+        });
     }
-    Err(LodestarError::KernelLpUnavailable {
-        detail: "external LP solver not configured".to_string(),
-    })
+    let solution = solve_mfvs_lp(&kernel_graph.graph).map_err(map_lp_solver_error)?;
+    lp_round_kernel_graph_from_solution(kernel_graph, params, &solution)
 }
 
 pub fn lp_round_kernel_graph_from_solution(
@@ -160,25 +158,25 @@ pub fn lp_round_kernel_graph_from_solution(
                 detail: "LP solution status is infeasible".to_string(),
             });
         }
-        _ => return lp_round_kernel_graph(kernel_graph, params),
+        other => {
+            return Err(LodestarError::KernelLpUnavailable {
+                detail: format!(
+                    "LP solution status {other:?} is not optimal; heuristic fallback is disabled"
+                ),
+            });
+        }
     }
     let ids: Vec<_> = kernel_graph.graph.node_ids().collect();
-    if solution.values.len() != ids.len() {
-        return Err(LodestarError::KernelInvalidParams {
-            detail: format!(
-                "LP solution has {} values for {} nodes",
-                solution.values.len(),
-                ids.len()
-            ),
-        });
-    }
+    validate_lp_solution_values(solution, ids.len())?;
     let selected: Vec<_> = ids
         .iter()
         .zip(&solution.values)
         .filter_map(|(id, value)| (*value >= params.threshold).then_some(*id))
         .collect();
-    if selected.is_empty() && !ids.is_empty() {
-        return Err(LodestarError::KernelEmptyResult);
+    if !verify_feedback_vertex_set(&kernel_graph.graph, &selected)? {
+        return Err(LodestarError::KernelLpInfeasible {
+            detail: "rounded LP solution does not hit every directed cycle".to_string(),
+        });
     }
     let lp_fraction = if ids.is_empty() {
         0.0
@@ -195,25 +193,83 @@ pub fn lp_round_kernel_graph_from_solution(
     )
 }
 
+fn validate_lp_solution_values(solution: &LpSolution, expected_len: usize) -> Result<()> {
+    if solution.values.len() != expected_len {
+        return Err(LodestarError::KernelInvalidParams {
+            detail: format!(
+                "LP solution has {} values for {} nodes",
+                solution.values.len(),
+                expected_len
+            ),
+        });
+    }
+    if !solution.objective_value.is_finite() {
+        return Err(LodestarError::KernelInvalidParams {
+            detail: format!(
+                "LP solution objective_value must be finite, got {}",
+                solution.objective_value
+            ),
+        });
+    }
+    for (idx, value) in solution.values.iter().copied().enumerate() {
+        if !value.is_finite() {
+            return Err(LodestarError::KernelInvalidParams {
+                detail: format!("LP solution value at index {idx} must be finite, got {value}"),
+            });
+        }
+        if !(0.0..=1.0).contains(&value) {
+            return Err(LodestarError::KernelInvalidParams {
+                detail: format!("LP solution value at index {idx}={value} is outside [0, 1]"),
+            });
+        }
+    }
+    let objective_sum: f64 = solution.values.iter().sum();
+    if (solution.objective_value - objective_sum).abs() > 1.0e-6 {
+        return Err(LodestarError::KernelInvalidParams {
+            detail: format!(
+                "LP solution objective_value {} does not match sum(values) {objective_sum}",
+                solution.objective_value
+            ),
+        });
+    }
+    Ok(())
+}
+
+/// Total (in + out) degree per node index, in one O(V+E) pass over the edge
+/// list. Replaces per-node `in_degree` calls, each of which is O(E).
+fn total_degrees(graph: &AssocGraph) -> Result<Vec<usize>> {
+    let mut degrees = vec![0_usize; graph.node_count()];
+    for edge in graph.edges() {
+        degrees[edge.src] += 1;
+        degrees[edge.dst] += 1;
+    }
+    Ok(degrees)
+}
+
 fn score_nodes(
     graph: &AssocGraph,
     betweenness: &BTreeMap<CxId, f64>,
     anchors: &[CxId],
     params: &KernelGraphParams,
 ) -> Result<Vec<NodeScore>> {
-    let max_degree = graph
-        .node_ids()
-        .map(|id| Ok(graph.in_degree(id)? + graph.out_degree(id)?))
-        .collect::<calyx_paths::Result<Vec<_>>>()?
-        .into_iter()
-        .max()
-        .unwrap_or(1)
-        .max(1) as f64;
+    // Precompute total degree per node in a single O(V+E) pass. `in_degree` is
+    // O(E) per call (it scans every edge), so the previous per-node calls were
+    // O(V·E) — intractable on the corpus graph. `out_degree` is O(1) (adjacency
+    // ranges); in-degrees we count once over all edges.
+    let degrees = total_degrees(graph)?;
+    let max_degree = degrees.iter().copied().max().unwrap_or(1).max(1) as f64;
+    // Anchor membership in O(1); a node that is itself an anchor is grounded at
+    // distance 0 without the BFS (corpus is fully anchored → no BFS at all).
+    let anchor_set: HashSet<CxId> = anchors.iter().copied().collect();
     let mut scored = Vec::new();
-    for id in graph.node_ids() {
-        let degree = (graph.in_degree(id)? + graph.out_degree(id)?) as f64 / max_degree;
+    for (index, id) in graph.node_ids().enumerate() {
+        let degree = degrees[index] as f64 / max_degree;
         let bet = *betweenness.get(&id).unwrap_or(&0.0);
-        let gnd = groundedness_distance(graph, id, anchors, params.max_groundedness_distance)?;
+        let gnd = if anchor_set.contains(&id) {
+            Some(0)
+        } else {
+            groundedness_distance(graph, id, anchors, params.max_groundedness_distance)?
+        };
         let gnd_score = match gnd {
             Some(distance) => {
                 1.0 - (distance.min(params.max_groundedness_distance) as f64
@@ -255,9 +311,6 @@ fn build_kernel_graph(
     lp_fraction: Option<f32>,
     warnings: Vec<String>,
 ) -> Result<KernelGraph> {
-    if selected.is_empty() && !source.is_empty() {
-        return Err(LodestarError::KernelEmptyResult);
-    }
     let selected_set: BTreeSet<_> = selected.iter().copied().collect();
     let mut builder = AssocGraph::builder();
     for id in &selected {
@@ -279,6 +332,15 @@ fn build_kernel_graph(
         scores,
         warnings,
     })
+}
+
+fn map_lp_solver_error(error: MincutError) -> LodestarError {
+    match error {
+        err @ MincutError::LpSolverLimit { .. } => LodestarError::KernelLpUnavailable {
+            detail: err.to_string(),
+        },
+        other => other.into(),
+    }
 }
 
 fn validate_params(params: &KernelGraphParams) -> Result<()> {

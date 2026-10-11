@@ -1,6 +1,10 @@
 //! Plain graph key-encoding layer for 0-lens collections.
 
+mod assoc_graph;
+mod csr_store;
 mod key;
+mod lifecycle;
+mod physical;
 mod types;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -10,15 +14,32 @@ use calyx_paths::AssocGraph;
 
 use crate::cf::{ColumnFamily, KeyRange};
 use crate::vault::AsterVault;
+use assoc_graph::{assoc_graph_from_csr, flatten_csr_edges};
 use key::{
     GraphKeyspace, MAX_TRAVERSE_COST, MAX_TRAVERSE_HOPS, graph_corrupt, graph_limit, graph_missing,
     path_error, validate_edge_type, validate_value,
 };
 
+pub use lifecycle::{
+    GraphCollectionGenerationReadback, GraphCollectionGenerationState,
+    GraphCollectionGenerationStatus, GraphCollectionLifecycle, PhysicalGraphCollectionLifecycle,
+};
+pub use physical::PhysicalPlainGraph;
 pub use types::{
     CsrCommit, GraphEdgeCommit, PlainGraphCsr, PlainGraphCsrEdge, PlainGraphDirection,
-    PlainGraphEdge, TraverseOptions,
+    PlainGraphEdge, PlainGraphEdgeWeightStats, TraverseOptions, plain_graph_edge_raw_weight,
+    plain_graph_normalized_edge_weight,
 };
+use types::{EdgeWeightPolicy, EdgeWeightSource, plain_graph_edge_raw_weight_with_policy};
+
+#[derive(Clone, Debug)]
+struct WeightedEdgeDraft {
+    src: CxId,
+    src_index: usize,
+    dst: CxId,
+    edge_type: String,
+    raw_weight: f32,
+}
 
 pub struct PlainGraph<'a, C: Clock> {
     vault: &'a AsterVault<C>,
@@ -143,6 +164,15 @@ impl<'a, C: Clock> PlainGraph<'a, C> {
     }
 
     pub fn csr_projection(&self, snapshot: Seq) -> Result<PlainGraphCsr> {
+        self.csr_projection_with_weight_policy(snapshot, EdgeWeightPolicy::Strict)
+            .map(|(projection, _stats)| projection)
+    }
+
+    fn csr_projection_with_weight_policy(
+        &self,
+        snapshot: Seq,
+        weight_policy: EdgeWeightPolicy,
+    ) -> Result<(PlainGraphCsr, PlainGraphEdgeWeightStats)> {
         let nodes = self.node_ids(snapshot)?;
         let node_index = nodes
             .iter()
@@ -153,8 +183,10 @@ impl<'a, C: Clock> PlainGraph<'a, C> {
         for node in &nodes {
             builder.add_node(*node, 1.0).map_err(path_error)?;
         }
-        let mut by_src = vec![Vec::<PlainGraphCsrEdge>::new(); nodes.len()];
-        for (key, _) in self.scan_at(snapshot, &self.keys.edge_out_range())? {
+        let mut stats = PlainGraphEdgeWeightStats::default();
+        let mut drafts = Vec::new();
+        let mut max_raw_weight = 0.0_f32;
+        for key in self.scan_keys_at(snapshot, &self.keys.edge_out_range())? {
             let edge = self.keys.decode_edge_out_key(&key)?;
             let src = *node_index.get(&edge.src).ok_or_else(|| {
                 graph_corrupt(format!("edge source {} has no node row", edge.src))
@@ -165,34 +197,91 @@ impl<'a, C: Clock> PlainGraph<'a, C> {
                     edge.dst
                 )));
             }
-            builder
-                .add_edge(edge.src, edge.dst, 1.0)
-                .map_err(path_error)?;
-            by_src[src].push(PlainGraphCsrEdge {
+            let value = self
+                .vault
+                .read_cf_at(snapshot, ColumnFamily::Graph, &key)?
+                .ok_or_else(|| graph_corrupt("graph edge row disappeared during CSR projection"))?;
+            let parsed = plain_graph_edge_raw_weight_with_policy(&value, weight_policy)?;
+            match parsed.source {
+                EdgeWeightSource::Explicit => stats.explicit_weight_edges += 1,
+                EdgeWeightSource::LegacyUnit => stats.legacy_unit_weight_edges += 1,
+            }
+            max_raw_weight = max_raw_weight.max(parsed.raw);
+            drafts.push(WeightedEdgeDraft {
+                src: edge.src,
+                src_index: src,
                 dst: edge.dst,
                 edge_type: edge.edge_type,
+                raw_weight: parsed.raw,
+            });
+        }
+        let mut by_src = vec![Vec::<PlainGraphCsrEdge>::new(); nodes.len()];
+        for draft in drafts {
+            let weight = plain_graph_normalized_edge_weight(draft.raw_weight, max_raw_weight)?;
+            builder
+                .add_edge(draft.src, draft.dst, weight)
+                .map_err(path_error)?;
+            by_src[draft.src_index].push(PlainGraphCsrEdge {
+                dst: draft.dst,
+                edge_type: draft.edge_type,
+                weight,
             });
         }
         let association_edge_count = builder.build().edge_count();
         let (offsets, edges) = flatten_csr_edges(by_src);
-        Ok(PlainGraphCsr {
+        let projection = PlainGraphCsr {
             collection: self.keys.collection_name(),
             source_snapshot: snapshot,
             nodes,
             offsets,
             edges,
             association_edge_count,
-        })
+        };
+        Ok((projection, stats))
     }
 
+    /// Persist the collection-local CSR projection as ordered byte segments plus
+    /// a manifest.
+    ///
+    /// This scans only this `PlainGraph` collection's node and outgoing-edge
+    /// key ranges; unrelated Graph CF collections are outside the key prefixes
+    /// used by `self.keys`.
+    ///
     pub fn rebuild_csr(&self, snapshot: Seq) -> Result<CsrCommit> {
         let projection = self.csr_projection(snapshot)?;
-        let value = serde_json::to_vec(&projection)
-            .map_err(|error| graph_corrupt(format!("encode CSR projection: {error}")))?;
+        self.write_csr_projection(projection)
+    }
+
+    pub fn rebuild_csr_with_legacy_unit_weights(
+        &self,
+        snapshot: Seq,
+    ) -> Result<(CsrCommit, PlainGraphEdgeWeightStats)> {
+        let (projection, stats) =
+            self.csr_projection_with_weight_policy(snapshot, EdgeWeightPolicy::LegacyUnit)?;
+        self.write_csr_projection(projection)
+            .map(|commit| (commit, stats))
+    }
+
+    pub fn write_csr_projection(&self, projection: PlainGraphCsr) -> Result<CsrCommit> {
+        if projection.collection != self.keys.collection_name() {
+            return Err(graph_corrupt(format!(
+                "CSR projection collection {} does not match graph collection {}",
+                projection.collection,
+                self.keys.collection_name()
+            )));
+        }
+        let (manifest_bytes, segments) = csr_store::encode_csr_segments(&self.keys, &projection)?;
+        for (ordinal, segment) in segments.into_iter().enumerate() {
+            self.vault.write_cf(
+                ColumnFamily::Graph,
+                self.keys.csr_segment_key(ordinal as u32),
+                segment,
+            )?;
+        }
         let key = self.keys.csr_key();
         let seq = self
             .vault
-            .write_cf(ColumnFamily::Graph, key.clone(), value)?;
+            .write_cf(ColumnFamily::Graph, key.clone(), manifest_bytes)?;
         Ok(CsrCommit {
             seq,
             key,
@@ -201,31 +290,46 @@ impl<'a, C: Clock> PlainGraph<'a, C> {
     }
 
     pub fn read_csr(&self, snapshot: Seq) -> Result<Option<PlainGraphCsr>> {
-        let Some(bytes) =
-            self.vault
-                .read_cf_at(snapshot, ColumnFamily::Graph, &self.keys.csr_key())?
-        else {
-            return Ok(None);
-        };
-        serde_json::from_slice(&bytes)
-            .map(Some)
-            .map_err(|error| graph_corrupt(format!("decode CSR projection: {error}")))
+        csr_store::load_csr(&self.keys, |key| {
+            self.vault.read_cf_at(snapshot, ColumnFamily::Graph, key)
+        })
     }
 
     pub fn assoc_graph(&self, snapshot: Seq) -> Result<AssocGraph> {
+        if let Some(csr) = self.read_csr(snapshot)? {
+            return assoc_graph_from_csr(&csr);
+        }
         let nodes = self.node_ids(snapshot)?;
         let node_set = nodes.iter().copied().collect::<BTreeSet<_>>();
         let mut builder = AssocGraph::builder();
         for node in &nodes {
             builder.add_node(*node, 1.0).map_err(path_error)?;
         }
-        for (key, _) in self.scan_at(snapshot, &self.keys.edge_out_range())? {
+        let mut drafts = Vec::new();
+        let mut max_raw_weight = 0.0_f32;
+        for key in self.scan_keys_at(snapshot, &self.keys.edge_out_range())? {
             let edge = self.keys.decode_edge_out_key(&key)?;
             if !node_set.contains(&edge.src) || !node_set.contains(&edge.dst) {
                 return Err(graph_corrupt("graph edge endpoint has no node row"));
             }
+            let value = self
+                .vault
+                .read_cf_at(snapshot, ColumnFamily::Graph, &key)?
+                .ok_or_else(|| graph_corrupt("graph edge row disappeared during assoc scan"))?;
+            let raw_weight = plain_graph_edge_raw_weight(&value)?;
+            max_raw_weight = max_raw_weight.max(raw_weight);
+            drafts.push(WeightedEdgeDraft {
+                src: edge.src,
+                src_index: 0,
+                dst: edge.dst,
+                edge_type: edge.edge_type,
+                raw_weight,
+            });
+        }
+        for draft in drafts {
+            let weight = plain_graph_normalized_edge_weight(draft.raw_weight, max_raw_weight)?;
             builder
-                .add_edge(edge.src, edge.dst, 1.0)
+                .add_edge(draft.src, draft.dst, weight)
                 .map_err(path_error)?;
         }
         Ok(builder.build())
@@ -359,9 +463,9 @@ impl<'a, C: Clock> PlainGraph<'a, C> {
     }
 
     fn node_ids(&self, snapshot: Seq) -> Result<Vec<CxId>> {
-        self.scan_at(snapshot, &self.keys.node_range())?
+        self.scan_keys_at(snapshot, &self.keys.node_range())?
             .into_iter()
-            .map(|(key, _)| self.keys.decode_node_key(&key))
+            .map(|key| self.keys.decode_node_key(&key))
             .collect()
     }
 
@@ -376,25 +480,20 @@ impl<'a, C: Clock> PlainGraph<'a, C> {
         self.vault
             .scan_cf_range_at(snapshot, ColumnFamily::Graph, range)
     }
-}
 
-fn flatten_csr_edges(
-    mut by_src: Vec<Vec<PlainGraphCsrEdge>>,
-) -> (Vec<usize>, Vec<PlainGraphCsrEdge>) {
-    let mut offsets = Vec::with_capacity(by_src.len() + 1);
-    let mut edges = Vec::new();
-    offsets.push(0);
-    for src_edges in &mut by_src {
-        src_edges.sort_by(|left, right| {
-            left.edge_type
-                .cmp(&right.edge_type)
-                .then_with(|| left.dst.cmp(&right.dst))
-        });
-        edges.append(src_edges);
-        offsets.push(edges.len());
+    fn scan_keys_at(&self, snapshot: Seq, range: &KeyRange) -> Result<Vec<Vec<u8>>> {
+        self.vault
+            .scan_cf_range_keys_at(snapshot, ColumnFamily::Graph, range)
     }
-    (offsets, edges)
 }
 
+#[cfg(test)]
+mod csr_binary_tests;
+#[cfg(test)]
+mod csr_fail_closed_tests;
+#[cfg(test)]
+mod legacy_weight_tests;
+#[cfg(test)]
+mod lifecycle_tests;
 #[cfg(test)]
 mod tests;

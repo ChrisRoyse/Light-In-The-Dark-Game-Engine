@@ -16,14 +16,18 @@ path = "src/main.rs"
 
 [dependencies]
 axum = "0.8"
-tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "signal"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "io-util", "signal"] }
 serde_json.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tower-http = { version = "0.6", features = ["catch-panic"] }
 calyx-core = { path = "../calyx-core" }
 calyx-aster = { path = "../calyx-aster" }
+calyx-search = { path = "../calyx-search" }
+calyx-ward = { path = "../calyx-ward" }
+calyx-lodestar = { path = "../calyx-lodestar" }
 calyx-registry = { path = "../calyx-registry" }
+calyx-ledger = { path = "../calyx-ledger" }
 serde = { workspace = true }
 
 [dev-dependencies]

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="Calyx — Store meaning, not tokens" width="100%" />
+<img src="assets/banner.jpg" alt="Calyx — Store meaning, not tokens" width="100%" />
 
 # Calyx
 
@@ -13,7 +13,24 @@
 
 [Why Calyx](#-why-calyx) · [Concepts](#-the-core-idea-constellations) · [Build](#-build-from-source) · [Architecture](#-architecture) · [Roadmap](#-project-status)
 
-<img src="assets/hero.png" alt="A single grounded point blooming into a constellation of vectors" width="100%" />
+<img src="assets/hero.jpg" alt="A single grounded point blooming into a constellation of vectors" width="100%" />
+
+</div>
+
+---
+
+<div align="center">
+
+### 📄 Start here — the Calyx white paper
+
+**[Calyx: An Association-Native Database & Its Path to Planetary-Scale Grounded Intelligence](https://calyxaimemory.com/research/association-native-grounded-intelligence)**
+<br/><sub>*A Technical White Paper — Illustrated Formal Edition · Chris Royse, 2026*</sub>
+
+The whole vision, end to end: the **calculus of association**, the grounding **kernel**, the fail-closed **guard**, and Calyx's path from a single workstation to a **neuromorphic, planetary-scale substrate for grounded intelligence** — where every answer is measured, grounded, and traceable to its sources.
+
+[**📖 Read on the web**](https://calyxaimemory.com/research/association-native-grounded-intelligence) · [**⬇️ Download the PDF**](https://calyxaimemory.com/papers/CALYX_WHITEPAPER.pdf) · [**🔬 ResearchGate**](https://www.researchgate.net/publication/408248277_Calyx_An_Association-Native_Database_and_Its_Path_to_Planetary-Scale_Grounded_Intelligence_A_Technical_White_Paper_-Illustrated_Formal_Edition)
+
+**🎥 Watch:** [*Calyx is AGI* — the intelligent database, demoed](https://youtu.be/Oix_PMsRrNM) · [*I Solved the Math Behind AGI* — the theory](https://youtu.be/8XisEf_uaZ8)
 
 </div>
 
@@ -32,7 +49,7 @@ Every time you build a serious retrieval or intelligence system, you end up glui
 Calyx bakes that machinery **once, into the storage engine**.
 
 <div align="center">
-<img src="assets/vs-oldway.png" alt="A tangle of disconnected databases and glue code, versus one unified Calyx constellation" width="90%" />
+<img src="assets/vs-oldway.jpg" alt="A tangle of disconnected databases and glue code, versus one unified Calyx constellation" width="90%" />
 </div>
 
 | What a multi-signal system needs | Vector DB / pgvector / Elastic / Neo4j | **Calyx bakes in** |
@@ -55,7 +72,7 @@ Calyx bakes that machinery **once, into the storage engine**.
 A traditional database stores a **row**. A vector database stores a **point**. Calyx stores a **constellation**: one input, measured through many independent *lenses* (embedders and feature extractors), each producing its own typed slot-vector — kept **separate**, never flattened into one opaque blob.
 
 <div align="center">
-<img src="assets/constellation-model.png" alt="One input passes through seven lenses, each producing a cluster of vectors that fuse into one constellation with a gold kernel at its center" width="95%" />
+<img src="assets/constellation-model.jpg" alt="One input passes through seven lenses, each producing a cluster of vectors that fuse into one constellation with a gold kernel at its center" width="95%" />
 </div>
 
 Calyx is organized around four verbs — the calculus of association:
@@ -84,7 +101,7 @@ Three principles make the results trustworthy:
 
 - Rust `1.95` (via [`rustup`](https://rustup.rs); the pinned toolchain is in `rust-toolchain.toml`)
 - A C toolchain (for bundled SQLite, used by the migration tool)
-- *Optional, for GPU acceleration:* an NVIDIA `sm_120`-class GPU and CUDA `13.2`
+- *Optional, for GPU acceleration:* an NVIDIA `sm_120`-class GPU and CUDA `13.3`
 
 **Build & test**
 
@@ -114,7 +131,7 @@ Calyx is **not** a service mesh. It is an embedded engine — a stack of focused
 Every subsystem is named for an instrument of celestial navigation: a lens is a sighting instrument, the kernel is the guiding star, and search is navigation.
 
 <div align="center">
-<img src="assets/architecture.png" alt="Calyx architecture: four layered tiers — Entry points (calyx CLI, calyxd daemon, calyx-mcp agent) above the Intelligence layer (Oracle, Anneal, Lodestar), above the Association engine (Sextant, Loom, Assay, Ward, Registry), above Storage & math (Aster, Forge, Ledger, Core)" width="92%" />
+<img src="assets/architecture.jpg" alt="Calyx architecture: four layered tiers — Entry points (calyx CLI, calyxd daemon, calyx-mcp agent) above the Intelligence layer (Oracle, Anneal, Lodestar), above the Association engine (Sextant, Loom, Assay, Ward, Registry), above Storage & math (Aster, Forge, Ledger, Core)" width="92%" />
 </div>
 
 | Subsystem | Crate | What it is |
@@ -145,7 +162,7 @@ Most datasets are mostly redundant. Lodestar discovers the small set of records 
 ### 🛡️ Ward — the no-hallucination guard
 
 <div align="center">
-<img src="assets/ward-guard.png" alt="A glowing trusted region with a gold kernel inside, deflecting an out-of-distribution intruder at its boundary" width="88%" />
+<img src="assets/ward-guard.jpg" alt="A glowing trusted region with a gold kernel inside, deflecting an out-of-distribution intruder at its boundary" width="88%" />
 </div>
 
 Ward is a **fail-closed boundary** around what your data can support. Each required slot is scored *independently* against a calibrated threshold — there is no single averaged gate that a strong score on one slot can sneak past. Anything outside the trusted region is refused, quarantined, or recorded as a new region to learn — never waved through. Thresholds are set by conformal calibration to a target false-accept rate, so the guard's strictness is a number you choose, not a guess.
@@ -153,7 +170,7 @@ Ward is a **fail-closed boundary** around what your data can support. Each requi
 ### 📜 Ledger — provenance you can verify
 
 <div align="center">
-<img src="assets/ledger.png" alt="A hash-chained sequence of crystalline blocks anchored by glowing gold checkpoints" width="90%" />
+<img src="assets/ledger.jpg" alt="A hash-chained sequence of crystalline blocks anchored by glowing gold checkpoints" width="90%" />
 </div>
 
 Every measurement, kernel, guard verdict, and answer is appended to a hash-chained ledger. Each entry seals the one before it, so any tampering is detectable; periodic checkpoints can be cryptographically signed; and a single command can re-verify the entire chain. You can always answer the question *"how was this produced, and has anything changed since?"*
@@ -161,7 +178,7 @@ Every measurement, kernel, guard verdict, and answer is appended to a hash-chain
 ### ♨️ Anneal — a database that improves with use
 
 <div align="center">
-<img src="assets/anneal.png" alt="A constellation tightening and brightening as redundant points are pruned away, over a rising growth curve" width="90%" />
+<img src="assets/anneal.jpg" alt="A constellation tightening and brightening as redundant points are pruned away, over a rising growth curve" width="90%" />
 </div>
 
 Anneal continuously tunes the engine — index parameters, quantization levels, fusion weights — but **safely**: every change is gated against quality tripwires and shadow-tested before it goes live, and anything that regresses recall, latency, or guard accuracy is automatically reverted. Optimization that can only make things better, and is always reversible.
@@ -169,7 +186,7 @@ Anneal continuously tunes the engine — index parameters, quantization levels, 
 ### 🔮 Oracle — grounded consequence prediction
 
 <div align="center">
-<img src="assets/oracle.png" alt="A branching consequence tree fanning out from a single action, with grounded branches glowing brighter" width="90%" />
+<img src="assets/oracle.jpg" alt="A branching consequence tree fanning out from a single action, with grounded branches glowing brighter" width="90%" />
 </div>
 
 Oracle predicts the grounded consequences of an action by mining recurrence patterns in your data, builds a branching "butterfly" tree of likely downstream effects, and can even walk backward from an outcome to its likely causes. Crucially, it has an **honesty gate**: when the available signals can't support a confident prediction, Oracle returns *insufficient* with the specific deficits — instead of fabricating an answer.
@@ -179,7 +196,7 @@ Oracle predicts the grounded consequences of an action by mining recurrence patt
 ## 🗄️ One core, every paradigm
 
 <div align="center">
-<img src="assets/universal-db.png" alt="Relational, document, key-value, columnar, graph, time-series, full-text, and vector paradigms all converging into one glowing core" width="92%" />
+<img src="assets/universal-db.jpg" alt="Relational, document, key-value, columnar, graph, time-series, full-text, and vector paradigms all converging into one glowing core" width="92%" />
 </div>
 
 Because everything is built on one ordered, transactional storage core, Calyx can serve the role of many database shapes at once:
@@ -211,7 +228,7 @@ Actively expanding toward 1.0:
 - **Broader validation** of the oracle and guard against public benchmark corpora.
 
 > [!NOTE]
-> Calyx's vision extends to a *grounded substrate for general intelligence* — measuring whether a domain has the signal to be predicted at all, and refusing to pretend when it doesn't. That north star is aspirational; the honesty gate that underpins it is already built.
+> **The dream.** Calyx's north star is a *grounded substrate for planetary-scale intelligence*: hold the world's data un-flattened, measure it through many diverse lenses, derive the associations between distant domains, and surface **ranked, provenance-backed, validatable hypotheses** — never ungrounded answers. Two levers maximize what it can discover: **corpus breadth** and **lens diversity**. In a world where any answer is cheap to generate, the scarce resource is *grounded verification* — knowing what is true and being able to trace it to its sources — and that is exactly what Calyx is built to provide. The [white paper](https://calyxaimemory.com/research/association-native-grounded-intelligence) lays out the full path, including why this workload's natural long-term home is **neuromorphic, in-memory hardware**. That vision is aspirational and Calyx is pre-1.0; the honesty gate that underpins it is already built.
 
 ---
 
@@ -232,9 +249,11 @@ Each released version automatically converts to the open-source **Apache License
 
 <div align="center">
 
-<img src="assets/logo.png" alt="Calyx mark" width="84" />
+<img src="assets/logo.jpg" alt="Calyx mark" width="84" />
 
 **Calyx** — *Intelligence is the calculus of association. Calyx is its engine.*
+
+[White paper](https://calyxaimemory.com/research/association-native-grounded-intelligence) · [calyxaimemory.com](https://calyxaimemory.com) · [Watch the demo](https://youtu.be/Oix_PMsRrNM) · [The theory](https://youtu.be/8XisEf_uaZ8)
 
 <sub>Built in Rust 🦀 · GPU math baked in · Grounded by design</sub>
 

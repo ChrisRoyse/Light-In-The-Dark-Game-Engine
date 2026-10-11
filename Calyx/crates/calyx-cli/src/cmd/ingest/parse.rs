@@ -1,5 +1,8 @@
 use super::super::{AnchorArgs, IngestArgs, MeasureArgs, Subcommand, value};
+use super::session::{IngestStatusArgs, validate_session_id};
+use super::types::IngestOutput;
 use crate::error::{CliError, CliResult};
+use std::net::{IpAddr, SocketAddr};
 
 pub(crate) fn parse_ingest(rest: &[String]) -> CliResult<Subcommand> {
     let vault = rest
@@ -11,6 +14,10 @@ pub(crate) fn parse_ingest(rest: &[String]) -> CliResult<Subcommand> {
     let mut file = None;
     let mut modality = None;
     let mut idempotent = true;
+    let mut output = IngestOutput::Summary;
+    let mut resident_addr = None;
+    let mut allow_cold_gpu_workers = false;
+    let mut session_id = None;
     let mut idx = 1;
     while idx < rest.len() {
         match rest[idx].as_str() {
@@ -45,6 +52,21 @@ pub(crate) fn parse_ingest(rest: &[String]) -> CliResult<Subcommand> {
                 }
             }
             "--no-idempotent" => idempotent = false,
+            "--output" => {
+                idx += 1;
+                output = parse_ingest_output(value(rest, idx, "--output")?)?;
+            }
+            "--resident-addr" => {
+                idx += 1;
+                resident_addr = Some(parse_resident_addr(value(rest, idx, "--resident-addr")?)?);
+            }
+            "--allow-cold-gpu-workers" => allow_cold_gpu_workers = true,
+            "--session-id" => {
+                idx += 1;
+                let value = value(rest, idx, "--session-id")?;
+                validate_session_id(value)?;
+                session_id = Some(value.to_string());
+            }
             other => return Err(CliError::usage(format!("unexpected ingest flag {other}"))),
         }
         idx += 1;
@@ -58,11 +80,14 @@ pub(crate) fn parse_ingest(rest: &[String]) -> CliResult<Subcommand> {
     }
     if file.is_some() && modality.is_none() {
         return Err(CliError::usage(
-            "ingest --file requires --modality <audio|video>",
+            "ingest --file requires --modality <image|audio|video>",
         ));
     }
     if file.is_none() && modality.is_some() {
         return Err(CliError::usage("--modality is only valid with --file"));
+    }
+    if session_id.is_some() && batch.is_none() {
+        return Err(CliError::usage("--session-id is only valid with --batch"));
     }
     if !idempotent {
         return Err(CliError::usage(
@@ -76,6 +101,40 @@ pub(crate) fn parse_ingest(rest: &[String]) -> CliResult<Subcommand> {
         file,
         modality,
         idempotent,
+        output,
+        resident_addr,
+        allow_cold_gpu_workers,
+        session_id,
+    }))
+}
+
+pub(crate) fn parse_ingest_status(rest: &[String]) -> CliResult<Subcommand> {
+    let vault = rest
+        .first()
+        .ok_or_else(|| CliError::usage("ingest-status requires <vault>"))?
+        .clone();
+    let mut session_id = None;
+    let mut idx = 1;
+    while idx < rest.len() {
+        match rest[idx].as_str() {
+            "--session" => {
+                idx += 1;
+                let value = value(rest, idx, "--session")?;
+                validate_session_id(value)?;
+                session_id = Some(value.to_string());
+            }
+            other => {
+                return Err(CliError::usage(format!(
+                    "unexpected ingest-status flag {other}"
+                )));
+            }
+        }
+        idx += 1;
+    }
+    Ok(Subcommand::IngestStatus(IngestStatusArgs {
+        vault,
+        session_id: session_id
+            .ok_or_else(|| CliError::usage("ingest-status requires --session <id>"))?,
     }))
 }
 
@@ -175,4 +234,29 @@ pub(super) fn parse_bool(value: &str, flag: &str) -> CliResult<bool> {
     value
         .parse::<bool>()
         .map_err(|err| CliError::usage(format!("parse {flag} {value}: {err}")))
+}
+
+fn parse_ingest_output(value: &str) -> CliResult<IngestOutput> {
+    match value {
+        "summary" => Ok(IngestOutput::Summary),
+        "rows" => Ok(IngestOutput::Rows),
+        other => Err(CliError::usage(format!(
+            "invalid --output {other}; expected summary or rows"
+        ))),
+    }
+}
+
+pub(super) fn parse_resident_addr(raw: &str) -> CliResult<SocketAddr> {
+    let addr = raw
+        .parse::<SocketAddr>()
+        .map_err(|error| CliError::usage(format!("parse --resident-addr {raw}: {error}")))?;
+    match addr.ip() {
+        IpAddr::V4(ip) if ip.is_loopback() => Ok(addr),
+        IpAddr::V6(ip) if ip.is_loopback() => Ok(addr),
+        _ => Err(CliError::from(calyx_core::CalyxError {
+            code: "CALYX_INGEST_RESIDENT_ADDR_REFUSED",
+            message: format!("--resident-addr {addr} is not loopback"),
+            remediation: "bind and use the resident measurement service only on 127.0.0.1 or [::1]",
+        })),
+    }
 }

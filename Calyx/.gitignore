@@ -59,6 +59,15 @@ env/
 models/
 checkpoints/
 lenses/
+# GameEditor keeps its sole local Calyx runtime beneath this workspace root.
+# Runtime state is authoritative on disk but never committed with source.
+/vaults/
+/panels/
+/ort-gpu-venv/
+/archive/
+/resident/
+# HuggingFace model cache (multi-GB downloads — never commit)
+.hf-cache/
 
 # ── Data, datasets, on-disk DB state (Aster storage, ZFS-backed) ─────
 data/

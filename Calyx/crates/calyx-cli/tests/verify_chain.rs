@@ -64,6 +64,140 @@ fn verify_chain_vault_quarantines_broken_range() {
 }
 
 #[test]
+fn verify_chain_vault_range_resolves_registered_name() {
+    let root = test_dir("registered-name");
+    reset_dir(&root);
+    let home = root.join("home");
+    let id = vault_id();
+    let vault_dir = home.join("vaults").join(id.to_string());
+    fs::create_dir_all(vault_dir.parent().expect("vault parent")).unwrap();
+    let vault = write_vault(&vault_dir, 3);
+    vault.flush().expect("flush");
+    remove_wal_segments(&vault_dir);
+    let index_path = home.join("vaults").join("index.json");
+    fs::write(
+        &index_path,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "vaults": [{
+                "name": "registered-verify",
+                "vault_id": id.to_string(),
+                "path": format!("vaults/{id}"),
+                "panel_template": "text-default"
+            }]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let by_name = run_verify_vault_ref_with_home(&home, "registered-verify", "0..3");
+    assert_success(&by_name);
+    assert_eq!(stdout(&by_name), "CHAIN_INTACT count=3");
+
+    let by_path = run(["verify-chain", "--vault"], &vault_dir, ["--range", "0..3"]);
+    assert_success(&by_path);
+    assert_eq!(stdout(&by_path), "CHAIN_INTACT count=3");
+
+    let by_path_head = run(["verify-chain", "--vault"], &vault_dir, []);
+    assert_success(&by_path_head);
+    assert_json_ok_checked(&by_path_head, 3);
+
+    let by_name_head = run_verify_vault_head_with_home(&home, "registered-verify");
+    assert_success(&by_name_head);
+    assert_json_ok_checked(&by_name_head, 3);
+
+    let missing = run_verify_vault_ref_with_home(&home, "missing-verify", "0..0");
+    assert!(!missing.status.success());
+    assert_stderr_code_and_message(&missing, "CALYX_VAULT_ACCESS_DENIED", "checked CLI index");
+    let missing_error: serde_json::Value =
+        serde_json::from_str(&stderr(&missing)).expect("missing stderr JSON");
+    assert!(
+        missing_error["message"]
+            .as_str()
+            .is_some_and(|message| message.contains(&index_path.display().to_string())),
+        "stderr: {}",
+        stderr(&missing)
+    );
+    cleanup(root);
+}
+
+#[test]
+fn verify_chain_vault_name_resolves_despite_cwd_shadow_entry() {
+    let root = test_dir("cwd-shadow");
+    reset_dir(&root);
+    let home = root.join("home");
+    let id = vault_id();
+    let vault_dir = home.join("vaults").join(id.to_string());
+    fs::create_dir_all(vault_dir.parent().expect("vault parent")).unwrap();
+    let vault = write_vault(&vault_dir, 3);
+    vault.flush().expect("flush");
+    remove_wal_segments(&vault_dir);
+    fs::write(
+        home.join("vaults").join("index.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "vaults": [{
+                "name": "shadowed-verify",
+                "vault_id": id.to_string(),
+                "path": format!("vaults/{id}"),
+                "panel_template": "text-default"
+            }]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    // The cwd contains entries named exactly like the logical name and the
+    // vault id; neither may capture bare-name resolution (#1082).
+    let cwd = root.join("cwd");
+    fs::create_dir_all(cwd.join("shadowed-verify")).unwrap();
+    fs::create_dir_all(cwd.join(id.to_string())).unwrap();
+
+    let by_name = run_verify_from(&home, &cwd, "shadowed-verify", "0..3");
+    assert_success(&by_name);
+    assert_eq!(stdout(&by_name), "CHAIN_INTACT count=3");
+
+    let by_id = run_verify_from(&home, &cwd, &id.to_string(), "0..3");
+    assert_success(&by_id);
+    assert_eq!(stdout(&by_id), "CHAIN_INTACT count=3");
+
+    let absolute = run_verify_from(&home, &cwd, vault_dir.to_str().unwrap(), "0..3");
+    assert_success(&absolute);
+    assert_eq!(stdout(&absolute), "CHAIN_INTACT count=3");
+
+    let unknown_bare = run_verify_from(&home, &cwd, "unknown-verify", "0..0");
+    assert!(!unknown_bare.status.success());
+    assert_stderr_code_and_message(
+        &unknown_bare,
+        "CALYX_VAULT_ACCESS_DENIED",
+        "pass an absolute or ./-prefixed path",
+    );
+
+    let explicit_non_vault = run_verify_from(&home, &cwd, "./shadowed-verify", "0..0");
+    assert!(!explicit_non_vault.status.success());
+    assert_stderr_code_and_message(
+        &explicit_non_vault,
+        "CALYX_LEDGER_CORRUPT",
+        "requires real Aster ledger state",
+    );
+
+    let explicit_missing = run_verify_from(&home, &cwd, "./missing/vault-dir", "0..0");
+    assert!(!explicit_missing.status.success());
+    assert_stderr_code_and_message(
+        &explicit_missing,
+        "CALYX_VAULT_ACCESS_DENIED",
+        "does not exist",
+    );
+
+    let explicit_missing_head = run_verify_head_from(&home, &cwd, "./missing/vault-dir");
+    assert!(!explicit_missing_head.status.success());
+    assert_stderr_code_and_message(
+        &explicit_missing_head,
+        "CALYX_VAULT_ACCESS_DENIED",
+        "does not exist",
+    );
+    cleanup(root);
+}
+
+#[test]
 #[ignore = "manual FSV for issue #250 verify-chain quarantine"]
 fn ph36_verify_chain_quarantine_manual_fsv() {
     let root =
@@ -257,12 +391,71 @@ fn run_readback_ledger_seq(vault: &Path, seq: u64) -> Output {
         .expect("run calyx readback ledger seq")
 }
 
+fn run_verify_vault_ref_with_home(home: &Path, vault: &str, range: &str) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_calyx"))
+        .env("CALYX_HOME", home)
+        .arg("verify-chain")
+        .arg("--vault")
+        .arg(vault)
+        .arg("--range")
+        .arg(range)
+        .output()
+        .expect("run calyx verify-chain --vault")
+}
+
+fn run_verify_vault_head_with_home(home: &Path, vault: &str) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_calyx"))
+        .env("CALYX_HOME", home)
+        .arg("verify-chain")
+        .arg("--vault")
+        .arg(vault)
+        .output()
+        .expect("run calyx verify-chain --vault")
+}
+
+fn run_verify_from(home: &Path, cwd: &Path, vault: &str, range: &str) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_calyx"))
+        .env("CALYX_HOME", home)
+        .current_dir(cwd)
+        .arg("verify-chain")
+        .arg("--vault")
+        .arg(vault)
+        .arg("--range")
+        .arg(range)
+        .output()
+        .expect("run calyx verify-chain --vault from cwd")
+}
+
+fn run_verify_head_from(home: &Path, cwd: &Path, vault: &str) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_calyx"))
+        .env("CALYX_HOME", home)
+        .current_dir(cwd)
+        .arg("verify-chain")
+        .arg("--vault")
+        .arg(vault)
+        .output()
+        .expect("run calyx verify-chain --vault from cwd")
+}
+
 fn assert_success(output: &Output) {
     assert!(
         output.status.success(),
         "stdout: {}\nstderr: {}",
         stdout(output),
         stderr(output)
+    );
+}
+
+fn assert_json_ok_checked(output: &Output, checked: u64) {
+    let stdout = stdout(output);
+    let parsed: serde_json::Value = serde_json::from_str(&stdout)
+        .unwrap_or_else(|error| panic!("stdout JSON: {error}: {stdout}"));
+    assert_eq!(parsed["status"], "ok", "stdout: {stdout}");
+    assert_eq!(parsed["checked"], checked, "stdout: {stdout}");
+    assert_eq!(
+        parsed["break_at"],
+        serde_json::Value::Null,
+        "stdout: {stdout}"
     );
 }
 

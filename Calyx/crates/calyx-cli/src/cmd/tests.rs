@@ -1,8 +1,9 @@
+use super::*;
 use proptest::prelude::*;
 
-use calyx_core::Modality;
-
-use super::*;
+mod ingest_flag_parse;
+mod ingest_session_parse;
+mod token_roundtrip;
 
 #[test]
 fn parse_create_vault_without_template() {
@@ -12,6 +13,27 @@ fn parse_create_vault_without_template() {
         Subcommand::CreateVault(CreateVaultArgs {
             name: "mydb".to_string(),
             panel_template: None,
+            cpu_explicit: false,
+        })
+    );
+}
+
+#[test]
+fn parse_create_vault_with_explicit_cpu_runtime() {
+    let parsed = parse(&tokens([
+        "create-vault",
+        "mydb",
+        "--panel-template",
+        "constellation-24",
+        "--cpu-explicit",
+    ]))
+    .unwrap();
+    assert_eq!(
+        parsed,
+        Subcommand::CreateVault(CreateVaultArgs {
+            name: "mydb".to_string(),
+            panel_template: Some("constellation-24".to_string()),
+            cpu_explicit: true,
         })
     );
 }
@@ -49,46 +71,6 @@ fn parse_add_lens_populates_required_and_optional_fields() {
 fn retire_lens_missing_slot_is_usage_error() {
     let err = parse(&tokens(["retire-lens", "mydb"])).unwrap_err();
     assert_eq!(err.code(), "CALYX_CLI_USAGE_ERROR");
-}
-
-#[test]
-fn parse_ingest_text_command() {
-    let parsed = parse(&tokens(["ingest", "mydb", "--text", "hello"])).unwrap();
-    assert_eq!(
-        parsed,
-        Subcommand::Ingest(IngestArgs {
-            vault: "mydb".to_string(),
-            text: Some("hello".to_string()),
-            batch: None,
-            file: None,
-            modality: None,
-            idempotent: true,
-        })
-    );
-}
-
-#[test]
-fn parse_ingest_video_file_command() {
-    let parsed = parse(&tokens([
-        "ingest",
-        "media",
-        "--file",
-        "clip.webm",
-        "--modality",
-        "video",
-    ]))
-    .unwrap();
-    assert_eq!(
-        parsed,
-        Subcommand::Ingest(IngestArgs {
-            vault: "media".to_string(),
-            text: None,
-            batch: None,
-            file: Some("clip.webm".into()),
-            modality: Some(Modality::Video),
-            idempotent: true,
-        })
-    );
 }
 
 #[test]
@@ -154,18 +136,61 @@ fn parse_provenance_ops_commands() {
             vault: "mydb".to_string(),
             from: Some(1),
             to: Some(3),
+            progress_jsonl: None,
+            time_budget_ms: None,
+            batch_size: 8192,
         })
     );
-    assert!(try_run(&tokens(["verify-chain", "--vault", "legacy"])).is_none());
 }
 
 #[test]
-fn unknown_panel_template_is_usage_error_with_remediation_values() {
+fn known_subcommand_help_bypasses_required_arg_validation() {
+    let result = try_run(&tokens(["probe-matrix", "--help"]))
+        .expect("known command should be handled by cmd dispatcher");
+    assert!(result.is_ok(), "{result:?}");
+
+    let result =
+        try_run(&tokens(["probe-matrix", "-h"])).expect("short help flag should be handled");
+    assert!(result.is_ok(), "{result:?}");
+}
+
+#[test]
+fn probe_matrix_missing_frontier_still_fails_closed_through_dispatcher() {
+    let result = try_run(&tokens(["probe-matrix", "corpus", "--top-k", "3"]))
+        .expect("known command should be handled by cmd dispatcher");
+    let err = result.unwrap_err();
+
+    assert_eq!(err.code(), "CALYX_CLI_USAGE_ERROR");
+    assert!(err.message().contains("--frontier"), "{}", err.message());
+}
+
+#[test]
+fn parse_erase_command() {
+    assert_eq!(
+        parse(&tokens([
+            "erase",
+            "mydb",
+            "--cx-id",
+            "00000000000000000000000000000000",
+            "--fsv-out",
+            "target/fsv/erase.json",
+        ]))
+        .unwrap(),
+        Subcommand::Erase(erase::EraseArgs {
+            vault: "mydb".to_string(),
+            cx_id: "00000000000000000000000000000000".to_string(),
+            fsv_out: Some("target/fsv/erase.json".into()),
+        })
+    );
+}
+
+#[test]
+fn unsafe_panel_template_selector_is_usage_error_with_remediation_values() {
     let err = parse(&tokens([
         "create-vault",
         "mydb",
         "--panel-template",
-        "unknown-default",
+        "../unknown-default",
     ]))
     .unwrap_err();
     assert_eq!(err.code(), "CALYX_CLI_USAGE_ERROR");
@@ -181,8 +206,8 @@ fn vault_name_with_spaces_is_usage_error() {
 
 proptest! {
     #[test]
-    fn vault_subcommands_round_trip(command in arb_subcommand()) {
-        let tokens = command.to_cli_tokens();
+fn vault_subcommands_round_trip(command in arb_subcommand()) {
+        let tokens = token_roundtrip::subcommand_tokens(&command);
         prop_assert_eq!(parse(&tokens).unwrap(), command);
     }
 }
@@ -193,6 +218,7 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
             Subcommand::CreateVault(CreateVaultArgs {
                 name,
                 panel_template: None,
+                cpu_explicit: false,
             })
         }),
         (safe_name(), safe_name()).prop_map(|(vault, name)| {
@@ -211,6 +237,13 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
         (safe_name(), 0u16..128u16)
             .prop_map(|(vault, slot)| { Subcommand::ParkLens(SlotCommandArgs { vault, slot }) }),
         safe_name().prop_map(|vault| Subcommand::ListPanel(VaultRefArgs { vault })),
+        safe_name().prop_map(|name| {
+            Subcommand::MaterializeBridgeCorpus(bridge_corpus::MaterializeBridgeCorpusArgs {
+                name,
+                rows: "rows.jsonl".into(),
+                home: Some("target/home".into()),
+            })
+        }),
         safe_name().prop_map(|vault| Subcommand::Ingest(IngestArgs {
             vault,
             text: Some("roundtrip".to_string()),
@@ -218,6 +251,10 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
             file: None,
             modality: None,
             idempotent: true,
+            output: IngestOutput::Summary,
+            resident_addr: None,
+            allow_cold_gpu_workers: false,
+            session_id: None,
         })),
         safe_name().prop_map(|vault| Subcommand::Measure(MeasureArgs {
             vault,
@@ -241,6 +278,7 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
             provenance: true,
             freshness: search::SearchFreshnessArg::Fresh,
             filter: None,
+            resident_addr: None,
         })),
         safe_name().prop_map(|vault| Subcommand::KernelAnswer(search::KernelAnswerArgs {
             vault,
@@ -274,6 +312,9 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
                 vault,
                 from: Some(0),
                 to: Some(1),
+                progress_jsonl: None,
+                time_budget_ms: None,
+                batch_size: 8192,
             })
         ),
         safe_name().prop_map(|vault| Subcommand::Reproduce(provenance::ReproduceArgs {
@@ -289,6 +330,13 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
                 identity_cx: None,
             },
         })),
+        safe_name().prop_map(|vault| {
+            Subcommand::AssembleHypothesisEvidence(hypothesis_evidence::HypothesisEvidenceArgs {
+                vault,
+                chain: "chain.json".into(),
+                out: "eval-input.json".into(),
+            })
+        }),
         Just(Subcommand::ProfileLens(ProfileLensArgs {
             name: Some("probe".to_string()),
             runtime: Some("algorithmic".to_string()),
@@ -298,6 +346,47 @@ fn arb_subcommand() -> impl Strategy<Value = Subcommand> {
             modality: Some("text".to_string()),
             probe: None,
         })),
+        (safe_name(), 1usize..64).prop_map(|(vault, top_k)| {
+            Subcommand::KernelBuild(kernel_build::KernelBuildArgs {
+                vault,
+                held_out_fraction: 0.5,
+                top_k,
+                min_recall: 0.95,
+            })
+        }),
+        (safe_name(), 1usize..16).prop_map(|(vault, top_k)| {
+            Subcommand::ProbeMatrix(probe_matrix::ProbeMatrixArgs {
+                vault,
+                frontier: "roundtrip frontier".to_string(),
+                slots: vec![calyx_core::SlotId::new(8)],
+                weighted_profiles: vec![calyx_sextant::RrfProfile::Bridge],
+                phrasings: vec![calyx_lodestar::ProbePhrasing::Clinical],
+                lengths: vec![calyx_lodestar::ProbeLength::Phrase],
+                top_k,
+                ..probe_matrix::ProbeMatrixArgs::default()
+            })
+        }),
+        (
+            safe_name(),
+            1usize..64,
+            1usize..8,
+            1usize..1024,
+            0usize..1000,
+        )
+            .prop_map(|(vault, knn, max_groundedness_distance, batch, limit)| {
+                Subcommand::WeaveLoom(weave::WeaveLoomArgs {
+                    vault,
+                    content_slot: None,
+                    knn,
+                    edge_cos_threshold: 0.5,
+                    max_groundedness_distance,
+                    batch,
+                    limit,
+                    candidate_selection: weave::CandidateSelectionMode::Covered,
+                    coverage_only: false,
+                    time_budget_ms: None,
+                })
+            }),
     ]
 }
 
@@ -307,159 +396,4 @@ fn safe_name() -> impl Strategy<Value = String> {
 
 fn tokens<const N: usize>(items: [&str; N]) -> Vec<String> {
     items.into_iter().map(str::to_string).collect()
-}
-
-impl Subcommand {
-    fn to_cli_tokens(&self) -> Vec<String> {
-        match self {
-            Self::CreateVault(args) => {
-                let mut out = vec!["create-vault".to_string(), args.name.clone()];
-                if let Some(template) = &args.panel_template {
-                    out.extend(["--panel-template".to_string(), template.clone()]);
-                }
-                out
-            }
-            Self::AddLens(args) => {
-                let mut out = vec![
-                    "add-lens".to_string(),
-                    args.vault.clone(),
-                    "--name".to_string(),
-                    args.name.clone(),
-                    "--runtime".to_string(),
-                    args.runtime.clone(),
-                ];
-                push_opt(&mut out, "--endpoint", args.endpoint.as_deref());
-                push_opt(
-                    &mut out,
-                    "--weights",
-                    args.weights.as_ref().and_then(|p| p.to_str()),
-                );
-                push_opt(&mut out, "--shape", args.shape.as_deref());
-                push_opt(&mut out, "--modality", args.modality.as_deref());
-                out
-            }
-            Self::RetireLens(args) => slot_tokens("retire-lens", args),
-            Self::ParkLens(args) => slot_tokens("park-lens", args),
-            Self::ListPanel(args) => vec!["list-panel".to_string(), args.vault.clone()],
-            Self::Ingest(args) => ingest_tokens(args),
-            Self::Anchor(args) => anchor_tokens(args),
-            Self::Measure(args) => vec![
-                "measure".to_string(),
-                args.vault.clone(),
-                "--text".to_string(),
-                args.text.clone(),
-            ],
-            Self::Search(args) => search::search_tokens(args),
-            Self::KernelAnswer(args) => search::kernel_answer_tokens(args),
-            Self::Bits(args) => intelligence::bits_tokens(args),
-            Self::Kernel(args) => intelligence::kernel_tokens(args),
-            Self::Guard(args) => intelligence::guard_tokens(args),
-            Self::Abundance(args) => intelligence::abundance_tokens(args),
-            Self::ProposeLens(args) => intelligence::propose_lens_tokens(args),
-            Self::Provenance(args) => vec![
-                "provenance".to_string(),
-                args.vault.clone(),
-                args.cx_id.clone(),
-            ],
-            Self::VerifyChain(args) => verify_chain_tokens(args),
-            Self::Reproduce(args) => vec![
-                "reproduce".to_string(),
-                args.vault.clone(),
-                args.answer_id.clone(),
-            ],
-            Self::AnnealStatus(args) => vec!["anneal-status".to_string(), args.vault.clone()],
-            Self::ProfileLens(args) => profile_lens_tokens(args),
-        }
-    }
-}
-
-fn verify_chain_tokens(args: &provenance::VerifyChainArgs) -> Vec<String> {
-    let mut out = vec!["verify-chain".to_string(), args.vault.clone()];
-    if let Some(from) = args.from {
-        out.extend(["--from".to_string(), from.to_string()]);
-    }
-    if let Some(to) = args.to {
-        out.extend(["--to".to_string(), to.to_string()]);
-    }
-    out
-}
-
-fn ingest_tokens(args: &IngestArgs) -> Vec<String> {
-    let mut out = vec!["ingest".to_string(), args.vault.clone()];
-    push_opt(&mut out, "--text", args.text.as_deref());
-    push_opt(
-        &mut out,
-        "--batch",
-        args.batch.as_ref().and_then(|path| path.to_str()),
-    );
-    push_opt(
-        &mut out,
-        "--file",
-        args.file.as_ref().and_then(|path| path.to_str()),
-    );
-    push_opt(&mut out, "--modality", args.modality.map(modality_name));
-    if args.idempotent {
-        out.push("--idempotent".to_string());
-    }
-    out
-}
-
-fn modality_name(value: Modality) -> &'static str {
-    match value {
-        Modality::Audio => "audio",
-        Modality::Video => "video",
-        _ => "media",
-    }
-}
-
-fn anchor_tokens(args: &AnchorArgs) -> Vec<String> {
-    let mut out = vec![
-        "anchor".to_string(),
-        args.vault.clone(),
-        args.cx_id.clone(),
-        "--kind".to_string(),
-        args.kind.clone(),
-        "--value".to_string(),
-        args.value.clone(),
-    ];
-    if let Some(confidence) = args.confidence {
-        out.extend(["--confidence".to_string(), confidence.to_string()]);
-    }
-    push_opt(&mut out, "--source", args.source.as_deref());
-    out
-}
-
-fn profile_lens_tokens(args: &ProfileLensArgs) -> Vec<String> {
-    let mut out = vec!["profile-lens".to_string()];
-    push_opt(&mut out, "--name", args.name.as_deref());
-    push_opt(&mut out, "--runtime", args.runtime.as_deref());
-    push_opt(&mut out, "--endpoint", args.endpoint.as_deref());
-    push_opt(
-        &mut out,
-        "--weights",
-        args.weights.as_ref().and_then(|p| p.to_str()),
-    );
-    push_opt(&mut out, "--shape", args.shape.as_deref());
-    push_opt(&mut out, "--modality", args.modality.as_deref());
-    push_opt(
-        &mut out,
-        "--probe",
-        args.probe.as_ref().and_then(|p| p.to_str()),
-    );
-    out
-}
-
-fn push_opt(out: &mut Vec<String>, flag: &str, value: Option<&str>) {
-    if let Some(value) = value {
-        out.extend([flag.to_string(), value.to_string()]);
-    }
-}
-
-fn slot_tokens(command: &str, args: &SlotCommandArgs) -> Vec<String> {
-    vec![
-        command.to_string(),
-        args.vault.clone(),
-        "--slot".to_string(),
-        args.slot.to_string(),
-    ]
 }

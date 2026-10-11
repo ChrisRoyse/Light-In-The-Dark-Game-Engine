@@ -1,11 +1,20 @@
-use calyx_core::{CalyxError, LensId, Modality, Result, SlotShape, SlotVector};
+use std::sync::Arc;
+
+use calyx_core::{CalyxError, Lens, LensId, Modality, Result, SlotShape, SlotVector};
 use calyx_registry::{
     AlgorithmicLens, CandleLens, FastembedBgem3Lens, FastembedQwen3Lens, FastembedRerankerLens,
     FastembedSparseLens, FrozenLensContract, LensRuntime, LensSpec, MultimodalAdapterLens,
-    NormPolicy, OnnxColbertLens, OnnxLens, Registry, StaticLookupLens, TeiHttpLens,
+    NormPolicy, OnnxColbertFileSpec, OnnxColbertLens, OnnxFileSpec, OnnxLens, OnnxProviderPolicy,
+    Registry, StaticLookupLens, TeiHttpLens, lens_spec_with_frozen_contract,
 };
 
 use crate::error::{CliError, CliResult};
+
+pub(crate) struct PreparedRuntimeLens {
+    pub(crate) lens: Arc<dyn Lens>,
+    pub(crate) contract: FrozenLensContract,
+    pub(crate) spec: LensSpec,
+}
 
 pub(crate) fn runtime_name(runtime: &LensRuntime) -> &'static str {
     match runtime {
@@ -25,66 +34,139 @@ pub(crate) fn runtime_name(runtime: &LensRuntime) -> &'static str {
 }
 
 pub(crate) fn register_manifest_runtime(registry: &mut Registry, spec: LensSpec) -> Result<LensId> {
+    register_prepared_manifest_runtime(registry, prepare_manifest_runtime(spec)?)
+}
+
+pub(crate) fn register_prepared_manifest_runtime(
+    registry: &mut Registry,
+    prepared: PreparedRuntimeLens,
+) -> Result<LensId> {
+    registry.register_frozen_arc_with_spec(prepared.lens, prepared.contract, prepared.spec)
+}
+
+pub(crate) fn prepare_manifest_runtime(spec: LensSpec) -> Result<PreparedRuntimeLens> {
     match &spec.runtime {
         LensRuntime::Onnx { .. } => {
             let lens = OnnxLens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::OnnxColbert { .. } => {
             let lens = OnnxColbertLens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::FastembedSparse { .. } => {
             let lens = FastembedSparseLens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::FastembedBgem3 { .. } => {
             let lens = FastembedBgem3Lens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::FastembedReranker { .. } => {
             let lens = FastembedRerankerLens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::FastembedQwen3 { .. } => {
             let lens = FastembedQwen3Lens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::CandleLocal { .. } => {
             let lens = CandleLens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::StaticLookup { .. } => {
             let lens = StaticLookupLens::from_lens_spec(&spec)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::MultimodalAdapter { .. } => {
             let lens = MultimodalAdapterLens::from_lens_spec(&spec)?;
             let contract = lens.contract();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::TeiHttp { endpoint } => {
             let lens = TeiHttpLens::new(&spec.name, endpoint, spec.modality, dim(spec.output));
             let contract =
                 FrozenLensContract::tei_http(&spec.name, endpoint, spec.modality, dim(spec.output));
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::Algorithmic { kind } => {
             let lens = algorithmic_lens(&spec.name, spec.modality, kind, spec.output)?;
             let contract = lens.contract().clone();
-            registry.register_frozen_with_spec(lens, contract, spec)
+            Ok(prepared(lens, contract, spec))
         }
         LensRuntime::ExternalCmd { .. } => Err(CalyxError::lens_unreachable(
             "manifest runtime registration does not load external-cmd lenses",
         )),
+    }
+}
+
+pub(crate) fn prepare_manifest_runtime_cpu_explicit(spec: LensSpec) -> Result<PreparedRuntimeLens> {
+    match &spec.runtime {
+        LensRuntime::Onnx { .. } => {
+            let files = OnnxFileSpec::from_lens_spec(&spec)?
+                .with_provider_policy(OnnxProviderPolicy::CpuExplicit);
+            let lens = OnnxLens::from_files(files)?;
+            let contract = lens.contract().clone();
+            Ok(prepared(lens, contract, spec))
+        }
+        LensRuntime::OnnxColbert { .. } => {
+            let files = OnnxColbertFileSpec::from_lens_spec(&spec)?
+                .with_provider_policy(OnnxProviderPolicy::CpuExplicit);
+            let lens = OnnxColbertLens::from_files(files)?;
+            let contract = lens.contract().clone();
+            Ok(prepared(lens, contract, spec))
+        }
+        LensRuntime::FastembedSparse { .. } => {
+            let lens = FastembedSparseLens::from_lens_spec_with_policy(
+                &spec,
+                OnnxProviderPolicy::CpuExplicit,
+            )?;
+            let contract = lens.contract().clone();
+            Ok(prepared(lens, contract, spec))
+        }
+        LensRuntime::FastembedBgem3 { .. } => {
+            let lens = FastembedBgem3Lens::from_lens_spec_with_policy(
+                &spec,
+                OnnxProviderPolicy::CpuExplicit,
+            )?;
+            let contract = lens.contract().clone();
+            Ok(prepared(lens, contract, spec))
+        }
+        other => Err(CalyxError::lens_unreachable(format!(
+            "explicit CPU template materialization does not support {} runtime",
+            runtime_name(other)
+        ))),
+    }
+}
+
+pub(crate) fn prepare_manifest_runtime_for_template(
+    spec: LensSpec,
+    cpu_explicit: bool,
+) -> Result<PreparedRuntimeLens> {
+    if cpu_explicit {
+        prepare_manifest_runtime_cpu_explicit(spec)
+    } else {
+        prepare_manifest_runtime(spec)
+    }
+}
+
+fn prepared<L>(lens: L, contract: FrozenLensContract, spec: LensSpec) -> PreparedRuntimeLens
+where
+    L: Lens + 'static,
+{
+    let spec = lens_spec_with_frozen_contract(spec, &contract);
+    PreparedRuntimeLens {
+        lens: Arc::new(lens),
+        contract,
+        spec,
     }
 }
 
@@ -108,6 +190,24 @@ fn algorithmic_lens(
         "gdelt-cameo" | "gdelt_cameo" => AlgorithmicLens::gdelt_cameo(name, modality),
         "gdelt-actor-geo" | "gdelt_actor_geo" => {
             AlgorithmicLens::gdelt_actor_geo(name, modality, dim(shape))
+        }
+        "gdelt-source-domain" | "gdelt_source_domain" => {
+            AlgorithmicLens::gdelt_source_domain(name, modality, dim(shape))
+        }
+        "gdelt-event-geo" | "gdelt_event_geo" => {
+            AlgorithmicLens::gdelt_event_geo(name, modality, dim(shape))
+        }
+        "gdelt-actor-pair" | "gdelt_actor_pair" => {
+            AlgorithmicLens::gdelt_actor_pair(name, modality, dim(shape))
+        }
+        "gdelt-event-actor" | "gdelt_event_actor" => {
+            AlgorithmicLens::gdelt_event_actor(name, modality, dim(shape))
+        }
+        "gdelt-tone-signal" | "gdelt_tone_signal" => {
+            AlgorithmicLens::gdelt_tone_signal(name, modality, dim(shape))
+        }
+        "gdelt-source-event" | "gdelt_source_event" => {
+            AlgorithmicLens::gdelt_source_event(name, modality, dim(shape))
         }
         "sparse" | "sparse-keywords" => {
             AlgorithmicLens::sparse_keywords(name, modality, dim(shape))

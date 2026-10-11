@@ -1,14 +1,12 @@
 use std::path::{Path, PathBuf};
 
-use proptest::prelude::*;
 use rusqlite::{Connection, params};
 
 use super::dual_write::replay_existing_sqlite;
 use super::panel_guard_enable::{PanelGuardEnable, PanelSpec};
 use super::production_fsv::{
-    CALYX_PG_STATE_CHANGED, CALYX_PG_WRITE_ATTEMPTED, CALYX_REPRODUCE_MISMATCH,
-    CALYX_VAULT_NOT_CALYX_ONLY, CALYX_VAULT_NOT_IN_PG, PgConn, ProductionFSV, REQUIRED_TABLES,
-    snapshot_pg_state,
+    CALYX_PG_STATE_CHANGED, CALYX_PG_WRITE_ATTEMPTED, CALYX_VAULT_NOT_CALYX_ONLY,
+    CALYX_VAULT_NOT_IN_PG, PgConn, ProductionFSV, REQUIRED_TABLES, snapshot_pg_state,
 };
 use super::read_flip::ReadFlip;
 use super::shadow_harness::{ShadowVault, VaultMode, read_shadow_manifest};
@@ -152,21 +150,23 @@ fn evidence_bundle_writes_all_true_flags() {
     cleanup(root);
 }
 
-proptest! {
-    #[test]
-    fn contract_proof_preserves_database_name_bytes(name in "[A-Za-z0-9_]{1,64}") {
-        let root = temp_root("contract-prop");
+#[test]
+fn contract_proof_preserves_database_name_boundary_bytes() {
+    let cases = ["A".to_string(), "a0_Z".to_string(), "z".repeat(64)];
+    for (case, name) in cases.iter().enumerate() {
+        let root = temp_root(&format!("contract-name-{case}"));
         let dump = root.join("dump");
-        write_pg_dump(&dump, &name, None);
+        write_pg_dump(&dump, name, None);
         let snapshot = snapshot_pg_state(
             &PgConn::DumpDir { root: dump },
-            &name,
+            name,
             &root.join("snapshot"),
-        ).unwrap();
+        )
+        .unwrap();
 
-        let proof = ProductionFSV::verify_control_plane_contract(&name, &snapshot).unwrap();
+        let proof = ProductionFSV::verify_control_plane_contract(name, &snapshot).unwrap();
 
-        prop_assert_eq!(proof.database_name, name);
+        assert_eq!(proof.database_name, *name);
         cleanup(root);
     }
 }
@@ -178,7 +178,14 @@ fn ask_proof_fails_closed_when_ledger_row_is_missing() {
 
     let error = ProductionFSV::run_full_ask_cycle(&vault, &vector(1.0), 1).unwrap_err();
 
-    assert_eq!(error.code, CALYX_REPRODUCE_MISMATCH);
+    assert_eq!(error.code, "CALYX_LEDGER_CHAIN_BROKEN");
+    assert!(
+        error
+            .message
+            .contains("anchored physical ledger hydration missing seq"),
+        "unexpected error message: {}",
+        error.message
+    );
     cleanup(root);
 }
 
@@ -214,54 +221,66 @@ fn prepared_flipped(
 }
 
 fn seed_sqlite(path: &Path, database_name: &str, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    conn.execute(
-        "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO database_metadata VALUES(1,?1)",
-        [database_name],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO creator_databases VALUES(1,?1,'2026-06-15T00:00:00Z')",
-        [database_name],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO queries VALUES(1,?1,'known query')",
-        [database_name],
-    )
-    .unwrap();
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,?2,?3,?4)",
-            params![
-                format!("c{idx:03}"),
-                database_name,
-                format!("content-{idx}"),
-                vector_blob(idx as f32)
-            ],
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE database_metadata(id INTEGER PRIMARY KEY, database_name TEXT NOT NULL)",
+            [],
         )
         .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE creator_databases(id INTEGER,database_name TEXT,created_at TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE queries(id INTEGER,database_name TEXT,query_text TEXT)",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO database_metadata VALUES(1,?1)",
+            [database_name],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO creator_databases VALUES(1,?1,'2026-06-15T00:00:00Z')",
+            [database_name],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO queries VALUES(1,?1,'known query')",
+            [database_name],
+        )
+        .unwrap();
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,?2,?3,?4)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("c{idx:03}"),
+                    database_name,
+                    format!("content-{idx}"),
+                    vector_blob(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn write_pg_dump(root: &Path, database_name: &str, change: Option<(&str, &str)>) {

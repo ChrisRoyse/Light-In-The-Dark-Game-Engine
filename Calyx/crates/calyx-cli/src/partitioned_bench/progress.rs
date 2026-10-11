@@ -7,7 +7,10 @@ use std::sync::{
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use calyx_sextant::index::{DiskAnnBuildBackend, PartitionBuildParams, PartitionDistanceMetric};
+use calyx_sextant::index::{
+    DiskAnnBuildBackend, PartitionBuildParams, PartitionDistanceMetric,
+    partitioned_manifest_db_exists,
+};
 use serde::Serialize;
 
 use crate::error::{CliError, CliResult};
@@ -70,7 +73,7 @@ struct CountSnapshot {
     assign_initial_files: usize,
     final_ids_files: usize,
     graph_files: usize,
-    manifest_exists: bool,
+    manifest_db_exists: bool,
 }
 
 impl BuildProgress {
@@ -193,7 +196,8 @@ fn write_snapshot(
         geometry: geometry(config),
         counts,
     };
-    let bytes = serde_json::to_vec_pretty(&snapshot).map_err(CliError::from)?;
+    let bytes = serde_json::to_vec_pretty(&snapshot)
+        .map_err(|e| CliError::runtime(format!("serialize progress snapshot: {e}")))?;
     write_atomic(path, &bytes)
 }
 
@@ -216,7 +220,7 @@ fn geometry(config: &BuildProgressConfig) -> GeometrySnapshot {
 }
 
 fn infer_phase(counts: &CountSnapshot, requested_regions: usize) -> String {
-    if counts.manifest_exists {
+    if counts.manifest_db_exists {
         return "manifest_written".to_string();
     }
     if counts.graph_files > 0 {
@@ -239,7 +243,7 @@ fn counts(vault: &Path) -> CountSnapshot {
         assign_initial_files: count_ids(&vault.join("idx/assign-initial")),
         final_ids_files: count_ids(&vault.join("idx")),
         graph_files: count_graphs(&vault.join("idx")),
-        manifest_exists: vault.join("partitioned-manifest.json").is_file(),
+        manifest_db_exists: partitioned_manifest_db_exists(vault).unwrap_or(false),
     }
 }
 

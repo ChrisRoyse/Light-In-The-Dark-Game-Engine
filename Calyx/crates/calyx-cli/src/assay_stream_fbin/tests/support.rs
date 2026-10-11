@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -6,15 +7,22 @@ use calyx_core::{Modality, QuantPolicy};
 use calyx_registry::{LensForgeFile, LensForgeManifest};
 use sha2::{Digest, Sha256};
 
-use super::super::args::{Args, StreamMode};
-use super::super::format::VectorFormat;
+use crate::assay_multi_anchor_card::model::{
+    LensEvidence, MultiAnchorReport, TargetLensValue, TargetSummary,
+};
+
+use super::args::{Args, StreamMode};
+use super::format::VectorFormat;
+use super::{DEFAULT_MIN_BITS, MIN_A35_LENSES, template};
 
 pub(super) struct Fixture {
     pub(super) root: PathBuf,
     pub(super) rows: PathBuf,
     pub(super) out: PathBuf,
     pub(super) bits: PathBuf,
+    a37: PathBuf,
     manifests: Vec<PathBuf>,
+    template_cf: PathBuf,
 }
 
 impl Fixture {
@@ -32,12 +40,17 @@ impl Fixture {
         write_rows(&rows_path, rows);
         let bits = root.join("assay_abundance.json");
         write_bits(&bits, manifest_count, admitted_lenses);
+        let a37 = root.join("a37_admission_cf");
+        write_a37_admission(&a37, manifest_count, admitted_lenses, None, 0.2);
+        let template_cf = root.join("lens_template_cf");
         Self {
             out: root.join("out"),
             root,
             rows: rows_path,
             bits,
+            a37,
             manifests,
+            template_cf,
         }
     }
 
@@ -54,13 +67,26 @@ impl Fixture {
     }
 
     pub(super) fn args(&self, query_count: usize) -> Args {
+        let record = template::record_from_manifests(&self.manifests).unwrap();
+        let _ = fs::remove_dir_all(&self.template_cf);
+        template::write(
+            &self.template_cf,
+            template::DEFAULT_ASSOCIATION_KEY,
+            &record,
+        )
+        .unwrap();
         Args {
             rows_jsonl: self.rows.clone(),
             out_dir: self.out.clone(),
             dataset: "unit_stream_fbin".to_string(),
             target_class: 1,
-            manifests: self.manifests.clone(),
-            bits_report: self.bits.clone(),
+            manifests: Vec::new(),
+            lens_template_cf_root: Some(self.template_cf.clone()),
+            lens_template_key: template::DEFAULT_ASSOCIATION_KEY.to_string(),
+            lens_template_specs: Vec::new(),
+            bits_report: None,
+            a37_admission_cf_root: Some(self.a37.clone()),
+            a37_admission_key: "a37_multi_anchor_admission".to_string(),
             query_count,
             limit_per_class: None,
             batch_size: 7,
@@ -71,8 +97,108 @@ impl Fixture {
             mode: StreamMode::Gate,
             worker_report: None,
             worker_slot: None,
+            lens_parallelism: 1,
+            worker_gpu_mem_limit_mib: None,
+            emit_artifacts: true,
         }
     }
+
+    pub(super) fn json_args(&self, query_count: usize, mode: StreamMode) -> Args {
+        let mut args = self.args(query_count);
+        args.manifests = self.manifests.clone();
+        args.lens_template_cf_root = None;
+        args.bits_report = Some(self.bits.clone());
+        args.a37_admission_cf_root = None;
+        args.mode = mode;
+        args
+    }
+
+    pub(super) fn rewrite_a37(&self, admitted: usize, names: Option<Vec<String>>, bits: f32) {
+        write_a37_admission(&self.a37, self.manifests.len(), admitted, names, bits);
+    }
+
+    pub(super) fn manifest_paths(&self) -> Vec<PathBuf> {
+        self.manifests.clone()
+    }
+}
+
+fn write_a37_admission(
+    root: &Path,
+    lenses: usize,
+    admitted: usize,
+    names: Option<Vec<String>>,
+    bits: f32,
+) {
+    let names = names.unwrap_or_else(|| (0..lenses).map(|idx| format!("lens-{idx}")).collect());
+    let gate_passed = admitted == lenses && bits >= DEFAULT_MIN_BITS;
+    let report = MultiAnchorReport {
+        schema_version: 1,
+        role: "a37_multi_anchor_admission_card".to_string(),
+        status: if gate_passed {
+            "gate_passed"
+        } else {
+            "gate_failed"
+        }
+        .to_string(),
+        mode: "gate".to_string(),
+        gate_passed,
+        report_count: 1,
+        lens_count: lenses,
+        passing_lens_count: admitted,
+        min_lenses: MIN_A35_LENSES,
+        min_marginal_bits: DEFAULT_MIN_BITS,
+        max_redundancy: 0.6,
+        family_span_pass: gate_passed,
+        redundancy_bound_pass: gate_passed,
+        no_collapse_pass: gate_passed,
+        association_family_count: 2,
+        association_families: BTreeMap::new(),
+        min_best_marginal_bits: bits,
+        max_best_marginal_bits: bits,
+        weakest_lens: names.first().cloned().unwrap_or_default(),
+        target_summaries: vec![TargetSummary {
+            target_class: 1,
+            domain: "unit_stream_fbin".to_string(),
+            report_path: "calyx/a37/admission/v1/unit".to_string(),
+            status: if gate_passed {
+                "gate_passed"
+            } else {
+                "gate_failed"
+            }
+            .to_string(),
+            no_collapse_pass: gate_passed,
+            family_span_pass: gate_passed,
+            redundancy_bound_pass: gate_passed,
+            n_eff: admitted as f32,
+            panel_bits: bits,
+            max_marginal_bits: bits,
+            keep_count: admitted,
+            park_count: lenses.saturating_sub(admitted),
+        }],
+        lenses: names
+            .iter()
+            .enumerate()
+            .map(|(slot, name)| LensEvidence {
+                slot: slot as u16,
+                name: name.clone(),
+                association_family: if slot % 2 == 0 { "dense" } else { "sparse" }.to_string(),
+                passed: slot < admitted,
+                best_target_class: 1,
+                best_domain: "unit_stream_fbin".to_string(),
+                best_marginal_bits: bits,
+                best_solo_bits: bits + 0.01,
+                target_values: vec![TargetLensValue {
+                    target_class: 1,
+                    domain: "unit_stream_fbin".to_string(),
+                    marginal_bits: bits,
+                    solo_bits: bits + 0.01,
+                    decision: if slot < admitted { "Keep" } else { "Park" }.to_string(),
+                }],
+            })
+            .collect(),
+        source_reports: vec!["calyx/a37/admission/v1/unit".to_string()],
+    };
+    crate::a37_admission_store::write(root, "a37_multi_anchor_admission", &report).unwrap();
 }
 
 fn write_rows(path: &Path, rows: usize) {
@@ -159,6 +285,18 @@ pub(super) fn write_bits_with_panel_names(
             "anchor_entropy_bits": 1.0,
             "min_informative_target_entropy_bits": 0.30,
             "lenses": lenses,
+            // #1140 fail-closed: gate eligibility must be an explicit
+            // affirmative audit; fixtures state it instead of relying on
+            // defaults.
+            "anchor_audit": {
+                "anchor_leaks_into_input": false,
+                "trivial_anchor": false,
+                "grounded_gate_eligible": true,
+                "label_recoverable_from_input": false,
+                "audit_kind": "unit_fixture_affirmative",
+                "source": "stream-fbin unit fixture",
+                "reason": "fixture anchor audited eligible for gate tests"
+            },
             "panel": {
                 "admitted_lenses": admitted_names,
                 "i_panel_anchor": sufficiency_basis_bits + 0.01,
@@ -211,6 +349,7 @@ fn learned_manifest(root: &Path, idx: usize, matrix: &[u8], tokenizer: &[u8]) ->
         truncate_dim: None,
         recall_delta: calyx_registry::spec::default_recall_delta(),
         max_batch: None,
+        batch_policy: None,
     };
     fs::write(&path, serde_json::to_vec_pretty(&manifest).unwrap()).unwrap();
     path
@@ -241,6 +380,7 @@ fn write_algorithmic_manifests(root: &Path, count: usize) -> Vec<PathBuf> {
                 truncate_dim: None,
                 recall_delta: calyx_registry::spec::default_recall_delta(),
                 max_batch: None,
+                batch_policy: None,
             };
             fs::write(&path, serde_json::to_vec_pretty(&manifest).unwrap()).unwrap();
             path

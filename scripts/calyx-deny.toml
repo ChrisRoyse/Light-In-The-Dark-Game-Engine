@@ -1,0 +1,82 @@
+# cargo-deny policy for the Calyx workspace (Calyx/).  (#1517)
+#
+# WHY THIS FILE LIVES IN scripts/ AND NOT Calyx/:
+#   Calyx/ is GameEditor's own, permanently-customized copy of Calyx (DEC-1519). Its
+#   advisory/license posture is enforced by THIS repo, so the policy lives here in
+#   GameEditor's tracked scripts/ - owned and versioned alongside the rest of the repo's
+#   gates rather than as a loose file inside the customized Calyx subtree.
+#   scripts/lint.ps1 invokes:
+#       cargo-deny --manifest-path Calyx/Cargo.toml --config scripts/calyx-deny.toml check
+#   so Calyx's dependency tree (licenses AND advisories) is gated exactly like the
+#   GameEditor root workspace - no more "skipped (no deny.toml)" silent pass.
+#
+# Mirrors the intent of the root deny.toml (#1073 permissive-only licenses,
+# #1516 documented advisory ignores) but the allow-list and ignores are scoped to
+# the crates ACTUALLY present in Calyx's Cargo.lock (verified with `cargo-deny list`),
+# not copied wholesale from root.
+
+[graph]
+# GameEditor ships exactly ONE target: x86_64-pc-windows-msvc (rust-toolchain.toml;
+# non-Windows dropped in #713). Calyx is built as a path dependency of the editor on
+# that target, and standalone development in this repo is Windows-only. Scope the graph
+# to the real ship target so platform-specific deps we never compile are not evaluated —
+# same rationale as the root deny.toml. The three advisories this gate closes
+# (crossbeam-epoch / memmap2 / paste) are all cross-platform and present on the Windows
+# target, so scoping does NOT hide any of them (verified).
+targets = ["x86_64-pc-windows-msvc"]
+
+[licenses]
+# Permissive-only mandate (#1073). Exactly the licenses present in Calyx/Cargo.lock,
+# verified via `cargo-deny --manifest-path Calyx/Cargo.toml --config <this> list`.
+# (The root deny.toml's OFL-1.1 / Ubuntu-font-1.0 / NCSA / Unicode-DFS-2016 entries are
+# egui/fontdue/libfuzzer-only and are NOT in Calyx's tree, so they are omitted here.)
+allow = [
+    "MIT",
+    "MIT-0",                          # Amazon MIT-No-Attribution — present, permissive (#1073)
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "Zlib",
+    "ISC",
+    "Unicode-3.0",
+    "MPL-2.0",
+    "CC0-1.0",
+    "BSL-1.0",
+    "Unlicense",                      # public-domain dedication — present, permissive (#1073)
+    "CDLA-Permissive-2.0",            # webpki-roots (Mozilla CA roots) — present, permissive
+]
+# Calyx's own crates (calyx-*) are unpublished (publish = false) and carry no license
+# expression; they surface as "Unlicensed" and are excluded from the license gate here.
+private = { ignore = true }
+confidence-threshold = 0.9
+
+[bans]
+# No copyleft/GPL creeping in. (Duplicate-version warnings are informational only.)
+deny = []
+
+[advisories]
+yanked = "deny"
+# Advisory posture for Calyx (verified against Calyx/Cargo.lock with cargo-deny 0.20.2):
+#
+#   * RUSTSEC-2026-0204 (crossbeam-epoch invalid pointer deref, VULNERABILITY) — FIXED,
+#     not ignored: Calyx's lock was bumped 0.9.18 -> 0.9.20 (`cargo update -p crossbeam-epoch
+#     --precise 0.9.20`). This mirrors the GameEditor root fix in ae079d11.
+#   * RUSTSEC-2026-0186 (memmap2 unchecked pointer offset, UNSOUND) — FIXED, not ignored:
+#     Calyx's lock was bumped 0.9.10 -> 0.9.11 (`cargo update -p memmap2 --precise 0.9.11`).
+#
+#   Both bumps live in Calyx/Cargo.lock. They are permanent GameEditor customizations of
+#   Calyx (DEC-1519). If either bump is ever reverted, THIS GATE FAILS LOUD (the advisory
+#   fires again) - that is by design and forces the bump to be re-applied. The gate, not the
+#   lock, is the durable enforcement (#1517).
+#
+# The single remaining advisory is UNMAINTAINED (not an exploitable CVE) with no
+# first-party fix, ignored with a documented rationale + re-evaluation trigger (no silent
+# ignores), exactly as the root deny.toml treats it:
+ignore = [
+    # paste 1.0.15 — unmaintained (RUSTSEC-2024-0436). Compile-time token-paste proc-macro,
+    # transitive via gemm -> candle-core (Calyx ML stack). No runtime code, no untrusted
+    # input. Upstream candle/gemm have not migrated off `paste` (successor: `pastey`, which
+    # is ALSO already in the tree). Re-evaluate when candle-core drops `paste`. Tracked: #1516, #1517.
+    { id = "RUSTSEC-2024-0436", reason = "paste unmaintained; transitive compile-time proc-macro via gemm/candle-core; no first-party fix, no untrusted input. Re-evaluate on candle migration to pastey. Tracked in #1516/#1517." },
+]

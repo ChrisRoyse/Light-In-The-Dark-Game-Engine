@@ -1,0 +1,43 @@
+#!/bin/sh
+# #1528: block commits that are not rustfmt-clean.
+#
+# There is no CI at the GameEditor root - local gates are the enforcement
+# mechanism (AGENTS.md, #800). Nothing previously ran the format gate before a
+# commit, so 122 unformatted files silently accumulated and the gate went red on
+# main. This hook runs the repo format gate in staged-change FormatOnly mode
+# (rustfmt for changed owning packages plus relevant static ratchets) on every commit and
+# fails loud, rejecting the commit with the exact command to fix it. No silent skip, no fallback.
+#
+# Install once per clone: powershell -File scripts/install-git-hooks.ps1
+#   (or: git config core.hooksPath .githooks)
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+gate="$repo_root/scripts/check-format.ps1"
+
+if [ ! -f "$gate" ]; then
+  echo "PRE_COMMIT_FORMAT_GATE_FAILED: format gate not found at $gate" >&2
+  exit 1
+fi
+
+# Prefer pwsh (cross-platform PowerShell 7+); fall back to Windows powershell.
+if command -v pwsh >/dev/null 2>&1; then
+  ps=pwsh
+elif command -v powershell >/dev/null 2>&1; then
+  ps=powershell
+else
+  echo "PRE_COMMIT_FORMAT_GATE_FAILED: neither pwsh nor powershell on PATH - cannot run the format gate" >&2
+  exit 1
+fi
+
+"$ps" -NoProfile -ExecutionPolicy Bypass -File "$gate" -FormatOnly -ChangedOnly
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo "" >&2
+  echo "PRE_COMMIT_FORMAT_GATE_FAILED: commit blocked - the workspace is not rustfmt-clean." >&2
+  echo "  Fix:  powershell -File scripts/check-format.ps1 -Write   (writes cargo fmt)" >&2
+  echo "  Then re-stage and commit." >&2
+  exit "$status"
+fi
+
+exit 0

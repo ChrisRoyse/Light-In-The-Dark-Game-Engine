@@ -24,6 +24,7 @@ pub const CALYX_SEXTANT_VECTOR_SHAPE: &str = "CALYX_SEXTANT_VECTOR_SHAPE";
 pub const CALYX_SEXTANT_QUERY_SHAPE: &str = "CALYX_SEXTANT_QUERY_SHAPE";
 pub const CALYX_INVALID_ARGUMENT: &str = "CALYX_INVALID_ARGUMENT";
 pub const CALYX_ANSWER_UNGROUNDED: &str = "CALYX_ANSWER_UNGROUNDED";
+pub const CALYX_ANSWER_SYNTHESIS_UNAVAILABLE: &str = "CALYX_ANSWER_SYNTHESIS_UNAVAILABLE";
 pub const CALYX_LENS_NOT_FOUND: &str = "CALYX_LENS_NOT_FOUND";
 pub const CALYX_SEXTANT_GPU_PARITY_UNAVAILABLE: &str = "CALYX_SEXTANT_GPU_PARITY_UNAVAILABLE";
 pub const CALYX_SEXTANT_POSTINGS_CORRUPT: &str = "CALYX_SEXTANT_POSTINGS_CORRUPT";
@@ -34,6 +35,8 @@ pub const CALYX_SEXTANT_CX_MISSING: &str = "CALYX_SEXTANT_CX_MISSING";
 pub const CALYX_SEXTANT_CONSENSUS_INSUFFICIENT_LENSES: &str =
     "CALYX_SEXTANT_CONSENSUS_INSUFFICIENT_LENSES";
 pub const CALYX_SEXTANT_ASSOC_GRAPH_MISSING: &str = "CALYX_SEXTANT_ASSOC_GRAPH_MISSING";
+pub const CALYX_SEXTANT_GRAPH_HOP_KIND_UNKNOWN: &str = "CALYX_SEXTANT_GRAPH_HOP_KIND_UNKNOWN";
+pub const CALYX_SEXTANT_VECTOR_FUSION_UNWIRED: &str = "CALYX_SEXTANT_VECTOR_FUSION_UNWIRED";
 pub const CALYX_SEXTANT_TRAVERSE_HOPS: &str = "CALYX_SEXTANT_TRAVERSE_HOPS";
 pub const CALYX_SEXTANT_SKILL_UNKNOWN: &str = "CALYX_SEXTANT_SKILL_UNKNOWN";
 pub const CALYX_SEXTANT_SKILL_PARAMS: &str = "CALYX_SEXTANT_SKILL_PARAMS";
@@ -42,6 +45,9 @@ pub const CALYX_SEXTANT_SKILL_PAIR_NO_OVERLAP: &str = "CALYX_SEXTANT_SKILL_PAIR_
 pub const CALYX_TEMPORAL_WINDOW_BUDGET_EXHAUSTED: &str = "CALYX_TEMPORAL_WINDOW_BUDGET_EXHAUSTED";
 pub const CALYX_INDEX_CORRUPT: &str = "CALYX_INDEX_CORRUPT";
 pub const CALYX_INDEX_IO: &str = "CALYX_INDEX_IO";
+pub const CALYX_INDEX_MANIFEST_DB_MISSING: &str = "CALYX_INDEX_MANIFEST_DB_MISSING";
+pub const CALYX_INDEX_MANIFEST_DB_INVALID: &str = "CALYX_INDEX_MANIFEST_DB_INVALID";
+pub const CALYX_INDEX_MANIFEST_DB_MISMATCH: &str = "CALYX_INDEX_MANIFEST_DB_MISMATCH";
 pub const CALYX_INDEX_DIM_MISMATCH: &str = "CALYX_INDEX_DIM_MISMATCH";
 pub const CALYX_INDEX_INVALID_PARAMS: &str = "CALYX_INDEX_INVALID_PARAMS";
 pub const CALYX_INDEX_DIRECTION_UNAVAILABLE: &str = "CALYX_INDEX_DIRECTION_UNAVAILABLE";
@@ -82,6 +88,9 @@ pub fn sextant_error(code: &'static str, message: impl Into<String>) -> CalyxErr
         CALYX_ANSWER_UNGROUNDED => {
             "seed ASK with at least one visible grounded constellation candidate"
         }
+        CALYX_ANSWER_SYNTHESIS_UNAVAILABLE => {
+            "wire a real answer synthesis/oracle implementation before enabling ASK answers"
+        }
         CALYX_LENS_NOT_FOUND => "register or load a visible lens slot for ASK retrieval",
         CALYX_SEXTANT_GPU_PARITY_UNAVAILABLE => {
             "wire a real Forge GPU path before claiming Sextant CPU/GPU parity"
@@ -101,7 +110,13 @@ pub fn sextant_error(code: &'static str, message: impl Into<String>) -> CalyxErr
             "expose at least two active dense lenses on the anchor for cross-lens consensus"
         }
         CALYX_SEXTANT_ASSOC_GRAPH_MISSING => {
-            "set the vault association graph on the engine before traversing"
+            "persist the vault association graph before traversing"
+        }
+        CALYX_SEXTANT_GRAPH_HOP_KIND_UNKNOWN => {
+            "use an edge type present in the persisted association graph"
+        }
+        CALYX_SEXTANT_VECTOR_FUSION_UNWIRED => {
+            "wire PlanStep::VectorFusion to real slot indexes before serving vector fusion"
         }
         CALYX_SEXTANT_TRAVERSE_HOPS => "set traverse hops within 1..=10",
         CALYX_SEXTANT_SKILL_UNKNOWN => "call skills() and use one of the returned skill names",
@@ -119,6 +134,15 @@ pub fn sextant_error(code: &'static str, message: impl Into<String>) -> CalyxErr
             "rebuild the on-disk index from the vault; do not trust partial reads"
         }
         CALYX_INDEX_IO => "inspect disk/permissions on the index path, then rebuild",
+        CALYX_INDEX_MANIFEST_DB_MISSING => {
+            "rebuild or migrate the partitioned vault so the manifest is a Calyx/Aster Graph CF row"
+        }
+        CALYX_INDEX_MANIFEST_DB_INVALID => {
+            "discard the corrupt partitioned manifest row and rebuild the partitioned vault"
+        }
+        CALYX_INDEX_MANIFEST_DB_MISMATCH => {
+            "rebuild the partitioned vault; manifest DB readback changed after write"
+        }
         CALYX_INDEX_DIM_MISMATCH => "submit a query vector matching the DiskANN graph dimension",
         CALYX_INDEX_INVALID_PARAMS => {
             "supply non-empty vectors with dense ids and dim/m_max/ef/alpha within bounds"

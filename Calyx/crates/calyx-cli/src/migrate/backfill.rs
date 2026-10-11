@@ -3,10 +3,12 @@ use std::fs;
 use std::path::Path;
 use std::time::Duration;
 
+use calyx_aster::cf::{ColumnFamily, base_key, slot_key};
 use calyx_aster::vault::AsterVault;
+use calyx_aster::vault::encode::{encode_constellation_base, encode_slot_vector};
 use calyx_core::{
     AbsentReason, CxId, Input, Lens, Modality, Result, SlotId, SlotShape, SlotVector,
-    TEMPORAL_MISSING_CREATED_AT,
+    TEMPORAL_MISSING_CREATED_AT, VaultStore,
 };
 use calyx_registry::{
     AlgorithmicPanelLens, BackfillConfig, BackfillPriority, BackfillRequest, BackfillScheduler,
@@ -17,9 +19,17 @@ use calyx_registry::{
 use serde::{Deserialize, Serialize};
 
 use super::adapter::VaultSqliteAdapter;
+use super::backfill_origin::{
+    ORIGIN_ALGORITHMIC, ORIGIN_LEARNED_TEI, ORIGIN_OFFLINE_DETERMINISTIC, runtime_kind,
+    slot_origin_key, slot_runtime_key,
+};
 use super::errors;
 use super::manifest::{now_ms, panel_path, scheduler_path};
 use super::reader::ChunkRow;
+
+#[cfg(test)]
+#[path = "backfill_tests.rs"]
+mod tests;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BackfillMode {
@@ -31,10 +41,13 @@ pub enum BackfillMode {
 pub struct BackfillSummary {
     pub panel_template: String,
     pub panel_version: u32,
+    pub backfill_mode: String,
     pub source_rows: usize,
     pub scheduled_slots: usize,
     pub batches_completed: usize,
     pub slot_rows_written: usize,
+    pub learned_tei_slot_rows_written: usize,
+    pub offline_deterministic_slot_rows_written: usize,
     pub scheduler_path: String,
 }
 
@@ -83,6 +96,8 @@ pub fn backfill_default_panel(
     let temporal = TemporalContext::from_rows(rows);
     let mut batches_completed = 0;
     let mut slot_rows_written = 0;
+    let mut learned_tei_slot_rows_written = 0;
+    let mut offline_deterministic_slot_rows_written = 0;
     while let Some(batch) = scheduler.claim_next_batch(now_ms())? {
         if batch.throttled {
             continue;
@@ -101,8 +116,13 @@ pub fn backfill_default_panel(
             let position = *positions
                 .get(cx_id)
                 .ok_or_else(|| errors::backfill_incomplete(format!("{cx_id} missing position")))?;
-            let vector = measure_slot(spec, row, mode, position, temporal)?;
-            vault.put_slot_vector(*cx_id, batch.slot_id, &vector)?;
+            let measured = measure_slot(spec, row, mode, position, temporal)?;
+            match measured.origin {
+                SlotOrigin::LearnedTei => learned_tei_slot_rows_written += 1,
+                SlotOrigin::OfflineDeterministic => offline_deterministic_slot_rows_written += 1,
+                SlotOrigin::Algorithmic => {}
+            }
+            write_measured_slot(vault, *cx_id, batch.slot_id, spec, &measured)?;
             slot_rows_written += 1;
         }
         scheduler.complete_batch(batch.slot_id, batch.lens_id, now_ms())?;
@@ -112,12 +132,55 @@ pub fn backfill_default_panel(
     Ok(BackfillSummary {
         panel_template: instantiated.template_name,
         panel_version: instantiated.panel.version,
+        backfill_mode: mode.as_str().to_string(),
         source_rows: rows.len(),
         scheduled_slots: instantiated.panel.slots.len().saturating_sub(1),
         batches_completed,
         slot_rows_written,
+        learned_tei_slot_rows_written,
+        offline_deterministic_slot_rows_written,
         scheduler_path: scheduler_file.display().to_string(),
     })
+}
+
+impl BackfillMode {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::RealTei => "real_tei",
+            Self::OfflineDeterministic => "offline_deterministic",
+        }
+    }
+}
+
+fn write_measured_slot(
+    vault: &AsterVault,
+    cx_id: CxId,
+    slot_id: SlotId,
+    spec: &PanelSlotSpec,
+    measured: &MeasuredSlot,
+) -> Result<()> {
+    let snapshot = vault.snapshot();
+    let mut cx = vault.get(cx_id, snapshot)?;
+    cx.metadata.insert(
+        slot_origin_key(slot_id),
+        measured.origin.as_str().to_string(),
+    );
+    cx.metadata
+        .insert(slot_runtime_key(slot_id), runtime_kind(spec).to_string());
+    cx.slots.insert(slot_id, measured.vector.clone());
+    vault.write_cf_batch([
+        (
+            ColumnFamily::Base,
+            base_key(cx_id),
+            encode_constellation_base(&cx)?,
+        ),
+        (
+            ColumnFamily::slot(slot_id),
+            slot_key(cx_id),
+            encode_slot_vector(&measured.vector)?,
+        ),
+    ])?;
+    Ok(())
 }
 
 pub fn default_slot_ids() -> Vec<SlotId> {
@@ -179,21 +242,67 @@ impl TemporalContext {
     }
 }
 
+struct MeasuredSlot {
+    vector: SlotVector,
+    origin: SlotOrigin,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SlotOrigin {
+    LearnedTei,
+    Algorithmic,
+    OfflineDeterministic,
+}
+
+impl SlotOrigin {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::LearnedTei => ORIGIN_LEARNED_TEI,
+            Self::Algorithmic => ORIGIN_ALGORITHMIC,
+            Self::OfflineDeterministic => ORIGIN_OFFLINE_DETERMINISTIC,
+        }
+    }
+}
+
 fn measure_slot(
     spec: &PanelSlotSpec,
     row: &ChunkRow,
     mode: BackfillMode,
     position: u64,
     temporal: TemporalContext,
-) -> Result<SlotVector> {
+) -> Result<MeasuredSlot> {
     match &spec.runtime {
         PanelLensRuntime::TeiHttp { endpoint } if mode == BackfillMode::RealTei => {
-            measure_tei(spec, endpoint, row)
+            Ok(MeasuredSlot {
+                vector: measure_tei(spec, endpoint, row)?,
+                origin: SlotOrigin::LearnedTei,
+            })
         }
-        PanelLensRuntime::Algorithmic { lens } => {
-            measure_algorithmic(lens.clone(), spec.output, row, position, temporal)
+        PanelLensRuntime::Algorithmic { lens } => Ok(MeasuredSlot {
+            vector: measure_algorithmic(lens.clone(), spec.output, row, position, temporal)?,
+            origin: SlotOrigin::Algorithmic,
+        }),
+        PanelLensRuntime::TeiHttp { .. }
+        | PanelLensRuntime::Registry { .. }
+        | PanelLensRuntime::ExternalCmd { .. }
+        | PanelLensRuntime::Placeholder { .. }
+            if mode == BackfillMode::OfflineDeterministic =>
+        {
+            Ok(MeasuredSlot {
+                vector: vector_for_shape(spec.output, row, spec.name.as_bytes())?,
+                origin: SlotOrigin::OfflineDeterministic,
+            })
         }
-        _ => vector_for_shape(spec.output, row, spec.name.as_bytes()),
+        PanelLensRuntime::Registry { name }
+        | PanelLensRuntime::ExternalCmd { name }
+        | PanelLensRuntime::Placeholder { name } => Err(errors::backfill_incomplete(format!(
+            "slot {} runtime {name} is not wired for real backfill; use --offline-backfill to write explicitly marked deterministic vectors",
+            spec.name
+        ))),
+        PanelLensRuntime::TeiHttp { endpoint } => Err(errors::backfill_incomplete(format!(
+            "slot {} TEI endpoint {endpoint} is not available in the selected backfill mode",
+            spec.name
+        ))),
     }
 }
 
@@ -219,9 +328,11 @@ fn measure_algorithmic(
         AlgorithmicPanelLens::ByteFeatures => sparse_keywords(shape, &row.content)?,
         AlgorithmicPanelLens::AstStyle => ast_style(&row.content),
         AlgorithmicPanelLens::SparseKeywords => sparse_keywords(shape, &row.content)?,
-        AlgorithmicPanelLens::TemporalRecent => temporal_recent(row, temporal)?,
-        AlgorithmicPanelLens::TemporalPeriodic => temporal_periodic(row, temporal)?,
-        AlgorithmicPanelLens::TemporalPositional => temporal_positional(row, position, temporal)?,
+        AlgorithmicPanelLens::TemporalRecent => temporal::temporal_recent(row, temporal)?,
+        AlgorithmicPanelLens::TemporalPeriodic => temporal::temporal_periodic(row, temporal)?,
+        AlgorithmicPanelLens::TemporalPositional => {
+            temporal::temporal_positional(row, position, temporal)?
+        }
         AlgorithmicPanelLens::Scalar => SlotVector::Dense {
             dim: 1,
             data: vec![row.content.len() as f32],
@@ -229,72 +340,7 @@ fn measure_algorithmic(
     })
 }
 
-fn temporal_recent(row: &ChunkRow, context: TemporalContext) -> Result<SlotVector> {
-    let Some(input) = event_time_input(row)? else {
-        return Ok(temporal_absent());
-    };
-    E2RecencyLens::new(E2RecencyConfig {
-        decay: DecayFunction::Linear {
-            max_age_secs: context.max_age_secs,
-        },
-        reference_time: context.reference_time,
-    })
-    .measure(&input)
-}
-
-fn temporal_periodic(row: &ChunkRow, context: TemporalContext) -> Result<SlotVector> {
-    let Some(input) = event_time_input(row)? else {
-        return Ok(temporal_absent());
-    };
-    E3PeriodicLens::new(E3PeriodicConfig {
-        options: PeriodicOptions {
-            target_hour: None,
-            target_day_of_week: None,
-            use_now: true,
-        },
-        reference_time: context.reference_time,
-    })
-    .measure(&input)
-}
-
-fn temporal_positional(
-    row: &ChunkRow,
-    position: u64,
-    context: TemporalContext,
-) -> Result<SlotVector> {
-    if row.event_time_secs.is_none() {
-        return Ok(temporal_absent());
-    }
-    let mut bytes = Vec::with_capacity(16);
-    bytes.extend_from_slice(&position.to_le_bytes());
-    bytes.extend_from_slice(&context.total_position.to_le_bytes());
-    E4PositionalLens::new(E4PositionalConfig {
-        options: SequenceOptions::default(),
-    })
-    .measure(&Input::new(Modality::Structured, bytes))
-}
-
-fn event_time_input(row: &ChunkRow) -> Result<Option<Input>> {
-    let Some(secs) = row.event_time_secs else {
-        return Ok(None);
-    };
-    let timestamp = i64::try_from(secs).map_err(|_| {
-        errors::backfill_incomplete(format!(
-            "row {} source event timestamp {secs} exceeds i64",
-            row.row_num
-        ))
-    })?;
-    Ok(Some(Input::new(
-        Modality::Structured,
-        timestamp.to_le_bytes().to_vec(),
-    )))
-}
-
-fn temporal_absent() -> SlotVector {
-    SlotVector::Absent {
-        reason: AbsentReason::Error(TEMPORAL_MISSING_CREATED_AT.to_string()),
-    }
-}
+mod temporal;
 
 fn sparse_keywords(shape: SlotShape, bytes: &[u8]) -> Result<SlotVector> {
     let SlotShape::Sparse(dim) = shape else {

@@ -142,6 +142,31 @@ impl FastembedQwen3Lens {
     }
 
     pub fn from_lens_spec(spec: &LensSpec) -> Result<Self> {
+        Self::from_lens_spec_with_policy(spec, CandleDevicePolicy::CudaFailLoud { ordinal: 0 })
+    }
+
+    /// Build a Qwen3 lens from a persisted spec under an EXPLICIT device policy.
+    ///
+    /// `from_lens_spec` pins `CudaFailLoud` -- the default no-silent-fallback GPU
+    /// contract. The engine CPU-explicit content panel (#1775) calls this with
+    /// `CandleDevicePolicy::CpuExplicit` so an active fastembed-qwen3 learned text
+    /// slot can be surfaced and measured on CPU. That is an EXPLICIT device choice
+    /// selected by the derived CPU-explicit panel, never a silent CPU fallback from
+    /// a failed CUDA init -- a CUDA policy still fails loud with `CALYX_LENS_UNREACHABLE`.
+    pub fn from_lens_spec_with_policy(
+        spec: &LensSpec,
+        device_policy: CandleDevicePolicy,
+    ) -> Result<Self> {
+        Self::from_files(Self::file_spec_from_lens_spec(spec, device_policy)?)
+    }
+
+    /// Resolve a persisted `LensSpec` into a concrete `Qwen3FileSpec` under the given
+    /// device policy WITHOUT loading the model. Kept separate so the device-policy
+    /// threading is unit-testable without a real Qwen3 checkpoint on disk.
+    pub(crate) fn file_spec_from_lens_spec(
+        spec: &LensSpec,
+        device_policy: CandleDevicePolicy,
+    ) -> Result<Qwen3FileSpec> {
         let LensRuntime::FastembedQwen3 {
             model_id,
             files,
@@ -151,12 +176,12 @@ impl FastembedQwen3Lens {
             return Err(config_invalid("LensSpec runtime is not fastembed-qwen3"));
         };
         let model_id = qwen3_model_id(model_id)?;
-        Self::from_files(Qwen3FileSpec {
+        Ok(Qwen3FileSpec {
             name: spec.name.clone(),
             model_id: model_id.clone(),
             files: Qwen3ModelFiles::from_paths(model_id, files.clone())?,
             max_tokens: DEFAULT_QWEN3_MAX_TOKENS,
-            device_policy: CandleDevicePolicy::CudaFailLoud { ordinal: 0 },
+            device_policy,
             precision: CandlePrecision::parse(dtype)?,
             expected_shape: Some(spec.output),
             expected_weights_sha256: Some(spec.weights_sha256),
@@ -281,5 +306,85 @@ pub(crate) fn config_invalid(message: impl Into<String>) -> CalyxError {
         code: "CALYX_LENS_CONFIG_INVALID",
         message: message.into(),
         remediation: "fix Qwen3 model/tokenizer/config or register a supported lens spec",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::frozen::NormPolicy;
+    use calyx_core::{Asymmetry, QuantPolicy};
+    use std::path::PathBuf;
+
+    fn qwen3_spec() -> LensSpec {
+        LensSpec {
+            name: "a38-qwen3-embedding".to_string(),
+            runtime: LensRuntime::FastembedQwen3 {
+                model_id: "Qwen/Qwen3-Embedding-0.6B".to_string(),
+                files: vec![
+                    PathBuf::from("model.safetensors"),
+                    PathBuf::from("tokenizer.json"),
+                    PathBuf::from("config.json"),
+                ],
+                dtype: "f32".to_string(),
+            },
+            output: SlotShape::Dense(1024),
+            modality: Modality::Text,
+            weights_sha256: [7; 32],
+            corpus_hash: [9; 32],
+            norm_policy: NormPolicy::unit(),
+            max_batch: None,
+            axis: None,
+            asymmetry: Asymmetry::None,
+            quant_default: QuantPolicy::turboquant_default(),
+            truncate_dim: None,
+            recall_delta: default_recall_delta(),
+            retrieval_only: false,
+            excluded_from_dedup: false,
+        }
+    }
+
+    #[test]
+    fn from_lens_spec_defaults_to_cuda_fail_loud_device_policy() {
+        // The default persisted-spec path stays on the no-silent-fallback GPU
+        // contract; nothing about surfacing a CPU-explicit panel changes it (#1775).
+        let file_spec = FastembedQwen3Lens::file_spec_from_lens_spec(
+            &qwen3_spec(),
+            CandleDevicePolicy::CudaFailLoud { ordinal: 0 },
+        )
+        .unwrap();
+        assert_eq!(
+            file_spec.device_policy,
+            CandleDevicePolicy::CudaFailLoud { ordinal: 0 }
+        );
+        assert_eq!(file_spec.expected_shape, Some(SlotShape::Dense(1024)));
+        assert_eq!(file_spec.precision, CandlePrecision::F32);
+    }
+
+    #[test]
+    fn cpu_explicit_policy_threads_through_to_file_spec() {
+        // #1775: the engine CPU-explicit content panel surfaces an active
+        // fastembed-qwen3 slot by resolving the spec under CpuExplicit -- an
+        // explicit CPU device choice that never touches CUDA.
+        let file_spec = FastembedQwen3Lens::file_spec_from_lens_spec(
+            &qwen3_spec(),
+            CandleDevicePolicy::CpuExplicit,
+        )
+        .unwrap();
+        assert_eq!(file_spec.device_policy, CandleDevicePolicy::CpuExplicit);
+        assert_eq!(file_spec.device_policy.as_str(), "cpu_explicit,no_cuda");
+    }
+
+    #[test]
+    fn file_spec_rejects_non_qwen3_runtime() {
+        let mut spec = qwen3_spec();
+        spec.runtime = LensRuntime::Onnx {
+            model_id: "dense".to_string(),
+            files: vec![PathBuf::from("model.onnx")],
+        };
+        let error =
+            FastembedQwen3Lens::file_spec_from_lens_spec(&spec, CandleDevicePolicy::CpuExplicit)
+                .unwrap_err();
+        assert_eq!(error.code, "CALYX_LENS_CONFIG_INVALID");
     }
 }

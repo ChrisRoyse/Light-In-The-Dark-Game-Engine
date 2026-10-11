@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use calyx_aster::cf::ColumnFamily;
 use calyx_aster::recurrence::read_series;
@@ -26,12 +26,21 @@ fn batch_ingest_structures_oracle_recurrence_for_reverse_query() {
     let jsonl = resolved.path.join("oracle.jsonl");
     fs::write(
         &jsonl,
-        concat!(
-            r#"{"text":"What treats type 2 diabetes? A metformin B aspirin","#,
-            r#""anchors":[{"kind":"label:answer","value":"A"},{"kind":"test-pass","value":"true"}],"#,
-            r#""oracle":{"domain":"endocrinology","action":"What treats type 2 diabetes?","#,
-            r#""outcome":"A","t_secs":1700000000}}"#,
-            "\n",
+        format!(
+            "{}\n",
+            oracle_row(
+                "What treats type 2 diabetes? A metformin B aspirin",
+                json!([
+                    {"kind":"label:answer","value":"A"},
+                    {"kind":"test-pass","value":"true"}
+                ]),
+                json!({
+                    "domain":"endocrinology",
+                    "action":"What treats type 2 diabetes?",
+                    "outcome":"A",
+                    "t_secs":1700000000
+                }),
+            )
         ),
     )
     .unwrap();
@@ -76,16 +85,22 @@ fn batch_ingest_structures_oracle_recurrence_for_reverse_query() {
     assert_eq!(causes.len(), 1);
     assert_eq!(causes[0].action_or_event, "What treats type 2 diabetes?");
     assert!(!causes[0].provisional);
-    if let Ok(fsv_root) = std::env::var("CALYX_FSV_ROOT") {
+    if let Some(fsv_root) = calyx_fsv::fsv_root("CALYX_FSV_ROOT") {
+        let fsv_snapshot = vault.snapshot();
         let recurrence_rows = vault
-            .scan_cf_at(snapshot, ColumnFamily::Recurrence)
+            .scan_cf_at(fsv_snapshot, ColumnFamily::Recurrence)
             .unwrap()
             .len();
         let report = json!({
             "issue": 885,
+            "fixed_by_issue": 1215,
             "scenario": "oracle_event_batch_ingest_reverse_query",
             "vault_path": resolved.path.display().to_string(),
             "cx_id": cx_id.to_string(),
+            "snapshots": {
+                "initial_readback": snapshot,
+                "fsv_readback": fsv_snapshot,
+            },
             "base_metadata": {
                 "oracle.domain": cx.metadata_value(calyx_oracle::ORACLE_DOMAIN_METADATA_KEY),
                 "oracle.action": cx.metadata_value(calyx_oracle::ORACLE_ACTION_METADATA_KEY),
@@ -108,7 +123,7 @@ fn batch_ingest_structures_oracle_recurrence_for_reverse_query() {
                 "ledger_seq": causes[0].provenance.seq,
             }
         });
-        let fsv_path = Path::new(&fsv_root);
+        let fsv_path = &fsv_root;
         fs::create_dir_all(fsv_path).unwrap();
         fs::write(
             fsv_path.join("issue885_oracle_event_readback.json"),
@@ -125,10 +140,18 @@ fn oracle_reingest_does_not_duplicate_recurrence_occurrence() {
     let jsonl = resolved.path.join("oracle.jsonl");
     fs::write(
         &jsonl,
-        concat!(
-            r#"{"text":"Question one","oracle":{"domain":"cardiology","#,
-            r#""action":"Question one","outcome":"yes","outcome_kind":"label:answer"}}"#,
-            "\n",
+        format!(
+            "{}\n",
+            oracle_row(
+                "Question one",
+                json!([]),
+                json!({
+                    "domain":"cardiology",
+                    "action":"Question one",
+                    "outcome":"yes",
+                    "outcome_kind":"label:answer"
+                }),
+            )
         ),
     )
     .unwrap();
@@ -148,7 +171,11 @@ fn oracle_reingest_does_not_duplicate_recurrence_occurrence() {
 fn malformed_oracle_event_is_loud_usage_error() {
     let err = parse_batch_line(
         0,
-        r#"{"text":"x","oracle":{"domain":"","action":"q","outcome":"A"}}"#,
+        &oracle_row(
+            "x",
+            json!([]),
+            json!({"domain":"","action":"q","outcome":"A"}),
+        ),
     )
     .unwrap_err();
     assert_eq!(err.code(), "CALYX_CLI_USAGE_ERROR");
@@ -156,7 +183,11 @@ fn malformed_oracle_event_is_loud_usage_error() {
 
     let err = parse_batch_line(
         1,
-        r#"{"text":"x","oracle":{"domain":"d","action":"q","outcome":"A","t_secs":-1}}"#,
+        &oracle_row(
+            "x",
+            json!([]),
+            json!({"domain":"d","action":"q","outcome":"A","t_secs":-1}),
+        ),
     )
     .unwrap_err();
     assert_eq!(err.code(), "CALYX_CLI_USAGE_ERROR");
@@ -228,15 +259,29 @@ fn panel_with_text_slot(lens_id: LensId, shape: SlotShape) -> Panel {
 }
 
 fn cleanup_root(root: PathBuf) {
-    if std::env::var_os("CALYX_FSV_ROOT").is_none() {
+    if calyx_fsv::fsv_root("CALYX_FSV_ROOT").is_none() {
         fs::remove_dir_all(root).ok();
     }
 }
 
+fn oracle_row(text: &str, anchors: serde_json::Value, oracle: serde_json::Value) -> String {
+    json!({
+        "text": text,
+        "metadata": {
+            "source_dataset": "oracle-event-tests",
+            "source_sha256": "sha256-oracle-event-test",
+            "source_url": "https://example.test/oracle-event",
+            "license": "CC-BY-4.0",
+            "retrieval_ts": "2026-07-04T00:00:00Z",
+        },
+        "anchors": anchors,
+        "oracle": oracle,
+    })
+    .to_string()
+}
+
 fn temp_root(name: &str) -> PathBuf {
-    let parent = std::env::var_os("CALYX_FSV_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(std::env::temp_dir);
+    let parent = calyx_fsv::fsv_root_or_else("CALYX_FSV_ROOT", std::env::temp_dir);
     parent.join(format!(
         "calyx-cli-ingest-oracle-{name}-{}-{}",
         std::process::id(),

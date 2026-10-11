@@ -102,23 +102,29 @@ fn seed_sqlite(path: &Path) {
 }
 
 fn seed_sqlite_rows(path: &Path, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    conn.execute(
-        "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
-        [],
-    )
-    .unwrap();
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1,'db',?2,?3)",
-            params![
-                format!("chunk-{idx}"),
-                format!("content-{idx}"),
-                embedding(idx as f32)
-            ],
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    transaction
+        .execute(
+            "CREATE TABLE chunks(chunk_id TEXT,database_name TEXT,content TEXT,embedding BLOB)",
+            [],
         )
         .unwrap();
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1,'db',?2,?3)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("chunk-{idx}"),
+                    format!("content-{idx}"),
+                    embedding(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn embedding(first: f32) -> Vec<u8> {

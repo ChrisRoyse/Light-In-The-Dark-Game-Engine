@@ -88,9 +88,13 @@
    `tmp/`, into chat, into commits, or into any docs. Use Infisical key
    names (e.g. `stripe_secret_key`) or the literal placeholder
    `<REDACTED:LABEL>`. The 2026-04-24 incident leaked 8+ live keys this
-   way; pre-commit secret scan + history rewrite are now in place. See
-   auto-memory `feedback_no_live_tokens_in_memory.md` and the repo
-   pre-commit hook at `.githooks/pre-commit`.
+   way; installed `.githooks/pre-commit` runs `scripts/secret-scan.sh --staged`
+   with gitleaks, and `.githooks/pre-push` scans only the outgoing commit
+   ranges. Full-history audits are manual:
+   `bash scripts/secret-scan.sh --git-history --no-banner --no-color --report-format json --report-path tmp/history-gitleaks-report.json`.
+   Treat that report JSON as the source of truth: rotate/revoke and rewrite
+   history for real credentials; add only exact `.gitleaksignore` fingerprints
+   for confirmed non-secret false positives.
 2. **Live credentials reach this codebase only through the loader or
    the Infisical CLI/REST/SDK.** No env files committed, no
    `.env.example` with non-placeholder values, no hardcoded fallback
@@ -879,7 +883,7 @@ restic, not by HA.
 | PostgreSQL 18.4 + PgBouncer | **the control plane** — customers, billing, creators, queries, outbox |
 
 GPU hygiene gotcha: after unattended-upgrades, the NVIDIA driver/userspace
-can skew and `nvidia-smi` mismatches until a **reboot**. CUDA is 13.2 from
+can skew and `nvidia-smi` mismatches until a **reboot**. CUDA is 13.3 from
 the NVIDIA runfile (not the Ubuntu package). Health checks must probe CUDA
 init and **fail loud**, never silently CPU-fallback in server mode.
 

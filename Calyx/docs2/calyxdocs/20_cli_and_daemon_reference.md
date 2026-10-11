@@ -25,6 +25,7 @@ calyxd (binary `calyxd`):
 - `crates/calyxd/src/health.rs`
 - `crates/calyxd/src/metrics.rs`, `metrics/calyx.rs`, `metrics/hazards.rs`, `metrics/zfs.rs`
 - `crates/calyxd/src/server.rs`, `mcp_server.rs`
+- `crates/calyxd/src/learner_origin/*`
 - `crates/calyxd/src/verify.rs`, `verify_loop.rs`
 
 Cross-references: error catalog roots in [03_configuration.md](03_configuration.md); subsystem entry points in [01_system_overview.md](01_system_overview.md); MCP dispatch in [19_mcp_api_tools_reference.md](19_mcp_api_tools_reference.md); ledger verify in [14_ledger_provenance.md](14_ledger_provenance.md); restore byte-layout in [04_storage_and_schema.md](04_storage_and_schema.md).
@@ -36,7 +37,7 @@ Cross-references: error catalog roots in [03_configuration.md](03_configuration.
 | Crate | `[[bin]]` name | Path | Purpose |
 |---|---|---|---|
 | `calyx-cli` | `calyx` | `crates/calyx-cli/src/main.rs` | The operator/agent CLI (~229 `.rs` files). |
-| `calyxd` | `calyxd` | `crates/calyxd/src/main.rs` | The daemon: chain-verify loop, `/metrics`, config-driven server mode. |
+| `calyxd` | `calyxd` | `crates/calyxd/src/main.rs` | The daemon: chain-verify loop, `/metrics`, optional learner-origin routes, config-driven server mode. |
 
 There are no console-script wrappers beyond these two Cargo `[[bin]]` targets. `calyxd` is also consumed as a **library** by `calyx-cli` (its `Cargo.toml` lists `calyxd = { path = "../calyxd" }`); the CLI reuses `calyxd::verify`, `calyxd::config`, and `calyxd::health` for `verify-restore` and the `healthcheck --config` form (`crates/calyxd/src/lib.rs`).
 
@@ -64,6 +65,9 @@ Every CLI failure serializes to a stable JSON envelope on **stderr** and exits w
 | `Calyx(CalyxError)` | the catalog `code` (PRD 18), carried verbatim | catalog `remediation` |
 | `Io(String)` | `CALYX_CLI_IO_ERROR` | "check the path/permissions in the message and retry" |
 | `Usage(String)` | `CALYX_CLI_USAGE_ERROR` | "run `calyx --help` and fix the command/flags shown in the message" |
+| `Runtime(String)` | `CALYX_CLI_RUNTIME_ERROR` | "the command and flags were valid; inspect the failure detail in the message, fix the named state or input, and retry" |
+
+Classification is explicit at every failure site (issue #1145): `Usage` is reserved for argument/flag parse failures, `Io` for OS-refused file/path operations, and `Runtime` for valid commands whose operation failed without a PRD 18 catalog entry (gate mismatches, worker panics, malformed stored data). `CliError` deliberately has **no** `From<String>`/`From<&str>` conversion — a blanket string conversion used to reclassify stringified `CalyxError`s as usage errors, destroying their typed `code`/`remediation`. A typed `CalyxError` always propagates verbatim via `?`.
 
 `LodestarError` is mapped to `Calyx(...)` with the subsystem code preserved. `verify-restore`, `healthcheck --config`, and a few FSV tools bypass this envelope and print `error: …` to stderr with their own exit codes (noted per command).
 
@@ -310,7 +314,7 @@ Legacy/groups: `readback, healthcheck, verify-restore, merkle-root, verify-chain
 
 ### B.1 Module surface (`lib.rs`)
 
-`calyxd` compiles a binary (`main.rs` + private `startup`, `verify_loop`) over a public **library** (`lib.rs`) that is the single source of truth for: `config` (`CalyxConfig`), `cuda_probe` (T02), `vram` (T03), `health` (T04), `metrics` (the `/metrics` surface, PH66 T03), `mcp_server` (T05 loopback MCP), `server` (the `/metrics` HTTP listener), `verify` (PH67 `verify-restore`), and `error` (the `CALYX_DAEMON_*` taxonomy).
+`calyxd` compiles a binary (`main.rs` + private `startup`, `verify_loop`) over a public **library** (`lib.rs`) that is the single source of truth for: `config` (`CalyxConfig`), `cuda_probe` (T02), `vram` (T03), `health` (T04), `metrics` (the `/metrics` surface, PH66 T03), `learner_origin` (Worker-only origin writes), `mcp_server` (T05 loopback MCP), `server` (the HTTP listener), `verify` (PH67 `verify-restore`), and `error` (the `CALYX_DAEMON_*` taxonomy).
 
 ### B.2 Invocation and arg parsing (`main.rs`)
 
@@ -342,10 +346,10 @@ The daemon **fails loud** at startup — no silent CPU fallback. `run_server` or
 
 1. **Config load** — `CalyxConfig::from_file(path)` (T01; see B.6).
 2. **T02 CUDA probe** — `cuda_probe::probe_cuda_device()`. With `--features cuda` calls `calyx_forge::init_cuda(0,false)` and captures `CudaDeviceInfo {device_name, vram_total_mib, compute_cap}`. Without the feature, or on any init failure, returns `DeviceUnavailable` (`CALYX_FORGE_DEVICE_UNAVAILABLE`). Env `CALYX_FORCE_CUDA_FAIL=1` (exact string `"1"`) forces the failure path for FSV.
-3. **T03 VRAM budget** — `build_vram_budget` → `NvmlVramUsage::init()` (loads `libnvidia-ml.so.1`) + `VramBudget::from_config(cfg.vram_budget_mib, &device, nvml)`, then `startup_vram_audit()`. Reads live device usage via **NVML** (not `cudaMemGetInfo`). Fails closed (`CALYX_FORGE_VRAM_BUDGET`) if budget = 0, budget > device board total, or resident footprint already > budget (error names the TEI endpoints `:8088/:8089/:8090`). `--audit-vram` prints the `VramAuditReport {tei_used_mib, calyx_budget_mib, device_total_mib}` JSON and exits 0 here.
+3. **T03 VRAM budget** — `build_vram_budget` → `NvmlVramUsage::init()` (loads `libnvidia-ml.so.1`) + `VramBudget::from_config(cfg.vram_budget_mib, &device, nvml)`, then `startup_vram_audit()`. Reads live device usage via **NVML** (not `cudaMemGetInfo`). Fails closed (`CALYX_FORGE_VRAM_BUDGET`) if budget = 0, budget > device board total, or resident footprint already > budget (error names the TEI endpoints `:18190/:18188/:8088/:8089/:8090`). `--audit-vram` prints the `VramAuditReport {tei_used_mib, calyx_budget_mib, device_total_mib}` JSON and exits 0 here.
 4. **Vault read-back** — `open_vault_for_startup(vault_path)` calls `verify::verify_restore`; a present-but-unverified vault → `DaemonError::health_failed` (`CALYX_DAEMON_HEALTH_FAIL`). `vault_path` is `cfg.vault_path_resolved()` (`$CALYX_HOME` expanded).
 5. **First chain-verify cycle (synchronous)** — `ChainVerifyMetrics::new`, then `run_cycle(&[target], &chain)` so a scrape never observes an unverified gauge. `CalyxMetrics::new` then composes the full surface; `refresh_zfs_metrics` populates ZFS gauges. `--once` prints the encoded text and exits here.
-6. **T05/metrics bind + signals** — `MetricsServer::bind(cfg.bind_addr, surface)` (loopback-only, `CALYX_DAEMON_BIND_FAILED`); `install_signal_handlers` wires SIGINT/SIGTERM (unix) or Ctrl-C (non-unix) → `CancellationToken`.
+6. **T05/metrics + origin bind + signals** — `MetricsServer::bind` or `MetricsServer::bind_with_origin` (loopback-only, `CALYX_DAEMON_BIND_FAILED`); when `[learner_origin]` is configured, `LearnerOriginService::from_config` opens a dedicated learner vault and requires the shared-secret env var before the listener starts. `install_signal_handlers` wires SIGINT/SIGTERM (unix) or Ctrl-C (non-unix) → `CancellationToken`.
 7. **T04 healthcheck** — `run_healthcheck(&cfg)` + `write_health_result` to `health_log_path`; if not pass, prints `CALYX_DAEMON_HEALTH_FAIL` and exits **1** (listener will not accept).
 8. **Loops** — `spawn_loop` (periodic chain-verify, `VERIFY_INTERVAL_SECS = 60`) + `spawn_zfs_metrics_loop`, then `server.run(cancel_token)` blocks. Clean shutdown writes `write_shutdown_status` (`{"status":"shutdown",…}`).
 
@@ -362,10 +366,21 @@ The plain `run()` path (no `--config`) skips T02–T04: it validates each target
 
 The CLI front-ends are `calyx healthcheck --config <toml>` (`healthcheck_daemon.rs`; exit **0** healthy / **1** ran-but-unhealthy / **2** cannot-run) — flags `--config` (required), `--wait <secs>` (default `healthcheck_timeout_secs`), `--out <path>` (default `health_log_path`).
 
-### B.5 Prometheus `/metrics` surface
+### B.5 Prometheus `/metrics` and learner-origin surface
 
 #### Transport (`server.rs`)
-Loopback-only `TcpListener` (non-loopback bind → `CALYX_DAEMON_BIND_FAILED`), thread-per-connection, panic-isolated. Minimal HTTP/1.1: `GET /metrics` → 200 text `version=0.0.4`; other GET paths → 404; other methods → 405; unreadable head → 400. Reads the full request head (avoids TCP RST). `CancellationToken` stops the accept loop; drains up to 5s.
+Loopback-only `TcpListener` (non-loopback bind → `CALYX_DAEMON_BIND_FAILED`), thread-per-connection, panic-isolated. Minimal HTTP/1.1: `GET /metrics` → 200 text `version=0.0.4`; other GET paths → 404; other methods → 405 unless `[learner_origin]` has claimed the path; unreadable head → 400. Reads the full request head (avoids TCP RST). When origin is configured, the same listener accepts bounded JSON POST bodies and requires `Authorization: Bearer <shared-secret>`. `CancellationToken` stops the accept loop; drains up to 5s.
+
+Learner-origin routes are Worker-only and backed by a dedicated Aster vault, not the public corpus vault:
+
+| Path | Method | Result |
+|---|---|---|
+| `/v1/learner-signals/batches` | POST | Ingest learner telemetry into a source row with idempotency handling. |
+| `/v1/interventions/decide` | POST | Persist an intervention decision row from learner evidence. |
+| `/v1/interventions/{decisionId}/outcomes` | POST | Persist an outcome row linked to the prior decision and learner. |
+| `/v1/mastery/estimate` | POST | Persist `mastery_evidence`, Assay sufficiency rows, Oracle `complete` output, six-tier `super_intelligence` trust evidence, and a final `mastery_estimate` row when certification is eligible. Insufficient Assay evidence fails closed with HTTP 422 and no final certification row. |
+| `/v1/oracle/forecast` | POST | Persist `oracle_forecast_evidence`, materialize Oracle recurrence graph rows, run `oracle_predict`, `butterfly::build_tree`/`select`, `reverse_query`, and Assay transfer entropy, then write a final `oracle_forecast` row only when evidence is sufficient. Insufficient panel or transfer-entropy evidence fails closed with HTTP 422. |
+| `/v1/reactive/affect-signals` | POST | Persist `reactive_affect_*` source rows and Recurrence CF rows, run Loom `NewRegion`/`DriftDetected` subscriptions through `evaluate_post_ingest_durable`/`observe_delta`, read Ward novelty/surprise and Assay MMD drift/change-point reports, then write a final `reactive_affect_signal` row only when an intervention fires. Quiet known-pattern evidence fails closed with HTTP 422 and no final signal row. |
 
 #### Surface (`metrics.rs` + `metrics/calyx.rs`)
 `CalyxMetrics::encode_text()` concatenates the chain-verify family then the PH66 T03 families. Exhaustive metric list:
@@ -406,8 +421,13 @@ Loopback-only `TcpListener` (non-loopback bind → `CALYX_DAEMON_BIND_FAILED`), 
 | `vram_budget_mib` | u32 | **yes** | — | `1..=30000` (`VRAM_BUDGET_MIB_CEILING`), else `CALYX_FORGE_VRAM_BUDGET`. |
 | `log_dir` | PathBuf | **yes** | — | — |
 | `health_log_path` | PathBuf | no | `/zfs/hot/logs/calyx-health/latest.json` | — |
-| `tei_endpoints` | Vec<String> | no | `[]` | Documents `:8088/:8089/:8090`. |
+| `tei_endpoints` | Vec<String> | no | `[]` | Documents Calyx-owned `:18190/:18188` plus legacy/shared `:8088/:8089/:8090`. |
 | `healthcheck_timeout_secs` | u32 | no | `30` | — |
+| `[learner_origin].vault_path` | PathBuf | no | — | Dedicated learner vault; must not equal `vault_path`. |
+| `[learner_origin].vault_id` | `VaultId` | iff block present | — | Stable learner vault id. |
+| `[learner_origin].vault_salt` | string | iff block present | — | Non-empty content-addressing salt. |
+| `[learner_origin].shared_secret_env` | string | no | `CALYX_ORIGIN_SHARED_SECRET` | Env var name for Worker-origin bearer secret; must be non-empty. |
+| `[learner_origin].max_body_bytes` | usize | no | `262144` | `1..=1048576`. |
 
 A TOML syntax error or missing required key → `CALYX_DAEMON_CONFIG_INVALID` naming the cause. See [03_configuration.md](03_configuration.md).
 
@@ -417,7 +437,7 @@ A TOML syntax error or missing required key → `CALYX_DAEMON_CONFIG_INVALID` na
 
 Fail-closed posture: non-loopback bind → `CALYX_DAEMON_BIND_FAILED` (never starts); oversized/zero/truncated frame → `CALYX_DAEMON_FRAME_INVALID` (connection closed); malformed JSON inside a valid frame → a JSON-RPC error reply (`CALYX_MCP_JSONRPC_INVALID`) and the connection stays open; a panicking handler → `CALYX_DAEMON_CONN_PANIC` logged, accept loop survives. Notifications (no `id`) get no reply. `ShutdownHandle::shutdown()` sets the flag then self-connects to wake the blocked `accept()`.
 
-> Note: `mcp_server` is library API for T05 (loopback dispatch); it registers no production tools (that is PH63/T06) and `main.rs`/`startup.rs` do not currently wire it into the running daemon — the binary runs the `/metrics` listener. See [19_mcp_api_tools_reference.md](19_mcp_api_tools_reference.md).
+> Note: `mcp_server` is library API for T05 (loopback dispatch). The stdio `calyx-mcp` binary registers the 31 production tools, but `main.rs`/`startup.rs` do not currently wire the socket transport into the running daemon — the binary runs the `/metrics` listener. See [19_mcp_api_tools_reference.md](19_mcp_api_tools_reference.md) and follow-up `ChrisRoyse/Calyx-Dev#959`.
 
 ### B.8 `verify-restore` (PH67, `verify.rs`)
 

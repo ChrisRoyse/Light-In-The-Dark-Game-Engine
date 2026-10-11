@@ -2,6 +2,7 @@
 
 mod assignment;
 mod balance;
+mod manifest;
 mod metric;
 mod search;
 mod sources;
@@ -9,10 +10,7 @@ mod sources;
 use std::path::Path;
 
 use calyx_core::{CxId, Result, SlotId};
-use rand::{Rng, SeedableRng};
-use rand_chacha::ChaCha8Rng;
 use rayon::{ThreadPoolBuilder, prelude::*};
-use serde::{Deserialize, Serialize};
 
 use crate::index::{
     DiskAnnBuildBackend, DiskAnnBuildParams, DiskAnnSearch, DiskAnnSearchParams,
@@ -23,11 +21,14 @@ use assignment::{
     stream_assign_to_ids_bounded, stream_assign_to_ids_with_routing,
 };
 use balance::balance_region_files;
+pub use manifest::{
+    ClosureAssignmentStats, PartitionedManifest, PartitionedManifestDbReadback, RegionMeta,
+};
 pub use metric::PartitionDistanceMetric;
-pub use search::{PartitionedSearch, PartitionedSearchReadback};
-pub use sources::{FbinSource, I8BinSource, SyntheticSource, VectorSource};
+pub use search::{PartitionedSearch, PartitionedSearchOptions, PartitionedSearchReadback};
+use sources::normalize;
+pub use sources::{FbinSource, I8BinSource, SyntheticSource, VectorSource, gen_row};
 
-const MANIFEST_FILE: &str = "partitioned-manifest.json";
 const CENTROID_DIR: &str = "idx/slot_00.sparse";
 const ROOT_GRAPH: &str = "idx/slot_00.ann/graph.cda";
 /// Mixing constant for per-index RNG seeding (splitmix64 multiplier).
@@ -36,78 +37,18 @@ const IDX_MIX: u64 = 0x9E37_79B9_7F4A_7C15;
 const MIN_REGION_CAP: usize = 2_048;
 pub const DEFAULT_FINAL_ASSIGNMENT_PROBE: usize = 32;
 const FINAL_ASSIGNMENT_BOUNDARY_EPSILON: f32 = 0.10;
-const FINAL_ASSIGNMENT_MAX_REPLICATION: usize = 2;
-
-pub fn gen_row(seed: u64, idx: u64, dim: usize) -> Vec<f32> {
-    let mut rng = ChaCha8Rng::seed_from_u64(seed ^ idx.wrapping_mul(IDX_MIX));
-    let mut v: Vec<f32> = (0..dim)
-        .map(|j| rng.gen_range(-1.0_f32..1.0) + ((idx as usize + j) % dim) as f32 * 0.001)
-        .collect();
-    let spike = (idx as usize) % dim;
-    v[spike] += 4.0;
-    normalize(&mut v);
-    v
-}
-
-fn normalize(v: &mut [f32]) {
-    let norm = v.iter().map(|x| x * x).sum::<f32>().sqrt();
-    if norm > 0.0 {
-        for x in v {
-            *x /= norm;
-        }
-    }
-}
+/// Closure replication defaults OFF (#1129): under the strict RNG rule the
+/// replication factor measured 1.003-1.078 on real SpaceV at every Calyx
+/// geometry, with <=1.1pt recall@10 gain at fixed n_probe — pure build/byte
+/// cost. Replication is an explicit storage-for-probes trade: opt in with
+/// `--max-replication N` (+ `--rng-factor` to actually keep replicas).
+const FINAL_ASSIGNMENT_MAX_REPLICATION: usize = 1;
+const FINAL_ASSIGNMENT_RNG_FACTOR: f32 = 1.0;
 
 pub fn cx(idx: u64) -> CxId {
     let mut bytes = [0u8; 16];
     bytes[8..16].copy_from_slice(&idx.to_be_bytes());
     CxId::from_bytes(bytes)
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegionMeta {
-    pub id: u32,
-    pub count: usize,
-    pub graph_rel: String,
-    pub ids_rel: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PartitionedManifest {
-    pub format: String,
-    pub n_cx: u64,
-    pub dim: usize,
-    pub n_regions: usize,
-    pub seed: u64,
-    pub m_max: usize,
-    pub ef_construction: usize,
-    #[serde(default)]
-    pub distance_metric: PartitionDistanceMetric,
-    #[serde(default)]
-    pub region_build_parallelism: usize,
-    #[serde(default = "default_graph_build_backend")]
-    pub graph_build_backend: DiskAnnBuildBackend,
-    #[serde(default)]
-    pub provisional_assignment_routing: String,
-    #[serde(default)]
-    pub final_assignment_routing: String,
-    #[serde(default)]
-    pub final_assignment_probe: usize,
-    #[serde(default)]
-    pub final_assignment_cap: Option<usize>,
-    #[serde(default)]
-    pub final_assignment_boundary_epsilon: f32,
-    #[serde(default)]
-    pub final_assignment_max_replication: usize,
-    #[serde(default)]
-    pub stored_region_members: usize,
-    pub centroids_rel: String,
-    pub root_graph_rel: String,
-    pub regions: Vec<RegionMeta>,
-}
-
-fn default_graph_build_backend() -> DiskAnnBuildBackend {
-    DiskAnnBuildBackend::CpuVamana
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -123,6 +64,20 @@ pub struct PartitionBuildParams {
     pub region_build_parallelism: usize,
     pub final_assignment_probe: usize,
     pub final_assignment_cap: Option<usize>,
+    /// Hierarchical balance split cap: regions larger than this are recursively
+    /// re-clustered (SPANN hierarchical balanced clustering). Defaults to the
+    /// initial-region mean (floored at MIN_REGION_CAP) when unset.
+    pub balance_cap: Option<usize>,
+    /// Closure-assignment boundary epsilon on the DISTANCE scale (SPANN eps1).
+    pub assignment_boundary_epsilon: f32,
+    /// Max regions a row may be stored in (SPANN closure replication limit).
+    pub assignment_max_replication: usize,
+    /// Apply SPANN's RNG rule to skip redundant boundary replicas.
+    pub assignment_rng_rule: bool,
+    /// SPTAG `RNGFactor` parity: skip a replica when
+    /// `rng_factor * d²(c_sel, c_cand) < d²(x, c_cand)`. 1.0 is the strict
+    /// SPANN paper rule; larger values keep more replicas (#1129).
+    pub assignment_rng_factor: f32,
 }
 
 impl PartitionBuildParams {
@@ -139,6 +94,11 @@ impl PartitionBuildParams {
             region_build_parallelism: Self::default_region_build_parallelism(n_regions),
             final_assignment_probe: DEFAULT_FINAL_ASSIGNMENT_PROBE,
             final_assignment_cap: None,
+            balance_cap: None,
+            assignment_boundary_epsilon: FINAL_ASSIGNMENT_BOUNDARY_EPSILON,
+            assignment_max_replication: FINAL_ASSIGNMENT_MAX_REPLICATION,
+            assignment_rng_rule: true,
+            assignment_rng_factor: FINAL_ASSIGNMENT_RNG_FACTOR,
         }
     }
 
@@ -243,6 +203,23 @@ pub fn build_partitioned_vault_from_source_with_backend_and_metric(
             "final_assignment_cap must be > 0 when set",
         ));
     }
+    if p.balance_cap == Some(0) {
+        return Err(crate::error::sextant_error(
+            crate::error::CALYX_INDEX_INVALID_PARAMS,
+            "balance_cap must be > 0 when set",
+        ));
+    }
+    if !p.assignment_boundary_epsilon.is_finite()
+        || p.assignment_boundary_epsilon < 0.0
+        || p.assignment_max_replication == 0
+        || !p.assignment_rng_factor.is_finite()
+        || p.assignment_rng_factor <= 0.0
+    {
+        return Err(crate::error::sextant_error(
+            crate::error::CALYX_INDEX_INVALID_PARAMS,
+            "assignment_boundary_epsilon must be finite and >= 0, assignment_max_replication >= 1, assignment_rng_factor finite and > 0",
+        ));
+    }
     if p.region_build_parallelism == 0 {
         return Err(crate::error::sextant_error(
             crate::error::CALYX_INDEX_INVALID_PARAMS,
@@ -282,7 +259,9 @@ pub fn build_partitioned_vault_from_source_with_backend_and_metric(
     )?;
 
     let mean_region = (n_cx as usize).div_ceil(r.max(1));
-    let cap = mean_region.max(MIN_REGION_CAP);
+    let cap = p
+        .balance_cap
+        .unwrap_or_else(|| mean_region.max(MIN_REGION_CAP));
     let final_centroids = balance_region_files(
         root,
         &centroids,
@@ -306,7 +285,7 @@ pub fn build_partitioned_vault_from_source_with_backend_and_metric(
         PartitionDistanceMetric::RawL2 => AssignmentRouting::Exact,
         PartitionDistanceMetric::UnitL2 => AssignmentRouting::Hnsw,
     };
-    let region_ids = stream_assign_to_ids_bounded(
+    let (region_ids, closure_stats) = stream_assign_to_ids_bounded(
         root,
         AssignmentSink::Final,
         &centroids,
@@ -316,8 +295,10 @@ pub fn build_partitioned_vault_from_source_with_backend_and_metric(
             cap: final_cap,
             routing_probe: p.final_assignment_probe,
             routing: final_routing,
-            boundary_epsilon: FINAL_ASSIGNMENT_BOUNDARY_EPSILON,
-            max_replication: FINAL_ASSIGNMENT_MAX_REPLICATION,
+            boundary_epsilon: p.assignment_boundary_epsilon,
+            max_replication: p.assignment_max_replication,
+            apply_rng_rule: p.assignment_rng_rule,
+            rng_factor: p.assignment_rng_factor,
         },
     )?;
     let region_build_parallelism =
@@ -423,18 +404,27 @@ pub fn build_partitioned_vault_from_source_with_backend_and_metric(
         final_assignment_routing: final_routing.as_str().to_string(),
         final_assignment_probe: p.final_assignment_probe,
         final_assignment_cap: Some(final_cap),
-        final_assignment_boundary_epsilon: FINAL_ASSIGNMENT_BOUNDARY_EPSILON,
-        final_assignment_max_replication: FINAL_ASSIGNMENT_MAX_REPLICATION,
+        final_assignment_boundary_epsilon: p.assignment_boundary_epsilon,
+        final_assignment_max_replication: p.assignment_max_replication,
+        final_assignment_rng_rule: p.assignment_rng_rule,
+        final_assignment_rng_factor: p.assignment_rng_factor,
+        final_assignment_closure: Some(closure_stats),
+        region_balance_cap: cap,
         stored_region_members: regions.iter().map(|region| region.count).sum(),
         centroids_rel: format!("{CENTROID_DIR}/centroids.spn"),
         root_graph_rel: ROOT_GRAPH.to_string(),
         regions,
     };
-    let bytes = serde_json::to_vec_pretty(&manifest)
-        .map_err(|e| crate::error::sextant_error(crate::error::CALYX_INDEX_IO, e.to_string()))?;
-    std::fs::write(root.join(MANIFEST_FILE), bytes)
-        .map_err(|e| crate::error::sextant_error(crate::error::CALYX_INDEX_IO, e.to_string()))?;
+    manifest::write_manifest_db(root, &manifest)?;
     Ok(manifest)
+}
+
+pub fn partitioned_manifest_db_exists(root: &Path) -> Result<bool> {
+    manifest::manifest_db_exists(root)
+}
+
+pub fn partitioned_manifest_db_readback(root: &Path) -> Result<PartitionedManifestDbReadback> {
+    manifest::read_manifest_db_readback(root)
 }
 
 fn build_partitioned_graph(

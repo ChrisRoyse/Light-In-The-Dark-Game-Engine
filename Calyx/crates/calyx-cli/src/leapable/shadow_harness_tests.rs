@@ -182,55 +182,69 @@ fn pg_contract_type_change_fails_closed() {
 }
 
 fn seed_sqlite(path: &Path, database_name: &str, rows: usize) {
-    let conn = Connection::open(path).unwrap();
-    create_schema(&conn, true);
-    conn.execute(
-        "INSERT INTO database_metadata(database_name) VALUES(?1)",
-        [database_name],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO creator_databases VALUES(1, ?1, '2026-06-15T00:00:00Z')",
-        [database_name],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO queries VALUES(1, ?1, 'known query')",
-        [database_name],
-    )
-    .unwrap();
-    for idx in 0..rows {
-        conn.execute(
-            "INSERT INTO chunks VALUES(?1, ?2, ?3, ?4)",
-            params![
-                format!("chunk-{idx}"),
-                database_name,
-                format!("content-{idx}"),
-                embedding(idx as f32)
-            ],
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_schema(&transaction, true);
+    transaction
+        .execute(
+            "INSERT INTO database_metadata(database_name) VALUES(?1)",
+            [database_name],
         )
         .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO creator_databases VALUES(1, ?1, '2026-06-15T00:00:00Z')",
+            [database_name],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO queries VALUES(1, ?1, 'known query')",
+            [database_name],
+        )
+        .unwrap();
+    {
+        let mut insert = transaction
+            .prepare("INSERT INTO chunks VALUES(?1, ?2, ?3, ?4)")
+            .unwrap();
+        for idx in 0..rows {
+            insert
+                .execute(params![
+                    format!("chunk-{idx}"),
+                    database_name,
+                    format!("content-{idx}"),
+                    embedding(idx as f32)
+                ])
+                .unwrap();
+        }
     }
+    transaction.commit().unwrap();
 }
 
 fn seed_sqlite_without_database_name(path: &Path) {
-    let conn = Connection::open(path).unwrap();
-    create_schema(&conn, true);
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_schema(&transaction, true);
+    transaction.commit().unwrap();
 }
 
 fn seed_sqlite_with_bad_query_contract(path: &Path) {
-    let conn = Connection::open(path).unwrap();
-    create_schema(&conn, false);
-    conn.execute(
-        "INSERT INTO database_metadata(database_name) VALUES('test_vault')",
-        [],
-    )
-    .unwrap();
-    conn.execute(
-        "INSERT INTO creator_databases VALUES(1, 'test_vault', '2026-06-15T00:00:00Z')",
-        [],
-    )
-    .unwrap();
+    let mut conn = Connection::open(path).unwrap();
+    let transaction = conn.transaction().unwrap();
+    create_schema(&transaction, false);
+    transaction
+        .execute(
+            "INSERT INTO database_metadata(database_name) VALUES('test_vault')",
+            [],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO creator_databases VALUES(1, 'test_vault', '2026-06-15T00:00:00Z')",
+            [],
+        )
+        .unwrap();
+    transaction.commit().unwrap();
 }
 
 fn create_schema(conn: &Connection, good_queries: bool) {

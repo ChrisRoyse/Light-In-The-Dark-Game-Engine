@@ -1,0 +1,10 @@
+[package]
+name = "litd-game-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Fail-loud command-line argument parsing for the LitD game runner."
+
+[dependencies]
+thiserror.workspace = true

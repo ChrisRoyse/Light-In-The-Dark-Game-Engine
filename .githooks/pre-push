@@ -1,0 +1,80 @@
+#!/bin/sh
+# #1553: give `git push` a REAL correctness gate (this hook's reason to exist).
+#
+# There is no CI at the GameEditor root (permanent decision #284/#447/#689) -- local hooks are
+# the ONLY enforcement. pre-commit runs check-format.ps1 -FormatOnly (rustfmt + ratchets, NO
+# compile) so commits stay fast. Before #1553 the push path proved formatting and (since #1545)
+# lint, but nothing proved the workspace even COMPILES or that its TESTS pass -- a commit that
+# does not build could be pushed with every installed hook green. Push is the publish boundary,
+# so this hook runs scripts/pre-push-gate.ps1, which proves correctness before anything leaves
+# the machine and fails LOUD with the exact remediation command:
+#   1. cargo check --workspace --all-targets   (the compile -FormatOnly skips)
+#   2. the test gate for every workspace package (scripts/test-gameeditor.ps1)
+#   3. scripts/check-examples.ps1               (~230 FSV example binaries; cf. #1527)
+#   4. scripts/lint.ps1 -Deny                   (strict clippy + cargo-deny; folds in #1545)
+# Steps 1-3 build into the warm gate cache target\fsv\test-gameeditor\cargo-target (#1498) so a
+# warm push is incremental, not a cold rebuild.
+#
+# WHY PRE-PUSH AND NOT PRE-COMMIT: the full gate compiles and tests the workspace. On a warm
+# cache with no changes it is minutes; after a real edit it recompiles the touched crates. A
+# multi-minute gate on EVERY commit would be bypassed reflexively (the same failure mode as no
+# gate at all), which is exactly why -FormatOnly exists and stays at commit time. Pushing is far
+# less frequent than committing, so the cost amortizes while still blocking broken code from the
+# shared remote.
+#
+# This hook is bypassable with `git push --no-verify`. That is ACCEPTABLE and by design (#1553):
+# a deliberate, visible bypass is categorically different from no gate at all.
+#
+# Install once per clone: powershell -File scripts/install-git-hooks.ps1
+
+# Git LFS (runs first: it consumes the ref-update list git streams on stdin, which the
+# PowerShell correctness gate does not read).
+command -v git-lfs >/dev/null 2>&1 || { printf >&2 "\n%s\n\n" "This repository is configured for Git LFS but 'git-lfs' was not found on your path. If you no longer wish to use Git LFS, remove this hook by deleting the 'pre-push' file in the hooks directory (set by 'core.hookspath'; usually '.git/hooks')."; exit 2; }
+git lfs pre-push "$@" || exit $?
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+gate="$repo_root/scripts/pre-push-gate.ps1"
+if [ ! -f "$gate" ]; then
+  echo "PRE_PUSH_GATE_FAILED: correctness gate not found at $gate" >&2
+  exit 1
+fi
+
+# Prefer pwsh (cross-platform PowerShell 7+); fall back to Windows powershell 5.1 -- same
+# interpreter-selection pattern as .githooks/pre-commit.
+if command -v pwsh >/dev/null 2>&1; then
+  ps=pwsh
+elif command -v powershell >/dev/null 2>&1; then
+  ps=powershell
+else
+  echo "PRE_PUSH_GATE_FAILED: neither pwsh nor powershell on PATH -- cannot run the correctness gate" >&2
+  exit 1
+fi
+
+echo "== pre-push: correctness gate (scripts/pre-push-gate.ps1: cargo check + test gate + examples + lint) =="
+# A long-lived feature branch should validate only the commits being published by
+# this push. The remote-tracking branch contains the last push boundary; when it
+# is available and is an ancestor of HEAD, use it as the incremental base. A
+# missing, divergent, or unresolvable branch falls back to origin/main so the
+# gate never silently narrows its source-of-truth range.
+base_ref=origin/main
+current_branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+if [ -n "$current_branch" ]; then
+  branch_ref="$1/$current_branch"
+  if git rev-parse --verify "$branch_ref^{commit}" >/dev/null 2>&1 &&
+     git merge-base --is-ancestor "$branch_ref" HEAD >/dev/null 2>&1; then
+    base_ref="$branch_ref"
+  fi
+fi
+echo "PRE_PUSH_GATE_BASE_REF base_ref=$base_ref"
+"$ps" -NoProfile -ExecutionPolicy Bypass -File "$gate" -ChangedOnly -BaseRef "$base_ref"
+status=$?
+if [ "$status" -ne 0 ]; then
+  echo "" >&2
+  echo "PRE_PUSH_GATE_FAILED: push blocked -- the workspace did not pass the correctness gate." >&2
+  echo "  See the PRE_PUSH_GATE_FAILED banner above for the failing step and the exact fix." >&2
+  echo "  Re-run the whole gate:  powershell -File scripts/pre-push-gate.ps1 -ChangedOnly -BaseRef $base_ref" >&2
+  echo "  Deliberate bypass:      git push --no-verify" >&2
+  exit "$status"
+fi
+
+exit 0

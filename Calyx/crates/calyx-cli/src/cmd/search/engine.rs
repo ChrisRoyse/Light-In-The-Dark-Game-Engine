@@ -1,26 +1,37 @@
-use std::collections::BTreeMap;
+//! CLI glue for `search` / `kernel-answer`: resolve + open the vault, delegate
+//! the real search to the shared `calyx-search` crate, then render the CLI JSON.
+//! All search logic (index load, recall, fusion, provenance, guard) lives in
+//! `calyx-search` so the CLI and `calyx-web-api` share ONE path (#573).
 
-use calyx_aster::vault::{AsterVault, VaultOptions};
+use std::collections::BTreeMap;
+use std::net::SocketAddr;
+use std::str::FromStr;
+use std::time::Instant;
+
+use calyx_aster::vault::AsterVault;
 use calyx_core::{
-    AnchorKind, CalyxError, Constellation, CxId, Input, Modality, SlotId, SlotState, SlotVector,
-    VaultStore,
+    AnchorKind, CalyxError, Constellation, CxId, Input, LensId, Modality, Placement, SlotId,
+    SlotState, SlotVector,
 };
-use calyx_registry::{VaultPanelState, load_vault_panel_state};
-use calyx_sextant::fusion;
-use calyx_sextant::{
-    FreshnessTag, FusionContext, FusionStrategy, Hit, ProvenanceSource, RrfProfile,
+use calyx_registry::{VaultPanelState, load_vault_panel_state, require_vault_registry_contracts};
+use calyx_search::{
+    FusionChoice, GuardChoice, SearchBudget, SearchFreshness, SearchTraceEvent, load_docs,
+    search_outcome_with_freshness, search_outcome_with_query_vectors_freshness,
 };
+use calyx_sextant::Hit;
 
 use super::super::Subcommand;
 use super::super::ingest::parse_anchor_kind;
 use super::super::vault::{ResolvedVault, home_dir, resolve_vault_info, vault_salt};
 use super::output;
-use super::parse::{DEFAULT_K, KernelAnswerArgs, SearchArgs, SearchFreshnessArg, SearchGuardArg};
-use super::persisted::{PersistedSearchIndexes, load_docs};
+use super::parse::{
+    KernelAnswerArgs, SearchArgs, SearchFreshnessArg, SearchFusionArg, SearchGuardArg,
+};
+use super::{base_read_cfs, latest_read_vault_options_for_cfs, panel_read_cfs};
 use crate::error::CliResult;
 use crate::output::print_json;
-
-const GUARD_TAU: f32 = 0.999;
+use crate::panel_commands::measure_resident_batch_at;
+use crate::path_identity::vault_template_source;
 
 pub(super) fn run(command: Subcommand) -> CliResult {
     match command {
@@ -31,7 +42,50 @@ pub(super) fn run(command: Subcommand) -> CliResult {
 }
 
 fn search_command(args: SearchArgs) -> CliResult {
-    let outcome = search_outcome(&args)?;
+    let resolved = resolve_cli_vault(&args.vault)?;
+    require_vault_registry_contracts(&resolved.path)?;
+    let state = load_vault_panel_state(&resolved.path)?;
+    let fusion = fusion_choice(args.fusion);
+    let guard = guard_choice(args.guard);
+    let freshness = freshness_choice(args.freshness);
+    let outcome = match args.resident_addr {
+        Some(addr) => {
+            let query_vectors =
+                measure_search_query_vectors_via_resident(&state, &resolved, &args.query, addr)?;
+            let vault = open_vault(&resolved, search_read_cfs(&state, guard))?;
+            let mut trace_sink = emit_search_trace;
+            search_outcome_with_query_vectors_freshness(
+                &vault,
+                &resolved.path,
+                &query_vectors,
+                args.k,
+                fusion,
+                guard,
+                Some(u64::from(state.panel.version)),
+                args.filter.as_deref(),
+                args.explain,
+                freshness,
+                SearchBudget::disabled(),
+                Some(&mut trace_sink),
+            )?
+        }
+        None => {
+            require_resident_for_gpu_text_search(&state)?;
+            let vault = open_vault(&resolved, search_read_cfs(&state, guard))?;
+            search_outcome_with_freshness(
+                &vault,
+                &state,
+                &resolved.path,
+                &args.query,
+                args.k,
+                fusion,
+                guard,
+                args.filter.as_deref(),
+                args.explain,
+                freshness,
+            )?
+        }
+    };
     print_json(&output::render_hits(
         &outcome.hits,
         args.explain,
@@ -40,205 +94,258 @@ fn search_command(args: SearchArgs) -> CliResult {
     ))
 }
 
+fn emit_search_trace(event: SearchTraceEvent) {
+    let slot = event
+        .slot
+        .map(|slot| slot.get().to_string())
+        .unwrap_or_else(|| "-".to_string());
+    let count = event
+        .count
+        .map(|count| count.to_string())
+        .unwrap_or_else(|| "-".to_string());
+    let detail = event.detail.as_deref().unwrap_or("-");
+    eprintln!(
+        "CALYX_SEARCH_RUNTIME phase={} slot={} elapsed_ms={} count={} detail={}",
+        event.phase, slot, event.elapsed_ms, count, detail
+    );
+}
+
+fn measure_search_query_vectors_via_resident(
+    state: &VaultPanelState,
+    resolved: &ResolvedVault,
+    query: &str,
+    addr: SocketAddr,
+) -> CliResult<Vec<(SlotId, SlotVector)>> {
+    let started = Instant::now();
+    let input = Input::new(Modality::Text, query.as_bytes().to_vec());
+    eprintln!(
+        "CALYX_SEARCH_RUNTIME phase=search_resident_service_start addr={} vault={} inputs=1",
+        addr,
+        resolved.path.display()
+    );
+    let resident = measure_resident_batch_at(addr, Modality::Text, &[input], None).map_err(
+        |error| {
+            CalyxError {
+                code: "CALYX_PANEL_RESIDENT_UNAVAILABLE",
+                message: format!(
+                    "resident search measurement failed addr={addr} code={} message={}",
+                    error.code(),
+                    error.message()
+                ),
+                remediation: "start `calyx panel resident serve --vault <vault-path>` for the matching active vault, then retry search with --resident-addr",
+            }
+        },
+    )?;
+    let request_bytes = resident.request_bytes;
+    let response_bytes = resident.response_bytes;
+    let response = resident.response;
+    if !response.ready {
+        return Err(CalyxError::lens_unreachable(format!(
+            "resident service {addr} returned ready=false for search measurement"
+        ))
+        .into());
+    }
+    let expected_template_source = vault_template_source(&resolved.path)?;
+    if response.template_source != expected_template_source {
+        return Err(CalyxError {
+            code: "CALYX_SEARCH_RESIDENT_MISMATCH",
+            message: format!(
+                "resident service {addr} served template_source {}, expected {}",
+                response.template_source, expected_template_source
+            ),
+            remediation: "restart the resident service with `calyx panel resident serve --vault <this-vault-path>` and retry search",
+        }
+        .into());
+    }
+    if response.modality != Modality::Text || response.input_count != 1 || response.rows.len() != 1
+    {
+        return Err(CalyxError::lens_dim_mismatch(format!(
+            "resident search response mismatch: modality {:?} input_count {} rows {}, expected Text/1/1",
+            response.modality,
+            response.input_count,
+            response.rows.len()
+        ))
+        .into());
+    }
+    let row = &response.rows[0];
+    if row.input_index != 0 {
+        return Err(CalyxError::lens_dim_mismatch(format!(
+            "resident search response row index {}, expected 0",
+            row.input_index
+        ))
+        .into());
+    }
+
+    let mut out = Vec::new();
+    for slot in active_registered_text_slots(state) {
+        let returned = row
+            .slots
+            .iter()
+            .find(|returned| {
+                returned.measured
+                    && returned.slot == slot.slot_id.get()
+                    && LensId::from_str(&returned.lens_id)
+                        .map(|lens_id| lens_id == slot.lens_id)
+                        .unwrap_or(false)
+            })
+            .ok_or_else(|| {
+                CalyxError::lens_unreachable(format!(
+                    "resident service {addr} did not return active text slot {} lens {}",
+                    slot.slot_id.get(),
+                    slot.lens_id
+                ))
+            })?;
+        if returned.modality != Modality::Text || returned.placement != slot.resource.placement {
+            return Err(CalyxError::lens_unreachable(format!(
+                "resident service {addr} returned slot {} lens {} with modality {:?} placement {:?}, expected Text/{:?}",
+                slot.slot_id.get(),
+                slot.lens_id,
+                returned.modality,
+                returned.placement,
+                slot.resource.placement
+            ))
+            .into());
+        }
+        let vector = returned.vector.clone().ok_or_else(|| {
+            CalyxError::lens_unreachable(format!(
+                "resident service {addr} measured slot {} lens {} without a vector",
+                slot.slot_id.get(),
+                slot.lens_id
+            ))
+        })?;
+        if !indexable(&vector) {
+            return Err(CalyxError::stale_derived(format!(
+                "resident service {addr} returned non-indexable query vector for slot {} lens {}",
+                slot.slot_id.get(),
+                slot.lens_id
+            ))
+            .into());
+        }
+        let snapshot = registry_snapshot_for_lens(state, slot.lens_id).ok_or_else(|| {
+            CalyxError::lens_unreachable(format!(
+                "resident search requires persisted registry snapshot contract for lens {}",
+                slot.lens_id
+            ))
+        })?;
+        snapshot.contract.verify_vector(slot.lens_id, &vector)?;
+        out.push((slot.slot_id, vector));
+    }
+    eprintln!(
+        "CALYX_SEARCH_RUNTIME phase=search_resident_service_ok addr={} process_id={} template_source={} inputs=1 slots={} elapsed_ms={} resident_elapsed_ms={} protocol=binary request_bytes={} response_bytes={}",
+        addr,
+        response.process_id,
+        response.template_source,
+        out.len(),
+        started.elapsed().as_millis(),
+        response.elapsed_ms,
+        request_bytes,
+        response_bytes
+    );
+    Ok(out)
+}
+
+fn require_resident_for_gpu_text_search(state: &VaultPanelState) -> CliResult {
+    let gpu_slots = active_registered_text_slots(state)
+        .filter(|slot| slot.resource.placement == Placement::Gpu)
+        .map(|slot| {
+            format!(
+                "slot={} key={} lens={} placement={:?}",
+                slot.slot_id.get(),
+                slot.slot_key.key(),
+                slot.lens_id,
+                slot.resource.placement
+            )
+        })
+        .collect::<Vec<_>>();
+    if gpu_slots.is_empty() {
+        return Ok(());
+    }
+    Err(CalyxError {
+        code: "CALYX_SEARCH_RESIDENT_REQUIRED",
+        message: format!(
+            "search refuses cold local query measurement for {} active GPU text lens(es): {}",
+            gpu_slots.len(),
+            gpu_slots.join(", ")
+        ),
+        remediation: "start `calyx panel resident serve --vault <vault-path>` and rerun search with --resident-addr",
+    }
+    .into())
+}
+
+fn active_registered_text_slots(
+    state: &VaultPanelState,
+) -> impl Iterator<Item = &calyx_core::Slot> {
+    state.panel.slots.iter().filter(|slot| {
+        slot.state == SlotState::Active
+            && slot.modality == Modality::Text
+            && state.registry.contains(slot.lens_id)
+    })
+}
+
+fn registry_snapshot_for_lens(
+    state: &VaultPanelState,
+    lens_id: LensId,
+) -> Option<&calyx_registry::RegistryLensSnapshot> {
+    state
+        .registry_snapshot
+        .as_ref()?
+        .lenses
+        .iter()
+        .find(|snapshot| snapshot.lens_id == lens_id)
+}
+
+fn indexable(vector: &SlotVector) -> bool {
+    matches!(
+        vector,
+        SlotVector::Dense { .. } | SlotVector::Sparse { .. } | SlotVector::Multi { .. }
+    )
+}
+
 fn kernel_answer_command(args: KernelAnswerArgs) -> CliResult {
-    let search_args = SearchArgs {
-        vault: args.vault,
-        query: args.query,
-        k: DEFAULT_K,
-        fusion: super::parse::SearchFusionArg::KernelFirst,
-        guard: SearchGuardArg::Off,
-        explain: args.explain,
-        provenance: true,
-        freshness: SearchFreshnessArg::Fresh,
-        filter: None,
-    };
     let anchor = args.anchor.as_deref().map(parse_anchor_kind).transpose()?;
-    let resolved = resolve_cli_vault(&search_args.vault)?;
-    let vault = open_vault(&resolved)?;
+    let resolved = resolve_cli_vault(&args.vault)?;
+    require_vault_registry_contracts(&resolved.path)?;
+    let state = load_vault_panel_state(&resolved.path)?;
+    let vault = open_vault(&resolved, panel_read_cfs(&state.panel))?;
     let docs = load_docs(&vault)?;
-    let outcome = search_outcome(&search_args)?;
+    let outcome = search_outcome_with_freshness(
+        &vault,
+        &state,
+        &resolved.path,
+        &args.query,
+        super::parse::DEFAULT_K,
+        FusionChoice::KernelFirst,
+        GuardChoice::Off,
+        None,
+        args.explain,
+        SearchFreshness::Fresh,
+    )?;
     let report = kernel_report_from_docs(&docs, &outcome.hits, anchor.as_ref())?;
     print_json(&report)
 }
 
-fn search_outcome(args: &SearchArgs) -> CliResult<SearchOutcome> {
-    let resolved = resolve_cli_vault(&args.vault)?;
-    let vault = open_vault(&resolved)?;
-    let state = load_vault_panel_state(&resolved.path)?;
-    let filters = super::filters::parse(args.filter.as_deref())?;
-    let indexes = match PersistedSearchIndexes::open(&resolved.path) {
-        Ok(indexes) => indexes,
-        Err(err) if err.code() == "CALYX_STALE_DERIVED" && vault_base_count(&vault)? == 0 => {
-            return Ok(SearchOutcome::empty());
-        }
-        Err(err) => return Err(err),
-    };
-    if indexes.max_len() == 0 {
-        return Ok(SearchOutcome::empty());
+fn fusion_choice(arg: SearchFusionArg) -> FusionChoice {
+    match arg {
+        SearchFusionArg::Rrf => FusionChoice::Rrf,
+        SearchFusionArg::WeightedRrf => FusionChoice::WeightedRrf,
+        SearchFusionArg::SingleLens => FusionChoice::SingleLens,
+        SearchFusionArg::KernelFirst => FusionChoice::KernelFirst,
+        SearchFusionArg::Pipeline => FusionChoice::Pipeline,
     }
-    let query_vectors = measure_query_vectors(&state, &args.query)?;
-    if query_vectors.is_empty() {
-        return Err(no_indexable_query_vectors().into());
-    }
-    let filter_candidates = indexes.filter_candidates(&filters)?;
-    if filter_candidates.as_ref().is_some_and(|ids| ids.is_empty()) {
-        return Ok(SearchOutcome::empty());
-    }
-    let search_k = filter_candidates
-        .as_ref()
-        .map(|ids| ids.len())
-        .unwrap_or_else(|| args.k.max(64));
-    let per_slot = search_slots(
-        &indexes,
-        &query_vectors,
-        search_k,
-        filter_candidates.as_ref(),
-    )?;
-    let slots = per_slot.keys().copied().collect::<Vec<_>>();
-    if slots.is_empty() {
-        return Err(no_indexable_stored_vectors().into());
-    }
-    let strategy = args.fusion.to_strategy(&slots)?;
-    let context = FusionContext {
-        k: args.k.max(64),
-        explain: args.explain,
-        strategy: strategy.clone(),
-        weights: weights_for(&strategy, &slots),
-        stage1_slots: stage1_slots(&strategy, &query_vectors, &slots),
-    };
-    let mut hits = fusion::fuse(&per_slot, &context);
-    let hit_docs = hit_docs(&vault, &hits)?;
-    attach_stored_provenance(&mut hits, &hit_docs, vault.latest_seq())?;
-    let guard_tau = if args.guard == SearchGuardArg::InRegion {
-        hits = apply_in_region_guard(hits, &hit_docs, &query_vectors)?;
-        Some(GUARD_TAU)
-    } else {
-        None
-    };
-    renumber_and_truncate(&mut hits, args.k);
-    Ok(SearchOutcome { hits, guard_tau })
 }
 
-pub(super) fn measure_query_vectors(
-    state: &VaultPanelState,
-    query: &str,
-) -> CliResult<Vec<(SlotId, SlotVector)>> {
-    let input = Input::new(Modality::Text, query.as_bytes().to_vec());
-    let mut out = Vec::new();
-    for slot in &state.panel.slots {
-        if slot.state == SlotState::Active
-            && slot.modality == Modality::Text
-            && state.registry.contains(slot.lens_id)
-        {
-            let vector = state.registry.measure(slot.lens_id, &input)?;
-            if indexable(&vector) {
-                out.push((slot.slot_id, vector));
-            }
-        }
+fn guard_choice(arg: SearchGuardArg) -> GuardChoice {
+    match arg {
+        SearchGuardArg::Off => GuardChoice::Off,
+        SearchGuardArg::InRegion => GuardChoice::InRegion,
     }
-    Ok(out)
 }
 
-pub(super) fn no_indexable_query_vectors() -> CalyxError {
-    CalyxError::stale_derived(
-        "search has no indexable query vectors from active text lenses; re-enable a concrete lens or remeasure the panel",
-    )
-}
-
-pub(super) fn no_indexable_stored_vectors() -> CalyxError {
-    CalyxError::stale_derived(
-        "search has no indexable stored slot vectors matching active query lenses; reingest or backfill stale slot rows",
-    )
-}
-
-fn search_slots(
-    indexes: &PersistedSearchIndexes,
-    query_vectors: &[(SlotId, SlotVector)],
-    k: usize,
-    filter_candidates: Option<&std::collections::BTreeSet<CxId>>,
-) -> CliResult<BTreeMap<SlotId, Vec<calyx_sextant::IndexSearchHit>>> {
-    let mut out = BTreeMap::new();
-    for (slot, query) in query_vectors {
-        let hits = if let Some(candidates) = filter_candidates {
-            indexes.search_filtered(*slot, query, k, candidates)?
-        } else {
-            indexes.search(*slot, query, k)?
-        };
-        if !hits.is_empty() {
-            out.insert(*slot, hits);
-        }
+fn freshness_choice(arg: SearchFreshnessArg) -> SearchFreshness {
+    match arg {
+        SearchFreshnessArg::Fresh => SearchFreshness::Fresh,
+        SearchFreshnessArg::StaleOk => SearchFreshness::StaleOk,
     }
-    Ok(out)
-}
-
-fn apply_in_region_guard(
-    hits: Vec<Hit>,
-    docs: &BTreeMap<CxId, Constellation>,
-    query_vectors: &[(SlotId, SlotVector)],
-) -> CliResult<Vec<Hit>> {
-    let mut kept = Vec::new();
-    for hit in hits {
-        let cosine = guard_cosine(&hit, docs, query_vectors);
-        if cosine.is_some_and(|value| value >= GUARD_TAU) {
-            kept.push(hit);
-        } else {
-            output::warn_guard_blocked(hit.cx_id, cosine, GUARD_TAU)?;
-        }
-    }
-    Ok(kept)
-}
-
-fn guard_cosine(
-    hit: &Hit,
-    docs: &BTreeMap<CxId, Constellation>,
-    query_vectors: &[(SlotId, SlotVector)],
-) -> Option<f32> {
-    let cx = docs.get(&hit.cx_id)?;
-    hit.per_lens
-        .iter()
-        .filter_map(|item| {
-            let query = query_vectors
-                .iter()
-                .find(|(slot, _)| *slot == item.slot)?
-                .1
-                .as_dense()?;
-            let doc = cx.slots.get(&item.slot)?.as_dense()?;
-            cosine(query, doc)
-        })
-        .max_by(f32::total_cmp)
-}
-
-fn attach_stored_provenance(
-    hits: &mut [Hit],
-    docs: &BTreeMap<CxId, Constellation>,
-    seq: u64,
-) -> CliResult {
-    for hit in hits {
-        let cx = docs.get(&hit.cx_id).ok_or_else(|| {
-            CalyxError::vault_access_denied(format!(
-                "stored constellation missing for hit {}",
-                hit.cx_id
-            ))
-        })?;
-        hit.provenance = cx.provenance.clone();
-        hit.provenance_source = ProvenanceSource::Stored;
-        hit.freshness = FreshnessTag::fresh(seq);
-    }
-    Ok(())
-}
-
-fn hit_docs(vault: &AsterVault, hits: &[Hit]) -> CliResult<BTreeMap<CxId, Constellation>> {
-    let snapshot = vault.snapshot();
-    let mut docs = BTreeMap::new();
-    for hit in hits {
-        let cx_id = hit.cx_id;
-        docs.insert(cx_id, vault.get(cx_id, snapshot)?);
-    }
-    Ok(docs)
-}
-
-fn vault_base_count(vault: &AsterVault) -> CliResult<usize> {
-    Ok(load_docs(vault)?.len())
 }
 
 pub(super) fn kernel_report_from_docs(
@@ -289,101 +396,33 @@ fn resolve_cli_vault(vault: &str) -> CliResult<ResolvedVault> {
     resolve_vault_info(&home_dir()?, vault)
 }
 
-fn open_vault(resolved: &ResolvedVault) -> CliResult<AsterVault> {
+fn open_vault(
+    resolved: &ResolvedVault,
+    selected_cfs: Option<Vec<calyx_aster::cf::ColumnFamily>>,
+) -> CliResult<AsterVault> {
     Ok(AsterVault::open(
         &resolved.path,
         resolved.vault_id,
         vault_salt(resolved.vault_id, &resolved.name),
-        VaultOptions::default(),
+        latest_read_vault_options_for_cfs(selected_cfs),
     )?)
 }
 
-fn renumber_and_truncate(hits: &mut Vec<Hit>, k: usize) {
-    hits.truncate(k);
-    for (idx, hit) in hits.iter_mut().enumerate() {
-        hit.rank = idx + 1;
-    }
-}
-
-fn indexable(vector: &SlotVector) -> bool {
-    matches!(
-        vector,
-        SlotVector::Dense { .. } | SlotVector::Sparse { .. } | SlotVector::Multi { .. }
-    )
-}
-
-fn cosine(left: &[f32], right: &[f32]) -> Option<f32> {
-    if left.len() != right.len() || left.is_empty() {
-        return None;
-    }
-    let (mut dot, mut l2, mut r2) = (0.0f32, 0.0f32, 0.0f32);
-    for (l, r) in left.iter().zip(right) {
-        dot += l * r;
-        l2 += l * l;
-        r2 += r * r;
-    }
-    (l2 > 0.0 && r2 > 0.0).then(|| dot / (l2.sqrt() * r2.sqrt()))
-}
-
-fn weights_for(strategy: &FusionStrategy, slots: &[SlotId]) -> BTreeMap<SlotId, f32> {
-    let Some(profile) = weighted_profile(strategy) else {
-        return BTreeMap::new();
-    };
-    let profile_weights = fusion::profiles::lookup(profile)
-        .map(|profile| profile.weights)
-        .unwrap_or_default();
-    slots
-        .iter()
-        .map(|slot| (*slot, profile_weights.get(slot).copied().unwrap_or(1.0)))
-        .collect()
-}
-
-fn weighted_profile(strategy: &FusionStrategy) -> Option<RrfProfile> {
-    match strategy {
-        FusionStrategy::WeightedRrf { profile } => Some(*profile),
-        _ => None,
-    }
-}
-
-fn stage1_slots(
-    strategy: &FusionStrategy,
-    query_vectors: &[(SlotId, SlotVector)],
-    slots: &[SlotId],
-) -> Vec<SlotId> {
-    if !matches!(strategy, FusionStrategy::Pipeline) {
-        return Vec::new();
-    }
-    let sparse = query_vectors
-        .iter()
-        .filter_map(|(slot, vector)| matches!(vector, SlotVector::Sparse { .. }).then_some(*slot))
-        .filter(|slot| slots.contains(slot))
-        .collect::<Vec<_>>();
-    if sparse.is_empty() {
-        slots.first().copied().into_iter().collect()
-    } else {
-        sparse
-    }
-}
-
-struct SearchOutcome {
-    hits: Vec<Hit>,
-    guard_tau: Option<f32>,
-}
-
-impl SearchOutcome {
-    fn empty() -> Self {
-        Self {
-            hits: Vec::new(),
-            guard_tau: None,
+fn search_read_cfs(
+    state: &VaultPanelState,
+    guard: GuardChoice,
+) -> Option<Vec<calyx_aster::cf::ColumnFamily>> {
+    match guard {
+        GuardChoice::Off => Some(base_read_cfs()),
+        GuardChoice::InRegion => {
+            // Profile-backed guarding (#1094) reads the calibrated Ward
+            // profile from the Guard CF; reading an unselected CF silently
+            // returns None, which would masquerade as a missing profile.
+            let mut cfs = panel_read_cfs(&state.panel)?;
+            cfs.push(calyx_aster::cf::ColumnFamily::Guard);
+            cfs.sort();
+            cfs.dedup();
+            Some(cfs)
         }
     }
-}
-
-#[cfg(test)]
-pub(super) fn guard_keeps_hit_for_test(
-    hit: &Hit,
-    docs: &BTreeMap<CxId, Constellation>,
-    query_vectors: &[(SlotId, SlotVector)],
-) -> bool {
-    guard_cosine(hit, docs, query_vectors).is_some_and(|value| value >= GUARD_TAU)
 }

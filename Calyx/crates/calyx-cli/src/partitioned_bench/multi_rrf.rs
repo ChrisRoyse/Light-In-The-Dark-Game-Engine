@@ -7,19 +7,27 @@ use calyx_sextant::fusion;
 use calyx_sextant::index::{DenseVectorFile, PartitionedSearch};
 use calyx_sextant::{FusionContext, FusionStrategy, IndexSearchHit};
 use rayon::prelude::*;
-use serde::Deserialize;
 use serde_json::json;
 
 use super::{enforce_recall_floor, percentiles, row_for_metric};
 use crate::error::{CliError, CliResult};
+use crate::partitioned_bench::rrf_plan::{self, LoadedPlan};
+pub(super) use crate::partitioned_bench::rrf_plan::{Plan, PlanSlot};
+use crate::partitioned_rrf_report_store;
 #[cfg(test)]
 use ids::low_u64;
 use ids::{fused_hit_ids, hit_ids, slot_id, to_index_hits};
 
 #[path = "multi_rrf/a35.rs"]
 mod a35;
+#[path = "multi_rrf/a37_admission.rs"]
+mod a37_admission;
+#[path = "multi_rrf/args.rs"]
+mod args;
 #[path = "multi_rrf/ensemble.rs"]
 mod ensemble;
+#[path = "multi_rrf/fused_truth_db.rs"]
+mod fused_truth_db;
 #[path = "multi_rrf/ground_truth.rs"]
 mod ground_truth;
 #[path = "multi_rrf/ids.rs"]
@@ -32,6 +40,8 @@ mod recall;
 mod report;
 #[path = "multi_rrf/slot_truth.rs"]
 mod slot_truth;
+#[path = "multi_rrf/slot_truth_db.rs"]
+mod slot_truth_db;
 #[path = "multi_rrf/timeline.rs"]
 mod timeline;
 #[path = "multi_rrf/truth_gate.rs"]
@@ -41,47 +51,6 @@ mod tuner;
 
 const DEFAULT_TRUTH_DEPTH: usize = 64;
 
-#[derive(Clone, Debug)]
-struct Args {
-    plan: PathBuf,
-    n: usize,
-    k: usize,
-    n_probe: usize,
-    region_beam: usize,
-    ground_truth: usize,
-    recall_floor: Option<f32>,
-    truth_depth: Option<usize>,
-    fused_ground_truth_file: Option<PathBuf>,
-    fused_ground_truth_manifest: Option<PathBuf>,
-    slot_ground_truth_manifest: Option<PathBuf>,
-    ensemble_card: Option<PathBuf>,
-    write_fused_ground_truth_file: Option<PathBuf>,
-    write_fused_ground_truth_manifest: Option<PathBuf>,
-    out: Option<PathBuf>,
-    anneal_vault: Option<PathBuf>,
-    tuner_slo_us: Option<u64>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct Plan {
-    #[serde(default)]
-    timeline: Option<PathBuf>,
-    slots: Vec<PlanSlot>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct PlanSlot {
-    slot: u16,
-    name: Option<String>,
-    lens_id: Option<String>,
-    weights_sha256: Option<String>,
-    signal_kind: Option<String>,
-    bits_about: Option<f32>,
-    vault: PathBuf,
-    queries: PathBuf,
-    corpus: PathBuf,
-}
-
 struct OpenSlot {
     spec: PlanSlot,
     search: PartitionedSearch,
@@ -90,152 +59,71 @@ struct OpenSlot {
     distance_metric: calyx_sextant::index::PartitionDistanceMetric,
 }
 
-impl Args {
-    fn parse(raw: &[String]) -> CliResult<Self> {
-        let mut plan = None;
-        let (mut n, mut k, mut n_probe, mut region_beam) = (1000, 10, 8, 64);
-        let mut ground_truth = 0;
-        let mut recall_floor = None;
-        let mut truth_depth = None;
-        let mut fused_ground_truth_file = None;
-        let mut fused_ground_truth_manifest = None;
-        let mut slot_ground_truth_manifest = None;
-        let mut ensemble_card = None;
-        let mut write_fused_ground_truth_file = None;
-        let mut write_fused_ground_truth_manifest = None;
-        let mut out = None;
-        let mut anneal_vault = None;
-        let mut tuner_slo_us = None;
-        let mut it = raw.iter();
-        while let Some(flag) = it.next() {
-            let mut next = || {
-                it.next()
-                    .cloned()
-                    .ok_or_else(|| CliError::usage(format!("{flag} requires a value")))
-            };
-            match flag.as_str() {
-                "--plan" => plan = Some(PathBuf::from(next()?)),
-                "--n" => n = parse(&next()?, "--n")?,
-                "--k" => k = parse(&next()?, "--k")?,
-                "--n-probe" => n_probe = parse(&next()?, "--n-probe")?,
-                "--region-beam" => region_beam = parse(&next()?, "--region-beam")?,
-                "--ground-truth" => ground_truth = parse(&next()?, "--ground-truth")?,
-                "--recall-floor" => recall_floor = Some(super::parse_recall_floor(&next()?)?),
-                "--truth-depth" => truth_depth = Some(parse(&next()?, "--truth-depth")?),
-                "--fused-ground-truth-file" => {
-                    fused_ground_truth_file = Some(PathBuf::from(next()?))
-                }
-                "--fused-ground-truth-manifest" => {
-                    fused_ground_truth_manifest = Some(PathBuf::from(next()?))
-                }
-                "--slot-ground-truth-manifest" => {
-                    slot_ground_truth_manifest = Some(PathBuf::from(next()?))
-                }
-                "--ensemble-card" => ensemble_card = Some(PathBuf::from(next()?)),
-                "--write-fused-ground-truth-file" => {
-                    write_fused_ground_truth_file = Some(PathBuf::from(next()?))
-                }
-                "--write-fused-ground-truth-manifest" => {
-                    write_fused_ground_truth_manifest = Some(PathBuf::from(next()?))
-                }
-                "--out" => out = Some(PathBuf::from(next()?)),
-                "--anneal-vault" => anneal_vault = Some(PathBuf::from(next()?)),
-                "--tuner-slo-us" => {
-                    let value = parse(&next()?, "--tuner-slo-us")?;
-                    if value == 0 {
-                        return Err(CliError::usage("--tuner-slo-us must be > 0"));
-                    }
-                    tuner_slo_us = Some(value);
-                }
-                other => return Err(CliError::usage(format!("unknown flag: {other}"))),
-            }
-        }
-        let plan = plan.ok_or_else(|| CliError::usage("--plan <json> is required"))?;
-        if k == 0 {
-            return Err(CliError::usage("--k must be > 0"));
-        }
-        validate_truth_args(
-            fused_ground_truth_file.as_ref(),
-            fused_ground_truth_manifest.as_ref(),
-            slot_ground_truth_manifest.as_ref(),
-            write_fused_ground_truth_file.as_ref(),
-            write_fused_ground_truth_manifest.as_ref(),
-        )?;
-        Ok(Self {
-            plan,
-            n,
-            k,
-            n_probe,
-            region_beam,
-            ground_truth,
-            recall_floor,
-            truth_depth,
-            fused_ground_truth_file,
-            fused_ground_truth_manifest,
-            slot_ground_truth_manifest,
-            ensemble_card,
-            write_fused_ground_truth_file,
-            write_fused_ground_truth_manifest,
-            out,
-            anneal_vault,
-            tuner_slo_us,
-        })
+impl OpenSlot {
+    fn query_row(&self, query_idx: usize) -> u64 {
+        self.spec.query_start_row + query_idx as u64
     }
-}
 
-fn validate_truth_args(
-    fused_file: Option<&PathBuf>,
-    fused_manifest: Option<&PathBuf>,
-    slot_manifest: Option<&PathBuf>,
-    write_file: Option<&PathBuf>,
-    write_manifest: Option<&PathBuf>,
-) -> CliResult {
-    if fused_file.is_some() != fused_manifest.is_some() {
-        return Err(CliError::usage(
-            "--fused-ground-truth-file requires --fused-ground-truth-manifest",
-        ));
+    fn query_capacity(&self) -> CliResult<usize> {
+        let count = self.queries.count();
+        if self.spec.query_start_row > count {
+            return Err(CliError::usage(format!(
+                "slot {} query_start_row={} exceeds query rows {}",
+                self.spec.slot, self.spec.query_start_row, count
+            )));
+        }
+        usize::try_from(count - self.spec.query_start_row)
+            .map_err(|_| CliError::usage("query row count exceeds usize"))
     }
-    if write_file.is_some() != write_manifest.is_some() {
-        return Err(CliError::usage(
-            "--write-fused-ground-truth-file requires --write-fused-ground-truth-manifest",
-        ));
-    }
-    if fused_file.is_some() && write_file.is_some() {
-        return Err(CliError::usage(
-            "precomputed and generated fused ground truth are mutually exclusive in one run",
-        ));
-    }
-    if fused_file.is_some() && slot_manifest.is_some() {
-        return Err(CliError::usage(
-            "--fused-ground-truth-file and --slot-ground-truth-manifest are mutually exclusive",
-        ));
-    }
-    Ok(())
 }
 
 pub(crate) fn run(raw: &[String]) -> CliResult {
-    let args = Args::parse(raw)?;
-    let plan = load_plan(&args.plan)?;
-    a35::validate_plan(&plan)?;
+    let args = args::Args::parse(raw)?;
+    let loaded_plan = load_plan(&args)?;
+    let plan = &loaded_plan.plan;
+    let plan_ref = args
+        .plan
+        .clone()
+        .unwrap_or_else(|| PathBuf::from(format!("aster-graph-cf:{}", args.plan_key)));
+    a35::validate_plan(plan)?;
+    let a37_admission_readback = a37_admission::load_from_cf(
+        args.a37_admission_cf_root.as_deref(),
+        &args.a37_admission_key,
+        plan,
+    )?
+    .or(a37_admission::load(
+        args.a37_admission_card.as_deref(),
+        plan,
+    )?);
     let ensemble_readback = ensemble::load(
         args.ensemble_card.as_deref(),
-        &plan,
-        args.recall_floor.is_some(),
+        plan,
+        args.recall_floor.is_some() && a37_admission_readback.is_none(),
     )?;
-    let slots = open_slots(&plan)?;
-    let n = slots
-        .iter()
-        .fold(args.n, |acc, slot| acc.min(slot.queries.count() as usize));
+    let slots = open_slots(plan, &loaded_plan.base_dir)?;
+    let n = slots.iter().try_fold(args.n, |acc, slot| {
+        Ok::<usize, CliError>(acc.min(slot.query_capacity()?))
+    })?;
     let corpus_rows = slots
         .iter()
         .fold(u64::MAX, |acc, slot| acc.min(slot.corpus.count())) as usize;
-    let timeline = plan
-        .timeline
-        .as_ref()
-        .map(|path| {
-            timeline::Timeline::load(&timeline::resolve_plan_path(&args.plan, path), corpus_rows)
-        })
-        .transpose()?;
+    let timeline = match args.timeline_cf_root.as_ref() {
+        Some(cf_root) => Some(timeline::Timeline::load_from_db(
+            cf_root,
+            &args.timeline_key,
+            corpus_rows,
+        )?),
+        None => plan
+            .timeline
+            .as_ref()
+            .map(|path| {
+                timeline::Timeline::load(
+                    &rrf_plan::resolve(&loaded_plan.base_dir, path),
+                    corpus_rows,
+                )
+            })
+            .transpose()?,
+    };
     let truth_n = args.ground_truth.min(n);
     timeline::enforce_gate(args.recall_floor.is_some(), timeline.as_ref(), truth_n)?;
     let truth_depth = args
@@ -250,8 +138,9 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
             ground_truth::Context {
                 truth_file: file,
                 manifest_file: manifest,
-                plan_path: &args.plan,
-                plan: &plan,
+                plan_path: &plan_ref,
+                plan_sha256: &loaded_plan.plan_sha256,
+                plan,
                 truth_n,
                 k: args.k,
                 truth_depth,
@@ -260,11 +149,33 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
         )?),
         _ => None,
     };
+    let db_fused_truth = match args.fused_ground_truth_cf_root.as_ref() {
+        Some(cf_root) if truth_n > 0 => Some(fused_truth_db::DbFusedTruth::load(
+            fused_truth_db::Context {
+                cf_root,
+                association_key: &args.fused_ground_truth_key,
+                plan_path: &plan_ref,
+                plan_sha256: &loaded_plan.plan_sha256,
+                plan,
+                truth_n,
+                k: args.k,
+                truth_depth,
+                corpus_rows,
+            },
+        )?),
+        Some(_) => {
+            return Err(CliError::usage(
+                "--fused-ground-truth-cf-root requires --ground-truth > 0",
+            ));
+        }
+        None => None,
+    };
     let slot_truth = match args.slot_ground_truth_manifest.as_ref() {
         Some(manifest) if truth_n > 0 => Some(slot_truth::SlotTruth::load(slot_truth::Context {
             manifest_file: manifest,
-            plan_path: &args.plan,
-            plan: &plan,
+            plan_path: &plan_ref,
+            plan_sha256: &loaded_plan.plan_sha256,
+            plan,
             truth_n,
             truth_depth,
             corpus_rows,
@@ -276,12 +187,40 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
         }
         None => None,
     };
-    let scale_truth = precomputed_truth
-        .as_ref()
-        .is_some_and(ground_truth::PrecomputedTruth::scale_suitable)
-        || slot_truth
+    let db_slot_truth = match args.slot_ground_truth_cf_root.as_ref() {
+        Some(cf_root) if truth_n > 0 => {
+            Some(slot_truth_db::DbSlotTruth::load(slot_truth_db::Context {
+                cf_root,
+                association_key: &args.slot_ground_truth_key,
+                plan_path: &plan_ref,
+                plan_sha256: &loaded_plan.plan_sha256,
+                plan,
+                truth_n,
+                truth_depth,
+                corpus_rows,
+            })?)
+        }
+        Some(_) => {
+            return Err(CliError::usage(
+                "--slot-ground-truth-cf-root requires --ground-truth > 0",
+            ));
+        }
+        None => None,
+    };
+    let scale_truth = gate_scale_truth(
+        precomputed_truth
             .as_ref()
-            .is_some_and(slot_truth::SlotTruth::scale_suitable);
+            .is_some_and(ground_truth::PrecomputedTruth::scale_suitable),
+        db_fused_truth
+            .as_ref()
+            .is_some_and(fused_truth_db::DbFusedTruth::scale_suitable),
+        slot_truth
+            .as_ref()
+            .is_some_and(slot_truth::SlotTruth::scale_suitable),
+        db_slot_truth
+            .as_ref()
+            .is_some_and(slot_truth_db::DbSlotTruth::scale_suitable),
+    );
     truth_gate::enforce(args.recall_floor.is_some(), truth_n, scale_truth)?;
     if n == 0 {
         return Err(CliError::usage(
@@ -294,17 +233,27 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
         .iter()
         .map(|slot| (slot_id(slot.spec.slot), Vec::with_capacity(truth_n)))
         .collect();
+    let search_opts = calyx_sextant::index::PartitionedSearchOptions {
+        n_probe: args.n_probe,
+        region_beam: args.region_beam,
+        pruning_epsilon: args.pruning_epsilon,
+    };
     for query_idx in 0..n {
         let started = Instant::now();
         let mut per_slot = BTreeMap::new();
         let slot_hits = slots
             .par_iter()
             .map(|slot| {
-                let query = row_for_metric(&slot.queries, query_idx as u64, slot.distance_metric);
+                let query = row_for_metric(
+                    &slot.queries,
+                    slot.query_row(query_idx),
+                    slot.distance_metric,
+                );
                 let raw_hits = slot
                     .search
-                    .search(&query, truth_depth, args.n_probe, args.region_beam)
-                    .map_err(CliError::Calyx)?;
+                    .search_with_readback_opts(&query, truth_depth, search_opts)
+                    .map_err(CliError::Calyx)?
+                    .hits;
                 Ok((slot_id(slot.spec.slot), to_index_hits(raw_hits)))
             })
             .collect::<CliResult<Vec<_>>>()?;
@@ -334,11 +283,14 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
             single_hits: &single_hits_for_truth,
             timeline: timeline.as_ref(),
             precomputed_truth: precomputed_truth.as_ref(),
+            db_fused_truth: db_fused_truth.as_ref(),
             slot_truth: slot_truth.as_ref(),
+            db_slot_truth: db_slot_truth.as_ref(),
         })
     } else {
         recall::RecallReadback::default()
     };
+    enforce_recall_floor(args.recall_floor, truth_n, recall.fused_recall)?;
     let written_ground_truth = match (
         args.write_fused_ground_truth_file.as_ref(),
         args.write_fused_ground_truth_manifest.as_ref(),
@@ -348,17 +300,39 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
             ground_truth::Context {
                 truth_file: file,
                 manifest_file: manifest,
-                plan_path: &args.plan,
-                plan: &plan,
+                plan_path: &plan_ref,
+                plan_sha256: &loaded_plan.plan_sha256,
+                plan,
                 truth_n,
                 k: args.k,
                 truth_depth,
                 corpus_rows,
             },
         )?),
-        _ => None,
+        _ => match args.write_fused_ground_truth_cf_root.as_ref() {
+            Some(cf_root) if truth_n > 0 => Some(fused_truth_db::write(
+                &recall.exact_fused_rows,
+                fused_truth_db::Context {
+                    cf_root,
+                    association_key: &args.write_fused_ground_truth_key,
+                    plan_path: &plan_ref,
+                    plan_sha256: &loaded_plan.plan_sha256,
+                    plan,
+                    truth_n,
+                    k: args.k,
+                    truth_depth,
+                    corpus_rows,
+                },
+                scale_truth,
+            )?),
+            Some(_) => {
+                return Err(CliError::usage(
+                    "--write-fused-ground-truth-cf-root requires --ground-truth > 0",
+                ));
+            }
+            None => None,
+        },
     };
-    enforce_recall_floor(args.recall_floor, truth_n, recall.fused_recall)?;
     let latency_us = percentiles(&fused_latencies_us);
     let tuner_status_path = if let Some(vault) = &args.anneal_vault {
         Some(tuner::write_status(tuner::StatusRequest {
@@ -379,7 +353,7 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
     } else {
         None
     };
-    let report = json!({
+    let mut report = json!({
         "trigger": "calyx bench partitioned-rrf",
         "mode": "real_multi_slot_rrf",
         "metric_class": report::METRIC_CLASS,
@@ -387,15 +361,19 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
         "ann_correctness_contract": report::ann_correctness_contract(),
         "grounded_phase_exit_contract": report::grounded_phase_exit_contract(),
         "plan": args.plan,
+        "plan_source": plan_source_report(&args, &loaded_plan),
+        "plan_sha256": loaded_plan.plan_sha256,
         "lens_roster": a35::lens_roster(&slots),
         "per_lens_bits": a35::per_lens_bits(&slots),
         "ensemble_decomposition": ensemble_readback,
+        "a37_admission": a37_admission_readback,
         "temporal": timeline.as_ref().map(|timeline| timeline.report()),
         "slots": report::slot_report(&slots),
         "queries": n,
         "k": args.k,
         "n_probe": args.n_probe,
         "region_beam": args.region_beam,
+        "pruning_epsilon": args.pruning_epsilon,
         "per_slot_search_depth": truth_depth,
         "truth_depth": truth_depth,
         "ground_truth_queries": truth_n,
@@ -412,35 +390,47 @@ pub(crate) fn run(raw: &[String]) -> CliResult {
         "recall_floor": args.recall_floor,
         "tuner_status_path": tuner_status_path,
     });
-    let bytes = serde_json::to_vec_pretty(&report)?;
+    let report_db_readback = match args.report_cf_root.as_ref() {
+        Some(cf_root) => Some(
+            partitioned_rrf_report_store::write(cf_root, &args.report_key, &report)
+                .map_err(CliError::from)?,
+        ),
+        None => None,
+    };
+    if let Some(readback) = &report_db_readback
+        && let Some(object) = report.as_object_mut()
+    {
+        object.insert("report_db_readback".to_string(), json!(readback));
+    }
+    let bytes = serde_json::to_vec_pretty(&report)
+        .map_err(|error| CliError::runtime(format!("serialize partitioned-rrf report: {error}")))?;
     if let Some(path) = &args.out {
         io::write_bytes_atomic(path, &bytes)?;
     }
-    println!("{}", String::from_utf8(bytes).expect("json is utf8"));
+    if !args.report_db_only {
+        println!("{}", String::from_utf8(bytes).expect("json is utf8"));
+    }
     Ok(())
 }
 
-fn load_plan(path: &Path) -> CliResult<Plan> {
-    let plan: Plan = serde_json::from_slice(&std::fs::read(path)?)?;
-    let mut seen = std::collections::BTreeSet::new();
-    for slot in &plan.slots {
-        if !seen.insert(slot.slot) {
-            return Err(CliError::usage(format!(
-                "partitioned-rrf plan has duplicate slot {}",
-                slot.slot
-            )));
-        }
+fn load_plan(args: &args::Args) -> CliResult<LoadedPlan> {
+    if let Some(path) = &args.plan {
+        return rrf_plan::load_from_file(path);
     }
-    Ok(plan)
+    let cf_root = args.plan_cf_root.as_ref().expect("validated");
+    rrf_plan::load_from_db(cf_root, &args.plan_key)
 }
 
-fn open_slots(plan: &Plan) -> CliResult<Vec<OpenSlot>> {
+fn open_slots(plan: &Plan, base_dir: &Path) -> CliResult<Vec<OpenSlot>> {
     plan.slots
         .iter()
         .map(|slot| {
-            let search = PartitionedSearch::open(&slot.vault).map_err(CliError::Calyx)?;
-            let queries = DenseVectorFile::open(&slot.queries).map_err(CliError::Calyx)?;
-            let corpus = DenseVectorFile::open(&slot.corpus).map_err(CliError::Calyx)?;
+            let vault_path = rrf_plan::resolve(base_dir, &slot.vault);
+            let queries_path = rrf_plan::resolve(base_dir, &slot.queries);
+            let corpus_path = rrf_plan::resolve(base_dir, &slot.corpus);
+            let search = PartitionedSearch::open(&vault_path).map_err(CliError::Calyx)?;
+            let queries = DenseVectorFile::open(&queries_path).map_err(CliError::Calyx)?;
+            let corpus = DenseVectorFile::open(&corpus_path).map_err(CliError::Calyx)?;
             if queries.dim() != search.dim() || corpus.dim() != search.dim() {
                 return Err(CliError::usage(format!(
                     "slot {} dim mismatch: vault={} queries={} corpus={}",
@@ -461,6 +451,23 @@ fn open_slots(plan: &Plan) -> CliResult<Vec<OpenSlot>> {
         .collect()
 }
 
+fn plan_source_report(args: &args::Args, loaded: &LoadedPlan) -> serde_json::Value {
+    match &loaded.db_readback {
+        Some(readback) => json!({
+            "mode": "aster_graph_cf",
+            "cf_root": args.plan_cf_root,
+            "association_key": args.plan_key,
+            "base_dir": loaded.base_dir,
+            "db_readback": readback,
+        }),
+        None => json!({
+            "mode": "legacy_json_import",
+            "path": args.plan,
+            "base_dir": loaded.base_dir,
+        }),
+    }
+}
+
 fn fuse(per_slot: &BTreeMap<SlotId, Vec<IndexSearchHit>>, k: usize) -> Vec<calyx_sextant::Hit> {
     let context = FusionContext {
         k,
@@ -472,10 +479,13 @@ fn fuse(per_slot: &BTreeMap<SlotId, Vec<IndexSearchHit>>, k: usize) -> Vec<calyx
     fusion::fuse(per_slot, &context)
 }
 
-fn parse<T: std::str::FromStr>(value: &str, flag: &str) -> CliResult<T> {
-    value
-        .parse::<T>()
-        .map_err(|_| CliError::usage(format!("{flag} expects a valid value, got {value}")))
+fn gate_scale_truth(
+    _file_fused_truth_scale_suitable: bool,
+    db_fused_truth_scale_suitable: bool,
+    _file_slot_truth_scale_suitable: bool,
+    db_slot_truth_scale_suitable: bool,
+) -> bool {
+    db_fused_truth_scale_suitable || db_slot_truth_scale_suitable
 }
 
 #[cfg(test)]

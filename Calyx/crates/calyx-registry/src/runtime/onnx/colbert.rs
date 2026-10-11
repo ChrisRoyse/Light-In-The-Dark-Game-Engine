@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use calyx_core::{CalyxError, Input, Lens, LensId, Modality, Result, SlotShape, SlotVector};
-use ort::session::Session;
 use ort::value::ValueType;
 use serde_json::Value;
 use tokenizers::Tokenizer;
@@ -11,14 +10,15 @@ use super::colbert_files::fetch_answerai_colbert_files;
 use super::colbert_tokens::multi_rows;
 use super::cuda_guard::CudaDropGuard;
 use super::custom::batch::{TokenBatch, max_tokens_from_config, session_inputs, token_batches};
-use super::fastembed_runtime::execution_providers;
+use super::io_binding::OnnxRunPlan;
+use super::session::{ManagedOnnxSession, build_session};
 use super::{OnnxModelFiles, OnnxProviderPolicy, config_invalid};
 use crate::frozen::{FrozenLensContract, LensDType, NormPolicy, sha256_digest};
 use crate::runtime::common::hash_files;
 use crate::spec::{LensRuntime, LensSpec, default_recall_delta};
 
 pub const DEFAULT_ANSWERAI_COLBERT_MODEL: &str = "answerdotai/answerai-colbert-small-v1";
-pub(in crate::runtime::onnx) const DEFAULT_COLBERT_ONNX: &str = "onnx/model_int8.onnx";
+pub(in crate::runtime::onnx) const DEFAULT_COLBERT_ONNX: &str = "onnx/model_fp16.onnx";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct OnnxColbertFileSpec {
@@ -45,7 +45,8 @@ pub struct OnnxColbertLens {
 }
 
 struct OnnxColbertRuntime {
-    session: Option<Session>,
+    session: Option<ManagedOnnxSession>,
+    run_plan: OnnxRunPlan,
     tokenizer: Tokenizer,
     token_dim: u32,
     max_tokens: usize,
@@ -132,7 +133,7 @@ impl OnnxColbertLens {
     }
 
     pub fn from_files(spec: OnnxColbertFileSpec) -> Result<Self> {
-        let _ort_dylib = super::dynamic_ort::ensure_dynamic_ort()?;
+        let _ort_dylib = super::dynamic_ort::ensure_dynamic_ort(spec.provider_policy)?;
         ensure_file("model", &spec.model_file)?;
         ensure_file("tokenizer", &spec.tokenizer)?;
         ensure_file("config", &spec.config)?;
@@ -149,15 +150,15 @@ impl OnnxColbertLens {
                 spec.model_id
             )));
         }
-        let session = Session::builder()
-            .map_err(|err| config_invalid(format!("ONNX session builder failed: {err}")))?
-            .with_intra_threads(1)
-            .map_err(|err| config_invalid(format!("ONNX intra-thread config failed: {err}")))?
-            .with_execution_providers(execution_providers(spec.provider_policy))
-            .map_err(|err| config_invalid(format!("ONNX provider config failed: {err}")))?
-            .commit_from_file(&spec.model_file)
-            .map_err(|err| config_invalid(format!("load ONNX ColBERT model failed: {err}")))?;
+        let run_label = format!("onnx-colbert:{}", spec.model_id);
+        super::arena::preflight_gpu_mem_limit_for_artifacts(
+            &run_label,
+            spec.provider_policy,
+            files.artifact_paths().iter().map(|path| path.as_path()),
+        )?;
+        let session = build_session(&run_label, &spec.model_file, spec.provider_policy)?;
         let session = CudaDropGuard::new(session, spec.provider_policy);
+        let run_plan = OnnxRunPlan::new(spec.provider_policy, run_label)?;
         let token_dim = output_token_dim(session.as_ref())?;
         let shape = SlotShape::Multi { token_dim };
         if let Some(expected) = spec.expected_shape
@@ -186,6 +187,7 @@ impl OnnxColbertLens {
         );
         let runtime = OnnxColbertRuntime {
             session: Some(session.into_inner()),
+            run_plan,
             tokenizer,
             token_dim,
             max_tokens,
@@ -275,13 +277,14 @@ impl Lens for OnnxColbertLens {
             .runtime
             .lock()
             .map_err(|_| CalyxError::lens_unreachable("ONNX ColBERT mutex was poisoned"))?;
-        let chunk_size = self.max_batch.unwrap_or(inputs.len()).max(1);
+        let max_batch = super::scoped_max_batch(self.max_batch)?;
+        let chunk_size = max_batch.unwrap_or(inputs.len()).max(1);
         if chunk_size >= inputs.len() {
-            return runtime.measure_batch(self, inputs, self.contract());
+            return runtime.measure_batch(self, inputs, self.contract(), max_batch);
         }
         let mut out = Vec::with_capacity(inputs.len());
         for chunk in inputs.chunks(chunk_size) {
-            out.extend(runtime.measure_batch(self, chunk, self.contract())?);
+            out.extend(runtime.measure_batch(self, chunk, self.contract(), max_batch)?);
         }
         Ok(out)
     }
@@ -306,18 +309,27 @@ impl OnnxColbertRuntime {
         lens: &dyn Lens,
         inputs: &[Input],
         contract: &FrozenLensContract,
+        max_batch: Option<usize>,
     ) -> Result<Vec<SlotVector>> {
-        let batches = token_batches(&self.tokenizer, lens, inputs, self.max_tokens)?;
+        let batches = token_batches(
+            &self.tokenizer,
+            lens,
+            inputs,
+            self.max_tokens,
+            max_batch,
+            self.run_plan.pads_batches(),
+        )?;
         let mut rows = vec![None; inputs.len()];
         for batch in &batches {
             let vectors = self.run_token_batch(batch)?;
-            if vectors.len() != batch.indices.len() {
+            if vectors.len() != batch.batch {
                 return Err(CalyxError::lens_dim_mismatch(format!(
-                    "ONNX ColBERT returned {} rows for {} bucketed inputs",
+                    "ONNX ColBERT returned {} rows for a padded batch of {}",
                     vectors.len(),
-                    batch.indices.len()
+                    batch.batch
                 )));
             }
+            // Rows beyond the real inputs are #1143 padding replicas.
             for (index, data) in batch.indices.iter().copied().zip(vectors) {
                 rows[index] = Some(data);
             }
@@ -342,15 +354,20 @@ impl OnnxColbertRuntime {
             .session
             .as_mut()
             .ok_or_else(|| CalyxError::lens_unreachable("ONNX ColBERT session is unavailable"))?;
-        let input_values = session_inputs(session, batch)?;
-        let outputs = session
-            .run(input_values)
-            .map_err(|err| config_invalid(format!("ONNX ColBERT inference failed: {err}")))?;
-        let output = output_tensor(&outputs)?;
-        let (shape, values) = output.try_extract_tensor::<f32>().map_err(|err| {
-            config_invalid(format!("ONNX ColBERT output is not f32 tensor: {err}"))
-        })?;
-        multi_rows(shape, values, batch, self.token_dim as usize)
+        let input_tensors = session_inputs(session.as_ref(), batch)?;
+        let token_dim = self.token_dim as usize;
+        self.run_plan.run_extract(
+            session.as_mut(),
+            input_tensors,
+            (batch.batch, batch.seq),
+            |outputs| {
+                let output = output_tensor(outputs)?;
+                let (shape, values) = output.try_extract_tensor::<f32>().map_err(|err| {
+                    config_invalid(format!("ONNX ColBERT output is not f32 tensor: {err}"))
+                })?;
+                multi_rows(shape, values, batch, token_dim)
+            },
+        )
     }
 }
 
@@ -408,7 +425,7 @@ fn validate_config(path: &Path) -> Result<Value> {
     })
 }
 
-fn output_token_dim(session: &Session) -> Result<u32> {
+fn output_token_dim(session: &ort::session::Session) -> Result<u32> {
     let output = session
         .outputs()
         .iter()
